@@ -24,6 +24,7 @@ import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
+import androidx.health.connect.client.response.ReadRecordsResponse
 import androidx.health.connect.client.time.TimeRangeFilter
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
@@ -234,232 +235,188 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateTotalCaloriesBurnedSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        try {
-            val totalCaloriesBurnedRequest = healthConnectClient.aggregate(buildAggregationRequest(TotalCaloriesBurnedRecord.ENERGY_TOTAL))
-            val energy = totalCaloriesBurnedRequest[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories ?: 0.0
-            onSensorUpdated(
-                context,
-                totalCaloriesBurned,
-                BigDecimal(energy).setScale(2, RoundingMode.HALF_EVEN),
-                totalCaloriesBurned.statelessIcon,
-                attributes = buildAggregationAttributes(totalCaloriesBurnedRequest)
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get total calories burned", e)
-        }
+        val totalCaloriesBurnedRequest = healthConnectClient.aggregateOrNull(buildAggregationRequest(TotalCaloriesBurnedRecord.ENERGY_TOTAL)) ?: return
+        val energy = totalCaloriesBurnedRequest[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories ?: 0.0
+        onSensorUpdated(
+            context,
+            totalCaloriesBurned,
+            BigDecimal(energy).setScale(2, RoundingMode.HALF_EVEN),
+            totalCaloriesBurned.statelessIcon,
+            attributes = buildAggregationAttributes(totalCaloriesBurnedRequest)
+        )
     }
 
     private suspend fun updateWeightSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        try {
-            val weightRequest = buildReadRecordsRequest(WeightRecord::class) as ReadRecordsRequest<WeightRecord>
-            val response = healthConnectClient.readRecords(weightRequest)
-            if (response.records.isEmpty()) {
-                return
-            }
-            onSensorUpdated(
-                context,
-                weight,
-                BigDecimal(response.records.last().weight.inGrams).setScale(2, RoundingMode.HALF_EVEN),
-                weight.statelessIcon,
-                attributes = mapOf(
-                    "date" to response.records.last().time,
-                    "source" to response.records.last().metadata.dataOrigin.packageName
-                )
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get weight", e)
+        val weightRequest = buildReadRecordsRequest(WeightRecord::class) as ReadRecordsRequest<WeightRecord>
+        val response = healthConnectClient.readRecordsOrNull(weightRequest)
+        if (response == null || response.records.isEmpty()) {
+            return
         }
+        onSensorUpdated(
+            context,
+            weight,
+            BigDecimal(response.records.last().weight.inGrams).setScale(2, RoundingMode.HALF_EVEN),
+            weight.statelessIcon,
+            attributes = mapOf(
+                "date" to response.records.last().time,
+                "source" to response.records.last().metadata.dataOrigin.packageName
+            )
+        )
     }
 
     private suspend fun updateActiveCaloriesBurnedSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        try {
-            val activeCaloriesBurnedRequest = buildReadRecordsRequest(ActiveCaloriesBurnedRecord::class) as ReadRecordsRequest<ActiveCaloriesBurnedRecord>
-            val response = healthConnectClient.readRecords(activeCaloriesBurnedRequest)
-            if (response.records.isEmpty()) {
-                return
-            }
-            onSensorUpdated(
-                context,
-                activeCaloriesBurned,
-                BigDecimal(response.records.last().energy.inKilocalories).setScale(2, RoundingMode.HALF_EVEN),
-                activeCaloriesBurned.statelessIcon,
-                attributes = mapOf(
-                    "endTime" to response.records.last().endTime,
-                    "source" to response.records.last().metadata.dataOrigin.packageName
-                )
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get active calories burned", e)
+        val activeCaloriesBurnedRequest = buildReadRecordsRequest(ActiveCaloriesBurnedRecord::class) as ReadRecordsRequest<ActiveCaloriesBurnedRecord>
+        val response = healthConnectClient.readRecordsOrNull(activeCaloriesBurnedRequest)
+        if (response == null || response.records.isEmpty()) {
+            return
         }
+        onSensorUpdated(
+            context,
+            activeCaloriesBurned,
+            BigDecimal(response.records.last().energy.inKilocalories).setScale(2, RoundingMode.HALF_EVEN),
+            activeCaloriesBurned.statelessIcon,
+            attributes = mapOf(
+                "endTime" to response.records.last().endTime,
+                "source" to response.records.last().metadata.dataOrigin.packageName
+            )
+        )
     }
 
     private suspend fun updateHeartRateSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        try {
-            val heartRateRequest = buildReadRecordsRequest(HeartRateRecord::class) as ReadRecordsRequest<HeartRateRecord>
-            val response = healthConnectClient.readRecords(heartRateRequest)
-            if (response.records.isEmpty() || response.records.last().samples.isEmpty()) {
-                return
-            }
-            onSensorUpdated(
-                context,
-                heartRate,
-                response.records.last().samples.last().beatsPerMinute,
-                heartRate.statelessIcon,
-                attributes = mapOf(
-                    "date" to response.records.last().samples.last().time,
-                    "source" to response.records.last().metadata.dataOrigin.packageName
-                )
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get heart rate", e)
+        val heartRateRequest = buildReadRecordsRequest(HeartRateRecord::class) as ReadRecordsRequest<HeartRateRecord>
+        val response = healthConnectClient.readRecordsOrNull(heartRateRequest)
+        if (response == null || response.records.isEmpty() || response.records.last().samples.isEmpty()) {
+            return
         }
+        onSensorUpdated(
+            context,
+            heartRate,
+            response.records.last().samples.last().beatsPerMinute,
+            heartRate.statelessIcon,
+            attributes = mapOf(
+                "date" to response.records.last().samples.last().time,
+                "source" to response.records.last().metadata.dataOrigin.packageName
+            )
+        )
     }
 
     private suspend fun updateBloodGlucoseSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        try {
-            val bloodGlucoseRequest = buildReadRecordsRequest(BloodGlucoseRecord::class) as ReadRecordsRequest<BloodGlucoseRecord>
-            val response = healthConnectClient.readRecords(bloodGlucoseRequest)
-            if (response.records.isEmpty()) {
-                return
-            }
-            onSensorUpdated(
-                context,
-                bloodGlucose,
-                response.records.last().level.inMilligramsPerDeciliter,
-                bloodGlucose.statelessIcon,
-                attributes = mapOf(
-                    "date" to response.records.last().time,
-                    "mealType" to getMealType(response.records.last().mealType),
-                    "relationToMeal" to getRelationToMeal(response.records.last().relationToMeal),
-                    "specimenSource" to getSpecimenSource(response.records.last().specimenSource),
-                    "source" to response.records.last().metadata.dataOrigin.packageName
-                )
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get blood glucose", e)
+        val bloodGlucoseRequest = buildReadRecordsRequest(BloodGlucoseRecord::class) as ReadRecordsRequest<BloodGlucoseRecord>
+        val response = healthConnectClient.readRecordsOrNull(bloodGlucoseRequest)
+        if (response == null || response.records.isEmpty()) {
+            return
         }
+        onSensorUpdated(
+            context,
+            bloodGlucose,
+            response.records.last().level.inMilligramsPerDeciliter,
+            bloodGlucose.statelessIcon,
+            attributes = mapOf(
+                "date" to response.records.last().time,
+                "mealType" to getMealType(response.records.last().mealType),
+                "relationToMeal" to getRelationToMeal(response.records.last().relationToMeal),
+                "specimenSource" to getSpecimenSource(response.records.last().specimenSource),
+                "source" to response.records.last().metadata.dataOrigin.packageName
+            )
+        )
     }
 
     private suspend fun updateBodyFatSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        try {
-            val bodyFatRequest = buildReadRecordsRequest(BodyFatRecord::class) as ReadRecordsRequest<BodyFatRecord>
-            val response = healthConnectClient.readRecords(bodyFatRequest)
-            if (response.records.isEmpty()) {
-                return
-            }
-            onSensorUpdated(
-                context,
-                bodyFat,
-                BigDecimal(response.records.last().percentage.value).setScale(2, RoundingMode.HALF_EVEN),
-                bodyFat.statelessIcon,
-                attributes = mapOf(
-                    "date" to response.records.last().time,
-                    "source" to response.records.last().metadata.dataOrigin.packageName
-                )
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get body fat", e)
+        val bodyFatRequest = buildReadRecordsRequest(BodyFatRecord::class) as ReadRecordsRequest<BodyFatRecord>
+        val response = healthConnectClient.readRecordsOrNull(bodyFatRequest)
+        if (response == null || response.records.isEmpty()) {
+            return
         }
+        onSensorUpdated(
+            context,
+            bodyFat,
+            BigDecimal(response.records.last().percentage.value).setScale(2, RoundingMode.HALF_EVEN),
+            bodyFat.statelessIcon,
+            attributes = mapOf(
+                "date" to response.records.last().time,
+                "source" to response.records.last().metadata.dataOrigin.packageName
+            )
+        )
     }
 
     private suspend fun updateDistanceSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        try {
-            val distanceRequest = healthConnectClient.aggregate(buildAggregationRequest(DistanceRecord.DISTANCE_TOTAL))
-            val distanceTotal = distanceRequest[DistanceRecord.DISTANCE_TOTAL]?.inMeters ?: 0
-            onSensorUpdated(
-                context,
-                distance,
-                distanceTotal,
-                distance.statelessIcon,
-                attributes = buildAggregationAttributes(distanceRequest)
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get distance", e)
-        }
+        val distanceRequest = healthConnectClient.aggregateOrNull(buildAggregationRequest(DistanceRecord.DISTANCE_TOTAL)) ?: return
+        val distanceTotal = distanceRequest[DistanceRecord.DISTANCE_TOTAL]?.inMeters ?: 0
+        onSensorUpdated(
+            context,
+            distance,
+            distanceTotal,
+            distance.statelessIcon,
+            attributes = buildAggregationAttributes(distanceRequest)
+        )
     }
 
     private suspend fun updateElevationGainedSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        try {
-            val elevationGainedRequest = healthConnectClient.aggregate(buildAggregationRequest(ElevationGainedRecord.ELEVATION_GAINED_TOTAL))
-            val elevationValue = elevationGainedRequest[ElevationGainedRecord.ELEVATION_GAINED_TOTAL]?.inMeters ?: 0
-            onSensorUpdated(
-                context,
-                elevationGained,
-                elevationValue,
-                elevationGained.statelessIcon,
-                attributes = buildAggregationAttributes(elevationGainedRequest)
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get elevation gained", e)
-        }
+        val elevationGainedRequest = healthConnectClient.aggregateOrNull(buildAggregationRequest(ElevationGainedRecord.ELEVATION_GAINED_TOTAL)) ?: return
+        val elevationValue = elevationGainedRequest[ElevationGainedRecord.ELEVATION_GAINED_TOTAL]?.inMeters ?: 0
+        onSensorUpdated(
+            context,
+            elevationGained,
+            elevationValue,
+            elevationGained.statelessIcon,
+            attributes = buildAggregationAttributes(elevationGainedRequest)
+        )
     }
 
     private suspend fun updateFloorsClimbedSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        try {
-            val floorsClimbedRequest = healthConnectClient.aggregate(buildAggregationRequest(FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL))
-            val floors = floorsClimbedRequest[FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL] ?: 0
-            onSensorUpdated(
-                context,
-                floorsClimbed,
-                floors,
-                floorsClimbed.statelessIcon,
-                attributes = buildAggregationAttributes(floorsClimbedRequest)
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get floors climbed", e)
-        }
+        val floorsClimbedRequest = healthConnectClient.aggregateOrNull(buildAggregationRequest(FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL)) ?: return
+        val floors = floorsClimbedRequest[FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL] ?: 0
+        onSensorUpdated(
+            context,
+            floorsClimbed,
+            floors,
+            floorsClimbed.statelessIcon,
+            attributes = buildAggregationAttributes(floorsClimbedRequest)
+        )
     }
 
     private suspend fun updateSleepDurationSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        try {
-            val sleepRequest = buildReadRecordsRequest(SleepSessionRecord::class) as ReadRecordsRequest<SleepSessionRecord>
-            val sleepRecords = healthConnectClient.readRecords(sleepRequest)
-            if (sleepRecords.records.isEmpty()) {
-                return
-            }
-            val lastSleepRecord = sleepRecords.records.last()
-            val sleepRecordDuration = (lastSleepRecord.endTime.toEpochMilli() - lastSleepRecord.startTime.toEpochMilli())
-                .toDuration(DurationUnit.MILLISECONDS)
-                .inWholeMinutes
-            onSensorUpdated(
-                context,
-                sleepDuration,
-                sleepRecordDuration,
-                sleepDuration.statelessIcon,
-                attributes = mapOf(
-                    "endTime" to lastSleepRecord.endTime,
-                    "sources" to lastSleepRecord.metadata.dataOrigin.packageName
-                )
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get sleep duration", e)
+        val sleepRequest = buildReadRecordsRequest(SleepSessionRecord::class) as ReadRecordsRequest<SleepSessionRecord>
+        val sleepRecords = healthConnectClient.readRecordsOrNull(sleepRequest)
+        if (sleepRecords == null || sleepRecords.records.isEmpty()) {
+            return
         }
+        val lastSleepRecord = sleepRecords.records.last()
+        val sleepRecordDuration = (lastSleepRecord.endTime.toEpochMilli() - lastSleepRecord.startTime.toEpochMilli())
+            .toDuration(DurationUnit.MILLISECONDS)
+            .inWholeMinutes
+        onSensorUpdated(
+            context,
+            sleepDuration,
+            sleepRecordDuration,
+            sleepDuration.statelessIcon,
+            attributes = mapOf(
+                "endTime" to lastSleepRecord.endTime,
+                "sources" to lastSleepRecord.metadata.dataOrigin.packageName
+            )
+        )
     }
 
     private suspend fun updateStepsSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        try {
-            val stepsRequest = healthConnectClient.aggregate(buildAggregationRequest(StepsRecord.COUNT_TOTAL))
-            val totalSteps = stepsRequest[StepsRecord.COUNT_TOTAL] ?: 0
-            onSensorUpdated(
-                context,
-                steps,
-                totalSteps,
-                steps.statelessIcon,
-                attributes = buildAggregationAttributes(stepsRequest)
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get steps", e)
-        }
+        val stepsRequest = healthConnectClient.aggregateOrNull(buildAggregationRequest(StepsRecord.COUNT_TOTAL)) ?: return
+        val totalSteps = stepsRequest[StepsRecord.COUNT_TOTAL] ?: 0
+        onSensorUpdated(
+            context,
+            steps,
+            totalSteps,
+            steps.statelessIcon,
+            attributes = buildAggregationAttributes(stepsRequest)
+        )
     }
 
     override fun docsLink(): String {
@@ -484,8 +441,7 @@ class HealthConnectSensorManager : SensorManager {
     override suspend fun checkPermission(context: Context, sensorId: String): Boolean {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return false
         return try {
-            val result = healthConnectClient.permissionController.getGrantedPermissions().containsAll(requiredPermissions(sensorId).toSet())
-            result
+            healthConnectClient.permissionController.getGrantedPermissions().containsAll(requiredPermissions(sensorId).toSet())
         } catch (e: Exception) {
             Log.e(TAG, "Unable to check permissions", e)
             false
@@ -499,6 +455,20 @@ class HealthConnectSensorManager : SensorManager {
             Log.e(TAG, "Unable to create Health Connect client", e)
             null
         }
+    }
+
+    private suspend fun <T : Record> HealthConnectClient.readRecordsOrNull(request: ReadRecordsRequest<T>): ReadRecordsResponse<T>? = try {
+        readRecords(request)
+    } catch (e: Exception) {
+        Log.e(TAG, "Could not read records", e)
+        null
+    }
+
+    private suspend fun HealthConnectClient.aggregateOrNull(request: AggregateRequest): AggregationResult? = try {
+        aggregate(request)
+    } catch (e: Exception) {
+        Log.e(TAG, "Could not aggregate", e)
+        null
     }
 
     private fun buildAggregationRequest(metric: AggregateMetric<*>): AggregateRequest {
