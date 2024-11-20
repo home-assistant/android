@@ -718,7 +718,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 HighAccuracyLocationService.updateNotificationAddress(latestContext, location)
                 // Send new location to Home Assistant
                 serverIds.forEach {
-                    sendLocationUpdate(location, it, trigger)
+                    ioScope.launch { sendLocationUpdate(location, it, trigger) }
                 }
             }
         }
@@ -785,14 +785,16 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     "vertical_accuracy" to if (Build.VERSION.SDK_INT >= 26) geofencingEvent.triggeringLocation!!.verticalAccuracyMeters.toInt() else 0,
                     "zone" to zone.substring(zone.indexOf("_") + 1)
                 )
-                try {
-                    val serverId = zone.split("_")[0].toIntOrNull() ?: return
-                    val enabled = isEnabled(latestContext, zoneLocation, serverId)
-                    if (!enabled) return
-                    serverManager(latestContext).integrationRepository(serverId).fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>)
-                    Log.d(TAG, "Event sent to Home Assistant")
-                } catch (e: Exception) {
-                    Log.e(TAG, "Unable to send event to Home Assistant", e)
+                ioScope.launch {
+                    try {
+                        val serverId = zone.split("_")[0].toIntOrNull() ?: return@launch
+                        val enabled = isEnabled(latestContext, zoneLocation, serverId)
+                        if (!enabled) return@launch
+                        serverManager(latestContext).integrationRepository(serverId).fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>)
+                        Log.d(TAG, "Event sent to Home Assistant")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Unable to send event to Home Assistant", e)
+                    }
                 }
             }
         }
@@ -816,7 +818,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             requestSingleAccurateLocation()
         } else {
             getEnabledServers(latestContext, zoneLocation).forEach {
-                sendLocationUpdate(geofencingEvent.triggeringLocation!!, it, trigger)
+                ioScope.launch { sendLocationUpdate(geofencingEvent.triggeringLocation!!, it, trigger) }
             }
         }
 
@@ -919,26 +921,28 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             "false"
         ).toBoolean()
 
-        try {
-            serverManager(latestContext).integrationRepository(serverId).updateLocation(updateLocation)
-            Log.d(TAG, "Location update sent successfully for $serverId as $updateLocationAs")
-            lastLocationSend[serverId] = now
-            lastUpdateLocation[serverId] = updateLocationString
-            logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SENT)
+        ioScope.launch {
+            try {
+                serverManager(latestContext).integrationRepository(serverId).updateLocation(updateLocation)
+                Log.d(TAG, "Location update sent successfully for $serverId as $updateLocationAs")
+                lastLocationSend[serverId] = now
+                lastUpdateLocation[serverId] = updateLocationString
+                logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SENT)
 
-            // Update Geocoded Location Sensor
-            if (geocodeIncludeLocation) {
-                val intent = Intent(latestContext, SensorReceiver::class.java)
-                intent.action = SensorReceiverBase.ACTION_UPDATE_SENSOR
-                intent.putExtra(
-                    SensorReceiverBase.EXTRA_SENSOR_ID,
-                    GeocodeSensorManager.geocodedLocation.id
-                )
-                latestContext.sendBroadcast(intent)
+                // Update Geocoded Location Sensor
+                if (geocodeIncludeLocation) {
+                    val intent = Intent(latestContext, SensorReceiver::class.java)
+                    intent.action = SensorReceiverBase.ACTION_UPDATE_SENSOR
+                    intent.putExtra(
+                        SensorReceiverBase.EXTRA_SENSOR_ID,
+                        GeocodeSensorManager.geocodedLocation.id
+                    )
+                    latestContext.sendBroadcast(intent)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Could not update location for $serverId.", e)
+                logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.FAILED_SEND)
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Could not update location for $serverId.", e)
-            logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.FAILED_SEND)
         }
     }
 
@@ -983,7 +987,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         var geofenceCount = 0
         getEnabledServers(latestContext, zoneLocation).map { serverId ->
-            sensorWorkerScope.async {
+            ioScope.async {
                 val configuredZones = getZones(serverId, forceRefresh = true)
                 configuredZones.forEach {
                     addGeofenceToBuilder(geofencingRequestBuilder, serverId, it)
