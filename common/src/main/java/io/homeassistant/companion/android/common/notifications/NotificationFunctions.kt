@@ -75,7 +75,7 @@ fun handleChannel(
 ): String {
     // Define some values for a default channel
     var channelID = CHANNEL_GENERAL
-    var channelName = "General"
+    var channelName = context.getString(R.string.general)
 
     if (!data[NotificationData.CHANNEL].isNullOrEmpty()) {
         channelID = createChannelID(data[NotificationData.CHANNEL].toString())
