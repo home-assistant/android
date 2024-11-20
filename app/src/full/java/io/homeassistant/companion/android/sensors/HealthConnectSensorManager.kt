@@ -297,11 +297,10 @@ class HealthConnectSensorManager : SensorManager {
                 (sensorId == activeCaloriesBurned.id) -> arrayOf(HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class))
                 (sensorId == basalMetabolicRate.id) -> arrayOf(HealthPermission.getReadPermission(BasalMetabolicRateRecord::class))
                 (sensorId == bloodGlucose.id) -> arrayOf(HealthPermission.getReadPermission(BloodGlucoseRecord::class))
-                (sensorId == diastolicBloodPressure.id) -> arrayOf(HealthPermission.getReadPermission(BloodPressureRecord::class))
-                (sensorId == systolicBloodPressure.id) -> arrayOf(HealthPermission.getReadPermission(BloodPressureRecord::class))
                 (sensorId == bodyFat.id) -> arrayOf(HealthPermission.getReadPermission(BodyFatRecord::class))
                 (sensorId == bodyTemperature.id) -> arrayOf(HealthPermission.getReadPermission(BodyTemperatureRecord::class))
                 (sensorId == boneMass.id) -> arrayOf(HealthPermission.getReadPermission(BoneMassRecord::class))
+                (sensorId == diastolicBloodPressure.id) -> arrayOf(HealthPermission.getReadPermission(BloodPressureRecord::class))
                 (sensorId == distance.id) -> arrayOf(HealthPermission.getReadPermission(DistanceRecord::class))
                 (sensorId == elevationGained.id) -> arrayOf(HealthPermission.getReadPermission(ElevationGainedRecord::class))
                 (sensorId == floorsClimbed.id) -> arrayOf(HealthPermission.getReadPermission(FloorsClimbedRecord::class))
@@ -312,6 +311,7 @@ class HealthConnectSensorManager : SensorManager {
                 (sensorId == respiratoryRate.id) -> arrayOf(HealthPermission.getReadPermission(RespiratoryRateRecord::class))
                 (sensorId == sleepDuration.id) -> arrayOf(HealthPermission.getReadPermission(SleepSessionRecord::class))
                 (sensorId == steps.id) -> arrayOf(HealthPermission.getReadPermission(StepsRecord::class))
+                (sensorId == systolicBloodPressure.id) -> arrayOf(HealthPermission.getReadPermission(BloodPressureRecord::class))
                 (sensorId == totalCaloriesBurned.id) -> arrayOf(HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class))
                 (sensorId == vo2Max.id) -> arrayOf(HealthPermission.getReadPermission(Vo2MaxRecord::class))
                 (sensorId == weight.id) -> arrayOf(HealthPermission.getReadPermission(WeightRecord::class))
@@ -333,12 +333,6 @@ class HealthConnectSensorManager : SensorManager {
         if (isEnabled(context, bloodGlucose)) {
             updateBloodGlucoseSensor(context)
         }
-        if (isEnabled(context, diastolicBloodPressure)) {
-            updateBloodPressureSensor(context, true)
-        }
-        if (isEnabled(context, systolicBloodPressure)) {
-            updateBloodPressureSensor(context, false)
-        }
         if (isEnabled(context, bodyFat)) {
             updateBodyFatSensor(context)
         }
@@ -347,6 +341,9 @@ class HealthConnectSensorManager : SensorManager {
         }
         if (isEnabled(context, boneMass)) {
             updateBoneMassSensor(context)
+        }
+        if (isEnabled(context, diastolicBloodPressure)) {
+            updateBloodPressureSensors(context, true)
         }
         if (isEnabled(context, distance)) {
             updateDistanceSensor(context)
@@ -377,6 +374,9 @@ class HealthConnectSensorManager : SensorManager {
         }
         if (isEnabled(context, steps)) {
             updateStepsSensor(context)
+        }
+        if (isEnabled(context, systolicBloodPressure)) {
+            updateBloodPressureSensors(context, false)
         }
         if (isEnabled(context, totalCaloriesBurned)) {
             updateTotalCaloriesBurnedSensor(context)
@@ -449,7 +449,7 @@ class HealthConnectSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateBloodPressureSensor(context: Context, isDiastolic: Boolean) {
+    private suspend fun updateBloodPressureSensors(context: Context, isDiastolic: Boolean) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val bloodPressureRequest = buildReadRecordsRequest(BloodPressureRecord::class) as ReadRecordsRequest<BloodPressureRecord>
         val response = healthConnectClient.readRecordsOrNull(bloodPressureRequest)
@@ -760,11 +760,10 @@ class HealthConnectSensorManager : SensorManager {
                 activeCaloriesBurned,
                 basalMetabolicRate,
                 bloodGlucose,
-                diastolicBloodPressure,
-                systolicBloodPressure,
                 bodyFat,
                 bodyTemperature,
                 boneMass,
+                diastolicBloodPressure,
                 distance,
                 elevationGained,
                 floorsClimbed,
@@ -775,6 +774,7 @@ class HealthConnectSensorManager : SensorManager {
                 respiratoryRate,
                 sleepDuration,
                 steps,
+                systolicBloodPressure,
                 totalCaloriesBurned,
                 vo2Max,
                 weight
