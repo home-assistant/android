@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.google.services)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.screenshot)
 }
 
 android {
@@ -59,6 +60,8 @@ android {
         sourceCompatibility(libs.versions.javaVersion.get())
         targetCompatibility(libs.versions.javaVersion.get())
     }
+
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
 
     lint {
         disable += "MissingTranslation"
@@ -117,4 +120,5 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+    screenshotTestImplementation(libs.compose.uiTooling)
 }
