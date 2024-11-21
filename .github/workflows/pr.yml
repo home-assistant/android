@@ -98,6 +98,12 @@ jobs:
       - name: Validate Screenshot Previews
         run: ./gradlew validateDebugScreenshotTest
 
+      - name: Upload screenshot results
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshot-results
+          path: wear/build/reports/screenshotTest
+
   pr_build:
     runs-on: ubuntu-latest
     permissions:
