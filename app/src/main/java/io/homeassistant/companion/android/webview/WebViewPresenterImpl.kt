@@ -480,6 +480,14 @@ class WebViewPresenterImpl @Inject constructor(
         mutableMatterThreadStep.tryEmit(MatterThreadStep.NOT_STARTED)
     }
 
+    override suspend fun shouldShowImprovPermissions(): Boolean {
+        return if (improvRepository.hasPermission(view as Context)) {
+            true
+        } else {
+            prefsRepository.getImprovPermissionDisplayedCount() < 2
+        }
+    }
+
     override fun startScanningForImprov(): Boolean {
         if (!improvRepository.hasPermission(view as Context)) return false
         improvJobStarted = System.currentTimeMillis()
@@ -493,8 +501,6 @@ class WebViewPresenterImpl @Inject constructor(
         }
         return true
     }
-
-    override fun getImprovPermissions(): Array<String> = improvRepository.getRequiredPermissions()
 
     override fun stopScanningForImprov(force: Boolean) {
         if (improvJob?.isActive == true && (force || System.currentTimeMillis() - improvJobStarted > 1000)) {

@@ -36,6 +36,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_IGNORED_SUGGESTIONS = "ignored_suggestions"
         private const val PREF_AUTO_FAVORITES = "auto_favorites"
         private const val PREF_LOCATION_HISTORY_DISABLED = "location_history"
+        private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displayed"
     }
 
     init {
@@ -241,6 +242,13 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setLocationHistoryEnabled(enabled: Boolean) {
         localStorage.putBoolean(PREF_LOCATION_HISTORY_DISABLED, !enabled)
+    }
+
+    override suspend fun getImprovPermissionDisplayedCount(): Int =
+        localStorage.getInt(PREF_IMPROV_PERMISSION_DISPLAYED) ?: 0
+
+    override suspend fun addImprovPermissionDisplayedCount() {
+        localStorage.putInt(PREF_IMPROV_PERMISSION_DISPLAYED, getImprovPermissionDisplayedCount() + 1)
     }
 
     override suspend fun removeServer(serverId: Int) {

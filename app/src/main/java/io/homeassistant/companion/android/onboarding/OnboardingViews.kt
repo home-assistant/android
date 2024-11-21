@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.onboarding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -70,6 +71,29 @@ fun OnboardingHeaderView(
             modifier = Modifier
                 .padding(vertical = 16.dp)
                 .align(Alignment.CenterHorizontally)
+        )
+    }
+}
+
+@Composable
+fun OnboardingPermissionBullet(
+    icon: IIcon,
+    text: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 12.dp)
+    ) {
+        Image(
+            asset = icon,
+            colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
+            contentDescription = null
+        )
+        Text(
+            text = text,
+            modifier = Modifier
+                .padding(start = 16.dp)
+                .fillMaxWidth()
         )
     }
 }

@@ -8,22 +8,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.OnboardingHeaderView
+import io.homeassistant.companion.android.onboarding.OnboardingPermissionBullet
 import io.homeassistant.companion.android.onboarding.OnboardingScreen
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
@@ -50,11 +47,11 @@ fun NotificationPermissionView(
                     .padding(bottom = 48.dp)
                     .align(Alignment.CenterHorizontally)
             )
-            NotificationPermissionBullet(
+            OnboardingPermissionBullet(
                 icon = CommunityMaterial.Icon.cmd_alert_decagram,
                 text = stringResource(id = commonR.string.onboarding_notifications_bullet_alert)
             )
-            NotificationPermissionBullet(
+            OnboardingPermissionBullet(
                 icon = CommunityMaterial.Icon3.cmd_text,
                 text = stringResource(id = commonR.string.onboarding_notifications_bullet_commands)
             )
@@ -68,29 +65,6 @@ fun NotificationPermissionView(
                 Text(stringResource(id = commonR.string.continue_connect))
             }
         }
-    }
-}
-
-@Composable
-fun NotificationPermissionBullet(
-    icon: IIcon,
-    text: String
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 12.dp)
-    ) {
-        Image(
-            asset = icon,
-            colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
-            contentDescription = null
-        )
-        Text(
-            text = text,
-            modifier = Modifier
-                .padding(start = 16.dp)
-                .fillMaxWidth()
-        )
     }
 }
 

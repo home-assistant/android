@@ -28,7 +28,7 @@ import io.homeassistant.companion.android.common.R as commonR
  */
 @Composable
 fun ModalBottomSheet(
-    title: String,
+    title: String?,
     showHandle: Boolean = true,
     content: @Composable () -> Unit
 ) {
@@ -52,14 +52,16 @@ fun ModalBottomSheet(
                     )
                 }
             }
-            Text(
-                text = title,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 22.dp),
-                style = MaterialTheme.typography.h6,
-                textAlign = TextAlign.Center
-            )
+            if (title != null) {
+                Text(
+                    text = title,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 22.dp),
+                    style = MaterialTheme.typography.h6,
+                    textAlign = TextAlign.Center
+                )
+            }
             content()
         }
     }

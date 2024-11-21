@@ -87,6 +87,10 @@ interface PrefsRepository {
 
     suspend fun setLocationHistoryEnabled(enabled: Boolean)
 
+    suspend fun getImprovPermissionDisplayedCount(): Int
+
+    suspend fun addImprovPermissionDisplayedCount()
+
     /** Clean up any app-level preferences that might reference servers */
     suspend fun removeServer(serverId: Int)
 }

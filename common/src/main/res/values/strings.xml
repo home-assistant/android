@@ -336,6 +336,10 @@
     <string name="improv_error_unknown">Unknown error, please try again</string>
     <string name="improv_hint">Improv Wi-Fi devices are available to set up</string>
     <string name="improv_list_title">Devices ready to set up</string>
+    <string name="improv_permission_title">Search devices</string>
+    <string name="improv_permission_text">The Home Assistant app can find devices using Bluetooth of this device. Allow access for the following permissions.</string>
+    <string name="improv_permission_bluetooth">Bluetooth</string>
+    <string name="improv_permission_location">Precise location</string>
     <string name="improv_wifi_title">Connect to Wi-Fi</string>
     <string name="improv_wifi_ssid">Network name</string>
     <string name="keep_screen_on_def">Do not lock screen when dashboard is active</string>
