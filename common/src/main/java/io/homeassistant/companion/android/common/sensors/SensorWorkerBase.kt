@@ -92,16 +92,12 @@ abstract class SensorWorkerBase(
 
     protected fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            var notificationChannel =
-                notificationManager.getNotificationChannel(CHANNEL_SENSOR_WORKER)
-            if (notificationChannel == null) {
-                notificationChannel = NotificationChannel(
-                    CHANNEL_SENSOR_WORKER,
-                    TAG,
-                    NotificationManager.IMPORTANCE_LOW
-                )
-                notificationManager.createNotificationChannel(notificationChannel)
-            }
+            val notificationChannel = NotificationChannel(
+                CHANNEL_SENSOR_WORKER,
+                appContext.getString(commonR.string.sensor_updates),
+                NotificationManager.IMPORTANCE_LOW
+            )
+            notificationManager.createNotificationChannel(notificationChannel)
         }
     }
 }

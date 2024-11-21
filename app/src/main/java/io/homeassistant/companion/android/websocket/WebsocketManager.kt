@@ -215,16 +215,12 @@ class WebsocketManager(
      */
     private suspend fun createNotification(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            var notificationChannel =
-                notificationManager.getNotificationChannel(CHANNEL_WEBSOCKET)
-            if (notificationChannel == null) {
-                notificationChannel = NotificationChannel(
-                    CHANNEL_WEBSOCKET,
-                    applicationContext.getString(R.string.websocket_setting_name),
-                    NotificationManager.IMPORTANCE_LOW
-                )
-                notificationManager.createNotificationChannel(notificationChannel)
-            }
+            val notificationChannel = NotificationChannel(
+                CHANNEL_WEBSOCKET,
+                applicationContext.getString(R.string.websocket_setting_name),
+                NotificationManager.IMPORTANCE_LOW
+            )
+            notificationManager.createNotificationChannel(notificationChannel)
         }
 
         val intent = WebViewActivity.newInstance(applicationContext)

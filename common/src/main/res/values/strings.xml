@@ -1313,4 +1313,6 @@
     <string name="sensor_description_steps">Total steps taken since midnight from Health Connect</string>
     <string name="basic_sensor_name_blood_glucose">Blood glucose</string>
     <string name="sensor_description_blood_glucose">Last recorded blood glucose reading in milligrams per deciliter from Health Connect</string>
+    <string name="general">General</string>
+    <string name="sensor_updates">Sensor updates</string>
 </resources>
