@@ -89,6 +89,7 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
+import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.nfc.WriteNfcTag
@@ -156,12 +157,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
                 downloadFile(downloadFileUrl, downloadFileContentDisposition, downloadFileMimetype)
-            }
-        }
-    private val requestImprovPermissions =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-            if (it.all { result -> result.value }) {
-                presenter.startScanningForImprov()
             }
         }
     private val writeNfcTag = registerForActivityResult(WriteNfcTag()) { messageId ->
@@ -834,7 +829,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         )
                                     )
                                 }
-                                "improv/scan" -> tryScanningForImprov()
+                                "improv/scan" -> scanForImprov()
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)
@@ -1683,10 +1678,21 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
-    private fun tryScanningForImprov() {
+    private fun scanForImprov() {
         if (!packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) return
-        if (!presenter.startScanningForImprov()) {
-            presenter.getImprovPermissions().let { requestImprovPermissions.launch(it) }
+        lifecycleScope.launch {
+            if (presenter.shouldShowImprovPermissions()) {
+                supportFragmentManager.setFragmentResultListener(ImprovPermissionDialog.RESULT_KEY, this@WebViewActivity) { _, bundle ->
+                    if (bundle.getBoolean(ImprovPermissionDialog.RESULT_GRANTED, false)) {
+                        presenter.startScanningForImprov()
+                    }
+                    supportFragmentManager.clearFragmentResultListener(ImprovPermissionDialog.RESULT_KEY)
+                }
+                val dialog = ImprovPermissionDialog()
+                dialog.show(supportFragmentManager, ImprovPermissionDialog.TAG)
+            } else {
+                presenter.startScanningForImprov()
+            }
         }
     }
 

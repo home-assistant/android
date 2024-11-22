@@ -66,8 +66,10 @@ interface WebViewPresenter {
     fun onMatterThreadIntentResult(context: Context, result: ActivityResult)
     fun finishMatterThreadFlow()
 
+    /** @return `true` if the app should prompt the user for Improv permissions before scanning */
+    suspend fun shouldShowImprovPermissions(): Boolean
+
     /** @return `true` if the app tried starting scanning or `false` if it was missing permissions */
     fun startScanningForImprov(): Boolean
-    fun getImprovPermissions(): Array<String>
     fun stopScanningForImprov(force: Boolean)
 }
