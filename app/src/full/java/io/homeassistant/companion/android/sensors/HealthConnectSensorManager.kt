@@ -10,23 +10,28 @@ import androidx.health.connect.client.aggregate.AggregateMetric
 import androidx.health.connect.client.aggregate.AggregationResult
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
+import androidx.health.connect.client.records.BasalBodyTemperatureRecord
 import androidx.health.connect.client.records.BasalMetabolicRateRecord
 import androidx.health.connect.client.records.BloodGlucoseRecord
 import androidx.health.connect.client.records.BloodPressureRecord
 import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.BodyTemperatureMeasurementLocation
 import androidx.health.connect.client.records.BodyTemperatureRecord
+import androidx.health.connect.client.records.BodyWaterMassRecord
 import androidx.health.connect.client.records.BoneMassRecord
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ElevationGainedRecord
 import androidx.health.connect.client.records.FloorsClimbedRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.HeartRateVariabilityRmssdRecord
 import androidx.health.connect.client.records.HeightRecord
+import androidx.health.connect.client.records.HydrationRecord
 import androidx.health.connect.client.records.LeanBodyMassRecord
 import androidx.health.connect.client.records.MealType
 import androidx.health.connect.client.records.OxygenSaturationRecord
 import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.RespiratoryRateRecord
+import androidx.health.connect.client.records.RestingHeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
@@ -70,6 +75,17 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
+        val basalBodyTemperature = SensorManager.BasicSensor(
+            id = "health_connect_basal_body_temperature",
+            type = "sensor",
+            commonR.string.basic_sensor_name_basal_body_temperature,
+            commonR.string.sensor_description_basal_body_temperature,
+            "mdi:thermometer",
+            deviceClass = "temperature",
+            unitOfMeasurement = "°C",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+
         val basalMetabolicRate = SensorManager.BasicSensor(
             id = "health_connect_basal_metabolic_rate",
             type = "sensor",
@@ -98,6 +114,17 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.sensor_description_body_fat,
             "mdi:scale-bathroom",
             unitOfMeasurement = "%",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+
+        val bodyWaterMass = SensorManager.BasicSensor(
+            id = "health_connect_body_water_mass",
+            type = "sensor",
+            commonR.string.basic_sensor_name_body_water_mass,
+            commonR.string.sensor_description_body_water_mass,
+            "mdi:water",
+            deviceClass = "weight",
+            unitOfMeasurement = "g",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
@@ -179,6 +206,17 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
+        val heartRateVariability = SensorManager.BasicSensor(
+            id = "health_connect_heart_rate_variability",
+            type = "sensor",
+            commonR.string.basic_sensor_name_heart_rate_variability,
+            commonR.string.sensor_description_heart_rate_variability,
+            "mdi:heart-pulse",
+            deviceClass = "duration",
+            unitOfMeasurement = "ms",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+
         val height = SensorManager.BasicSensor(
             id = "health_connect_height",
             type = "sensor",
@@ -187,6 +225,18 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:human-male-height",
             deviceClass = "distance",
             unitOfMeasurement = "m",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+
+        val hydration = SensorManager.BasicSensor(
+            id = "health_connect_hydration",
+            type = "sensor",
+            commonR.string.basic_sensor_name_hydration,
+            commonR.string.sensor_description_hydration,
+            "mdi:cup-water",
+            unitOfMeasurement = "ml",
+            deviceClass = "volume",
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
@@ -217,6 +267,16 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.basic_sensor_name_respiratory_rate,
             commonR.string.sensor_description_respiratory_rate,
             "mdi:account-voice",
+            unitOfMeasurement = "bpm",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+
+        val restingHeartRate = SensorManager.BasicSensor(
+            id = "health_connect_resting_heart_rate",
+            type = "sensor",
+            commonR.string.basic_sensor_name_resting_heart_rate,
+            commonR.string.sensor_description_resting_heart_rate,
+            "mdi:heart-pulse",
             unitOfMeasurement = "bpm",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -295,9 +355,11 @@ class HealthConnectSensorManager : SensorManager {
         return try {
             when {
                 (sensorId == activeCaloriesBurned.id) -> arrayOf(HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class))
+                (sensorId == basalBodyTemperature.id) -> arrayOf(HealthPermission.getReadPermission(BasalBodyTemperatureRecord::class))
                 (sensorId == basalMetabolicRate.id) -> arrayOf(HealthPermission.getReadPermission(BasalMetabolicRateRecord::class))
                 (sensorId == bloodGlucose.id) -> arrayOf(HealthPermission.getReadPermission(BloodGlucoseRecord::class))
                 (sensorId == bodyFat.id) -> arrayOf(HealthPermission.getReadPermission(BodyFatRecord::class))
+                (sensorId == bodyWaterMass.id) -> arrayOf(HealthPermission.getReadPermission(BodyWaterMassRecord::class))
                 (sensorId == bodyTemperature.id) -> arrayOf(HealthPermission.getReadPermission(BodyTemperatureRecord::class))
                 (sensorId == boneMass.id) -> arrayOf(HealthPermission.getReadPermission(BoneMassRecord::class))
                 (sensorId == diastolicBloodPressure.id) -> arrayOf(HealthPermission.getReadPermission(BloodPressureRecord::class))
@@ -305,10 +367,13 @@ class HealthConnectSensorManager : SensorManager {
                 (sensorId == elevationGained.id) -> arrayOf(HealthPermission.getReadPermission(ElevationGainedRecord::class))
                 (sensorId == floorsClimbed.id) -> arrayOf(HealthPermission.getReadPermission(FloorsClimbedRecord::class))
                 (sensorId == heartRate.id) -> arrayOf(HealthPermission.getReadPermission(HeartRateRecord::class))
+                (sensorId == heartRateVariability.id) -> arrayOf(HealthPermission.getReadPermission(HeartRateVariabilityRmssdRecord::class))
                 (sensorId == height.id) -> arrayOf(HealthPermission.getReadPermission(HeightRecord::class))
+                (sensorId == hydration.id) -> arrayOf(HealthPermission.getReadPermission(HydrationRecord::class))
                 (sensorId == leanBodyMass.id) -> arrayOf(HealthPermission.getReadPermission(LeanBodyMassRecord::class))
                 (sensorId == oxygenSaturation.id) -> arrayOf(HealthPermission.getReadPermission(OxygenSaturationRecord::class))
                 (sensorId == respiratoryRate.id) -> arrayOf(HealthPermission.getReadPermission(RespiratoryRateRecord::class))
+                (sensorId == restingHeartRate.id) -> arrayOf(HealthPermission.getReadPermission(RestingHeartRateRecord::class))
                 (sensorId == sleepDuration.id) -> arrayOf(HealthPermission.getReadPermission(SleepSessionRecord::class))
                 (sensorId == steps.id) -> arrayOf(HealthPermission.getReadPermission(StepsRecord::class))
                 (sensorId == systolicBloodPressure.id) -> arrayOf(HealthPermission.getReadPermission(BloodPressureRecord::class))
@@ -327,6 +392,9 @@ class HealthConnectSensorManager : SensorManager {
         if (isEnabled(context, activeCaloriesBurned)) {
             updateActiveCaloriesBurnedSensor(context)
         }
+        if (isEnabled(context, basalBodyTemperature)) {
+            updateBasalBodyTemperatureSensor(context)
+        }
         if (isEnabled(context, basalMetabolicRate)) {
             updateBasalMetabolicRateSensor(context)
         }
@@ -335,6 +403,9 @@ class HealthConnectSensorManager : SensorManager {
         }
         if (isEnabled(context, bodyFat)) {
             updateBodyFatSensor(context)
+        }
+        if (isEnabled(context, bodyWaterMass)) {
+            updateBodyWaterMassSensor(context)
         }
         if (isEnabled(context, bodyTemperature)) {
             updateBodyTemperatureSensor(context)
@@ -357,8 +428,14 @@ class HealthConnectSensorManager : SensorManager {
         if (isEnabled(context, heartRate)) {
             updateHeartRateSensor(context)
         }
+        if (isEnabled(context, heartRateVariability)) {
+            updateHeartRateVariabilitySensor(context)
+        }
         if (isEnabled(context, height)) {
             updateHeightSensor(context)
+        }
+        if (isEnabled(context, hydration)) {
+            updateHydrationSensor(context)
         }
         if (isEnabled(context, leanBodyMass)) {
             updateLeanBodyMassSensor(context)
@@ -368,6 +445,9 @@ class HealthConnectSensorManager : SensorManager {
         }
         if (isEnabled(context, respiratoryRate)) {
             updateRespiratoryRateSensor(context)
+        }
+        if (isEnabled(context, restingHeartRate)) {
+            updateRestingHeartRateSensor(context)
         }
         if (isEnabled(context, sleepDuration)) {
             updateSleepDurationSensor(context)
@@ -403,6 +483,25 @@ class HealthConnectSensorManager : SensorManager {
             activeCaloriesBurned.statelessIcon,
             attributes = mapOf(
                 "endTime" to response.records.last().endTime,
+                "source" to response.records.last().metadata.dataOrigin.packageName
+            )
+        )
+    }
+
+    private suspend fun updateBasalBodyTemperatureSensor(context: Context) {
+        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
+        val basalBodyTemperatureRequest = buildReadRecordsRequest(BasalBodyTemperatureRecord::class) as ReadRecordsRequest<BasalBodyTemperatureRecord>
+        val response = healthConnectClient.readRecordsOrNull(basalBodyTemperatureRequest)
+        if (response == null || response.records.isEmpty()) {
+            return
+        }
+        onSensorUpdated(
+            context,
+            basalBodyTemperature,
+            response.records.last().temperature.inCelsius,
+            basalBodyTemperature.statelessIcon,
+            attributes = mapOf(
+                "date" to response.records.last().time,
                 "source" to response.records.last().metadata.dataOrigin.packageName
             )
         )
@@ -482,6 +581,25 @@ class HealthConnectSensorManager : SensorManager {
             bodyFat,
             BigDecimal(response.records.last().percentage.value).setScale(2, RoundingMode.HALF_EVEN),
             bodyFat.statelessIcon,
+            attributes = mapOf(
+                "date" to response.records.last().time,
+                "source" to response.records.last().metadata.dataOrigin.packageName
+            )
+        )
+    }
+
+    private suspend fun updateBodyWaterMassSensor(context: Context) {
+        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
+        val bodyWaterMassRequest = buildReadRecordsRequest(BodyWaterMassRecord::class) as ReadRecordsRequest<BodyWaterMassRecord>
+        val response = healthConnectClient.readRecordsOrNull(bodyWaterMassRequest)
+        if (response == null || response.records.isEmpty()) {
+            return
+        }
+        onSensorUpdated(
+            context,
+            bodyWaterMass,
+            response.records.last().mass.inGrams,
+            bodyWaterMass.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
                 "source" to response.records.last().metadata.dataOrigin.packageName
@@ -586,6 +704,25 @@ class HealthConnectSensorManager : SensorManager {
         )
     }
 
+    private suspend fun updateHeartRateVariabilitySensor(context: Context) {
+        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
+        val heartRateVariabilityRequest = buildReadRecordsRequest(HeartRateVariabilityRmssdRecord::class) as ReadRecordsRequest<HeartRateVariabilityRmssdRecord>
+        val response = healthConnectClient.readRecordsOrNull(heartRateVariabilityRequest)
+        if (response == null || response.records.isEmpty()) {
+            return
+        }
+        onSensorUpdated(
+            context,
+            heartRateVariability,
+            response.records.last().heartRateVariabilityMillis,
+            heartRateVariability.statelessIcon,
+            attributes = mapOf(
+                "date" to response.records.last().time,
+                "source" to response.records.last().metadata.dataOrigin.packageName
+            )
+        )
+    }
+
     private suspend fun updateHeightSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val heightRequest = buildReadRecordsRequest(HeightRecord::class) as ReadRecordsRequest<HeightRecord>
@@ -602,6 +739,19 @@ class HealthConnectSensorManager : SensorManager {
                 "date" to response.records.last().time,
                 "source" to response.records.last().metadata.dataOrigin.packageName
             )
+        )
+    }
+
+    private suspend fun updateHydrationSensor(context: Context) {
+        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
+        val hydrationRequest = healthConnectClient.aggregateOrNull(buildAggregationRequest(HydrationRecord.VOLUME_TOTAL)) ?: return
+        val hydrationTotal = hydrationRequest[HydrationRecord.VOLUME_TOTAL]?.inMilliliters ?: 0
+        onSensorUpdated(
+            context,
+            hydration,
+            hydrationTotal,
+            hydration.statelessIcon,
+            attributes = buildAggregationAttributes(hydrationRequest)
         )
     }
 
@@ -655,6 +805,25 @@ class HealthConnectSensorManager : SensorManager {
             respiratoryRate,
             response.records.last().rate,
             respiratoryRate.statelessIcon,
+            attributes = mapOf(
+                "date" to response.records.last().time,
+                "source" to response.records.last().metadata.dataOrigin.packageName
+            )
+        )
+    }
+
+    private suspend fun updateRestingHeartRateSensor(context: Context) {
+        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
+        val restingHeartRateRequest = buildReadRecordsRequest(RestingHeartRateRecord::class) as ReadRecordsRequest<RestingHeartRateRecord>
+        val response = healthConnectClient.readRecordsOrNull(restingHeartRateRequest)
+        if (response == null || response.records.isEmpty()) {
+            return
+        }
+        onSensorUpdated(
+            context,
+            restingHeartRate,
+            response.records.last().beatsPerMinute,
+            restingHeartRate.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
                 "source" to response.records.last().metadata.dataOrigin.packageName
@@ -758,9 +927,11 @@ class HealthConnectSensorManager : SensorManager {
         return if (hasSensor(context)) {
             listOf(
                 activeCaloriesBurned,
+                basalBodyTemperature,
                 basalMetabolicRate,
                 bloodGlucose,
                 bodyFat,
+                bodyWaterMass,
                 bodyTemperature,
                 boneMass,
                 diastolicBloodPressure,
@@ -768,10 +939,13 @@ class HealthConnectSensorManager : SensorManager {
                 elevationGained,
                 floorsClimbed,
                 heartRate,
+                heartRateVariability,
                 height,
+                hydration,
                 leanBodyMass,
                 oxygenSaturation,
                 respiratoryRate,
+                restingHeartRate,
                 sleepDuration,
                 steps,
                 systolicBloodPressure,
