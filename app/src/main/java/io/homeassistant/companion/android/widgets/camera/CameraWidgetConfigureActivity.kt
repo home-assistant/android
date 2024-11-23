@@ -224,7 +224,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     }
 
     private fun initTapActionsSpinner() {
-        val tapActionValues = listOf(getString(commonR.string.refresh), getString(commonR.string.state_open))
+        val tapActionValues = listOf(getString(commonR.string.refresh), getString(commonR.string.widget_tap_action_open))
         binding.tapActionList.adapter = ArrayAdapter(this, R.layout.simple_spinner_dropdown_item, tapActionValues)
     }
 

@@ -119,7 +119,7 @@
     <string name="basic_sensor_name_wifi">WiFi connection</string>
     <string name="basic_sensor_name_hotspot_state">Hotspot state</string>
     <string name="binary_sensor">Binary sensor</string>
-    <string name="biometric_message">Unlock using your biometric or screen lock credential</string>
+    <string name="biometric_message">Unlock using your biometric or screen lock credentials</string>
     <string name="biometric_set_title">Confirm to continue</string>
     <string name="biometric_title">Home Assistant is locked</string>
     <string name="brightness">Brightness: %1$d%%</string>
@@ -279,7 +279,6 @@
     <string name="filter_sensors_enabled">Enabled sensors</string>
     <string name="filter_sensors_disabled">Disabled sensors</string>
     <string name="filter_updates">Filter updates</string>
-    <string name="finish">Finish</string>
     <string name="firebase_error_message">This means you will be unable to receive cloud notifications.\n\nLocal notifications will still be available via persistent connection settings in companion app settings</string>
     <string name="firebase_error_title">Firebase error</string>
     <string name="fullscreen_def">Put application in full screen</string>
@@ -403,7 +402,7 @@
     <string name="location_tracking_summary">View a history of location tracking updates to troubleshoot the device tracker</string>
     <string name="location_warn_channel">Location disabled</string>
     <string name="location">Location</string>
-    <string name="lock_summary">Use biometric or screen lock credential to unlock app</string>
+    <string name="lock_summary">Use biometric or screen lock credentials to unlock app</string>
     <string name="lock_title">Lock app</string>
     <string name="lock_home_bypass_summary">Disable app lock when connected to the home WiFi network</string>
     <string name="lock_home_bypass_title">Unlock on home WiFi</string>
@@ -578,7 +577,7 @@
     <string name="select_entity_to_display">Select entity to display</string>
     <string name="select_file">Select file</string>
     <string name="select_instance">Select your Home Assistant server</string>
-    <string name="sensor_description_active_calories_burned">Get active calories burned from Health Connect</string>
+    <string name="sensor_description_active_calories_burned">Last recorded active calories burned from Health Connect</string>
     <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications. Attributes will include the contents of all notifications if the corresponding setting is enabled. It\'s enabled by default.</string>
     <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be</string>
     <string name="sensor_description_android_auto">If the phone is currently connected to an Android Auto head unit</string>
@@ -655,7 +654,7 @@
     <string name="sensor_description_speakerphone">Whether speakerphone is enabled on the device</string>
     <string name="sensor_description_steps_sensor">The total number of steps since the last reboot of the device</string>
     <string name="sensor_description_storage_sensor">Information about the total and available storage space internally and externally</string>
-    <string name="sensor_description_total_calories_burned">Get total calories burned from Health Connect</string>
+    <string name="sensor_description_total_calories_burned">Total amount of calories burned since midnight from Health Connect</string>
     <string name="sensor_description_total_rx_gb">Total Rx GB since last device reboot</string>
     <string name="sensor_description_total_tx_gb">Total Tx GB since last device reboot</string>
     <string name="sensor_description_volume_alarm">Volume level for alarms on the device</string>
@@ -784,7 +783,7 @@
     <string name="session_timeout_title">Session timeout (in seconds)</string>
     <string name="set_favorite">Set favorites</string>
     <string name="set_favorites_on_device">Set favorites on Wear OS device</string>
-    <string name="set_lock_message">No biometric sensor or screen lock credential available</string>
+    <string name="set_lock_message">No biometric sensor or screen lock credentials available</string>
     <string name="set_lock_title">App locking error</string>
     <string name="setting_haptic_label">Haptics</string>
     <string name="setting_toast_label">Toast message</string>
@@ -961,7 +960,7 @@
     <string name="toast_message">%1$s was selected</string>
     <string name="toggle_flashlight">Toggle flashlight</string>
     <string name="trust_server_title">Remotely control app &amp; device</string>
-    <string name="trust_server_summary">Manage enabled sensors and use notification commands from this server</string>
+    <string name="trust_server_summary">Allow this server to enable and manage sensors and send notification commands</string>
     <string name="tts_error_utterance">Unable to process notification \"%1$s\" as text to speech.</string>
     <string name="tts_error_init">Failed to initialize a text to speech engine.</string>
     <string name="tts_no_text">Please set the text for text to speech to process</string>
@@ -1038,6 +1037,7 @@
     <string name="widget_state_separator_label">State and attribute separator:</string>
     <string name="widget_static_image_description">Entity state</string>
     <string name="widget_tap_action_label">Tap action:</string>
+    <string name="widget_tap_action_open">Open</string>
     <string name="widget_tap_action_toggle">Toggle</string>
     <string name="widget_template_error">Unable to render the template</string>
     <string name="widget_text_hint_label">Label</string>
