@@ -1339,7 +1339,7 @@
     <string name="sensor_description_basal_body_temperature">Last recorded basal body temperature from Health Connect</string>
     <string name="basic_sensor_name_body_water_mass">Body water mass</string>
     <string name="sensor_description_body_water_mass">Last recorded body water mass from Health Connect</string>
-    <string name="basic_sensor_name_heart_rate_variability">Heart rate variiability</string>
+    <string name="basic_sensor_name_heart_rate_variability">Heart rate variability</string>
     <string name="sensor_description_heart_rate_variability">Last recorded heart rate variability from Health Connect</string>
     <string name="basic_sensor_name_hydration">Daily hydration</string>
     <string name="sensor_description_hydration">Total hydration in milliliters since midnight from Health Connect</string>
