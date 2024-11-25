@@ -87,8 +87,10 @@ class HaCarAppService : CarAppService() {
                                     serverManager,
                                     serverIdFlow,
                                     entityFlow,
-                                    prefsRepository
-                                ) { loadEntities(lifecycleScope, it) }
+                                    prefsRepository,
+                                    { loadEntities(lifecycleScope, it) },
+                                    { loadEntities(lifecycleScope, serverId.value) }
+                                )
                             )
 
                             push(
@@ -108,8 +110,10 @@ class HaCarAppService : CarAppService() {
                                     serverManager,
                                     serverIdFlow,
                                     entityFlow,
-                                    prefsRepository
-                                ) { loadEntities(lifecycleScope, it) }
+                                    prefsRepository,
+                                    { loadEntities(lifecycleScope, it) },
+                                    { loadEntities(lifecycleScope, serverId.value) }
+                                )
                             )
                         }
                     return LoginScreen(
@@ -129,7 +133,6 @@ class HaCarAppService : CarAppService() {
     private fun loadEntities(scope: CoroutineScope, id: Int) {
         allEntitiesJob?.cancel()
         allEntitiesJob = scope.launch {
-            allEntities.emit(emptyMap())
             serverId.value = id
             val entities: MutableMap<String, Entity<*>>? =
                 if (serverManager.getServer(id) != null) {
