@@ -234,7 +234,7 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.basic_sensor_name_hydration,
             commonR.string.sensor_description_hydration,
             "mdi:cup-water",
-            unitOfMeasurement = "ml",
+            unitOfMeasurement = "mL",
             deviceClass = "volume",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
