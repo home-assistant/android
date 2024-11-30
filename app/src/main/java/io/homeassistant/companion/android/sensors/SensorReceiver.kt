@@ -66,7 +66,7 @@ class SensorReceiver : SensorReceiverBase() {
             DynamicColorSensorManager(),
             DevicePolicyManager(),
             GeocodeSensorManager(),
-            HealthConnectSensorManager(),
+            // HealthConnectSensorManager(),
             KeyguardSensorManager(),
             LastAppSensorManager(),
             LastRebootSensorManager(),
