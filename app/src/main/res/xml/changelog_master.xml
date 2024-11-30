@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2024.11.8 - Main" versioncode="3">
+    <release version="2024.12.1 - Main" versioncode="3">
         <change>Android Auto: Add new Car sensors, support toggling fans and add refresh button</change>
 <!--        <change>Android 9+ and Play Store: Add Health Connect sensors</change>-->
         <change>Add notification command to control flashlight</change>
@@ -9,10 +9,10 @@
         <change>Add support to identify multiple notification reply actions</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.11.8 - Wear" versioncode="2">
+    <release version="2024.12.1 - Wear" versioncode="2">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2024.11.8 - Automotive" versioncode="1">
+    <release version="2024.12.1 - Automotive" versioncode="1">
         <change>Add new Car sensors</change>
         <change>Driving Interface: Add support for toggling fans and refresh button</change>
         <change>Bug fixes and dependency updates</change>
