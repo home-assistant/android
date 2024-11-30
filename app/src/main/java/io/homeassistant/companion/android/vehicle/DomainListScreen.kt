@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.model.Action
+import androidx.car.app.model.ActionStrip
 import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.Template
 import androidx.lifecycle.lifecycleScope
@@ -18,7 +19,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.getDomainList
-import io.homeassistant.companion.android.util.vehicle.nativeModeActionStrip
+import io.homeassistant.companion.android.util.vehicle.nativeModeAction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -80,7 +81,7 @@ class DomainListScreen(
             setTitle(carContext.getString(R.string.all_entities))
             setHeaderAction(Action.BACK)
             if (isAutomotive && !isDrivingOptimized && BuildConfig.FLAVOR != "full") {
-                setActionStrip(nativeModeActionStrip(carContext))
+                setActionStrip(ActionStrip.Builder().addAction(nativeModeAction(carContext)).build())
             }
             val domainBuild = domainList.build()
             if (!domainsAdded) {

@@ -5,12 +5,19 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.model.Action
+import androidx.car.app.model.ActionStrip
+import androidx.car.app.model.CarColor
+import androidx.car.app.model.CarIcon
 import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.ItemList
 import androidx.car.app.model.Template
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import com.mikepenz.iconics.utils.sizeDp
+import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
@@ -24,7 +31,7 @@ import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.getChangeServerGridItem
 import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getNavigationGridItem
-import io.homeassistant.companion.android.util.vehicle.nativeModeActionStrip
+import io.homeassistant.companion.android.util.vehicle.nativeModeAction
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -39,7 +46,8 @@ class MainVehicleScreen(
     private val serverId: StateFlow<Int>,
     private val allEntities: Flow<Map<String, Entity<*>>>,
     private val prefsRepository: PrefsRepository,
-    private val onChangeServer: (Int) -> Unit
+    private val onChangeServer: (Int) -> Unit,
+    private val onRefresh: () -> Unit
 ) : BaseVehicleScreen(carContext) {
 
     companion object {
@@ -174,13 +182,30 @@ class MainVehicleScreen(
             }
             builder
         }
+        val refreshAction = Action.Builder()
+            .setIcon(
+                CarIcon.Builder(
+                    IconicsDrawable(carContext, CommunityMaterial.Icon3.cmd_refresh).apply {
+                        sizeDp = 64
+                    }.toAndroidIconCompat()
+                )
+                    .setTint(CarColor.DEFAULT)
+                    .build()
+            )
+            .setOnClickListener {
+                onRefresh()
+            }.build()
+
+        val actionStripBuilder = ActionStrip.Builder()
+        if (isAutomotive && !isDrivingOptimized && BuildConfig.FLAVOR != "full") {
+            actionStripBuilder.addAction(nativeModeAction(carContext))
+        }
+        actionStripBuilder.addAction(refreshAction)
 
         return GridTemplate.Builder().apply {
             setTitle(carContext.getString(commonR.string.app_name))
             setHeaderAction(Action.APP_ICON)
-            if (isAutomotive && !isDrivingOptimized && BuildConfig.FLAVOR != "full") {
-                setActionStrip(nativeModeActionStrip(carContext))
-            }
+            setActionStrip(actionStripBuilder.build())
             if (!domainsAdded) {
                 setLoading(true)
             } else {
