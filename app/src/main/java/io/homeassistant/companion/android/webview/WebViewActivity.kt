@@ -71,8 +71,6 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
-import com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_INDEFINITE
-import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
@@ -234,7 +232,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var downloadFileUrl = ""
     private var downloadFileContentDisposition = ""
     private var downloadFileMimetype = ""
-    private var snackbar: Snackbar? = null
     private val javascriptInterface = "externalApp"
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -491,10 +488,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     super.doUpdateVisitedHistory(view, url, isReload)
                     onBackPressed.isEnabled = canGoBack()
                     presenter.stopScanningForImprov(false)
-                    snackbar?.let {
-                        it.dismiss()
-                        snackbar = null
-                    }
                 }
             }
 
@@ -830,6 +823,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     )
                                 }
                                 "improv/scan" -> scanForImprov()
+                                "improv/configure_device" -> {
+                                    val payload = if (json.has("payload")) json.getJSONObject("payload") else null
+                                    if (payload?.has("name") != true) return@post
+                                    configureImprovDevice(payload.getString("name"))
+                                }
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)
@@ -1680,6 +1678,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     private fun scanForImprov() {
         if (!packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) return
+        if (!hasWindowFocus()) return
         lifecycleScope.launch {
             if (presenter.shouldShowImprovPermissions()) {
                 supportFragmentManager.setFragmentResultListener(ImprovPermissionDialog.RESULT_KEY, this@WebViewActivity) { _, bundle ->
@@ -1696,33 +1695,29 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
-    override fun showImprovAvailable() {
-        snackbar = Snackbar.make(binding.root, commonR.string.improv_hint, LENGTH_INDEFINITE)
-            .setAction(commonR.string.configure) {
-                supportFragmentManager.setFragmentResultListener(ImprovSetupDialog.RESULT_KEY, this) { _, bundle ->
-                    if (bundle.containsKey(ImprovSetupDialog.RESULT_DOMAIN)) {
-                        bundle.getString(ImprovSetupDialog.RESULT_DOMAIN)?.let { improvDomain ->
-                            val url = serverManager.getServer(presenter.getActiveServer())?.let url@{
-                                val base = it.connection.getUrl() ?: return@url null
-                                Uri.parse(base.toString())
-                                    .buildUpon()
-                                    .appendEncodedPath("config/integrations/dashboard/add")
-                                    .appendQueryParameter("domain", improvDomain)
-                                    .appendQueryParameter("external_auth", "1")
-                                    .build()
-                                    .toString()
-                            }
-                            if (url != null) {
-                                loadUrl(url = url, keepHistory = true, openInApp = true)
-                            }
-                        }
-                        supportFragmentManager.clearFragmentResultListener(ImprovSetupDialog.RESULT_KEY)
+    private fun configureImprovDevice(deviceName: String) {
+        supportFragmentManager.setFragmentResultListener(ImprovSetupDialog.RESULT_KEY, this) { _, bundle ->
+            if (bundle.containsKey(ImprovSetupDialog.RESULT_DOMAIN)) {
+                bundle.getString(ImprovSetupDialog.RESULT_DOMAIN)?.let { improvDomain ->
+                    val url = serverManager.getServer(presenter.getActiveServer())?.let url@{
+                        val base = it.connection.getUrl() ?: return@url null
+                        Uri.parse(base.toString())
+                            .buildUpon()
+                            .appendEncodedPath("config/integrations/dashboard/add")
+                            .appendQueryParameter("domain", improvDomain)
+                            .appendQueryParameter("external_auth", "1")
+                            .build()
+                            .toString()
+                    }
+                    if (url != null) {
+                        loadUrl(url = url, keepHistory = true, openInApp = true)
                     }
                 }
-                val dialog = ImprovSetupDialog()
-                dialog.show(supportFragmentManager, ImprovSetupDialog.TAG)
+                supportFragmentManager.clearFragmentResultListener(ImprovSetupDialog.RESULT_KEY)
             }
-        snackbar?.show()
+        }
+        val dialog = ImprovSetupDialog.newInstance(deviceName)
+        dialog.show(supportFragmentManager, ImprovSetupDialog.TAG)
     }
 
     override fun onNewIntent(intent: Intent) {

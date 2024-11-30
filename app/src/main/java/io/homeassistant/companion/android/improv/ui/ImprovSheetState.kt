@@ -9,7 +9,9 @@ data class ImprovSheetState(
     val devices: List<ImprovDevice>,
     val deviceState: DeviceState?,
     val errorState: ErrorState?,
-    val activeSsid: String? = null
+    val activeSsid: String? = null,
+    val initialDeviceName: String? = null,
+    val initialDeviceAddress: String? = null
 ) {
     /** @return `true` when [errorState] is not `null` or [ErrorState.NO_ERROR] */
     val hasError
