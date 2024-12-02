@@ -26,6 +26,8 @@ data class ServerConnectionInfo(
     val cloudhookUrl: String? = null,
     @ColumnInfo(name = "use_cloud")
     val useCloud: Boolean = false,
+    @ColumnInfo(name = "use_internal_when", defaultValue = "SSID")
+    val useInternalWhen: InternalReason = InternalReason.SSID,
     @ColumnInfo(name = "internal_ssids")
     val internalSsids: List<String> = emptyList(),
     @ColumnInfo(name = "prioritize_internal")
@@ -94,11 +96,26 @@ data class ServerConnectionInfo(
     fun isHomeWifiSsid(): Boolean = wifiHelper.isUsingSpecificWifi(internalSsids)
 
     fun isInternal(): Boolean {
-        val usesInternalSsid = wifiHelper.isUsingSpecificWifi(internalSsids)
-        val usesWifi = wifiHelper.isUsingWifi()
-        val localUrl = internalUrl
-        Log.d(this::class.simpleName, "localUrl is: ${!localUrl.isNullOrBlank()}, usesInternalSsid is: $usesInternalSsid, usesWifi is: $usesWifi")
-        return !localUrl.isNullOrBlank() && usesInternalSsid && usesWifi
+        if (internalUrl.isNullOrBlank()) return false
+
+        return when (useInternalWhen) {
+            InternalReason.ETHERNET -> {
+                val usesEthernet = wifiHelper.isUsingEthernet()
+                Log.d(this::class.simpleName, "usesEthernet is: $usesEthernet")
+                usesEthernet
+            }
+            InternalReason.VPN -> {
+                val usesVpn = wifiHelper.isUsingVpn()
+                Log.d(this::class.simpleName, "usesVpn is: $usesVpn")
+                usesVpn
+            }
+            InternalReason.SSID -> { // Default
+                val usesInternalSsid = wifiHelper.isUsingSpecificWifi(internalSsids)
+                val usesWifi = wifiHelper.isUsingWifi()
+                Log.d(this::class.simpleName, "usesInternalSsid is: $usesInternalSsid, usesWifi is: $usesWifi")
+                usesInternalSsid && usesWifi
+            }
+        }
     }
 }
 
@@ -128,4 +145,10 @@ class InternalSsidTypeConverter {
             }
         }
     }
+}
+
+enum class InternalReason {
+    SSID,
+    ETHERNET,
+    VPN
 }
