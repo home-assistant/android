@@ -59,14 +59,16 @@ fun ImprovSheetView(
     onRestart: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    var selectedName by rememberSaveable { mutableStateOf<String?>(null) }
-    var selectedAddress by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedName by rememberSaveable(screenState.initialDeviceName) { mutableStateOf<String?>(screenState.initialDeviceName) }
+    var selectedAddress by rememberSaveable(screenState.initialDeviceAddress) { mutableStateOf<String?>(screenState.initialDeviceAddress) }
     var submittedWifi by rememberSaveable { mutableStateOf(false) }
 
     ModalBottomSheet(
         title = if (screenState.scanning && screenState.deviceState == null && !screenState.hasError) {
             if (selectedAddress != null) {
                 stringResource(commonR.string.improv_wifi_title)
+            } else if (selectedName != null) {
+                ""
             } else {
                 stringResource(commonR.string.improv_list_title)
             }
@@ -142,7 +144,7 @@ fun ImprovSheetView(
                             commonR.string.improv_device_authorized
                         } else if (screenState.deviceState == DeviceState.PROVISIONING) {
                             commonR.string.improv_device_provisioning
-                        } else if (selectedAddress != null) {
+                        } else if (selectedName != null) {
                             commonR.string.improv_device_connecting
                         } else {
                             commonR.string.state_unknown

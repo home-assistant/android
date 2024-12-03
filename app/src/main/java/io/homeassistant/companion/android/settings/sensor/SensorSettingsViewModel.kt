@@ -14,7 +14,9 @@ import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class SensorSettingsViewModel @Inject constructor(
@@ -47,8 +49,13 @@ class SensorSettingsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             sensorDao.getAllFlow().collect {
-                sensorsList = it
-                filterSensorsList()
+                withContext(Dispatchers.IO) {
+                    // Compare contents, because the worker typically pushes a DB update on
+                    // sensor updates even when contents don't change
+                    val different = sensorsList != it
+                    sensorsList = it
+                    if (different) filterSensorsList()
+                }
             }
         }
     }
@@ -67,7 +74,7 @@ class SensorSettingsViewModel @Inject constructor(
         }
     }
 
-    private suspend fun filterSensorsList() {
+    private suspend fun filterSensorsList() = withContext(Dispatchers.IO) {
         val app = getApplication<Application>()
         val managers = SensorReceiver.MANAGERS.sortedBy { app.getString(it.name) }
         sensors = SensorReceiver.MANAGERS
