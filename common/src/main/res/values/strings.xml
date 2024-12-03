@@ -567,7 +567,7 @@
     <string name="search_results">Search results</string>
     <string name="search_sensors">Search sensors</string>
     <string name="security_vulnerably_message">Your version of Home Assistant does not protect for recently discovered security vulnerabilities in custom components. Please view the details via the bulletin and update as soon as possible.</string>
-    <string name="security_vulnerably_title">Security vulnerably warning</string>
+    <string name="security_vulnerably_title">Security vulnerability warning</string>
     <string name="security_vulnerably_understand">I understand</string>
     <string name="security_vulnerably_view">View bulletin</string>
     <string name="security">Security</string>
