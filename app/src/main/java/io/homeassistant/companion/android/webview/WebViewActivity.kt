@@ -934,7 +934,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val settingsWithLocationPermissions = mutableListOf<String>()
         if (!DisabledLocationHandler.isLocationEnabled(this) && presenter.isSsidUsed()) {
             showLocationDisabledWarning = true
-            settingsWithLocationPermissions.add(getString(commonR.string.pref_connection_wifi))
+            settingsWithLocationPermissions.add(getString(commonR.string.pref_connection_homenetwork))
         }
         for (manager in SensorReceiver.MANAGERS) {
             for (basicSensor in manager.getAvailableSensors(this)) {

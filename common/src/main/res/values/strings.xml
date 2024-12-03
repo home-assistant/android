@@ -394,7 +394,7 @@
     <string name="location_history_skipped_not_latest">Old location</string>
     <string name="location_history_skipped_old">Very old location</string>
     <string name="location_history_use">Use location history</string>
-    <string name="location_perm_info_message">Android set up restrictions for apps which want to use your WiFi, because WiFi can be theoretically used to determine your location.\n\nAlso to ensure the app can access WiFi in background (URL decision making, sensors) you need to allow location access all the time.\n\nTherefore, to use this option location access all the time is needed.\n\nContinue granting location access?</string>
+    <string name="location_perm_info_message">Android set up restrictions for apps which want to use your WiFi, because WiFi can be theoretically used to determine your location.\n\nATo ensure the app can access WiFi in background (URL decision making, sensors), you must allow location access all the time.\n\nTherefore, to use this option location access all the time is needed.\n\nContinue granting location access?</string>
     <string name="location_perm_info_title">Location access</string>
     <string name="location_tracking">Location tracking</string>
     <string name="location_tracking_summary">View a history of location tracking updates to troubleshoot the device tracker</string>
@@ -402,8 +402,8 @@
     <string name="location">Location</string>
     <string name="lock_summary">Use biometric or screen lock credentials to unlock app</string>
     <string name="lock_title">Lock app</string>
-    <string name="lock_home_bypass_summary">Disable app lock when connected to the home WiFi network</string>
-    <string name="lock_home_bypass_title">Unlock on home WiFi</string>
+    <string name="lock_home_bypass_summary">Disable app lock when connected to the home network</string>
+    <string name="lock_home_bypass_title">Unlock on home network</string>
     <string name="locks">Locks</string>
     <string name="lockscreen_title">App locked!</string>
     <string name="log_file_not_created">Log file could not be created.</string>
@@ -425,10 +425,13 @@
     <string name="manage_all_sensors">Manage all sensors</string>
     <string name="manage_shortcuts_summary">Manage launcher shortcuts</string>
     <string name="manage_shortcuts">Manage shortcuts</string>
-    <string name="manage_ssids_input_exists">This SSID already exists.</string>
+    <string name="manage_ssids_ethernet">Ethernet connected</string>
+    <string name="manage_ssids_input_exists">This SSID already exists</string>
     <string name="manage_ssids_input">New WiFi SSID</string>
-    <string name="manage_ssids_introduction">The internal connection URL will be used when connected to one of the listed SSIDs.</string>
-    <string name="manage_ssids">Manage SSID(s)</string>
+    <string name="manage_ssids_introduction">Indicate when you\'re connected to your home network, based on WiFi, ethernet or VPN. This can be used to, for example, use the internal connection URL or disable the app lock when at home.</string>
+    <string name="manage_ssids_permission">Home Assistant needs additional access to read WiFi information.</string>
+    <string name="manage_ssids_wifi">WiFi network connected</string>
+    <string name="manage_ssids_vpn">VPN connected</string>
     <string name="manage_this_notification">Manage this notification</string>
     <string name="manage_tiles_summary">Set up and manage quick settings tiles here. They will not function until you set them up here.</string>
     <string name="manage_tiles">Manage tiles</string>
@@ -498,6 +501,7 @@
     <string name="none">None</string>
     <string name="none_selected">None selected</string>
     <string name="not_private">Your connection to this site is not private.</string>
+    <string name="not_set">Not set</string>
     <string name="notification_data">Full notification data</string>
     <string name="notification_dismiss_failure">Failed to send event on notification dismissed</string>
     <string name="notification_history_summary">History of notifications</string>
@@ -524,11 +528,10 @@
     <string name="pref_call_tracking_summary">Allow application to detect call occurrence and notify server about it.</string>
     <string name="pref_call_tracking_title">Calls tracking</string>
     <string name="pref_connection_internal">Internal connection URL</string>
-    <string name="pref_connection_ssids_empty">Configure your WiFi SSID(s)</string>
     <string name="pref_connection_title">Connection information</string>
     <string name="pref_connection_url">Home Assistant URL</string>
-    <string name="pref_connection_wifi">Home network WiFi SSID</string>
-    <string name="prioritize_internal_title">When loading dashboard and unknown if connected to home network WiFi</string>
+    <string name="pref_connection_homenetwork">Home network</string>
+    <string name="prioritize_internal_title">When loading dashboard and unknown if connected to home network</string>
     <string name="prioritize_internal_on">Use internal connection URL</string>
     <string name="prioritize_internal_on_expanded">Use internal connection URL (use this if you typically turn location access off)</string>
     <string name="prioritize_internal_off">Use Home Assistant URL (recommended)</string>
@@ -592,7 +595,7 @@
     <string name="sensor_description_battery_level">The current battery level of the device</string>
     <string name="sensor_description_battery_state">The current charging state of the battery</string>
     <string name="sensor_description_battery_temperature">The current battery temperature</string>
-    <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon with configured interval, used to track presence around house, e.g. together with roomassistant, esp32-mqtt-room or espresence projects.\n\nWarning: this can affect battery life, particularly if the \"Transmitter power\" setting is set to High or \"Advertise Mode\" is set to Low latency.\n\nSettings allow for specifying:\n- \"UUID\" (standard UUID format), \"Major\" and \"Minor\" (should be 0 - 65535), to tailor identifiers and groups. The default Minor value 40004 has the special meaning of forcing the beacon to be recognized by the iBeacon Tracker integration\n- \"Transmitter Power\" and \"Advertise Mode\" to help to preserve battery life (use lowest values if possible)\n - \"Measured Power\" to specify power measured at 1m (initial default -59)\n\nIt is also possible to set beacons to only be transmitted when connected to a Home Network WiFi SSID, which may be desirable for privacy and battery life.\n\nNote:\nAdditionally a separate setting exists (\"Enable Transmitter\") to stop or start transmitting.</string>
+    <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon with configured interval, used to track presence around house, e.g. together with roomassistant, esp32-mqtt-room or espresence projects.\n\nWarning: this can affect battery life, particularly if the \"Transmitter power\" setting is set to High or \"Advertise Mode\" is set to Low latency.\n\nSettings allow for specifying:\n- \"UUID\" (standard UUID format), \"Major\" and \"Minor\" (should be 0 - 65535), to tailor identifiers and groups. The default Minor value 40004 has the special meaning of forcing the beacon to be recognized by the iBeacon Tracker integration\n- \"Transmitter Power\" and \"Advertise Mode\" to help to preserve battery life (use lowest values if possible)\n - \"Measured Power\" to specify power measured at 1m (initial default -59)\n\nIt is also possible to set beacons to only be transmitted when connected to a Home network, which may be desirable for privacy and battery life.\n\nNote:\nAdditionally a separate setting exists (\"Enable Transmitter\") to stop or start transmitting.</string>
     <string name="sensor_description_bluetooth_ble_beacon_monitor">Scans for iBeacons and shows the IDs of nearby beacons and their distance in meters. A notification will be shown on the device when scanning is actively running.\n\nWarning: this can affect battery life, especially with a short \"Scan Interval\".\n\nSettings allow for specifying:\n- \"Filter Iterations\" (should be 1 - 100, default: 10), higher values will result in more stable measurements but also less responsiveness.\n- \"Filter RSSI Multiplier\" (should be 1.0 - 2.0, default: 1.05), can be used to achieve more stable measurements when beacons are farther away. This will also affect responsiveness.\n- \"Scan Interval\" (default: 500) milliseconds between scans. Shorter intervals will drain the battery more quickly.\n- \"Scan Period\" (default: 1100) milliseconds to scan for beacons. Most beacons will send a signal every second so this value should be at least 1100ms.\n- \"UUID Filter\" allows to restrict the reported beacons by including (or excluding) those with the selected UUIDs.\n- \"Exclude selected UUIDs\", if false (default) only the beacons with the selected UUIDs are reported. If true all beacons except the selected ones are reported. Not available when \"UUID Filter\" is empty.\n\nNote:\nAdditionally a separate setting exists (\"Enable Beacon Monitor\") to stop or start scanning.</string>
     <string name="sensor_description_bluetooth_connection">Information about currently connected Bluetooth devices</string>
     <string name="sensor_description_bluetooth_state">Whether Bluetooth is enabled on the device</string>
@@ -717,7 +720,7 @@
     <string name="sensor_setting_ble_measured_power_at_1m_title">Measured power</string>
     <string name="sensor_setting_ble_minor_title">Minor</string>
     <string name="sensor_setting_ble_transmit_enabled_title">Enable transmitter</string>
-    <string name="sensor_setting_ble_home_wifi_only_title">Transmit on Home Network WiFi SSID only</string>
+    <string name="sensor_setting_ble_home_wifi_only_title">Transmit on Home network only</string>
     <string name="sensor_setting_ble_transmit_power_high_label">High</string>
     <string name="sensor_setting_ble_transmit_power_low_label">Low</string>
     <string name="sensor_setting_ble_transmit_power_medium_label">Medium</string>
@@ -1081,8 +1084,8 @@
     <string name="shortcut_pinned">Pinned shortcuts</string>
     <string name="remote_debugging">WebView remote debugging</string>
     <string name="remote_debugging_summary">Allow remote debugging of WebView to troubleshoot Home Assistant frontend issues</string>
-    <string name="websocket_setting_home_wifi">On home WiFi only\n\nNotifications will be delivered by Google only when not on home WiFi.</string>
-    <string name="websocket_setting_home_wifi_minimal">On home WiFi only\n\nNotifications will only be received when on home WiFi.</string>
+    <string name="websocket_setting_home_wifi">On home network only\n\nNotifications will be delivered by Google only when not on home network.</string>
+    <string name="websocket_setting_home_wifi_minimal">On home network only\n\nNotifications will only be received when on home network.</string>
     <string name="sensor_update_frequency">Sensor update frequency</string>
     <string name="sensor_update_frequency_description">Sensors will update either instantly or on a defined interval. If the sensor supports instant updates then it will always receive instant updates. View the sensor details to learn which sensors update instantly. Location sensors are not part of the update frequency setting as they have their own interval, consider using High Accuracy mode if you need to adjust the update interval.\n\nIf the sensor does not support instant updates then it will update based on one of the below selected options.\n\nYou must restart the application when you make any changes to this setting.</string>
     <string name="sensor_update_frequency_normal">Normal\n\nSensors will update on a 15 minute interval.</string>

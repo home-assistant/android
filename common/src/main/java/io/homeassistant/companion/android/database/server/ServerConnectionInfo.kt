@@ -95,8 +95,6 @@ data class ServerConnectionInfo(
 
     fun canUseCloud(): Boolean = !this.cloudUrl.isNullOrBlank()
 
-    fun isHomeWifiSsid(): Boolean = wifiHelper.isUsingSpecificWifi(internalSsids)
-
     fun isInternal(): Boolean {
         if (internalUrl.isNullOrBlank()) return false
 

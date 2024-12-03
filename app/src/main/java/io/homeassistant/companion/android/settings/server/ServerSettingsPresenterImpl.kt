@@ -147,21 +147,10 @@ class ServerSettingsPresenterImpl @Inject constructor(
             }
         }
         mainScope.launch {
-            val ssids = serverManager.getServer(serverId)?.connection?.internalSsids.orEmpty()
-            if (ssids.isEmpty()) {
-                serverManager.getServer(serverId)?.let {
-                    serverManager.updateServer(
-                        it.copy(
-                            connection = it.connection.copy(
-                                internalUrl = null
-                            )
-                        )
-                    )
-                }
-            }
-
-            view.enableInternalConnection(ssids.isNotEmpty())
-            view.updateSsids(ssids)
+            val connection = serverManager.getServer(serverId)?.connection
+            val ssids = connection?.internalSsids.orEmpty()
+            view.enableInternalConnection(ssids.isNotEmpty() || connection?.internalEthernet == true || connection?.internalVpn == true)
+            view.updateHomeNetwork(ssids, connection?.internalEthernet, connection?.internalVpn)
         }
     }
 
