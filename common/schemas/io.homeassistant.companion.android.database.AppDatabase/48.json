@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 48,
-    "identityHash": "4054f37ad307a9d9647ed871fa60e5b2",
+    "identityHash": "aef553fa0b2cb5f0ccc508e5908effd2",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -923,7 +923,7 @@
       },
       {
         "tableName": "servers",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `_name` TEXT NOT NULL, `name_override` TEXT, `_version` TEXT, `device_registry_id` TEXT, `list_order` INTEGER NOT NULL, `device_name` TEXT, `external_url` TEXT NOT NULL, `internal_url` TEXT, `cloud_url` TEXT, `webhook_id` TEXT, `secret` TEXT, `cloudhook_url` TEXT, `use_cloud` INTEGER NOT NULL, `use_internal_when` TEXT NOT NULL DEFAULT 'SSID', `internal_ssids` TEXT NOT NULL, `prioritize_internal` INTEGER NOT NULL, `access_token` TEXT, `refresh_token` TEXT, `token_expiration` INTEGER, `token_type` TEXT, `install_id` TEXT, `user_id` TEXT, `user_name` TEXT, `user_is_owner` INTEGER, `user_is_admin` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `_name` TEXT NOT NULL, `name_override` TEXT, `_version` TEXT, `device_registry_id` TEXT, `list_order` INTEGER NOT NULL, `device_name` TEXT, `external_url` TEXT NOT NULL, `internal_url` TEXT, `cloud_url` TEXT, `webhook_id` TEXT, `secret` TEXT, `cloudhook_url` TEXT, `use_cloud` INTEGER NOT NULL, `internal_ssids` TEXT NOT NULL, `internal_ethernet` INTEGER, `internal_vpn` INTEGER, `prioritize_internal` INTEGER NOT NULL, `access_token` TEXT, `refresh_token` TEXT, `token_expiration` INTEGER, `token_type` TEXT, `install_id` TEXT, `user_id` TEXT, `user_name` TEXT, `user_is_owner` INTEGER, `user_is_admin` INTEGER)",
         "fields": [
           {
             "fieldPath": "id",
@@ -1010,17 +1010,22 @@
             "notNull": true
           },
           {
-            "fieldPath": "connection.useInternalWhen",
-            "columnName": "use_internal_when",
-            "affinity": "TEXT",
-            "notNull": true,
-            "defaultValue": "'SSID'"
-          },
-          {
             "fieldPath": "connection.internalSsids",
             "columnName": "internal_ssids",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "connection.internalEthernet",
+            "columnName": "internal_ethernet",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "connection.internalVpn",
+            "columnName": "internal_vpn",
+            "affinity": "INTEGER",
+            "notNull": false
           },
           {
             "fieldPath": "connection.prioritizeInternal",
@@ -1128,7 +1133,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4054f37ad307a9d9647ed871fa60e5b2')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'aef553fa0b2cb5f0ccc508e5908effd2')"
     ]
   }
 }
