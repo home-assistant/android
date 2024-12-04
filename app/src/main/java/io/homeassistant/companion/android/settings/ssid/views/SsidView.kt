@@ -205,7 +205,12 @@ fun SsidView(
 
         if (wifiSsids.isNotEmpty() || ethernet == true || vpn == true) {
             item("warn") {
-                Box(Modifier.padding(horizontal = 16.dp).padding(top = 32.dp)) {
+                Box(
+                    Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 32.dp)
+                        .animateItem()
+                ) {
                     HaAlertInfo(
                         message = stringResource(commonR.string.manage_ssids_warning),
                         action = null,
