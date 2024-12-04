@@ -59,6 +59,7 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
+import io.homeassistant.companion.android.util.compose.HaAlertInfo
 import io.homeassistant.companion.android.util.compose.HaAlertWarning
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -200,6 +201,18 @@ fun SsidView(
                 checked = vpn,
                 onClicked = { onSetVpn(it) }
             )
+        }
+
+        if (wifiSsids.isNotEmpty() || ethernet == true || vpn == true) {
+            item("warn") {
+                Box(Modifier.padding(horizontal = 16.dp).padding(top = 32.dp)) {
+                    HaAlertInfo(
+                        message = stringResource(commonR.string.manage_ssids_warning),
+                        action = null,
+                        onActionClicked = null
+                    )
+                }
+            }
         }
 
         item("prioritize") {

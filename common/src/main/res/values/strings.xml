@@ -432,6 +432,7 @@
     <string name="manage_ssids_permission">Home Assistant needs additional access to read Wi-Fi information.</string>
     <string name="manage_ssids_wifi">Wi-Fi network connected</string>
     <string name="manage_ssids_vpn">VPN connected</string>
+    <string name="manage_ssids_warning">Make sure to set up your home network correctly. Adding public Wi-Fi networks or using multiple ethernet/VPN connections may unintentionally expose information about or access to your app or server.</string>
     <string name="manage_this_notification">Manage this notification</string>
     <string name="manage_tiles_summary">Set up and manage quick settings tiles here. They will not function until you set them up here.</string>
     <string name="manage_tiles">Manage tiles</string>
