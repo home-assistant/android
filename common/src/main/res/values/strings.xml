@@ -394,7 +394,7 @@
     <string name="location_history_skipped_not_latest">Old location</string>
     <string name="location_history_skipped_old">Very old location</string>
     <string name="location_history_use">Use location history</string>
-    <string name="location_perm_info_message">Android set up restrictions for apps which want to use your Wi-Fi, because Wi-Fi can be theoretically used to determine your location.\n\nATo ensure the app can access Wi-Fi in background (URL decision making, sensors), you must allow location access all the time.\n\nTherefore, to use this option location access all the time is needed.\n\nContinue granting location access?</string>
+    <string name="location_perm_info_message">Android set up restrictions for apps which want to use your Wi-Fi, because Wi-Fi can be theoretically used to determine your location.\n\nTo ensure the app can access Wi-Fi in background (URL decision making, sensors), you must allow location access all the time.\n\nTherefore, to use this option location access all the time is needed.\n\nContinue granting location access?</string>
     <string name="location_perm_info_title">Location access</string>
     <string name="location_tracking">Location tracking</string>
     <string name="location_tracking_summary">View a history of location tracking updates to troubleshoot the device tracker</string>
