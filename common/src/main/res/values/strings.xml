@@ -394,7 +394,7 @@
     <string name="location_history_skipped_not_latest">Old location</string>
     <string name="location_history_skipped_old">Very old location</string>
     <string name="location_history_use">Use location history</string>
-    <string name="location_perm_info_message">Android set up restrictions for apps which want to use your WiFi, because WiFi can be theoretically used to determine your location.\n\nATo ensure the app can access WiFi in background (URL decision making, sensors), you must allow location access all the time.\n\nTherefore, to use this option location access all the time is needed.\n\nContinue granting location access?</string>
+    <string name="location_perm_info_message">Android set up restrictions for apps which want to use your Wi-Fi, because Wi-Fi can be theoretically used to determine your location.\n\nATo ensure the app can access Wi-Fi in background (URL decision making, sensors), you must allow location access all the time.\n\nTherefore, to use this option location access all the time is needed.\n\nContinue granting location access?</string>
     <string name="location_perm_info_title">Location access</string>
     <string name="location_tracking">Location tracking</string>
     <string name="location_tracking_summary">View a history of location tracking updates to troubleshoot the device tracker</string>
@@ -428,9 +428,9 @@
     <string name="manage_ssids_ethernet">Ethernet connected</string>
     <string name="manage_ssids_input_exists">This SSID already exists</string>
     <string name="manage_ssids_input">New WiFi SSID</string>
-    <string name="manage_ssids_introduction">Indicate when you\'re connected to your home network, based on WiFi, ethernet or VPN. This can be used to, for example, use the internal connection URL or disable the app lock when at home.</string>
-    <string name="manage_ssids_permission">Home Assistant needs additional access to read WiFi information.</string>
-    <string name="manage_ssids_wifi">WiFi network connected</string>
+    <string name="manage_ssids_introduction">Indicate when you\'re connected to your home network, based on Wi-Fi, ethernet or VPN. This can be used to, for example, use the internal connection URL or disable the app lock when at home.</string>
+    <string name="manage_ssids_permission">Home Assistant needs additional access to read Wi-Fi information.</string>
+    <string name="manage_ssids_wifi">Wi-Fi network connected</string>
     <string name="manage_ssids_vpn">VPN connected</string>
     <string name="manage_this_notification">Manage this notification</string>
     <string name="manage_tiles_summary">Set up and manage quick settings tiles here. They will not function until you set them up here.</string>
