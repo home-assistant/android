@@ -54,7 +54,7 @@ fun ExternalUrlInputView(
                 urlInput = it
                 urlError = false
             },
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, autoCorrect = false, keyboardType = KeyboardType.Uri),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, autoCorrectEnabled = false, keyboardType = KeyboardType.Uri),
             keyboardActions = KeyboardActions(
                 onDone = {
                     urlError = !performUrlUpdate(urlInput?.trim(), url, onSaveUrl)
