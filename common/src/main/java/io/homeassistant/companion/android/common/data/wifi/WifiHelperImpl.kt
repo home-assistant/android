@@ -49,4 +49,28 @@ class WifiHelperImpl @Inject constructor(
 
     override fun getWifiBssid(): String? =
         wifiManager?.connectionInfo?.bssid // Deprecated but callback doesn't provide BSSID info instantly
+
+    override fun isUsingEthernet(): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            connectivityManager.activeNetwork?.let {
+                connectivityManager
+                    .getNetworkCapabilities(it)
+                    ?.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) == true
+            } == true
+        } else {
+            connectivityManager.activeNetworkInfo?.isConnected == true &&
+                connectivityManager.activeNetworkInfo?.type == ConnectivityManager.TYPE_ETHERNET
+        }
+
+    override fun isUsingVpn(): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            connectivityManager.activeNetwork?.let {
+                connectivityManager
+                    .getNetworkCapabilities(it)
+                    ?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
+            } == true
+        } else {
+            connectivityManager.activeNetworkInfo?.isConnected == true &&
+                connectivityManager.activeNetworkInfo?.type == ConnectivityManager.TYPE_VPN
+        }
 }
