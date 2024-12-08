@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.widgets.common
 
-import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -13,6 +12,9 @@ import io.homeassistant.companion.android.widgets.button.ButtonWidget
 class WidgetAuthenticationActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "WidgetAuthenticationA"
+        const val EXTRA_TARGET = "io.homeassistant.companion.android.widgets.common.WidgetAuthenticationActivity.EXTRA_TARGET"
+        const val EXTRA_ACTION = "io.homeassistant.companion.android.widgets.common.WidgetAuthenticationActivity.EXTRA_ACTION"
+        const val EXTRA_EXTRAS = "io.homeassistant.companion.android.widgets.common.WidgetAuthenticationActivity.EXTRA_EXTRAS"
     }
 
     private var authenticating = false
@@ -35,14 +37,14 @@ class WidgetAuthenticationActivity : AppCompatActivity() {
         when (result) {
             Authenticator.SUCCESS -> {
                 Log.d(TAG, "Authentication successful, calling requested service")
-                val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
-                if (appWidgetId > -1) {
-                    val intent = Intent(applicationContext, ButtonWidget::class.java).apply {
-                        action = ButtonWidget.CALL_SERVICE
-                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                    }
-                    sendBroadcast(intent)
+                val target = intent.getSerializableExtra(EXTRA_TARGET) ?: ButtonWidget::class.java
+                val targetAction = intent.getStringExtra(EXTRA_ACTION) ?: ButtonWidget.CALL_SERVICE
+                val extras = intent.getBundleExtra(EXTRA_EXTRAS) ?: Bundle()
+                val intent = Intent(applicationContext, target as Class<*>).apply {
+                    action = targetAction
+                    putExtras(extras)
                 }
+                sendBroadcast(intent)
                 finishAffinity()
             }
             Authenticator.CANCELED -> {

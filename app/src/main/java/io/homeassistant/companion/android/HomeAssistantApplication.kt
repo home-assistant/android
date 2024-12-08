@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
+import io.homeassistant.companion.android.widgets.grid.GridWidget
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidget
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
 import javax.inject.Inject
@@ -287,6 +288,7 @@ open class HomeAssistantApplication : Application() {
             // Update widgets when the screen turns on, updates are skipped if widgets were not added
             val buttonWidget = ButtonWidget()
             val entityWidget = EntityWidget()
+            val gridWidget = GridWidget()
             val mediaPlayerWidget = MediaPlayerControlsWidget()
             val templateWidget = TemplateWidget()
 
@@ -296,6 +298,7 @@ open class HomeAssistantApplication : Application() {
 
             ContextCompat.registerReceiver(this, buttonWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
             ContextCompat.registerReceiver(this, entityWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            ContextCompat.registerReceiver(this, gridWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
             ContextCompat.registerReceiver(this, mediaPlayerWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
             ContextCompat.registerReceiver(this, templateWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
         }

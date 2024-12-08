@@ -169,6 +169,7 @@ dependencies {
     implementation(libs.preference.ktx)
     implementation(libs.material)
     implementation(libs.fragment.ktx)
+    implementation(libs.core.remoteviews)
 
     implementation(libs.jackson.module.kotlin)
     implementation(libs.okhttp)

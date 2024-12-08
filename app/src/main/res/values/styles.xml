@@ -95,6 +95,8 @@
 
     <style name="Theme.HomeAssistant.Widget">
         <item name="colorWidgetPrimary">@color/colorWidgetButtonLabel</item>
+        <item name="colorWidgetContainer">@color/colorPrimary</item>
+        <item name="colorWidgetOnContainer">@color/colorOnPrimary</item>
         <item name="colorWidgetButton">@color/colorIcon</item>
         <item name="colorWidgetBackground">@color/colorWidgetButtonBackground</item>
         <item name="colorWidgetOnBackground">@color/colorWidgetButtonLabel</item>

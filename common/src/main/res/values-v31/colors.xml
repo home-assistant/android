@@ -3,4 +3,5 @@
     <color name="colorDynamicWidgetBackground">@android:color/system_accent2_50</color> <!-- M3 colorSecondaryContainer - 1 level-->
     <color name="colorDynamicWidgetOnBackground">@android:color/system_accent2_900</color> <!-- M3 colorOnSecondaryContainer -->
     <color name="colorDynamicWidgetPrimary">@android:color/system_accent1_600</color> <!-- M3 colorPrimary -->
+    <color name="colorDynamicWidgetContainer">@android:color/system_accent1_100</color>
 </resources>

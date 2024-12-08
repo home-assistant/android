@@ -158,9 +158,15 @@ class ButtonWidget : AppWidgetProvider() {
     private fun authThenCallConfiguredAction(context: Context, appWidgetId: Int) {
         Log.d(TAG, "Calling authentication, then configured action")
 
-        val intent = Intent(context, WidgetAuthenticationActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NEW_DOCUMENT
-        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        val extras = Bundle().apply {
+            putInt(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        }
+        val intent = Intent(context, WidgetAuthenticationActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NEW_DOCUMENT
+            putExtra(WidgetAuthenticationActivity.EXTRA_TARGET, ButtonWidget::class.java)
+            putExtra(WidgetAuthenticationActivity.EXTRA_ACTION, CALL_SERVICE)
+            putExtra(WidgetAuthenticationActivity.EXTRA_EXTRAS, extras)
+        }
         context.startActivity(intent)
     }
 

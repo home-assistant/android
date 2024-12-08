@@ -176,6 +176,7 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.core.remoteviews)
 
     implementation(libs.iconics.core)
     implementation(libs.iconics.compose)
