@@ -58,7 +58,7 @@
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
 
     <application
-        android:name="io.homeassistant.companion.android.HomeAssistantApplication"
+        android:name="io.shpro.companion.android.HomeAssistantApplication"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/backup_rules_android12"
@@ -101,7 +101,7 @@
                 <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
-                <action android:name="io.homeassistant.companion.android.UPDATE_SENSORS" />
+                <action android:name="io.shpro.companion.android.UPDATE_SENSORS" />
             </intent-filter>
         </receiver>
 
@@ -109,9 +109,9 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.CALL_SERVICE" />
-                <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.CALL_SERVICE_AUTH" />
-                <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.RECEIVE_DATA" />
+                <action android:name="io.shpro.companion.android.widgets.ButtonWidget.CALL_SERVICE" />
+                <action android:name="io.shpro.companion.android.widgets.ButtonWidget.CALL_SERVICE_AUTH" />
+                <action android:name="io.shpro.companion.android.widgets.ButtonWidget.RECEIVE_DATA" />
             </intent-filter>
 
             <meta-data
@@ -123,8 +123,8 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.camera.CameraWidget.RECEIVE_DATA" />
-                <action android:name="io.homeassistant.companion.android.widgets.camera.CameraWidget.UPDATE_IMAGE" />
+                <action android:name="io.shpro.companion.android.widgets.camera.CameraWidget.RECEIVE_DATA" />
+                <action android:name="io.shpro.companion.android.widgets.camera.CameraWidget.UPDATE_IMAGE" />
             </intent-filter>
 
             <meta-data
@@ -136,7 +136,7 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.StaticWidget.RECEIVE_DATA" />
+                <action android:name="io.shpro.companion.android.widgets.StaticWidget.RECEIVE_DATA" />
             </intent-filter>
 
             <meta-data
@@ -148,13 +148,13 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.RECEIVE_DATA" />
-                <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.UPDATE_MEDIA_IMAGE" />
-                <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_PREV_TRACK" />
-                <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_REWIND" />
-                <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_PLAYPAUSE" />
-                <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_FASTFORWARD" />
-                <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_NEXT_TRACK" />
+                <action android:name="io.shpro.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.RECEIVE_DATA" />
+                <action android:name="io.shpro.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.UPDATE_MEDIA_IMAGE" />
+                <action android:name="io.shpro.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_PREV_TRACK" />
+                <action android:name="io.shpro.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_REWIND" />
+                <action android:name="io.shpro.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_PLAYPAUSE" />
+                <action android:name="io.shpro.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_FASTFORWARD" />
+                <action android:name="io.shpro.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_NEXT_TRACK" />
             </intent-filter>
 
             <meta-data
@@ -171,9 +171,9 @@
                 <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
-                <action android:name="io.homeassistant.companion.android.background.REQUEST_SENSORS_UPDATE" />
+                <action android:name="io.shpro.companion.android.background.REQUEST_SENSORS_UPDATE" />
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.template.TemplateWidget.RECEIVE_DATA" />
+                <action android:name="io.shpro.companion.android.widgets.template.TemplateWidget.RECEIVE_DATA" />
             </intent-filter>
 
             <meta-data
@@ -234,7 +234,7 @@
             android:exported="true">
             <meta-data
                 android:name="android.service.controls.META_DATA_PANEL_ACTIVITY"
-                android:value="${applicationId}/io.homeassistant.companion.android.controls.HaControlsPanelActivity" />
+                android:value="${applicationId}/io.shpro.companion.android.controls.HaControlsPanelActivity" />
             <intent-filter>
                 <action android:name="android.service.controls.ControlsProviderService"/>
             </intent-filter>
@@ -244,7 +244,7 @@
             android:permission="android.permission.BIND_CONTROLS"
             android:exported="true"
             android:resizeableActivity="true"
-            android:taskAffinity="io.homeassistant.companion.android.controls"
+            android:taskAffinity="io.shpro.companion.android.controls"
             android:enabled="false" />
 
         <receiver
@@ -252,7 +252,7 @@
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="io.homeassistant.companion.android.background.REQUEST_ACCURATE_UPDATE" />
+                <action android:name="io.shpro.companion.android.background.REQUEST_ACCURATE_UPDATE" />
             </intent-filter>
         </receiver>
 
@@ -261,7 +261,7 @@
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="io.homeassistant.companion.android.background.REQUEST_ACTIVITY_UPDATES" />
+                <action android:name="io.shpro.companion.android.background.REQUEST_ACTIVITY_UPDATES" />
             </intent-filter>
         </receiver>
 
@@ -405,7 +405,7 @@
             android:exported="true"
             android:windowSoftInputMode="adjustResize"
             android:launchMode="singleTask"
-            android:taskAffinity="io.homeassistant.companion.android.assist"
+            android:taskAffinity="io.shpro.companion.android.assist"
             android:autoRemoveFromRecents="true"
             android:showWhenLocked="true"
             android:theme="@style/Theme.HomeAssistant.Assist">

@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android
+package io.shpro.companion.android
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers

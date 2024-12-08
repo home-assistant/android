@@ -1,4 +1,7 @@
 import com.google.gms.googleservices.GoogleServicesPlugin.GoogleServicesPluginConfig
+import java.io.FileInputStream
+import java.util.Properties
+
 
 plugins {
     alias(libs.plugins.android.application)
@@ -11,8 +14,15 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+
+val keystoreProperties = Properties()
+
+keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+
 android {
-    namespace = "io.homeassistant.companion.android"
+    namespace = "io.shpro.companion.android"
 
     compileSdk = libs.versions.androidSdk.compile.get().toInt()
 
@@ -21,7 +31,7 @@ android {
     useLibrary("android.car")
 
     defaultConfig {
-        applicationId = "io.homeassistant.companion.android"
+        applicationId = "io.shpro.companion.android"
         minSdk = libs.versions.androidSdk.min.get().toInt()
         targetSdk = libs.versions.androidSdk.target.get().toInt()
 
@@ -62,12 +72,13 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "release_keystore.keystore")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias = System.getenv("KEYSTORE_ALIAS") ?: ""
-            keyPassword = System.getenv("KEYSTORE_ALIAS_PASSWORD") ?: ""
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
             enableV1Signing = true
             enableV2Signing = true
+
         }
     }
 

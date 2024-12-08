@@ -2,7 +2,7 @@
 <!-- Media3 doesn't allow customizing the default player controls, but you can override the layout
      file and it will pick up this instead of the library layout. Adjusted from the original layout
      https://github.com/androidx/media/blob/a94aa8dbd99fc5ddec6ef25bb4c8ad7b3ca39e6f/libraries/ui/src/main/res/layout/exo_player_control_view.xml
-     to fit the camera livestream use case / previous (ExoPlayer v2) layout by Home Assistant.
+     to fit the camera livestream use case / previous (ExoPlayer v2) layout by SH Pro.
 -->
 <!-- Copyright 2020 The Android Open Source Project
 

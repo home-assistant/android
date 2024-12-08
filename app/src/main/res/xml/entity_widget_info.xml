@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:configure="io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity"
+    android:configure="io.shpro.companion.android.widgets.entity.EntityWidgetConfigureActivity"
     android:initialKeyguardLayout="@layout/widget_static"
     android:initialLayout="@layout/widget_static"
     android:minWidth="40dp"

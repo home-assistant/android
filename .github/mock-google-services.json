@@ -10,7 +10,7 @@
       "client_info": {
         "mobilesdk_app_id": "mobilesdk_app_id",
         "android_client_info": {
-          "package_name": "io.homeassistant.companion.android"
+          "package_name": "io.shpro.companion.android"
         }
       },
       "api_key": [
@@ -23,7 +23,7 @@
       "client_info": {
         "mobilesdk_app_id": "mobilesdk_app_id",
         "android_client_info": {
-          "package_name": "io.homeassistant.companion.android.debug"
+          "package_name": "io.shpro.companion.android.debug"
         }
       },
       "api_key": [
@@ -36,7 +36,7 @@
       "client_info": {
         "mobilesdk_app_id": "mobilesdk_app_id",
         "android_client_info": {
-          "package_name": "io.homeassistant.companion.android.minimal"
+          "package_name": "io.shpro.companion.android.minimal"
         }
       },
       "api_key": [
@@ -49,7 +49,7 @@
       "client_info": {
         "mobilesdk_app_id": "mobilesdk_app_id",
         "android_client_info": {
-          "package_name": "io.homeassistant.companion.android.minimal.debug"
+          "package_name": "io.shpro.companion.android.minimal.debug"
         }
       },
       "api_key": [

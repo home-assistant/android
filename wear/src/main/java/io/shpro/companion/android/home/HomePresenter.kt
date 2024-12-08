@@ -1,0 +1,57 @@
+package io.shpro.companion.android.home
+
+import io.shpro.companion.android.common.data.integration.Entity
+import io.shpro.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
+import io.shpro.companion.android.common.data.websocket.WebSocketState
+import io.shpro.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.shpro.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
+import io.shpro.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.shpro.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
+import io.shpro.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.shpro.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
+import io.shpro.companion.android.data.SimplifiedEntity
+import kotlinx.coroutines.flow.Flow
+
+interface HomePresenter {
+
+    fun init(homeView: HomeView)
+
+    fun onViewReady()
+    suspend fun onEntityClicked(entityId: String, state: String)
+    suspend fun onFanSpeedChanged(entityId: String, speed: Float)
+    suspend fun onBrightnessChanged(entityId: String, brightness: Float)
+    suspend fun onColorTempChanged(entityId: String, colorTemp: Float, isKelvin: Boolean)
+    fun onLogoutClicked()
+    fun onInvalidAuthorization()
+    fun onFinish()
+
+    fun isConnected(): Boolean
+    fun getServerId(): Int?
+    fun getWebSocketState(): WebSocketState?
+
+    suspend fun getEntities(): List<Entity<*>>?
+    suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>?
+
+    suspend fun getAreaRegistry(): List<AreaRegistryResponse>?
+    suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>?
+    suspend fun getEntityRegistry(): List<EntityRegistryResponse>?
+    suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>?
+    suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>?
+    suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>?
+
+    suspend fun getAllTileShortcuts(): Map<Int?, List<SimplifiedEntity>>
+    suspend fun getTileShortcuts(tileId: Int): List<SimplifiedEntity>
+    suspend fun setTileShortcuts(tileId: Int?, entities: List<SimplifiedEntity>)
+
+    suspend fun getWearHapticFeedback(): Boolean
+    suspend fun setWearHapticFeedback(enabled: Boolean)
+    suspend fun getWearToastConfirmation(): Boolean
+    suspend fun setWearToastConfirmation(enabled: Boolean)
+    suspend fun getShowShortcutText(): Boolean
+    suspend fun setShowShortcutTextEnabled(enabled: Boolean)
+    suspend fun getAllTemplateTiles(): Map<Int, TemplateTileConfig>
+    suspend fun setTemplateTileRefreshInterval(tileId: Int, interval: Int)
+
+    suspend fun getWearFavoritesOnly(): Boolean
+    suspend fun setWearFavoritesOnly(enabled: Boolean)
+}

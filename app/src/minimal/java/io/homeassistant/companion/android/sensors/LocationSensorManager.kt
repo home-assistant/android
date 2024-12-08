@@ -1,10 +1,10 @@
-package io.homeassistant.companion.android.sensors
+package io.shpro.companion.android.sensors
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.shpro.companion.android.common.R as commonR
+import io.shpro.companion.android.common.sensors.SensorManager
 
 class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
@@ -12,15 +12,15 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         const val MINIMUM_ACCURACY = 200
 
         const val ACTION_REQUEST_LOCATION_UPDATES =
-            "io.homeassistant.companion.android.background.REQUEST_UPDATES"
+            "io.shpro.companion.android.background.REQUEST_UPDATES"
         const val ACTION_REQUEST_ACCURATE_LOCATION_UPDATE =
-            "io.homeassistant.companion.android.background.REQUEST_ACCURATE_UPDATE"
+            "io.shpro.companion.android.background.REQUEST_ACCURATE_UPDATE"
         const val ACTION_PROCESS_LOCATION =
-            "io.homeassistant.companion.android.background.PROCESS_UPDATES"
+            "io.shpro.companion.android.background.PROCESS_UPDATES"
         const val ACTION_PROCESS_GEO =
-            "io.homeassistant.companion.android.background.PROCESS_GEOFENCE"
+            "io.shpro.companion.android.background.PROCESS_GEOFENCE"
         const val ACTION_FORCE_HIGH_ACCURACY =
-            "io.homeassistant.companion.android.background.FORCE_HIGH_ACCURACY"
+            "io.shpro.companion.android.background.FORCE_HIGH_ACCURACY"
 
         val backgroundLocation = SensorManager.BasicSensor(
             "location_background",

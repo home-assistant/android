@@ -1,9 +1,9 @@
-package io.homeassistant.companion.android.launch
+package io.shpro.companion.android.launch
 
 import android.util.Log
-import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
-import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.shpro.companion.android.BuildConfig
+import io.shpro.companion.android.common.data.integration.DeviceRegistration
+import io.shpro.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 

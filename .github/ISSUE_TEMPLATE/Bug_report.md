@@ -9,22 +9,22 @@ assignees: ''
 
 <!-- READ THIS FIRST:
 - Make sure you run the latest version of the Android app
-- Make sure you run the latest version of Home Assistant
+- Make sure you run the latest version of SH Pro
 - Make sure to check the Companion docs for troubleshooting and configuration: https://companion.home-assistant.io/
 - Make sure the bug you found is not already reported, we love to put work in bugfixes instead of closing duplicate bug reports
   DO NOT DELETE ANY TEXT from this template! All requested information is important.
 -->
 
 <!-- If you are reporting an issue for Wear OS please list both devices for the below 3 fields -->
-**Home Assistant Android app version(s):**
+**SH Pro Android app version(s):**
 
 **Android version(s):**
 
 **Device model(s):**
 
-**Home Assistant version:**
+**SH Pro version:**
 
-**Last working Home Assistant release (if known):**
+**Last working SH Pro release (if known):**
 
 **Description of problem, include YAML if issue is related to notifications:**
 

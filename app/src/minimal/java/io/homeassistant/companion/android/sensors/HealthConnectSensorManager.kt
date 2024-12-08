@@ -1,10 +1,10 @@
-package io.homeassistant.companion.android.sensors
+package io.shpro.companion.android.sensors
 
 import android.content.Context
 import android.content.Intent
 import androidx.activity.result.contract.ActivityResultContract
-import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.shpro.companion.android.common.R
+import io.shpro.companion.android.common.sensors.SensorManager
 
 class HealthConnectSensorManager : SensorManager {
     companion object {

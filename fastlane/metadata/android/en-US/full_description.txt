@@ -1,16 +1,16 @@
-The Home Assistant Companion app allows you to access your Home Assistant instance on the go. Home Assistant is the smart home solution focused on privacy, choice, and sustainability. It runs locally in your home via a device like the Home Assistant Green or Raspberry Pi.
+The SH Pro Companion app allows you to access your SH Pro instance on the go. SH Pro is the smart home solution focused on privacy, choice, and sustainability. It runs locally in your home via a device like the SH Pro Green or Raspberry Pi.
 
-This app connects to all the most powerful features of Home Assistant,
-- One app to control the whole home - Home Assistant is compatible with the biggest brands in the smart home, connecting to thousands of smart devices and services.
+This app connects to all the most powerful features of SH Pro,
+- One app to control the whole home - SH Pro is compatible with the biggest brands in the smart home, connecting to thousands of smart devices and services.
 - Discover automatically and quickly configure new devices - such as Philips Hue, Google Cast, Sonos, IKEA Tradfri and Apple Homekit compatible devices.
 - Automate everything - Make all the devices in your home work in harmony - have your lights dim when you start watching a movie, or turn off your heat when you’re away from home.
 - Keep your home’s data in the home - use it privately to see past trends and averages.
 - Connect to open standards with hardware add-ons - including Z-Wave, Zigbee, Matter, Thread, and Bluetooth.
-- Connect Anywhere - If you would like to access this app while away from home, the most secure and simple way to get started is Home Assistant Cloud.
+- Connect Anywhere - If you would like to access this app while away from home, the most secure and simple way to get started is SH Pro Cloud.
 
 The app unlocks your smartphone or tablet as a home automation tool,
 - Securely share your location, using it to automate heating, security, and so much more.
-- Can share your phone's sensors with Home Assistant for automations including information on: steps taken, battery level, connectivity, next alarm, and many more.
+- Can share your phone's sensors with SH Pro for automations including information on: steps taken, battery level, connectivity, next alarm, and many more.
 - Get notifications on what's happening in your home, from detecting leaks to doors left open, you have full control over what it tells you.
 - Android Auto functionality lets you control your home from the dash of your car - open the garage, disable the security system, and more.
 - Build your own widgets to control any device in your home with a tap.

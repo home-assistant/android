@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.onboarding
+package io.shpro.companion.android.onboarding
 
 suspend fun getMessagingToken(): String {
     return ""

@@ -50,7 +50,7 @@
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
-                <action android:name="io.homeassistant.companion.android.UPDATE_SENSORS" />
+                <action android:name="io.shpro.companion.android.UPDATE_SENSORS" />
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
             </intent-filter>
@@ -79,7 +79,7 @@
         <activity android:name=".complications.ComplicationConfigActivity"
             android:exported="true">
             <intent-filter>
-                <action android:name="io.homeassistant.companion.android.ENTITY_STATE_COMPLICATION_CONFIG" />
+                <action android:name="io.shpro.companion.android.ENTITY_STATE_COMPLICATION_CONFIG" />
                 <category android:name="android.support.wearable.complications.category.PROVIDER_CONFIG" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
@@ -212,7 +212,7 @@
         <receiver android:name=".tiles.TileActionReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="io.homeassistant.companion.android.TILE_ACTION" />
+                <action android:name="io.shpro.companion.android.TILE_ACTION" />
             </intent-filter>
         </receiver>
         
@@ -234,7 +234,7 @@
                 android:value="900" />
             <meta-data
                 android:name="android.support.wearable.complications.PROVIDER_CONFIG_ACTION"
-                android:value="io.homeassistant.companion.android.ENTITY_STATE_COMPLICATION_CONFIG" />
+                android:value="io.shpro.companion.android.ENTITY_STATE_COMPLICATION_CONFIG" />
         </service>
 
         <service android:name=".complications.AssistDataSourceService"

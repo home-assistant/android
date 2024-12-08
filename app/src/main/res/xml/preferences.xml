@@ -2,7 +2,7 @@
 <androidx.preference.PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <io.homeassistant.companion.android.settings.SettingsSuggestionPreference
+    <io.shpro.companion.android.settings.SettingsSuggestionPreference
         android:key="settings_suggestion"
         app:isPreferenceVisible="false" />
     <PreferenceCategory
@@ -217,7 +217,7 @@
             app:enableCopying="true" />
         <Preference
             android:key="version"
-            android:icon="@drawable/app_icon_round"
+            android:icon="@drawable/app_logo"
             android:title="@string/application_version"
             android:summary="1.0.0 (1)"/>
         <Preference

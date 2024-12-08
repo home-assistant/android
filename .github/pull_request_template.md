@@ -1,5 +1,5 @@
 
-<!-- Thank you for submitting a Pull Request and helping to improve Home Assistant. Please complete the following sections to help the processing and review of your changes. Please do not delete anything from this template. -->
+<!-- Thank you for submitting a Pull Request and helping to improve SH Pro. Please complete the following sections to help the processing and review of your changes. Please do not delete anything from this template. -->
 
 ## Summary
 <!-- Provide a brief summary of the changes you have made and most importantly what they aim to achieve -->

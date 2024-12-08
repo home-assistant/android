@@ -6,9 +6,9 @@
     <color name="colorBackground">@android:color/white</color>
     <color name="colorOnBackground">#212121</color>
     <color name="colorSurface">@android:color/white</color>
-    <color name="colorPrimary">#03A9F4</color>
+    <color name="colorPrimary">#0079a6</color>
     <color name="colorPrimaryDark">#0288D1</color>
-    <color name="colorAccent">#03A9F4</color>
+    <color name="colorAccent">#0079a6</color>
     <color name="colorOnPrimary">@android:color/white</color>
     <color name="colorWarning">#D32F2F</color>
     <color name="colorHeadline1">@android:color/black</color>
