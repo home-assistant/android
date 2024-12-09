@@ -230,7 +230,7 @@ fun ManageControlsView(
                     value = panelPath,
                     onValueChange = { panelPath = it },
                     label = { Text(stringResource(id = R.string.lovelace_view_dashboard)) },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, autoCorrect = false, keyboardType = KeyboardType.Uri),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, autoCorrectEnabled = false, keyboardType = KeyboardType.Uri),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(all = 16.dp)
