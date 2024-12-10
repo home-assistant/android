@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.database.settings.SensorUpdateFrequenc
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.util.LifecycleHandler
+import io.homeassistant.companion.android.util.initCrashSaving
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
@@ -60,6 +61,7 @@ open class HomeAssistantApplication : Application() {
                 applicationContext,
                 prefsRepository.isCrashReporting()
             )
+            initCrashSaving(applicationContext)
         }
 
         languagesManager.applyCurrentLang()

@@ -31,8 +31,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
-import io.homeassistant.companion.android.getLatestFatalCrash
 import io.homeassistant.companion.android.util.LogcatReader
+import io.homeassistant.companion.android.util.getLatestFatalCrash
 import java.io.File
 import java.util.Calendar
 import javax.inject.Inject
@@ -115,7 +115,7 @@ class LogFragment : Fragment() {
 
             // Runs with Dispatcher IO
             processLog = LogcatReader.readLog()
-            crashLog = getLatestFatalCrash(requireContext(), prefsRepository.isCrashReporting())
+            crashLog = getLatestFatalCrash(requireContext())
 
             showLog()
             showHideLogLoader(false)
