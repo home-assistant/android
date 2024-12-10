@@ -25,6 +25,7 @@ import com.mikepenz.iconics.utils.toAndroidIconCompat
 import com.vdurmont.emoji.EmojiParser
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.CHANNEL_GENERAL
+import io.homeassistant.companion.android.common.util.HaIconTypeface
 import io.homeassistant.companion.android.common.util.cancel
 import java.util.Locale
 
@@ -217,8 +218,11 @@ fun handleSmallIcon(
     val notificationIcon = data[NotificationData.NOTIFICATION_ICON] ?: ""
     if (notificationIcon.startsWith("mdi:") && notificationIcon.substringAfter("mdi:").isNotBlank() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         val iconName = notificationIcon.split(":")[1]
-        val iconDrawable =
+        val iconDrawable = if (iconName == "home-assistant") {
+            IconicsDrawable(context, HaIconTypeface.Icon.mdi_home_assistant)
+        } else {
             IconicsDrawable(context, "cmd-$iconName")
+        }
         if (iconDrawable.icon != null) {
             builder.setSmallIcon(iconDrawable.colorFilter { PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN) }.toAndroidIconCompat())
         } else {
