@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.settings.server
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -10,7 +8,6 @@ import android.os.Handler
 import android.os.Looper
 import android.text.InputType
 import android.util.Log
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
@@ -26,8 +23,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.util.DisabledLocationHandler
-import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
@@ -49,10 +44,6 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
 
     @Inject
     lateinit var presenter: ServerSettingsPresenter
-
-    private val permissionsRequest = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        onPermissionsResult(it)
-    }
 
     private var serverId = -1
 
@@ -155,7 +146,14 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
 
         findPreference<Preference>("connection_internal_ssids")?.let {
             it.setOnPreferenceClickListener {
-                onDisplaySsidScreen()
+                parentFragmentManager.commit {
+                    replace(
+                        R.id.content,
+                        SsidFragment::class.java,
+                        Bundle().apply { putInt(SsidFragment.EXTRA_SERVER, serverId) }
+                    )
+                    addToBackStack(getString(commonR.string.pref_connection_homenetwork))
+                }
                 return@setOnPreferenceClickListener true
             }
             it.isVisible = presenter.hasWifi()
@@ -208,10 +206,9 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
 
     override fun enableInternalConnection(isEnabled: Boolean) {
         val iconTint = if (isEnabled) ContextCompat.getColor(requireContext(), commonR.color.colorAccent) else Color.DKGRAY
-        val doEnable = isEnabled && hasLocationPermission()
 
         findPreference<EditTextPreference>("connection_internal")?.let {
-            it.isEnabled = doEnable
+            it.isEnabled = isEnabled
             try {
                 val unwrappedDrawable =
                     AppCompatResources.getDrawable(requireContext(), R.drawable.ic_computer)
@@ -223,7 +220,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         }
 
         findPreference<SwitchPreference>("app_lock_home_bypass")?.let {
-            it.isEnabled = doEnable
+            it.isEnabled = isEnabled
             try {
                 val unwrappedDrawable =
                     AppCompatResources.getDrawable(requireContext(), R.drawable.ic_wifi)
@@ -246,68 +243,18 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         }
     }
 
-    override fun updateSsids(ssids: List<String>) {
+    override fun updateHomeNetwork(ssids: List<String>, ethernet: Boolean?, vpn: Boolean?) {
         findPreference<Preference>("connection_internal_ssids")?.let {
             it.summary =
-                if (ssids.isEmpty()) {
-                    getString(commonR.string.pref_connection_ssids_empty)
+                if (ssids.isEmpty() && ethernet != true && vpn != true) {
+                    getString(commonR.string.not_set)
                 } else {
-                    ssids.joinToString()
+                    val options = ssids.toMutableList()
+                    if (ethernet == true) options += getString(commonR.string.manage_ssids_ethernet)
+                    if (vpn == true) options += getString(commonR.string.manage_ssids_vpn)
+
+                    options.joinToString()
                 }
-        }
-    }
-
-    private fun onDisplaySsidScreen() {
-        val permissionsToCheck: Array<String> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        } else {
-            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
-        }
-
-        if (DisabledLocationHandler.isLocationEnabled(requireContext())) {
-            if (!checkPermission(permissionsToCheck)) {
-                LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(
-                    requireContext(),
-                    permissionsToCheck,
-                    continueYesCallback = {
-                        requestLocationPermission()
-                        // showSsidSettings() will be called if permission is granted
-                    }
-                )
-            } else {
-                showSsidSettings()
-            }
-        } else {
-            if (presenter.isSsidUsed()) {
-                DisabledLocationHandler.showLocationDisabledWarnDialog(
-                    requireActivity(),
-                    arrayOf(
-                        getString(commonR.string.pref_connection_wifi)
-                    ),
-                    showAsNotification = false,
-                    withDisableOption = true
-                ) {
-                    presenter.clearSsids()
-                }
-            } else {
-                DisabledLocationHandler.showLocationDisabledWarnDialog(
-                    requireActivity(),
-                    arrayOf(
-                        getString(commonR.string.pref_connection_wifi)
-                    )
-                )
-            }
-        }
-    }
-
-    private fun showSsidSettings() {
-        parentFragmentManager.commit {
-            replace(
-                R.id.content,
-                SsidFragment::class.java,
-                Bundle().apply { putInt(SsidFragment.EXTRA_SERVER, serverId) }
-            )
-            addToBackStack(getString(commonR.string.manage_ssids))
         }
     }
 
@@ -324,37 +271,6 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
         return (result == Authenticator.SUCCESS || result == Authenticator.CANCELED)
     }
 
-    private fun hasLocationPermission(): Boolean {
-        val permissionsToCheck: Array<String> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        } else {
-            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
-        }
-        return checkPermission(permissionsToCheck)
-    }
-
-    private fun requestLocationPermission() {
-        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION) // Background location will be requested later
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        } else {
-            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
-        }
-        permissionsRequest.launch(permissions)
-    }
-
-    private fun checkPermission(permissions: Array<String>?): Boolean {
-        if (!permissions.isNullOrEmpty()) {
-            for (permission in permissions) {
-                if (ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_DENIED) {
-                    return false
-                }
-            }
-        }
-        return true
-    }
-
     override fun onRemovedServer(success: Boolean, hasAnyRemaining: Boolean) {
         serverDeleteHandler.removeCallbacksAndMessages(null)
         serverDeleteDialog?.cancel()
@@ -365,24 +281,6 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                 startActivity(Intent(requireContext(), LaunchActivity::class.java))
                 requireActivity().finishAffinity()
             }
-        }
-    }
-
-    private fun onPermissionsResult(results: Map<String, Boolean>) {
-        if (results.keys.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            results[Manifest.permission.ACCESS_FINE_LOCATION] == true &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
-        ) {
-            // For Android 11+ we MUST NOT request Background Location permission with fine or coarse
-            // permissions as for Android 11 the background location request needs to be done separately
-            // See here: https://developer.android.com/about/versions/11/privacy/location#request-background-location-separately
-            // The separate request of background location is done here
-            permissionsRequest.launch(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION))
-            return
-        }
-
-        if (results.entries.all { it.value }) {
-            showSsidSettings()
         }
     }
 

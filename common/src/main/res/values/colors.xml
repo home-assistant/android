@@ -26,7 +26,9 @@
     <color name="colorActionBarPopupBackground">@android:color/white</color>
     <color name="colorLaunchScreenBackground">#fafafa</color>
     <color name="colorCodeBackground">#f5f5f5</color>
+    <color name="colorAlertInfo">#dbeef7</color>
     <color name="colorAlertWarning">#1fffa600</color>
+    <color name="colorOnAlertInfo">#039be5</color>
     <color name="colorOnAlertWarning">#ffa600</color>
     <color name="colorOnAlertSuccess">#43a047</color>
     <color name="colorDeviceControlsLightOn">#FDD663</color>

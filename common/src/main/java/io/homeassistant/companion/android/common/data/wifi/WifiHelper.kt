@@ -17,4 +17,10 @@ interface WifiHelper {
     fun isUsingSpecificWifi(networks: List<String>): Boolean
     fun getWifiSsid(): String?
     fun getWifiBssid(): String?
+
+    /** Returns if the active data connection is using ethernet */
+    fun isUsingEthernet(): Boolean
+
+    /** Returns if the active data connection is a VPN connection */
+    fun isUsingVpn(): Boolean
 }

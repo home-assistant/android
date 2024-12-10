@@ -192,7 +192,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
         val raw = isLockEnabledRaw()
         val bypass = isLockHomeBypassEnabled()
         return if (raw && bypass) {
-            !server.connection.isHomeWifiSsid()
+            !server.connection.isInternal()
         } else {
             raw
         }
