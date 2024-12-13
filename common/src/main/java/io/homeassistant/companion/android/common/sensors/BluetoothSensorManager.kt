@@ -250,7 +250,7 @@ class BluetoothSensorManager : SensorManager {
         )
     }
 
-    private fun isPermittedOnThisWifiNetwork(context: Context) = serverManager(context).defaultServers.any { it.connection.isHomeWifiSsid() }
+    private fun isPermittedOnThisNetwork(context: Context) = serverManager(context).defaultServers.any { it.connection.isInternal() }
 
     private suspend fun updateBLEDevice(context: Context) {
         val transmitActive = getToggleSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_ENABLED, default = true)
@@ -353,14 +353,14 @@ class BluetoothSensorManager : SensorManager {
         // transmit when BT is on, if we are not already transmitting, or details have changed, and we're permitted on this wifi network
         if (isBtOn(context)) {
             if (bleTransmitterDevice.transmitRequested && (!bleTransmitterDevice.transmitting || bleTransmitterDevice.restartRequired) &&
-                (!bleTransmitterDevice.onlyTransmitOnHomeWifiSetting || isPermittedOnThisWifiNetwork(context))
+                (!bleTransmitterDevice.onlyTransmitOnHomeWifiSetting || isPermittedOnThisNetwork(context))
             ) {
                 TransmitterManager.startTransmitting(context, bleTransmitterDevice)
             }
         }
 
         // BT off, or TransmitToggled off, or not permitted on this network - stop transmitting if we have been
-        if (!isBtOn(context) || !bleTransmitterDevice.transmitRequested || (bleTransmitterDevice.onlyTransmitOnHomeWifiSetting && !isPermittedOnThisWifiNetwork(context))) {
+        if (!isBtOn(context) || !bleTransmitterDevice.transmitRequested || (bleTransmitterDevice.onlyTransmitOnHomeWifiSetting && !isPermittedOnThisNetwork(context))) {
             TransmitterManager.stopTransmitting(bleTransmitterDevice)
         }
 

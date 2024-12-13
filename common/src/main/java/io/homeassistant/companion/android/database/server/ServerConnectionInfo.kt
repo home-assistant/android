@@ -28,6 +28,10 @@ data class ServerConnectionInfo(
     val useCloud: Boolean = false,
     @ColumnInfo(name = "internal_ssids")
     val internalSsids: List<String> = emptyList(),
+    @ColumnInfo(name = "internal_ethernet")
+    val internalEthernet: Boolean? = null,
+    @ColumnInfo(name = "internal_vpn")
+    val internalVpn: Boolean? = null,
     @ColumnInfo(name = "prioritize_internal")
     val prioritizeInternal: Boolean = false
 ) {
@@ -91,14 +95,29 @@ data class ServerConnectionInfo(
 
     fun canUseCloud(): Boolean = !this.cloudUrl.isNullOrBlank()
 
-    fun isHomeWifiSsid(): Boolean = wifiHelper.isUsingSpecificWifi(internalSsids)
-
     fun isInternal(): Boolean {
-        val usesInternalSsid = wifiHelper.isUsingSpecificWifi(internalSsids)
-        val usesWifi = wifiHelper.isUsingWifi()
-        val localUrl = internalUrl
-        Log.d(this::class.simpleName, "localUrl is: ${!localUrl.isNullOrBlank()}, usesInternalSsid is: $usesInternalSsid, usesWifi is: $usesWifi")
-        return !localUrl.isNullOrBlank() && usesInternalSsid && usesWifi
+        if (internalUrl.isNullOrBlank()) return false
+
+        if (internalEthernet == true) {
+            val usesEthernet = wifiHelper.isUsingEthernet()
+            Log.d(this::class.simpleName, "usesEthernet is: $usesEthernet")
+            if (usesEthernet) return true
+        }
+
+        if (internalVpn == true) {
+            val usesVpn = wifiHelper.isUsingVpn()
+            Log.d(this::class.simpleName, "usesVpn is: $usesVpn")
+            if (usesVpn) return true
+        }
+
+        return if (internalSsids.isNotEmpty()) {
+            val usesInternalSsid = wifiHelper.isUsingSpecificWifi(internalSsids)
+            val usesWifi = wifiHelper.isUsingWifi()
+            Log.d(this::class.simpleName, "usesInternalSsid is: $usesInternalSsid, usesWifi is: $usesWifi")
+            usesInternalSsid && usesWifi
+        } else {
+            false
+        }
     }
 }
 
