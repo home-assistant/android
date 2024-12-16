@@ -14,12 +14,12 @@ import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.core.os.BundleCompat
+import coil3.imageLoader
+import coil3.request.ImageRequest
 import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWid
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
+import io.homeassistant.companion.android.widgets.common.RemoteViewsTarget
 import java.util.LinkedList
 import javax.inject.Inject
 import kotlin.collections.HashMap
@@ -273,20 +274,16 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     )
                     Log.d(TAG, "Fetching media preview image")
                     Handler(Looper.getMainLooper()).post {
-                        if (BuildConfig.DEBUG) {
-                            Picasso.get().isLoggingEnabled = true
-                            Picasso.get().setIndicatorsEnabled(true)
-                        }
                         try {
-                            Picasso.get().load(url).resize(1024, 1024).into(
-                                this,
-                                R.id.widgetMediaImage,
-                                intArrayOf(appWidgetId)
-                            )
+                            val request = ImageRequest.Builder(context)
+                                .data(url)
+                                .target(RemoteViewsTarget(context, appWidgetId, this, R.id.widgetMediaImage))
+                                .size(1024)
+                                .build()
+                            context.imageLoader.enqueue(request)
                         } catch (e: Exception) {
                             Log.e(TAG, "Unable to load image", e)
                         }
-                        Log.d(TAG, "Fetch and load complete")
                     }
                 }
 

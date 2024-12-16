@@ -13,6 +13,10 @@ import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
 import androidx.core.content.ContextCompat
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -35,9 +39,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 
 @HiltAndroidApp
-open class HomeAssistantApplication : Application() {
+open class HomeAssistantApplication : Application(), SingletonImageLoader.Factory {
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
@@ -47,6 +52,9 @@ open class HomeAssistantApplication : Application() {
     @Inject
     @Named("keyChainRepository")
     lateinit var keyChainRepository: KeyChainRepository
+
+    @Inject
+    lateinit var okHttpClient: OkHttpClient
 
     @Inject
     lateinit var languagesManager: LanguagesManager
@@ -302,4 +310,15 @@ open class HomeAssistantApplication : Application() {
             ContextCompat.registerReceiver(this, templateWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
         }
     }
+
+    override fun newImageLoader(context: PlatformContext): ImageLoader =
+        ImageLoader.Builder(context)
+            .components {
+                add(
+                    OkHttpNetworkFetcherFactory(
+                        callFactory = okHttpClient
+                    )
+                )
+            }
+            .build()
 }

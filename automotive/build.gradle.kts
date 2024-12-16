@@ -172,7 +172,8 @@ dependencies {
 
     implementation(libs.jackson.module.kotlin)
     implementation(libs.okhttp)
-    implementation(libs.picasso)
+
+    implementation(libs.bundles.coil)
 
     "fullImplementation"(libs.play.services.location)
     "fullImplementation"(libs.play.services.home)

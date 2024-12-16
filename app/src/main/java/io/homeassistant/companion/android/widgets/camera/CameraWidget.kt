@@ -14,9 +14,13 @@ import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.os.BundleCompat
-import com.squareup.picasso.Picasso
+import coil3.imageLoader
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
+import coil3.size.Dimension
+import coil3.size.Precision
+import coil3.size.Size
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
@@ -24,11 +28,13 @@ import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.webview.WebViewActivity
+import io.homeassistant.companion.android.widgets.common.RemoteViewsTarget
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 
 @AndroidEntryPoint
 class CameraWidget : AppWidgetProvider() {
@@ -51,6 +57,9 @@ class CameraWidget : AppWidgetProvider() {
 
     @Inject
     lateinit var cameraWidgetDao: CameraWidgetDao
+
+    @Inject
+    lateinit var okHttpClient: OkHttpClient
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -152,21 +161,20 @@ class CameraWidget : AppWidgetProvider() {
                     )
                     Log.d(TAG, "Fetching camera image")
                     Handler(Looper.getMainLooper()).post {
-                        val picasso = Picasso.get()
-                        if (BuildConfig.DEBUG) {
-                            picasso.isLoggingEnabled = true
-                        }
                         try {
-                            picasso.invalidate(url)
-                            picasso.load(url).resize(getScreenWidth(), 0).onlyScaleDown().into(
-                                this,
-                                R.id.widgetCameraImage,
-                                intArrayOf(appWidgetId)
-                            )
+                            val request = ImageRequest.Builder(context)
+                                .data(url)
+                                .target(RemoteViewsTarget(context, appWidgetId, this, R.id.widgetCameraImage))
+                                .diskCachePolicy(CachePolicy.DISABLED)
+                                .memoryCachePolicy(CachePolicy.DISABLED)
+                                .networkCachePolicy(CachePolicy.READ_ONLY)
+                                .size(Size(getScreenWidth(), Dimension.Undefined))
+                                .precision(Precision.INEXACT)
+                                .build()
+                            context.imageLoader.enqueue(request)
                         } catch (e: Exception) {
                             Log.e(TAG, "Unable to fetch image", e)
                         }
-                        Log.d(TAG, "Fetch and load complete")
                     }
                 }
 
