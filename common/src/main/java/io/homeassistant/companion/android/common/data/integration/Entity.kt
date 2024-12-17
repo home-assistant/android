@@ -11,6 +11,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
+import io.homeassistant.companion.android.common.util.HaIconTypeface
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -303,6 +304,9 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon {
     val icon = attributes["icon"] as? String
     return if (icon?.startsWith("mdi") == true) {
         val mdiIcon = icon.split(":")[1]
+        if (mdiIcon == "home-assistant") {
+            return HaIconTypeface.Icon.mdi_home_assistant
+        }
         return IconicsDrawable(context, "cmd-$mdiIcon").icon ?: CommunityMaterial.Icon.cmd_bookmark
     } else {
         /**
@@ -355,7 +359,7 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon {
             }
             "google_assistant" -> CommunityMaterial.Icon2.cmd_google_assistant
             "group" -> CommunityMaterial.Icon2.cmd_google_circles_communities
-            "homeassistant" -> CommunityMaterial.Icon2.cmd_home_assistant
+            "homeassistant" -> HaIconTypeface.Icon.mdi_home_assistant
             "homekit" -> CommunityMaterial.Icon2.cmd_home_automation
             "humidifier" -> if (compareState == "off") {
                 CommunityMaterial.Icon.cmd_air_humidifier_off
