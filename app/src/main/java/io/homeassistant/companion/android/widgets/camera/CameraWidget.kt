@@ -89,7 +89,7 @@ class CameraWidget : AppWidgetProvider() {
         }
         mainScope.launch {
             val views = getWidgetRemoteViews(context, appWidgetId)
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+            views?.let { appWidgetManager.updateAppWidget(appWidgetId, it) }
         }
     }
 
@@ -117,27 +117,30 @@ class CameraWidget : AppWidgetProvider() {
         }
     }
 
-    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
+    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews? {
         val updateCameraIntent = Intent(context, CameraWidget::class.java).apply {
             action = UPDATE_IMAGE
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        return RemoteViews(context.packageName, R.layout.widget_camera).apply {
-            val widget = cameraWidgetDao.get(appWidgetId)
-            if (widget != null) {
-                var entityPictureUrl: String?
-                try {
-                    entityPictureUrl = retrieveCameraImageUrl(widget.serverId, widget.entityId)
-                    setViewVisibility(R.id.widgetCameraError, View.GONE)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to fetch entity or entity does not exist", e)
-                    setViewVisibility(R.id.widgetCameraError, View.VISIBLE)
-                    entityPictureUrl = null
-                }
+        val widget = cameraWidgetDao.get(appWidgetId)
+        var widgetCameraError = false
+        var url: String? = null
+        if (widget != null) {
+            try {
+                val entityPictureUrl = retrieveCameraImageUrl(widget.serverId, widget.entityId)
                 val baseUrl = serverManager.getServer(widget.serverId)?.connection?.getUrl().toString().removeSuffix("/")
-                val url = "$baseUrl$entityPictureUrl"
-                if (entityPictureUrl == null) {
+                url = "$baseUrl$entityPictureUrl"
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to fetch entity or entity does not exist", e)
+                widgetCameraError = true
+            }
+        }
+
+        val views = RemoteViews(context.packageName, R.layout.widget_camera).apply {
+            if (widget != null) {
+                setViewVisibility(R.id.widgetCameraError, if (widgetCameraError) View.VISIBLE else View.GONE)
+                if (url == null) {
                     setImageViewResource(
                         R.id.widgetCameraImage,
                         R.drawable.app_icon_round
@@ -197,6 +200,8 @@ class CameraWidget : AppWidgetProvider() {
                 setOnClickPendingIntent(R.id.widgetCameraPlaceholder, tapWidgetPendingIntent)
             }
         }
+        // If there is an url, Coil will call appWidgetManager.updateAppWidget
+        return if (url == null) views else null
     }
 
     private suspend fun retrieveCameraImageUrl(serverId: Int, entityId: String): String? {

@@ -19,7 +19,10 @@ class RemoteViewsTarget(
     @IdRes private val imageViewResId: Int
 ) : Target {
 
-    override fun onStart(placeholder: Image?) = setDrawable(placeholder)
+    override fun onStart(placeholder: Image?) {
+        // Skip if null to avoid blinking (there is no placeholder)
+        placeholder?.let { setDrawable(it) }
+    }
 
     override fun onError(error: Image?) = setDrawable(error)
 
