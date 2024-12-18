@@ -14,9 +14,13 @@ import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.os.BundleCompat
-import com.squareup.picasso.Picasso
+import coil3.imageLoader
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
+import coil3.size.Dimension
+import coil3.size.Precision
+import coil3.size.Size
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
@@ -24,11 +28,13 @@ import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.webview.WebViewActivity
+import io.homeassistant.companion.android.widgets.common.RemoteViewsTarget
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 
 @AndroidEntryPoint
 class CameraWidget : AppWidgetProvider() {
@@ -51,6 +57,9 @@ class CameraWidget : AppWidgetProvider() {
 
     @Inject
     lateinit var cameraWidgetDao: CameraWidgetDao
+
+    @Inject
+    lateinit var okHttpClient: OkHttpClient
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -80,7 +89,7 @@ class CameraWidget : AppWidgetProvider() {
         }
         mainScope.launch {
             val views = getWidgetRemoteViews(context, appWidgetId)
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+            views?.let { appWidgetManager.updateAppWidget(appWidgetId, it) }
         }
     }
 
@@ -108,27 +117,30 @@ class CameraWidget : AppWidgetProvider() {
         }
     }
 
-    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
+    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews? {
         val updateCameraIntent = Intent(context, CameraWidget::class.java).apply {
             action = UPDATE_IMAGE
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        return RemoteViews(context.packageName, R.layout.widget_camera).apply {
-            val widget = cameraWidgetDao.get(appWidgetId)
-            if (widget != null) {
-                var entityPictureUrl: String?
-                try {
-                    entityPictureUrl = retrieveCameraImageUrl(widget.serverId, widget.entityId)
-                    setViewVisibility(R.id.widgetCameraError, View.GONE)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to fetch entity or entity does not exist", e)
-                    setViewVisibility(R.id.widgetCameraError, View.VISIBLE)
-                    entityPictureUrl = null
-                }
+        val widget = cameraWidgetDao.get(appWidgetId)
+        var widgetCameraError = false
+        var url: String? = null
+        if (widget != null) {
+            try {
+                val entityPictureUrl = retrieveCameraImageUrl(widget.serverId, widget.entityId)
                 val baseUrl = serverManager.getServer(widget.serverId)?.connection?.getUrl().toString().removeSuffix("/")
-                val url = "$baseUrl$entityPictureUrl"
-                if (entityPictureUrl == null) {
+                url = "$baseUrl$entityPictureUrl"
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to fetch entity or entity does not exist", e)
+                widgetCameraError = true
+            }
+        }
+
+        val views = RemoteViews(context.packageName, R.layout.widget_camera).apply {
+            if (widget != null) {
+                setViewVisibility(R.id.widgetCameraError, if (widgetCameraError) View.VISIBLE else View.GONE)
+                if (url == null) {
                     setImageViewResource(
                         R.id.widgetCameraImage,
                         R.drawable.app_icon_round
@@ -152,21 +164,20 @@ class CameraWidget : AppWidgetProvider() {
                     )
                     Log.d(TAG, "Fetching camera image")
                     Handler(Looper.getMainLooper()).post {
-                        val picasso = Picasso.get()
-                        if (BuildConfig.DEBUG) {
-                            picasso.isLoggingEnabled = true
-                        }
                         try {
-                            picasso.invalidate(url)
-                            picasso.load(url).resize(getScreenWidth(), 0).onlyScaleDown().into(
-                                this,
-                                R.id.widgetCameraImage,
-                                intArrayOf(appWidgetId)
-                            )
+                            val request = ImageRequest.Builder(context)
+                                .data(url)
+                                .target(RemoteViewsTarget(context, appWidgetId, this, R.id.widgetCameraImage))
+                                .diskCachePolicy(CachePolicy.DISABLED)
+                                .memoryCachePolicy(CachePolicy.DISABLED)
+                                .networkCachePolicy(CachePolicy.READ_ONLY)
+                                .size(Size(getScreenWidth(), Dimension.Undefined))
+                                .precision(Precision.INEXACT)
+                                .build()
+                            context.imageLoader.enqueue(request)
                         } catch (e: Exception) {
                             Log.e(TAG, "Unable to fetch image", e)
                         }
-                        Log.d(TAG, "Fetch and load complete")
                     }
                 }
 
@@ -189,6 +200,8 @@ class CameraWidget : AppWidgetProvider() {
                 setOnClickPendingIntent(R.id.widgetCameraPlaceholder, tapWidgetPendingIntent)
             }
         }
+        // If there is an url, Coil will call appWidgetManager.updateAppWidget
+        return if (url == null) views else null
     }
 
     private suspend fun retrieveCameraImageUrl(serverId: Int, entityId: String): String? {
