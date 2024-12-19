@@ -42,6 +42,7 @@ object EntityExt {
     const val LIGHT_SUPPORT_BRIGHTNESS_DEPR = 1
     const val LIGHT_SUPPORT_COLOR_TEMP_DEPR = 2
     const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
+    const val MEDIA_PLAYER_SUPPORT_VOLUME_SET = 4
 
     val DOMAINS_PRESS = listOf("button", "input_button")
     val DOMAINS_TOGGLE = listOf(
@@ -295,6 +296,50 @@ fun <T> Entity<T>.getLightColor(): Int? {
     } catch (e: Exception) {
         Log.e(EntityExt.TAG, "Unable to get getLightColor", e)
         null
+    }
+}
+
+fun <T> Entity<T>.supportsVolumeSet(): Boolean {
+    return try {
+        if (domain != "media_player") return false
+        ((attributes as Map<*, *>)["supported_features"] as Int) and EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET == EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET
+    } catch (e: Exception) {
+        Log.e(EntityExt.TAG, "Unable to get supportsVolumeSet", e)
+        false
+    }
+}
+
+fun <T> Entity<T>.getVolumeLevel(): EntityPosition? {
+    return try {
+        if (!supportsVolumeSet()) return null
+
+        val minValue = 0f
+        val maxValue = 100f
+
+        // Convert to percentage to match frontend behavior:
+        // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-media_player.ts#L137
+        val currentValue = ((attributes as Map<*, *>)["volume_level"] as? Number)?.toFloat()?.times(100) ?: 0f
+
+        EntityPosition(
+            value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
+            min = minValue,
+            max = maxValue
+        )
+    } catch (e: Exception) {
+        Log.e(EntityExt.TAG, "Unable to get getVolumeLevel", e)
+        null
+    }
+}
+
+fun <T> Entity<T>.getVolumeStep(): Float {
+    return try {
+        if (!supportsVolumeSet()) return 0.1f
+
+        val volumeStep = ((attributes as Map<*, *>)["volume_step"] as? Number)?.toFloat() ?: 0.1f
+        volumeStep.coerceAtLeast(0.01f)
+    } catch (e: Exception) {
+        Log.e(EntityExt.TAG, "Unable to get getVolumeStep", e)
+        0.1f
     }
 }
 
