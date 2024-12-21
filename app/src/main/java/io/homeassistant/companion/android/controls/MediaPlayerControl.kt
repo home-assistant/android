@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.getVolumeLevel
 import io.homeassistant.companion.android.common.data.integration.getVolumeStep
+import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.supportsVolumeSet
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -29,13 +30,12 @@ object MediaPlayerControl : HaControl {
         entity: Entity<Map<String, Any>>,
         info: HaControlInfo
     ): Control.StatefulBuilder {
-        val isPlaying = entity.state == "playing"
         if (entity.supportsVolumeSet()) {
             val volumeLevel = entity.getVolumeLevel()
             control.setControlTemplate(
                 ToggleRangeTemplate(
                     entity.entityId,
-                    isPlaying,
+                    entity.isActive(),
                     "",
                     RangeTemplate(
                         entity.entityId,
@@ -52,7 +52,7 @@ object MediaPlayerControl : HaControl {
                 ToggleTemplate(
                     entity.entityId,
                     ControlButton(
-                        isPlaying,
+                        entity.isActive(),
                         ""
                     )
                 )
