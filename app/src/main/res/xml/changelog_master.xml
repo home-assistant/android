@@ -4,7 +4,7 @@
     <release version="2024.12.4 - Main" versioncode="3">
 <!--        <change>Android 9+ and Play Store: Add Health Connect sensors</change>-->
         <change>Add Ethernet and VPN to Home Network options for internal URL switching</change>
-        <change>Add media player to device controls for play pause toggle and volume control slider</change>
+        <change>Add support for media player in device controls with play pause toggle and volume control slider</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2024.12.4 - Wear" versioncode="2">
