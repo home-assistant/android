@@ -53,7 +53,7 @@ class HaControlsProviderService : ControlsProviderService() {
             "input_number" to DefaultSliderControl,
             "light" to LightControl,
             "lock" to LockControl,
-            "media_player" to null,
+            "media_player" to MediaPlayerControl,
             "remote" to null,
             "scene" to DefaultButtonControl,
             "script" to DefaultButtonControl,

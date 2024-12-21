@@ -17,6 +17,8 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyState
+import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.webview.WebViewActivity
 
 @RequiresApi(Build.VERSION_CODES.R)
@@ -73,6 +75,14 @@ interface HaControl {
 
                 iconDrawable.setTint(ContextCompat.getColor(context, colorTint))
                 control.setCustomIcon(iconDrawable.toAndroidIconCompat().toIcon(context))
+            }
+        } else {
+            // Specific override for media_player icons to match HA frontend rather than provided device type
+            if (entity.domain == "media_player") {
+                val icon = IconicsDrawable(context, entity.getIcon(context)).apply { sizeDp = 48 }
+                val tint = if (entity.isActive()) R.color.colorDeviceControlsDefaultOn else R.color.colorDeviceControlsOff
+                icon.setTint(ContextCompat.getColor(context, tint))
+                control.setCustomIcon(icon.toAndroidIconCompat().toIcon(context))
             }
         }
 
