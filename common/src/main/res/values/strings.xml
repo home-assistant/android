@@ -1351,4 +1351,8 @@
     <string name="sensor_description_hydration">Total hydration in milliliters since midnight from Health Connect</string>
     <string name="basic_sensor_name_resting_heart_rate">Resting heart rate</string>
     <string name="sensor_description_resting_heart_rate">Last recorded resting heart rate from Health Connect</string>
+    <string name="domain_number">Number</string>
+    <string name="domain_remote">Remote</string>
+    <string name="domain_siren">Siren</string>
+    <string name="domain_humidifier">Humidifier</string>
 </resources>

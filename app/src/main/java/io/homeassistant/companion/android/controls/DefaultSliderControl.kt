@@ -11,6 +11,7 @@ import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.domain
 
 @RequiresApi(Build.VERSION_CODES.R)
 object DefaultSliderControl : HaControl {
@@ -38,7 +39,11 @@ object DefaultSliderControl : HaControl {
         DeviceTypes.TYPE_UNKNOWN
 
     override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
-        context.getString(commonR.string.domain_input_number)
+        if (entity.domain == "input_number") {
+            context.getString(commonR.string.domain_input_number)
+        } else {
+            context.getString(commonR.string.domain_number)
+        }
 
     override suspend fun performAction(
         integrationRepository: IntegrationRepository,
