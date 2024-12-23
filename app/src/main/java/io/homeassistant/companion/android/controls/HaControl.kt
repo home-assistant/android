@@ -77,8 +77,9 @@ interface HaControl {
                 control.setCustomIcon(iconDrawable.toAndroidIconCompat().toIcon(context))
             }
         } else {
-            // Specific override for media_player icons to match HA frontend rather than provided device type
-            if (entity.domain == "media_player") {
+            // Specific override for some domain icons to match HA frontend rather than provided device type
+            val iconOverride = listOf("media_player", "number")
+            if (entity.domain in iconOverride) {
                 val icon = IconicsDrawable(context, entity.getIcon(context)).apply { sizeDp = 48 }
                 val tint = if (entity.isActive()) R.color.colorDeviceControlsDefaultOn else R.color.colorDeviceControlsOff
                 icon.setTint(ContextCompat.getColor(context, tint))
