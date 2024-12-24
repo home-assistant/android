@@ -471,7 +471,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateActiveCaloriesBurnedSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val activeCaloriesBurnedRequest = buildReadRecordsRequest(ActiveCaloriesBurnedRecord::class) as ReadRecordsRequest<ActiveCaloriesBurnedRecord>
+        val activeCaloriesBurnedRequest = buildReadRecordsRequest(ActiveCaloriesBurnedRecord::class)
         val response = healthConnectClient.readRecordsOrNull(activeCaloriesBurnedRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -490,7 +490,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateBasalBodyTemperatureSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val basalBodyTemperatureRequest = buildReadRecordsRequest(BasalBodyTemperatureRecord::class) as ReadRecordsRequest<BasalBodyTemperatureRecord>
+        val basalBodyTemperatureRequest = buildReadRecordsRequest(BasalBodyTemperatureRecord::class)
         val response = healthConnectClient.readRecordsOrNull(basalBodyTemperatureRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -509,7 +509,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateBasalMetabolicRateSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val basalMetabolicRateRequest = buildReadRecordsRequest(BasalMetabolicRateRecord::class) as ReadRecordsRequest<BasalMetabolicRateRecord>
+        val basalMetabolicRateRequest = buildReadRecordsRequest(BasalMetabolicRateRecord::class)
         val response = healthConnectClient.readRecordsOrNull(basalMetabolicRateRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -528,7 +528,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateBloodGlucoseSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val bloodGlucoseRequest = buildReadRecordsRequest(BloodGlucoseRecord::class) as ReadRecordsRequest<BloodGlucoseRecord>
+        val bloodGlucoseRequest = buildReadRecordsRequest(BloodGlucoseRecord::class)
         val response = healthConnectClient.readRecordsOrNull(bloodGlucoseRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -550,7 +550,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateBloodPressureSensors(context: Context, isDiastolic: Boolean) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val bloodPressureRequest = buildReadRecordsRequest(BloodPressureRecord::class) as ReadRecordsRequest<BloodPressureRecord>
+        val bloodPressureRequest = buildReadRecordsRequest(BloodPressureRecord::class)
         val response = healthConnectClient.readRecordsOrNull(bloodPressureRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -571,7 +571,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateBodyFatSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val bodyFatRequest = buildReadRecordsRequest(BodyFatRecord::class) as ReadRecordsRequest<BodyFatRecord>
+        val bodyFatRequest = buildReadRecordsRequest(BodyFatRecord::class)
         val response = healthConnectClient.readRecordsOrNull(bodyFatRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -590,7 +590,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateBodyWaterMassSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val bodyWaterMassRequest = buildReadRecordsRequest(BodyWaterMassRecord::class) as ReadRecordsRequest<BodyWaterMassRecord>
+        val bodyWaterMassRequest = buildReadRecordsRequest(BodyWaterMassRecord::class)
         val response = healthConnectClient.readRecordsOrNull(bodyWaterMassRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -609,7 +609,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateBodyTemperatureSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val bodyTemperatureRequest = buildReadRecordsRequest(BodyTemperatureRecord::class) as ReadRecordsRequest<BodyTemperatureRecord>
+        val bodyTemperatureRequest = buildReadRecordsRequest(BodyTemperatureRecord::class)
         val response = healthConnectClient.readRecordsOrNull(bodyTemperatureRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -629,7 +629,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateBoneMassSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val boneMassRequest = buildReadRecordsRequest(BoneMassRecord::class) as ReadRecordsRequest<BoneMassRecord>
+        val boneMassRequest = buildReadRecordsRequest(BoneMassRecord::class)
         val response = healthConnectClient.readRecordsOrNull(boneMassRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -687,7 +687,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateHeartRateSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val heartRateRequest = buildReadRecordsRequest(HeartRateRecord::class) as ReadRecordsRequest<HeartRateRecord>
+        val heartRateRequest = buildReadRecordsRequest(HeartRateRecord::class)
         val response = healthConnectClient.readRecordsOrNull(heartRateRequest)
         if (response == null || response.records.isEmpty() || response.records.last().samples.isEmpty()) {
             return
@@ -706,7 +706,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateHeartRateVariabilitySensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val heartRateVariabilityRequest = buildReadRecordsRequest(HeartRateVariabilityRmssdRecord::class) as ReadRecordsRequest<HeartRateVariabilityRmssdRecord>
+        val heartRateVariabilityRequest = buildReadRecordsRequest(HeartRateVariabilityRmssdRecord::class)
         val response = healthConnectClient.readRecordsOrNull(heartRateVariabilityRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -725,7 +725,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateHeightSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val heightRequest = buildReadRecordsRequest(HeightRecord::class) as ReadRecordsRequest<HeightRecord>
+        val heightRequest = buildReadRecordsRequest(HeightRecord::class)
         val response = healthConnectClient.readRecordsOrNull(heightRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -757,7 +757,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateLeanBodyMassSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val leanBodyMassRequest = buildReadRecordsRequest(LeanBodyMassRecord::class) as ReadRecordsRequest<LeanBodyMassRecord>
+        val leanBodyMassRequest = buildReadRecordsRequest(LeanBodyMassRecord::class)
         val response = healthConnectClient.readRecordsOrNull(leanBodyMassRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -776,7 +776,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateOxygenSaturationSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val oxygenSaturationRequest = buildReadRecordsRequest(OxygenSaturationRecord::class) as ReadRecordsRequest<OxygenSaturationRecord>
+        val oxygenSaturationRequest = buildReadRecordsRequest(OxygenSaturationRecord::class)
         val response = healthConnectClient.readRecordsOrNull(oxygenSaturationRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -795,7 +795,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateRespiratoryRateSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val respiratoryRateRequest = buildReadRecordsRequest(RespiratoryRateRecord::class) as ReadRecordsRequest<RespiratoryRateRecord>
+        val respiratoryRateRequest = buildReadRecordsRequest(RespiratoryRateRecord::class)
         val response = healthConnectClient.readRecordsOrNull(respiratoryRateRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -814,7 +814,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateRestingHeartRateSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val restingHeartRateRequest = buildReadRecordsRequest(RestingHeartRateRecord::class) as ReadRecordsRequest<RestingHeartRateRecord>
+        val restingHeartRateRequest = buildReadRecordsRequest(RestingHeartRateRecord::class)
         val response = healthConnectClient.readRecordsOrNull(restingHeartRateRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -833,7 +833,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateSleepDurationSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val sleepRequest = buildReadRecordsRequest(SleepSessionRecord::class) as ReadRecordsRequest<SleepSessionRecord>
+        val sleepRequest = buildReadRecordsRequest(SleepSessionRecord::class)
         val sleepRecords = healthConnectClient.readRecordsOrNull(sleepRequest)
         if (sleepRecords == null || sleepRecords.records.isEmpty()) {
             return
@@ -882,7 +882,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateVo2MaxSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val vo2MaxRequest = buildReadRecordsRequest(Vo2MaxRecord::class) as ReadRecordsRequest<Vo2MaxRecord>
+        val vo2MaxRequest = buildReadRecordsRequest(Vo2MaxRecord::class)
         val response = healthConnectClient.readRecordsOrNull(vo2MaxRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -902,7 +902,7 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateWeightSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val weightRequest = buildReadRecordsRequest(WeightRecord::class) as ReadRecordsRequest<WeightRecord>
+        val weightRequest = buildReadRecordsRequest(WeightRecord::class)
         val response = healthConnectClient.readRecordsOrNull(weightRequest)
         if (response == null || response.records.isEmpty()) {
             return
@@ -1005,7 +1005,7 @@ class HealthConnectSensorManager : SensorManager {
         )
     }
 
-    private fun buildReadRecordsRequest(request: KClass<out Record>): ReadRecordsRequest<out Record> {
+    private fun <T : Record> buildReadRecordsRequest(request: KClass<T>): ReadRecordsRequest<T> {
         return ReadRecordsRequest(
             recordType = request,
             timeRangeFilter = TimeRangeFilter.between(
