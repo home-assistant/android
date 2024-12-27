@@ -141,10 +141,6 @@ class CameraWidget : AppWidgetProvider() {
             if (widget != null) {
                 setViewVisibility(R.id.widgetCameraError, if (widgetCameraError) View.VISIBLE else View.GONE)
                 if (url == null) {
-                    setImageViewResource(
-                        R.id.widgetCameraImage,
-                        R.drawable.app_icon_round
-                    )
                     setViewVisibility(
                         R.id.widgetCameraPlaceholder,
                         View.VISIBLE

@@ -251,10 +251,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                 val baseUrl = serverManager.getServer(widget.serverId)?.connection?.getUrl().toString().removeSuffix("/")
                 val url = if (entityPictureUrl?.startsWith("http") == true) entityPictureUrl else "$baseUrl$entityPictureUrl"
                 if (entityPictureUrl == null) {
-                    setImageViewResource(
-                        R.id.widgetMediaImage,
-                        R.drawable.app_icon_round
-                    )
                     setViewVisibility(
                         R.id.widgetMediaPlaceholder,
                         View.VISIBLE
