@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- We don't inherit Theme.LaunchScreen.Base anymore, because on API 31+ (Anrdoid 12) the system draws the launch screen background -->
+    <!-- We don't inherit Theme.LaunchScreen.Base anymore, because on API 31+ (Android 12) the system draws the launch screen background -->
     <!-- It is only allowed to change the color and a few other things -->
     <style name="Theme.LaunchScreen" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:colorBackground">@color/colorLaunchScreenBackground</item>
         <item name="android:statusBarColor">@color/colorLaunchScreenBackground</item>
         <item name="android:navigationBarColor">@color/colorLaunchScreenBackground</item>
         <item name="alertDialogTheme">@style/Theme.HomeAssistant.Dialog.Alert.Launch</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/app_icon_launch_screen</item>
     </style>
 
     <style name="Theme.HomeAssistant.DynamicColorWidget">

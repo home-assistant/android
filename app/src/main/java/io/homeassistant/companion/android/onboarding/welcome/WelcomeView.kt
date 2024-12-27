@@ -36,13 +36,13 @@ fun WelcomeView(
 ) {
     OnboardingScreen(Modifier.verticalScroll(rememberScrollState())) {
         Image(
-            painter = painterResource(id = R.drawable.app_icon_round),
+            painter = painterResource(id = R.drawable.app_icon_launch),
             contentDescription = stringResource(
                 id = commonR.string.app_name
             ),
             modifier = Modifier
-                .size(width = 274.dp, height = 202.dp)
-                .padding(bottom = 16.dp)
+                .size(width = 112.dp, height = 148.dp)
+                .padding(bottom = 32.dp)
         )
         Text(
             fontSize = 19.sp,
