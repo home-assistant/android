@@ -1677,8 +1677,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     private fun scanForImprov() {
-        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) return
-        if (!hasWindowFocus()) return
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+            Log.d(TAG, "Improv scan request ignored because device doesn't have Bluetooth")
+            return
+        }
+        if (!hasWindowFocus()) {
+            Log.d(TAG, "Improv scan request ignored because webview doesn't have focus")
+            return
+        }
         lifecycleScope.launch {
             if (presenter.shouldShowImprovPermissions()) {
                 supportFragmentManager.setFragmentResultListener(ImprovPermissionDialog.RESULT_KEY, this@WebViewActivity) { _, bundle ->

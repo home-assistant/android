@@ -490,7 +490,12 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override fun startScanningForImprov(): Boolean {
-        if (!improvRepository.hasPermission(view as Context)) return false
+        if (!improvRepository.hasPermission(view as Context)) {
+            Log.d(TAG, "Improv scan request ignored because app doesn't have permission")
+            return false
+        } else {
+            Log.d(TAG, "Improv scan starting")
+        }
         improvJobStarted = System.currentTimeMillis()
         improvJob = mainScope.launch {
             withContext(Dispatchers.IO) {
@@ -517,6 +522,7 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun stopScanningForImprov(force: Boolean) {
         if (improvJob?.isActive == true && (force || System.currentTimeMillis() - improvJobStarted > 1000)) {
+            Log.d(TAG, "Improv scan stopping")
             improvRepository.stopScanning()
             improvJob?.cancel()
         }
