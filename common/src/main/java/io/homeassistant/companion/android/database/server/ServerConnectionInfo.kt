@@ -95,8 +95,14 @@ data class ServerConnectionInfo(
 
     fun canUseCloud(): Boolean = !this.cloudUrl.isNullOrBlank()
 
-    fun isInternal(): Boolean {
-        if (internalUrl.isNullOrBlank()) return false
+    /**
+     * Indicate if the device's current connection should be treated as internal for
+     * this server.
+     * @param requiresUrl Whether a valid internal url is required for internal or not.
+     *   Usually you want this `true` for url related actions and `false` for others.
+     */
+    fun isInternal(requiresUrl: Boolean = true): Boolean {
+        if (requiresUrl && internalUrl.isNullOrBlank()) return false
 
         if (internalEthernet == true) {
             val usesEthernet = wifiHelper.isUsingEthernet()
