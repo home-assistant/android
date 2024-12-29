@@ -250,7 +250,7 @@ class BluetoothSensorManager : SensorManager {
         )
     }
 
-    private fun isPermittedOnThisNetwork(context: Context) = serverManager(context).defaultServers.any { it.connection.isInternal() }
+    private fun isPermittedOnThisNetwork(context: Context) = serverManager(context).defaultServers.any { it.connection.isInternal(requiresUrl = false) }
 
     private suspend fun updateBLEDevice(context: Context) {
         val transmitActive = getToggleSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_ENABLED, default = true)

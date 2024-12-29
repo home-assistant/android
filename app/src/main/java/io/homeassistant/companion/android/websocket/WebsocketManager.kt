@@ -129,7 +129,7 @@ class WebsocketManager(
     private fun shouldRunForServer(serverId: Int): Boolean {
         val server = serverManager.getServer(serverId) ?: return false
         val setting = settingsDao.get(serverId)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
-        val isHome = server.connection.isInternal()
+        val isHome = server.connection.isInternal(requiresUrl = false)
 
         // Check for connectivity but not internet access, based on WorkManager's NetworkConnectedController API <26
         val powerManager = applicationContext.getSystemService<PowerManager>()!!
