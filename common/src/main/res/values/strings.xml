@@ -1355,4 +1355,5 @@
     <string name="domain_remote">Remote</string>
     <string name="domain_siren">Siren</string>
     <string name="domain_humidifier">Humidifier</string>
+    <string name="thermostat_tiles">Thermostat tiles</string>
 </resources>

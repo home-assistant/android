@@ -177,6 +177,10 @@ fun LoadHomePage(
                         mainViewModel.loadTemplateTiles()
                         swipeDismissableNavController.navigate("$ROUTE_TEMPLATE_TILE/$SCREEN_SELECT_TEMPLATE_TILE")
                     },
+                    onClickThermostatTiles = {
+                        mainViewModel.loadTemplateTiles()
+                        swipeDismissableNavController.navigate("$ROUTE_TEMPLATE_TILE/$SCREEN_SELECT_TEMPLATE_TILE")
+                    },
                     onAssistantAppAllowed = mainViewModel::setAssistantApp,
                     onClickNotifications = {
                         notificationLaunch.launch(
