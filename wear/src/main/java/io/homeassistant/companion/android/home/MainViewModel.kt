@@ -99,6 +99,9 @@ class MainViewModel @Inject constructor(
     var cameraEntitiesMap = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
         private set
 
+    var climateEntitiesMap = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
+        private set
+
     var areas = mutableListOf<AreaRegistryResponse>()
         private set
 
@@ -242,9 +245,11 @@ class MainViewModel @Inject constructor(
             entities.clear()
             it.forEach { state -> updateEntityStates(state) }
 
-            // Special list: camera entities
+            // Special lists: camera entities and climate entities
             val cameraEntities = it.filter { entity -> entity.domain == "camera" }
             cameraEntitiesMap["camera"] = mutableStateListOf<Entity<*>>().apply { addAll(cameraEntities) }
+            val climateEntities = it.filter { entity -> entity.domain == "climate" }
+            climateEntitiesMap["climate"] = mutableStateListOf<Entity<*>>().apply { addAll(climateEntities) }
         }
         if (!isFavoritesOnly) {
             updateEntityDomains()
