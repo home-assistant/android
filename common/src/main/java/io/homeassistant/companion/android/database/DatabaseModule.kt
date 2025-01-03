@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
+import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
@@ -79,6 +80,9 @@ object DatabaseModule {
 
     @Provides
     fun provideCameraTileDao(database: AppDatabase): CameraTileDao = database.cameraTileDao()
+
+    @Provides
+    fun provideThermostatTileDao(database: AppDatabase): ThermostatTileDao = database.thermostatTileDao()
 
     @Provides
     fun provideEntityStateComplicationsDao(database: AppDatabase): EntityStateComplicationsDao = database.entityStateComplicationsDao()
