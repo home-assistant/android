@@ -22,10 +22,12 @@ import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.tiles.CameraTile
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
+import io.homeassistant.companion.android.tiles.ThermostatTile
 import io.homeassistant.companion.android.views.ChooseEntityView
 
 private const val ARG_SCREEN_SENSOR_MANAGER_ID = "sensorManagerId"
 private const val ARG_SCREEN_CAMERA_TILE_ID = "cameraTileId"
+private const val ARG_SCREEN_THERMOSTAT_TILE_ID = "thermostatTileId"
 private const val ARG_SCREEN_SHORTCUTS_TILE_ID = "shortcutsTileId"
 private const val ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX = "shortcutsTileEntityIndex"
 private const val ARG_SCREEN_TEMPLATE_TILE_ID = "templateTileId"
@@ -42,6 +44,11 @@ private const val SCREEN_SELECT_CAMERA_TILE = "select_camera_tile"
 private const val SCREEN_SET_CAMERA_TILE = "set_camera_tile"
 private const val SCREEN_SET_CAMERA_TILE_ENTITY = "entity"
 private const val SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL = "refresh_interval"
+private const val ROUTE_THERMOSTAT_TILE = "thermostat_tile"
+private const val SCREEN_SELECT_THERMOSTAT_TILE = "select_thermostat_tile"
+private const val SCREEN_SET_THERMOSTAT_TILE = "set_thermostat_tile"
+private const val SCREEN_SET_THERMOSTAT_TILE_ENTITY = "entity"
+private const val SCREEN_SET_THERMOSTAT_TILE_REFRESH_INTERVAL = "refresh_interval"
 private const val ROUTE_SHORTCUTS_TILE = "shortcuts_tile"
 private const val ROUTE_TEMPLATE_TILE = "template_tile"
 private const val SCREEN_SELECT_SHORTCUTS_TILE = "select_shortcuts_tile"
@@ -53,6 +60,7 @@ private const val SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL = "set_tile_template
 
 const val DEEPLINK_SENSOR_MANAGER = "ha_wear://$SCREEN_SINGLE_SENSOR_MANAGER"
 const val DEEPLINK_PREFIX_SET_CAMERA_TILE = "ha_wear://$SCREEN_SET_CAMERA_TILE"
+const val DEEPLINK_PREFIX_SET_THERMOSTAT_TILE = "ha_wear://$SCREEN_SET_THERMOSTAT_TILE"
 const val DEEPLINK_PREFIX_SET_SHORTCUT_TILE = "ha_wear://$SCREEN_SET_SHORTCUTS_TILE"
 const val DEEPLINK_PREFIX_SET_TEMPLATE_TILE = "ha_wear://$SCREEN_SET_TILE_TEMPLATE"
 
@@ -178,8 +186,7 @@ fun LoadHomePage(
                         swipeDismissableNavController.navigate("$ROUTE_TEMPLATE_TILE/$SCREEN_SELECT_TEMPLATE_TILE")
                     },
                     onClickThermostatTiles = {
-                        mainViewModel.loadTemplateTiles()
-                        swipeDismissableNavController.navigate("$ROUTE_TEMPLATE_TILE/$SCREEN_SELECT_TEMPLATE_TILE")
+                        swipeDismissableNavController.navigate("$ROUTE_THERMOSTAT_TILE/$SCREEN_SELECT_THERMOSTAT_TILE")
                     },
                     onAssistantAppAllowed = mainViewModel::setAssistantApp,
                     onClickNotifications = {
@@ -278,6 +285,85 @@ fun LoadHomePage(
                 ) { interval ->
                     tileId?.let {
                         mainViewModel.setCameraTileRefreshInterval(it, interval.toLong())
+                    }
+                    swipeDismissableNavController.navigateUp()
+                }
+            }
+            composable("$ROUTE_THERMOSTAT_TILE/$SCREEN_SELECT_THERMOSTAT_TILE") {
+                SelectThermostatTileView(
+                    tiles = mainViewModel.thermostatTiles.value,
+                    onSelectTile = { tileId ->
+                        swipeDismissableNavController.navigate("$ROUTE_THERMOSTAT_TILE/$tileId/$SCREEN_SET_THERMOSTAT_TILE")
+                    }
+                )
+            }
+            composable(
+                route = "$ROUTE_THERMOSTAT_TILE/{$ARG_SCREEN_THERMOSTAT_TILE_ID}/$SCREEN_SET_THERMOSTAT_TILE",
+                arguments = listOf(
+                    navArgument(name = ARG_SCREEN_THERMOSTAT_TILE_ID) {
+                        type = NavType.IntType
+                    }
+                ),
+                deepLinks = listOf(
+                    navDeepLink { uriPattern = "$DEEPLINK_PREFIX_SET_THERMOSTAT_TILE/{$ARG_SCREEN_THERMOSTAT_TILE_ID}" }
+                )
+            ) { backStackEntry ->
+                val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_THERMOSTAT_TILE_ID)
+                SetThermostatTileView(
+                    tile = mainViewModel.thermostatTiles.value.firstOrNull { it.id == tileId },
+                    entities = mainViewModel.climateEntitiesMap["climate"],
+                    onSelectEntity = {
+                        swipeDismissableNavController.navigate("$ROUTE_THERMOSTAT_TILE/$tileId/$SCREEN_SET_THERMOSTAT_TILE_ENTITY")
+                    },
+                    onSelectRefreshInterval = {
+                        swipeDismissableNavController.navigate("$ROUTE_THERMOSTAT_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL")
+                    }
+                )
+            }
+            composable(
+                route = "$ROUTE_THERMOSTAT_TILE/{$ARG_SCREEN_THERMOSTAT_TILE_ID}/$SCREEN_SET_THERMOSTAT_TILE_ENTITY",
+                arguments = listOf(
+                    navArgument(name = ARG_SCREEN_THERMOSTAT_TILE_ID) {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+                val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_THERMOSTAT_TILE_ID)
+                val climateDomains = remember { mutableStateListOf("climate") }
+                val climateFavorites = remember { mutableStateOf(emptyList<String>()) } // There are no climate favorites
+                ChooseEntityView(
+                    entitiesByDomainOrder = climateDomains,
+                    entitiesByDomain = mainViewModel.climateEntitiesMap,
+                    favoriteEntityIds = climateFavorites,
+                    onNoneClicked = {},
+                    onEntitySelected = { entity ->
+                        tileId?.let {
+                            mainViewModel.setThermostatTileEntity(it, entity.entityId)
+                            TileService.getUpdater(context).requestUpdate(ThermostatTile::class.java)
+                        }
+                        swipeDismissableNavController.navigateUp()
+                    },
+                    allowNone = false
+                )
+            }
+            composable(
+                route = "$ROUTE_THERMOSTAT_TILE/{$ARG_SCREEN_THERMOSTAT_TILE_ID}/$SCREEN_SET_THERMOSTAT_TILE_REFRESH_INTERVAL",
+                arguments = listOf(
+                    navArgument(name = ARG_SCREEN_THERMOSTAT_TILE_ID) {
+                        type = NavType.IntType
+                    }
+                )
+            ) { backStackEntry ->
+                val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_THERMOSTAT_TILE_ID)
+                RefreshIntervalPickerView(
+                    currentInterval = (
+                        mainViewModel.thermostatTiles.value
+                            .firstOrNull { it.id == tileId }?.refreshInterval
+                            ?: ThermostatTile.DEFAULT_REFRESH_INTERVAL
+                        ).toInt()
+                ) { interval ->
+                    tileId?.let {
+                        mainViewModel.setThermostatTileRefreshInterval(it, interval.toLong())
                     }
                     swipeDismissableNavController.navigateUp()
                 }
