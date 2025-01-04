@@ -69,6 +69,13 @@ interface WebViewPresenter {
     /** @return `true` if the app should prompt the user for Improv permissions before scanning */
     suspend fun shouldShowImprovPermissions(): Boolean
 
+    /**
+     * @return Improv permission the app should request directly, without showing a prompt.
+     * This may occur when one of two Bluetooth related permissions is granted and the other one
+     * is not. The system should automatically grant this when requested.
+     * */
+    fun shouldRequestImprovPermission(): String?
+
     /** @return `true` if the app tried starting scanning or `false` if it was missing permissions */
     fun startScanningForImprov(): Boolean
     fun stopScanningForImprov(force: Boolean)
