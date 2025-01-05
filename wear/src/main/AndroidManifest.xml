@@ -225,7 +225,7 @@
             </intent-filter>
 
             <meta-data android:name="androidx.wear.tiles.PREVIEW"
-                android:resource="@drawable/camera_tile_example" />
+                android:resource="@drawable/thermostat_tile_example" />
 
             <meta-data
                 android:name="com.google.android.clockwork.tiles.MULTI_INSTANCES_SUPPORTED"
