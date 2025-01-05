@@ -71,14 +71,11 @@ class ThermostatTile: TileService() {
                 if (wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
             }
 
-            Log.d(TAG, entity?.entityId.toString())
-
             val lastId = requestParams.currentState.lastClickableId
 
             var targetTemp = tileConfig?.targetTemperature.toString()
             if (targetTemp == "null") targetTemp = entity?.attributes?.get("temperature").toString()
 
-            Log.d(TAG, lastId)
             if (lastId == "Up" || lastId == "Down") {
 
                 val entityStr = entity?.entityId.toString()
