@@ -1473,7 +1473,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         if (!httpAuth?.host.isNullOrBlank()) {
             if (!authError) {
-                handler.proceed(httpAuth?.username, httpAuth?.password)
+                handler.proceed(httpAuth.username, httpAuth.password)
                 autoAuth = true
                 firstAuthTime = System.currentTimeMillis()
             }
@@ -1488,6 +1488,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
         }
         if (!autoAuth || authError) {
+            isShowingError = true
             AlertDialog.Builder(this, R.style.Authentication_Dialog)
                 .setTitle(commonR.string.auth_request)
                 .setMessage(message)
@@ -1527,6 +1528,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 .setNeutralButton(android.R.string.cancel) { _, _ ->
                     Toast.makeText(applicationContext, commonR.string.auth_cancel, Toast.LENGTH_SHORT)
                         .show()
+                }
+                .setOnDismissListener {
+                    isShowingError = false
+                    waitForConnection()
                 }
                 .show()
         }
