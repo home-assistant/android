@@ -1,9 +1,6 @@
 package io.homeassistant.companion.android.tiles
 
-import android.graphics.Color
-import android.util.Log
 import androidx.wear.protolayout.ActionBuilders
-import androidx.wear.protolayout.ColorBuilders
 import androidx.wear.protolayout.DimensionBuilders
 import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
@@ -12,32 +9,27 @@ import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.protolayout.TimelineBuilders.Timeline
 import androidx.wear.protolayout.material.Button
-import androidx.wear.protolayout.material.ButtonColors
 import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
+import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.wear.ThermostatTile
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import androidx.wear.tiles.TileBuilders.Tile
-import com.mikepenz.iconics.compose.Image
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.theme.getPrimaryButtonColors
-import io.homeassistant.companion.android.theme.md_theme_dark_onPrimary
-import io.homeassistant.companion.android.theme.md_theme_dark_primary
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.wear.ThermostatTile
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.guava.future
-import javax.inject.Inject
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class ThermostatTile: TileService() {
@@ -51,14 +43,13 @@ class ThermostatTile: TileService() {
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     @Inject
-    lateinit var serverManager: ServerManager
+    lateinit var serverManager : ServerManager
 
     @Inject
-    lateinit var wearPrefsRepository: WearPrefsRepository
+    lateinit var wearPrefsRepository : WearPrefsRepository
 
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
-
             val tileId = requestParams.tileId
             val thermostatTileDao = AppDatabase.getInstance(this@ThermostatTile).thermostatTileDao()
             val tileConfig = thermostatTileDao.get(tileId)
@@ -77,7 +68,6 @@ class ThermostatTile: TileService() {
             if (targetTemp == "null") targetTemp = entity?.attributes?.get("temperature").toString()
 
             if (lastId == "Up" || lastId == "Down") {
-
                 val entityStr = entity?.entityId.toString()
                 val stepSize = entity?.attributes?.get("target_temp_step").toString().toFloat()
                 val updatedTargetTemp = targetTemp.toFloat() + if (lastId == "Up") +stepSize else -stepSize
@@ -165,7 +155,6 @@ class ThermostatTile: TileService() {
 
     private suspend fun timeline(tileConfig: ThermostatTile?, targetTemperature: String): Timeline = Timeline.fromLayoutElement(
         LayoutElementBuilders.Box.Builder().apply {
-
             val entity = tileConfig?.entityId?.let {
                 serverManager.integrationRepository().getEntity(it)
             }
@@ -186,9 +175,11 @@ class ThermostatTile: TileService() {
                             LayoutElementBuilders.Text.Builder()
                                 .setText(targetTemperature)
                                 .setMaxLines(1)
-                                .setFontStyle(LayoutElementBuilders.FontStyle.Builder().setSize(
+                                .setFontStyle(
+                                    LayoutElementBuilders.FontStyle.Builder().setSize(
                                     DimensionBuilders.sp(35f)
-                                ).build())
+                                )
+                                    .build())
                                 .build()
                         )
                         .addContent(
@@ -216,7 +207,6 @@ class ThermostatTile: TileService() {
                                 .build()
                         ).build()
                 )
-
             }
             // Refresh button
             addContent(getRefreshButton())
@@ -225,7 +215,6 @@ class ThermostatTile: TileService() {
     )
 
     private suspend fun getTempUpButton(): LayoutElement {
-
         val clickable = Clickable.Builder()
             .setOnClick(ActionBuilders.LoadAction.Builder().build())
             .setId("Up")
@@ -234,7 +223,6 @@ class ThermostatTile: TileService() {
         return Button.Builder(this, clickable)
             .setTextContent("+")
             .build()
-
     }
 
     private fun getTempDownButton(): LayoutElement {
