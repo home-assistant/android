@@ -157,6 +157,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 downloadFile(downloadFileUrl, downloadFileContentDisposition, downloadFileMimetype)
             }
         }
+    private val requestImprovPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                presenter.startScanningForImprov()
+            }
+        }
     private val writeNfcTag = registerForActivityResult(WriteNfcTag()) { messageId ->
         sendExternalBusMessage(
             ExternalBusMessage(
@@ -1696,7 +1702,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 val dialog = ImprovPermissionDialog()
                 dialog.show(supportFragmentManager, ImprovPermissionDialog.TAG)
             } else {
-                presenter.startScanningForImprov()
+                val safePermissionToRequest = presenter.shouldRequestImprovPermission()
+                if (safePermissionToRequest != null) {
+                    requestImprovPermission.launch(safePermissionToRequest)
+                } else {
+                    presenter.startScanningForImprov()
+                }
             }
         }
     }

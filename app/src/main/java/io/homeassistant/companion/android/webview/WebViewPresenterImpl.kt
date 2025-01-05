@@ -1,12 +1,15 @@
 package io.homeassistant.companion.android.webview
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.IntentSender
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
 import android.util.Log
 import androidx.activity.result.ActivityResult
+import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
@@ -486,6 +489,23 @@ class WebViewPresenterImpl @Inject constructor(
             false
         } else {
             prefsRepository.getImprovPermissionDisplayedCount() < 2
+        }
+    }
+
+    override fun shouldRequestImprovPermission(): String? {
+        var returnPermissions = try {
+            improvRepository.getRequiredPermissions().filter {
+                ContextCompat.checkSelfPermission(view as Context, it) != PackageManager.PERMISSION_GRANTED
+            }
+        } catch (_: Exception) {
+            // Unable to check, ignore
+            emptyList<String>()
+        }
+        return if (returnPermissions.size == 1 && returnPermissions[0] != Manifest.permission.ACCESS_FINE_LOCATION) {
+            Log.d(TAG, "Should request Improv permission: $returnPermissions")
+            returnPermissions[0]
+        } else {
+            null
         }
     }
 
