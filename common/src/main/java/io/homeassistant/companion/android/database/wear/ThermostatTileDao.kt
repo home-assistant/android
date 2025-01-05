@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 interface ThermostatTileDao {
 
     @Query("SELECT * FROM thermostat_tiles WHERE id = :id")
-    suspend fun get(id: Int): ThermostatTile
+    suspend fun get(id: Int): ThermostatTile?
 
     @Query("SELECT * FROM thermostat_tiles ORDER BY id ASC")
     fun getAllFlow(): Flow<List<ThermostatTile>>

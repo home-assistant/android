@@ -19,5 +19,8 @@ data class ThermostatTile(
     val entityId: String? = null,
     /** The refresh interval of this tile, in seconds */
     @ColumnInfo(name = "refresh_interval")
-    val refreshInterval: Long? = null
+    val refreshInterval: Long? = null,
+    /** The target temperature to allow quick repeated changes */
+    @ColumnInfo(name = "target_temperature")
+    val targetTemperature: Float? = null
 )
