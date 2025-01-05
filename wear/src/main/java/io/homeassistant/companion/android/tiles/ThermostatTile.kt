@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.tiles
 
+import android.graphics.Color
 import android.util.Log
 import androidx.wear.protolayout.ActionBuilders
+import androidx.wear.protolayout.ColorBuilders
 import androidx.wear.protolayout.DimensionBuilders
 import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
@@ -10,6 +12,7 @@ import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.protolayout.TimelineBuilders.Timeline
 import androidx.wear.protolayout.material.Button
+import androidx.wear.protolayout.material.ButtonColors
 import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
@@ -22,9 +25,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import androidx.wear.tiles.TileBuilders.Tile
+import com.mikepenz.iconics.compose.Image
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.theme.getPrimaryButtonColors
+import io.homeassistant.companion.android.theme.md_theme_dark_onPrimary
+import io.homeassistant.companion.android.theme.md_theme_dark_primary
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
