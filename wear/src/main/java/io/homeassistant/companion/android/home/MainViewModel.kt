@@ -30,6 +30,8 @@ import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.database.wear.CameraTileDao
+import io.homeassistant.companion.android.database.wear.ThermostatTile
+import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.database.wear.FavoriteCaches
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
@@ -53,6 +55,7 @@ class MainViewModel @Inject constructor(
     private val favoriteCachesDao: FavoriteCachesDao,
     private val sensorsDao: SensorDao,
     private val cameraTileDao: CameraTileDao,
+    private val thermostatTileDao: ThermostatTileDao,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -97,6 +100,10 @@ class MainViewModel @Inject constructor(
 
     val cameraTiles = cameraTileDao.getAllFlow().collectAsState()
     var cameraEntitiesMap = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
+        private set
+
+    val thermostatTiles = thermostatTileDao.getAllFlow().collectAsState()
+    var climateEntitiesMap = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
         private set
 
     var areas = mutableListOf<AreaRegistryResponse>()
@@ -242,9 +249,11 @@ class MainViewModel @Inject constructor(
             entities.clear()
             it.forEach { state -> updateEntityStates(state) }
 
-            // Special list: camera entities
+            // Special lists: camera entities and climate entities
             val cameraEntities = it.filter { entity -> entity.domain == "camera" }
             cameraEntitiesMap["camera"] = mutableStateListOf<Entity<*>>().apply { addAll(cameraEntities) }
+            val climateEntities = it.filter { entity -> entity.domain == "climate" }
+            climateEntitiesMap["climate"] = mutableStateListOf<Entity<*>>().apply { addAll(climateEntities) }
         }
         if (!isFavoritesOnly) {
             updateEntityDomains()
@@ -446,6 +455,18 @@ class MainViewModel @Inject constructor(
         val current = cameraTileDao.get(tileId)
         val updated = current?.copy(refreshInterval = interval) ?: CameraTile(id = tileId, refreshInterval = interval)
         cameraTileDao.add(updated)
+    }
+
+    fun setThermostatTileEntity(tileId: Int, entityId: String) = viewModelScope.launch {
+        val current = thermostatTileDao.get(tileId)
+        val updated = current?.copy(entityId = entityId) ?: ThermostatTile(id = tileId, entityId = entityId)
+        thermostatTileDao.add(updated)
+    }
+
+    fun setThermostatTileRefreshInterval(tileId: Int, interval: Long) = viewModelScope.launch {
+        val current = thermostatTileDao.get(tileId)
+        val updated = current?.copy(refreshInterval = interval) ?: ThermostatTile(id = tileId, refreshInterval = interval)
+        thermostatTileDao.add(updated)
     }
 
     fun setTileShortcut(tileId: Int?, index: Int, entity: SimplifiedEntity) {

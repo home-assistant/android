@@ -1355,4 +1355,12 @@
     <string name="domain_remote">Remote</string>
     <string name="domain_siren">Siren</string>
     <string name="domain_humidifier">Humidifier</string>
+    <string name="thermostat_tiles">Thermostat tiles</string>
+    <string name="thermostat">Thermostat</string>
+    <string name="thermostat_tile_desc">See and change the thermostat temperature.</string>
+    <string name="thermostat_tile_no_tiles_yet">There are no thermostat tiles added yet - add one from the watch face to set it up</string>
+    <string name="thermostat_tile_no_entity_yet">Edit the tile settings and select a thermostat to show</string>
+    <string name="thermostat_tile_n">Thermostat tile #%d</string>
+    <string name="thermostat_tile_log_in">Log in to add a thermostat tile</string>
+    <string name="thermostat_tile">Thermostat tile</string>
 </resources>
