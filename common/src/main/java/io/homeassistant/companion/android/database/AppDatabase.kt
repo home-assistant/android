@@ -55,14 +55,14 @@ import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.database.wear.CameraTileDao
-import io.homeassistant.companion.android.database.wear.ThermostatTile
-import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.database.wear.EntityStateComplications
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import io.homeassistant.companion.android.database.wear.FavoriteCaches
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.database.wear.FavoritesDao
+import io.homeassistant.companion.android.database.wear.ThermostatTile
+import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
