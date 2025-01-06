@@ -21,6 +21,8 @@ import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.ThermostatTile
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,11 +30,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 
 @AndroidEntryPoint
-class ThermostatTile: TileService() {
+class ThermostatTile : TileService() {
 
     companion object {
         private const val TAG = "ThermostatTile"
@@ -43,93 +43,91 @@ class ThermostatTile: TileService() {
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     @Inject
-    lateinit var serverManager : ServerManager
+    lateinit var serverManager: ServerManager
 
     @Inject
-    lateinit var wearPrefsRepository : WearPrefsRepository
+    lateinit var wearPrefsRepository: WearPrefsRepository
 
-    override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile> =
-        serviceScope.future {
-            val tileId = requestParams.tileId
-            val thermostatTileDao = AppDatabase.getInstance(this@ThermostatTile).thermostatTileDao()
-            val tileConfig = thermostatTileDao.get(tileId)
+    override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile> = serviceScope.future {
+        val tileId = requestParams.tileId
+        val thermostatTileDao = AppDatabase.getInstance(this@ThermostatTile).thermostatTileDao()
+        val tileConfig = thermostatTileDao.get(tileId)
 
-            val entity = tileConfig?.entityId?.let {
-                serverManager.integrationRepository().getEntity(it)
-            }
+        val entity = tileConfig?.entityId?.let {
+            serverManager.integrationRepository().getEntity(it)
+        }
 
-            if (requestParams.currentState.lastClickableId.isNotEmpty()) {
-                if (wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
-            }
+        if (requestParams.currentState.lastClickableId.isNotEmpty()) {
+            if (wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
+        }
 
-            val lastId = requestParams.currentState.lastClickableId
+        val lastId = requestParams.currentState.lastClickableId
 
-            var targetTemp = tileConfig?.targetTemperature.toString()
-            if (targetTemp == "null") targetTemp = entity?.attributes?.get("temperature").toString()
+        var targetTemp = tileConfig?.targetTemperature.toString()
+        if (targetTemp == "null") targetTemp = entity?.attributes?.get("temperature").toString()
 
-            if (lastId == "Up" || lastId == "Down") {
-                val entityStr = entity?.entityId.toString()
-                val stepSize = entity?.attributes?.get("target_temp_step").toString().toFloat()
-                val updatedTargetTemp = targetTemp.toFloat() + if (lastId == "Up") +stepSize else -stepSize
+        if (lastId == "Up" || lastId == "Down") {
+            val entityStr = entity?.entityId.toString()
+            val stepSize = entity?.attributes?.get("target_temp_step").toString().toFloat()
+            val updatedTargetTemp = targetTemp.toFloat() + if (lastId == "Up") +stepSize else -stepSize
 
-                serverManager.integrationRepository().callAction(
-                    entityStr.split(".")[0],
-                    "set_temperature",
-                    hashMapOf(
-                        "entity_id" to entityStr,
-                        "temperature" to updatedTargetTemp
+            serverManager.integrationRepository().callAction(
+                entityStr.split(".")[0],
+                "set_temperature",
+                hashMapOf(
+                    "entity_id" to entityStr,
+                    "temperature" to updatedTargetTemp
+                )
+            )
+            val updated = tileConfig?.copy(targetTemperature = updatedTargetTemp) ?: ThermostatTile(id = tileId, targetTemperature = updatedTargetTemp)
+            thermostatTileDao.add(updated)
+            targetTemp = updatedTargetTemp.toString()
+        } else {
+            val updated = tileConfig?.copy(targetTemperature = null) ?: ThermostatTile(id = tileId, targetTemperature = null)
+            thermostatTileDao.add(updated)
+        }
+
+        val freshness = when {
+            (tileConfig?.refreshInterval != null && tileConfig.refreshInterval!! <= 1) -> 0
+            tileConfig?.refreshInterval != null -> tileConfig.refreshInterval!!
+            else -> DEFAULT_REFRESH_INTERVAL
+        }
+
+        Tile.Builder()
+            .setResourcesVersion("$TAG$tileId.${System.currentTimeMillis()}")
+            .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(freshness))
+            .setTileTimeline(
+                if (serverManager.isRegistered()) {
+                    timeline(
+                        tileConfig,
+                        targetTemp
                     )
-                )
-                val updated = tileConfig?.copy(targetTemperature = updatedTargetTemp) ?: ThermostatTile(id = tileId, targetTemperature = updatedTargetTemp)
-                thermostatTileDao.add(updated)
-                targetTemp = updatedTargetTemp.toString()
-            } else {
-                val updated = tileConfig?.copy(targetTemperature = null) ?: ThermostatTile(id = tileId, targetTemperature = null)
-                thermostatTileDao.add(updated)
-            }
+                } else {
+                    loggedOutTimeline(
+                        this@ThermostatTile,
+                        requestParams,
+                        R.string.thermostat,
+                        R.string.thermostat_tile_log_in
+                    )
+                }
+            )
+            .build()
+    }
 
-            val freshness = when {
-                (tileConfig?.refreshInterval != null && tileConfig.refreshInterval!! <= 1) -> 0
-                tileConfig?.refreshInterval != null -> tileConfig.refreshInterval!!
-                else -> DEFAULT_REFRESH_INTERVAL
-            }
-
-            Tile.Builder()
-                .setResourcesVersion("$TAG$tileId.${System.currentTimeMillis()}")
-                .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(freshness))
-                .setTileTimeline(
-                    if (serverManager.isRegistered()) {
-                        timeline(
-                            tileConfig,
-                            targetTemp
-                        )
-                    } else {
-                        loggedOutTimeline(
-                            this@ThermostatTile,
-                            requestParams,
-                            R.string.thermostat,
-                            R.string.thermostat_tile_log_in
-                        )
-                    }
-                )
-                .build()
-        }
-
-    override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
-        serviceScope.future {
-            Resources.Builder()
-                .setVersion(requestParams.version)
-                .addIdToImageMapping(
-                    RESOURCE_REFRESH,
-                    ResourceBuilders.ImageResource.Builder()
-                        .setAndroidResourceByResId(
-                            ResourceBuilders.AndroidImageResourceByResId.Builder()
-                                .setResourceId(io.homeassistant.companion.android.R.drawable.ic_refresh)
-                                .build()
-                        ).build()
-                )
-                .build()
-        }
+    override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> = serviceScope.future {
+        Resources.Builder()
+            .setVersion(requestParams.version)
+            .addIdToImageMapping(
+                RESOURCE_REFRESH,
+                ResourceBuilders.ImageResource.Builder()
+                    .setAndroidResourceByResId(
+                        ResourceBuilders.AndroidImageResourceByResId.Builder()
+                            .setResourceId(io.homeassistant.companion.android.R.drawable.ic_refresh)
+                            .build()
+                    ).build()
+            )
+            .build()
+    }
 
     override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) = runBlocking {
         withContext(Dispatchers.IO) {
@@ -177,9 +175,9 @@ class ThermostatTile: TileService() {
                                 .setMaxLines(1)
                                 .setFontStyle(
                                     LayoutElementBuilders.FontStyle.Builder().setSize(
-                                    DimensionBuilders.sp(35f)
+                                        DimensionBuilders.sp(35f)
+                                    ).build()
                                 )
-                                    .build())
                                 .build()
                         )
                         .addContent(
@@ -214,7 +212,7 @@ class ThermostatTile: TileService() {
         }.build()
     )
 
-    private suspend fun getTempUpButton(): LayoutElement {
+    private fun getTempUpButton(): LayoutElement {
         val clickable = Clickable.Builder()
             .setOnClick(ActionBuilders.LoadAction.Builder().build())
             .setId("Up")
