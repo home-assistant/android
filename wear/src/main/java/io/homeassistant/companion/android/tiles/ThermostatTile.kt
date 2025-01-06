@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.tiles
 
 import androidx.wear.protolayout.ActionBuilders
+import androidx.wear.protolayout.ColorBuilders
 import androidx.wear.protolayout.DimensionBuilders
 import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
@@ -9,6 +10,7 @@ import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.protolayout.TimelineBuilders.Timeline
 import androidx.wear.protolayout.material.Button
+import androidx.wear.protolayout.material.ButtonColors
 import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
@@ -158,6 +160,15 @@ class ThermostatTile : TileService() {
             }
 
             val currentTemperature = entity?.attributes?.get("current_temperature").toString()
+            val hvacAction = entity?.attributes?.get("hvac_action").toString().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+            val friendlyName = entity?.attributes?.get("friendly_name").toString()
+
+            val hvacActionColor = when (hvacAction) {
+                "Idle" -> getColor(R.color.colorWidgetButtonLabelWhite)
+                "Heating" -> getColor(R.color.colorDeviceControlsThermostatHeat)
+                "Cooling" -> getColor(R.color.colorDeviceControlsDefaultOn)
+                else -> getColor(R.color.colorDialogBackground)
+            }
 
             if (tileConfig?.entityId.isNullOrBlank()) {
                 addContent(
@@ -171,8 +182,13 @@ class ThermostatTile : TileService() {
                     LayoutElementBuilders.Column.Builder()
                         .addContent(
                             LayoutElementBuilders.Text.Builder()
+                                .setText(hvacAction)
+                                .setFontStyle(LayoutElementBuilders.FontStyle.Builder().setColor(ColorBuilders.argb(hvacActionColor)).build())
+                                .build()
+                        )
+                        .addContent(
+                            LayoutElementBuilders.Text.Builder()
                                 .setText(targetTemperature)
-                                .setMaxLines(1)
                                 .setFontStyle(
                                     LayoutElementBuilders.FontStyle.Builder().setSize(
                                         DimensionBuilders.sp(35f)
@@ -181,13 +197,9 @@ class ThermostatTile : TileService() {
                                 .build()
                         )
                         .addContent(
-                            LayoutElementBuilders.Spacer.Builder()
-                                .setHeight(DimensionBuilders.dp(10f)).build()
-                        )
-                        .addContent(
                             LayoutElementBuilders.Text.Builder()
                                 .setText(currentTemperature)
-                                .setMaxLines(1)
+                                .setFontStyle(LayoutElementBuilders.FontStyle.Builder().setColor(ColorBuilders.argb(hvacActionColor)).build())
                                 .build()
                         )
                         .addContent(
@@ -203,7 +215,23 @@ class ThermostatTile : TileService() {
                                 )
                                 .addContent(getTempUpButton())
                                 .build()
-                        ).build()
+                        )
+                        .build()
+                )
+            }
+            if (friendlyName != "null") {
+                addContent(
+                    LayoutElementBuilders.Arc.Builder()
+                        .setAnchorAngle(
+                            DimensionBuilders.DegreesProp.Builder(0f).build()
+                        )
+                        .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_CENTER)
+                        .addContent(
+                            LayoutElementBuilders.ArcText.Builder()
+                                .setText(friendlyName)
+                                .build()
+                        )
+                        .build()
                 )
             }
             // Refresh button
@@ -220,6 +248,12 @@ class ThermostatTile : TileService() {
 
         return Button.Builder(this, clickable)
             .setTextContent("+")
+            .setButtonColors(
+                ButtonColors(
+                    ColorBuilders.argb(getColor(R.color.colorPrimary)),
+                    ColorBuilders.argb(getColor(R.color.colorWidgetButtonLabelBlack))
+                )
+            )
             .build()
     }
 
@@ -230,7 +264,13 @@ class ThermostatTile : TileService() {
             .build()
 
         return Button.Builder(this, clickable)
-            .setTextContent("-")
+            .setTextContent("—")
+            .setButtonColors(
+                ButtonColors(
+                    ColorBuilders.argb(getColor(R.color.colorPrimary)),
+                    ColorBuilders.argb(getColor(R.color.colorWidgetButtonLabelBlack))
+                )
+            )
             .build()
     }
 }
