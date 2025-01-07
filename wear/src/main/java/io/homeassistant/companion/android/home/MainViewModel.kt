@@ -469,6 +469,12 @@ class MainViewModel @Inject constructor(
         thermostatTileDao.add(updated)
     }
 
+    fun setThermostatTileShowName(tileId: Int, showName: Boolean) = viewModelScope.launch {
+        val current = thermostatTileDao.get(tileId)
+        val updated = current?.copy(showEntityName = showName) ?: ThermostatTile(id = tileId, showEntityName = showName)
+        thermostatTileDao.add(updated)
+    }
+
     fun setTileShortcut(tileId: Int?, index: Int, entity: SimplifiedEntity) {
         viewModelScope.launch {
             val shortcutEntities = shortcutEntitiesMap[tileId]!!

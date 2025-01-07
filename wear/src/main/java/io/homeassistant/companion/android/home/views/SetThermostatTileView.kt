@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -18,6 +19,7 @@ import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
+import io.homeassistant.companion.android.theme.getSwitchButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.tiles.ThermostatTile.Companion.DEFAULT_REFRESH_INTERVAL
 import io.homeassistant.companion.android.util.intervalToString
@@ -29,7 +31,8 @@ fun SetThermostatTileView(
     tile: ThermostatTile?,
     entities: List<Entity<*>>?,
     onSelectEntity: () -> Unit,
-    onSelectRefreshInterval: () -> Unit
+    onSelectRefreshInterval: () -> Unit,
+    onNameEnabled: (Int, Boolean) -> Unit
 ) {
     WearAppTheme {
         ThemeLazyColumn {
@@ -83,6 +86,23 @@ fun SetThermostatTileView(
                         )
                     },
                     onClick = onSelectRefreshInterval
+                )
+            }
+            item {
+                SwitchButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    checked = tile?.showEntityName == true,
+                    onCheckedChange = {
+                        onNameEnabled(tile?.id.toString().toInt(), it)
+                    },
+                    label = { Text(stringResource(commonR.string.setting_entity_name_on_tile)) },
+                    icon = {
+                        Image(
+                            asset = CommunityMaterial.Icon3.cmd_page_layout_header,
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
+                        )
+                    },
+                    colors = getSwitchButtonColors()
                 )
             }
         }

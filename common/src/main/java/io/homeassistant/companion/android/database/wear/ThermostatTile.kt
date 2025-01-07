@@ -22,5 +22,8 @@ data class ThermostatTile(
     val refreshInterval: Long? = null,
     /** The target temperature to allow quick repeated changes */
     @ColumnInfo(name = "target_temperature")
-    val targetTemperature: Float? = null
+    val targetTemperature: Float? = null,
+    /** Whether or not to show the entity friendly name on the tile. */
+    @ColumnInfo(name = "show_entity_name")
+    val showEntityName: Boolean? = true
 )

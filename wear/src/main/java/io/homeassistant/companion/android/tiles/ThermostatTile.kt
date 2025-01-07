@@ -229,19 +229,21 @@ class ThermostatTile : TileService() {
                         .build()
                 )
             }
-            addContent(
-                LayoutElementBuilders.Arc.Builder()
-                    .setAnchorAngle(
-                        DimensionBuilders.DegreesProp.Builder(0f).build()
-                    )
-                    .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_CENTER)
-                    .addContent(
-                        LayoutElementBuilders.ArcText.Builder()
-                            .setText(friendlyName)
-                            .build()
-                    )
-                    .build()
-            )
+            if (tileConfig?.showEntityName == true) {
+                addContent(
+                    LayoutElementBuilders.Arc.Builder()
+                        .setAnchorAngle(
+                            DimensionBuilders.DegreesProp.Builder(0f).build()
+                        )
+                        .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_CENTER)
+                        .addContent(
+                            LayoutElementBuilders.ArcText.Builder()
+                                .setText(friendlyName)
+                                .build()
+                        )
+                        .build()
+                )
+            }
             // Refresh button
             addContent(getRefreshButton())
             setModifiers(getRefreshModifiers())

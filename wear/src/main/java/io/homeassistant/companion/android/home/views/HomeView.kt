@@ -317,6 +317,9 @@ fun LoadHomePage(
                     },
                     onSelectRefreshInterval = {
                         swipeDismissableNavController.navigate("$ROUTE_THERMOSTAT_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL")
+                    },
+                    onNameEnabled = { tileIdToggle, showName ->
+                        mainViewModel.setThermostatTileShowName(tileIdToggle, showName)
                     }
                 )
             }

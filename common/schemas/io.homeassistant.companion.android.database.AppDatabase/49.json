@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 49,
-    "identityHash": "5d28954bad3cbfaf7cae269341c36096",
+    "identityHash": "7367bad243f166fbcfc3325de2a420b3",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -883,7 +883,7 @@
       },
       {
         "tableName": "thermostat_tiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `entity_id` TEXT, `refresh_interval` INTEGER, `target_temperature` REAL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `entity_id` TEXT, `refresh_interval` INTEGER, `target_temperature` REAL, `show_entity_name` INTEGER, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -907,6 +907,12 @@
             "fieldPath": "targetTemperature",
             "columnName": "target_temperature",
             "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "showEntityName",
+            "columnName": "show_entity_name",
+            "affinity": "INTEGER",
             "notNull": false
           }
         ],
@@ -1171,7 +1177,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5d28954bad3cbfaf7cae269341c36096')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7367bad243f166fbcfc3325de2a420b3')"
     ]
   }
 }
