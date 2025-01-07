@@ -162,6 +162,8 @@ class ThermostatTile : TileService() {
             val currentTemperature = entity?.attributes?.get("current_temperature").toString()
             val hvacAction = entity?.attributes?.get("hvac_action").toString().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
             val friendlyName = entity?.attributes?.get("friendly_name").toString()
+            val config = serverManager.webSocketRepository().getConfig()
+            val temperatureUnit = config?.unitSystem?.getValue("temperature").toString()
 
             val hvacActionColor = when (hvacAction) {
                 "Idle" -> getColor(R.color.colorWidgetButtonLabelWhite)
@@ -188,18 +190,22 @@ class ThermostatTile : TileService() {
                         )
                         .addContent(
                             LayoutElementBuilders.Text.Builder()
-                                .setText(targetTemperature)
+                                .setText("$targetTemperature $temperatureUnit")
                                 .setFontStyle(
                                     LayoutElementBuilders.FontStyle.Builder().setSize(
-                                        DimensionBuilders.sp(35f)
+                                        DimensionBuilders.sp(30f)
                                     ).build()
                                 )
                                 .build()
                         )
                         .addContent(
                             LayoutElementBuilders.Text.Builder()
-                                .setText(currentTemperature)
-                                .setFontStyle(LayoutElementBuilders.FontStyle.Builder().setColor(ColorBuilders.argb(hvacActionColor)).build())
+                                .setText("$currentTemperature $temperatureUnit")
+                                .setFontStyle(
+                                    LayoutElementBuilders.FontStyle.Builder()
+                                        .setColor(ColorBuilders.argb(hvacActionColor))
+                                        .build()
+                                )
                                 .build()
                         )
                         .addContent(
@@ -219,21 +225,19 @@ class ThermostatTile : TileService() {
                         .build()
                 )
             }
-            if (friendlyName != "null") {
-                addContent(
-                    LayoutElementBuilders.Arc.Builder()
-                        .setAnchorAngle(
-                            DimensionBuilders.DegreesProp.Builder(0f).build()
-                        )
-                        .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_CENTER)
-                        .addContent(
-                            LayoutElementBuilders.ArcText.Builder()
-                                .setText(friendlyName)
-                                .build()
-                        )
-                        .build()
-                )
-            }
+            addContent(
+                LayoutElementBuilders.Arc.Builder()
+                    .setAnchorAngle(
+                        DimensionBuilders.DegreesProp.Builder(0f).build()
+                    )
+                    .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_CENTER)
+                    .addContent(
+                        LayoutElementBuilders.ArcText.Builder()
+                            .setText(friendlyName)
+                            .build()
+                    )
+                    .build()
+            )
             // Refresh button
             addContent(getRefreshButton())
             setModifiers(getRefreshModifiers())
