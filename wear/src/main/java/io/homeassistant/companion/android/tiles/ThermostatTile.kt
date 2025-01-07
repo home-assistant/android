@@ -169,7 +169,7 @@ class ThermostatTile : TileService() {
                 "Idle" -> getColor(R.color.colorWidgetButtonLabelWhite)
                 "Heating" -> getColor(R.color.colorDeviceControlsThermostatHeat)
                 "Cooling" -> getColor(R.color.colorDeviceControlsDefaultOn)
-                else -> getColor(R.color.colorDialogBackground)
+                else -> getColor(R.color.colorWidgetButtonLabelWhite)
             }
 
             if (tileConfig?.entityId.isNullOrBlank()) {
@@ -190,7 +190,7 @@ class ThermostatTile : TileService() {
                         )
                         .addContent(
                             LayoutElementBuilders.Text.Builder()
-                                .setText("$targetTemperature $temperatureUnit")
+                                .setText(if (hvacAction == "Off") "--.- $temperatureUnit" else "$targetTemperature $temperatureUnit")
                                 .setFontStyle(
                                     LayoutElementBuilders.FontStyle.Builder().setSize(
                                         DimensionBuilders.sp(30f)
@@ -213,14 +213,18 @@ class ThermostatTile : TileService() {
                                 .setHeight(DimensionBuilders.dp(10f)).build()
                         )
                         .addContent(
-                            LayoutElementBuilders.Row.Builder()
-                                .addContent(getTempDownButton())
-                                .addContent(
-                                    LayoutElementBuilders.Spacer.Builder()
-                                        .setWidth(DimensionBuilders.dp(20f)).build()
-                                )
-                                .addContent(getTempUpButton())
-                                .build()
+                            if (hvacAction != "Off") {
+                                LayoutElementBuilders.Row.Builder()
+                                    .addContent(getTempDownButton())
+                                    .addContent(
+                                        LayoutElementBuilders.Spacer.Builder()
+                                            .setWidth(DimensionBuilders.dp(20f)).build()
+                                    )
+                                    .addContent(getTempUpButton())
+                                    .build()
+                            } else {
+                                LayoutElementBuilders.Spacer.Builder().setWidth(DimensionBuilders.dp(0f)).build()
+                            }
                         )
                         .build()
                 )
