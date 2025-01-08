@@ -188,7 +188,7 @@ class ThermostatTile : TileService() {
                         )
                         .addContent(
                             LayoutElementBuilders.Text.Builder()
-                                .setText(if (hvacAction == "Off") "--.- $temperatureUnit" else "$targetTemperature $temperatureUnit")
+                                .setText(if (hvacAction == "Off") "-- $temperatureUnit" else "$targetTemperature $temperatureUnit")
                                 .setFontStyle(
                                     LayoutElementBuilders.FontStyle.Builder().setSize(
                                         DimensionBuilders.sp(30f)
