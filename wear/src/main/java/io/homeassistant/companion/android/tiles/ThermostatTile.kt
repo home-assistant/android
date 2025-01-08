@@ -172,7 +172,6 @@ class ThermostatTile : TileService() {
                 val currentTemperature = entity?.attributes?.get("current_temperature").toString()
                 val config = serverManager.webSocketRepository().getConfig()
                 val temperatureUnit = config?.unitSystem?.getValue("temperature").toString()
-                Log.d(TAG, hvacAction)
 
                 val hvacAction = entity?.attributes?.get("hvac_action").toString()
                 val hvacActionColor = when (hvacAction) {
@@ -208,11 +207,6 @@ class ThermostatTile : TileService() {
                         .addContent(
                             LayoutElementBuilders.Text.Builder()
                                 .setText("$currentTemperature $temperatureUnit")
-                                .setFontStyle(
-                                    LayoutElementBuilders.FontStyle.Builder()
-                                        .setColor(ColorBuilders.argb(hvacActionColor))
-                                        .build()
-                                )
                                 .build()
                         )
                         .addContent(
@@ -231,22 +225,38 @@ class ThermostatTile : TileService() {
                         )
                         .build()
                 )
-            }
-            if (tileConfig?.showEntityName == true) {
+                addContent(
+                    LayoutElementBuilders.Arc.Builder()
+                        .addContent(
+                            LayoutElementBuilders.ArcLine.Builder()
+                                .setLength(DimensionBuilders.DegreesProp.Builder(360f).build())
+                                .setThickness(DimensionBuilders.DpProp.Builder(2f).build())
+                                .setColor(ColorBuilders.argb(hvacActionColor))
+                                .build()
+                        )
+                        .build()
+                )
                 addContent(
                     LayoutElementBuilders.Arc.Builder()
                         .setAnchorAngle(
-                            DimensionBuilders.DegreesProp.Builder(0f).build()
+                            DimensionBuilders.DegreesProp.Builder(180f).build()
                         )
                         .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_CENTER)
                         .addContent(
+                            LayoutElementBuilders.ArcLine.Builder()
+                                .setLength(DimensionBuilders.DegreesProp.Builder(360f).build())
+                                .setThickness(DimensionBuilders.DpProp.Builder(30f).build())
+                                .setColor(ColorBuilders.argb(0x00000000)) // Fully transparent
+                                .build()
+                        )
+                        .addContent(
                             LayoutElementBuilders.ArcText.Builder()
+                                .setText(if (tileConfig?.showEntityName == true) entity?.friendlyName.toString() else "")
                                 .build()
                         )
                         .build()
                 )
             }
-                            .setText(if (tileConfig?.showEntityName == true) entity?.friendlyName.toString() else "")
             // Refresh button
             addContent(getRefreshButton())
             setModifiers(getRefreshModifiers())
