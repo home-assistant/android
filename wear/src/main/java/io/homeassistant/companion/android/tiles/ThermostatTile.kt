@@ -39,6 +39,8 @@ class ThermostatTile : TileService() {
     companion object {
         private const val TAG = "ThermostatTile"
         const val DEFAULT_REFRESH_INTERVAL = 600L
+        const val TAP_ACTION_UP = "Up"
+        const val TAP_ACTION_DOWN = "Down"
     }
 
     private val serviceJob = Job()
@@ -67,7 +69,7 @@ class ThermostatTile : TileService() {
 
         var targetTemp = tileConfig?.targetTemperature ?: entity?.attributes?.get("temperature").toString().toFloat()
 
-        if (lastId == "Up" || lastId == "Down") {
+        if (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN) {
             val entityStr = entity?.entityId.toString()
             val stepSize = entity?.attributes?.get("target_temp_step").toString().toFloat()
             val updatedTargetTemp = targetTemp + if (lastId == "Up") +stepSize else -stepSize
@@ -211,18 +213,14 @@ class ThermostatTile : TileService() {
                                 .setHeight(DimensionBuilders.dp(10f)).build()
                         )
                         .addContent(
-                            if (hvacAction != "Off") {
-                                LayoutElementBuilders.Row.Builder()
-                                    .addContent(getTempDownButton())
-                                    .addContent(
-                                        LayoutElementBuilders.Spacer.Builder()
-                                            .setWidth(DimensionBuilders.dp(20f)).build()
-                                    )
-                                    .addContent(getTempUpButton())
-                                    .build()
-                            } else {
-                                LayoutElementBuilders.Spacer.Builder().setWidth(DimensionBuilders.dp(0f)).build()
-                            }
+                            LayoutElementBuilders.Row.Builder()
+                                .addContent(getTempButton(hvacAction != "off", TAP_ACTION_DOWN))
+                                .addContent(
+                                    LayoutElementBuilders.Spacer.Builder()
+                                        .setWidth(DimensionBuilders.dp(20f)).build()
+                                )
+                                .addContent(getTempButton(hvacAction != "off", TAP_ACTION_UP))
+                                .build()
                         )
                         .build()
                 )
@@ -248,34 +246,17 @@ class ThermostatTile : TileService() {
         }.build()
     )
 
-    private fun getTempUpButton(): LayoutElement {
+    private fun getTempButton(enabled: Boolean, action: String): LayoutElement {
         val clickable = Clickable.Builder()
             .setOnClick(ActionBuilders.LoadAction.Builder().build())
-            .setId("Up")
+            .setId(action)
             .build()
 
         return Button.Builder(this, clickable)
-            .setTextContent("+")
+            .setTextContent(if (action == TAP_ACTION_DOWN) "—" else "+")
             .setButtonColors(
                 ButtonColors(
-                    ColorBuilders.argb(getColor(R.color.colorPrimary)),
-                    ColorBuilders.argb(getColor(R.color.colorWidgetButtonLabelBlack))
-                )
-            )
-            .build()
-    }
-
-    private fun getTempDownButton(): LayoutElement {
-        val clickable = Clickable.Builder()
-            .setOnClick(ActionBuilders.LoadAction.Builder().build())
-            .setId("Down")
-            .build()
-
-        return Button.Builder(this, clickable)
-            .setTextContent("—")
-            .setButtonColors(
-                ButtonColors(
-                    ColorBuilders.argb(getColor(R.color.colorPrimary)),
+                    ColorBuilders.argb(getColor(if (enabled) R.color.colorPrimary else R.color.colorDeviceControlsOff)),
                     ColorBuilders.argb(getColor(R.color.colorWidgetButtonLabelBlack))
                 )
             )
