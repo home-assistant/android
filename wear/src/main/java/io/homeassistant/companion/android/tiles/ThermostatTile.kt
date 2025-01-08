@@ -65,13 +65,12 @@ class ThermostatTile : TileService() {
 
         val lastId = requestParams.currentState.lastClickableId
 
-        var targetTemp = tileConfig?.targetTemperature.toString()
-        if (targetTemp == "null") targetTemp = entity?.attributes?.get("temperature").toString()
+        var targetTemp = tileConfig?.targetTemperature ?: entity?.attributes?.get("temperature").toString().toFloat()
 
         if (lastId == "Up" || lastId == "Down") {
             val entityStr = entity?.entityId.toString()
             val stepSize = entity?.attributes?.get("target_temp_step").toString().toFloat()
-            val updatedTargetTemp = targetTemp.toFloat() + if (lastId == "Up") +stepSize else -stepSize
+            val updatedTargetTemp = targetTemp + if (lastId == "Up") +stepSize else -stepSize
 
             serverManager.integrationRepository().callAction(
                 entityStr.split(".")[0],
@@ -83,7 +82,7 @@ class ThermostatTile : TileService() {
             )
             val updated = tileConfig?.copy(targetTemperature = updatedTargetTemp) ?: ThermostatTile(id = tileId, targetTemperature = updatedTargetTemp)
             thermostatTileDao.add(updated)
-            targetTemp = updatedTargetTemp.toString()
+            targetTemp = updatedTargetTemp
         } else {
             val updated = tileConfig?.copy(targetTemperature = null) ?: ThermostatTile(id = tileId, targetTemperature = null)
             thermostatTileDao.add(updated)
@@ -153,7 +152,7 @@ class ThermostatTile : TileService() {
         serviceScope.cancel()
     }
 
-    private suspend fun timeline(tileConfig: ThermostatTile?, targetTemperature: String): Timeline = Timeline.fromLayoutElement(
+    private suspend fun timeline(tileConfig: ThermostatTile?, targetTemperature: Float): Timeline = Timeline.fromLayoutElement(
         LayoutElementBuilders.Box.Builder().apply {
             val entity = tileConfig?.entityId?.let {
                 serverManager.integrationRepository().getEntity(it)
