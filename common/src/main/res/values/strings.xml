@@ -1364,4 +1364,8 @@
     <string name="thermostat_tile_n">Thermostat tile #%d</string>
     <string name="thermostat_tile_log_in">Log in to add a thermostat tile</string>
     <string name="thermostat_tile">Thermostat tile</string>
+    <string name="climate_heating">Heating</string>
+    <string name="climate_cooling">Cooling</string>
+    <string name="climate_idle">Idle</string>
+    <string name="climate_off">Off</string>
 </resources>

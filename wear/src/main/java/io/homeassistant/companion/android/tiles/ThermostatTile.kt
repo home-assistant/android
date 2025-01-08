@@ -179,13 +179,19 @@ class ThermostatTile : TileService() {
                     "cooling" -> getColor(R.color.colorDeviceControlsDefaultOn)
                     else -> 0x00000000
                 }
+                val friendlyHvacAction = when (hvacAction) {
+                    "heating" -> getString(R.string.climate_heating)
+                    "cooling" -> getString(R.string.climate_cooling)
+                    "idle" -> getString(R.string.climate_idle)
+                    "off" -> getString(R.string.climate_off)
+                    else -> hvacAction
+                }
 
                 addContent(
                     LayoutElementBuilders.Column.Builder()
                         .addContent(
                             LayoutElementBuilders.Text.Builder()
-                                .setText(entity?.friendlyState(this@ThermostatTile).toString())
-                                //.setFontStyle(LayoutElementBuilders.FontStyle.Builder().setColor(ColorBuilders.argb(hvacActionColor)).build())
+                                .setText(friendlyHvacAction)
                                 .build()
                         )
                         .addContent(
