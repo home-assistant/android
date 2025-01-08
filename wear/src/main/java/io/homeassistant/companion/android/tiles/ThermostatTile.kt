@@ -167,14 +167,14 @@ class ThermostatTile : TileService() {
                 }
 
                 val currentTemperature = entity?.attributes?.get("current_temperature").toString()
-                val hvacAction = entity?.attributes?.get("hvac_action").toString().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
                 val config = serverManager.webSocketRepository().getConfig()
                 val temperatureUnit = config?.unitSystem?.getValue("temperature").toString()
                 Log.d(TAG, hvacAction)
 
+                val hvacAction = entity?.attributes?.get("hvac_action").toString()
                 val hvacActionColor = when (hvacAction) {
-                    "Heating" -> getColor(R.color.colorDeviceControlsThermostatHeat)
-                    "Cooling" -> getColor(R.color.colorDeviceControlsDefaultOn)
+                    "heating" -> getColor(R.color.colorDeviceControlsThermostatHeat)
+                    "cooling" -> getColor(R.color.colorDeviceControlsDefaultOn)
                     else -> 0x00000000
                 }
 
@@ -182,13 +182,13 @@ class ThermostatTile : TileService() {
                     LayoutElementBuilders.Column.Builder()
                         .addContent(
                             LayoutElementBuilders.Text.Builder()
-                                .setText(hvacAction)
-                                .setFontStyle(LayoutElementBuilders.FontStyle.Builder().setColor(ColorBuilders.argb(hvacActionColor)).build())
+                                .setText(entity?.friendlyState(this@ThermostatTile).toString())
+                                //.setFontStyle(LayoutElementBuilders.FontStyle.Builder().setColor(ColorBuilders.argb(hvacActionColor)).build())
                                 .build()
                         )
                         .addContent(
                             LayoutElementBuilders.Text.Builder()
-                                .setText(if (hvacAction == "Off") "-- $temperatureUnit" else "$targetTemperature $temperatureUnit")
+                                .setText(if (hvacAction == "off") "-- $temperatureUnit" else "$targetTemperature $temperatureUnit")
                                 .setFontStyle(
                                     LayoutElementBuilders.FontStyle.Builder().setSize(
                                         DimensionBuilders.sp(30f)
