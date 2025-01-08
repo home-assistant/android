@@ -7,7 +7,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.wear.compose.material3.Button
-import androidx.wear.compose.material3.CheckboxButton
+import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -18,8 +18,8 @@ import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.getCheckboxButtonColors
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
+import io.homeassistant.companion.android.theme.getSwitchButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.tiles.ThermostatTile.Companion.DEFAULT_REFRESH_INTERVAL
 import io.homeassistant.companion.android.util.intervalToString
@@ -89,7 +89,7 @@ fun SetThermostatTileView(
                 )
             }
             item {
-                CheckboxButton(
+                SwitchButton(
                     modifier = Modifier.fillMaxWidth(),
                     checked = tile?.showEntityName == true,
                     onCheckedChange = {
@@ -107,7 +107,7 @@ fun SetThermostatTileView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    colors = getCheckboxButtonColors()
+                    colors = getSwitchButtonColors()
                 )
             }
         }
