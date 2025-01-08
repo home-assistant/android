@@ -160,7 +160,6 @@ class ThermostatTile : TileService() {
 
             val currentTemperature = entity?.attributes?.get("current_temperature").toString()
             val hvacAction = entity?.attributes?.get("hvac_action").toString().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-            val friendlyName = entity?.attributes?.get("friendly_name").toString()
             val config = serverManager.webSocketRepository().getConfig()
             val temperatureUnit = config?.unitSystem?.getValue("temperature").toString()
 
@@ -237,12 +236,12 @@ class ThermostatTile : TileService() {
                         .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_CENTER)
                         .addContent(
                             LayoutElementBuilders.ArcText.Builder()
-                                .setText(friendlyName)
                                 .build()
                         )
                         .build()
                 )
             }
+                            .setText(if (tileConfig?.showEntityName == true) entity?.friendlyName.toString() else "")
             // Refresh button
             addContent(getRefreshButton())
             setModifiers(getRefreshModifiers())
