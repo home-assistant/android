@@ -154,22 +154,6 @@ class ThermostatTile : TileService() {
 
     private suspend fun timeline(tileConfig: ThermostatTile?, targetTemperature: Float): Timeline = Timeline.fromLayoutElement(
         LayoutElementBuilders.Box.Builder().apply {
-            val entity = tileConfig?.entityId?.let {
-                serverManager.integrationRepository().getEntity(it)
-            }
-
-            val currentTemperature = entity?.attributes?.get("current_temperature").toString()
-            val hvacAction = entity?.attributes?.get("hvac_action").toString().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-            val config = serverManager.webSocketRepository().getConfig()
-            val temperatureUnit = config?.unitSystem?.getValue("temperature").toString()
-
-            val hvacActionColor = when (hvacAction) {
-                "Idle" -> getColor(R.color.colorWidgetButtonLabelWhite)
-                "Heating" -> getColor(R.color.colorDeviceControlsThermostatHeat)
-                "Cooling" -> getColor(R.color.colorDeviceControlsDefaultOn)
-                else -> getColor(R.color.colorWidgetButtonLabelWhite)
-            }
-
             if (tileConfig?.entityId.isNullOrBlank()) {
                 addContent(
                     LayoutElementBuilders.Text.Builder()
@@ -178,6 +162,22 @@ class ThermostatTile : TileService() {
                         .build()
                 )
             } else {
+                val entity = tileConfig?.entityId?.let {
+                    serverManager.integrationRepository().getEntity(it)
+                }
+
+                val currentTemperature = entity?.attributes?.get("current_temperature").toString()
+                val hvacAction = entity?.attributes?.get("hvac_action").toString().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                val config = serverManager.webSocketRepository().getConfig()
+                val temperatureUnit = config?.unitSystem?.getValue("temperature").toString()
+                Log.d(TAG, hvacAction)
+
+                val hvacActionColor = when (hvacAction) {
+                    "Heating" -> getColor(R.color.colorDeviceControlsThermostatHeat)
+                    "Cooling" -> getColor(R.color.colorDeviceControlsDefaultOn)
+                    else -> 0x00000000
+                }
+
                 addContent(
                     LayoutElementBuilders.Column.Builder()
                         .addContent(
