@@ -2,7 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2025.1.1 - Main" versioncode="3">
-<!--        <change>Android 9+ and Play Store: Add Health Connect sensors</change>-->
+        <change>Android 9+ and Play Store: Add Health Connect sensors</change>
         <change>Add Ethernet and VPN to Home Network options for internal URL switching</change>
         <change>Add support for humidifier, media player, number and remote in device controls</change>
         <change>Bug fixes and dependency updates</change>
