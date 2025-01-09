@@ -58,16 +58,15 @@ class ThermostatTile : TileService() {
         val thermostatTileDao = AppDatabase.getInstance(this@ThermostatTile).thermostatTileDao()
         val tileConfig = thermostatTileDao.get(tileId)
 
-        val entity = tileConfig?.entityId?.let {
-            serverManager.integrationRepository().getEntity(it)
-        }
-
         if (requestParams.currentState.lastClickableId.isNotEmpty()) {
             if (wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
         }
 
-        val lastId = requestParams.currentState.lastClickableId
+        val entity = tileConfig?.entityId?.let {
+            serverManager.integrationRepository().getEntity(it)
+        }
 
+        val lastId = requestParams.currentState.lastClickableId
         var targetTemp = tileConfig?.targetTemperature ?: entity?.attributes?.get("temperature").toString().toFloat()
 
         if (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN) {
