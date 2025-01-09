@@ -264,11 +264,12 @@ class ThermostatTile : TileService() {
 
     private fun getTempButton(enabled: Boolean, action: String): LayoutElement {
         val clickable = Clickable.Builder()
-            .setOnClick(ActionBuilders.LoadAction.Builder().build())
-            .setId(action)
-            .build()
+        if (enabled) {
+            clickable.setOnClick(ActionBuilders.LoadAction.Builder().build())
+                .setId(action)
+        }
 
-        return Button.Builder(this, clickable)
+        return Button.Builder(this, clickable.build())
             .setTextContent(if (action == TAP_ACTION_DOWN) "—" else "+")
             .setButtonColors(
                 ButtonColors(
