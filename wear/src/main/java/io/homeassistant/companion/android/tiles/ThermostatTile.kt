@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.tiles
 
+import android.util.Log
 import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ColorBuilders
 import androidx.wear.protolayout.DimensionBuilders
@@ -62,59 +63,84 @@ class ThermostatTile : TileService() {
             if (wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
         }
 
-        val entity = tileConfig?.entityId?.let {
-            serverManager.integrationRepository().getEntity(it)
-        }
+        try {
+            val entity = tileConfig?.entityId?.let {
+                serverManager.integrationRepository().getEntity(it)
+            }
 
-        val lastId = requestParams.currentState.lastClickableId
-        var targetTemp = tileConfig?.targetTemperature ?: entity?.attributes?.get("temperature").toString().toFloat()
+            val lastId = requestParams.currentState.lastClickableId
+            var targetTemp = tileConfig?.targetTemperature ?: entity?.attributes?.get("temperature").toString().toFloat()
 
-        if (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN) {
-            val entityStr = entity?.entityId.toString()
-            val stepSize = entity?.attributes?.get("target_temp_step").toString().toFloat()
-            val updatedTargetTemp = targetTemp + if (lastId == "Up") +stepSize else -stepSize
+            if (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN) {
+                val entityStr = entity?.entityId.toString()
+                val stepSize = entity?.attributes?.get("target_temp_step").toString().toFloat()
+                val updatedTargetTemp = targetTemp + if (lastId == "Up") +stepSize else -stepSize
 
-            serverManager.integrationRepository().callAction(
-                entityStr.split(".")[0],
-                "set_temperature",
-                hashMapOf(
-                    "entity_id" to entityStr,
-                    "temperature" to updatedTargetTemp
-                )
-            )
-            val updated = tileConfig?.copy(targetTemperature = updatedTargetTemp) ?: ThermostatTile(id = tileId, targetTemperature = updatedTargetTemp)
-            thermostatTileDao.add(updated)
-            targetTemp = updatedTargetTemp
-        } else {
-            val updated = tileConfig?.copy(targetTemperature = null) ?: ThermostatTile(id = tileId, targetTemperature = null)
-            thermostatTileDao.add(updated)
-        }
-
-        val freshness = when {
-            (tileConfig?.refreshInterval != null && tileConfig.refreshInterval!! <= 1) -> 0
-            tileConfig?.refreshInterval != null -> tileConfig.refreshInterval!!
-            else -> DEFAULT_REFRESH_INTERVAL
-        }
-
-        Tile.Builder()
-            .setResourcesVersion("$TAG$tileId.${System.currentTimeMillis()}")
-            .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(freshness))
-            .setTileTimeline(
-                if (serverManager.isRegistered()) {
-                    timeline(
-                        tileConfig,
-                        targetTemp
+                serverManager.integrationRepository().callAction(
+                    entityStr.split(".")[0],
+                    "set_temperature",
+                    hashMapOf(
+                        "entity_id" to entityStr,
+                        "temperature" to updatedTargetTemp
                     )
-                } else {
-                    loggedOutTimeline(
+                )
+                val updated = tileConfig?.copy(targetTemperature = updatedTargetTemp) ?: ThermostatTile(id = tileId, targetTemperature = updatedTargetTemp)
+                thermostatTileDao.add(updated)
+                targetTemp = updatedTargetTemp
+            } else {
+                val updated = tileConfig?.copy(targetTemperature = null) ?: ThermostatTile(id = tileId, targetTemperature = null)
+                thermostatTileDao.add(updated)
+            }
+
+            val freshness = when {
+                (tileConfig?.refreshInterval != null && tileConfig.refreshInterval!! <= 1) -> 0
+                tileConfig?.refreshInterval != null -> tileConfig.refreshInterval!!
+                else -> DEFAULT_REFRESH_INTERVAL
+            }
+
+            Tile.Builder()
+                .setResourcesVersion("$TAG$tileId.${System.currentTimeMillis()}")
+                .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(freshness))
+                .setTileTimeline(
+                    if (serverManager.isRegistered()) {
+                        timeline(
+                            tileConfig,
+                            targetTemp
+                        )
+                    } else {
+                        loggedOutTimeline(
+                            this@ThermostatTile,
+                            requestParams,
+                            R.string.thermostat,
+                            R.string.thermostat_tile_log_in
+                        )
+                    }
+                )
+                .build()
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to fetch entity ${tileConfig?.entityId}", e)
+
+            val freshness = when {
+                (tileConfig?.refreshInterval != null && tileConfig.refreshInterval!! <= 1) -> 0
+                tileConfig?.refreshInterval != null -> tileConfig.refreshInterval!!
+                else -> DEFAULT_REFRESH_INTERVAL
+            }
+
+            Tile.Builder()
+                .setResourcesVersion("$TAG$tileId.${System.currentTimeMillis()}")
+                .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(freshness))
+                .setTileTimeline(
+                    primaryLayoutTimeline(
                         this@ThermostatTile,
                         requestParams,
-                        R.string.thermostat,
-                        R.string.thermostat_tile_log_in
+                        null,
+                        R.string.tile_fetch_entity_error,
+                        R.string.refresh,
+                        ActionBuilders.LoadAction.Builder().build()
                     )
-                }
-            )
-            .build()
+                )
+                .build()
+        }
     }
 
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> = serviceScope.future {

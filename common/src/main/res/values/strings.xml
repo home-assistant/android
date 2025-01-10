@@ -1083,6 +1083,7 @@
     <string name="tile_icon">Tile icon</string>
     <string name="tile_icon_original">Use entity icon</string>
     <string name="tile_select">Select a tile to edit</string>
+    <string name="tile_fetch_entity_error">Cannot fetch entity</string>
     <string name="shortcut_pinned">Pinned shortcuts</string>
     <string name="remote_debugging">WebView remote debugging</string>
     <string name="remote_debugging_summary">Allow remote debugging of WebView to troubleshoot Home Assistant frontend issues</string>
