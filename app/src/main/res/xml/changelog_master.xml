@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2025.1.1 - Main" versioncode="3">
-<!--        <change>Android 9+ and Play Store: Add Health Connect sensors</change>-->
+    <release version="2025.1.2 - Main" versioncode="3">
+        <change>Android 9+ and Play Store: Add Health Connect sensors</change>
         <change>Add Ethernet and VPN to Home Network options for internal URL switching</change>
         <change>Add support for humidifier, media player, number and remote in device controls</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2025.1.1 - Wear" versioncode="2">
+    <release version="2025.1.2 - Wear" versioncode="2">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2025.1.1 - Automotive" versioncode="1">
+    <release version="2025.1.2 - Automotive" versioncode="1">
         <change>Add Ethernet and VPN to Home Network options for internal URL switching</change>
         <change>Bug fixes and dependency updates</change>
     </release>
