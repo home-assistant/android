@@ -257,7 +257,13 @@ class SettingsPresenterImpl @Inject constructor(
 
         // Assist
         var assistantSuggestion = serverManager.defaultServers.any { it.version?.isAtLeast(2023, 5) == true }
-        assistantSuggestion = if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        assistantSuggestion = if (
+            assistantSuggestion &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+            context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+        ) {
+            false
+        } else if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val roleManager = context.getSystemService<RoleManager>()
             roleManager?.isRoleAvailable(RoleManager.ROLE_ASSISTANT) == true && !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)
         } else if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
