@@ -94,8 +94,14 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             var serverParameter: Int? = null
             if (intent.data?.queryParameterNames.orEmpty().contains("server")) {
                 val serverName = intent.data?.getQueryParameter("server").takeIf { !it.isNullOrBlank() }
-                serverManager.defaultServers.firstOrNull { it.friendlyName == serverName }?.let {
-                    serverParameter = it.id
+                if (serverName == "default" || serverName == null) {
+                    serverParameter = serverManager.getServer()?.id
+                } else {
+                    serverManager.defaultServers
+                        .firstOrNull { it.friendlyName.equals(serverName, ignoreCase = true) }
+                        ?.let {
+                            serverParameter = it.id
+                        }
                 }
             }
 
