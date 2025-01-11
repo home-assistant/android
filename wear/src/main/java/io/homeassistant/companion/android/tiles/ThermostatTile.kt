@@ -63,45 +63,59 @@ class ThermostatTile : TileService() {
             if (wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
         }
 
-        try {
-            val entity = tileConfig?.entityId?.let {
-                serverManager.integrationRepository().getEntity(it)
-            }
+        val freshness = when {
+            (tileConfig?.refreshInterval != null && tileConfig.refreshInterval!! <= 1) -> 0
+            tileConfig?.refreshInterval != null -> tileConfig.refreshInterval!!
+            else -> DEFAULT_REFRESH_INTERVAL
+        }
 
-            val lastId = requestParams.currentState.lastClickableId
-            var targetTemp = tileConfig?.targetTemperature ?: entity?.attributes?.get("temperature").toString().toFloat()
+        val tile = Tile.Builder()
+            .setResourcesVersion("$TAG$tileId.${System.currentTimeMillis()}")
+            .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(freshness))
 
-            if (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN) {
-                val entityStr = entity?.entityId.toString()
-                val stepSize = entity?.attributes?.get("target_temp_step").toString().toFloat()
-                val updatedTargetTemp = targetTemp + if (lastId == "Up") +stepSize else -stepSize
-
-                serverManager.integrationRepository().callAction(
-                    entityStr.split(".")[0],
-                    "set_temperature",
-                    hashMapOf(
-                        "entity_id" to entityStr,
-                        "temperature" to updatedTargetTemp
-                    )
+        if (tileConfig?.entityId.isNullOrBlank()) {
+            tile.setTileTimeline(
+                Timeline.fromLayoutElement(
+                    LayoutElementBuilders.Box.Builder()
+                        .addContent(
+                            LayoutElementBuilders.Text.Builder()
+                                .setText(getString(R.string.thermostat_tile_no_entity_yet))
+                                .setMaxLines(10)
+                                .build()
+                        ).build()
                 )
-                val updated = tileConfig?.copy(targetTemperature = updatedTargetTemp) ?: ThermostatTile(id = tileId, targetTemperature = updatedTargetTemp)
-                thermostatTileDao.add(updated)
-                targetTemp = updatedTargetTemp
-            } else {
-                val updated = tileConfig?.copy(targetTemperature = null) ?: ThermostatTile(id = tileId, targetTemperature = null)
-                thermostatTileDao.add(updated)
-            }
+            ).build()
+        } else {
+            try {
+                val entity = tileConfig?.entityId?.let {
+                    serverManager.integrationRepository().getEntity(it)
+                }
 
-            val freshness = when {
-                (tileConfig?.refreshInterval != null && tileConfig.refreshInterval!! <= 1) -> 0
-                tileConfig?.refreshInterval != null -> tileConfig.refreshInterval!!
-                else -> DEFAULT_REFRESH_INTERVAL
-            }
+                val lastId = requestParams.currentState.lastClickableId
+                var targetTemp = tileConfig?.targetTemperature ?: entity?.attributes?.get("temperature").toString().toFloat()
 
-            Tile.Builder()
-                .setResourcesVersion("$TAG$tileId.${System.currentTimeMillis()}")
-                .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(freshness))
-                .setTileTimeline(
+                if (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN) {
+                    val entityStr = entity?.entityId.toString()
+                    val stepSize = entity?.attributes?.get("target_temp_step").toString().toFloat()
+                    val updatedTargetTemp = targetTemp + if (lastId == "Up") +stepSize else -stepSize
+
+                    serverManager.integrationRepository().callAction(
+                        entityStr.split(".")[0],
+                        "set_temperature",
+                        hashMapOf(
+                            "entity_id" to entityStr,
+                            "temperature" to updatedTargetTemp
+                        )
+                    )
+                    val updated = tileConfig?.copy(targetTemperature = updatedTargetTemp) ?: ThermostatTile(id = tileId, targetTemperature = updatedTargetTemp)
+                    thermostatTileDao.add(updated)
+                    targetTemp = updatedTargetTemp
+                } else {
+                    val updated = tileConfig?.copy(targetTemperature = null) ?: ThermostatTile(id = tileId, targetTemperature = null)
+                    thermostatTileDao.add(updated)
+                }
+
+                tile.setTileTimeline(
                     if (serverManager.isRegistered()) {
                         timeline(
                             tileConfig,
@@ -115,21 +129,11 @@ class ThermostatTile : TileService() {
                             R.string.thermostat_tile_log_in
                         )
                     }
-                )
-                .build()
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to fetch entity ${tileConfig?.entityId}", e)
+                ).build()
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to fetch entity ${tileConfig?.entityId}", e)
 
-            val freshness = when {
-                (tileConfig?.refreshInterval != null && tileConfig.refreshInterval!! <= 1) -> 0
-                tileConfig?.refreshInterval != null -> tileConfig.refreshInterval!!
-                else -> DEFAULT_REFRESH_INTERVAL
-            }
-
-            Tile.Builder()
-                .setResourcesVersion("$TAG$tileId.${System.currentTimeMillis()}")
-                .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(freshness))
-                .setTileTimeline(
+                tile.setTileTimeline(
                     primaryLayoutTimeline(
                         this@ThermostatTile,
                         requestParams,
@@ -138,8 +142,8 @@ class ThermostatTile : TileService() {
                         R.string.refresh,
                         ActionBuilders.LoadAction.Builder().build()
                     )
-                )
-                .build()
+                ).build()
+            }
         }
     }
 
@@ -182,106 +186,97 @@ class ThermostatTile : TileService() {
 
     private suspend fun timeline(tileConfig: ThermostatTile?, targetTemperature: Float): Timeline = Timeline.fromLayoutElement(
         LayoutElementBuilders.Box.Builder().apply {
-            if (tileConfig?.entityId.isNullOrBlank()) {
-                addContent(
-                    LayoutElementBuilders.Text.Builder()
-                        .setText(getString(R.string.thermostat_tile_no_entity_yet))
-                        .setMaxLines(10)
-                        .build()
-                )
-            } else {
-                val entity = tileConfig?.entityId?.let {
-                    serverManager.integrationRepository().getEntity(it)
-                }
-
-                val currentTemperature = entity?.attributes?.get("current_temperature").toString()
-                val config = serverManager.webSocketRepository().getConfig()
-                val temperatureUnit = config?.unitSystem?.getValue("temperature").toString()
-
-                val hvacAction = entity?.attributes?.get("hvac_action").toString()
-                val hvacActionColor = when (hvacAction) {
-                    "heating" -> getColor(R.color.colorDeviceControlsThermostatHeat)
-                    "cooling" -> getColor(R.color.colorDeviceControlsDefaultOn)
-                    else -> 0x00000000
-                }
-                val friendlyHvacAction = when (hvacAction) {
-                    "heating" -> getString(R.string.climate_heating)
-                    "cooling" -> getString(R.string.climate_cooling)
-                    "idle" -> getString(R.string.climate_idle)
-                    "off" -> getString(R.string.climate_off)
-                    else -> hvacAction
-                }
-
-                addContent(
-                    LayoutElementBuilders.Column.Builder()
-                        .addContent(
-                            LayoutElementBuilders.Text.Builder()
-                                .setText(friendlyHvacAction)
-                                .build()
-                        )
-                        .addContent(
-                            LayoutElementBuilders.Text.Builder()
-                                .setText(if (hvacAction == "off") "-- $temperatureUnit" else "$targetTemperature $temperatureUnit")
-                                .setFontStyle(
-                                    LayoutElementBuilders.FontStyle.Builder().setSize(
-                                        DimensionBuilders.sp(30f)
-                                    ).build()
-                                )
-                                .build()
-                        )
-                        .addContent(
-                            LayoutElementBuilders.Text.Builder()
-                                .setText("$currentTemperature $temperatureUnit")
-                                .build()
-                        )
-                        .addContent(
-                            LayoutElementBuilders.Spacer.Builder()
-                                .setHeight(DimensionBuilders.dp(10f)).build()
-                        )
-                        .addContent(
-                            LayoutElementBuilders.Row.Builder()
-                                .addContent(getTempButton(hvacAction != "off", TAP_ACTION_DOWN))
-                                .addContent(
-                                    LayoutElementBuilders.Spacer.Builder()
-                                        .setWidth(DimensionBuilders.dp(20f)).build()
-                                )
-                                .addContent(getTempButton(hvacAction != "off", TAP_ACTION_UP))
-                                .build()
-                        )
-                        .build()
-                )
-                addContent(
-                    LayoutElementBuilders.Arc.Builder()
-                        .addContent(
-                            LayoutElementBuilders.ArcLine.Builder()
-                                .setLength(DimensionBuilders.DegreesProp.Builder(360f).build())
-                                .setThickness(DimensionBuilders.DpProp.Builder(2f).build())
-                                .setColor(ColorBuilders.argb(hvacActionColor))
-                                .build()
-                        )
-                        .build()
-                )
-                addContent(
-                    LayoutElementBuilders.Arc.Builder()
-                        .setAnchorAngle(
-                            DimensionBuilders.DegreesProp.Builder(180f).build()
-                        )
-                        .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_CENTER)
-                        .addContent(
-                            LayoutElementBuilders.ArcLine.Builder()
-                                .setLength(DimensionBuilders.DegreesProp.Builder(360f).build())
-                                .setThickness(DimensionBuilders.DpProp.Builder(30f).build())
-                                .setColor(ColorBuilders.argb(0x00000000)) // Fully transparent
-                                .build()
-                        )
-                        .addContent(
-                            LayoutElementBuilders.ArcText.Builder()
-                                .setText(if (tileConfig?.showEntityName == true) entity?.friendlyName.toString() else "")
-                                .build()
-                        )
-                        .build()
-                )
+            val entity = tileConfig?.entityId?.let {
+                serverManager.integrationRepository().getEntity(it)
             }
+
+            val currentTemperature = entity?.attributes?.get("current_temperature").toString()
+            val config = serverManager.webSocketRepository().getConfig()
+            val temperatureUnit = config?.unitSystem?.getValue("temperature").toString()
+
+            val hvacAction = entity?.attributes?.get("hvac_action").toString()
+            val hvacActionColor = when (hvacAction) {
+                "heating" -> getColor(R.color.colorDeviceControlsThermostatHeat)
+                "cooling" -> getColor(R.color.colorDeviceControlsDefaultOn)
+                else -> 0x00000000
+            }
+            val friendlyHvacAction = when (hvacAction) {
+                "heating" -> getString(R.string.climate_heating)
+                "cooling" -> getString(R.string.climate_cooling)
+                "idle" -> getString(R.string.climate_idle)
+                "off" -> getString(R.string.climate_off)
+                else -> hvacAction
+            }
+
+            addContent(
+                LayoutElementBuilders.Column.Builder()
+                    .addContent(
+                        LayoutElementBuilders.Text.Builder()
+                            .setText(friendlyHvacAction)
+                            .build()
+                    )
+                    .addContent(
+                        LayoutElementBuilders.Text.Builder()
+                            .setText(if (hvacAction == "off") "-- $temperatureUnit" else "$targetTemperature $temperatureUnit")
+                            .setFontStyle(
+                                LayoutElementBuilders.FontStyle.Builder().setSize(
+                                    DimensionBuilders.sp(30f)
+                                ).build()
+                            )
+                            .build()
+                    )
+                    .addContent(
+                        LayoutElementBuilders.Text.Builder()
+                            .setText("$currentTemperature $temperatureUnit")
+                            .build()
+                    )
+                    .addContent(
+                        LayoutElementBuilders.Spacer.Builder()
+                            .setHeight(DimensionBuilders.dp(10f)).build()
+                    )
+                    .addContent(
+                        LayoutElementBuilders.Row.Builder()
+                            .addContent(getTempButton(hvacAction != "off", TAP_ACTION_DOWN))
+                            .addContent(
+                                LayoutElementBuilders.Spacer.Builder()
+                                    .setWidth(DimensionBuilders.dp(20f)).build()
+                            )
+                            .addContent(getTempButton(hvacAction != "off", TAP_ACTION_UP))
+                            .build()
+                    )
+                    .build()
+            )
+            addContent(
+                LayoutElementBuilders.Arc.Builder()
+                    .addContent(
+                        LayoutElementBuilders.ArcLine.Builder()
+                            .setLength(DimensionBuilders.DegreesProp.Builder(360f).build())
+                            .setThickness(DimensionBuilders.DpProp.Builder(2f).build())
+                            .setColor(ColorBuilders.argb(hvacActionColor))
+                            .build()
+                    )
+                    .build()
+            )
+            addContent(
+                LayoutElementBuilders.Arc.Builder()
+                    .setAnchorAngle(
+                        DimensionBuilders.DegreesProp.Builder(180f).build()
+                    )
+                    .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_CENTER)
+                    .addContent(
+                        LayoutElementBuilders.ArcLine.Builder()
+                            .setLength(DimensionBuilders.DegreesProp.Builder(360f).build())
+                            .setThickness(DimensionBuilders.DpProp.Builder(30f).build())
+                            .setColor(ColorBuilders.argb(0x00000000)) // Fully transparent
+                            .build()
+                    )
+                    .addContent(
+                        LayoutElementBuilders.ArcText.Builder()
+                            .setText(if (tileConfig?.showEntityName == true) entity?.friendlyName.toString() else "")
+                            .build()
+                    )
+                    .build()
+            )
             // Refresh button
             addContent(getRefreshButton())
             setModifiers(getRefreshModifiers())
