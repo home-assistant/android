@@ -73,6 +73,17 @@ class ThermostatTile : TileService() {
             .setResourcesVersion("$TAG$tileId.${System.currentTimeMillis()}")
             .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(freshness))
 
+        if (!serverManager.isRegistered()) {
+            tile.setTileTimeline(
+                loggedOutTimeline(
+                    this@ThermostatTile,
+                    requestParams,
+                    R.string.thermostat,
+                    R.string.thermostat_tile_log_in
+                )
+            )
+        }
+
         if (tileConfig?.entityId.isNullOrBlank()) {
             tile.setTileTimeline(
                 Timeline.fromLayoutElement(
@@ -116,19 +127,10 @@ class ThermostatTile : TileService() {
                 }
 
                 tile.setTileTimeline(
-                    if (serverManager.isRegistered()) {
-                        timeline(
-                            tileConfig,
-                            targetTemp
-                        )
-                    } else {
-                        loggedOutTimeline(
-                            this@ThermostatTile,
-                            requestParams,
-                            R.string.thermostat,
-                            R.string.thermostat_tile_log_in
-                        )
-                    }
+                    timeline(
+                        tileConfig,
+                        targetTemp
+                    )
                 ).build()
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to fetch entity ${tileConfig?.entityId}", e)
