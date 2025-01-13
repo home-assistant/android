@@ -58,7 +58,7 @@ fun SelectThermostatTileView(
 private fun PreviewSelectThermostatTileViewOne() {
     SelectThermostatTileView(
         tiles = listOf(
-            ThermostatTile(id = 1, entityId = "camera.buienradar", refreshInterval = 300)
+            ThermostatTile(id = 1, entityId = "climate.living_room", refreshInterval = 300, targetTemperature = 21.0f, showEntityName = true)
         ),
         onSelectTile = {}
     )
@@ -66,6 +66,6 @@ private fun PreviewSelectThermostatTileViewOne() {
 
 @Preview(device = WearDevices.LARGE_ROUND)
 @Composable
-private fun PreviewSelectCameraTileViewEmpty() {
-    SelectCameraTileView(tiles = emptyList(), onSelectTile = {})
+private fun PreviewSelectThermostatTileViewEmpty() {
+    SelectThermostatTileView(tiles = emptyList(), onSelectTile = {})
 }
