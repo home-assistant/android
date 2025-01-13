@@ -1,9 +1,12 @@
 package io.homeassistant.companion.android.onboarding.discovery
 
+import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -12,8 +15,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
-import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import javax.inject.Inject
@@ -47,7 +50,7 @@ class DiscoveryFragment @Inject constructor() : Fragment() {
                         discoveryActive = viewModel.discoveryActive,
                         foundInstances = viewModel.foundInstances,
                         manualSetupClicked = { navigateToManualSetup() },
-                        instanceClicked = { onInstanceClicked(it) }
+                        instanceClicked = { onInstanceClicked(it, requireContext()) }
                     )
                 }
             }
@@ -62,12 +65,11 @@ class DiscoveryFragment @Inject constructor() : Fragment() {
             .commit()
     }
 
-    private fun onInstanceClicked(instance: HomeAssistantInstance) {
+    private fun onInstanceClicked(instance: HomeAssistantInstance, context: Context) {
         viewModel.manualUrl.value = instance.url.toString()
-        parentFragmentManager
-            .beginTransaction()
-            .replace(R.id.content, AuthenticationFragment::class.java, null)
-            .addToBackStack(null)
-            .commit()
+        val uri = OnboardingActivity.buildAuthUrl(context, viewModel.manualUrl.value)
+        val builder = CustomTabsIntent.Builder()
+        val customTabsIntent = builder.build()
+        customTabsIntent.launchUrl(context, Uri.parse(uri))
     }
 }
