@@ -81,70 +81,70 @@ class ThermostatTile : TileService() {
                     R.string.thermostat,
                     R.string.thermostat_tile_log_in
                 )
-            )
-        }
-
-        if (tileConfig?.entityId.isNullOrBlank()) {
-            tile.setTileTimeline(
-                Timeline.fromLayoutElement(
-                    LayoutElementBuilders.Box.Builder()
-                        .addContent(
-                            LayoutElementBuilders.Text.Builder()
-                                .setText(getString(R.string.thermostat_tile_no_entity_yet))
-                                .setMaxLines(10)
-                                .build()
-                        ).build()
-                )
             ).build()
         } else {
-            try {
-                val entity = tileConfig?.entityId?.let {
-                    serverManager.integrationRepository().getEntity(it)
-                }
+            if (tileConfig?.entityId.isNullOrBlank()) {
+                tile.setTileTimeline(
+                    Timeline.fromLayoutElement(
+                        LayoutElementBuilders.Box.Builder()
+                            .addContent(
+                                LayoutElementBuilders.Text.Builder()
+                                    .setText(getString(R.string.thermostat_tile_no_entity_yet))
+                                    .setMaxLines(10)
+                                    .build()
+                            ).build()
+                    )
+                ).build()
+            } else {
+                try {
+                    val entity = tileConfig?.entityId?.let {
+                        serverManager.integrationRepository().getEntity(it)
+                    }
 
-                val lastId = requestParams.currentState.lastClickableId
-                var targetTemp = tileConfig?.targetTemperature ?: entity?.attributes?.get("temperature").toString().toFloat()
+                    val lastId = requestParams.currentState.lastClickableId
+                    var targetTemp = tileConfig?.targetTemperature ?: entity?.attributes?.get("temperature").toString().toFloat()
 
-                if (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN) {
-                    val entityStr = entity?.entityId.toString()
-                    val stepSize = entity?.attributes?.get("target_temp_step").toString().toFloat()
-                    val updatedTargetTemp = targetTemp + if (lastId == TAP_ACTION_UP) +stepSize else -stepSize
+                    if (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN) {
+                        val entityStr = entity?.entityId.toString()
+                        val stepSize = entity?.attributes?.get("target_temp_step").toString().toFloat()
+                        val updatedTargetTemp = targetTemp + if (lastId == TAP_ACTION_UP) +stepSize else -stepSize
 
-                    serverManager.integrationRepository().callAction(
-                        entityStr.split(".")[0],
-                        "set_temperature",
-                        hashMapOf(
-                            "entity_id" to entityStr,
-                            "temperature" to updatedTargetTemp
+                        serverManager.integrationRepository().callAction(
+                            entityStr.split(".")[0],
+                            "set_temperature",
+                            hashMapOf(
+                                "entity_id" to entityStr,
+                                "temperature" to updatedTargetTemp
+                            )
                         )
-                    )
-                    val updated = tileConfig?.copy(targetTemperature = updatedTargetTemp) ?: ThermostatTile(id = tileId, targetTemperature = updatedTargetTemp)
-                    thermostatTileDao.add(updated)
-                    targetTemp = updatedTargetTemp
-                } else {
-                    val updated = tileConfig?.copy(targetTemperature = null) ?: ThermostatTile(id = tileId, targetTemperature = null)
-                    thermostatTileDao.add(updated)
+                        val updated = tileConfig?.copy(targetTemperature = updatedTargetTemp) ?: ThermostatTile(id = tileId, targetTemperature = updatedTargetTemp)
+                        thermostatTileDao.add(updated)
+                        targetTemp = updatedTargetTemp
+                    } else {
+                        val updated = tileConfig?.copy(targetTemperature = null) ?: ThermostatTile(id = tileId, targetTemperature = null)
+                        thermostatTileDao.add(updated)
+                    }
+
+                    tile.setTileTimeline(
+                        timeline(
+                            tileConfig,
+                            targetTemp
+                        )
+                    ).build()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to fetch entity ${tileConfig?.entityId}", e)
+
+                    tile.setTileTimeline(
+                        primaryLayoutTimeline(
+                            this@ThermostatTile,
+                            requestParams,
+                            null,
+                            R.string.tile_fetch_entity_error,
+                            R.string.refresh,
+                            ActionBuilders.LoadAction.Builder().build()
+                        )
+                    ).build()
                 }
-
-                tile.setTileTimeline(
-                    timeline(
-                        tileConfig,
-                        targetTemp
-                    )
-                ).build()
-            } catch (e: Exception) {
-                Log.e(TAG, "Unable to fetch entity ${tileConfig?.entityId}", e)
-
-                tile.setTileTimeline(
-                    primaryLayoutTimeline(
-                        this@ThermostatTile,
-                        requestParams,
-                        null,
-                        R.string.tile_fetch_entity_error,
-                        R.string.refresh,
-                        ActionBuilders.LoadAction.Builder().build()
-                    )
-                ).build()
             }
         }
     }
