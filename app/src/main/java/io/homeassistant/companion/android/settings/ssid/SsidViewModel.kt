@@ -71,6 +71,7 @@ class SsidViewModel @Inject constructor(
      */
     fun addHomeWifiSsid(ssid: String): Boolean {
         if (ssid.isEmpty()) return false
+        if (wifiSsids.contains(ssid)) return false
         setHomeWifiSsids((wifiSsids + ssid).sorted())
         return true
     }
