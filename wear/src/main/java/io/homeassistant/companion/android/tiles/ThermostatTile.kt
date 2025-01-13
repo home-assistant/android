@@ -257,26 +257,28 @@ class ThermostatTile : TileService() {
                     )
                     .build()
             )
-            addContent(
-                LayoutElementBuilders.Arc.Builder()
-                    .setAnchorAngle(
-                        DimensionBuilders.DegreesProp.Builder(180f).build()
-                    )
-                    .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_CENTER)
-                    .addContent(
-                        LayoutElementBuilders.ArcLine.Builder()
-                            .setLength(DimensionBuilders.DegreesProp.Builder(360f).build())
-                            .setThickness(DimensionBuilders.DpProp.Builder(30f).build())
-                            .setColor(ColorBuilders.argb(0x00000000)) // Fully transparent
-                            .build()
-                    )
-                    .addContent(
-                        LayoutElementBuilders.ArcText.Builder()
-                            .setText(if (tileConfig?.showEntityName == true) entity?.friendlyName.toString() else "")
-                            .build()
-                    )
-                    .build()
-            )
+            if (tileConfig?.showEntityName == true) {
+                addContent(
+                    LayoutElementBuilders.Arc.Builder()
+                        .setAnchorAngle(
+                            DimensionBuilders.DegreesProp.Builder(180f).build()
+                        )
+                        .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_CENTER)
+                        .addContent(
+                            LayoutElementBuilders.ArcLine.Builder()
+                                .setLength(DimensionBuilders.DegreesProp.Builder(360f).build())
+                                .setThickness(DimensionBuilders.DpProp.Builder(30f).build())
+                                .setColor(ColorBuilders.argb(0x00000000)) // Fully transparent
+                                .build()
+                        )
+                        .addContent(
+                            LayoutElementBuilders.ArcText.Builder()
+                                .setText(entity?.friendlyName.toString())
+                                .build()
+                        )
+                        .build()
+                )
+            }
             // Refresh button
             addContent(getRefreshButton())
             setModifiers(getRefreshModifiers())
