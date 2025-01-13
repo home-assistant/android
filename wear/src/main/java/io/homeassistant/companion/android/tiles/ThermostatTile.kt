@@ -97,7 +97,7 @@ class ThermostatTile : TileService() {
                 if (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN) {
                     val entityStr = entity?.entityId.toString()
                     val stepSize = entity?.attributes?.get("target_temp_step").toString().toFloat()
-                    val updatedTargetTemp = targetTemp + if (lastId == "Up") +stepSize else -stepSize
+                    val updatedTargetTemp = targetTemp + if (lastId == TAP_ACTION_UP) +stepSize else -stepSize
 
                     serverManager.integrationRepository().callAction(
                         entityStr.split(".")[0],
