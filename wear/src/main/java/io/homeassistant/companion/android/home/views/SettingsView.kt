@@ -192,7 +192,7 @@ fun SettingsView(
             }
             item {
                 SecondarySettingsChip(
-                    icon = CommunityMaterial.Icon3.cmd_thermometer,
+                    icon = CommunityMaterial.Icon3.cmd_thermostat,
                     label = stringResource(commonR.string.thermostat_tiles),
                     onClick = onClickThermostatTiles
                 )

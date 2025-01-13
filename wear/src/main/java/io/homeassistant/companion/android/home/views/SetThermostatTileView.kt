@@ -43,7 +43,7 @@ fun SetThermostatTileView(
                 val entity = tile?.entityId?.let { tileEntityId ->
                     entities?.firstOrNull { it.entityId == tileEntityId }
                 }
-                val icon = entity?.getIcon(LocalContext.current) ?: CommunityMaterial.Icon3.cmd_thermometer
+                val icon = entity?.getIcon(LocalContext.current) ?: CommunityMaterial.Icon3.cmd_thermostat
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     icon = {
