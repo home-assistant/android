@@ -203,8 +203,8 @@ class ThermostatTile : TileService() {
             val friendlyHvacAction = when (hvacAction) {
                 "heating" -> getString(R.string.climate_heating)
                 "cooling" -> getString(R.string.climate_cooling)
-                "idle" -> getString(R.string.climate_idle)
-                "off" -> getString(R.string.climate_off)
+                "idle" -> getString(R.string.state_idle)
+                "off" -> getString(R.string.state_off)
                 else -> hvacAction
             }
 
