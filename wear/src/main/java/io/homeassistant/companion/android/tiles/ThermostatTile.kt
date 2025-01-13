@@ -205,7 +205,7 @@ class ThermostatTile : TileService() {
                 "cooling" -> getString(R.string.climate_cooling)
                 "idle" -> getString(R.string.state_idle)
                 "off" -> getString(R.string.state_off)
-                else -> hvacAction
+                else -> hvacAction.replaceFirstChar { it.uppercase() }
             }
 
             addContent(
