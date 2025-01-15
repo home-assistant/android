@@ -118,6 +118,7 @@ android {
 
 dependencies {
     implementation(project(":common"))
+    implementation(libs.androidx.browser)
 
     coreLibraryDesugaring(libs.tools.desugar.jdk)
 
