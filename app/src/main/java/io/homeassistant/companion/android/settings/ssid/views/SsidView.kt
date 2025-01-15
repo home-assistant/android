@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
@@ -131,7 +131,12 @@ fun SsidView(
                 }
             }
         }
-        items(wifiSsids, key = { "ssid.item.$it" }) {
+        itemsIndexed(
+            items = wifiSsids,
+            key = { index: Int, item: String ->
+                if (wifiSsids.count { it == item } == 1) "ssid.item.$item" else "ssid.index.$index"
+            }
+        ) { _, it ->
             val connected = remember(it, activeSsid, activeBssid, usingWifi) {
                 usingWifi &&
                     (
