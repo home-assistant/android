@@ -110,6 +110,16 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
+        private val batteryCycles = SensorManager.BasicSensor(
+            "battery_cycles",
+            "sensor",
+            commonR.string.basic_sensor_name_battery_cycles,
+            commonR.string.sensor_description_battery_cycles,
+            "mdi:battery-sync",
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+
         fun getIsCharging(intent: Intent): Boolean {
             val status: Int = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
 
@@ -136,7 +146,9 @@ class BatterySensorManager : SensorManager {
     )
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            defaultSensorList.plus(listOf(remainingChargeTime, batteryCycles))
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             defaultSensorList.plus(remainingChargeTime)
         } else {
             defaultSensorList
@@ -166,6 +178,9 @@ class BatterySensorManager : SensorManager {
             updateBatteryPower(context, intent)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 updateRemainingChargeTime(context)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                updateBatteryCycles(context, intent)
             }
         }
     }
@@ -358,6 +373,23 @@ class BatterySensorManager : SensorManager {
                 remainingCharge
             },
             remainingChargeTime.statelessIcon,
+            mapOf()
+        )
+    }
+
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private suspend fun updateBatteryCycles(context: Context, intent: Intent) {
+        if (!isEnabled(context, batteryCycles)) {
+            return
+        }
+
+        val cycles = intent.getIntExtra(BatteryManager.EXTRA_CYCLE_COUNT, -1)
+
+        onSensorUpdated(
+            context,
+            batteryCycles,
+            if (cycles != -1) cycles else STATE_UNAVAILABLE,
+            batteryCycles.statelessIcon,
             mapOf()
         )
     }
