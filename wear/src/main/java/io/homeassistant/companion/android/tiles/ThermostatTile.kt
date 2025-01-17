@@ -97,12 +97,12 @@ class ThermostatTile : TileService() {
                 ).build()
             } else {
                 try {
-                    val entity = tileConfig?.entityId?.let {
+                    val entity = tileConfig.entityId?.let {
                         serverManager.integrationRepository().getEntity(it)
                     }
 
                     val lastId = requestParams.currentState.lastClickableId
-                    var targetTemp = tileConfig?.targetTemperature ?: entity?.attributes?.get("temperature").toString().toFloat()
+                    var targetTemp = tileConfig.targetTemperature ?: entity?.attributes?.get("temperature").toString().toFloat()
 
                     if (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN) {
                         val entityStr = entity?.entityId.toString()
@@ -117,11 +117,11 @@ class ThermostatTile : TileService() {
                                 "temperature" to updatedTargetTemp
                             )
                         )
-                        val updated = tileConfig?.copy(targetTemperature = updatedTargetTemp) ?: ThermostatTile(id = tileId, targetTemperature = updatedTargetTemp)
+                        val updated = tileConfig.copy(targetTemperature = updatedTargetTemp)
                         thermostatTileDao.add(updated)
                         targetTemp = updatedTargetTemp
                     } else {
-                        val updated = tileConfig?.copy(targetTemperature = null) ?: ThermostatTile(id = tileId, targetTemperature = null)
+                        val updated = tileConfig.copy(targetTemperature = null)
                         thermostatTileDao.add(updated)
                     }
 
@@ -186,9 +186,9 @@ class ThermostatTile : TileService() {
         serviceScope.cancel()
     }
 
-    private suspend fun timeline(tileConfig: ThermostatTile?, targetTemperature: Float): Timeline = Timeline.fromLayoutElement(
+    private suspend fun timeline(tileConfig: ThermostatTile, targetTemperature: Float): Timeline = Timeline.fromLayoutElement(
         LayoutElementBuilders.Box.Builder().apply {
-            val entity = tileConfig?.entityId?.let {
+            val entity = tileConfig.entityId?.let {
                 serverManager.integrationRepository().getEntity(it)
             }
 
@@ -259,7 +259,7 @@ class ThermostatTile : TileService() {
                     )
                     .build()
             )
-            if (tileConfig?.showEntityName == true) {
+            if (tileConfig.showEntityName == true) {
                 addContent(
                     LayoutElementBuilders.Arc.Builder()
                         .setAnchorAngle(
