@@ -57,6 +57,7 @@
     <string name="basic_sensor_name_app_rx_gb">App Rx GB</string>
     <string name="basic_sensor_name_app_standby">App standby bucket</string>
     <string name="basic_sensor_name_app_tx_gb">App Tx GB</string>
+    <string name="basic_sensor_name_battery_cycles">Battery cycle count</string>
     <string name="basic_sensor_name_battery_health">Battery health</string>
     <string name="basic_sensor_name_battery_level">Battery level</string>
     <string name="basic_sensor_name_battery_state">Battery state</string>
@@ -592,6 +593,7 @@
     <string name="sensor_description_app_tx_gb">App Tx GB since last device reboot</string>
     <string name="sensor_description_audio_mode">The state of the device\'s audio mode</string>
     <string name="sensor_description_audio_sensor">The state of the device\'s ringer mode</string>
+    <string name="sensor_description_battery_cycles">The number of charge cycles completed by the battery.\n\nNote: not all devices will report or update the cycle count.</string>
     <string name="sensor_description_battery_health">The health of the battery</string>
     <string name="sensor_description_battery_level">The current battery level of the device</string>
     <string name="sensor_description_battery_state">The current charging state of the battery</string>
