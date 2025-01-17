@@ -7,7 +7,7 @@
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2025.1.4 - Wear" versioncode="2">
-        <change>Add battery cycles sensor</change>
+        <change>Add battery cycle count sensor</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2025.1.4 - Automotive" versioncode="1">
