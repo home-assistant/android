@@ -791,6 +791,7 @@
     <string name="set_lock_title">App locking error</string>
     <string name="setting_haptic_label">Haptics</string>
     <string name="setting_toast_label">Toast message</string>
+    <string name="setting_entity_name_on_tile">Show name on tile</string>
     <string name="settings">Settings</string>
     <string name="share_failed">Sharing with Home Assistant failed!</string>
     <string name="share_logs_sens_message">Please note: by sharing the log, you could share sensitive data like location data or your Home Assistant URL.\n\nDo you want to continue?</string>
@@ -1084,6 +1085,7 @@
     <string name="tile_icon">Tile icon</string>
     <string name="tile_icon_original">Use entity icon</string>
     <string name="tile_select">Select a tile to edit</string>
+    <string name="tile_fetch_entity_error">Cannot fetch entity</string>
     <string name="shortcut_pinned">Pinned shortcuts</string>
     <string name="remote_debugging">WebView remote debugging</string>
     <string name="remote_debugging_summary">Allow remote debugging of WebView to troubleshoot Home Assistant frontend issues</string>
@@ -1357,4 +1359,14 @@
     <string name="domain_remote">Remote</string>
     <string name="domain_siren">Siren</string>
     <string name="domain_humidifier">Humidifier</string>
+    <string name="thermostat_tiles">Thermostat tiles</string>
+    <string name="thermostat">Thermostat</string>
+    <string name="thermostat_tile_desc">See and change the thermostat temperature.</string>
+    <string name="thermostat_tile_no_tiles_yet">There are no thermostat tiles added yet - add one from the watch face to set it up</string>
+    <string name="thermostat_tile_no_entity_yet">Edit the tile settings and select a thermostat to show</string>
+    <string name="thermostat_tile_n">Thermostat tile #%d</string>
+    <string name="thermostat_tile_log_in">Log in to add a thermostat tile</string>
+    <string name="thermostat_tile">Thermostat tile</string>
+    <string name="climate_heating">Heating</string>
+    <string name="climate_cooling">Cooling</string>
 </resources>
