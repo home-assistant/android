@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2025.1.2 - Main" versioncode="3">
-        <change>Android 9+ and Play Store: Add Health Connect sensors</change>
-        <change>Add Ethernet and VPN to Home Network options for internal URL switching</change>
-        <change>Add support for humidifier, media player, number and remote in device controls</change>
+    <release version="2025.1.4 - Main" versioncode="3">
+        <change>Add battery cycle count sensor</change>
+        <change>Add support for specifying a server in a deeplink</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2025.1.2 - Wear" versioncode="2">
+    <release version="2025.1.4 - Wear" versioncode="2">
+        <change>Add battery cycle count sensor</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2025.1.2 - Automotive" versioncode="1">
-        <change>Add Ethernet and VPN to Home Network options for internal URL switching</change>
+    <release version="2025.1.4 - Automotive" versioncode="1">
+        <change>Add battery cycle count sensor</change>
+        <change>Add support for specifying a server in a deeplink</change>
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
