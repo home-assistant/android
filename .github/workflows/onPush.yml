@@ -71,6 +71,8 @@ jobs:
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: |
           ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
+      - name: Upload for Emerge Size Analysis
+        run: ./gradlew :app:emergeUploadReleaseApk
 
       - name: Archive Build
         uses: actions/upload-artifact@v4

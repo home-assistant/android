@@ -85,6 +85,8 @@ jobs:
     - name: Build Debug APK
       run: |
         ./gradlew :common:assemble :app:assembleDebug :wear:assembleDebug :automotive:assembleDebug
+    - name: Upload Emerge Size Analysis
+      run: ./gradlew :app:emergeUploadFullDebugApk
 
     - name: Check for missing/modified DB schemas after build
       run: |

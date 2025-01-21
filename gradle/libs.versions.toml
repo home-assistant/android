@@ -21,6 +21,7 @@ coreKtx = "1.15.0"
 core-splashscreen = "1.1.0-rc01"
 cronet-embedded = "119.6045.31"
 emojiJava = "5.1.1"
+emergeGradlePlugin = "4.0.6"
 firebase-bom = "33.8.0"
 firebaseAppdistributionGradle = "5.1.0"
 fragment-ktx = "1.8.5"
@@ -72,6 +73,7 @@ zxing = "4.3.0"
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidPlugin" }
 android-library = { id = "com.android.library", version.ref = "androidPlugin" }
+emerge = { id = "com.emergetools.android", version.ref = "emergeGradlePlugin"}
 firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "firebaseAppdistributionGradle" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
