@@ -3,6 +3,8 @@ name: Pull Request
 on:
   pull_request:
     branches: [ master ]
+  push:
+    branches: [ master ]
 
 jobs:
   ktlint:
@@ -49,7 +51,7 @@ jobs:
       - name: Validate Lint
         run: ./gradlew lint
 
-  pr_build:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
