@@ -106,10 +106,22 @@ class ThermostatTile : TileService() {
                     val lastId = requestParams.currentState.lastClickableId
                     var targetTemp = tileConfig.targetTemperature ?: entity.attributes["temperature"].toString().toFloat()
 
+                    val config = serverManager.webSocketRepository().getConfig()
+                    val temperatureUnit = config?.unitSystem?.getValue("temperature").toString()
+
                     if (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN) {
                         val entityStr = entity.entityId
-                        val stepSize = entity.attributes["target_temp_step"].toString().toFloat()
-                        val updatedTargetTemp = targetTemp + if (lastId == TAP_ACTION_UP) +stepSize else -stepSize
+                        var stepSize = entity.attributes["target_temp_step"]
+
+                        stepSize = if (stepSize == null && temperatureUnit == "°F") {
+                            1.0f
+                        } else if (stepSize == null) {
+                            0.5f
+                        } else {
+                            stepSize.toString().toFloat()
+                        }
+
+                        val updatedTargetTemp = targetTemp + if (lastId == TAP_ACTION_UP) +stepSize.toFloat() else -stepSize.toFloat()
 
                         serverManager.integrationRepository().callAction(
                             entityStr.split(".")[0],
@@ -131,7 +143,8 @@ class ThermostatTile : TileService() {
                         timeline(
                             tileConfig,
                             entity,
-                            targetTemp
+                            targetTemp,
+                            temperatureUnit
                         )
                     ).build()
                 } catch (e: Exception) {
@@ -189,14 +202,11 @@ class ThermostatTile : TileService() {
         serviceScope.cancel()
     }
 
-    private suspend fun timeline(tileConfig: ThermostatTile, entity: Entity<Map<String, Any>>?, targetTemperature: Float): Timeline =
+    private suspend fun timeline(tileConfig: ThermostatTile, entity: Entity<Map<String, Any>>?, targetTemperature: Float, temperatureUnit: String): Timeline =
         Timeline.fromLayoutElement(
         LayoutElementBuilders.Box.Builder().apply {
 
             val currentTemperature = entity?.attributes?.get("current_temperature").toString()
-            val config = serverManager.webSocketRepository().getConfig()
-            val temperatureUnit = config?.unitSystem?.getValue("temperature").toString()
-
             val hvacAction = entity?.attributes?.get("hvac_action").toString()
             val hvacActionColor = when (hvacAction) {
                 "heating" -> getColor(R.color.colorDeviceControlsThermostatHeat)
