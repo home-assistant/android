@@ -104,12 +104,12 @@ class ThermostatTile : TileService() {
                     check(entity != null)
 
                     val lastId = requestParams.currentState.lastClickableId
-                    var targetTemp = tileConfig.targetTemperature ?: entity.attributes["temperature"].toString().toFloat()
+                    var targetTemp = tileConfig.targetTemperature ?: entity.attributes["temperature"]?.toString()?.toFloat()
 
                     val config = serverManager.webSocketRepository().getConfig()
                     val temperatureUnit = config?.unitSystem?.getValue("temperature").toString()
 
-                    if (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN) {
+                    if (targetTemp != null && ( lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN ) ) {
                         val entityStr = entity.entityId
                         var stepSize = entity.attributes["target_temp_step"]
 
@@ -202,16 +202,24 @@ class ThermostatTile : TileService() {
         serviceScope.cancel()
     }
 
-    private suspend fun timeline(tileConfig: ThermostatTile, entity: Entity<Map<String, Any>>?, targetTemperature: Float, temperatureUnit: String): Timeline =
+    private suspend fun timeline(tileConfig: ThermostatTile, entity: Entity<Map<String, Any>>, targetTemperature: Float?, temperatureUnit: String): Timeline =
         Timeline.fromLayoutElement(
             LayoutElementBuilders.Box.Builder().apply {
-                val currentTemperature = entity?.attributes?.get("current_temperature").toString()
-                val hvacAction = entity?.attributes?.get("hvac_action").toString()
+                val currentTemperature = entity.attributes["current_temperature"]
+                var hvacAction = entity.attributes["hvac_action"].toString()
+                val state = entity.state
                 val hvacActionColor = when (hvacAction) {
                     "heating" -> getColor(R.color.colorDeviceControlsThermostatHeat)
                     "cooling" -> getColor(R.color.colorDeviceControlsDefaultOn)
                     else -> 0x00000000
                 }
+
+                hvacAction = when (state) {
+                    "off" -> "off"
+                    "unavailable" -> "off"
+                    else -> hvacAction
+                }
+
                 val friendlyHvacAction = when (hvacAction) {
                     "heating" -> getString(R.string.climate_heating)
                     "cooling" -> getString(R.string.climate_cooling)
@@ -239,7 +247,7 @@ class ThermostatTile : TileService() {
                         )
                         .addContent(
                             LayoutElementBuilders.Text.Builder()
-                                .setText("$currentTemperature $temperatureUnit")
+                                .setText(if (currentTemperature == null) "-- $temperatureUnit" else "$currentTemperature $temperatureUnit")
                                 .build()
                         )
                         .addContent(
@@ -285,7 +293,7 @@ class ThermostatTile : TileService() {
                             )
                             .addContent(
                                 LayoutElementBuilders.ArcText.Builder()
-                                    .setText(entity?.friendlyName.toString())
+                                    .setText(entity.friendlyName)
                                     .build()
                             )
                             .build()
