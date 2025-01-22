@@ -20,6 +20,7 @@ import androidx.wear.tiles.TileService
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -100,13 +101,14 @@ class ThermostatTile : TileService() {
                     val entity = tileConfig.entityId?.let {
                         serverManager.integrationRepository().getEntity(it)
                     }
+                    check(entity != null)
 
                     val lastId = requestParams.currentState.lastClickableId
-                    var targetTemp = tileConfig.targetTemperature ?: entity?.attributes?.get("temperature").toString().toFloat()
+                    var targetTemp = tileConfig.targetTemperature ?: entity.attributes["temperature"].toString().toFloat()
 
                     if (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN) {
-                        val entityStr = entity?.entityId.toString()
-                        val stepSize = entity?.attributes?.get("target_temp_step").toString().toFloat()
+                        val entityStr = entity.entityId
+                        val stepSize = entity.attributes["target_temp_step"].toString().toFloat()
                         val updatedTargetTemp = targetTemp + if (lastId == TAP_ACTION_UP) +stepSize else -stepSize
 
                         serverManager.integrationRepository().callAction(
@@ -128,11 +130,12 @@ class ThermostatTile : TileService() {
                     tile.setTileTimeline(
                         timeline(
                             tileConfig,
+                            entity,
                             targetTemp
                         )
                     ).build()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unable to fetch entity ${tileConfig?.entityId}", e)
+                    Log.e(TAG, "Unable to fetch entity ${tileConfig.entityId}", e)
 
                     tile.setTileTimeline(
                         primaryLayoutTimeline(
@@ -186,11 +189,9 @@ class ThermostatTile : TileService() {
         serviceScope.cancel()
     }
 
-    private suspend fun timeline(tileConfig: ThermostatTile, targetTemperature: Float): Timeline = Timeline.fromLayoutElement(
+    private suspend fun timeline(tileConfig: ThermostatTile, entity: Entity<Map<String, Any>>?, targetTemperature: Float): Timeline =
+        Timeline.fromLayoutElement(
         LayoutElementBuilders.Box.Builder().apply {
-            val entity = tileConfig.entityId?.let {
-                serverManager.integrationRepository().getEntity(it)
-            }
 
             val currentTemperature = entity?.attributes?.get("current_temperature").toString()
             val config = serverManager.webSocketRepository().getConfig()
