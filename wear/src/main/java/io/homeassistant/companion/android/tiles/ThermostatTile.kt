@@ -205,7 +205,6 @@ class ThermostatTile : TileService() {
     private suspend fun timeline(tileConfig: ThermostatTile, entity: Entity<Map<String, Any>>?, targetTemperature: Float, temperatureUnit: String): Timeline =
         Timeline.fromLayoutElement(
             LayoutElementBuilders.Box.Builder().apply {
-
                 val currentTemperature = entity?.attributes?.get("current_temperature").toString()
                 val hvacAction = entity?.attributes?.get("hvac_action").toString()
                 val hvacActionColor = when (hvacAction) {
@@ -230,7 +229,7 @@ class ThermostatTile : TileService() {
                         )
                         .addContent(
                             LayoutElementBuilders.Text.Builder()
-                                .setText(if (hvacAction == "off") "-- $temperatureUnit" else "$targetTemperature $temperatureUnit")
+                                .setText(if (targetTemperature == null) "-- $temperatureUnit" else "$targetTemperature $temperatureUnit")
                                 .setFontStyle(
                                     LayoutElementBuilders.FontStyle.Builder().setSize(
                                         DimensionBuilders.sp(30f)
