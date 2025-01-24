@@ -445,6 +445,15 @@
                 android:resource="@xml/provider_paths"/>
         </provider>
 
+        <activity
+            android:name=".qs.TilePreferenceActivity"
+            android:exported="true"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".qs.Tile1Service"
             android:icon="@drawable/ic_stat_ic_notification"
