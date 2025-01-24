@@ -1,0 +1,28 @@
+* text eol=lf
+
+#
+# The above will handle all files NOT found below
+# https://help.github.com/articles/dealing-with-line-endings/
+# https://github.com/Danimoth/gitattributes
+
+# These are explicitly windows files and should use crlf
+*.bat           text eol=crlf
+
+# Java/kotlin sources
+*.java          text diff=java
+*.kt            text diff=kotlin
+*.gradle        text diff=java
+*.gradle.kts    text diff=kotlin
+
+# These files are text and should be normalized
+*.properties    text
+*.xml           text
+
+# These files are binary and should be left untouched
+*.aab           binary
+*.apk           binary
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.bin           binary
+
