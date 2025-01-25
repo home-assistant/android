@@ -51,14 +51,6 @@ internal val wearColorScheme: ColorScheme = ColorScheme(
 )
 
 @Composable
-fun getCheckboxButtonColors() = CheckboxButtonDefaults.checkboxButtonColors(
-    checkedBoxColor = wearColorScheme.onTertiary,
-    checkedCheckmarkColor = wearColorScheme.tertiary,
-    checkedContainerColor = wearColorScheme.surfaceContainerHigh,
-    uncheckedContentColor = wearColorScheme.surfaceContainerLow
-)
-
-@Composable
 fun getSwitchButtonColors() = SwitchButtonDefaults.switchButtonColors(
     checkedThumbColor = wearColorScheme.tertiary,
     checkedTrackColor = wearColorScheme.onTertiary,
