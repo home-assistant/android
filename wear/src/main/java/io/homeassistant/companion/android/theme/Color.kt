@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.theme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.wear.compose.material3.ButtonDefaults
-import androidx.wear.compose.material3.CheckboxButtonDefaults
 import androidx.wear.compose.material3.ColorScheme
 import androidx.wear.compose.material3.SliderDefaults
 import androidx.wear.compose.material3.SwitchButtonDefaults
