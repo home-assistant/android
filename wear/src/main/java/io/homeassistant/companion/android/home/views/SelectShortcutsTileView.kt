@@ -9,15 +9,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.foundation.lazy.itemsIndexed
 import androidx.wear.compose.material3.Button
-import androidx.wear.compose.material3.CheckboxButton
+import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.theme.getCheckboxButtonColors
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
+import io.homeassistant.companion.android.theme.getSwitchButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
@@ -35,7 +35,7 @@ fun SelectShortcutsTileView(
                 ListHeader(id = commonR.string.shortcut_tiles)
             }
             item {
-                CheckboxButton(
+                SwitchButton(
                     modifier = Modifier.fillMaxWidth(),
                     checked = isShowShortcutTextEnabled,
                     onCheckedChange = { onShowShortcutTextEnabled(it) },
@@ -51,7 +51,7 @@ fun SelectShortcutsTileView(
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
                         )
                     },
-                    colors = getCheckboxButtonColors()
+                    colors = getSwitchButtonColors()
                 )
             }
             item {
