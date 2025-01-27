@@ -61,6 +61,8 @@ import io.homeassistant.companion.android.database.wear.FavoriteCaches
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.database.wear.FavoritesDao
+import io.homeassistant.companion.android.database.wear.ThermostatTile
+import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
@@ -93,11 +95,12 @@ import kotlinx.coroutines.runBlocking
         Favorites::class,
         FavoriteCaches::class,
         CameraTile::class,
+        ThermostatTile::class,
         EntityStateComplications::class,
         Server::class,
         Setting::class
     ],
-    version = 48,
+    version = 49,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -121,7 +124,8 @@ import kotlinx.coroutines.runBlocking
         AutoMigration(from = 44, to = 45),
         AutoMigration(from = 45, to = 46),
         AutoMigration(from = 46, to = 47),
-        AutoMigration(from = 47, to = 48)
+        AutoMigration(from = 47, to = 48),
+        AutoMigration(from = 48, to = 49)
     ]
 )
 @TypeConverters(
@@ -146,6 +150,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun favoritesDao(): FavoritesDao
     abstract fun favoriteCachesDao(): FavoriteCachesDao
     abstract fun cameraTileDao(): CameraTileDao
+    abstract fun thermostatTileDao(): ThermostatTileDao
     abstract fun entityStateComplicationsDao(): EntityStateComplicationsDao
     abstract fun serverDao(): ServerDao
     abstract fun settingsDao(): SettingsDao
