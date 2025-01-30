@@ -222,7 +222,7 @@ fun ImprovWifiInput(
         )
         Button(
             modifier = Modifier.padding(vertical = 8.dp).align(Alignment.CenterHorizontally),
-            enabled = ssidInput.isNotBlank() && passwordInput.isNotBlank(),
+            enabled = ssidInput.isNotBlank(),
             onClick = { onSubmit(ssidInput, passwordInput) }
         ) {
             Text(stringResource(commonR.string.continue_connect))
