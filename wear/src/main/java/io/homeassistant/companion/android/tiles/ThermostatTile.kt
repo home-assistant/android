@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -124,7 +125,7 @@ class ThermostatTile : TileService() {
                         val updatedTargetTemp = targetTemp + if (lastId == TAP_ACTION_UP) +stepSize.toFloat() else -stepSize.toFloat()
 
                         serverManager.integrationRepository().callAction(
-                            entityStr.split(".")[0],
+                            entity.domain,
                             "set_temperature",
                             hashMapOf(
                                 "entity_id" to entityStr,
