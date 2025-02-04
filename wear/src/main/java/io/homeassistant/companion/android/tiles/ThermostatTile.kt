@@ -111,17 +111,10 @@ class ThermostatTile : TileService() {
                     val temperatureUnit = config?.unitSystem?.getValue("temperature").toString()
 
                     if (targetTemp != null && (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN)) {
-                        var stepSize = entity.attributes["target_temp_step"]
 
-                        stepSize = if (stepSize == null && temperatureUnit == "°F") {
-                            1.0f
-                        } else if (stepSize == null) {
-                            0.5f
-                        } else {
-                            stepSize.toString().toFloat()
-                        }
-
-                        val updatedTargetTemp = targetTemp + if (lastId == TAP_ACTION_UP) +stepSize.toFloat() else -stepSize.toFloat()
+                        val attrStepSize = (entity.attributes["target_temp_step"] as? Number)?.toFloat()
+                        val stepSize = attrStepSize ?: if (temperatureUnit == "°F") 1.0f else 0.5f
+                        val updatedTargetTemp = targetTemp + if (lastId == TAP_ACTION_UP) +stepSize else -stepSize
 
                         serverManager.integrationRepository().callAction(
                             entity.domain,
