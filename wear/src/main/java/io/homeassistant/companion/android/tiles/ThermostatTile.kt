@@ -111,7 +111,6 @@ class ThermostatTile : TileService() {
                     val temperatureUnit = config?.unitSystem?.getValue("temperature").toString()
 
                     if (targetTemp != null && (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN)) {
-
                         val attrStepSize = (entity.attributes["target_temp_step"] as? Number)?.toFloat()
                         val stepSize = attrStepSize ?: if (temperatureUnit == "°F") 1.0f else 0.5f
                         val updatedTargetTemp = targetTemp + if (lastId == TAP_ACTION_UP) +stepSize else -stepSize
