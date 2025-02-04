@@ -199,18 +199,12 @@ class ThermostatTile : TileService() {
         Timeline.fromLayoutElement(
             LayoutElementBuilders.Box.Builder().apply {
                 val currentTemperature = entity.attributes["current_temperature"]
-                var hvacAction = entity.attributes["hvac_action"].toString()
-                val state = entity.state
+                val hvacAction = entity.attributes["hvac_action"].toString()
+
                 val hvacActionColor = when (hvacAction) {
                     "heating" -> getColor(R.color.colorDeviceControlsThermostatHeat)
                     "cooling" -> getColor(R.color.colorDeviceControlsDefaultOn)
                     else -> 0x00000000
-                }
-
-                hvacAction = when (state) {
-                    "off" -> "off"
-                    "unavailable" -> "off"
-                    else -> hvacAction
                 }
 
                 val friendlyHvacAction = when (hvacAction) {
@@ -249,12 +243,12 @@ class ThermostatTile : TileService() {
                         )
                         .addContent(
                             LayoutElementBuilders.Row.Builder()
-                                .addContent(getTempButton(hvacAction != "off", TAP_ACTION_DOWN))
+                                .addContent(getTempButton(hvacAction != "off" && entity.state != "unavailable", TAP_ACTION_DOWN))
                                 .addContent(
                                     LayoutElementBuilders.Spacer.Builder()
                                         .setWidth(DimensionBuilders.dp(20f)).build()
                                 )
-                                .addContent(getTempButton(hvacAction != "off", TAP_ACTION_UP))
+                                .addContent(getTempButton(hvacAction != "off" && entity.state != "unavailable", TAP_ACTION_UP))
                                 .build()
                         )
                         .build()
