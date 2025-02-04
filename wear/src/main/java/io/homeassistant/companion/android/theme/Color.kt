@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.theme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.wear.compose.material3.ButtonDefaults
-import androidx.wear.compose.material3.CheckboxButtonDefaults
 import androidx.wear.compose.material3.ColorScheme
 import androidx.wear.compose.material3.SliderDefaults
 import androidx.wear.compose.material3.SwitchButtonDefaults
@@ -48,14 +47,6 @@ internal val wearColorScheme: ColorScheme = ColorScheme(
     onSurfaceVariant = md_theme_dark_onSurfaceVariant,
     outline = md_theme_dark_outline,
     outlineVariant = md_theme_dark_outlineVariant
-)
-
-@Composable
-fun getCheckboxButtonColors() = CheckboxButtonDefaults.checkboxButtonColors(
-    checkedBoxColor = wearColorScheme.onTertiary,
-    checkedCheckmarkColor = wearColorScheme.tertiary,
-    checkedContainerColor = wearColorScheme.surfaceContainerHigh,
-    uncheckedContentColor = wearColorScheme.surfaceContainerLow
 )
 
 @Composable

@@ -91,19 +91,37 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(carIntent)
         } else if (presenter.hasMultipleServers() && intent.data?.path?.isNotBlank() == true) {
-            supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
-                val serverId = if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
-                    bundle.getInt(ServerChooserFragment.RESULT_SERVER)
+            var serverParameter: Int? = null
+            if (intent.data?.queryParameterNames.orEmpty().contains("server")) {
+                val serverName = intent.data?.getQueryParameter("server").takeIf { !it.isNullOrBlank() }
+                if (serverName == "default" || serverName == null) {
+                    serverParameter = serverManager.getServer()?.id
                 } else {
-                    null
+                    serverManager.defaultServers
+                        .firstOrNull { it.friendlyName.equals(serverName, ignoreCase = true) }
+                        ?.let {
+                            serverParameter = it.id
+                        }
                 }
-                supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
-                startActivity(WebViewActivity.newInstance(this, intent.data?.path, serverId))
-                finish()
-                overridePendingTransition(0, 0) // Disable activity start/stop animation
             }
-            ServerChooserFragment().show(supportFragmentManager, ServerChooserFragment.TAG)
-            return
+
+            if (serverParameter != null) {
+                startActivity(WebViewActivity.newInstance(this, intent.data?.path, serverParameter))
+            } else { // Show server chooser
+                supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
+                    val serverId = if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
+                        bundle.getInt(ServerChooserFragment.RESULT_SERVER)
+                    } else {
+                        null
+                    }
+                    supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
+                    startActivity(WebViewActivity.newInstance(this, intent.data?.path, serverId))
+                    finish()
+                    overridePendingTransition(0, 0) // Disable activity start/stop animation
+                }
+                ServerChooserFragment().show(supportFragmentManager, ServerChooserFragment.TAG)
+                return
+            }
         } else {
             startActivity(WebViewActivity.newInstance(this, intent.data?.path))
         }

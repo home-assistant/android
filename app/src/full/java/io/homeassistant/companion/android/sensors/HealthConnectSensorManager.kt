@@ -929,16 +929,16 @@ class HealthConnectSensorManager : SensorManager {
                 activeCaloriesBurned,
 //                basalBodyTemperature,
 //                basalMetabolicRate,
-//                bloodGlucose,
+                bloodGlucose,
 //                bodyFat,
 //                bodyWaterMass,
 //                bodyTemperature,
 //                boneMass,
-//                diastolicBloodPressure,
+                diastolicBloodPressure,
                 distance,
                 elevationGained,
                 floorsClimbed,
-//                heartRate,
+                heartRate,
 //                heartRateVariability,
 //                height,
 //                hydration,
@@ -948,10 +948,10 @@ class HealthConnectSensorManager : SensorManager {
 //                restingHeartRate,
 //                sleepDuration,
                 steps,
-//                systolicBloodPressure,
+                systolicBloodPressure,
                 totalCaloriesBurned,
-                vo2Max
-//                weight
+                vo2Max,
+                weight
             )
         } else {
             emptyList()
