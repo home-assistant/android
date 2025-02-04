@@ -111,7 +111,6 @@ class ThermostatTile : TileService() {
                     val temperatureUnit = config?.unitSystem?.getValue("temperature").toString()
 
                     if (targetTemp != null && (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN)) {
-                        val entityStr = entity.entityId
                         var stepSize = entity.attributes["target_temp_step"]
 
                         stepSize = if (stepSize == null && temperatureUnit == "°F") {
@@ -128,7 +127,7 @@ class ThermostatTile : TileService() {
                             entity.domain,
                             "set_temperature",
                             hashMapOf(
-                                "entity_id" to entityStr,
+                                "entity_id" to entity.entityId,
                                 "temperature" to updatedTargetTemp
                             )
                         )
