@@ -19,7 +19,8 @@ import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
@@ -80,8 +81,8 @@ class ThermostatTile : TileService() {
                 loggedOutTimeline(
                     this@ThermostatTile,
                     requestParams,
-                    R.string.thermostat,
-                    R.string.thermostat_tile_log_in
+                    commonR.string.thermostat,
+                    commonR.string.thermostat_tile_log_in
                 )
             ).build()
         } else {
@@ -91,7 +92,7 @@ class ThermostatTile : TileService() {
                         LayoutElementBuilders.Box.Builder()
                             .addContent(
                                 LayoutElementBuilders.Text.Builder()
-                                    .setText(getString(R.string.thermostat_tile_no_entity_yet))
+                                    .setText(getString(commonR.string.thermostat_tile_no_entity_yet))
                                     .setMaxLines(10)
                                     .build()
                             ).build()
@@ -147,8 +148,8 @@ class ThermostatTile : TileService() {
                             this@ThermostatTile,
                             requestParams,
                             null,
-                            R.string.tile_fetch_entity_error,
-                            R.string.refresh,
+                            commonR.string.tile_fetch_entity_error,
+                            commonR.string.refresh,
                             ActionBuilders.LoadAction.Builder().build()
                         )
                     ).build()
@@ -165,7 +166,7 @@ class ThermostatTile : TileService() {
                 ResourceBuilders.ImageResource.Builder()
                     .setAndroidResourceByResId(
                         ResourceBuilders.AndroidImageResourceByResId.Builder()
-                            .setResourceId(io.homeassistant.companion.android.R.drawable.ic_refresh)
+                            .setResourceId(R.drawable.ic_refresh)
                             .build()
                     ).build()
             )
@@ -201,16 +202,16 @@ class ThermostatTile : TileService() {
                 val hvacAction = entity.attributes["hvac_action"].toString()
 
                 val hvacActionColor = when (hvacAction) {
-                    "heating" -> getColor(R.color.colorDeviceControlsThermostatHeat)
-                    "cooling" -> getColor(R.color.colorDeviceControlsDefaultOn)
+                    "heating" -> getColor(commonR.color.colorDeviceControlsThermostatHeat)
+                    "cooling" -> getColor(commonR.color.colorDeviceControlsDefaultOn)
                     else -> 0x00000000
                 }
 
                 val friendlyHvacAction = when (hvacAction) {
-                    "heating" -> getString(R.string.climate_heating)
-                    "cooling" -> getString(R.string.climate_cooling)
-                    "idle" -> getString(R.string.state_idle)
-                    "off" -> getString(R.string.state_off)
+                    "heating" -> getString(commonR.string.climate_heating)
+                    "cooling" -> getString(commonR.string.climate_cooling)
+                    "idle" -> getString(commonR.string.state_idle)
+                    "off" -> getString(commonR.string.state_off)
                     else -> hvacAction.replaceFirstChar { it.uppercase() }
                 }
 
@@ -302,8 +303,8 @@ class ThermostatTile : TileService() {
             .setTextContent(if (action == TAP_ACTION_DOWN) "—" else "+")
             .setButtonColors(
                 ButtonColors(
-                    ColorBuilders.argb(getColor(if (enabled) R.color.colorPrimary else R.color.colorDeviceControlsOff)),
-                    ColorBuilders.argb(getColor(R.color.colorWidgetButtonLabelBlack))
+                    ColorBuilders.argb(getColor(if (enabled) commonR.color.colorPrimary else commonR.color.colorDeviceControlsOff)),
+                    ColorBuilders.argb(getColor(commonR.color.colorWidgetButtonLabelBlack))
                 )
             )
             .build()
