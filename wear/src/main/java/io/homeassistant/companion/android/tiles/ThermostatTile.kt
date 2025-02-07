@@ -194,7 +194,7 @@ class ThermostatTile : TileService() {
         serviceScope.cancel()
     }
 
-    private suspend fun timeline(tileConfig: ThermostatTile, entity: Entity<Map<String, Any>>, targetTemperature: Float?, temperatureUnit: String): Timeline =
+    private fun timeline(tileConfig: ThermostatTile, entity: Entity<Map<String, Any>>, targetTemperature: Float?, temperatureUnit: String): Timeline =
         Timeline.fromLayoutElement(
             LayoutElementBuilders.Box.Builder().apply {
                 val currentTemperature = entity.attributes["current_temperature"]
