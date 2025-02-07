@@ -19,15 +19,14 @@ import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.ThermostatTile
-import io.homeassistant.companion.android.R
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -37,6 +36,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class ThermostatTile : TileService() {
