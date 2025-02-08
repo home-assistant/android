@@ -73,6 +73,7 @@ fun SettingsView(
     setFavoritesOnly: (Boolean) -> Unit,
     onClickCameraTile: () -> Unit,
     onClickTemplateTiles: () -> Unit,
+    onClickThermostatTiles: () -> Unit,
     onAssistantAppAllowed: (Boolean) -> Unit,
     onClickNotifications: () -> Unit
 ) {
@@ -190,6 +191,13 @@ fun SettingsView(
                 )
             }
             item {
+                SecondarySettingsChip(
+                    icon = CommunityMaterial.Icon3.cmd_thermostat,
+                    label = stringResource(commonR.string.thermostat_tiles),
+                    onClick = onClickThermostatTiles
+                )
+            }
+            item {
                 ListHeader(
                     id = commonR.string.sensors
                 )
@@ -285,6 +293,7 @@ private fun PreviewSettingsView() {
         setFavoritesOnly = {},
         onClickCameraTile = {},
         onClickTemplateTiles = {},
+        onClickThermostatTiles = {},
         onAssistantAppAllowed = {},
         onClickNotifications = {}
     )
