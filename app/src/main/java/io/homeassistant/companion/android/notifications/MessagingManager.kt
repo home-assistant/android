@@ -1020,9 +1020,9 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ) {
         try { // Without this, a non-numeric when value will crash the app
-            var notificationWhen = data[WHEN]?.toLongOrNull()?.times(1000) ?: 0
-            val isRelative = data[WHEN_RELATIVE]?.toBoolean() ?: false
-            val usesChronometer = data[CHRONOMETER]?.toBoolean() ?: false
+            var notificationWhen = data[WHEN]?.toLongOrNull()?.times(1000) ?: data[WHEN]?.toFloatOrNull()?.times(1000)?.toLong() ?: 0
+            val isRelative = data[WHEN_RELATIVE]?.toBoolean() == true
+            val usesChronometer = data[CHRONOMETER]?.toBoolean() == true
 
             if (notificationWhen != 0L) {
                 if (isRelative) {
