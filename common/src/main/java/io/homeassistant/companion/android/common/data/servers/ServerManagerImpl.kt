@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.servers
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepositoryFactory
+import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepositoryFactory
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -85,7 +86,11 @@ class ServerManagerImpl @Inject constructor(
     }
 
     override fun isRegistered(): Boolean =
-        mutableServers.values.any { it.type == ServerType.DEFAULT && it.connection.isRegistered() }
+        mutableServers.values.any {
+            it.type == ServerType.DEFAULT &&
+                it.connection.isRegistered() &&
+                authenticationRepository(it.id).getSessionState() == SessionState.CONNECTED
+        }
 
     override suspend fun addServer(server: Server): Int {
         val newServer = server.copy(
