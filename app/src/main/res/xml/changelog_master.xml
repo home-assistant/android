@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2025.1.4 - Main" versioncode="3">
+    <release version="2025.2.2 - Main" versioncode="3">
         <change>Add battery cycle count sensor</change>
+        <change>Add more Health Connect sensors</change>
         <change>Add support for specifying a server in a deeplink</change>
+        <change>Show entity more info pop-up when you long press a quick settings tile</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2025.1.4 - Wear" versioncode="2">
+    <release version="2025.2.2 - Wear" versioncode="2">
+        <change>Add new Thermostat tile for temperature control</change>
         <change>Add battery cycle count sensor</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2025.1.4 - Automotive" versioncode="1">
+    <release version="2025.2.2 - Automotive" versioncode="1">
         <change>Add battery cycle count sensor</change>
         <change>Add support for specifying a server in a deeplink</change>
         <change>Bug fixes and dependency updates</change>
