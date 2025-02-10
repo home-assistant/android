@@ -1215,8 +1215,9 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        data[SUBJECT]?.let {
-            builder.setContentText(prepareText(it))
+        val subject = data[SUBJECT]
+        if (!subject.isNullOrBlank()) {
+            builder.setContentText(prepareText(subject))
         }
     }
 
@@ -1237,8 +1238,9 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        data[ICON_URL]?.let {
-            val dataIcon = it.trim().replace(" ", "%20")
+        val iconUrl = data[ICON_URL]
+        if (!iconUrl.isNullOrBlank()) {
+            val dataIcon = iconUrl.trim().replace(" ", "%20")
             val serverId = data[THIS_SERVER_ID]!!.toInt()
             val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), dataIcon)
             val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(dataIcon))
@@ -1252,8 +1254,9 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        data[IMAGE_URL]?.let {
-            val dataImage = it.trim().replace(" ", "%20")
+        val imageUrl = data[IMAGE_URL]
+        if (!imageUrl.isNullOrBlank()) {
+            val dataImage = imageUrl.trim().replace(" ", "%20")
             val serverId = data[THIS_SERVER_ID]!!.toInt()
             val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), dataImage)
             val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(dataImage))
@@ -1342,8 +1345,9 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        data[VIDEO_URL]?.let {
-            val dataVideo = it.trim().replace(" ", "%20")
+        val videoUrl = data[VIDEO_URL]
+        if (!videoUrl.isNullOrBlank()) {
+            val dataVideo = videoUrl.trim().replace(" ", "%20")
             val serverId = data[THIS_SERVER_ID]!!.toInt()
             val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), dataVideo)
             getVideoFrames(serverId, url, !UrlUtil.isAbsoluteUrl(dataVideo))?.let { frames ->
@@ -1459,9 +1463,10 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        data[VISIBILITY]?.let {
+        val visibility = data[VISIBILITY]
+        if (!visibility.isNullOrBlank()) {
             builder.setVisibility(
-                when (it) {
+                when (visibility) {
                     "public" -> NotificationCompat.VISIBILITY_PUBLIC
                     "secret" -> NotificationCompat.VISIBILITY_SECRET
                     else -> NotificationCompat.VISIBILITY_PRIVATE
