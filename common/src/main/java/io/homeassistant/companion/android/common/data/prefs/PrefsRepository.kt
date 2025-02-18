@@ -61,6 +61,10 @@ interface PrefsRepository {
 
     suspend fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean
 
+    suspend fun isUnloadWhenBackgroundedEnabled(): Boolean
+
+    suspend fun setUnloadWhenBackgroundedEnabled(enabled: Boolean)
+
     suspend fun setAlwaysShowFirstViewOnAppStart(enabled: Boolean)
 
     suspend fun isWebViewDebugEnabled(): Boolean

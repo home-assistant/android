@@ -13,7 +13,7 @@ class PrefsRepositoryImpl @Inject constructor(
 
     companion object {
         private const val MIGRATION_PREF = "migration"
-        private const val MIGRATION_VERSION = 1
+        private const val MIGRATION_VERSION = 2
 
         private const val PREF_VER = "version"
         private const val PREF_THEME = "theme"
@@ -30,6 +30,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_PINCH_TO_ZOOM_ENABLED = "pinch_to_zoom_enabled"
         private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
         private const val PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START = "always_show_first_view_on_app_start"
+        private const val PREF_UNLOAD_WHEN_BACKGROUNDED = "unload_when_backgrounded"
         private const val PREF_WEBVIEW_DEBUG_ENABLED = "webview_debug_enabled"
         private const val PREF_KEY_ALIAS = "key-alias"
         private const val PREF_CRASH_REPORTING_DISABLED = "crash_reporting"
@@ -42,7 +43,7 @@ class PrefsRepositoryImpl @Inject constructor(
     init {
         runBlocking {
             val currentVersion = localStorage.getInt(MIGRATION_PREF)
-            if (currentVersion == null || currentVersion < 1) {
+            if (currentVersion == null || currentVersion < MIGRATION_VERSION) {
                 integrationStorage.getString(PREF_CONTROLS_AUTH_REQUIRED)?.let {
                     localStorage.putString(PREF_CONTROLS_AUTH_REQUIRED, it)
                 }
@@ -63,6 +64,11 @@ class PrefsRepositoryImpl @Inject constructor(
                 }
                 integrationStorage.getBooleanOrNull(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START)?.let {
                     localStorage.putBoolean(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START, it)
+                }
+                integrationStorage.getBooleanOrNull(PREF_UNLOAD_WHEN_BACKGROUNDED)?.let { pref ->
+                    localStorage.putBoolean(PREF_UNLOAD_WHEN_BACKGROUNDED, pref)
+                } ?: run {
+                    localStorage.putBoolean(PREF_UNLOAD_WHEN_BACKGROUNDED, false)
                 }
                 integrationStorage.getBooleanOrNull(PREF_WEBVIEW_DEBUG_ENABLED)?.let {
                     localStorage.putBoolean(PREF_WEBVIEW_DEBUG_ENABLED, it)
@@ -191,6 +197,14 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean {
         return localStorage.getBoolean(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START)
+    }
+
+    override suspend fun isUnloadWhenBackgroundedEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_UNLOAD_WHEN_BACKGROUNDED)
+    }
+
+    override suspend fun setUnloadWhenBackgroundedEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_UNLOAD_WHEN_BACKGROUNDED, enabled)
     }
 
     override suspend fun setAlwaysShowFirstViewOnAppStart(enabled: Boolean) {

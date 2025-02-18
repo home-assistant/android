@@ -312,6 +312,10 @@ class WebViewPresenterImpl @Inject constructor(
         prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()
     }
 
+    override fun isUnloadWhenBackgroundedEnabled(): Boolean = runBlocking {
+        prefsRepository.isUnloadWhenBackgroundedEnabled()
+    }
+
     override fun onExternalBusMessage(message: JSONObject) {
         mainScope.launch {
             externalBusRepository.received(message)

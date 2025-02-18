@@ -887,7 +887,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     override fun onResume() {
         super.onResume()
-        if (currentAutoplay != presenter.isAutoPlayVideoEnabled()) {
+
+        if(presenter.isUnloadWhenBackgroundedEnabled()){
+            restoreView()
+        } else if (currentAutoplay != presenter.isAutoPlayVideoEnabled()) {
             recreate()
         }
 
@@ -932,7 +935,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun onPause() {
         super.onPause()
         presenter.setAppActive(false)
-        if (!isFinishing && !isRelaunching) SensorReceiver.updateAllSensors(this)
+        if (!isFinishing && !isRelaunching) {
+            if (presenter.isUnloadWhenBackgroundedEnabled()){
+                unloadView()
+            }
+            SensorReceiver.updateAllSensors(this)
+        }
     }
 
     private suspend fun checkAndWarnForDisabledLocation() {
@@ -1088,6 +1096,36 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         exoPlayerView.requestLayout()
     }
 
+    /**
+     * Unload the view to stop video feeds and data usage.
+     */
+    private fun unloadView() {
+        if (webView.url == null) return
+        if (webView.url !== "about:blank") {
+            Log.d(TAG, "unloadView: the URL was ${webView.url} before unload, 'about:blank' the WebView to unload")
+            webView.loadUrl("about:blank")
+        } else {
+            Log.d(TAG, "unloadView: the URL is already unloaded")
+        }
+    }
+
+    /**
+     * Reload the view to restore previous suspended state.
+     */
+    private fun restoreView() {
+        if (webView.url == "about:blank") {
+            Log.d(TAG, "restoreView: the URL was previously unloaded")
+            if (webView.canGoBack()) {
+                webView.goBack()
+                Log.d(TAG, "restoreView: the WebView went back to ${webView.url}")
+            } else {
+                Log.w(TAG, "restoreView: the WebView cannot go back")
+            }
+        } else {
+            Log.d(TAG, "restoreView: the URL was not 'about:blank', no need to restore")
+        }
+    }
+
     fun processHaptic(hapticType: String) {
         val vm = getSystemService<Vibrator>()
 
@@ -1136,6 +1174,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
         }
     }
+
     private fun authenticationResult(result: Int) {
         when (result) {
             Authenticator.SUCCESS -> {
