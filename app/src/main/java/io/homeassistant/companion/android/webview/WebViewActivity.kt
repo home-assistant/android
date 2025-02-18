@@ -888,7 +888,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun onResume() {
         super.onResume()
 
-        if(presenter.isUnloadWhenBackgroundedEnabled()){
+        if (presenter.isUnloadWhenBackgroundedEnabled()) {
             restoreView()
         } else if (currentAutoplay != presenter.isAutoPlayVideoEnabled()) {
             recreate()
@@ -936,7 +936,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         super.onPause()
         presenter.setAppActive(false)
         if (!isFinishing && !isRelaunching) {
-            if (presenter.isUnloadWhenBackgroundedEnabled()){
+            if (presenter.isUnloadWhenBackgroundedEnabled()) {
                 unloadView()
             }
             SensorReceiver.updateAllSensors(this)
