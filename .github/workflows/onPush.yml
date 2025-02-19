@@ -118,6 +118,9 @@ jobs:
           AMAZON_APPSTORE_CLIENT_SECRET: ${{ secrets.AMAZON_APPSTORE_CLIENT_SECRET }}
           AMAZON_APPSTORE_APP_ID: ${{ secrets.AMAZON_APPSTORE_APP_ID }}
 
+      - name: Upload Github Dependencies
+        uses: gradle/actions/dependency-submission@v4
+
       - name: Print `git status`
         run: git status
 
