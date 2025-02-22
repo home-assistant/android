@@ -306,7 +306,19 @@
         <activity
             android:name=".onboarding.OnboardingActivity"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation"
-            android:theme="@style/Theme.HomeAssistant.Config" />
+            android:theme="@style/Theme.HomeAssistant.Config"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="homeassistant"
+                    android:host="auth-callback" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".settings.wear.SettingsWearActivity"
