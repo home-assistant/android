@@ -75,6 +75,11 @@
             android:icon="@drawable/ic_home_variant_outline"
             android:title="@string/always_show_first_view_on_app_start"
             android:summary="@string/always_show_first_view_on_app_start_summary" />
+        <SwitchPreference
+            android:key="unload_when_backgrounded"
+            android:icon="@drawable/ic_visibility_off"
+            android:title="@string/unload_when_backgrounded"
+            android:summary="@string/unload_when_backgrounded_summary" />
         <Preference
             android:key="nfc_tags"
             android:icon="@drawable/ic_nfc"
