@@ -1,5 +1,5 @@
 [versions]
-activity-compose = "1.10.0"
+activity-compose = "1.10.1"
 androidBeaconLibrary = "2.20.7"
 androidPlugin = "8.8.1"
 androidSdk-compile = "35"
