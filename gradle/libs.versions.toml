@@ -1,7 +1,7 @@
 [versions]
 activity-compose = "1.10.0"
 androidBeaconLibrary = "2.20.7"
-androidPlugin = "8.8.1"
+androidGradlePlugin = "8.8.1"
 androidSdk-compile = "35"
 androidSdk-min = "21"
 androidSdk-target = "34"
@@ -31,7 +31,7 @@ hilt = "2.55"
 iconics = "5.4.0"
 improv = "0.1.1"
 jackson-module-kotlin = "2.13.5"
-javaVersion = "11"
+javaVersion = "11" # https://developer.android.com/studio/write/java11-minimal-support-table
 kotlinx-coroutines = "1.9.0"
 kotlin = "2.0.21"
 ksp = "2.0.21-1.0.25"
@@ -70,8 +70,8 @@ workRuntimeKtx = "2.10.0"
 zxing = "4.3.0"
 
 [plugins]
-android-application = { id = "com.android.application", version.ref = "androidPlugin" }
-android-library = { id = "com.android.library", version.ref = "androidPlugin" }
+android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
+android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
 firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "firebaseAppdistributionGradle" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
@@ -81,10 +81,15 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 
+# Plugins defined by this project in `:build-logic:convention` module.
+homeassistant-android-application = { id = "homeassistant.android.application" }
+homeassistant-android-dependencies = { id = "homeassistant.android.dependencies" }
+
 [libraries]
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
 activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity-compose" }
 android-beacon-library = { module = "org.altbeacon:android-beacon-library", version.ref = "androidBeaconLibrary" }
+android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
 androidx-health-connect-client = { module = "androidx.health.connect:connect-client", version.ref = "connectClient" }
 androidx-health-services-client = { module = "androidx.health:health-services-client", version.ref = "healthServicesClient" }
 androidx-media = { module = "androidx.media:media", version.ref = "media" }
@@ -132,6 +137,7 @@ iconics-compose = { module = "com.mikepenz:iconics-compose", version.ref = "icon
 iconics-core = { module = "com.mikepenz:iconics-core", version.ref = "iconics" }
 improv = { module = "org.openhomefoundation.improv-wifi:sdk-android", version.ref = "improv" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
+kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
