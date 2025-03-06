@@ -1,4 +1,5 @@
 import com.android.build.api.dsl.ApplicationExtension
+import com.dropbox.gradle.plugins.dependencyguard.DependencyGuardPluginExtension
 import io.homeassistant.companion.android.getPluginId
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -35,6 +36,17 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             apply(plugin = libs.plugins.hilt.getPluginId())
             apply(plugin = libs.plugins.kotlin.parcelize.getPluginId())
             apply(plugin = libs.plugins.compose.compiler.getPluginId())
+            apply(plugin = libs.plugins.dependency.guard.getPluginId())
+
+            extensions.configure<DependencyGuardPluginExtension> {
+                // All dependencies included in Production Release APK
+                configuration("fullReleaseRuntimeClasspath") {
+                    allowedFilter = {
+                        // Disallow dependencies with a name containing "junit"
+                        !it.contains("junit") && !it.contains("test")
+                    }
+                }
+            }
 
             extensions.configure<ApplicationExtension> {
                 namespace = APPLICATION_ID
