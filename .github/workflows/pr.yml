@@ -24,6 +24,10 @@ jobs:
           cp .github/mock-google-services.json wear/google-services.json
           cp .github/mock-google-services.json automotive/google-services.json
 
+        # Since `build-logic` is added with `includeBuild` we have to call ktlint explicitly on `:convention`.
+      - name: Validate ktlint convention plugins
+        run: ./gradlew :build-logic:convention:ktlintCheck
+
       - name: Validate ktlint
         run: ./gradlew ktlintCheck
 
