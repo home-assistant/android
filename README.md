@@ -84,3 +84,14 @@ The project currently uses [Lokalise](https://lokalise.com/public/145814835dd655
   * F-Droid uses the `version_code.txt` file of the latest release to detect a new production release and build it themselves, this may take some time
  
 [![Home Assistant - A project from the Open Home Foundation](https://www.openhomefoundation.org/badges/home-assistant.png)](https://www.openhomefoundation.org/)
+
+## Update dependencies
+
+This project utilizes [Dependency Guard](https://github.com/dropbox/dependency-guard) to ensure consistent and controlled dependency management.  It serves two primary purposes:
+
+*   **Transitive Dependency Change Detection:** Dependency Guard alerts us to any unexpected changes in transitive dependencies when we update libraries.
+*   **Dependency Version Tracking:** It generates a `fullReleaseRuntimeClasspath.txt` file for each module, which lists the precise versions of all direct and transitive dependencies used.
+
+### Updating Library Dependencies
+
+If you update a library, you **must** also update the Dependency Guard baseline files. To do this, run `./gradlew dependencyGuardBaseline` and commit the updated baseline files.  The CI build will fail if the baseline files are not updated.

@@ -20,6 +20,7 @@ constraintlayout = "2.2.0"
 coreKtx = "1.15.0"
 core-splashscreen = "1.1.0-rc01"
 cronet-embedded = "119.6045.31"
+dependency-guard = "0.5.0"
 emojiJava = "5.1.1"
 firebase-bom = "33.10.0"
 firebaseAppdistributionGradle = "5.1.1"
@@ -72,12 +73,13 @@ zxing = "4.3.0"
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+dependency-guard = { id = "com.dropbox.dependency-guard", version.ref = "dependency-guard" }
 firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "firebaseAppdistributionGradle" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 
@@ -125,6 +127,7 @@ compose-uiTooling = { module = "androidx.compose.ui:ui-tooling" }
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "core-splashscreen" }
 cronet-embedded = { module = "org.chromium.net:cronet-embedded", version.ref = "cronet-embedded" }
+dependency-guard = { module = "com.dropbox.dependency-guard:dependency-guard", version.ref = "dependency-guard" }
 emojiJava = { module = "com.vdurmont:emoji-java", version.ref = "emojiJava" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
