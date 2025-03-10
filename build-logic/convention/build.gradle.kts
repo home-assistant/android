@@ -41,5 +41,9 @@ gradlePlugin {
             id = libs.plugins.homeassistant.android.dependencies.get().pluginId
             implementationClass = "AndroidApplicationDependenciesConventionPlugin"
         }
+        register("androidApplicationFullMinimalFlavor") {
+            id = libs.plugins.homeassistant.android.flavor.get().pluginId
+            implementationClass = "AndroidFullMinimalFlavorConventionPlugin"
+        }
     }
 }

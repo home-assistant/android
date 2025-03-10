@@ -10,7 +10,13 @@ import org.gradle.kotlin.dsl.project
 
 /**
  * This convention plugin has been created to avoid duplicating dependencies
- * in `:app` and `:automotive` module.
+ * in `:app` and `:automotive` modules.
+ *
+ * This plugin requires the following:
+ * - The Android Application Gradle plugin must be applied to the project.
+ * - The project must define at least two product flavors: `full` and `minimal`.
+ *   These flavors can be automatically configured by applying the
+ *   [AndroidFullMinimalFlavorConventionPlugin].
  */
 class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {

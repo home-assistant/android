@@ -12,19 +12,22 @@ private const val APPLICATION_ID = "io.homeassistant.companion.android"
 
 /**
  * A convention plugin that applies common configurations to Android application modules.
- * This avoid duplicating the same configuration across multiple modules.
+ * This centralizes configuration, preventing duplication across multiple modules.
  *
- * It applies multiple gradle plugins that are used in every modules.
+ * This plugin applies several Gradle plugins that are commonly used in all application modules.
  *
- * Once this plugin is applied, the values set can be overridden if needed. But it probably
- * means that it should not in this convention plugin anymore.
+ * After applying this plugin, the configured values can be overridden if necessary. However,
+ * if extensive overrides are required, it may indicate that the configuration should be moved
+ * out of this convention plugin.
  *
- * application `version code` can be set in the environment variable VERSION_CODE
- * keystore information can be set in the environment variables:
- * - KEYSTORE_PATH for the path to the keystore
- * - KEYSTORE_PASSWORD for the store password
- * - KEYSTORE_ALIAS for the alias
- * - KEYSTORE_ALIAS_PASSWORD for the alias password
+ * The application's `versionCode` can be set via the `VERSION_CODE` environment variable.
+ *
+ * A `release` signing configuration is automatically created. The keystore information can be
+ * provided through the following environment variables:
+ * - `KEYSTORE_PATH`: The path to the keystore file.
+ * - `KEYSTORE_PASSWORD`: The password for the keystore.
+ * - `KEYSTORE_ALIAS`: The alias for the key within the keystore.
+ * - `KEYSTORE_ALIAS_PASSWORD`: The password for the key alias.
  */
 class AndroidApplicationConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -87,25 +90,6 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                         isJniDebuggable = false
                         signingConfig = signingConfigs.getByName("release")
                     }
-                }
-
-                flavorDimensions.add("version")
-                productFlavors {
-                    create("minimal") {
-                        applicationIdSuffix = ".minimal"
-                        versionNameSuffix = "-minimal"
-                    }
-                    create("full") {
-                        applicationIdSuffix = ""
-                        versionNameSuffix = "-full"
-                    }
-
-                    // Generate a list of application ids into BuildConfig
-                    val values = productFlavors.joinToString {
-                        "\"${it.applicationId ?: defaultConfig.applicationId}${it.applicationIdSuffix}\""
-                    }
-
-                    defaultConfig.buildConfigField("String[]", "APPLICATION_IDS", "{$values}")
                 }
 
                 testOptions {
