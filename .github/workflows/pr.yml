@@ -86,6 +86,9 @@ jobs:
         cp .github/mock-google-services.json wear/google-services.json
         cp .github/mock-google-services.json automotive/google-services.json
 
+    - name: Dependency guard
+      run: ./gradlew dependencyGuard
+
     - name: Build Debug APK
       run: |
         ./gradlew :common:assemble :app:assembleDebug :wear:assembleDebug :automotive:assembleDebug
