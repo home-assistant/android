@@ -1,0 +1,44 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+ch.qos.logback:logback-classic:1.3.5=ktlint
+ch.qos.logback:logback-core:1.3.5=ktlint
+com.pinterest.ktlint:ktlint-cli-reporter-baseline:1.0.1=ktlint,ktlintBaselineReporter
+com.pinterest.ktlint:ktlint-cli-reporter-checkstyle:1.0.1=ktlint
+com.pinterest.ktlint:ktlint-cli-reporter-core:1.0.1=ktlint,ktlintBaselineReporter
+com.pinterest.ktlint:ktlint-cli-reporter-format:1.0.1=ktlint
+com.pinterest.ktlint:ktlint-cli-reporter-html:1.0.1=ktlint
+com.pinterest.ktlint:ktlint-cli-reporter-json:1.0.1=ktlint
+com.pinterest.ktlint:ktlint-cli-reporter-plain-summary:1.0.1=ktlint
+com.pinterest.ktlint:ktlint-cli-reporter-plain:1.0.1=ktlint
+com.pinterest.ktlint:ktlint-cli-reporter-sarif:1.0.1=ktlint
+com.pinterest.ktlint:ktlint-cli-ruleset-core:1.0.1=ktlint,ktlintRuleset
+com.pinterest.ktlint:ktlint-cli:1.0.1=ktlint
+com.pinterest.ktlint:ktlint-logger:1.0.1=ktlint,ktlintBaselineReporter,ktlintRuleset
+com.pinterest.ktlint:ktlint-rule-engine-core:1.0.1=ktlint,ktlintBaselineReporter,ktlintRuleset
+com.pinterest.ktlint:ktlint-rule-engine:1.0.1=ktlint
+com.pinterest.ktlint:ktlint-ruleset-standard:1.0.1=ktlint,ktlintRuleset
+dev.drewhamilton.poko:poko-annotations-jvm:0.15.0=ktlint,ktlintBaselineReporter,ktlintRuleset
+dev.drewhamilton.poko:poko-annotations:0.15.0=ktlint,ktlintBaselineReporter,ktlintRuleset
+info.picocli:picocli:4.7.5=ktlint
+io.github.detekt.sarif4k:sarif4k-jvm:0.5.0=ktlint,ktlintReporter
+io.github.detekt.sarif4k:sarif4k:0.5.0=ktlint,ktlintReporter
+io.github.oshai:kotlin-logging-jvm:5.1.0=ktlint,ktlintBaselineReporter,ktlintReporter,ktlintRuleset
+io.github.oshai:kotlin-logging:5.1.0=ktlint,ktlintBaselineReporter,ktlintReporter
+org.ec4j.core:ec4j-core:0.3.0=ktlint,ktlintBaselineReporter,ktlintRuleset
+org.jetbrains.intellij.deps:trove4j:1.0.20200330=ktlint,ktlintBaselineReporter,ktlintRuleset
+org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.10=ktlint,ktlintBaselineReporter,ktlintRuleset
+org.jetbrains.kotlin:kotlin-daemon-embeddable:1.9.10=ktlint,ktlintBaselineReporter,ktlintRuleset
+org.jetbrains.kotlin:kotlin-reflect:1.6.10=ktlint,ktlintBaselineReporter,ktlintRuleset
+org.jetbrains.kotlin:kotlin-script-runtime:1.9.10=ktlint,ktlintBaselineReporter,ktlintRuleset
+org.jetbrains.kotlin:kotlin-stdlib-common:1.9.10=ktlint,ktlintBaselineReporter,ktlintReporter,ktlintRuleset
+org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.10=ktlint,ktlintBaselineReporter,ktlintReporter,ktlintRuleset
+org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10=ktlint,ktlintBaselineReporter,ktlintReporter,ktlintRuleset
+org.jetbrains.kotlin:kotlin-stdlib:1.9.10=ktlint,ktlintBaselineReporter,ktlintReporter,ktlintRuleset
+org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.4.1=ktlintReporter
+org.jetbrains.kotlinx:kotlinx-serialization-core:1.4.1=ktlintReporter
+org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.4.1=ktlintReporter
+org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1=ktlintReporter
+org.jetbrains:annotations:13.0=ktlint,ktlintBaselineReporter,ktlintReporter,ktlintRuleset
+org.slf4j:slf4j-api:2.0.4=ktlint
+empty=

@@ -14,10 +14,20 @@ plugins {
 
 allprojects {
     apply(plugin = rootProject.libs.plugins.ktlint.get().pluginId)
+
+    dependencyLocking {
+        lockAllConfigurations()
+    }
 }
 
 tasks.register("clean").configure {
     delete("build")
+}
+
+tasks.register("alldependencies").configure {
+    setDependsOn(project.allprojects.flatMap {
+        it.tasks.withType<DependencyReportTask>()
+    })
 }
 
 ktlint {
