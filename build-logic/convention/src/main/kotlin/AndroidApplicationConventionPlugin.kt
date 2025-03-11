@@ -36,7 +36,6 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             apply(plugin = libs.plugins.kotlin.android.getPluginId())
             apply(plugin = libs.plugins.ksp.getPluginId())
             apply(plugin = libs.plugins.hilt.getPluginId())
-            apply(plugin = libs.plugins.kotlin.parcelize.getPluginId())
             apply(plugin = libs.plugins.compose.compiler.getPluginId())
 
             extensions.configure<ApplicationExtension> {
