@@ -27,6 +27,28 @@ jobs:
       - name: Validate ktlint
         run: ./gradlew ktlintCheck
 
+  unit-tests:
+      runs-on: ubuntu-latest
+      steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4.7.0
+        with:
+            distribution: 'temurin'
+            java-version: '17'
+
+      - name: Mock google-services.json
+        run: |
+            cp .github/mock-google-services.json app/google-services.json
+            cp .github/mock-google-services.json wear/google-services.json
+            cp .github/mock-google-services.json automotive/google-services.json
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run test
+        run: ./gradlew :common:testDebugUnitTest # Should be adapted once we have more than one tests
+
   lint:
     runs-on: ubuntu-latest
     steps:

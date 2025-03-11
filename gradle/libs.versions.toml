@@ -32,6 +32,7 @@ iconics = "5.4.0"
 improv = "0.1.1"
 jackson-module-kotlin = "2.13.5"
 javaVersion = "11"
+junit = "5.12.0"
 kotlinx-coroutines = "1.9.0"
 kotlin = "2.0.21"
 ksp = "2.0.21-1.0.25"
@@ -132,6 +133,9 @@ iconics-compose = { module = "com.mikepenz:iconics-compose", version.ref = "icon
 iconics-core = { module = "com.mikepenz:iconics-core", version.ref = "iconics" }
 improv = { module = "org.openhomefoundation.improv-wifi:sdk-android", version.ref = "improv" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }

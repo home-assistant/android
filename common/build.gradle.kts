@@ -44,6 +44,10 @@ android {
         abortOnError = false
         disable += "MissingTranslation"
     }
+
+    tasks.withType<Test> {
+        useJUnitPlatform()
+    }
 }
 
 dependencies {
@@ -79,4 +83,8 @@ dependencies {
     implementation(libs.emojiJava) {
         exclude(group = "org.json", module = "json")
     }
+
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
