@@ -86,6 +86,7 @@ ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 
 # Plugins defined by this project in `:build-logic:convention` module.
 homeassistant-android-application = { id = "homeassistant.android.application" }
+homeassistant-android-common = { id = "homeassistant.android.common" }
 homeassistant-android-dependencies = { id = "homeassistant.android.dependencies" }
 homeassistant-android-flavor = { id = "homeassistant.android.flavor" }
 

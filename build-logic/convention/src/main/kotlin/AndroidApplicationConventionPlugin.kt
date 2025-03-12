@@ -4,9 +4,6 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
-import org.gradle.kotlin.dsl.withType
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 private const val APPLICATION_ID = "io.homeassistant.companion.android"
 
@@ -15,6 +12,7 @@ private const val APPLICATION_ID = "io.homeassistant.companion.android"
  * This centralizes configuration, preventing duplication across multiple modules.
  *
  * This plugin applies several Gradle plugins that are commonly used in all application modules.
+ * More specifically it apply the [AndroidCommonConventionPlugin].
  *
  * After applying this plugin, the configured values can be overridden if necessary. However,
  * if extensive overrides are required, it may indicate that the configuration should be moved
@@ -37,14 +35,13 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             apply(plugin = libs.plugins.ksp.getPluginId())
             apply(plugin = libs.plugins.hilt.getPluginId())
             apply(plugin = libs.plugins.compose.compiler.getPluginId())
+            AndroidCommonConventionPlugin().apply(target)
 
             extensions.configure<ApplicationExtension> {
                 namespace = APPLICATION_ID
-                compileSdk = libs.versions.androidSdk.compile.get().toInt()
 
                 defaultConfig {
                     applicationId = APPLICATION_ID
-                    minSdk = libs.versions.androidSdk.min.get().toInt()
                     targetSdk = libs.versions.androidSdk.target.get().toInt()
 
                     versionName = project.version.toString()
@@ -54,19 +51,10 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                 buildFeatures {
                     viewBinding = true
                     compose = true
-                    buildConfig = true
                 }
 
                 compileOptions {
                     isCoreLibraryDesugaringEnabled = true
-                    sourceCompatibility(libs.versions.javaVersion.get())
-                    targetCompatibility(libs.versions.javaVersion.get())
-                }
-
-                tasks.withType<KotlinCompile>().configureEach {
-                    compilerOptions {
-                        jvmTarget.set(JvmTarget.fromTarget(libs.versions.javaVersion.get()))
-                    }
                 }
 
                 signingConfigs {
@@ -89,15 +77,6 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                         isJniDebuggable = false
                         signingConfig = signingConfigs.getByName("release")
                     }
-                }
-
-                testOptions {
-                    unitTests.isReturnDefaultValues = true
-                }
-
-                lint {
-                    abortOnError = false
-                    disable += "MissingTranslation"
                 }
             }
         }
