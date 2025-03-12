@@ -21,9 +21,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: ./.github/actions/setup-build-env
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - uses: ./.github/actions/setup-build-env
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -123,9 +125,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: ./.github/actions/setup-build-env
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - uses: ./.github/actions/setup-build-env
 
       - uses: ruby/setup-ruby@v1
         with:

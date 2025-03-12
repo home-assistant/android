@@ -8,6 +8,8 @@ jobs:
   ktlint:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - uses: ./.github/actions/setup-build-env
         with:
           mock-google-services: "true"
@@ -18,6 +20,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - uses: ./.github/actions/setup-build-env
         with:
           mock-google-services: "true"
@@ -30,10 +34,9 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: ./.github/actions/setup-build-env
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          mock-google-services: "true"
 
       - name: Check for modified DB schemas on branch
         run: |
@@ -43,6 +46,8 @@ jobs:
           else
             echo -e "\n✔️ No changed database schemas on branch"
           fi
+
+      - uses: ./.github/actions/setup-build-env
 
       - name: Build Debug APK
         run: |

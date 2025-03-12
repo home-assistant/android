@@ -1,10 +1,6 @@
 name: "Setup build environment"
 description: "Setup the runner with all the tools we need to build our project."
 inputs:
-    fetch-depth:
-        description: "Number of commits to fetch. 0 indicates all history for all branches and tags."
-        default: "1"
-        required: false
     mock-google-services:
         description: "Mock the google-services.json file inside the gradle modules."
         default: "false"
@@ -12,10 +8,6 @@ inputs:
 runs:
     using: "composite"
     steps:
-        - uses: actions/checkout@v4
-          with:
-              fetch-depth: ${{ inputs.fetch-depth }}
-
         - name: Mock google-services.json
           shell: bash
           if: ${{ inputs.mock-google-services == 'true' }}
