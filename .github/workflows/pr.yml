@@ -48,6 +48,8 @@ jobs:
           fi
 
       - uses: ./.github/actions/setup-build-env
+        with:
+          mock-google-services: "true"
 
       - name: Build Debug APK
         run: |
