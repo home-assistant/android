@@ -1,3 +1,6 @@
+# ---------- IMPORTANT ----------
+# You need to update the lock if you update or add a dependency
+# you can do that with `./gradlew alldependencies --write-locks`
 [versions]
 activity-compose = "1.10.1"
 androidBeaconLibrary = "2.20.7"

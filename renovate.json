@@ -1,6 +1,75 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "configMigration": true,
     "extends": [
-        "config:recommended"
+        "config:recommended",
+        "group:linters",
+        "group:monorepos",
+        "group:recommended"
+    ],
+    "lockFileMaintenance": {"enabled": true},
+    "minimumReleaseAge": "3 days",
+    "packageRules": [
+        {
+            "groupName": "org.jetbrains.kotlin:*",
+            "matchPackageNames": [
+                "org.jetbrains.kotlin:{/,}**",
+                "org.jetbrains.kotlin.{/,}**"
+            ]
+        },
+        {
+            "groupName": "org.jetbrains.kotlin-wrappers:*",
+            "matchPackageNames": ["org.jetbrains.kotlin-wrappers:{/,}**"]
+        },
+        {
+            "groupName": "org.jetbrains.kotlinx.*",
+            "matchPackageNames": [
+                "org.jetbrains.kotlinx:{/,}**",
+                "org.jetbrains.kotlinx.{/,}**"
+            ]
+        },
+        {
+            "groupName": "org.jetbrains.kotlin.*",
+            "matchPackageNames": [
+                "/org.jetbrains.kotlin.*/",
+                "/com.google.devtools.ksp/",
+                "/androidx.compose.compiler:compiler/"
+            ]
+        },
+        {
+            "groupName": "androidx.compose.*",
+            "matchPackageNames": [
+                "!androidx.compose.compiler{/,}**",
+                "androidx.compose.{/,}**",
+                "androidx.wear.compose.{/,}**"
+            ]
+        },
+        {
+            "groupName": "androidx.*",
+            "matchPackageNames": [
+                "!androidx.compose.{/,}**",
+                "!androidx.wear.compose.{/,}**",
+                "androidx.{/,}**"
+            ]
+        },
+        {
+            "groupName": "com.android.*",
+            "matchPackageNames": ["com.android:{/,}**", "com.android.{/,}**"]
+        },
+        {
+            "groupName": "com.google.firebase.*",
+            "matchPackageNames": ["com.google.firebase.{/,}**"]
+        },
+        {
+            "groupName": "com.google.android.*",
+            "matchPackageNames": [
+                "com.google.android:{/,}**",
+                "com.google.android.{/,}**"
+            ]
+        },
+        {
+            "groupName": "com.fasterxml.jackson.*",
+            "matchPackageNames": ["com.fasterxml.jackson.{/,}**"]
+        }
     ]
 }
