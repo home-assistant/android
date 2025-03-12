@@ -17,6 +17,10 @@ jobs:
         with:
           mock-google-services: "true"
 
+        # Since `build-logic` is added with `includeBuild` we have to call ktlint explicitly on `:convention`.
+      - name: Validate ktlint convention plugins
+        run: ./gradlew :build-logic:convention:ktlintCheck
+
       - name: Validate ktlint
         run: ./gradlew ktlintCheck
 
