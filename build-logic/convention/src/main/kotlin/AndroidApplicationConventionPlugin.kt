@@ -98,6 +98,8 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                 lint {
                     abortOnError = false
                     disable += "MissingTranslation"
+                    // This report is used by Github Actions to parse the new issues and report them into the PR.
+                    sarifReport = true
                 }
             }
         }
