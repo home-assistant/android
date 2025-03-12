@@ -133,9 +133,10 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
+          arch: x86_64
           force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: echo "Generated AVD snapshot for caching."
 
       - name: Enable KVM group perms
@@ -150,16 +151,16 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           arch: x86_64
+          force-avd-creation: false
           disable-animations: true
-          disk-size: 6000M
-          heap-size: 600M
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: ./gradlew connectedDemoDebugAndroidTest --daemon
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-API${{ matrix.api-level }}
+          name: instrumentation-test-results-API${{ matrix.api-level }}
           path: |
             **/build/reports/*
             **/build/outputs/*/connected/*
