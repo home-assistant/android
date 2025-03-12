@@ -10,7 +10,7 @@ runs:
     steps:
         - name: Mock google-services.json
           shell: bash
-          if: ${{ inputs.mock-google-services == "true" }}
+          if: ${{ inputs.mock-google-services == 'true' }}
           run: |
               cp .github/mock-google-services.json app/google-services.json
               cp .github/mock-google-services.json wear/google-services.json
