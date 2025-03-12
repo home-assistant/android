@@ -25,9 +25,11 @@ tasks.register("clean").configure {
 }
 
 tasks.register("alldependencies").configure {
-    setDependsOn(project.allprojects.flatMap {
-        it.tasks.withType<DependencyReportTask>()
-    })
+    setDependsOn(
+        project.allprojects.flatMap {
+            it.tasks.withType<DependencyReportTask>()
+        }
+    )
 }
 
 ktlint {
