@@ -1,67 +1,16 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt)
+    alias(libs.plugins.homeassistant.android.application)
     alias(libs.plugins.google.services)
-    alias(libs.plugins.compose.compiler)
 }
 
 android {
-    namespace = "io.homeassistant.companion.android"
-
-    compileSdk = libs.versions.androidSdk.compile.get().toInt()
-
     defaultConfig {
-        applicationId = "io.homeassistant.companion.android"
         minSdk = libs.versions.androidSdk.wear.min.get().toInt()
         targetSdk = libs.versions.androidSdk.wear.target.get().toInt()
 
         versionName = project.version.toString()
         // We add 1 because the app and wear versions need to have different version codes.
-        versionCode = (System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1) + 1
-    }
-
-    buildFeatures {
-        viewBinding = true
-        compose = true
-        buildConfig = true
-    }
-
-    signingConfigs {
-        create("release") {
-            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "release_keystore.keystore")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias = System.getenv("KEYSTORE_ALIAS") ?: ""
-            keyPassword = System.getenv("KEYSTORE_ALIAS_PASSWORD") ?: ""
-            enableV1Signing = true
-            enableV2Signing = true
-        }
-    }
-
-    buildTypes {
-        named("debug").configure {
-            applicationIdSuffix = ".debug"
-        }
-        named("release").configure {
-            isDebuggable = false
-            isJniDebuggable = false
-            signingConfig = signingConfigs.getByName("release")
-        }
-    }
-
-    kotlinOptions {
-        jvmTarget = libs.versions.javaVersion.get()
-    }
-
-    compileOptions {
-        isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility(libs.versions.javaVersion.get())
-        targetCompatibility(libs.versions.javaVersion.get())
-    }
-
-    lint {
-        disable += "MissingTranslation"
+        versionCode = 1 + checkNotNull(versionCode) { "Did you forget to apply the convention plugin that set the version code?" }
     }
 }
 
