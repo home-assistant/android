@@ -3,21 +3,15 @@ name: Tag Weekly Release
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 4 * * 0'
+    - cron: "0 4 * * 0"
 jobs:
   tag:
     name: Tag Weekly Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-build-env
         with:
           fetch-depth: 0
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4.7.0
-        with:
-          distribution: 'temurin'
-          java-version: '17'
 
       - name: Tag Weekly Release
         env:

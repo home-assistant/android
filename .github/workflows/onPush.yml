@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       beta:
-        description: 'true if this is a beta release'
+        description: "true if this is a beta release"
         required: false
-        default: 'false'
+        default: "false"
   push:
     branches:
       - master
@@ -21,23 +21,14 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-build-env
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4.7.0
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2'
+          ruby-version: "3.2"
           bundler-cache: true
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
 
       - uses: ./.github/actions/create-release-number
         name: Create Release Number
@@ -132,23 +123,14 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-build-env
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4.7.0
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2'
+          ruby-version: "3.2"
           bundler-cache: true
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
 
       - uses: ./.github/actions/create-release-number
         name: Create Release Number
