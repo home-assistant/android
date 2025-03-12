@@ -7,84 +7,69 @@
         "group:monorepos",
         "group:recommended"
     ],
-    "lockFileMaintenance": {
-        "enabled": true
-    },
+    "lockFileMaintenance": {"enabled": true},
     "minimumReleaseAge": "3 days",
     "packageRules": [
         {
             "groupName": "org.jetbrains.kotlin:*",
-            "matchPackagePrefixes": [
-                "org.jetbrains.kotlin:",
-                "org.jetbrains.kotlin."
+            "matchPackageNames": [
+                "org.jetbrains.kotlin:{/,}**",
+                "org.jetbrains.kotlin.{/,}**"
             ]
         },
         {
             "groupName": "org.jetbrains.kotlin-wrappers:*",
-            "matchPackagePrefixes": [
-                "org.jetbrains.kotlin-wrappers:"
-            ]
+            "matchPackageNames": ["org.jetbrains.kotlin-wrappers:{/,}**"]
         },
         {
             "groupName": "org.jetbrains.kotlinx.*",
-            "matchPackagePrefixes": [
-                "org.jetbrains.kotlinx:",
-                "org.jetbrains.kotlinx."
+            "matchPackageNames": [
+                "org.jetbrains.kotlinx:{/,}**",
+                "org.jetbrains.kotlinx.{/,}**"
             ]
         },
         {
             "groupName": "org.jetbrains.kotlin.*",
-            "matchPackagePatterns": [
-                "org.jetbrains.kotlin.*",
-                "com.google.devtools.ksp",
-                "androidx.compose.compiler:compiler"
+            "matchPackageNames": [
+                "/org.jetbrains.kotlin.*/",
+                "/com.google.devtools.ksp/",
+                "/androidx.compose.compiler:compiler/"
             ]
         },
         {
-            "excludePackagePrefixes": [
-                "androidx.compose.compiler"
-            ],
             "groupName": "androidx.compose.*",
-            "matchPackagePrefixes": [
-                "androidx.compose.",
-                "androidx.wear.compose."
+            "matchPackageNames": [
+                "!androidx.compose.compiler{/,}**",
+                "androidx.compose.{/,}**",
+                "androidx.wear.compose.{/,}**"
             ]
         },
         {
-            "excludePackagePrefixes": [
-                "androidx.compose.",
-                "androidx.wear.compose."
-            ],
             "groupName": "androidx.*",
-            "matchPackagePrefixes": [
-                "androidx."
+            "matchPackageNames": [
+                "!androidx.compose.{/,}**",
+                "!androidx.wear.compose.{/,}**",
+                "androidx.{/,}**"
             ]
         },
         {
             "groupName": "com.android.*",
-            "matchPackagePrefixes": [
-                "com.android:",
-                "com.android."
-            ]
+            "matchPackageNames": ["com.android:{/,}**", "com.android.{/,}**"]
         },
         {
             "groupName": "com.google.firebase.*",
-            "matchPackagePrefixes": [
-                "com.google.firebase."
-            ]
+            "matchPackageNames": ["com.google.firebase.{/,}**"]
         },
         {
             "groupName": "com.google.android.*",
-            "matchPackagePrefixes": [
-                "com.google.android:",
-                "com.google.android."
+            "matchPackageNames": [
+                "com.google.android:{/,}**",
+                "com.google.android.{/,}**"
             ]
         },
         {
             "groupName": "com.fasterxml.jackson.*",
-            "matchPackagePrefixes": [
-                "com.fasterxml.jackson."
-            ]
+            "matchPackageNames": ["com.fasterxml.jackson.{/,}**"]
         }
     ]
 }
