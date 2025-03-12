@@ -62,6 +62,7 @@ android {
 
     lint {
         disable += "MissingTranslation"
+        sarifReport = true
     }
 }
 

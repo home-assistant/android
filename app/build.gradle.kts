@@ -113,6 +113,7 @@ android {
     lint {
         abortOnError = false
         disable += "MissingTranslation"
+        sarifReport = true
     }
 }
 
