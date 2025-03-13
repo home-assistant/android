@@ -112,6 +112,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write # To publish comments on failure
+      checks: write
     strategy:
       # We want the result of each device to be reported, so we can't fail-fast
       fail-fast: false
@@ -185,4 +186,7 @@ jobs:
         with:
           report_paths: '**/androidTest-results/**/TEST-*.xml'
           comment: true
-          job_name: Instrumentation Tests API${{ matrix.api-level }}
+          check_name: Instrumentation Tests API${{ matrix.api-level }}
+          annotate_notice: true
+          detailed_summary: true
+          skip_success_summary: true
