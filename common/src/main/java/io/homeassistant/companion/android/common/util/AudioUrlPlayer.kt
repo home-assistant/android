@@ -37,7 +37,7 @@ class AudioUrlPlayer(private val audioManager: AudioManager?) {
      * @param donePlaying callback to be invoked when playback has finished (it covers when it's not playing anything or an error happened)
      * @return `true` if the audio playback started, or `false` if not
      */
-    suspend fun playAudio(url: String, isAssistant: Boolean = true, donePlaying: () -> Unit): Boolean = withContext(Dispatchers.IO) {
+    suspend fun playAudio(url: String, isAssistant: Boolean = true, donePlaying: (() -> Unit)?): Boolean = withContext(Dispatchers.IO) {
         if (player != null) {
             stop()
         }

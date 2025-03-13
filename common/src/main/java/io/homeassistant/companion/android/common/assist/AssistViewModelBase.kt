@@ -68,7 +68,7 @@ abstract class AssistViewModelBase(
      * @param text input to run an intent pipeline with, or `null` to run a STT pipeline (check if
      * STT is supported _before_ calling this function)
      * @param pipeline information about the pipeline, or `null` to use the server's default
-     * @param onMessage callback for messages that should be posted for this pipeline run, with 3
+     * @param onMessage callback for messages that should be posted for this pipeline run, with 4
      * arguments: the message, whether the message is input/output/undetermined, whether the message
      * is an error message, whether the conversation should continue
      */
@@ -132,7 +132,7 @@ abstract class AssistViewModelBase(
                         val audioPath = (it.data as? AssistPipelineTtsEnd)?.ttsOutput?.url
                         if (!audioPath.isNullOrBlank()) {
                             playAudio(audioPath) {
-                                // We send the continueConversation flag here after getting it from INTENT_END so that
+                                // We send the continueConversation flag here after getting it from AssistPipelineEventType.INTENT_END so that
                                 // we let the mediaplayer finishing playing the audio before recording a new entry from the user.
                                 onMessage("", null, false, continueConversation.getAndSet(false))
                             }
@@ -174,7 +174,7 @@ abstract class AssistViewModelBase(
         }
     }
 
-    private fun playAudio(path: String, donePlaying: () -> Unit) {
+    private fun playAudio(path: String, donePlaying: (() -> Unit)?) {
         UrlUtil.handle(serverManager.getServer(selectedServerId)?.connection?.getUrl(), path)?.let {
             viewModelScope.launch {
                 audioUrlPlayer.playAudio(it.toString(), donePlaying = donePlaying)
