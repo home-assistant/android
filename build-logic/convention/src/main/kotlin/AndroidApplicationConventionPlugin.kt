@@ -11,8 +11,8 @@ private const val APPLICATION_ID = "io.homeassistant.companion.android"
  * A convention plugin that applies common configurations to Android application modules.
  * This centralizes configuration, preventing duplication across multiple modules.
  *
- * This plugin applies several Gradle plugins that are commonly used in all application modules.
- * More specifically it apply the [AndroidCommonConventionPlugin].
+ * This plugin applies several Gradle plugins that are commonly used in all application modules,
+ * including the [AndroidCommonConventionPlugin].
  *
  * After applying this plugin, the configured values can be overridden if necessary. However,
  * if extensive overrides are required, it may indicate that the configuration should be moved
