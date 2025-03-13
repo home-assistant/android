@@ -6,7 +6,6 @@ on:
 
 jobs:
   ktlint:
-    name: "Ktlint"
     runs-on: ubuntu-latest
     permissions:
         security-events: write
@@ -31,7 +30,6 @@ jobs:
           sarif_file: "./"
 
   lint:
-    name: "Lint"
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -70,7 +68,6 @@ jobs:
           limit-access-to-users: timoPtr
 
   pr_build:
-    name: "Build debug APKs"
     runs-on: ubuntu-latest
     permissions:
       contents: write
