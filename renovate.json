@@ -9,7 +9,35 @@
     ],
     "lockFileMaintenance": {"enabled": true},
     "minimumReleaseAge": "3 days",
+    "hostRules": [
+		{
+			"matchHost": "repo.maven.apache.org",
+			"concurrentRequestLimit": 1,
+			"maxRequestsPerSecond": 8
+		},
+		{
+			"matchHost": "plugins.gradle.org",
+			"concurrentRequestLimit": 1,
+			"maxRequestsPerSecond": 8
+		},
+		{
+			"matchHost": "dl.google.com",
+			"concurrentRequestLimit": 1,
+			"maxRequestsPerSecond": 8
+		}
+    ],
     "packageRules": [
+        {
+            "matchDatasources": ["maven"],
+            "registryUrls": ["https://repo1.maven.org/maven2/", "https://plugins.gradle.org/m2/", "https://dl.google.com/android/maven2/"]
+        },
+        {
+            "matchDatasources": ["maven"],
+            "registryUrls": ["https://jitpack.io"],
+            "matchPackageNames": [
+                "com.github.AppDevNext"
+            ]
+        },
         {
             "groupName": "org.jetbrains.kotlin:*",
             "matchPackageNames": [
@@ -40,15 +68,15 @@
             "groupName": "androidx.compose.*",
             "matchPackageNames": [
                 "!androidx.compose.compiler{/,}**",
-                "androidx.compose.{/,}**",
-                "androidx.wear.compose.{/,}**"
+                "!androidx.wear.compose{/,}**",
+                "androidx.compose.{/,}**"
             ]
         },
         {
             "groupName": "androidx.*",
             "matchPackageNames": [
                 "!androidx.compose.{/,}**",
-                "!androidx.wear.compose.{/,}**",
+                "!androidx.wear.compose{/,}**",
                 "androidx.{/,}**"
             ]
         },
