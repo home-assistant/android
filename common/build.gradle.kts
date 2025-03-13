@@ -57,4 +57,6 @@ dependencies {
     implementation(libs.emojiJava) {
         exclude(group = "org.json", module = "json")
     }
+
+    androidTestImplementation(libs.bundles.androidx.test)
 }
