@@ -14,6 +14,16 @@
 			"matchHost": "repo.maven.apache.org",
 			"concurrentRequestLimit": 1,
 			"maxRequestsPerSecond": 8
+		},
+		{
+			"matchHost": "plugins.gradle.org",
+			"concurrentRequestLimit": 1,
+			"maxRequestsPerSecond": 8
+		},
+		{
+			"matchHost": "dl.google.com",
+			"concurrentRequestLimit": 1,
+			"maxRequestsPerSecond": 8
 		}
     ],
     "packageRules": [
