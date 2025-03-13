@@ -166,7 +166,7 @@ jobs:
           force-avd-creation: false
           disable-animations: true
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: ./gradlew connectedDebugAndroidTest
+          script: ./gradlew :common:connectedDebugAndroidTest
 
       - name: Upload test results
         if: always()
