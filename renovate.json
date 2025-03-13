@@ -9,7 +9,21 @@
     ],
     "lockFileMaintenance": {"enabled": true},
     "minimumReleaseAge": "3 days",
+    "hostRules": [
+		{
+			"matchHost": "repo.maven.apache.org",
+			"concurrentRequestLimit": 1,
+			"maxRequestsPerSecond": 8
+		}
+    ],
     "packageRules": [
+        {
+            "matchDatasources": ["maven"],
+            "registryUrls": ["https://jitpack.io"],
+            "matchPackageNames": [
+                "com.github.AppDevNext"
+            ]
+        },
         {
             "groupName": "org.jetbrains.kotlin:*",
             "matchPackageNames": [
