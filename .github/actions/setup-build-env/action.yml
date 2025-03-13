@@ -29,4 +29,4 @@ runs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
       with:
-        cache-disabled: ${{ inputs.cache-disabled }}
+        cache-disabled: ${{ inputs.cache-disabled == 'true'}}
