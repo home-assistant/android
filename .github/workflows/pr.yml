@@ -110,9 +110,6 @@ jobs:
 
   instrumentation_test:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write # To publish comments on failure
-      checks: write
     strategy:
       # We want the result of each device to be reported, so we can't fail-fast
       fail-fast: false
@@ -175,18 +172,38 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: instrumentation-test-results-API${{ matrix.api-level }}
+          name: Instrumentation test results (API${{ matrix.api-level }})
           path: |
             **/build/reports/*
             **/build/outputs/*/connected/*
 
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v5
-        if: success() || failure() # always run even if the previous step fails but not when cancelled
+  publish-test-results:
+    name: "Publish Tests Results"
+    needs: instrumentation_test
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+    if: always()
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+
+      #- name: Publish Test Report Mikepenz
+      #  uses: mikepenz/action-junit-report@v5
+      #  if: success() || failure() # always run even if the previous step fails but not when cancelled
+      #  with:
+      #    report_paths: '**/androidTest-results/**/TEST-*.xml'
+      #    comment: true
+      #    check_name: Instrumentation Tests API${{ matrix.api-level }}
+      #    annotate_notice: true
+      #    detailed_summary: true
+      #    skip_success_summary: true
+
+      - name: Publish Test Results EnricoMi
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
         with:
-          report_paths: '**/androidTest-results/**/TEST-*.xml'
-          comment: true
-          check_name: Instrumentation Tests API${{ matrix.api-level }}
-          annotate_notice: true
-          detailed_summary: true
-          skip_success_summary: true
+          files: |
+            **/androidTest-results/**/TEST-*.xml
