@@ -110,6 +110,8 @@ jobs:
 
   instrumentation_test:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write # To publish comments on failure
     strategy:
       # We want the result of each device to be reported, so we can't fail-fast
       fail-fast: false
@@ -182,3 +184,5 @@ jobs:
         if: success() || failure() # always run even if the previous step fails but not when cancelled
         with:
           report_paths: '**/androidTest-results/**/TEST-*.xml'
+          comment: true
+          job_name: Instrumentation Tests API${{ matrix.api-level }}
