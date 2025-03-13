@@ -40,15 +40,15 @@
             "groupName": "androidx.compose.*",
             "matchPackageNames": [
                 "!androidx.compose.compiler{/,}**",
-                "androidx.compose.{/,}**",
-                "androidx.wear.compose.{/,}**"
+                "!androidx.wear.compose{/,}**",
+                "androidx.compose.{/,}**"
             ]
         },
         {
             "groupName": "androidx.*",
             "matchPackageNames": [
                 "!androidx.compose.{/,}**",
-                "!androidx.wear.compose.{/,}**",
+                "!androidx.wear.compose{/,}**",
                 "androidx.{/,}**"
             ]
         },
