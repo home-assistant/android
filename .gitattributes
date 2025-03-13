@@ -16,40 +16,12 @@
 *.txt text
 *.bash text eol=lf
 *.css text diff=css
-*.htm text diff=html
-*.html text diff=html
 *.sh text eol=lf
 
 # Declare binary files to be preserved as-is
 *.png binary
 *.jpg binary
-*.jpeg binary
-*.gif binary
-*.ico binary
-*.pdf binary
 *.jar binary
-*.keystore binary
-*.apk binary
-*.aab binary
-*.a binary
-*.so binary
-*.lib binary
-*.icns binary
-*.mov binary
-*.mp4 binary
-*.mp3 binary
-*.flv binary
-*.fla binary
-*.swf binary
-*.gz binary
-*.zip binary
-*.tar binary
-*.tar.gz binary
-*.7z binary
-*.ttf binary
-*.pyc binary
-*.gpg binary
-*.bin binary
 
 # Custom merge driver for Gradle lock files
 gradle.lockfile merge=union
@@ -60,14 +32,6 @@ gradle.lockfile merge=union
 # Ensure Windows batch files have CRLF line endings
 *.bat text eol=crlf
 
-# Handle Unity YAML files
-*.unity text
-*.prefab text
-*.mat text
-*.meta text
-
 # Handle Android Studio specific files
 *.iml text
 *.idea/** text
-*.gradle/** text
-gradle/** text
