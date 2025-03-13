@@ -39,7 +39,6 @@ jobs:
       - uses: ./.github/actions/setup-build-env
         with:
           mock-google-services: "true"
-          cache-disabled: "true"
 
       - name: Validate Lint
         run: ./gradlew lint
@@ -130,7 +129,6 @@ jobs:
       - uses: ./.github/actions/setup-build-env
         with:
           mock-google-services: "true"
-          cache-disabled: "true"
 
       - name: Enable KVM group perms
         run: |
