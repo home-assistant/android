@@ -1,8 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt)
+    alias(libs.plugins.homeassistant.android.common)
 }
 
 val homeAssistantAndroidPushUrl: String by project
@@ -14,10 +12,7 @@ val versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 android {
     namespace = "io.homeassistant.companion.android.common"
 
-    compileSdk = libs.versions.androidSdk.compile.get().toInt()
-
     defaultConfig {
-        minSdk = libs.versions.androidSdk.min.get().toInt()
         buildConfigField("String", "PUSH_URL", "\"$homeAssistantAndroidPushUrl\"")
         buildConfigField("String", "RATE_LIMIT_URL", "\"$homeAssistantAndroidRateLimitUrl\"")
         buildConfigField("String", "VERSION_NAME", "\"$versionName-$versionCode\"")
@@ -25,24 +20,6 @@ android {
         ksp {
             arg("room.schemaLocation", "$projectDir/schemas")
         }
-    }
-
-    buildFeatures {
-        buildConfig = true
-    }
-
-    kotlinOptions {
-        jvmTarget = libs.versions.javaVersion.get()
-    }
-
-    compileOptions {
-        sourceCompatibility(libs.versions.javaVersion.get())
-        targetCompatibility(libs.versions.javaVersion.get())
-    }
-
-    lint {
-        abortOnError = false
-        disable += "MissingTranslation"
     }
 }
 
