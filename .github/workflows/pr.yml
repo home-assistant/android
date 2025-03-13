@@ -6,6 +6,7 @@ on:
 
 jobs:
   ktlint:
+    name: "Ktlint"
     runs-on: ubuntu-latest
     permissions:
         security-events: write
@@ -30,6 +31,7 @@ jobs:
           sarif_file: "./"
 
   lint:
+    name: "Lint"
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -68,6 +70,7 @@ jobs:
           limit-access-to-users: timoPtr
 
   pr_build:
+    name: "Build debug APKs"
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -109,6 +112,7 @@ jobs:
           path: ./**/*.apk
 
   instrumentation_test:
+    name: "Instrumentation Tests"
     runs-on: ubuntu-latest
     strategy:
       # We want the result of each device to be reported, so we can't fail-fast
@@ -177,7 +181,7 @@ jobs:
             **/build/reports/*
             **/build/outputs/*/connected/*
 
-  publish-test-results:
+  publish_test_results:
     name: "Publish Tests Results"
     needs: instrumentation_test
     runs-on: ubuntu-latest
@@ -189,17 +193,6 @@ jobs:
     steps:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
-
-      #- name: Publish Test Report Mikepenz
-      #  uses: mikepenz/action-junit-report@v5
-      #  if: success() || failure() # always run even if the previous step fails but not when cancelled
-      #  with:
-      #    report_paths: '**/androidTest-results/**/TEST-*.xml'
-      #    comment: true
-      #    check_name: Instrumentation Tests API${{ matrix.api-level }}
-      #    annotate_notice: true
-      #    detailed_summary: true
-      #    skip_success_summary: true
 
       - name: Publish Test Results EnricoMi
         uses: EnricoMi/publish-unit-test-result-action@v2
