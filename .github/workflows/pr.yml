@@ -26,6 +26,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "./"
+          category: "KTlint"
 
   lint:
     runs-on: ubuntu-latest
@@ -53,6 +54,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "./"
+          category: "Android Lint"
 
   pr_build:
     runs-on: ubuntu-latest
