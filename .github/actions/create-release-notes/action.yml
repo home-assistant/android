@@ -1,14 +1,14 @@
-name: 'Create Release Notes'
-description: 'Creates the current releases release notes'
+name: "Create Release Notes"
+description: "Creates the current releases release notes"
 inputs:
   tag-name:
-    description: 'Name of the tag that will be used for this release'
+    description: "Name of the tag that will be used for this release"
     required: true
   gh-token:
-    description: 'The GitHub token used to get details from the API'
+    description: "The GitHub token used to get details from the API"
     required: true
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Get Previous Release Tag
       uses: actions/github-script@v7
@@ -42,10 +42,10 @@ runs:
       shell: bash
       run: |
         mkdir -p ./app/build/outputs/
-        
+
         echo "Previous Release Tag:"
         echo "${{ steps.latest-release-tag.outputs.result }}"
-        
+
         echo "Full Changelog:"
         CHANGELOG="${{ steps.generate-notes.outputs.result }}"
         echo -e "$CHANGELOG"

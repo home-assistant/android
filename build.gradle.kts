@@ -1,3 +1,5 @@
+import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
+
 plugins {
     alias(libs.plugins.ktlint)
 
@@ -34,6 +36,10 @@ tasks.register("alldependencies").configure {
 
 ktlint {
     android.set(true)
+    reporters {
+        reporter(ReporterType.SARIF)
+        reporter(ReporterType.PLAIN)
+    }
 }
 
 tasks.register("versionFile").configure {
