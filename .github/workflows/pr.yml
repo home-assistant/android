@@ -8,6 +8,7 @@ jobs:
   ktlint:
     runs-on: ubuntu-latest
     permissions:
+        pull-requests: write
         security-events: write
     steps:
       - uses: actions/checkout@v4
@@ -16,12 +17,9 @@ jobs:
         with:
           mock-google-services: "true"
 
-        # Since `build-logic` is added with `includeBuild` we have to call ktlint explicitly on `:convention`.
-      - name: Validate ktlint convention plugins
-        run: ./gradlew :build-logic:convention:ktlintCheck
-
+      # Since `build-logic` is added with `includeBuild` we have to call ktlint explicitly on `:convention`.
       - name: Validate ktlint
-        run: ./gradlew ktlintCheck
+        run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck
 
       - name: Upload lint reports (SARIF)
         if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }}
