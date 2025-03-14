@@ -30,6 +30,7 @@ jobs:
           sarif_file: "./"
 
   unit_tests:
+      name: "Unit Tests"
       runs-on: ubuntu-latest
       steps:
       - uses: actions/checkout@v4
