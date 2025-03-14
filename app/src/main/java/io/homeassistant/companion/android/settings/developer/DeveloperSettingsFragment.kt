@@ -2,10 +2,12 @@ package io.homeassistant.companion.android.settings.developer
 
 import android.content.IntentSender
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.commit
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import dagger.hilt.android.AndroidEntryPoint
@@ -17,6 +19,8 @@ import io.homeassistant.companion.android.settings.developer.location.LocationTr
 import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import javax.inject.Inject
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class DeveloperSettingsFragment : DeveloperSettingsView, PreferenceFragmentCompat() {
@@ -24,7 +28,7 @@ class DeveloperSettingsFragment : DeveloperSettingsView, PreferenceFragmentCompa
     @Inject
     lateinit var presenter: DeveloperSettingsPresenter
 
-    private var threadDebugDialog: AlertDialog? = null
+    private var activeTaskDialog: AlertDialog? = null
     private var threadIntentServer: Int = ServerManager.SERVER_ID_ACTIVE
     private var threadIntentDeviceOnly: Boolean = true
 
@@ -75,15 +79,28 @@ class DeveloperSettingsFragment : DeveloperSettingsView, PreferenceFragmentCompa
                 return@setOnPreferenceClickListener true
             }
         }
+
+        findPreference<Preference>("webview_clear_cache")?.let {
+            it.isVisible = presenter.webViewSupportsClearCache()
+            it.setOnPreferenceClickListener {
+                activeTaskDialog = AlertDialog.Builder(requireContext())
+                    .setMessage(commonR.string.clear_webview_cache_active)
+                    .setCancelable(false)
+                    .create()
+                activeTaskDialog?.show()
+                presenter.clearWebViewCache()
+                return@setOnPreferenceClickListener true
+            }
+        }
     }
 
     private fun startThreadDebug(serverId: Int) {
         presenter.runThreadDebug(requireContext(), serverId)
-        threadDebugDialog = AlertDialog.Builder(requireContext())
+        activeTaskDialog = AlertDialog.Builder(requireContext())
             .setMessage(commonR.string.thread_debug_active)
             .setCancelable(false)
             .create()
-        threadDebugDialog?.show()
+        activeTaskDialog?.show()
     }
 
     override fun onThreadPermissionRequest(intent: IntentSender, serverId: Int, isDeviceOnly: Boolean) {
@@ -93,12 +110,24 @@ class DeveloperSettingsFragment : DeveloperSettingsView, PreferenceFragmentCompa
     }
 
     override fun onThreadDebugResult(result: String, success: Boolean?) {
-        threadDebugDialog?.hide()
+        activeTaskDialog?.hide()
         AlertDialog.Builder(requireContext())
             .setTitle(commonR.string.thread_debug)
             .setMessage("${if (success == true) "✅" else if (success == null) "⚠️" else "⛔"}\n\n$result")
             .setPositiveButton(commonR.string.ok, null)
             .show()
+    }
+
+    override fun onWebViewClearCacheResult(success: Boolean) {
+        lifecycleScope.launch {
+            delay(750L) // Add a delay to prevent the dialog 'flashing' if clearing completed quickly
+            activeTaskDialog?.hide()
+            Toast.makeText(
+                requireContext(),
+                if (success) commonR.string.clear_webview_cache_success else commonR.string.clear_webview_cache_failed,
+                Toast.LENGTH_SHORT
+            ).show()
+        }
     }
 
     override fun onResume() {
