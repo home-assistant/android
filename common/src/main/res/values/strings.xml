@@ -148,6 +148,7 @@
     <string name="clear_search">Clear search</string>
     <string name="clear_webview_cache">Reset frontend cache</string>
     <string name="clear_webview_cache_active">Resetting…</string>
+    <string name="clear_webview_cache_failed">Reset failed</string>
     <string name="clear_webview_cache_success">Reset completed</string>
     <string name="close">Close</string>
     <string name="color_temp">Color temperature: %1$s</string>

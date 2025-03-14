@@ -122,9 +122,11 @@ class DeveloperSettingsFragment : DeveloperSettingsView, PreferenceFragmentCompa
         lifecycleScope.launch {
             delay(750L) // Add a delay to prevent the dialog 'flashing' if clearing completed quickly
             activeTaskDialog?.hide()
-            if (success) {
-                Toast.makeText(requireContext(), commonR.string.clear_webview_cache_success, Toast.LENGTH_SHORT).show()
-            }
+            Toast.makeText(
+                requireContext(),
+                if (success) commonR.string.clear_webview_cache_success else commonR.string.clear_webview_cache_failed,
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
