@@ -40,6 +40,7 @@ interface WebViewPresenter {
     fun isLockEnabled(): Boolean
     fun isAutoPlayVideoEnabled(): Boolean
     fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean
+    fun isUnloadWhenBackgroundedEnabled(): Boolean
 
     fun sessionTimeOut(): Int
 
