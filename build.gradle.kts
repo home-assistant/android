@@ -17,6 +17,14 @@ plugins {
 allprojects {
     apply(plugin = rootProject.libs.plugins.ktlint.get().pluginId)
 
+    ktlint {
+        android.set(true)
+        reporters {
+            reporter(ReporterType.SARIF)
+            reporter(ReporterType.PLAIN)
+        }
+    }
+
     dependencyLocking {
         lockAllConfigurations()
     }
@@ -32,14 +40,6 @@ tasks.register("alldependencies").configure {
             it.tasks.withType<DependencyReportTask>()
         }
     )
-}
-
-ktlint {
-    android.set(true)
-    reporters {
-        reporter(ReporterType.SARIF)
-        reporter(ReporterType.PLAIN)
-    }
 }
 
 tasks.register("versionFile").configure {
