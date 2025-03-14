@@ -4,12 +4,9 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.webkit.CookieManager
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.BuildConfig
+import io.homeassistant.companion.android.common.util.jacksonObjectMapperForHACore
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import okhttp3.OkHttpClient
@@ -71,10 +68,7 @@ class HomeAssistantApis @Inject constructor(
         .Builder()
         .addConverterFactory(
             JacksonConverterFactory.create(
-                ObjectMapper()
-                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                    .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-                    .registerKotlinModule()
+                jacksonObjectMapperForHACore()
             )
         )
         .client(configureOkHttpClient(OkHttpClient.Builder()).build())

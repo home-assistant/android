@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.Dispatchers
@@ -33,11 +34,18 @@ class AudioUrlPlayer(private val audioManager: AudioManager?) {
      * Stream and play audio from the provided [url]. Any currently playing audio will be stopped.
      * This function will suspend until playback has started.
      * @param isAssistant whether the usage/stream should be set to Assistant on supported versions
+     * @param donePlaying callback to be invoked when playback has finished (it covers when it's not playing anything or an error happened)
      * @return `true` if the audio playback started, or `false` if not
      */
-    suspend fun playAudio(url: String, isAssistant: Boolean = true): Boolean = withContext(Dispatchers.IO) {
+    suspend fun playAudio(url: String, isAssistant: Boolean = true, donePlaying: (() -> Unit)?): Boolean = withContext(Dispatchers.IO) {
         if (player != null) {
             stop()
+        }
+
+        val refDonePlaying = AtomicReference<(() -> Unit)?>(donePlaying)
+
+        fun donePlayingInvocation() {
+            refDonePlaying.getAndSet(null)?.invoke()
         }
 
         return@withContext suspendCoroutine { cont ->
@@ -70,10 +78,12 @@ class AudioUrlPlayer(private val audioManager: AudioManager?) {
                     Log.e(TAG, "Media player encountered error: $what ($extra)")
                     releasePlayer()
                     cont.resume(false)
+                    donePlayingInvocation()
                     return@setOnErrorListener true
                 }
                 setOnCompletionListener {
                     releasePlayer()
+                    donePlayingInvocation()
                 }
             }
             try {
@@ -82,6 +92,7 @@ class AudioUrlPlayer(private val audioManager: AudioManager?) {
             } catch (e: Exception) {
                 Log.e(TAG, "Media player couldn't be prepared", e)
                 cont.resume(false)
+                donePlayingInvocation()
             }
         }
     }

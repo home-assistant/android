@@ -16,7 +16,7 @@ jobs:
         with:
           mock-google-services: "true"
 
-        # Since `build-logic` is added with `includeBuild` we have to call ktlint explicitly on `:convention`.
+      # Since `build-logic` is added with `includeBuild` we have to call ktlint explicitly on `:convention`.
       - name: Validate ktlint convention plugins
         run: ./gradlew :build-logic:convention:ktlintCheck
 
@@ -28,6 +28,27 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "./"
+
+  unit_tests:
+      name: "Unit Tests"
+      runs-on: ubuntu-latest
+      steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          mock-google-services: "true"
+
+      - name: Run test
+        run: ./gradlew :common:testDebugUnitTest # Should be adapted once we have more than one tests
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unit test results
+          path: |
+            **/build/test-results/**/TEST-*.xml
 
   lint:
     runs-on: ubuntu-latest
@@ -169,7 +190,7 @@ jobs:
 
   publish_test_results:
     name: "Publish Tests Results"
-    needs: instrumentation_test
+    needs: [instrumentation_test, unit_tests]
     runs-on: ubuntu-latest
     permissions:
       checks: write
@@ -186,3 +207,4 @@ jobs:
         with:
           files: |
             **/androidTest-results/**/TEST-*.xml
+            **/build/test-results/**/TEST-*.xml
