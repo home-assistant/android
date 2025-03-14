@@ -3,7 +3,7 @@ name: Bump our Calendar Version
 on:
   workflow_dispatch:
   schedule:
-    - cron: '30 3 1 * *'
+    - cron: "30 3 1 * *"
 jobs:
   tag:
     name: Tag Monthly Release

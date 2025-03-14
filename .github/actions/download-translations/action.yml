@@ -1,14 +1,14 @@
-name: 'Download Translations'
-description: 'Reaches out to Lokalise to download the latest translations.'
+name: "Download Translations"
+description: "Reaches out to Lokalise to download the latest translations."
 inputs:
   lokalise-project:
-    description: 'The project id in lokalise'
+    description: "The project id in lokalise"
     required: true
   lokalise-token:
-    description: 'An API token that has read access to the desired project'
+    description: "An API token that has read access to the desired project"
     required: true
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Get Translations
       id: translations
@@ -36,7 +36,7 @@ runs:
         echo "Download Complete, unzipping"
         unzip -n strings.zip
         echo "Unzipped strings, generating locales_config.xml"
-        
+
         XML_START='<?xml version="1.0" encoding="utf-8"?>\n<locale-config xmlns:android="http://schemas.android.com/apk/res/android">\n'
         XML_LOCALES=''
         XML_END='</locale-config>'
@@ -49,5 +49,5 @@ runs:
         done
         printf "$XML_START$XML_LOCALES$XML_END" > app/src/main/res/xml/locales_config.xml
         printf "$XML_START$XML_LOCALES$XML_END" > wear/src/main/res/xml/locales_config.xml
-        
+
         echo "Complete"

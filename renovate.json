@@ -24,19 +24,17 @@
 			"matchHost": "dl.google.com",
 			"concurrentRequestLimit": 1,
 			"maxRequestsPerSecond": 8
+		},
+		{
+			"matchHost": "jitpack.io",
+			"concurrentRequestLimit": 1,
+			"maxRequestsPerSecond": 8
 		}
     ],
     "packageRules": [
         {
             "matchDatasources": ["maven"],
-            "registryUrls": ["https://repo1.maven.org/maven2/", "https://plugins.gradle.org/m2/", "https://dl.google.com/android/maven2/"]
-        },
-        {
-            "matchDatasources": ["maven"],
-            "registryUrls": ["https://jitpack.io"],
-            "matchPackageNames": [
-                "com.github.AppDevNext"
-            ]
+            "registryUrls": ["https://repo1.maven.org/maven2/", "https://plugins.gradle.org/m2/", "https://dl.google.com/android/maven2/", "https://jitpack.io"]
         },
         {
             "groupName": "org.jetbrains.kotlin:*",

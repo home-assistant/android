@@ -1,14 +1,14 @@
-name: 'Create Release Numbers'
-description: 'Creates the current release number based on checked out code'
+name: "Create Release Numbers"
+description: "Creates the current release number based on checked out code"
 outputs:
   version-code:
-    description: 'The numeric app version'
+    description: "The numeric app version"
     value: ${{ steps.version-generator.outputs.version-code }}
   version:
-    description: 'The app version'
+    description: "The app version"
     value: ${{ steps.version-generator.outputs.version }}
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Set Build Number
       id: version-generator

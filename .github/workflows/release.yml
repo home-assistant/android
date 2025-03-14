@@ -3,7 +3,7 @@ name: Production Deploy
 on:
   workflow_dispatch:
   release:
-    types: [ released ]
+    types: [released]
 
 env:
   SUPPLY_UPLOAD_MAX_RETRIES: 5
@@ -17,7 +17,7 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2'
+          ruby-version: "3.2"
           bundler-cache: true
 
       - uses: ./.github/actions/inflate-secrets
