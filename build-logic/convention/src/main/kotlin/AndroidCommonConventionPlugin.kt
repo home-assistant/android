@@ -34,6 +34,7 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
 
                 defaultConfig {
                     minSdk = libs.versions.androidSdk.min.get().toInt()
+                    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
                 }
 
                 buildFeatures {
@@ -62,6 +63,7 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                 lint {
                     abortOnError = false
                     disable += "MissingTranslation"
+                    // This report is used by Github Actions to parse the new issues and report them into the PR.
                     sarifReport = true
                 }
             }

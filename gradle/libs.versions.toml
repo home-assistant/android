@@ -11,6 +11,10 @@ androidSdk-target = "34"
 androidSdk-automotive-min = "29"
 androidSdk-wear-min = "26"
 androidSdk-wear-target = "33"
+androidxTestCore = "1.6.1"
+androidxTestExt = "1.2.1"
+androidxTestRules = "1.6.1"
+androidxTestRunner = "1.6.2"
 appcompat = "1.7.0"
 biometric = "1.1.0"
 blurView = "version-2.0.6"
@@ -33,7 +37,7 @@ healthServicesClient = "1.1.0-alpha04"
 hilt = "2.55"
 iconics = "5.4.0"
 improv = "0.1.1"
-jackson-module-kotlin = "2.13.5"
+jackson-module-kotlin = "2.13.5" # WARNING: https://github.com/home-assistant/android/issues/3518
 javaVersion = "11" # https://developer.android.com/studio/write/java11-minimal-support-table
 junit = "5.12.0"
 kotlinx-coroutines = "1.9.0"
@@ -108,6 +112,10 @@ androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-ru
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidx-watchface-complications-data-source-ktx = { module = "androidx.wear.watchface:watchface-complications-data-source-ktx", version.ref = "watchfaceComplicationsDataSourceKtx" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
+androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+androidx-test-ext = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "androidxTestExt" }
+androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidxTestRules" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
 blurView = { module = "com.github.Dimezis:BlurView", version.ref = "blurView" }
@@ -194,3 +202,4 @@ coil = ["coil-views", "coil-oktthp", "coil-svg"]
 media3 = ["media3-exoplayer", "media3-exoplayer-hls", "media3-ui"]
 paging = ["paging-runtime", "paging-compose"]
 wear-tiles = ["wear-tiles", "wear-protolayout-main", "wear-protolayout-expression", "wear-protolayout-material"]
+androidx-test =["androidx-test-core", "androidx-test-ext", "androidx-test-rules", "androidx-test-runner"]
