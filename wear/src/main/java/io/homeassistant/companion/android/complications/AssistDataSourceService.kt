@@ -27,7 +27,7 @@ class AssistDataSourceService : ComplicationDataSourceService() {
         }
 
         listener.onComplicationData(
-            MonochromaticImageComplicationData.Builder(
+            MonochromaticImageComplicationData. Builder(
                 monochromaticImage = MonochromaticImage.Builder(Icon.createWithBitmap(getAssistIcon())).build(),
                 contentDescription = PlainComplicationText.Builder(getText(R.string.assist))
                     .build()
