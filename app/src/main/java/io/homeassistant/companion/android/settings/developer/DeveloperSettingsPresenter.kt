@@ -14,4 +14,7 @@ interface DeveloperSettingsPresenter {
     fun appSupportsThread(): Boolean
     fun runThreadDebug(context: Context, serverId: Int)
     fun onThreadPermissionResult(context: Context, result: ActivityResult, serverId: Int, isDeviceOnly: Boolean)
+
+    fun webViewSupportsClearCache(): Boolean
+    fun clearWebViewCache()
 }
