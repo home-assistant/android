@@ -105,6 +105,7 @@ jobs:
       matrix:
         configuration: 
           - api-level: 21
+            arch: x86_64
             profile: "Nexus 5"
             target: "google_apis"
             gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
