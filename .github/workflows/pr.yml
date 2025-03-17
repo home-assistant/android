@@ -128,7 +128,7 @@ jobs:
             profile: "wearos_square"
             target: "android-wear"
             gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
-          - api-level: 35-ext15
+          - api-level: "34"
             arch: x86_64
             profile: "wearos_small_round"
             target: "android-wear"
