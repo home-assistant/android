@@ -109,22 +109,27 @@ jobs:
             target: "google_apis"
             gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           - api-level: 35
+            arch: x86_64
             profile: "pixel_7"
             target: "google_apis"
             gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           #- api-level: 33
+          #  arch: x86_64
           #  profile: "automotive_1024p_landscape"
           #  target: "android-automotive"
           #  gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           #- api-level: "34-ext9"
+          #  arch: x86_64
           #  profile: "automotive_ultrawide"
           #  target: "android-automotive"
           #  gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           - api-level: 26
+            arch: x86
             profile: "wearos_square"
             target: "android-wear"
             gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
-          - api-level: 35
+          - api-level: 35-ext15
+            arch: x86_64
             profile: "wearos_small_round"
             target: "android-wear"
             gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
@@ -166,7 +171,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.configuration.api-level }}
-          arch: x86_64
+          arch: ${{ matrix.configuration.arch }}
           force-avd-creation: false
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
@@ -180,7 +185,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.configuration.api-level }}
-          arch: x86_64
+          arch: ${{ matrix.configuration.arch }}
           force-avd-creation: false
           disable-animations: true
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
