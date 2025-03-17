@@ -104,24 +104,30 @@ jobs:
       fail-fast: false
       matrix:
         configuration: 
-          - target: "google_apis"
-            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
-            api-level: 21
+          - api-level: 21
             profile: "Nexus 5"
-          - target: "google_apis"
+            target: "google_apis"
             gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
-            api-level: 35
+          - api-level: 35
             profile: "pixel_7"
-          #- target: "android-automotive"
-          #  api-level: 33
+            target: "google_apis"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          #- api-level: 33
           #  profile: "automotive_1024p_landscape"
-          #- target: "android-automotive"
-          #  api-level: "34-ext9"
+          #  target: "android-automotive"
+          #  gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          #- api-level: "34-ext9"
           #  profile: "automotive_ultrawide"
-          #- target: "wear"
-          #  api-level: 26
-          #- target: "wear"
-          #  api-level: 35
+          #  target: "android-automotive"
+          #  gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: 26
+            profile: "wearos_square"
+            target: "wear"
+            gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: 35
+            profile: "wearos_small_round"
+            target: "wear"
+            gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
           #- target: "tv"
           #  api-level: ????
     steps:
