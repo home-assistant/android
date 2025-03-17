@@ -61,6 +61,17 @@ android {
                 srcDirs("../app/src/debug/res")
             }
         }
+        getByName("androidTest") {
+            kotlin {
+                srcDirs("../app/src/androidTest/kotlin")
+            }
+            assets {
+                srcDirs("../app/src/androidTest/assets")
+            }
+            res {
+                srcDirs("../app/src/androidTest/res")
+            }
+        }
     }
 }
 
