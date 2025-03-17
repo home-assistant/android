@@ -122,11 +122,11 @@ jobs:
           #  gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           - api-level: 26
             profile: "wearos_square"
-            target: "wear"
+            target: "android-wear"
             gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
           - api-level: 35
             profile: "wearos_small_round"
-            target: "wear"
+            target: "android-wear"
             gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
           #- target: "tv"
           #  api-level: ????
