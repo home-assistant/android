@@ -137,7 +137,7 @@ jobs:
           android: false # Don't remove Android tools
           tool-cache: true # Remove image tool cache - rm -rf "$AGENT_TOOLSDIRECTORY"
           docker-images: false # Takes 16s, enable if needed in the future
-          large-packages: false # includes google-cloud-sdk and it's slow
+          large-packages: true # includes google-cloud-sdk and it's slow
 
       - uses: actions/checkout@v4
 
