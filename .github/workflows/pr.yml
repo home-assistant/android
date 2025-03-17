@@ -17,17 +17,15 @@ jobs:
           mock-google-services: "true"
 
       # Since `build-logic` is added with `includeBuild` we have to call ktlint explicitly on `:convention`.
-      - name: Validate ktlint convention plugins
-        run: ./gradlew :build-logic:convention:ktlintCheck
-
       - name: Validate ktlint
-        run: ./gradlew ktlintCheck
+        run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck
 
       - name: Upload lint reports (SARIF)
         if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }}
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "./"
+          category: "KTlint"
 
   unit_tests:
       name: "Unit Tests"
@@ -76,6 +74,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "./"
+          category: "Android Lint"
 
   pr_build:
     runs-on: ubuntu-latest

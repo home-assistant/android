@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 plugins {
     `kotlin-dsl`
@@ -6,6 +7,18 @@ plugins {
 }
 
 group = "io.homeassistant.companion.android.buildlogic"
+
+allprojects {
+    apply(plugin = rootProject.libs.plugins.ktlint.get().pluginId)
+
+    ktlint {
+        android.set(true)
+        reporters {
+            reporter(ReporterType.SARIF)
+            reporter(ReporterType.PLAIN)
+        }
+    }
+}
 
 // Configure the build-logic plugins to target JDK 17 and is not related to what is running on device.
 java {
