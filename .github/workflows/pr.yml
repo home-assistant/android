@@ -105,11 +105,11 @@ jobs:
       matrix:
         configuration: 
           - target: "google_apis"
-            gradle_target: ":app:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
             api-level: 21
             profile: "Nexus 5"
           - target: "google_apis"
-            gradle_target: ":app:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
             api-level: 35
             profile: "pixel_9"
           #- target: "android-automotive"
