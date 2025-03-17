@@ -103,25 +103,27 @@ jobs:
       # We want the result of each device to be reported, so we can't fail-fast
       fail-fast: false
       matrix:
-        device: 
-          #- target: "app"
-          #  api-level: 21
-          #- target: "app"
-          #  api-level: 35
-          #- target: "common"
-          #  api-level: 21
-          #- target: "common"
-          #  api-level: 35
-          - target: "android-automotive"
-            api-level: 33
-            profile: "automotive_1024p_landscape"
-          - target: "android-automotive"
-            api-level: "34-ext9"
-            profile: "automotive_ultrawide"
+        configuration: 
+          - target: "google_apis"
+            gradle_target: ":app:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
+            api-level: 21
+            profile: "Nexus 5"
+          - target: "google_apis"
+            gradle_target: ":app:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
+            api-level: 35
+            profile: "pixel_9"
+          #- target: "android-automotive"
+          #  api-level: 33
+          #  profile: "automotive_1024p_landscape"
+          #- target: "android-automotive"
+          #  api-level: "34-ext9"
+          #  profile: "automotive_ultrawide"
           #- target: "wear"
           #  api-level: 26
           #- target: "wear"
           #  api-level: 35
+          #- target: "tv"
+          #  api-level: ????
     steps:
       - name: Delete unnecessary tools 🔧
         uses: jlumbroso/free-disk-space@v1.3.1
@@ -151,19 +153,19 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ matrix.device.target }}-${{ matrix.device.api-level }}
+          key: avd-${{ matrix.configuration.target }}-${{ matrix.configuration.api-level }}
 
       - name: Create AVD and generate snapshot for caching
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: ${{ matrix.device.api-level }}
+          api-level: ${{ matrix.configuration.api-level }}
           arch: x86_64
           force-avd-creation: false
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          profile: ${{ matrix.device.profile }}
-          target: ${{ matrix.device.target }}
+          profile: ${{ matrix.configuration.profile }}
+          target: ${{ matrix.configuration.target }}
           script: |
             echo "Generated AVD snapshot for caching."
 
@@ -171,20 +173,20 @@ jobs:
       - name: Build projects and run instrumentation tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: ${{ matrix.device.api-level }}
+          api-level: ${{ matrix.configuration.api-level }}
           arch: x86_64
           force-avd-creation: false
           disable-animations: true
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          profile: ${{ matrix.device.profile }}
-          target: ${{ matrix.device.target }}
-          script: ./gradlew :automotive:connectedDebugAndroidTest
+          profile: ${{ matrix.configuration.profile }}
+          target: ${{ matrix.configuration.target }}
+          script: ./gradlew ${{ matrix.configuration.gradle_target }}
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Instrumentation test results (API${{ matrix.device.api-level }}) ${{ matrix.device.target }}
+          name: Instrumentation test results (API${{ matrix.configuration.api-level }}) ${{ matrix.configuration.target }}
           path: |
             **/build/reports/*
             **/build/outputs/*/connected/*
