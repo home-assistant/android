@@ -8,6 +8,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.onEntityPressedWithoutState
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.conversation.ConversationActivity
+import io.homeassistant.companion.android.home.HomeActivity
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 
@@ -28,16 +30,27 @@ class TileActionReceiver : BroadcastReceiver() {
         val entityId: String? = intent?.getStringExtra("entity_id")
 
         if (entityId != null) {
-            runBlocking {
-                if (wearPrefsRepository.getWearHapticFeedback() && context != null) hapticClick(context)
+            if (entityId.split(".")[0] == "app_shortcut" && context != null) {
+                val m = mapOf(
+                    "assist" to ConversationActivity.newInstance(context),
+                    "home_assistant" to HomeActivity.newInstance(context)
+                )
+                m[entityId.split(".")[1]]?.let {
+                    it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(it)
+                }
+            } else {
+                runBlocking {
+                    if (wearPrefsRepository.getWearHapticFeedback() && context != null) hapticClick(context)
 
-                try {
-                    onEntityPressedWithoutState(
-                        entityId = entityId,
-                        integrationRepository = serverManager.integrationRepository()
-                    )
-                } catch (e: Exception) {
-                    Log.e(TAG, "Cannot call tile service", e)
+                    try {
+                        onEntityPressedWithoutState(
+                            entityId = entityId,
+                            integrationRepository = serverManager.integrationRepository()
+                        )
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Cannot call tile service", e)
+                    }
                 }
             }
         }

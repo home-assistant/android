@@ -52,6 +52,7 @@ fun ChooseEntityView(
     // Remember expanded state of each header
     val expandedStates = rememberExpandedStates(entitiesByDomainOrder)
     var expandedFavorites: Boolean by rememberSaveable { mutableStateOf(false) }
+    var expandedAppShortcuts: Boolean by rememberSaveable { mutableStateOf(false) }
 
     WearAppTheme {
         ThemeLazyColumn {
@@ -116,6 +117,65 @@ fun ChooseEntityView(
                             )
                         }
                     }
+                }
+            }
+
+            // App Shortcuts
+            item {
+                ExpandableListHeader(
+                    string = stringResource(commonR.string.shortcuts),
+                    expanded = expandedAppShortcuts,
+                    onExpandChanged = { expandedAppShortcuts = it }
+                )
+            }
+            if (expandedAppShortcuts) {
+                // HomeAssistant app shortcut
+                item {
+                    Button(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        icon = {
+                            Image(
+                                asset = CommunityMaterial.Icon2.cmd_home_assistant,
+                                colorFilter = ColorFilter.tint(Color.White)
+                            )
+                        },
+                        label = { Text(stringResource(id = commonR.string.app_name)) },
+                        onClick = {
+                            onEntitySelected(
+                                SimplifiedEntity(
+                                    "app_shortcut.home_assistant",
+                                    "Home Assistant",
+                                    "mdi:home-assistant"
+                                )
+                            )
+                        },
+                        colors = getFilledTonalButtonColors()
+                    )
+                }
+                // Assist shortcut
+                item {
+                    Button(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        icon = {
+                            Image(
+                                asset = CommunityMaterial.Icon.cmd_comment_processing_outline,
+                                colorFilter = ColorFilter.tint(Color.White)
+                            )
+                        },
+                        label = { Text(stringResource(id = commonR.string.assist)) },
+                        onClick = {
+                            onEntitySelected(
+                                SimplifiedEntity(
+                                    "app_shortcut.assist",
+                                    "Assist",
+                                    "mdi:comment-processing-outline"
+                                )
+                            )
+                        },
+                        colors = getFilledTonalButtonColors()
+                    )
                 }
             }
         }
