@@ -44,6 +44,7 @@ tasks {
     }
 
     // Fix for an implicit_dependency after bumping typesafe-conventions to 0.5.1
+    // issue can be tracked here: https://github.com/radoslaw-panuszewski/typesafe-conventions-gradle-plugin/issues/34
     getByName("runKtlintCheckOverMainSourceSet").mustRunAfter(
         "generateEntrypointForLibs",
         "generateEntrypointForLibsInPluginsBlock"
