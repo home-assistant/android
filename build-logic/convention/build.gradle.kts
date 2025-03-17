@@ -45,9 +45,13 @@ tasks {
 
     // Fix for an implicit_dependency after bumping typesafe-conventions to 0.5.1
     getByName("runKtlintCheckOverMainSourceSet").mustRunAfter(
-            "generateEntrypointForLibs",
-            "generateEntrypointForLibsInPluginsBlock"
-        )
+        "generateEntrypointForLibs",
+        "generateEntrypointForLibsInPluginsBlock"
+    )
+    getByName("runKtlintFormatOverMainSourceSet").mustRunAfter(
+        "generateEntrypointForLibs",
+        "generateEntrypointForLibsInPluginsBlock"
+    )
 }
 
 gradlePlugin {
