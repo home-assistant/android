@@ -109,17 +109,23 @@ jobs:
             profile: "Nexus 5"
             target: "google_apis"
             gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: 30
+            arch: x86
+            profile: "tv_4k"
+            target: "android-tv"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           - api-level: 35
             arch: x86_64
             profile: "pixel_7"
             target: "google_apis"
             gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          # Disabled due to Github Actions limitations https://github.com/ReactiveCircus/android-emulator-runner/pull/428
           #- api-level: 33
           #  arch: x86_64
           #  profile: "automotive_1024p_landscape"
           #  target: "android-automotive"
           #  gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
-          #- api-level: "34-ext9"
+          #- api-level: "34-ext9" # -ext9 is not usable because of https://github.com/ReactiveCircus/android-emulator-runner/issues/429
           #  arch: x86_64
           #  profile: "automotive_ultrawide"
           #  target: "android-automotive"
@@ -129,13 +135,11 @@ jobs:
             profile: "wearos_square"
             target: "android-wear"
             gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
-          - api-level: "34"
+          - api-level: 34
             arch: x86_64
             profile: "wearos_small_round"
             target: "android-wear"
             gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
-          #- target: "tv"
-          #  api-level: ????
     steps:
       - name: Delete unnecessary tools 🔧
         uses: jlumbroso/free-disk-space@v1.3.1
@@ -143,7 +147,7 @@ jobs:
           android: false # Don't remove Android tools
           tool-cache: true # Remove image tool cache - rm -rf "$AGENT_TOOLSDIRECTORY"
           docker-images: false # Takes 16s, enable if needed in the future
-          large-packages: true # includes google-cloud-sdk and it's slow
+          large-packages: false # includes google-cloud-sdk and it's slow
 
       - uses: actions/checkout@v4
 
@@ -175,7 +179,7 @@ jobs:
           arch: ${{ matrix.configuration.arch }}
           force-avd-creation: false
           disable-animations: true
-          disk-size: 1G
+          disk-size: 1G # We need to ensure that there is enough space for the emulator to run. If not we get 'Failed to commit install' errors.
           heap-size: 1G
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           profile: ${{ matrix.configuration.profile }}
