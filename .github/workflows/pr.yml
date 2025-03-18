@@ -28,10 +28,6 @@ jobs:
         with:
           mock-google-services: "true"
 
-      - name: Register ktlint problem matcher
-        run: |
-          echo "::add-matcher::.github/workflows/matchers/ktlint.json"
-
       # Since `build-logic` is added with `includeBuild` we have to call ktlint explicitly on `:convention`.
       - name: Validate ktlint
         run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck
