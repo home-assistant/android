@@ -175,6 +175,8 @@ jobs:
           arch: ${{ matrix.configuration.arch }}
           force-avd-creation: false
           disable-animations: true
+          disk-size: 1G
+          heap-size: 1G
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           profile: ${{ matrix.configuration.profile }}
           target: ${{ matrix.configuration.target }}
@@ -189,6 +191,8 @@ jobs:
           arch: ${{ matrix.configuration.arch }}
           force-avd-creation: false
           disable-animations: true
+          disk-size: 1G
+          heap-size: 1G
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           profile: ${{ matrix.configuration.profile }}
           target: ${{ matrix.configuration.target }}
