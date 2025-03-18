@@ -1,20 +1,36 @@
 name: Pull Request
 
-on:
+on: # yamllint disable-line rule:truthy
   pull_request:
     branches: [master]
 
 jobs:
+  yamlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Register yamllint problem matcher
+        run: |
+          echo "::add-matcher::.github/workflows/matchers/yamllint.json"
+
+      - name: Validate YAML
+        run: yamllint --strict --format github .
+
   ktlint:
     runs-on: ubuntu-latest
     permissions:
-        security-events: write
+      security-events: write
     steps:
       - uses: actions/checkout@v4
 
       - uses: ./.github/actions/setup-build-env
         with:
           mock-google-services: "true"
+
+      - name: Register ktlint problem matcher
+        run: |
+          echo "::add-matcher::.github/workflows/matchers/ktlint.json"
 
       # Since `build-logic` is added with `includeBuild` we have to call ktlint explicitly on `:convention`.
       - name: Validate ktlint
@@ -145,7 +161,6 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: echo "Generated AVD snapshot for caching."
-
 
       - name: Build projects and run instrumentation tests
         uses: reactivecircus/android-emulator-runner@v2
