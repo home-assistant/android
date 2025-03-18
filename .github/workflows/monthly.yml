@@ -1,6 +1,6 @@
 name: Bump our Calendar Version
 
-on: # yamllint disable-line rule:truthy
+on:
   workflow_dispatch:
   schedule:
     - cron: "30 3 1 * *"
