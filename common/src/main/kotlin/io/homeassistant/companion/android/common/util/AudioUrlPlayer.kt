@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.util
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.AudioManager.OnAudioFocusChangeListener
+import android.media.AudioManager.STREAM_MUSIC
 import android.media.MediaPlayer
 import android.os.Build
 import android.util.Log
@@ -33,6 +34,7 @@ class AudioUrlPlayer(private val audioManager: AudioManager?) {
     /**
      * Stream and play audio from the provided [url]. Any currently playing audio will be stopped.
      * This function will suspend until playback has started.
+     * If the current volume of the [STREAM_MUSIC] is 0 it doesn't play the audio and directly invoke [donePlaying].
      * @param isAssistant whether the usage/stream should be set to Assistant on supported versions
      * @param donePlaying callback to be invoked when playback has finished (it covers when it's not playing anything or an error happened)
      * @return `true` if the audio playback started, or `false` if not
@@ -49,50 +51,61 @@ class AudioUrlPlayer(private val audioManager: AudioManager?) {
         }
 
         return@withContext suspendCoroutine { cont ->
-            player = MediaPlayer().apply {
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setContentType(
-                            if (isAssistant) AudioAttributes.CONTENT_TYPE_SPEECH else AudioAttributes.CONTENT_TYPE_MUSIC
-                        )
-                        .setUsage(
-                            if (isAssistant && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                AudioAttributes.USAGE_ASSISTANT
-                            } else {
-                                AudioAttributes.USAGE_MEDIA
-                            }
-                        )
-                        .build()
-                )
-                setOnPreparedListener {
-                    if (isActive) {
-                        requestFocus(isAssistant)
-                        it.start()
-                        cont.resume(true)
-                    } else {
+            val volume = try {
+                audioManager?.getStreamVolume(STREAM_MUSIC)
+            } catch (e: RuntimeException) {
+                Log.e(TAG, "Couldn't get stream volume", e)
+                Int.MAX_VALUE
+            }
+
+            if (volume == 0) {
+                donePlayingInvocation()
+            } else {
+                player = MediaPlayer().apply {
+                    setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setContentType(
+                                if (isAssistant) AudioAttributes.CONTENT_TYPE_SPEECH else AudioAttributes.CONTENT_TYPE_MUSIC
+                            )
+                            .setUsage(
+                                if (isAssistant && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    AudioAttributes.USAGE_ASSISTANT
+                                } else {
+                                    AudioAttributes.USAGE_MEDIA
+                                }
+                            )
+                            .build()
+                    )
+                    setOnPreparedListener {
+                        if (isActive) {
+                            requestFocus(isAssistant)
+                            it.start()
+                            cont.resume(true)
+                        } else {
+                            releasePlayer()
+                            cont.resume(false)
+                        }
+                    }
+                    setOnErrorListener { _, what, extra ->
+                        Log.e(TAG, "Media player encountered error: $what ($extra)")
                         releasePlayer()
                         cont.resume(false)
+                        donePlayingInvocation()
+                        return@setOnErrorListener true
+                    }
+                    setOnCompletionListener {
+                        releasePlayer()
+                        donePlayingInvocation()
                     }
                 }
-                setOnErrorListener { _, what, extra ->
-                    Log.e(TAG, "Media player encountered error: $what ($extra)")
-                    releasePlayer()
+                try {
+                    player?.setDataSource(url)
+                    player?.prepareAsync()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Media player couldn't be prepared", e)
                     cont.resume(false)
                     donePlayingInvocation()
-                    return@setOnErrorListener true
                 }
-                setOnCompletionListener {
-                    releasePlayer()
-                    donePlayingInvocation()
-                }
-            }
-            try {
-                player?.setDataSource(url)
-                player?.prepareAsync()
-            } catch (e: Exception) {
-                Log.e(TAG, "Media player couldn't be prepared", e)
-                cont.resume(false)
-                donePlayingInvocation()
             }
         }
     }
