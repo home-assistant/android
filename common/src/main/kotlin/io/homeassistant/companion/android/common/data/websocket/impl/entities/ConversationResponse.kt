@@ -6,5 +6,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 data class ConversationResponse(
     val response: ConversationSpeechResponse,
     val conversationId: String?,
+    // Default value is set for backward compatibility.
     val continueConversation: Boolean = false
 )
