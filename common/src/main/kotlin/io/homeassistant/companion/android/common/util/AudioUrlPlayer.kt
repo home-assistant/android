@@ -10,7 +10,6 @@ import android.util.Log
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.Dispatchers
@@ -34,34 +33,17 @@ class AudioUrlPlayer(private val audioManager: AudioManager?) {
     /**
      * Stream and play audio from the provided [url]. Any currently playing audio will be stopped.
      * This function will suspend until playback has started.
-     * If the current volume of the [STREAM_MUSIC] is 0 it doesn't play the audio and directly invoke [donePlaying].
+     * If the current volume of the [STREAM_MUSIC] is 0 it doesn't play the audio and directly return false.
      * @param isAssistant whether the usage/stream should be set to Assistant on supported versions
-     * @param donePlaying callback to be invoked when playback has finished (it covers when it's not playing anything or an error happened)
      * @return `true` if the audio playback started, or `false` if not
      */
-    suspend fun playAudio(url: String, isAssistant: Boolean = true, donePlaying: (() -> Unit)?): Boolean = withContext(Dispatchers.IO) {
+    suspend fun playAudio(url: String, isAssistant: Boolean = true): Boolean = withContext(Dispatchers.IO) {
         if (player != null) {
             stop()
         }
 
-        val refDonePlaying = AtomicReference<(() -> Unit)?>(donePlaying)
-
-        fun donePlayingInvocation() {
-            refDonePlaying.getAndSet(null)?.invoke()
-        }
-
-        return@withContext suspendCoroutine { cont ->
-            val volume = try {
-                audioManager?.getStreamVolume(STREAM_MUSIC)
-            } catch (e: RuntimeException) {
-                Log.e(TAG, "Couldn't get stream volume", e)
-                Int.MAX_VALUE
-            }
-
-            if (volume == 0) {
-                donePlayingInvocation()
-                cont.resume(false)
-            } else {
+        return@withContext if (canPlayMusic()) {
+            suspendCoroutine { cont ->
                 player = MediaPlayer().apply {
                     setAudioAttributes(
                         AudioAttributes.Builder()
@@ -81,7 +63,6 @@ class AudioUrlPlayer(private val audioManager: AudioManager?) {
                         if (isActive) {
                             requestFocus(isAssistant)
                             it.start()
-                            cont.resume(true)
                         } else {
                             releasePlayer()
                             cont.resume(false)
@@ -91,12 +72,11 @@ class AudioUrlPlayer(private val audioManager: AudioManager?) {
                         Log.e(TAG, "Media player encountered error: $what ($extra)")
                         releasePlayer()
                         cont.resume(false)
-                        donePlayingInvocation()
                         return@setOnErrorListener true
                     }
                     setOnCompletionListener {
                         releasePlayer()
-                        donePlayingInvocation()
+                        cont.resume(true)
                     }
                 }
                 try {
@@ -105,9 +85,10 @@ class AudioUrlPlayer(private val audioManager: AudioManager?) {
                 } catch (e: Exception) {
                     Log.e(TAG, "Media player couldn't be prepared", e)
                     cont.resume(false)
-                    donePlayingInvocation()
                 }
             }
+        } else {
+            false
         }
     }
 
@@ -118,6 +99,15 @@ class AudioUrlPlayer(private val audioManager: AudioManager?) {
             // Player wasn't initialized, ignore
         }
         releasePlayer()
+    }
+
+    private fun canPlayMusic(): Boolean {
+        return try {
+            audioManager?.getStreamVolume(STREAM_MUSIC) != 0
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "Couldn't get stream volume", e)
+            true
+        }
     }
 
     private fun releasePlayer() {
