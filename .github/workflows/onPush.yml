@@ -1,6 +1,6 @@
 name: On Push
 
-on:
+on: # yamllint disable-line rule:truthy
   workflow_dispatch:
     inputs:
       beta:
