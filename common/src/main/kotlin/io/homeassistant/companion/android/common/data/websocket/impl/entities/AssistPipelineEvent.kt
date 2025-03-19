@@ -13,6 +13,7 @@ object AssistPipelineEventType {
     const val STT_START = "stt-start"
     const val STT_END = "stt-end"
     const val INTENT_START = "intent-start"
+    const val INTENT_PROGRESS = "intent-progress"
     const val INTENT_END = "intent-end"
     const val TTS_START = "tts-start"
     const val TTS_END = "tts-end"
@@ -39,6 +40,14 @@ data class AssistPipelineIntentStart(
     val language: String,
     val intentInput: String
 ) : AssistPipelineEventData
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class AssistPipelineIntentProgress(
+    val chat_log_delta: AssistChatLogDelta?
+) : AssistPipelineEventData
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class AssistChatLogDelta(val content: String?)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class AssistPipelineIntentEnd(
