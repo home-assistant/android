@@ -5,7 +5,7 @@ on: # yamllint disable-line rule:truthy
     branches: [master]
 
 jobs:
-  yamlint:
+  yamllint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
