@@ -4,6 +4,11 @@ on: # yamllint disable-line rule:truthy
   pull_request:
     branches: [master]
 
+# This workflow should cancel previous builds since it means that a new commit has been made to the PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   yamllint:
     runs-on: ubuntu-latest
@@ -115,7 +120,43 @@ jobs:
       # We want the result of each device to be reported, so we can't fail-fast
       fail-fast: false
       matrix:
-        api-level: [21, 35]
+        configuration: 
+          - api-level: 21
+            arch: x86_64
+            profile: "Nexus 5"
+            target: "google_apis"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: 30
+            arch: x86
+            profile: "tv_4k"
+            target: "android-tv"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: 35
+            arch: x86_64
+            profile: "pixel_7"
+            target: "google_apis"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          # Disabled due to Github Actions limitations https://github.com/ReactiveCircus/android-emulator-runner/pull/428
+          #- api-level: 33
+          #  arch: x86_64
+          #  profile: "automotive_1024p_landscape"
+          #  target: "android-automotive"
+          #  gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          #- api-level: "34-ext9" # -ext9 is not usable because of https://github.com/ReactiveCircus/android-emulator-runner/issues/429
+          #  arch: x86_64
+          #  profile: "automotive_ultrawide"
+          #  target: "android-automotive"
+          #  gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: 26
+            arch: x86
+            profile: "wearos_square"
+            target: "android-wear"
+            gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: 34
+            arch: x86_64
+            profile: "wearos_small_round"
+            target: "android-wear"
+            gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
     steps:
       - name: Delete unnecessary tools 🔧
         uses: jlumbroso/free-disk-space@v1.3.1
@@ -145,34 +186,43 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ matrix.api-level }}
+          key: avd-${{ matrix.configuration.target }}-${{ matrix.configuration.api-level }}
 
       - name: Create AVD and generate snapshot for caching
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: ${{ matrix.api-level }}
-          arch: x86_64
+          api-level: ${{ matrix.configuration.api-level }}
+          arch: ${{ matrix.configuration.arch }}
           force-avd-creation: false
           disable-animations: true
+          disk-size: 1G # We need to ensure that there is enough space for the emulator to run. If not we get 'Failed to commit install' errors.
+          heap-size: 1G
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: echo "Generated AVD snapshot for caching."
+          profile: ${{ matrix.configuration.profile }}
+          target: ${{ matrix.configuration.target }}
+          script: |
+            echo "Generated AVD snapshot for caching."
 
       - name: Build projects and run instrumentation tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: ${{ matrix.api-level }}
-          arch: x86_64
+          api-level: ${{ matrix.configuration.api-level }}
+          arch: ${{ matrix.configuration.arch }}
           force-avd-creation: false
           disable-animations: true
+          disk-size: 1G
+          heap-size: 1G
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: ./gradlew :common:connectedDebugAndroidTest
+          profile: ${{ matrix.configuration.profile }}
+          target: ${{ matrix.configuration.target }}
+          script: ./gradlew ${{ matrix.configuration.gradle_target }}
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Instrumentation test results (API${{ matrix.api-level }})
+          name: Instrumentation test results (API${{ matrix.configuration.api-level }}) ${{ matrix.configuration.target }}
           path: |
             **/build/reports/*
             **/build/outputs/*/connected/*
@@ -194,5 +244,6 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
         with:
+          comment_mode: "failures"
           files: |
             **/androidTest-results/**/TEST-*.xml
