@@ -266,6 +266,8 @@ jobs:
         if: always()
         with:
           comment_mode: "failures"
+          # We want to fail the build to block the merge if any test fail it allows us simplify the setup of the protected branch.
+          action_fail: true
           files: |
             **/androidTest-results/**/TEST-*.xml
             **/build/test-results/**/TEST-*.xml
