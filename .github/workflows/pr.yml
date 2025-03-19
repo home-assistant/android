@@ -44,6 +44,27 @@ jobs:
           sarif_file: "./"
           category: "KTlint"
 
+  unit_tests:
+    name: "Unit Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          mock-google-services: "true"
+
+      - name: Run test
+        run: ./gradlew :common:testDebugUnitTest # Should be adapted once we have more than one tests
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unit test results
+          path: |
+            **/build/test-results/**/TEST-*.xml
+
   lint:
     runs-on: ubuntu-latest
     permissions:
@@ -120,7 +141,7 @@ jobs:
       # We want the result of each device to be reported, so we can't fail-fast
       fail-fast: false
       matrix:
-        configuration: 
+        configuration:
           - api-level: 21
             arch: x86_64
             profile: "Nexus 5"
@@ -137,16 +158,16 @@ jobs:
             target: "google_apis"
             gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           # Disabled due to Github Actions limitations https://github.com/ReactiveCircus/android-emulator-runner/pull/428
-          #- api-level: 33
-          #  arch: x86_64
-          #  profile: "automotive_1024p_landscape"
-          #  target: "android-automotive"
-          #  gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
-          #- api-level: "34-ext9" # -ext9 is not usable because of https://github.com/ReactiveCircus/android-emulator-runner/issues/429
-          #  arch: x86_64
-          #  profile: "automotive_ultrawide"
-          #  target: "android-automotive"
-          #  gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          # - api-level: 33
+          #   arch: x86_64
+          #   profile: "automotive_1024p_landscape"
+          #   target: "android-automotive"
+          #   gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          # - api-level: "34-ext9" # -ext9 is not usable because of https://github.com/ReactiveCircus/android-emulator-runner/issues/429
+          #   arch: x86_64
+          #   profile: "automotive_ultrawide"
+          #   target: "android-automotive"
+          #   gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           - api-level: 26
             arch: x86
             profile: "wearos_square"
@@ -229,7 +250,7 @@ jobs:
 
   publish_test_results:
     name: "Publish Tests Results"
-    needs: instrumentation_test
+    needs: [instrumentation_test, unit_tests]
     runs-on: ubuntu-latest
     permissions:
       checks: write
@@ -245,5 +266,8 @@ jobs:
         if: always()
         with:
           comment_mode: "failures"
+          # We want to fail the build to block the merge if any test fail it allows us simplify the setup of the protected branch.
+          action_fail: true
           files: |
             **/androidTest-results/**/TEST-*.xml
+            **/build/test-results/**/TEST-*.xml

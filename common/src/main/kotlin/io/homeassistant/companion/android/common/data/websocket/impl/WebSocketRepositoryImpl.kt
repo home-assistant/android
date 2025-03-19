@@ -2,11 +2,8 @@ package io.homeassistant.companion.android.common.data.websocket.impl
 
 import android.util.Log
 import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.contains
 import com.fasterxml.jackson.module.kotlin.convertValue
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -50,6 +47,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Te
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetTlvResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
+import io.homeassistant.companion.android.common.util.jacksonObjectMapperForHACore
 import io.homeassistant.companion.android.common.util.toHexString
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import java.io.IOException
@@ -110,9 +108,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
     }
 
     private val ioScope = CoroutineScope(Dispatchers.IO + Job())
-    private val mapper = jacksonObjectMapper()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+    private val mapper = jacksonObjectMapperForHACore()
     private val activeMessages = Collections.synchronizedMap(mutableMapOf<Long, WebSocketRequest>())
     private val id = AtomicLong(1)
     private var connection: WebSocket? = null

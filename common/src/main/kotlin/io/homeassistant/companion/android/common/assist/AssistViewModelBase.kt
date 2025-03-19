@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import io.homeassistant.companion.android.util.UrlUtil
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -51,6 +52,7 @@ abstract class AssistViewModelBase(
 
     private var binaryHandlerId: Int? = null
     private var conversationId: String? = null
+    private var continueConversation = AtomicBoolean(false)
 
     fun isRegistered(): Boolean = serverManager.isRegistered()
 
@@ -66,14 +68,14 @@ abstract class AssistViewModelBase(
      * @param text input to run an intent pipeline with, or `null` to run a STT pipeline (check if
      * STT is supported _before_ calling this function)
      * @param pipeline information about the pipeline, or `null` to use the server's default
-     * @param onMessage callback for messages that should be posted for this pipeline run, with 3
+     * @param onMessage callback for messages that should be posted for this pipeline run, with 4
      * arguments: the message, whether the message is input/output/undetermined, whether the message
-     * is an error message
+     * is an error message, whether the conversation should continue
      */
     protected fun runAssistPipelineInternal(
         text: String?,
         pipeline: AssistPipelineResponse?,
-        onMessage: (String, Boolean?, Boolean) -> Unit
+        onMessage: (String, Boolean?, Boolean, Boolean) -> Unit
     ) {
         val isVoice = text == null
         var job: Job? = null
@@ -114,21 +116,26 @@ abstract class AssistViewModelBase(
                     AssistPipelineEventType.STT_END -> {
                         stopRecording()
                         (it.data as? AssistPipelineSttEnd)?.sttOutput?.let { response ->
-                            onMessage(response["text"] as String, true, false)
+                            onMessage(response["text"] as String, true, false, false)
                         }
                     }
                     AssistPipelineEventType.INTENT_END -> {
                         val data = (it.data as? AssistPipelineIntentEnd)?.intentOutput ?: return@collect
                         conversationId = data.conversationId
+                        continueConversation.set(data.continueConversation)
                         data.response.speech.plain["speech"]?.let { response ->
-                            onMessage(response, false, false)
+                            onMessage(response, false, false, false)
                         }
                     }
                     AssistPipelineEventType.TTS_END -> {
                         if (!isVoice) return@collect
                         val audioPath = (it.data as? AssistPipelineTtsEnd)?.ttsOutput?.url
                         if (!audioPath.isNullOrBlank()) {
-                            playAudio(audioPath)
+                            playAudio(audioPath) {
+                                // We send the continueConversation flag here after getting it from AssistPipelineEventType.INTENT_END so that
+                                // we let the mediaplayer finishing playing the audio before recording a new entry from the user.
+                                onMessage("", null, false, continueConversation.getAndSet(false))
+                            }
                         }
                     }
                     AssistPipelineEventType.RUN_END -> {
@@ -137,14 +144,14 @@ abstract class AssistViewModelBase(
                     }
                     AssistPipelineEventType.ERROR -> {
                         val errorMessage = (it.data as? AssistPipelineError)?.message ?: return@collect
-                        onMessage(errorMessage, null, true)
+                        onMessage(errorMessage, null, true, false)
                         stopRecording()
                         job?.cancel()
                     }
                     else -> { /* Do nothing */ }
                 }
             } ?: run {
-                onMessage(app.getString(R.string.assist_error), null, true)
+                onMessage(app.getString(R.string.assist_error), null, true, false)
             }
         }
     }
@@ -167,10 +174,10 @@ abstract class AssistViewModelBase(
         }
     }
 
-    private fun playAudio(path: String) {
+    private fun playAudio(path: String, donePlaying: (() -> Unit)?) {
         UrlUtil.handle(serverManager.getServer(selectedServerId)?.connection?.getUrl(), path)?.let {
             viewModelScope.launch {
-                audioUrlPlayer.playAudio(it.toString())
+                audioUrlPlayer.playAudio(it.toString(), donePlaying = donePlaying)
             }
         }
     }
