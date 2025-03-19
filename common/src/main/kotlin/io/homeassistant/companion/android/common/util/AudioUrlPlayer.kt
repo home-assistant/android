@@ -60,6 +60,7 @@ class AudioUrlPlayer(private val audioManager: AudioManager?) {
 
             if (volume == 0) {
                 donePlayingInvocation()
+                cont.resume(false)
             } else {
                 player = MediaPlayer().apply {
                     setAudioAttributes(
