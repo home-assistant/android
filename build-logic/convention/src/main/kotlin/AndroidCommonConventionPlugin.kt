@@ -7,6 +7,7 @@ import org.gradle.api.Project
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -69,7 +70,12 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
             }
 
             when (extensions.findByName("android")) {
-                is ApplicationExtension -> extensions.configure<ApplicationExtension> { configure() }
+                is ApplicationExtension -> extensions.configure<ApplicationExtension> {
+                    configure()
+                    dependencies {
+                        "debugImplementation"(libs.leakcanary.android)
+                    }
+                }
                 is LibraryExtension -> extensions.configure<LibraryExtension> { configure() }
             }
         }
