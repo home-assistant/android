@@ -58,7 +58,11 @@ dependencies {
     }
 
     testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.junit.jupiter)
+    testImplementation(libs.junit.vintage.engine)
+    testImplementation(libs.mockk)
+    testImplementation(libs.robolectric)
     testRuntimeOnly(libs.junit.platform.launcher)
 
     androidTestImplementation(libs.bundles.androidx.test)

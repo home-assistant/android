@@ -129,13 +129,14 @@ abstract class AssistViewModelBase(
                     }
                     AssistPipelineEventType.TTS_END -> {
                         if (!isVoice) return@collect
-                        val audioPath = (it.data as? AssistPipelineTtsEnd)?.ttsOutput?.url
-                        if (!audioPath.isNullOrBlank()) {
-                            playAudio(audioPath) {
-                                // We send the continueConversation flag here after getting it from AssistPipelineEventType.INTENT_END so that
-                                // we let the mediaplayer finishing playing the audio before recording a new entry from the user.
-                                onMessage("", null, false, continueConversation.getAndSet(false))
+                        viewModelScope.launch {
+                            val audioPath = (it.data as? AssistPipelineTtsEnd)?.ttsOutput?.url
+                            if (!audioPath.isNullOrBlank()) {
+                                playAudio(audioPath)
                             }
+                            // We send the continueConversation flag here after getting it from AssistPipelineEventType.INTENT_END so that
+                            // we let the mediaplayer finishing playing the audio before recording a new entry from the user.
+                            onMessage("", null, false, continueConversation.getAndSet(false))
                         }
                     }
                     AssistPipelineEventType.RUN_END -> {
@@ -174,12 +175,10 @@ abstract class AssistViewModelBase(
         }
     }
 
-    private fun playAudio(path: String, donePlaying: (() -> Unit)?) {
-        UrlUtil.handle(serverManager.getServer(selectedServerId)?.connection?.getUrl(), path)?.let {
-            viewModelScope.launch {
-                audioUrlPlayer.playAudio(it.toString(), donePlaying = donePlaying)
-            }
-        }
+    private suspend fun playAudio(path: String): Boolean {
+        return UrlUtil.handle(serverManager.getServer(selectedServerId)?.connection?.getUrl(), path)?.let {
+            audioUrlPlayer.playAudio(it.toString())
+        } ?: false
     }
 
     protected fun stopRecording() {
