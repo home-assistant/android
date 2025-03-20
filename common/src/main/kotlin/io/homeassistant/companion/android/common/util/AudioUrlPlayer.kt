@@ -7,6 +7,7 @@ import android.media.AudioManager.STREAM_MUSIC
 import android.media.MediaPlayer
 import android.os.Build
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
@@ -19,15 +20,17 @@ import kotlinx.coroutines.withContext
 /**
  * Simple interface for playing short streaming audio (from URLs).
  */
-class AudioUrlPlayer(private val audioManager: AudioManager?) {
+class AudioUrlPlayer @VisibleForTesting constructor(private val audioManager: AudioManager?, private val mediaPlayerCreator: () -> MediaPlayer) {
+
+    constructor(audioManager: AudioManager?) : this(audioManager, { MediaPlayer() })
 
     companion object {
         private const val TAG = "AudioUrlPlayer"
     }
 
-    private var player: MediaPlayer? = null
+    @VisibleForTesting var player: MediaPlayer? = null
 
-    private var focusRequest: AudioFocusRequestCompat? = null
+    @VisibleForTesting var focusRequest: AudioFocusRequestCompat? = null
     private val focusListener = OnAudioFocusChangeListener { /* Not used */ }
 
     /**
@@ -44,7 +47,7 @@ class AudioUrlPlayer(private val audioManager: AudioManager?) {
 
         return@withContext if (canPlayMusic()) {
             suspendCoroutine { cont ->
-                player = MediaPlayer().apply {
+                player = mediaPlayerCreator().apply {
                     setAudioAttributes(
                         AudioAttributes.Builder()
                             .setContentType(
