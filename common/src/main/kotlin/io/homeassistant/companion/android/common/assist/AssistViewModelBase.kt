@@ -129,7 +129,7 @@ abstract class AssistViewModelBase(
                         }
                     }
                     AssistPipelineEventType.INTENT_PROGRESS -> {
-                        (it.data as? AssistPipelineIntentProgress)?.chat_log_delta?.content?.let { delta ->
+                        (it.data as? AssistPipelineIntentProgress)?.chatLogDelta?.content?.let { delta ->
                             onEvent(AssistEvent.MessageChunk(delta))
                         }
                     }

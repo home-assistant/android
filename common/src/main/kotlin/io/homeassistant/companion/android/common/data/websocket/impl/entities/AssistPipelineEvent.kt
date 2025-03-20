@@ -43,7 +43,7 @@ data class AssistPipelineIntentStart(
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class AssistPipelineIntentProgress(
-    val chat_log_delta: AssistChatLogDelta?
+    val chatLogDelta: AssistChatLogDelta?
 ) : AssistPipelineEventData
 
 @JsonIgnoreProperties(ignoreUnknown = true)
