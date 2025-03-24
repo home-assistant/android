@@ -7,6 +7,7 @@ import org.gradle.api.Project
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -65,6 +66,11 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     disable += "MissingTranslation"
                     // This report is used by Github Actions to parse the new issues and report them into the PR.
                     sarifReport = true
+                    error += "LogNotTimber"
+                }
+
+                dependencies {
+                    "implementation"(libs.timber)
                 }
             }
 
