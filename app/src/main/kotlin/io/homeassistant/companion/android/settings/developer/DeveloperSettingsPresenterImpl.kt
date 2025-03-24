@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.developer
 
 import android.content.Context
-import android.util.Log
 import android.webkit.WebStorage
 import androidx.activity.result.ActivityResult
 import androidx.preference.PreferenceDataStore
@@ -20,16 +19,13 @@ import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 class DeveloperSettingsPresenterImpl @Inject constructor(
     private val prefsRepository: PrefsRepository,
     private val serverManager: ServerManager,
     private val threadManager: ThreadManager
 ) : DeveloperSettingsPresenter, PreferenceDataStore() {
-
-    companion object {
-        private const val TAG = "DevSettingsPresenter"
-    }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     private lateinit var view: DeveloperSettingsView
@@ -101,7 +97,7 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
                         view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_error), false)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Exception while syncing preferred Thread dataset", e)
+                Timber.e(e, "Exception while syncing preferred Thread dataset")
                 view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_error), false)
             }
         }
@@ -144,7 +140,7 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
                 view.onWebViewClearCacheResult(success = true)
             }
         } catch (e: RuntimeException) {
-            Log.e(TAG, "Unable to clear WebView cache", e)
+            Timber.e(e, "Unable to clear WebView cache")
             view.onWebViewClearCacheResult(success = false)
         }
     }

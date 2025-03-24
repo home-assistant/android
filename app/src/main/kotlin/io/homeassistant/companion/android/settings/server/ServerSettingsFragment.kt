@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.InputType
-import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
@@ -32,6 +31,7 @@ import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import timber.log.Timber
 
 @AndroidEntryPoint
 class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
@@ -215,7 +215,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                 unwrappedDrawable?.setTint(iconTint)
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
-                Log.e(TAG, "Unable to set the icon tint", e)
+                Timber.e(e, "Unable to set the icon tint")
             }
         }
 
@@ -227,7 +227,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                 unwrappedDrawable?.setTint(iconTint)
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
-                Log.e(TAG, "Unable to set the icon tint", e)
+                Timber.e(e, "Unable to set the icon tint")
             }
         }
     }

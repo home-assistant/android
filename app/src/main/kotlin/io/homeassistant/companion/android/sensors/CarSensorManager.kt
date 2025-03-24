@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.car.app.hardware.common.CarValue
 import androidx.car.app.hardware.info.EnergyLevel
@@ -20,6 +19,7 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.vehicle.HaCarAppService
+import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.O)
 class CarSensorManager :
@@ -39,8 +39,6 @@ class CarSensorManager :
     )
 
     companion object {
-        internal const val TAG = "CarSM"
-
         private val fuelLevel = CarSensor(
             SensorManager.BasicSensor(
                 "car_fuel",
@@ -337,9 +335,9 @@ class CarSensorManager :
         val car = HaCarAppService.carInfo ?: return
 
         if (enable) {
-            Log.d(TAG, "registering CarInfo $l listener")
+            Timber.d("registering CarInfo $l listener")
         } else {
-            Log.d(TAG, "unregistering CarInfo $l listener")
+            Timber.d("unregistering CarInfo $l listener")
         }
 
         val executor = ContextCompat.getMainExecutor(latestContext)
@@ -395,7 +393,7 @@ class CarSensorManager :
         listenerSensors.forEach { (listener, sensors) ->
             if (sensors.any { isEnabled(latestContext, it) }) {
                 if (listenerLastRegistered[listener] != -1L && listenerLastRegistered[listener]!! + SensorManager.SENSOR_LISTENER_TIMEOUT < System.currentTimeMillis()) {
-                    Log.d(TAG, "Re-registering CarInfo $listener listener as it appears to be stuck")
+                    Timber.d("Re-registering CarInfo $listener listener as it appears to be stuck")
                     setListener(listener, false)
                 }
 
@@ -408,7 +406,7 @@ class CarSensorManager :
 
     private fun onEnergyAvailable(data: EnergyLevel) {
         val fuelStatus = carValueStatus(data.fuelPercent.status)
-        Log.d(TAG, "Received Energy level: $data")
+        Timber.d("Received Energy level: $data")
         onSensorUpdated(
             latestContext,
             fuelLevel.sensor,
@@ -446,7 +444,7 @@ class CarSensorManager :
 
     private fun onModelAvailable(data: Model) {
         val status = carValueStatus(data.name.status)
-        Log.d(TAG, "Received model information: $data")
+        Timber.d("Received model information: $data")
         onSensorUpdated(
             latestContext,
             carName.sensor,
@@ -465,7 +463,7 @@ class CarSensorManager :
     @androidx.annotation.OptIn(androidx.car.app.annotations.ExperimentalCarApi::class)
     fun onStatusAvailable(data: EvStatus) {
         val status = carValueStatus(data.evChargePortConnected.status)
-        Log.d(TAG, "Received status available: $data")
+        Timber.d("Received status available: $data")
         onSensorUpdated(
             latestContext,
             carChargingStatus.sensor,
@@ -483,7 +481,7 @@ class CarSensorManager :
     @androidx.annotation.OptIn(androidx.car.app.annotations.ExperimentalCarApi::class)
     fun onMileageAvailable(data: Mileage) {
         val status = carValueStatus(data.odometerMeters.status)
-        Log.d(TAG, "Received mileage: $data")
+        Timber.d("Received mileage: $data")
         onSensorUpdated(
             latestContext,
             odometerValue.sensor,
@@ -500,7 +498,7 @@ class CarSensorManager :
     private fun onProfileAvailable(data: EnergyProfile) {
         val fuelTypeStatus = carValueStatus(data.fuelTypes.status)
         val evConnectorTypeStatus = carValueStatus(data.evConnectorTypes.status)
-        Log.d(TAG, "Received energy profile: $data")
+        Timber.d("Received energy profile: $data")
         onSensorUpdated(
             latestContext,
             fuelType.sensor,
@@ -527,7 +525,7 @@ class CarSensorManager :
 
     private fun onSpeedAvailable(data: Speed) {
         val speedStatus = carValueStatus(data.displaySpeedMetersPerSecond.status)
-        Log.d(TAG, "Received speed: $data")
+        Timber.d("Received speed: $data")
 
         onSensorUpdated(
             latestContext,

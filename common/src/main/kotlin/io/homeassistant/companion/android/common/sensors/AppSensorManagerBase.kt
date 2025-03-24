@@ -6,15 +6,14 @@ import android.content.Context
 import android.net.TrafficStats
 import android.os.Build
 import android.os.Process
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import java.math.RoundingMode
+import timber.log.Timber
 
 abstract class AppSensorManagerBase : SensorManager {
     companion object {
-        private const val TAG = "AppSensor"
         private const val GB = 1000000000
 
         val currentVersion = SensorManager.BasicSensor(
@@ -172,7 +171,7 @@ abstract class AppSensorManagerBase : SensorManager {
         val appRx = try {
             TrafficStats.getUidRxBytes(appUid).toFloat() / GB
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting app rx bytes", e)
+            Timber.e(e, "Error getting app rx bytes")
             return
         }
 
@@ -193,7 +192,7 @@ abstract class AppSensorManagerBase : SensorManager {
         val appTx = try {
             TrafficStats.getUidTxBytes(appUid).toFloat() / GB
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting app tx bytes", e)
+            Timber.e(e, "Error getting app tx bytes")
             return
         }
 

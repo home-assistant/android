@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.settings.wear.views
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -15,6 +14,7 @@ import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class SettingsWearMainView : AppCompatActivity() {
@@ -27,7 +27,6 @@ class SettingsWearMainView : AppCompatActivity() {
     )
 
     companion object {
-        private const val TAG = "SettingsWearDevice"
         private var currentNodes = setOf<Node>()
         private var registerUrl: String? = null
         const val LANDING = "Landing"
@@ -85,7 +84,7 @@ class SettingsWearMainView : AppCompatActivity() {
             val (url, authCode, deviceName, deviceTrackingEnabled, _, tlsCertificateUri, tlsCertificatePassword) = result
             settingsWearViewModel.sendAuthToWear(url, authCode, deviceName, deviceTrackingEnabled, true, tlsCertificateUri, tlsCertificatePassword)
         } else {
-            Log.e(TAG, "onOnboardingComplete: Activity result returned null intent data")
+            Timber.e("onOnboardingComplete: Activity result returned null intent data")
         }
     }
 }

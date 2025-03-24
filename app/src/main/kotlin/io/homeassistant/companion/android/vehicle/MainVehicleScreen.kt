@@ -50,10 +50,6 @@ class MainVehicleScreen(
     private val onRefresh: () -> Unit
 ) : BaseVehicleScreen(carContext) {
 
-    companion object {
-        private const val TAG = "MainVehicleScreen"
-    }
-
     private var favoritesEntities: List<Entity<*>> = listOf()
     private var entityRegistry: List<EntityRegistryResponse>? = null
     private var favoritesList = emptyList<String>()

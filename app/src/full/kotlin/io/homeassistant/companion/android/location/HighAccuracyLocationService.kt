@@ -13,7 +13,6 @@ import android.graphics.Color
 import android.location.Location
 import android.os.Build
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -26,12 +25,11 @@ import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.ForegroundServiceLauncher
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import timber.log.Timber
 
 class HighAccuracyLocationService : Service() {
 
     companion object {
-        internal const val TAG = "HighAccLocService"
-
         private lateinit var notificationBuilder: NotificationCompat.Builder
         private lateinit var notification: Notification
         private lateinit var notificationManagerCompat: NotificationManagerCompat
@@ -44,7 +42,7 @@ class HighAccuracyLocationService : Service() {
 
         @Synchronized
         fun startService(context: Context, intervalInSeconds: Int) {
-            Log.d(TAG, "Try starting high accuracy location service (Interval: ${intervalInSeconds}s)...")
+            Timber.d("Try starting high accuracy location service (Interval: ${intervalInSeconds}s)...")
             LAUNCHER.startService(context) {
                 putExtra("intervalInSeconds", intervalInSeconds)
             }
@@ -52,12 +50,12 @@ class HighAccuracyLocationService : Service() {
 
         @Synchronized
         fun stopService(context: Context) {
-            Log.d(TAG, "Try stopping high accuracy location service...")
+            Timber.d("Try stopping high accuracy location service...")
             LAUNCHER.stopService(context)
         }
 
         fun restartService(context: Context, intervalInSeconds: Int) {
-            Log.d(TAG, "Try restarting high accuracy location service (Interval: ${intervalInSeconds}s)...")
+            Timber.d("Try restarting high accuracy location service (Interval: ${intervalInSeconds}s)...")
             LAUNCHER.restartService(context) {
                 putExtra("intervalInSeconds", intervalInSeconds)
             }
@@ -152,7 +150,7 @@ class HighAccuracyLocationService : Service() {
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) FOREGROUND_SERVICE_TYPE_LOCATION else 0
         LAUNCHER.onServiceCreated(this, notificationId, notification, type)
 
-        Log.d(TAG, "High accuracy location service created -> onCreate")
+        Timber.d("High accuracy location service created -> onCreate")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -161,7 +159,7 @@ class HighAccuracyLocationService : Service() {
         val intervalInSeconds = intent?.getIntExtra("intervalInSeconds", DEFAULT_UPDATE_INTERVAL_SECONDS) ?: DEFAULT_UPDATE_INTERVAL_SECONDS
         requestLocationUpdates(intervalInSeconds)
 
-        Log.d(TAG, "High accuracy location service (Interval: ${intervalInSeconds}s) started -> onStartCommand")
+        Timber.d("High accuracy location service (Interval: ${intervalInSeconds}s) started -> onStartCommand")
         return START_NOT_STICKY
     }
 
@@ -175,7 +173,7 @@ class HighAccuracyLocationService : Service() {
         // Remove notification again. Sometimes stopForeground(true) is not enough. Just to be sure
         notificationManagerCompat.cancel(notificationId)
 
-        Log.d(TAG, "High accuracy location service stopped -> onDestroy")
+        Timber.d("High accuracy location service stopped -> onDestroy")
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -199,7 +197,7 @@ class HighAccuracyLocationService : Service() {
         fusedLocationProviderClient = try {
             LocationServices.getFusedLocationProviderClient(this)
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to get fused location provider client", e)
+            Timber.e(e, "Unable to get fused location provider client")
             null
         }
         fusedLocationProviderClient?.requestLocationUpdates(request, getLocationUpdateIntent())

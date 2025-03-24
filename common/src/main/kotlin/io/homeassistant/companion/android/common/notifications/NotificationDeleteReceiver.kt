@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -15,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class NotificationDeleteReceiver : BroadcastReceiver() {
@@ -23,7 +23,6 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
         const val EXTRA_NOTIFICATION_GROUP = "EXTRA_NOTIFICATION_GROUP"
         const val EXTRA_NOTIFICATION_GROUP_ID = "EXTRA_NOTIFICATION_GROUP_ID"
         const val EXTRA_NOTIFICATION_DB = "EXTRA_NOTIFICATION_DB"
-        const val TAG = "NotifDeleteReceiver"
     }
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
@@ -58,9 +57,9 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
                 val serverId = notificationDao.get(databaseId.toInt())?.serverId ?: ServerManager.SERVER_ID_ACTIVE
 
                 serverManager.integrationRepository(serverId).fireEvent("mobile_app_notification_cleared", hashData)
-                Log.d(TAG, "Notification cleared event successful!")
+                Timber.d("Notification cleared event successful!")
             } catch (e: Exception) {
-                Log.e(TAG, "Issue sending event to Home Assistant", e)
+                Timber.e(e, "Issue sending event to Home Assistant")
             }
         }
     }

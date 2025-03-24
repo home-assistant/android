@@ -5,7 +5,6 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.ServiceInfo
 import android.os.Build
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import androidx.work.CoroutineWorker
@@ -18,6 +17,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import java.lang.IllegalStateException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 abstract class SensorWorkerBase(
     val appContext: Context,
@@ -61,12 +61,12 @@ abstract class SensorWorkerBase(
             )
             try {
                 setForeground(foregroundInfo)
-                Log.d(TAG, "Updating all Sensors in foreground.")
+                Timber.d("Updating all Sensors in foreground.")
             } catch (e: IllegalStateException) {
                 // On Android 12+ we might encounter a ForegroundServiceStartNotAllowedException
                 // depending on battery settings and trigger. Because the service also works in the
                 // background, ignore it and continue (doesn't need to be logged as an exception).
-                Log.d(TAG, "Updating all Sensors in background.", e)
+                Timber.d(e, "Updating all Sensors in background.")
             }
 
             val lastUpdateSensor = sensorDao.get(LastUpdateManager.lastUpdate.id)
@@ -81,7 +81,7 @@ abstract class SensorWorkerBase(
         val currentServerIds = serverManager.defaultServers.map { it.id }
         val orphanedSensors = sensorDao.getAllExceptServer(currentServerIds)
         if (orphanedSensors.any()) {
-            Log.i(TAG, "Cleaning up ${orphanedSensors.size} orphaned sensor entries")
+            Timber.i("Cleaning up ${orphanedSensors.size} orphaned sensor entries")
             orphanedSensors.forEach {
                 sensorDao.removeSensor(it.id, it.serverId)
             }

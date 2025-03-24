@@ -9,7 +9,6 @@ import io.homeassistant.companion.android.common.R as commonR
 
 class PowerSensorManager : SensorManager {
     companion object {
-        private const val TAG = "PowerSensors"
         private const val PACKAGE_NAME = "io.homeassistant.companion.android"
 
         val interactiveDevice = SensorManager.BasicSensor(

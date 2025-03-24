@@ -10,7 +10,6 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
@@ -43,11 +42,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class ButtonWidget : AppWidgetProvider() {
     companion object {
-        private const val TAG = "ButtonWidget"
         const val CALL_SERVICE =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE"
         private const val CALL_SERVICE_AUTH =
@@ -101,13 +100,13 @@ class ButtonWidget : AppWidgetProvider() {
                 .filter { !systemWidgetIds.contains(it.id) }
                 .map { it.id }
             if (invalidWidgetIds.isNotEmpty()) {
-                Log.i(TAG, "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
+                Timber.i("Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
                 onDeleted(context, invalidWidgetIds.toIntArray())
             }
 
             val buttonWidgetEntityList = dbWidgetList.filter { systemWidgetIds.contains(it.id) }
             if (buttonWidgetEntityList.isNotEmpty()) {
-                Log.d(TAG, "Updating all widgets")
+                Timber.d("Updating all widgets")
                 for (item in buttonWidgetEntityList) {
                     val views = getWidgetRemoteViews(context, item.id)
 
@@ -139,8 +138,7 @@ class ButtonWidget : AppWidgetProvider() {
         val action = intent.action
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
-        Log.d(
-            TAG,
+        Timber.d(
             "Broadcast received: " + System.lineSeparator() +
                 "Broadcast action: " + action + System.lineSeparator() +
                 "AppWidgetId: " + appWidgetId
@@ -156,7 +154,7 @@ class ButtonWidget : AppWidgetProvider() {
     }
 
     private fun authThenCallConfiguredAction(context: Context, appWidgetId: Int) {
-        Log.d(TAG, "Calling authentication, then configured action")
+        Timber.d("Calling authentication, then configured action")
 
         val intent = Intent(context, WidgetAuthenticationActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NEW_DOCUMENT
@@ -261,7 +259,7 @@ class ButtonWidget : AppWidgetProvider() {
     }
 
     private fun callConfiguredAction(context: Context, appWidgetId: Int) {
-        Log.d(TAG, "Calling widget action")
+        Timber.d("Calling widget action")
 
         // Set up progress bar as immediate feedback to show the click has been received
         // Success or failure feedback will come from the mainScope coroutine
@@ -284,8 +282,7 @@ class ButtonWidget : AppWidgetProvider() {
             val action = widget?.service
             val actionDataJson = widget?.serviceData
 
-            Log.d(
-                TAG,
+            Timber.d(
                 "Action Call Data loaded:" + System.lineSeparator() +
                     "domain: " + domain + System.lineSeparator() +
                     "action: " + action + System.lineSeparator() +
@@ -293,7 +290,7 @@ class ButtonWidget : AppWidgetProvider() {
             )
 
             if (domain == null || action == null || actionDataJson == null) {
-                Log.w(TAG, "Action Call Data incomplete.  Aborting action call")
+                Timber.w("Action Call Data incomplete.  Aborting action call")
             } else {
                 // If everything loaded correctly, package the action data and attempt the call
                 try {
@@ -316,15 +313,15 @@ class ButtonWidget : AppWidgetProvider() {
                         }
                     }
 
-                    Log.d(TAG, "Sending action call to Home Assistant")
+                    Timber.d("Sending action call to Home Assistant")
                     serverManager.integrationRepository(widget.serverId).callAction(domain, action, actionDataMap)
-                    Log.d(TAG, "Action call sent successfully")
+                    Timber.d("Action call sent successfully")
 
                     // If action call does not throw an exception, send positive feedback
                     feedbackColor = R.drawable.widget_button_background_green
                     feedbackIcon = R.drawable.ic_check_black_24dp
                 } catch (e: Exception) {
-                    Log.e(TAG, "Could not send action call.", e)
+                    Timber.e(e, "Could not send action call.")
                     Toast.makeText(context, commonR.string.action_failure, Toast.LENGTH_LONG).show()
                 }
             }
@@ -368,13 +365,12 @@ class ButtonWidget : AppWidgetProvider() {
         val textColor: String? = extras.getString(EXTRA_TEXT_COLOR)
 
         if (serverId == null || domain == null || action == null || actionData == null) {
-            Log.e(TAG, "Did not receive complete action call data")
+            Timber.e("Did not receive complete action call data")
             return
         }
 
         mainScope.launch {
-            Log.d(
-                TAG,
+            Timber.d(
                 "Saving action call config data:" + System.lineSeparator() +
                     "domain: " + domain + System.lineSeparator() +
                     "action: " + action + System.lineSeparator() +

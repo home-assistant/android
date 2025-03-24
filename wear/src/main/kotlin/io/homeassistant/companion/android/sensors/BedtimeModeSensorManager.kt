@@ -3,14 +3,12 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import timber.log.Timber
 
 class BedtimeModeSensorManager : SensorManager {
     companion object {
-        private const val TAG = "BedtimeSensor"
-
         val bedtimeMode = SensorManager.BasicSensor(
             "bedtime_mode",
             "binary_sensor",
@@ -52,7 +50,7 @@ class BedtimeModeSensorManager : SensorManager {
         val state = try {
             Settings.Global.getInt(context.contentResolver, if (Build.MANUFACTURER == "samsung") "setting_bedtime_mode_running_state" else "bedtime_mode") == 1
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to update bedtime mode sensor", e)
+            Timber.e(e, "Unable to update bedtime mode sensor")
             false
         }
 

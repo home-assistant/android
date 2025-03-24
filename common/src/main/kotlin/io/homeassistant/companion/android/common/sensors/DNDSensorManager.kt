@@ -13,8 +13,6 @@ import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 @RequiresApi(Build.VERSION_CODES.M)
 class DNDSensorManager : SensorManager {
     companion object {
-        private const val TAG = "DNDSensor"
-
         val dndSensor = SensorManager.BasicSensor(
             "dnd_sensor",
             "sensor",

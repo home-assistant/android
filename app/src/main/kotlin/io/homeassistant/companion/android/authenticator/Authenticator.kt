@@ -1,11 +1,11 @@
 package io.homeassistant.companion.android.authenticator
 
 import android.content.Context
-import android.util.Log
 import androidx.biometric.BiometricManager.Authenticators
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import timber.log.Timber
 
 class Authenticator(context: Context, fragmentActivity: FragmentActivity, callback: (Int) -> Unit) {
     companion object {
@@ -23,7 +23,7 @@ class Authenticator(context: Context, fragmentActivity: FragmentActivity, callba
         object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                 super.onAuthenticationError(errorCode, errString)
-                Log.d("Unlock", "onAuthenticationError -> $errorCode :: $errString")
+                Timber.d("Unlock onAuthenticationError -> $errorCode :: $errString")
                 if (errorCode == BiometricPrompt.ERROR_USER_CANCELED) {
                     callback(CANCELED)
                 } else {

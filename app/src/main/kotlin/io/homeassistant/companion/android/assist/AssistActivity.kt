@@ -33,8 +33,6 @@ class AssistActivity : BaseActivity() {
     private var contextIsLocked = true
 
     companion object {
-        const val TAG = "AssistActivity"
-
         private const val EXTRA_SERVER = "server"
         private const val EXTRA_PIPELINE = "pipeline"
         private const val EXTRA_START_LISTENING = "start_listening"

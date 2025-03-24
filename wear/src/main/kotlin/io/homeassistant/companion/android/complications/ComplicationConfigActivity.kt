@@ -5,7 +5,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -15,6 +14,7 @@ import androidx.wear.watchface.complications.datasource.ComplicationDataSourceSe
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService.Companion.EXTRA_CONFIG_DATA_SOURCE_COMPONENT
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.complications.views.LoadConfigView
+import timber.log.Timber
 
 @AndroidEntryPoint
 class ComplicationConfigActivity : ComponentActivity() {
@@ -22,8 +22,6 @@ class ComplicationConfigActivity : ComponentActivity() {
     private val complicationConfigViewModel by viewModels<ComplicationConfigViewModel>()
 
     companion object {
-        private const val TAG = "EntityStateConfigActivity"
-
         fun newInstance(context: Context): Intent {
             return Intent(context, ComplicationConfigActivity::class.java)
         }
@@ -35,7 +33,7 @@ class ComplicationConfigActivity : ComponentActivity() {
         val id = intent.getIntExtra(EXTRA_CONFIG_COMPLICATION_ID, -1)
         val type = intent.getIntExtra(EXTRA_CONFIG_COMPLICATION_TYPE, -1)
         val component = IntentCompat.getParcelableExtra(intent, EXTRA_CONFIG_DATA_SOURCE_COMPONENT, ComponentName::class.java)
-        Log.i(TAG, "Config for id $id of type $type for component ${component?.className}")
+        Timber.i("Config for id $id of type $type for component ${component?.className}")
 
         complicationConfigViewModel.setDataFromIntent(id)
 

@@ -3,20 +3,16 @@ package io.homeassistant.companion.android.tiles
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.onEntityPressedWithoutState
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 @AndroidEntryPoint
 class TileActionReceiver : BroadcastReceiver() {
-
-    companion object {
-        private const val TAG = "TileActionReceiver"
-    }
 
     @Inject
     lateinit var serverManager: ServerManager
@@ -37,7 +33,7 @@ class TileActionReceiver : BroadcastReceiver() {
                         integrationRepository = serverManager.integrationRepository()
                     )
                 } catch (e: Exception) {
-                    Log.e(TAG, "Cannot call tile service", e)
+                    Timber.e(e, "Cannot call tile service")
                 }
             }
         }

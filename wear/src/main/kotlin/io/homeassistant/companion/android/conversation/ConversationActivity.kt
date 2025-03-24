@@ -25,8 +25,6 @@ class ConversationActivity : ComponentActivity() {
 
     private val conversationViewModel by viewModels<ConversationViewModel>()
     companion object {
-        private const val TAG = "ConvActivity"
-
         fun newInstance(context: Context): Intent {
             return Intent(context, ConversationActivity::class.java)
         }
