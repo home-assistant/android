@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.assist.AssistEvent
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -257,24 +258,38 @@ class ConversationViewModel @Inject constructor(
         runAssistPipelineInternal(
             text,
             currentPipeline
-        ) { newMessage, isInput, isError, shouldContinueConversation ->
-            if (shouldContinueConversation) {
-                onMicrophoneInput()
-            } else {
-                _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
-                    _conversation[index] = message.copy(
-                        message = newMessage.trim(),
-                        isInput = isInput ?: message.isInput,
-                        isError = isError
-                    )
-                    if (isInput == true) {
-                        _conversation.add(haMessage)
-                        message = haMessage
-                    }
-                    if (isError && inputMode == AssistInputMode.VOICE_ACTIVE) {
-                        stopRecording()
+        ) { event ->
+            when (event) {
+                is AssistEvent.Message -> {
+                    _conversation.indexOf(message).takeIf { pos -> pos >= 0 }?.let { index ->
+                        val isInput = event is AssistEvent.Message.Input
+                        val isError = event is AssistEvent.Message.Error
+                        _conversation[index] = message.copy(
+                            message = event.message.trim(),
+                            isInput = isInput,
+                            isError = isError
+                        )
+                        if (isInput) {
+                            _conversation.add(haMessage)
+                            message = haMessage
+                        }
+                        if (isError && inputMode == AssistInputMode.VOICE_ACTIVE) {
+                            stopRecording()
+                        }
                     }
                 }
+                is AssistEvent.MessageChunk -> {
+                    val lastMessage = _conversation.last()
+                    if (lastMessage == haMessage) {
+                        // Remove '...' message and add the chunk received
+                        _conversation.removeAt(_conversation.lastIndex)
+                        _conversation.add(lastMessage.copy(message = event.chunk))
+                    } else {
+                        // Replace last message with the updated message with the new chunk append
+                        _conversation[_conversation.lastIndex] = lastMessage.copy(message = lastMessage.message + event.chunk)
+                    }
+                }
+                is AssistEvent.ContinueConversation -> onMicrophoneInput()
             }
         }
     }

@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineError
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentProgress
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineRunStart
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineSttEnd
@@ -19,6 +20,16 @@ import io.homeassistant.companion.android.util.UrlUtil
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+
+sealed interface AssistEvent {
+    sealed class Message(val message: String) : AssistEvent {
+        class Input(message: String) : Message(message)
+        class Output(message: String) : Message(message)
+        class Error(message: String) : Message(message)
+    }
+    class MessageChunk(val chunk: String) : AssistEvent
+    data object ContinueConversation : AssistEvent
+}
 
 abstract class AssistViewModelBase(
     private val serverManager: ServerManager,
@@ -68,14 +79,12 @@ abstract class AssistViewModelBase(
      * @param text input to run an intent pipeline with, or `null` to run a STT pipeline (check if
      * STT is supported _before_ calling this function)
      * @param pipeline information about the pipeline, or `null` to use the server's default
-     * @param onMessage callback for messages that should be posted for this pipeline run, with 4
-     * arguments: the message, whether the message is input/output/undetermined, whether the message
-     * is an error message, whether the conversation should continue
+     * @param onEvent callback for events that should be use to update the UI
      */
     protected fun runAssistPipelineInternal(
         text: String?,
         pipeline: AssistPipelineResponse?,
-        onMessage: (String, Boolean?, Boolean, Boolean) -> Unit
+        onEvent: (AssistEvent) -> Unit
     ) {
         val isVoice = text == null
         var job: Job? = null
@@ -116,15 +125,20 @@ abstract class AssistViewModelBase(
                     AssistPipelineEventType.STT_END -> {
                         stopRecording()
                         (it.data as? AssistPipelineSttEnd)?.sttOutput?.let { response ->
-                            onMessage(response["text"] as String, true, false, false)
+                            onEvent(AssistEvent.Message.Input(response["text"] as String))
+                        }
+                    }
+                    AssistPipelineEventType.INTENT_PROGRESS -> {
+                        (it.data as? AssistPipelineIntentProgress)?.chatLogDelta?.content?.let { delta ->
+                            onEvent(AssistEvent.MessageChunk(delta))
                         }
                     }
                     AssistPipelineEventType.INTENT_END -> {
                         val data = (it.data as? AssistPipelineIntentEnd)?.intentOutput ?: return@collect
                         conversationId = data.conversationId
                         continueConversation.set(data.continueConversation)
-                        data.response.speech.plain["speech"]?.let { response ->
-                            onMessage(response, false, false, false)
+                        data.response.speech.plain["speech"]?.let { speech ->
+                            onEvent(AssistEvent.Message.Output(speech))
                         }
                     }
                     AssistPipelineEventType.TTS_END -> {
@@ -136,7 +150,9 @@ abstract class AssistViewModelBase(
                             }
                             // We send the continueConversation flag here after getting it from AssistPipelineEventType.INTENT_END so that
                             // we let the mediaplayer finishing playing the audio before recording a new entry from the user.
-                            onMessage("", null, false, continueConversation.getAndSet(false))
+                            if (continueConversation.getAndSet(false)) {
+                                onEvent(AssistEvent.ContinueConversation)
+                            }
                         }
                     }
                     AssistPipelineEventType.RUN_END -> {
@@ -145,14 +161,14 @@ abstract class AssistViewModelBase(
                     }
                     AssistPipelineEventType.ERROR -> {
                         val errorMessage = (it.data as? AssistPipelineError)?.message ?: return@collect
-                        onMessage(errorMessage, null, true, false)
+                        onEvent(AssistEvent.Message.Error(errorMessage))
                         stopRecording()
                         job?.cancel()
                     }
                     else -> { /* Do nothing */ }
                 }
             } ?: run {
-                onMessage(app.getString(R.string.assist_error), null, true, false)
+                onEvent(AssistEvent.Message.Output(app.getString(R.string.assist_error)))
             }
         }
     }
