@@ -73,7 +73,11 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                 is ApplicationExtension -> extensions.configure<ApplicationExtension> {
                     configure()
                     dependencies {
-                        "debugImplementation"(libs.leakcanary.android)
+                        val noLeakCanary = project.findProperty("noLeakCanary")?.toString()?.ifEmpty { "true" }?.toBoolean() ?: false
+
+                        if (!noLeakCanary) {
+                            "debugImplementation"(libs.leakcanary.android)
+                        }
                     }
                 }
                 is LibraryExtension -> extensions.configure<LibraryExtension> { configure() }
