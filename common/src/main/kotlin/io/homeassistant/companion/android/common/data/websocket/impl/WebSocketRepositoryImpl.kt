@@ -24,6 +24,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentProgress
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentStart
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineListResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
@@ -745,10 +746,14 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                             AssistPipelineEventType.RUN_START -> mapper.convertValue(eventDataMap, AssistPipelineRunStart::class.java)
                             AssistPipelineEventType.STT_END -> mapper.convertValue(eventDataMap, AssistPipelineSttEnd::class.java)
                             AssistPipelineEventType.INTENT_START -> mapper.convertValue(eventDataMap, AssistPipelineIntentStart::class.java)
+                            AssistPipelineEventType.INTENT_PROGRESS -> mapper.convertValue(eventDataMap, AssistPipelineIntentProgress::class.java)
                             AssistPipelineEventType.INTENT_END -> mapper.convertValue(eventDataMap, AssistPipelineIntentEnd::class.java)
                             AssistPipelineEventType.TTS_END -> mapper.convertValue(eventDataMap, AssistPipelineTtsEnd::class.java)
                             AssistPipelineEventType.ERROR -> mapper.convertValue(eventDataMap, AssistPipelineError::class.java)
-                            else -> null
+                            else -> {
+                                Log.d(TAG, "Unknown event type ignoring. received data = \n$response")
+                                null
+                            }
                         }
                         AssistPipelineEvent(eventType.textValue(), eventData)
                     } else {
