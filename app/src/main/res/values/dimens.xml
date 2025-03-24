@@ -3,5 +3,4 @@
     <dimen name="activity_margin">16dp</dimen>
     <dimen name="widget_corner_radius">8dp</dimen>
     <dimen name="bottom_sheet_corner_radius">28dp</dimen>
-    <dimen name="hello_world_un_used">42dp</dimen>
 </resources>
