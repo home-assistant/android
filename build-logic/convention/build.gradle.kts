@@ -17,6 +17,12 @@ allprojects {
             reporter(ReporterType.SARIF)
             reporter(ReporterType.PLAIN)
         }
+
+        // Fix for an implicit_dependency after bumping typesafe-conventions to 0.5.1
+        // https://github.com/radoslaw-panuszewski/typesafe-conventions-gradle-plugin/issues/34
+        filter {
+            exclude { it.file.path.contains("build/generated-sources") }
+        }
     }
 }
 
@@ -42,17 +48,6 @@ tasks {
         enableStricterValidation = true
         failOnWarning = true
     }
-
-    // Fix for an implicit_dependency after bumping typesafe-conventions to 0.5.1
-    // issue can be tracked here: https://github.com/radoslaw-panuszewski/typesafe-conventions-gradle-plugin/issues/34
-    getByName("runKtlintCheckOverMainSourceSet").mustRunAfter(
-        "generateEntrypointForLibs",
-        "generateEntrypointForLibsInPluginsBlock"
-    )
-    getByName("runKtlintFormatOverMainSourceSet").mustRunAfter(
-        "generateEntrypointForLibs",
-        "generateEntrypointForLibsInPluginsBlock"
-    )
 }
 
 gradlePlugin {

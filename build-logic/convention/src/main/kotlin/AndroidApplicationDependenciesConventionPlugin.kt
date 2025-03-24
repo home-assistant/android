@@ -99,6 +99,10 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "implementation"(libs.improv)
 
                     "implementation"(libs.car.core)
+
+                    "androidTestImplementation"(platform(libs.compose.bom))
+                    "androidTestImplementation"(libs.bundles.androidx.test)
+                    "androidTestImplementation"(libs.bundles.androidx.compose.ui.test)
                 }
             }
         }

@@ -30,8 +30,8 @@ android {
 
     sourceSets {
         getByName("main") {
-            java {
-                srcDirs("../app/src/main/java")
+            kotlin {
+                srcDirs("../app/src/main/kotlin")
             }
             assets {
                 srcDirs("../app/src/main/assets")
@@ -41,16 +41,16 @@ android {
             }
         }
         getByName("full") {
-            java {
-                srcDirs("../app/src/full/java")
+            kotlin {
+                srcDirs("../app/src/full/kotlin")
             }
             res {
                 srcDirs("../app/src/full/res")
             }
         }
         getByName("minimal") {
-            java {
-                srcDirs("../app/src/minimal/java")
+            kotlin {
+                srcDirs("../app/src/minimal/kotlin")
             }
             res {
                 srcDirs("../app/src/minimal/res")
@@ -59,6 +59,17 @@ android {
         getByName("debug") {
             res {
                 srcDirs("../app/src/debug/res")
+            }
+        }
+        getByName("androidTest") {
+            kotlin {
+                srcDirs("../app/src/androidTest/kotlin")
+            }
+            assets {
+                srcDirs("../app/src/androidTest/assets")
+            }
+            res {
+                srcDirs("../app/src/androidTest/res")
             }
         }
     }

@@ -1,0 +1,5 @@
+<project version="4">
+  <component name="ExternalDependencies">
+    <plugin id="gradle-consistent-versions" min-version="0.9.0"/>
+  </component>
+</project>
