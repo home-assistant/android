@@ -71,6 +71,8 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     sarifReport = true
                     // Sometimes we need to bypass lint issues we use this file to keep track of them.
                     baseline = file("lint-baseline.xml")
+                    // We already have renovate for this
+                    checkDependencies = false
                 }
             }
 
