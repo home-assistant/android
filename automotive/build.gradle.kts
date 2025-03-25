@@ -26,6 +26,11 @@ android {
                 enableSplit = false
             }
         }
+        lint {
+            // We disable the lint tasks for release only for automotive because the baseline cannot be parsed in release builds due to the fact that we share sources between app and automotive.
+            // It is not an issue since we still check the :app module and the code is exactly the same.
+            checkReleaseBuilds = false
+        }
     }
 
     sourceSets {
