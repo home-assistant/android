@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -16,11 +15,10 @@ import io.homeassistant.companion.android.onboarding.manual.ManualSetupActivity
 import io.homeassistant.companion.android.theme.WearAppTheme
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class PhoneInstallActivity : AppCompatActivity() {
     companion object {
-        private const val TAG = "PhoneInstallActivity"
-
         fun newInstance(context: Context): Intent {
             return Intent(context, PhoneInstallActivity::class.java)
         }
@@ -63,7 +61,7 @@ class PhoneInstallActivity : AppCompatActivity() {
                     null
                 ).await()
             } catch (e: Exception) {
-                Log.e(TAG, "Unable to open remote activity", e)
+                Timber.e(e, "Unable to open remote activity")
                 success = false
             }
             val confirmation =

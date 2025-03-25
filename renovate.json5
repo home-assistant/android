@@ -67,13 +67,15 @@
             "matchPackageNames": [
                 "!androidx.compose.compiler{/,}**",
                 "!androidx.wear.compose{/,}**",
-                "androidx.compose.{/,}**"
+                "androidx.navigation:navigation-compose{/,}**",
+                "androidx.compose{/,}**",
             ]
         },
         {
             "groupName": "androidx.*",
             "matchPackageNames": [
-                "!androidx.compose.{/,}**",
+                "!androidx.compose{/,}**",
+                "!androidx.navigation:navigation-compose{/,}**",
                 "!androidx.wear.compose{/,}**",
                 "androidx.{/,}**"
             ]

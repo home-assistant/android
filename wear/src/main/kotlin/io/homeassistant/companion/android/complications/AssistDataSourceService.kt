@@ -17,10 +17,6 @@ import io.homeassistant.companion.android.common.R
 
 class AssistDataSourceService : ComplicationDataSourceService() {
 
-    companion object {
-        const val TAG = "AssistDataSourceService"
-    }
-
     override fun onComplicationRequest(request: ComplicationRequest, listener: ComplicationRequestListener) {
         if (request.complicationType != ComplicationType.MONOCHROMATIC_IMAGE) {
             return

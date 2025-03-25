@@ -65,8 +65,6 @@ class ComplicationReceiver : BroadcastReceiver() {
     }
 
     companion object {
-        private const val TAG = "ComplicationReceiver"
-
         const val UPDATE_COMPLICATION = "update_complication"
         private const val EXTRA_ID = "complication_instance_id"
 

@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
@@ -31,12 +30,12 @@ import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import javax.inject.Inject
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class EntityWidget : BaseWidgetProvider() {
 
     companion object {
-        private const val TAG = "StaticWidget"
         internal const val TOGGLE_ENTITY =
             "io.homeassistant.companion.android.widgets.entity.EntityWidget.TOGGLE_ENTITY"
 
@@ -165,7 +164,7 @@ class EntityWidget : BaseWidgetProvider() {
                 entityId?.let { serverManager.integrationRepository(serverId).getEntity(it) }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to fetch entity", e)
+            Timber.e(e, "Unable to fetch entity")
             entityCaughtException = true
         }
         val entityOptions = if (
@@ -194,7 +193,7 @@ class EntityWidget : BaseWidgetProvider() {
             staticWidgetDao.updateWidgetLastUpdate(appWidgetId, lastUpdate)
             return ResolvedText(lastUpdate)
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to fetch entity state and attributes", e)
+            Timber.e(e, "Unable to fetch entity state and attributes")
         }
         return ResolvedText(staticWidgetDao.get(appWidgetId)?.lastUpdate, true)
     }
@@ -216,13 +215,12 @@ class EntityWidget : BaseWidgetProvider() {
         val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
 
         if (serverId == null || entitySelection == null) {
-            Log.e(TAG, "Did not receive complete service call data")
+            Timber.e("Did not receive complete service call data")
             return
         }
 
         widgetScope?.launch {
-            Log.d(
-                TAG,
+            Timber.d(
                 "Saving entity state config data:" + System.lineSeparator() +
                     "entity id: " + entitySelection + System.lineSeparator() +
                     "attribute: " + (attributeSelection ?: "N/A")
@@ -273,7 +271,7 @@ class EntityWidget : BaseWidgetProvider() {
                     )
                     success = true
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unable to send toggle service call", e)
+                    Timber.e(e, "Unable to send toggle service call")
                 }
             }
 

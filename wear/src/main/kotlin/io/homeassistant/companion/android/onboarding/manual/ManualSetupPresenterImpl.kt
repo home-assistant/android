@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.onboarding.manual
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.wear.phone.interactions.authentication.CodeChallenge
 import androidx.wear.phone.interactions.authentication.CodeVerifier
 import androidx.wear.phone.interactions.authentication.OAuthRequest
@@ -24,14 +23,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class ManualSetupPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
     private val serverManager: ServerManager
 ) : ManualSetupPresenter {
-    companion object {
-        private const val TAG = "ManualSetupPresenter"
-    }
 
     private val view = context as ManualSetupView
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -51,7 +48,7 @@ class ManualSetupPresenterImpl @Inject constructor(
                     .setCodeChallenge(CodeChallenge(codeVerifier))
                     .build()
             } catch (e: Exception) {
-                Log.e(TAG, "Unable to build OAuthRequest", e)
+                Timber.e(e, "Unable to build OAuthRequest")
                 view.showError(commonR.string.failed_unsupported)
                 return@launch
             }
@@ -64,7 +61,7 @@ class ManualSetupPresenterImpl @Inject constructor(
                     Executors.newSingleThreadExecutor(),
                     object : RemoteAuthClient.Callback() {
                         override fun onAuthorizationError(request: OAuthRequest, errorCode: Int) {
-                            Log.w(TAG, "Received authorization error for OAuth: $errorCode")
+                            Timber.w("Received authorization error for OAuth: $errorCode")
                             view.showError(
                                 when (errorCode) {
                                     RemoteAuthClient.ERROR_UNSUPPORTED -> commonR.string.failed_unsupported
@@ -109,14 +106,14 @@ class ManualSetupPresenterImpl @Inject constructor(
                 serverId = serverManager.addServer(server)
                 serverManager.authenticationRepository(serverId).registerAuthorizationCode(code)
             } catch (e: Exception) {
-                Log.e(TAG, "Exception during registration", e)
+                Timber.e(e, "Exception during registration")
                 try {
                     if (serverId != null) {
                         serverManager.authenticationRepository(serverId).revokeSession()
                         serverManager.removeServer(serverId)
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Can't revoke session", e)
+                    Timber.e(e, "Can't revoke session")
                 }
                 view.showError(commonR.string.failed_registration)
                 return@launch

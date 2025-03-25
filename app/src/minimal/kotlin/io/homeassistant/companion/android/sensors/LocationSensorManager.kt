@@ -46,7 +46,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             "mdi:crosshairs-gps",
             updateType = SensorManager.BasicSensor.UpdateType.LOCATION
         )
-        internal const val TAG = "LocBroadcastReceiver"
 
         fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {}
         fun setHighAccuracyModeIntervalSetting(context: Context, updateInterval: Int) {}

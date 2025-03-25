@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.util.vehicle
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.ScreenManager
@@ -34,8 +33,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-
-private const val TAG = "GridItems"
+import timber.log.Timber
 
 fun getChangeServerGridItem(
     carContext: CarContext,
@@ -59,7 +57,7 @@ fun getChangeServerGridItem(
                 .build()
         )
         setOnClickListener {
-            Log.i(TAG, "Change server clicked")
+            Timber.i("Change server clicked")
             screenManager.pushForResult(
                 ChangeServerScreen(
                     carContext,
@@ -98,7 +96,7 @@ fun getNavigationGridItem(
                 .build()
         )
         setOnClickListener {
-            Log.i(TAG, "Navigation clicked")
+            Timber.i("Navigation clicked")
             screenManager.push(
                 MapVehicleScreen(
                     carContext,
@@ -176,7 +174,7 @@ fun getDomainList(
                 }
                     .setTitle(friendlyDomain)
                     .setOnClickListener {
-                        Log.i(TAG, "Domain:$domain clicked")
+                        Timber.i("Domain:$domain clicked")
                         screenManager.push(
                             EntityGridVehicleScreen(
                                 carContext,
@@ -227,7 +225,7 @@ fun getDomainsGridItem(
                 .build()
         )
         setOnClickListener {
-            Log.i(TAG, "Categories clicked")
+            Timber.i("Categories clicked")
             screenManager.push(
                 DomainListScreen(
                     carContext,

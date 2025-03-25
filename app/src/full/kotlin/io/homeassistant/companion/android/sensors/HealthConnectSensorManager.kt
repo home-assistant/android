@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
@@ -54,11 +53,10 @@ import java.time.temporal.ChronoUnit
 import kotlin.reflect.KClass
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
+import timber.log.Timber
 
 class HealthConnectSensorManager : SensorManager {
     companion object {
-        private const val TAG = "HealthConnectSM"
-
         fun getPermissionIntent(): Intent? = Intent(HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS)
 
         fun getPermissionResultContract(): ActivityResultContract<Set<String>, Set<String>>? =
@@ -383,7 +381,7 @@ class HealthConnectSensorManager : SensorManager {
                 else -> arrayOf()
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to get required permissions", e)
+            Timber.e(e, "Unable to get required permissions")
             arrayOf()
         }
     }
@@ -967,7 +965,7 @@ class HealthConnectSensorManager : SensorManager {
         return try {
             healthConnectClient.permissionController.getGrantedPermissions().containsAll(requiredPermissions(sensorId).toSet())
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to check permissions", e)
+            Timber.e(e, "Unable to check permissions")
             true // default to true as we still need to check sensor enabled state
         }
     }
@@ -976,7 +974,7 @@ class HealthConnectSensorManager : SensorManager {
         return try {
             HealthConnectClient.getOrCreate(context.applicationContext)
         } catch (e: RuntimeException) {
-            Log.e(TAG, "Unable to create Health Connect client", e)
+            Timber.e(e, "Unable to create Health Connect client")
             null
         }
     }
@@ -984,14 +982,14 @@ class HealthConnectSensorManager : SensorManager {
     private suspend fun <T : Record> HealthConnectClient.readRecordsOrNull(request: ReadRecordsRequest<T>): ReadRecordsResponse<T>? = try {
         readRecords(request)
     } catch (e: Exception) {
-        Log.e(TAG, "Could not read records", e)
+        Timber.e(e, "Could not read records")
         null
     }
 
     private suspend fun HealthConnectClient.aggregateOrNull(request: AggregateRequest): AggregationResult? = try {
         aggregate(request)
     } catch (e: Exception) {
-        Log.e(TAG, "Could not aggregate", e)
+        Timber.e(e, "Could not aggregate")
         null
     }
 

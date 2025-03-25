@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.database.server
 
-import android.util.Log
 import androidx.room.ColumnInfo
 import androidx.room.Ignore
 import androidx.room.TypeConverter
@@ -10,6 +9,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import java.net.URL
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import timber.log.Timber
 
 data class ServerConnectionInfo(
     @ColumnInfo(name = "external_url")
@@ -82,13 +82,13 @@ data class ServerConnectionInfo(
         val cloud = cloudUrl?.toHttpUrlOrNull()?.toUrl()
 
         return if (isInternal ?: isInternal() && (internal != null || force)) {
-            Log.d(this::class.simpleName, "Using internal URL")
+            Timber.d("Using internal URL")
             internal
         } else if (!force && useCloud && cloud != null) {
-            Log.d(this::class.simpleName, "Using cloud / remote UI URL")
+            Timber.d("Using cloud / remote UI URL")
             cloud
         } else {
-            Log.d(this::class.simpleName, "Using external URL")
+            Timber.d("Using external URL")
             external
         }
     }
@@ -106,20 +106,20 @@ data class ServerConnectionInfo(
 
         if (internalEthernet == true) {
             val usesEthernet = wifiHelper.isUsingEthernet()
-            Log.d(this::class.simpleName, "usesEthernet is: $usesEthernet")
+            Timber.d("usesEthernet is: $usesEthernet")
             if (usesEthernet) return true
         }
 
         if (internalVpn == true) {
             val usesVpn = wifiHelper.isUsingVpn()
-            Log.d(this::class.simpleName, "usesVpn is: $usesVpn")
+            Timber.d("usesVpn is: $usesVpn")
             if (usesVpn) return true
         }
 
         return if (internalSsids.isNotEmpty()) {
             val usesInternalSsid = wifiHelper.isUsingSpecificWifi(internalSsids)
             val usesWifi = wifiHelper.isUsingWifi()
-            Log.d(this::class.simpleName, "usesInternalSsid is: $usesInternalSsid, usesWifi is: $usesWifi")
+            Timber.d("usesInternalSsid is: $usesInternalSsid, usesWifi is: $usesWifi")
             usesInternalSsid && usesWifi
         } else {
             false

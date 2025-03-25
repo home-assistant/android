@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.concurrent.futures.await
@@ -29,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityChangedListener {
 
@@ -52,19 +52,19 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
         capabilityClient = try {
             Wearable.getCapabilityClient(this)
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to get capability client", e)
+            Timber.e(e, "Unable to get capability client")
             null
         }
         nodeClient = try {
             Wearable.getNodeClient(this)
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to get node client", e)
+            Timber.e(e, "Unable to get node client")
             null
         }
         remoteActivityHelper = try {
             RemoteActivityHelper(this)
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to get remote activity helper", e)
+            Timber.e(e, "Unable to get remote activity helper")
             null
         }
 
@@ -126,14 +126,14 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
 
             withContext(Dispatchers.Main) {
                 wearNodesWithApp = capabilityInfo?.nodes
-                Log.d(TAG, "Capable Nodes: $wearNodesWithApp")
+                Timber.d("Capable Nodes: $wearNodesWithApp")
                 updateUI()
             }
         } catch (cancellationException: CancellationException) {
             // Request was cancelled normally
             throw cancellationException
         } catch (throwable: Throwable) {
-            Log.d(TAG, "Capability request failed to return any results.")
+            Timber.d("Capability request failed to return any results.")
         }
     }
 
@@ -148,7 +148,7 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
         } catch (cancellationException: CancellationException) {
             // Request was cancelled normally
         } catch (throwable: Throwable) {
-            Log.d(TAG, "Node request failed to return any results.")
+            Timber.d("Node request failed to return any results.")
         }
     }
 
@@ -158,27 +158,27 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
 
         when {
             wearNodesWithApp == null || allConnectedNodes == null -> {
-                Log.d(TAG, "Waiting on Results for both connected nodes and nodes with app")
+                Timber.d("Waiting on Results for both connected nodes and nodes with app")
                 binding.informationTextView.text = getString(commonR.string.message_checking)
                 binding.remoteOpenButton.isInvisible = true
             }
             allConnectedNodes.isEmpty() -> {
-                Log.d(TAG, "No devices")
+                Timber.d("No devices")
                 binding.informationTextView.text = getString(commonR.string.message_no_connected_nodes)
                 binding.remoteOpenButton.isInvisible = true
             }
             wearNodesWithApp.isEmpty() -> {
-                Log.d(TAG, "Missing on all devices")
+                Timber.d("Missing on all devices")
                 binding.informationTextView.text = getString(commonR.string.message_missing_all)
                 binding.remoteOpenButton.isVisible = true
             }
             wearNodesWithApp.size < allConnectedNodes.size -> {
-                Log.d(TAG, "Installed on some devices")
+                Timber.d("Installed on some devices")
                 startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp, getAuthIntentUrl()))
                 finish()
             }
             else -> {
-                Log.d(TAG, "Installed on all devices")
+                Timber.d("Installed on all devices")
                 startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp, getAuthIntentUrl()))
                 finish()
             }
@@ -192,7 +192,7 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
         // Determine the list of nodes (wear devices) that don't have the app installed yet.
         val nodesWithoutApp = allConnectedNodes - wearNodesWithApp
 
-        Log.d(TAG, "Number of nodes without app: " + nodesWithoutApp.size)
+        Timber.d("Number of nodes without app: " + nodesWithoutApp.size)
         val intent = Intent(Intent.ACTION_VIEW)
             .addCategory(Intent.CATEGORY_BROWSABLE)
             .setData(Uri.parse(PLAY_STORE_APP_URI))
@@ -238,8 +238,6 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
     }
 
     companion object {
-        private const val TAG = "SettingsWearAct"
-
         // Name of capability listed in Wear app's wear.xml.
         // IMPORTANT NOTE: This should be named differently than your Phone app's capability.
         private const val CAPABILITY_WEAR_APP = "verify_wear_app"

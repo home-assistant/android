@@ -6,7 +6,6 @@ import android.app.StatusBarManager
 import android.content.ComponentName
 import android.graphics.drawable.Icon
 import android.os.Build
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -79,6 +78,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 @HiltViewModel
 class ManageTilesViewModel @Inject constructor(
@@ -89,8 +89,6 @@ class ManageTilesViewModel @Inject constructor(
 ) : AndroidViewModel(application) {
 
     companion object {
-        private const val TAG = "ManageTilesViewModel"
-
         @SuppressLint("InlinedApi", "NewApi")
         val idToTileService = mapOf(
             Tile1Service.TILE_ID to Tile1Service::class.java,
@@ -187,7 +185,7 @@ class ManageTilesViewModel @Inject constructor(
                         serverManager.integrationRepository(it.id).getEntities().orEmpty()
                             .filter { it.domain in ManageTilesFragment.validDomains }
                     } catch (e: Exception) {
-                        Log.e(TAG, "Couldn't load entities for server", e)
+                        Timber.e(e, "Couldn't load entities for server")
                         emptyList()
                     }
                 }
@@ -294,7 +292,7 @@ class ManageTilesViewModel @Inject constructor(
                     Executors.newSingleThreadExecutor()
                 ) { result ->
                     viewModelScope.launch {
-                        Log.d(TAG, "Adding quick settings tile, system returned: $result")
+                        Timber.d("Adding quick settings tile, system returned: $result")
                         if (result == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ||
                             result == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED
                         ) {

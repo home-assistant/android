@@ -3,14 +3,12 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import timber.log.Timber
 
 class TheaterModeSensorManager : SensorManager {
     companion object {
-        private const val TAG = "TheaterSensor"
-
         val theaterMode = SensorManager.BasicSensor(
             "theater_mode",
             "binary_sensor",
@@ -48,7 +46,7 @@ class TheaterModeSensorManager : SensorManager {
         val state = try {
             Settings.Global.getInt(context.contentResolver, if (Build.MANUFACTURER == "samsung") "setting_theater_mode_on" else "theater_mode_on") == 1
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to update theater mode sensor", e)
+            Timber.e(e, "Unable to update theater mode sensor")
             false
         }
 

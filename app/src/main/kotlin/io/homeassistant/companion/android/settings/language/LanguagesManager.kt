@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.settings.language
 
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import io.homeassistant.companion.android.common.R as commonR
@@ -10,13 +9,12 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import org.xmlpull.v1.XmlPullParser
+import timber.log.Timber
 
 class LanguagesManager @Inject constructor(
     private var prefs: PrefsRepository
 ) {
     companion object {
-        private const val TAG = "LanguagesManager"
-
         const val DEF_LOCALE = "default"
         private const val SYSTEM_MANAGES_LOCALE = "system_managed"
     }
@@ -103,7 +101,7 @@ class LanguagesManager @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Exception while parsing locale config XML", e)
+                Timber.e(e, "Exception while parsing locale config XML")
             }
 
             languagesList

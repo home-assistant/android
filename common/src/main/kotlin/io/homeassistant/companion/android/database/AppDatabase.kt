@@ -11,7 +11,6 @@ import android.database.sqlite.SQLiteDatabase
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -77,6 +76,7 @@ import io.homeassistant.companion.android.database.widget.WidgetBackgroundTypeCo
 import io.homeassistant.companion.android.database.widget.WidgetTapActionConverter
 import java.util.UUID
 import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 @Database(
     entities = [
@@ -277,7 +277,7 @@ abstract class AppDatabase : RoomDatabase() {
                     }
                     widgets.close()
                 } catch (exception: Exception) {
-                    Log.e(TAG, "Failed to migrate database version 5 to version 6", exception)
+                    Timber.e(exception, "Failed to migrate database version 5 to version 6")
                 }
             }
         }
@@ -307,7 +307,7 @@ abstract class AppDatabase : RoomDatabase() {
                     }
                 } catch (e: Exception) {
                     migrationFailed = true
-                    Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
+                    Timber.e(e, "Unable to migrate, proceeding with recreating the table")
                     null
                 }
                 db.execSQL("DROP TABLE IF EXISTS `sensors`")
@@ -361,7 +361,7 @@ abstract class AppDatabase : RoomDatabase() {
                     }
                 } catch (e: Exception) {
                     migrationFailed = true
-                    Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
+                    Timber.e(e, "Unable to migrate, proceeding with recreating the table")
                     null
                 }
                 db.execSQL("DROP TABLE IF EXISTS `sensors`")
@@ -487,7 +487,7 @@ abstract class AppDatabase : RoomDatabase() {
                     }
                 } catch (e: Exception) {
                     migrationFailed = true
-                    Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
+                    Timber.e(e, "Unable to migrate, proceeding with recreating the table")
                 }
                 db.execSQL("DROP TABLE IF EXISTS `sensor_settings`")
                 db.execSQL("CREATE TABLE IF NOT EXISTS `sensor_settings` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, `value_type` TEXT NOT NULL DEFAULT 'string', `entries` TEXT NOT NULL, `enabled` INTEGER NOT NULL DEFAULT '1', PRIMARY KEY(`sensor_id`, `name`))")
@@ -851,7 +851,7 @@ abstract class AppDatabase : RoomDatabase() {
                     }
                 } catch (e: Exception) {
                     migrationFailed = true
-                    Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
+                    Timber.e(e, "Unable to migrate, proceeding with recreating the table")
                     null
                 }
                 db.execSQL("DROP TABLE IF EXISTS `button_widgets`")
@@ -859,7 +859,7 @@ abstract class AppDatabase : RoomDatabase() {
                 widgets?.forEach {
                     db.insert("button_widgets", OnConflictStrategy.REPLACE, it)
                 }
-                Log.d(TAG, "Migrated ${widgets?.size ?: "no"} button widgets to MDI icon names")
+                Timber.d("Migrated ${widgets?.size ?: "no"} button widgets to MDI icon names")
 
                 val tiles = try {
                     db.query("SELECT * FROM `qs_tiles`").use { cursor ->
@@ -884,7 +884,7 @@ abstract class AppDatabase : RoomDatabase() {
                     }
                 } catch (e: Exception) {
                     migrationFailed = true
-                    Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
+                    Timber.e(e, "Unable to migrate, proceeding with recreating the table")
                     null
                 }
                 db.execSQL("DROP TABLE IF EXISTS `qs_tiles`")
@@ -892,7 +892,7 @@ abstract class AppDatabase : RoomDatabase() {
                 tiles?.forEach {
                     db.insert("qs_tiles", OnConflictStrategy.REPLACE, it)
                 }
-                Log.d(TAG, "Migrated ${tiles?.size ?: "no"} QS tiles to MDI icon names")
+                Timber.d("Migrated ${tiles?.size ?: "no"} QS tiles to MDI icon names")
 
                 if (migrationFailed) {
                     notifyMigrationFailed()
@@ -930,9 +930,9 @@ abstract class AppDatabase : RoomDatabase() {
             runBlocking {
                 try {
                     integrationRepository.fireEvent("mobile_app.migration_failed", mapOf())
-                    Log.d(TAG, "Event sent to Home Assistant")
+                    Timber.d("Event sent to Home Assistant")
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unable to send event to Home Assistant", e)
+                    Timber.e(e, "Unable to send event to Home Assistant")
                     Handler(Looper.getMainLooper()).post {
                         Toast.makeText(
                             appContext,

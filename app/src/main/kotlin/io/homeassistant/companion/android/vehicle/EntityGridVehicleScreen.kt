@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.vehicle
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
@@ -47,6 +46,7 @@ import io.homeassistant.companion.android.util.vehicle.getNavigationGridItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.O)
 class EntityGridVehicleScreen(
@@ -62,10 +62,6 @@ class EntityGridVehicleScreen(
     private val allEntities: Flow<Map<String, Entity<*>>>,
     private val onChangeServer: (Int) -> Unit
 ) : Screen(carContext) {
-
-    companion object {
-        private const val TAG = "EntityGridVehicleScreen"
-    }
 
     private var loading = true
     var entities: List<Entity<*>> = listOf()
@@ -161,7 +157,7 @@ class EntityGridVehicleScreen(
         val extraGrid = if (shouldSwitchServers) 3 else 2
         entities.forEachIndexed { index, entity ->
             if (index >= (gridLimit - if (isFavorites) extraGrid else 0)) {
-                Log.i(TAG, "Grid limit ($gridLimit) reached, not adding more entities (${entities.size}) for $title ")
+                Timber.i("Grid limit ($gridLimit) reached, not adding more entities (${entities.size}) for $title ")
                 return@forEachIndexed
             }
             val icon = entity.getIcon(carContext)
@@ -177,7 +173,7 @@ class EntityGridVehicleScreen(
                 if (entity.domain !in NOT_ACTIONABLE_DOMAINS || canNavigate(entity) || alarmHasNoCode(entity)) {
                     gridItem
                         .setOnClickListener {
-                            Log.i(TAG, "${entity.entityId} clicked")
+                            Timber.i("${entity.entityId} clicked")
                             when (entity.domain) {
                                 in MAP_DOMAINS -> {
                                     val attrs = entity.attributes as? Map<*, *>

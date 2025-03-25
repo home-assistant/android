@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.settings.shortcuts
 
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,6 +20,7 @@ import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.shortcuts.views.ManageShortcutsView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.icondialog.IconDialog
+import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @AndroidEntryPoint
@@ -29,7 +29,6 @@ class ManageShortcutsSettingsFragment : Fragment() {
     companion object {
         const val MAX_SHORTCUTS = 5
         const val SHORTCUT_PREFIX = "shortcut"
-        private const val TAG = "ManageShortcutFrag"
     }
 
     val viewModel: ManageShortcutsViewModel by viewModels()
@@ -72,7 +71,7 @@ class ManageShortcutsSettingsFragment : Fragment() {
     }
 
     private fun onIconDialogIconsSelected(tag: String, selectedIcon: IIcon) {
-        Log.d(TAG, "Selected icon: $selectedIcon")
+        Timber.d("Selected icon: $selectedIcon")
 
         val index = when (tag) {
             "shortcut_1" -> 0

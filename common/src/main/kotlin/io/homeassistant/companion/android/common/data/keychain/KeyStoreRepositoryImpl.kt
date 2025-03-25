@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.common.data.keychain
 
 import android.content.Context
-import android.util.Log
 import java.security.KeyStore
 import java.security.KeyStore.PrivateKeyEntry
 import java.security.PrivateKey
@@ -9,10 +8,10 @@ import java.security.cert.X509Certificate
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 class KeyStoreRepositoryImpl @Inject constructor() : KeyChainRepository {
     companion object {
-        private const val TAG = "KeyStoreRepository"
         const val ALIAS = "TLSClientCertificate"
     }
 
@@ -67,7 +66,7 @@ class KeyStoreRepositoryImpl @Inject constructor() : KeyChainRepository {
             val entry = try {
                 aks.getEntry(alias, null) as PrivateKeyEntry
             } catch (e: Exception) {
-                Log.e(TAG, "Exception getting KeyStore.Entry", e)
+                Timber.e(e, "Exception getting KeyStore.Entry")
                 null
             }
             if (entry != null) {
@@ -76,7 +75,7 @@ class KeyStoreRepositoryImpl @Inject constructor() : KeyChainRepository {
                         @Suppress("UNCHECKED_CAST")
                         entry.certificateChain as Array<X509Certificate>
                     } catch (e: Exception) {
-                        Log.e(TAG, "Exception getting certificate chain", e)
+                        Timber.e(e, "Exception getting certificate chain")
                         null
                     }
                 }
@@ -84,7 +83,7 @@ class KeyStoreRepositoryImpl @Inject constructor() : KeyChainRepository {
                     key = try {
                         entry.privateKey
                     } catch (e: Exception) {
-                        Log.e(TAG, "Exception getting private key", e)
+                        Timber.e(e, "Exception getting private key")
                         null
                     }
                 }
@@ -100,7 +99,7 @@ class KeyStoreRepositoryImpl @Inject constructor() : KeyChainRepository {
                 setEntry(alias, PrivateKeyEntry(key, chain), null)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Exception storing KeyStore.Entry", e)
+            Timber.e(e, "Exception storing KeyStore.Entry")
         }
     }
 }

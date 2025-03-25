@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.assist
 
 import android.app.Application
 import android.content.Intent
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -20,6 +19,7 @@ import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import javax.inject.Inject
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @HiltViewModel
 class AssistViewModel @Inject constructor(
@@ -28,10 +28,6 @@ class AssistViewModel @Inject constructor(
     audioUrlPlayer: AudioUrlPlayer,
     application: Application
 ) : AssistViewModelBase(serverManager, audioRecorder, audioUrlPlayer, application) {
-
-    companion object {
-        const val TAG = "AssistViewModel"
-    }
 
     private var filteredServerId: Int? = null
     private val allPipelines = mutableMapOf<Int, List<AssistPipelineResponse>>()
@@ -212,7 +208,7 @@ class AssistViewModel @Inject constructor(
             if (!id.isNullOrBlank()) {
                 setPipeline(null) // Try falling back to default pipeline
             } else {
-                Log.w(TAG, "Server $selectedServerId does not have any pipelines")
+                Timber.w("Server $selectedServerId does not have any pipelines")
                 inputMode = AssistInputMode.BLOCKED
                 _conversation.clear()
                 _conversation.add(
@@ -263,7 +259,7 @@ class AssistViewModel @Inject constructor(
         val recording = try {
             recorderProactive || audioRecorder.startRecording()
         } catch (e: Exception) {
-            Log.e(TAG, "Exception while starting recording", e)
+            Timber.e(e, "Exception while starting recording")
             false
         }
 

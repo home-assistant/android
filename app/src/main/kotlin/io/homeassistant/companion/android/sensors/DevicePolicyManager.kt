@@ -7,8 +7,6 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class DevicePolicyManager : SensorManager {
     companion object {
-        private const val TAG = "DevicePolicyMgr"
-
         val isWorkProfile = SensorManager.BasicSensor(
             "is_work_profile",
             "binary_sensor",

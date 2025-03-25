@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.complications
 
 import android.app.Application
-import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -26,6 +25,7 @@ import io.homeassistant.companion.android.database.wear.getAllFlow
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @HiltViewModel
 class ComplicationConfigViewModel @Inject constructor(
@@ -34,9 +34,6 @@ class ComplicationConfigViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val entityStateComplicationsDao: EntityStateComplicationsDao
 ) : AndroidViewModel(application) {
-    companion object {
-        const val TAG = "ComplicationConfigViewModel"
-    }
 
     enum class LoadingState {
         LOADING,
@@ -110,7 +107,7 @@ class ComplicationConfigViewModel @Inject constructor(
                     LoadingState.ERROR
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Exception while loading entities", e)
+                Timber.e(e, "Exception while loading entities")
                 loadingState = LoadingState.ERROR
             }
         }

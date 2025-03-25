@@ -9,7 +9,6 @@ import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
@@ -28,10 +27,10 @@ import okhttp3.Response
 import okio.IOException
 import org.json.JSONException
 import org.json.JSONObject
+import timber.log.Timber
 
 class NetworkSensorManager : SensorManager {
     companion object {
-        private const val TAG = "NetworkSM"
         val hotspotState = SensorManager.BasicSensor(
             "hotspot_state",
             "binary_sensor",
@@ -546,7 +545,7 @@ class NetworkSensorManager : SensorManager {
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                Log.e(TAG, "Error getting response from external service", e)
+                Timber.e(e, "Error getting response from external service")
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -555,7 +554,7 @@ class NetworkSensorManager : SensorManager {
                     val jsonObject = JSONObject(response.body.string())
                     ip = jsonObject.getString("ip")
                 } catch (e: JSONException) {
-                    Log.e(TAG, "Unable to parse ip address from response", e)
+                    Timber.e(e, "Unable to parse ip address from response")
                 }
 
                 onSensorUpdated(

@@ -17,9 +17,6 @@ class SensorUpdateReceiver : SensorReceiverBase() {
         }
     }
 
-    override val tag: String
-        get() = "SensorReceiver"
-
     override val currentAppVersion: String
         get() = BuildConfig.VERSION_NAME
 

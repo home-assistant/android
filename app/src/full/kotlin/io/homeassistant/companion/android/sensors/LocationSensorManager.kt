@@ -10,7 +10,6 @@ import android.location.Location
 import android.os.Build
 import android.os.Looper
 import android.os.PowerManager
-import android.util.Log
 import androidx.core.content.getSystemService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Geofence
@@ -56,6 +55,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 @AndroidEntryPoint
 class LocationSensorManager : BroadcastReceiver(), SensorManager {
@@ -144,7 +144,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT
         )
-        internal const val TAG = "LocBroadcastReceiver"
 
         private var geofencingClient: GeofencingClient? = null
         private var fusedLocationProviderClient: FusedLocationProviderClient? = null
@@ -224,9 +223,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                         DeviceCommandData.TURN_ON, DeviceCommandData.TURN_OFF, MessagingManager.FORCE_ON -> {
                             val turnOn = command != DeviceCommandData.TURN_OFF
                             if (turnOn) {
-                                Log.d(TAG, "Forcing of high accuracy mode enabled")
+                                Timber.d("Forcing of high accuracy mode enabled")
                             } else {
-                                Log.d(TAG, "Forcing of high accuracy mode disabled")
+                                Timber.d("Forcing of high accuracy mode disabled")
                             }
                             forceHighAccuracyModeOn = turnOn
                             forceHighAccuracyModeOff = false
@@ -235,7 +234,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                         }
 
                         MessagingManager.FORCE_OFF -> {
-                            Log.d(TAG, "High accuracy mode forced off")
+                            Timber.d("High accuracy mode forced off")
                             forceHighAccuracyModeOn = false
                             forceHighAccuracyModeOff = true
                             setupBackgroundLocation()
@@ -249,14 +248,14 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     }
                 }
 
-                else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
+                else -> Timber.w("Unknown intent action: ${intent.action}!")
             }
         }
     }
 
     private suspend fun setupLocationTracking() {
         if (!checkPermission(latestContext, backgroundLocation.id)) {
-            Log.w(TAG, "Not starting location reporting because of permissions.")
+            Timber.w("Not starting location reporting because of permissions.")
             return
         }
 
@@ -284,7 +283,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 requestZoneUpdates()
             }
             if (zoneEnabled && isZoneLocationSetup && geofenceRegistered != zoneServers) {
-                Log.d(TAG, "Zone enabled servers changed. Reconfigure zones.")
+                Timber.d("Zone enabled servers changed. Reconfigure zones.")
                 removeGeofenceUpdateRequests()
                 requestZoneUpdates()
             }
@@ -294,7 +293,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 (!highAccuracyModeEnabled && isBackgroundLocationSetup) &&
                 (lastLocationReceived.all { (it.value + (DEFAULT_LOCATION_MAX_WAIT_TIME * 2L)) < now })
             ) {
-                Log.d(TAG, "Background location updates appear to have stopped, restarting location updates")
+                Timber.d("Background location updates appear to have stopped, restarting location updates")
                 isBackgroundLocationSetup = false
                 fusedLocationProviderClient?.flushLocations()
                 removeBackgroundUpdateRequests()
@@ -302,14 +301,14 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 highAccuracyModeEnabled &&
                 (lastLocationReceived.all { (it.value + (getHighAccuracyModeUpdateInterval().toLong() * 2000L)) < now })
             ) {
-                Log.d(TAG, "High accuracy mode appears to have stopped, restarting high accuracy mode")
+                Timber.d("High accuracy mode appears to have stopped, restarting high accuracy mode")
                 isBackgroundLocationSetup = false
                 stopHighAccuracyService()
             }
 
             setupBackgroundLocation(backgroundEnabled, zoneEnabled)
         } catch (e: Exception) {
-            Log.e(TAG, "Issue setting up location tracking", e)
+            Timber.e(e, "Issue setting up location tracking")
         }
     }
 
@@ -337,7 +336,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     updateIntervalHighAccuracySeconds != lastHighAccuracyUpdateInterval
                 ) {
                     if (highAccuracyModeEnabled) {
-                        Log.d(TAG, "High accuracy mode parameters changed. Enable high accuracy mode.")
+                        Timber.d("High accuracy mode parameters changed. Enable high accuracy mode.")
                         if (updateIntervalHighAccuracySeconds != lastHighAccuracyUpdateInterval) {
                             restartHighAccuracyService(updateIntervalHighAccuracySeconds)
                         } else {
@@ -345,7 +344,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                             startHighAccuracyService(updateIntervalHighAccuracySeconds)
                         }
                     } else {
-                        Log.d(TAG, "High accuracy mode parameters changed. Disable high accuracy mode.")
+                        Timber.d("High accuracy mode parameters changed. Disable high accuracy mode.")
                         stopHighAccuracyService()
                         requestLocationUpdates()
                     }
@@ -354,7 +353,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 if (highAccuracyTriggerRange != lastHighAccuracyTriggerRange ||
                     highAccuracyZones != lastHighAccuracyZones
                 ) {
-                    Log.d(TAG, "High accuracy mode geo parameters changed. Reconfigure zones.")
+                    Timber.d("High accuracy mode geo parameters changed. Reconfigure zones.")
                     removeGeofenceUpdateRequests()
                     requestZoneUpdates()
                 }
@@ -448,21 +447,21 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         // As soon as the high accuracy mode should be enabled, disable the force_on of high accuracy mode!
         if (shouldEnableHighAccuracyMode && forceHighAccuracyModeOn) {
-            Log.d(TAG, "Forcing of high accuracy mode disabled, because high accuracy mode had to be enabled anyway.")
+            Timber.d("Forcing of high accuracy mode disabled, because high accuracy mode had to be enabled anyway.")
             forceHighAccuracyModeOn = false
         }
 
         // As soon as the high accuracy mode shouldn't be enabled, disable the force_off of high accuracy mode!
         if (!shouldEnableHighAccuracyMode && forceHighAccuracyModeOff) {
-            Log.d(TAG, "Forcing off of high accuracy mode disabled, because high accuracy mode had to be disabled anyway.")
+            Timber.d("Forcing off of high accuracy mode disabled, because high accuracy mode had to be disabled anyway.")
             forceHighAccuracyModeOff = false
         }
 
         return if (forceHighAccuracyModeOn) {
-            Log.d(TAG, "High accuracy mode enabled, because command_high_accuracy_mode was used to turn it on")
+            Timber.d("High accuracy mode enabled, because command_high_accuracy_mode was used to turn it on")
             true
         } else if (forceHighAccuracyModeOff) {
-            Log.d(TAG, "High accuracy mode disabled, because command_high_accuracy_mode was used to force it off")
+            Timber.d("High accuracy mode disabled, because command_high_accuracy_mode was used to force it off")
             false
         } else {
             shouldEnableHighAccuracyMode
@@ -530,9 +529,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
             if (!forceHighAccuracyModeOn && !forceHighAccuracyModeOff) {
                 if (!btDevConnected) {
-                    Log.d(TAG, "High accuracy mode disabled, because defined ($highAccuracyModeBTDevices) bluetooth device(s) not connected (Connected devices: $bluetoothDevices)")
+                    Timber.d("High accuracy mode disabled, because defined ($highAccuracyModeBTDevices) bluetooth device(s) not connected (Connected devices: $bluetoothDevices)")
                 } else {
-                    Log.d(TAG, "High accuracy mode enabled, because defined ($highAccuracyModeBTDevices) bluetooth device(s) connected (Connected devices: $bluetoothDevices)")
+                    Timber.d("High accuracy mode enabled, because defined ($highAccuracyModeBTDevices) bluetooth device(s) connected (Connected devices: $bluetoothDevices)")
                 }
             }
         }
@@ -551,9 +550,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
             if (!forceHighAccuracyModeOn && !forceHighAccuracyModeOff) {
                 if (!inZone) {
-                    Log.d(TAG, "High accuracy mode disabled, because not in zone $highAccuracyExpZones")
+                    Timber.d("High accuracy mode disabled, because not in zone $highAccuracyExpZones")
                 } else {
-                    Log.d(TAG, "High accuracy mode enabled, because in zone $highAccuracyExpZones")
+                    Timber.d("High accuracy mode enabled, because in zone $highAccuracyExpZones")
                 }
             }
         }
@@ -612,45 +611,45 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private fun removeAllLocationUpdateRequests() {
-        Log.d(TAG, "Removing all location requests.")
+        Timber.d("Removing all location requests.")
         removeBackgroundUpdateRequests()
         removeGeofenceUpdateRequests()
     }
 
     private fun removeBackgroundUpdateRequests() {
         if (fusedLocationProviderClient != null) {
-            Log.d(TAG, "Removing background location requests.")
+            Timber.d("Removing background location requests.")
             val backgroundIntent = getLocationUpdateIntent(false)
             fusedLocationProviderClient?.removeLocationUpdates(backgroundIntent)
         } else {
-            Log.d(TAG, "Cannot remove background location requests. Location provider is not set.")
+            Timber.d("Cannot remove background location requests. Location provider is not set.")
         }
     }
 
     private fun removeGeofenceUpdateRequests() {
         if (geofencingClient != null) {
-            Log.d(TAG, "Removing geofence location requests.")
+            Timber.d("Removing geofence location requests.")
             val zoneIntent = getLocationUpdateIntent(true)
             geofencingClient?.removeGeofences(zoneIntent)
             geofenceRegistered.clear()
             lastEnteredGeoZones.clear()
             lastExitedGeoZones.clear()
         } else {
-            Log.d(TAG, "Cannot remove geofence location requests. Geofence provider is not set.")
+            Timber.d("Cannot remove geofence location requests. Geofence provider is not set.")
         }
     }
 
     private suspend fun requestLocationUpdates() {
         if (!checkPermission(latestContext, backgroundLocation.id)) {
-            Log.w(TAG, "Not registering for location updates because of permissions.")
+            Timber.w("Not registering for location updates because of permissions.")
             return
         }
-        Log.d(TAG, "Registering for location updates.")
+        Timber.d("Registering for location updates.")
 
         fusedLocationProviderClient = try {
             LocationServices.getFusedLocationProviderClient(latestContext)
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to get fused location provider client", e)
+            Timber.e(e, "Unable to get fused location provider client")
             null
         }
 
@@ -664,16 +663,16 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     private suspend fun requestZoneUpdates() {
         if (!checkPermission(latestContext, zoneLocation.id)) {
-            Log.w(TAG, "Not registering for zone based updates because of permissions.")
+            Timber.w("Not registering for zone based updates because of permissions.")
             return
         }
 
         if (geofenceRegistered == getEnabledServers(latestContext, zoneLocation)) {
-            Log.w(TAG, "Not registering for zones as we already have / haven't")
+            Timber.w("Not registering for zones as we already have / haven't")
             return
         }
 
-        Log.d(TAG, "Registering for zone based location updates")
+        Timber.d("Registering for zone based location updates")
 
         try {
             geofencingClient = LocationServices.getGeofencingClient(latestContext)
@@ -685,15 +684,15 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     intent
                 )
             } else {
-                Log.w(TAG, "No zones, skipping zone based location updates")
+                Timber.w("No zones, skipping zone based location updates")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Issue requesting zone updates.", e)
+            Timber.e(e, "Issue requesting zone updates.")
         }
     }
 
     private suspend fun handleLocationUpdate(intent: Intent) {
-        Log.d(TAG, "Received location update.")
+        Timber.d("Received location update.")
         val serverIds = getEnabledServers(latestContext, backgroundLocation)
         serverIds.forEach {
             lastLocationReceived[it] = System.currentTimeMillis()
@@ -712,7 +711,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     LocationUpdateTrigger.BACKGROUND_LOCATION
                 }
             if (location.accuracy > minAccuracy) {
-                Log.w(TAG, "Location accuracy didn't meet requirements, disregarding: $location")
+                Timber.w("Location accuracy didn't meet requirements, disregarding: $location")
                 logLocationUpdate(location, null, null, trigger, LocationHistoryItemResult.SKIPPED_ACCURACY)
             } else {
                 HighAccuracyLocationService.updateNotificationAddress(latestContext, location)
@@ -733,21 +732,21 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private suspend fun handleGeoUpdate(intent: Intent) {
-        Log.d(TAG, "Received geofence update.")
+        Timber.d("Received geofence update.")
         if (!isEnabled(latestContext, zoneLocation)) {
             isZoneLocationSetup = false
-            Log.w(TAG, "Unregistering geofences as zone tracking is disabled and intent was received")
+            Timber.w("Unregistering geofences as zone tracking is disabled and intent was received")
             removeGeofenceUpdateRequests()
             return
         }
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
         if (geofencingEvent?.hasError() == true) {
-            Log.e(TAG, "Error getting geofence broadcast status code: ${geofencingEvent.errorCode}")
+            Timber.e("Error getting geofence broadcast status code: ${geofencingEvent.errorCode}")
             return
         }
 
         if (geofencingEvent?.triggeringLocation == null) {
-            Log.d(TAG, "Geofence event is null")
+            Timber.d("Geofence event is null")
             return
         }
 
@@ -791,9 +790,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                         val enabled = isEnabled(latestContext, zoneLocation, serverId)
                         if (!enabled) return@launch
                         serverManager(latestContext).integrationRepository(serverId).fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>)
-                        Log.d(TAG, "Event sent to Home Assistant")
+                        Timber.d("Event sent to Home Assistant")
                     } catch (e: Exception) {
-                        Log.e(TAG, "Unable to send event to Home Assistant", e)
+                        Timber.e(e, "Unable to send event to Home Assistant")
                     }
                 }
             }
@@ -813,7 +812,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             else -> null
         }
         if (geofencingEvent.triggeringLocation!!.accuracy > minAccuracy) {
-            Log.w(TAG, "Geofence location accuracy didn't meet requirements, requesting new location.")
+            Timber.w("Geofence location accuracy didn't meet requirements, requesting new location.")
             logLocationUpdate(geofencingEvent.triggeringLocation, null, null, trigger, LocationHistoryItemResult.SKIPPED_ACCURACY)
             requestSingleAccurateLocation()
         } else {
@@ -826,8 +825,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private suspend fun sendLocationUpdate(location: Location, serverId: Int, trigger: LocationUpdateTrigger?) {
-        Log.d(
-            TAG,
+        Timber.d(
             "Last Location: " +
                 "\nCoords:(${location.latitude}, ${location.longitude})" +
                 "\nAccuracy: ${location.accuracy}" +
@@ -870,16 +868,15 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         val now = System.currentTimeMillis()
 
-        Log.d(TAG, "Begin evaluating if location update should be skipped")
+        Timber.d("Begin evaluating if location update should be skipped")
         if (now + 5000 < location.time && !highAccuracyModeEnabled) {
-            Log.d(TAG, "Skipping location update that came from the future. ${now + 5000} should always be greater than ${location.time}")
+            Timber.d("Skipping location update that came from the future. ${now + 5000} should always be greater than ${location.time}")
             logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SKIPPED_FUTURE)
             return
         }
 
         if (location.time < (lastLocationSend[serverId] ?: 0)) {
-            Log.d(
-                TAG,
+            Timber.d(
                 "Skipping old location update since time is before the last one we sent, received: ${location.time} last sent: $lastLocationSend"
             )
             logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SKIPPED_NOT_LATEST)
@@ -887,20 +884,18 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
 
         if (now - location.time < 300000) {
-            Log.d(
-                TAG,
+            Timber.d(
                 "Received location that is ${now - location.time} milliseconds old, ${location.time} compared to $now with source ${location.provider}"
             )
             if (lastUpdateLocation[serverId] == updateLocationString) {
                 if (now < (lastLocationSend[serverId] ?: 0) + 900000) {
-                    Log.d(TAG, "Duplicate location received, not sending to HA")
+                    Timber.d("Duplicate location received, not sending to HA")
                     logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SKIPPED_DUPLICATE)
                     return
                 }
             } else {
                 if (now < (lastLocationSend[serverId] ?: 0) + 5000 && trigger?.isGeofence != true && !highAccuracyModeEnabled) {
-                    Log.d(
-                        TAG,
+                    Timber.d(
                         "New location update not possible within 5 seconds, not sending to HA"
                     )
                     logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SKIPPED_DEBOUNCE)
@@ -908,7 +903,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 }
             }
         } else {
-            Log.d(TAG, "Skipping location update due to old timestamp ${location.time} compared to $now")
+            Timber.d("Skipping location update due to old timestamp ${location.time} compared to $now")
             logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SKIPPED_OLD)
             return
         }
@@ -924,7 +919,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         ioScope.launch {
             try {
                 serverManager(latestContext).integrationRepository(serverId).updateLocation(updateLocation)
-                Log.d(TAG, "Location update sent successfully for $serverId as $updateLocationAs")
+                Timber.d("Location update sent successfully for $serverId as $updateLocationAs")
                 lastLocationSend[serverId] = now
                 lastUpdateLocation[serverId] = updateLocationString
                 logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SENT)
@@ -940,7 +935,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     latestContext.sendBroadcast(intent)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Could not update location for $serverId.", e)
+                Timber.e(e, "Could not update location for $serverId.")
                 logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.FAILED_SEND)
             }
         }
@@ -971,7 +966,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 zones[serverId] = serverManager(latestContext).integrationRepository(serverId).getZones()
                 zonesLastReceived[serverId] = System.currentTimeMillis()
             } catch (e: Exception) {
-                Log.e(TAG, "Error receiving zones from Home Assistant", e)
+                Timber.e(e, "Error receiving zones from Home Assistant")
                 if (forceRefresh) zones[serverId] = emptyArray()
             }
         }
@@ -1078,11 +1073,11 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     private suspend fun requestSingleAccurateLocation() {
         if (!checkPermission(latestContext, singleAccurateLocation.id)) {
-            Log.w(TAG, "Not getting single accurate location because of permissions.")
+            Timber.w("Not getting single accurate location because of permissions.")
             return
         }
         if (!isEnabled(latestContext, singleAccurateLocation)) {
-            Log.w(TAG, "Requested single accurate location but it is not enabled.")
+            Timber.w("Requested single accurate location but it is not enabled.")
             return
         }
 
@@ -1103,7 +1098,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         // Only update accurate location at most once a minute
         if (now < latestAccurateLocation + minTimeBetweenUpdates) {
-            Log.d(TAG, "Not requesting accurate location, last accurate location was too recent")
+            Timber.d("Not requesting accurate location, last accurate location was too recent")
             return
         }
         sensorDao.add(Attribute(singleAccurateLocation.id, "lastAccurateLocationRequest", now.toString(), "string"))
@@ -1130,19 +1125,18 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                         var numberCalls = 0
                         override fun onLocationResult(locationResult: LocationResult) {
                             numberCalls++
-                            Log.d(
-                                TAG,
+                            Timber.d(
+
                                 "Got single accurate location update: ${locationResult.lastLocation}"
                             )
                             if (locationResult.equals(null)) {
-                                Log.w(TAG, "No location provided.")
+                                Timber.w("No location provided.")
                                 return
                             }
 
                             when {
                                 locationResult.lastLocation!!.accuracy <= minAccuracy -> {
-                                    Log.d(
-                                        TAG,
+                                    Timber.d(
                                         "Location accurate enough, all done with high accuracy."
                                     )
                                     runBlocking {
@@ -1163,8 +1157,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                                 }
 
                                 numberCalls >= maxRetries -> {
-                                    Log.d(
-                                        TAG,
+                                    Timber.d(
                                         "No location was accurate enough, sending our last location anyway"
                                     )
                                     if (locationResult.lastLocation!!.accuracy <= minAccuracy * 2) {
@@ -1185,8 +1178,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                                 }
 
                                 else -> {
-                                    Log.w(
-                                        TAG,
+                                    Timber.w(
                                         "Location not accurate enough on retry $numberCalls of $maxRetries"
                                     )
                                 }
@@ -1196,7 +1188,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     Looper.getMainLooper()
                 )
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to get location data for single accurate sensor", e)
+            Timber.e(e, "Failed to get location data for single accurate sensor")
         }
     }
 

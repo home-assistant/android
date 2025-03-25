@@ -13,10 +13,6 @@ abstract class LaunchPresenterBase(
     internal val serverManager: ServerManager
 ) : LaunchPresenter {
 
-    companion object {
-        const val TAG = "LaunchPresenter"
-    }
-
     internal val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     internal val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 

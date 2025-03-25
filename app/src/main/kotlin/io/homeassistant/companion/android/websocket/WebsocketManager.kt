@@ -8,7 +8,6 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.PowerManager
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import androidx.work.CoroutineWorker
@@ -43,6 +42,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 class WebsocketManager(
     appContext: Context,
@@ -107,7 +107,7 @@ class WebsocketManager(
         }
 
         // Start listening for notifications
-        Log.d(TAG, "Starting to listen to Websocket")
+        Timber.d("Starting to listen to Websocket")
         val jobs = mutableMapOf<Int, Job>()
         manageServerJobs(jobs, this)
 
@@ -119,7 +119,7 @@ class WebsocketManager(
         jobs.forEach { it.value.cancel() }
         jobs.clear()
 
-        Log.d(TAG, "Done listening to Websocket")
+        Timber.d("Done listening to Websocket")
 
         return@withContext Result.success()
     }
@@ -175,7 +175,7 @@ class WebsocketManager(
                 try {
                     serverManager.webSocketRepository(serverId).ackNotification(it["hass_confirm_id"].toString())
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unable to confirm received notification", e)
+                    Timber.e(e, "Unable to confirm received notification")
                 }
             }
             val flattened = mutableMapOf<String, String>()
@@ -269,7 +269,7 @@ class WebsocketManager(
         } catch (e: IllegalStateException) {
             if (e is CancellationException) return false
 
-            Log.e(TAG, "Unable to setForeground due to restrictions", e)
+            Timber.e(e, "Unable to setForeground due to restrictions")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 if (notificationManager.getNotificationChannel(CHANNEL_WEBSOCKET_ISSUES) == null) {
                     val restrictedNotificationChannel = NotificationChannel(

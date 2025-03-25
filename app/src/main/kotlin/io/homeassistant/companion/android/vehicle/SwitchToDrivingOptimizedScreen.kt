@@ -23,8 +23,4 @@ class SwitchToDrivingOptimizedScreen(carContext: CarContext) : Screen(carContext
                     .build()
             ).build()
     }
-
-    companion object {
-        private const val TAG = "DrvOptScreen"
-    }
 }

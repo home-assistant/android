@@ -8,7 +8,6 @@ import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.Icon
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.MutableState
@@ -40,6 +39,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @HiltViewModel
@@ -47,10 +47,6 @@ class ManageShortcutsViewModel @Inject constructor(
     private val serverManager: ServerManager,
     application: Application
 ) : AndroidViewModel(application) {
-
-    companion object {
-        private const val TAG = "ShortcutViewModel"
-    }
 
     val app = application
     private var shortcutManager = application.applicationContext.getSystemService<ShortcutManager>()!!
@@ -93,18 +89,18 @@ class ManageShortcutsViewModel @Inject constructor(
                         serverManager.integrationRepository(server.id).getEntities().orEmpty()
                             .sortedBy { it.entityId }
                     } catch (e: Exception) {
-                        Log.e(TAG, "Couldn't load entities for server", e)
+                        Timber.e(e, "Couldn't load entities for server")
                         emptyList()
                     }
                 }
             }
         }
         updateDynamicShortcuts()
-        Log.d(TAG, "We have ${dynamicShortcuts.size} dynamic shortcuts")
+        Timber.d("We have ${dynamicShortcuts.size} dynamic shortcuts")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Log.d(TAG, "Can we pin shortcuts: ${shortcutManager.isRequestPinShortcutSupported}")
-            Log.d(TAG, "We have ${pinnedShortcuts.size} pinned shortcuts")
+            Timber.d("Can we pin shortcuts: ${shortcutManager.isRequestPinShortcutSupported}")
+            Timber.d("We have ${pinnedShortcuts.size} pinned shortcuts")
         }
 
         for (i in 0..5) {
@@ -129,7 +125,7 @@ class ManageShortcutsViewModel @Inject constructor(
     }
 
     fun createShortcut(shortcutId: String, serverId: Int, shortcutLabel: String, shortcutDesc: String, shortcutPath: String, icon: IIcon?) {
-        Log.d(TAG, "Attempt to add shortcut $shortcutId")
+        Timber.d("Attempt to add shortcut $shortcutId")
         val intent = Intent(
             WebViewActivity.newInstance(app, shortcutPath, serverId).addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK
@@ -166,14 +162,14 @@ class ManageShortcutsViewModel @Inject constructor(
             for (item in pinnedShortcuts) {
                 if (item.id == shortcutId) {
                     isNewPinned = false
-                    Log.d(TAG, "Updating pinned shortcut: $shortcutId")
+                    Timber.d("Updating pinned shortcut: $shortcutId")
                     shortcutManager.updateShortcuts(listOf(shortcut))
                     Toast.makeText(app, R.string.shortcut_updated, Toast.LENGTH_SHORT).show()
                 }
             }
 
             if (isNewPinned) {
-                Log.d(TAG, "Requesting to pin shortcut: $shortcutId")
+                Timber.d("Requesting to pin shortcut: $shortcutId")
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     shortcutManager.requestPinShortcut(shortcut, null)
                 }
@@ -203,7 +199,7 @@ class ManageShortcutsViewModel @Inject constructor(
         if (dynamicShortcuts.isNotEmpty()) {
             for (item in dynamicShortcuts) {
                 if (item.id == shortcutId) {
-                    Log.d(TAG, "setting ${item.id} data")
+                    Timber.d("setting ${item.id} data")
                     shortcuts[index].setData(item)
                 }
             }

@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.notifications
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -31,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import timber.log.Timber
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
@@ -38,11 +38,6 @@ class MessagingManager @Inject constructor(
     private val sensorDao: SensorDao,
     private val textToSpeechClient: TextToSpeechClient
 ) {
-
-    companion object {
-        const val TAG = "MessagingManager"
-    }
-
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     fun handleMessage(notificationData: Map<String, String>, source: String) {
@@ -58,7 +53,7 @@ class MessagingManager @Inject constructor(
             NotificationItem(0, now, notificationData[NotificationData.MESSAGE].toString(), jsonObject.toString(), source, serverId)
         notificationDao.add(notificationRow)
         if (serverManager.getServer(serverId) == null) {
-            Log.w(TAG, "Received notification but no server for it, discarding")
+            Timber.w("Received notification but no server for it, discarding")
             return
         }
 
@@ -120,15 +115,14 @@ class MessagingManager @Inject constructor(
         handleDeleteIntent(context, notificationBuilder, data, messageId, group, groupId, null)
 
         notificationManagerCompat.apply {
-            Log.d(TAG, "Show notification with tag \"$tag\" and id \"$messageId\"")
+            Timber.d("Show notification with tag \"$tag\" and id \"$messageId\"")
             notify(tag, messageId, notificationBuilder.build())
             if (!group.isNullOrBlank()) {
-                Log.d(TAG, "Show group notification with tag \"$group\" and id \"$groupId\"")
+                Timber.d("Show group notification with tag \"$group\" and id \"$groupId\"")
                 notify(group, groupId, getGroupNotificationBuilder(context, channelId, group, data).build())
             } else {
                 if (previousGroup.isNotBlank()) {
-                    Log.d(
-                        TAG,
+                    Timber.d(
                         "Remove group notification with tag \"$previousGroup\" and id \"$previousGroupId\""
                     )
                     notificationManagerCompat.cancelGroupIfNeeded(previousGroup, previousGroupId)

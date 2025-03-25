@@ -6,7 +6,6 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -32,11 +31,11 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 @AndroidEntryPoint
 class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     companion object {
-        private const val TAG: String = "TemplateWidgetConfigAct"
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
@@ -223,7 +222,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     templateText = serverManager.integrationRepository(selectedServerId!!).renderTemplate(template, mapOf()).toString()
                     enabled = true
                 } catch (e: Exception) {
-                    Log.e(TAG, "Exception while rendering template", e)
+                    Timber.e(e, "Exception while rendering template")
                     // JsonMappingException suggests that template is not a String (= error)
                     templateText = getString(
                         if (e.cause is JsonMappingException) {

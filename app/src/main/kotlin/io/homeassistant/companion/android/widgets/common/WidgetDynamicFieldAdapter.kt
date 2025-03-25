@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.widgets.common
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,16 +13,13 @@ import io.homeassistant.companion.android.common.util.capitalize
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureDynamicFieldBinding
 import java.util.Locale
 import kotlin.Exception
+import timber.log.Timber
 
 class WidgetDynamicFieldAdapter(
     private var actions: HashMap<String, Action>,
     private var entities: HashMap<String, Entity<Any>>,
     private val actionFieldList: ArrayList<ActionFieldBinder>
 ) : RecyclerView.Adapter<WidgetDynamicFieldAdapter.ViewHolder>() {
-
-    companion object {
-        private const val TAG = "WidgetField"
-    }
 
     class ViewHolder(
         val binding: WidgetButtonConfigureDynamicFieldBinding
@@ -144,7 +140,7 @@ class WidgetDynamicFieldAdapter(
             try {
                 autoCompleteTextView.setText(actionFieldList[position].value as String)
             } catch (e: Exception) {
-                Log.d(TAG, "Unable to get action field list", e)
+                Timber.d(e, "Unable to get action field list")
                 // Set text to empty string to prevent a recycled, incorrect value
                 autoCompleteTextView.setText("")
             }

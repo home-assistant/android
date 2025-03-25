@@ -4,7 +4,6 @@ import android.content.Intent
 import android.net.Uri
 import android.nfc.NfcAdapter
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.lifecycle.lifecycleScope
@@ -19,13 +18,10 @@ import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class TagReaderActivity : BaseActivity() {
-
-    companion object {
-        const val TAG = "TagReaderActivity"
-    }
 
     @Inject
     lateinit var serverManager: ServerManager
@@ -53,7 +49,7 @@ class TagReaderActivity : BaseActivity() {
                     handleTag(url, isNfcTag)
                 } catch (e: Exception) {
                     showProcessingError(isNfcTag)
-                    Log.e(TAG, "Unable to handle url (${if (isNfcTag) "nfc" else "qr"}}): $url", e)
+                    Timber.e(e, "Unable to handle url (${if (isNfcTag) "nfc" else "qr"}}): $url")
                 }
             }
             finish()
@@ -64,15 +60,15 @@ class TagReaderActivity : BaseActivity() {
         // https://www.home-assistant.io/tag/5f0ba733-172f-430d-a7f8-e4ad940c88d7
 
         val nfcTagId = UrlUtil.splitNfcTagId(url)
-        Log.d(TAG, "Tag ID: $nfcTagId")
+        Timber.d("Tag ID: $nfcTagId")
         if (nfcTagId != null && serverManager.isRegistered()) {
             serverManager.defaultServers.map {
                 lifecycleScope.async {
                     try {
                         serverManager.integrationRepository(it.id).scanTag(hashMapOf("tag_id" to nfcTagId))
-                        Log.d(TAG, "Tag scanned to HA successfully")
+                        Timber.d("Tag scanned to HA successfully")
                     } catch (e: Exception) {
-                        Log.e(TAG, "Tag not scanned to HA", e)
+                        Timber.e(e, "Tag not scanned to HA")
                     }
                 }
             }.awaitAll()

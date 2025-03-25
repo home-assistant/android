@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.onboarding
 
 import android.app.Application
 import android.net.Uri
-import android.util.Log
 import android.webkit.URLUtil
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -18,16 +17,13 @@ import io.homeassistant.companion.android.onboarding.discovery.HomeAssistantInst
 import io.homeassistant.companion.android.onboarding.discovery.HomeAssistantSearcher
 import java.net.URL
 import javax.inject.Inject
+import timber.log.Timber
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
     val serverManager: ServerManager,
     app: Application
 ) : AndroidViewModel(app) {
-
-    companion object {
-        const val TAG = "OnboardingViewModel"
-    }
 
     private val _homeAssistantSearcher = HomeAssistantSearcher(
         nsdManager = app.getSystemService()!!,
@@ -112,7 +108,7 @@ class OnboardingViewModel @Inject constructor(
             serverManager.defaultServers.any { it.connection.hasUrl(instance.url) }
         ) {
             // Skip anything with a URL known to the app, as it is added initially or should be hidden
-            Log.i(TAG, "Skipping instance ${instance.name} (${instance.url}) because of option $discoveryOptions")
+            Timber.i("Skipping instance ${instance.name} (${instance.url}) because of option $discoveryOptions")
             return
         }
 

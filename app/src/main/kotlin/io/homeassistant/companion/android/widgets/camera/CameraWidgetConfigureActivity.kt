@@ -7,7 +7,6 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -29,12 +28,12 @@ import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 @AndroidEntryPoint
 class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     companion object {
-        private const val TAG: String = "CameraWidgetConfigAct"
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
@@ -118,7 +117,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 try {
                     serverManager.integrationRepository(cameraWidget.serverId).getEntity(cameraWidget.entityId)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unable to get entity information", e)
+                    Timber.e(e, "Unable to get entity information")
                     Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
                         .show()
                     null
@@ -147,7 +146,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 } catch (e: Exception) {
                     // If entities fail to load, it's okay to pass
                     // an empty map to the dynamicFieldAdapter
-                    Log.e(TAG, "Failed to query entities", e)
+                    Timber.e(e, "Failed to query entities")
                 }
             }
         }
@@ -218,7 +217,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             )
             finish()
         } catch (e: Exception) {
-            Log.e(TAG, "Issue configuring widget", e)
+            Timber.e(e, "Issue configuring widget")
             showAddWidgetError()
         }
     }

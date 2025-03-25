@@ -6,7 +6,6 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
@@ -30,12 +29,12 @@ import java.util.LinkedList
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     companion object {
-        private const val TAG: String = "MediaWidgetConfigAct"
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
@@ -139,7 +138,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
                         serverManager.integrationRepository(mediaPlayerWidget.serverId).getEntity(s.trim())
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unable to get entity information", e)
+                    Timber.e(e, "Unable to get entity information")
                     Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
                         .show()
                     null
@@ -168,7 +167,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
                 } catch (e: Exception) {
                     // If entities fail to load, it's okay to pass
                     // an empty map to the dynamicFieldAdapter
-                    Log.e(TAG, "Failed to query entities", e)
+                    Timber.e(e, "Failed to query entities")
                 }
             }
         }
@@ -265,7 +264,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
             )
             finish()
         } catch (e: Exception) {
-            Log.e(TAG, "Issue configuring widget", e)
+            Timber.e(e, "Issue configuring widget")
             showAddWidgetError()
         }
     }

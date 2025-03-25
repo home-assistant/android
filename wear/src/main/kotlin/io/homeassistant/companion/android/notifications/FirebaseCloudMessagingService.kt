@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.notifications
 
-import android.util.Log
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
@@ -11,11 +10,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class FirebaseCloudMessagingService : FirebaseMessagingService() {
     companion object {
-        private const val TAG = "FCMService"
         private const val SOURCE = "FCM"
     }
 
@@ -28,7 +27,7 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        Log.d(TAG, "From: ${remoteMessage.from} and data: ${remoteMessage.data}")
+        Timber.d("From: ${remoteMessage.from} and data: ${remoteMessage.data}")
 
         messagingManager.handleMessage(remoteMessage.data, SOURCE)
     }
@@ -40,9 +39,9 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
      */
     override fun onNewToken(token: String) {
         mainScope.launch {
-            Log.d(TAG, "Refreshed token: $token")
+            Timber.d("Refreshed token: $token")
             if (!serverManager.isRegistered()) {
-                Log.d(TAG, "Not trying to update registration since we aren't authenticated.")
+                Timber.d("Not trying to update registration since we aren't authenticated.")
                 return@launch
             }
             serverManager.defaultServers.forEach {
@@ -56,7 +55,7 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
                             allowReregistration = false
                         )
                     } catch (e: Exception) {
-                        Log.e(TAG, "Issue updating token", e)
+                        Timber.e(e, "Issue updating token")
                     }
                 }
             }

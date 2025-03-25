@@ -19,8 +19,6 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
     companion object {
-        private const val TAG = "ManualSetupActivity"
-
         fun newInstance(context: Context): Intent {
             return Intent(context, ManualSetupActivity::class.java)
         }

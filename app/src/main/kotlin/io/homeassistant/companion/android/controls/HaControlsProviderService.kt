@@ -4,7 +4,6 @@ import android.os.Build
 import android.service.controls.Control
 import android.service.controls.ControlsProviderService
 import android.service.controls.actions.ControlAction
-import android.util.Log
 import androidx.annotation.RequiresApi
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
@@ -32,14 +31,13 @@ import okhttp3.ResponseBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.HttpException
 import retrofit2.Response
+import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.R)
 @AndroidEntryPoint
 class HaControlsProviderService : ControlsProviderService() {
 
     companion object {
-        private const val TAG = "HaConProService"
-
         private val domainToHaControl = mapOf(
             "automation" to DefaultSwitchControl,
             "button" to DefaultButtonControl,
@@ -123,7 +121,7 @@ class HaControlsProviderService : ControlsProviderService() {
                             entities[server.id] = entities[server.id].orEmpty()
                                 .sortedWith(compareBy(nullsLast()) { areaForEntity[server.id]?.get(it.entityId)?.name })
                         } catch (e: Exception) {
-                            Log.e(TAG, "Unable to load entities/registries for server ${server.id} (${server.friendlyName}), skipping", e)
+                            Timber.e(e, "Unable to load entities/registries for server ${server.id} (${server.friendlyName}), skipping")
                         }
                     }
                 }.awaitAll()
@@ -157,7 +155,7 @@ class HaControlsProviderService : ControlsProviderService() {
                                     info
                                 )
                             } catch (e: Exception) {
-                                Log.e(TAG, "Unable to create control for ${entity.domain} entity, skipping", e)
+                                Timber.e(e, "Unable to create control for ${entity.domain} entity, skipping")
                                 null
                             }
                         }
@@ -165,7 +163,7 @@ class HaControlsProviderService : ControlsProviderService() {
                             subscriber.onNext(it)
                         }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error building list of entities", e)
+                    Timber.e(e, "Error building list of entities")
                 }
                 subscriber.onComplete()
             }
@@ -173,12 +171,12 @@ class HaControlsProviderService : ControlsProviderService() {
     }
 
     override fun createPublisherFor(controlIds: MutableList<String>): Flow.Publisher<Control> {
-        Log.d(TAG, "publisherFor $controlIds")
+        Timber.d("publisherFor $controlIds")
         return Flow.Publisher { subscriber ->
             subscriber.onSubscribe(object : Flow.Subscription {
                 val webSocketScope = CoroutineScope(Dispatchers.IO)
                 override fun request(n: Long) {
-                    if (!serverManager.isRegistered()) return else Log.d(TAG, "request $n")
+                    if (!serverManager.isRegistered()) return else Timber.d("request $n")
 
                     ioScope.launch {
                         controlIds
@@ -199,7 +197,7 @@ class HaControlsProviderService : ControlsProviderService() {
                 }
 
                 override fun cancel() {
-                    Log.d(TAG, "cancel")
+                    Timber.d("cancel")
                     webSocketScope.cancel()
                 }
             })
@@ -211,7 +209,7 @@ class HaControlsProviderService : ControlsProviderService() {
         action: ControlAction,
         consumer: Consumer<Int>
     ) {
-        Log.d(TAG, "Control: $controlId, action: $action")
+        Timber.d("Control: $controlId, action: $action")
         if (!serverManager.isRegistered()) return consumer.accept(ControlAction.RESPONSE_FAIL)
 
         var server = 0
@@ -231,7 +229,7 @@ class HaControlsProviderService : ControlsProviderService() {
                 try {
                     actionSuccess = haControl.performAction(serverManager.integrationRepository(server), action)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unable to control or get entity information", e)
+                    Timber.e(e, "Unable to control or get entity information")
                 }
             }
 
@@ -323,13 +321,13 @@ class HaControlsProviderService : ControlsProviderService() {
                             // All initial states will be in the first message
                             sentInitial = true
                             (entityIds - entities.keys).forEach { missingEntity ->
-                                Log.e(TAG, "Unable to get $missingEntity from Home Assistant, not returned in subscribe_entities.")
+                                Timber.e("Unable to get $missingEntity from Home Assistant, not returned in subscribe_entities.")
                                 val entity = getFailedEntity(missingEntity, error404)
                                 entities["ha_failed.$missingEntity"] = entity
                                 toSend["ha_failed.$missingEntity"] = entity
                             }
                         }
-                        Log.d(TAG, "Sending ${toSend.size} entities to subscriber")
+                        Timber.d("Sending ${toSend.size} entities to subscriber")
                         sendEntitiesToSubscriber(subscriber, controlIds, toSend, serverId, webSocketScope, baseUrl)
                     } ?: run {
                     entityIds.forEachIndexed { index, entityId ->
@@ -360,10 +358,10 @@ class HaControlsProviderService : ControlsProviderService() {
                         if (entity != null) {
                             entities[entityId] = entity
                         } else {
-                            Log.e(TAG, "Unable to get $entityId from Home Assistant, null response.")
+                            Timber.e("Unable to get $entityId from Home Assistant, null response.")
                         }
                     } catch (e: Exception) {
-                        Log.e(TAG, "Unable to get $entityId from Home Assistant, caught exception.", e)
+                        Timber.e(e, "Unable to get $entityId from Home Assistant, caught exception.")
                         entities["ha_failed.$entityId"] = getFailedEntity(entityId, e)
                         id = "ha_failed.$entityId"
                     }
@@ -459,7 +457,7 @@ class HaControlsProviderService : ControlsProviderService() {
                         info
                     )
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unable to create control for ${it.value.domain} entity, sending error entity", e)
+                    Timber.e(e, "Unable to create control for ${it.value.domain} entity, sending error entity")
                     domainToHaControl["ha_failed"]?.createControl(
                         applicationContext,
                         getFailedEntity(it.value.entityId, e),

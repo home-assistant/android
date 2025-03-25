@@ -6,8 +6,6 @@ import io.homeassistant.companion.android.common.R as commonR
 
 class NfcSensorManager : SensorManager {
     companion object {
-        private const val TAG = "NfcSensor"
-
         val nfcStateSensor = SensorManager.BasicSensor(
             "nfc_state",
             "binary_sensor",

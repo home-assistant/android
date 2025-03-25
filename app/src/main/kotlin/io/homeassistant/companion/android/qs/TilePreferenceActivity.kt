@@ -4,7 +4,6 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.core.os.BundleCompat
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
@@ -20,13 +19,10 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 @AndroidEntryPoint
 class TilePreferenceActivity : BaseActivity() {
-
-    companion object {
-        private const val TAG = "TilePrefActivity"
-    }
 
     @Inject
     lateinit var serverManager: ServerManager
@@ -45,11 +41,11 @@ class TilePreferenceActivity : BaseActivity() {
                         val tileClass = Class.forName(component.className)
                         val tileMap = ManageTilesViewModel.idToTileService
                         tileMap.filter { it.value == tileClass }.entries.firstOrNull()?.key?.let {
-                            Log.d(TAG, "Tile ID for long press action: $it")
+                            Timber.d("Tile ID for long press action: $it")
                             tileId = it
                         }
                     } catch (e: Exception) {
-                        Log.e(TAG, "Couldn't get tile ID for component $component", e)
+                        Timber.e(e, "Couldn't get tile ID for component $component")
                     }
                 }
             }
