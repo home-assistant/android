@@ -351,6 +351,8 @@ playStorePublishServiceCredentialsFile.json
 ## Missing from the generated gitignore
 .idea/androidTestResultsUserPreferences.xml
 .idea/deploymentTargetSelector.xml
+.idea/deploymentTargetDropDown.xml
 .idea/emulatorDisplays.xml
+.idea/graphql-settings.xml
 .idea/runConfigurations.xml
 .idea/studiobot.xml
