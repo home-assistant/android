@@ -4,9 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.location.Address
 import android.location.Geocoder
+import android.location.Location
 import android.os.Build
 import android.os.Build.VERSION.SDK_INT
-import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
@@ -14,10 +14,10 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
+import io.homeassistant.companion.android.location.getLocation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
-import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 
 class GeocodeSensorManager : SensorManager {
@@ -70,42 +70,34 @@ class GeocodeSensorManager : SensorManager {
             return
         }
 
-        val location = try {
-            LocationServices.getFusedLocationProviderClient(context).lastLocation.await()
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to get fused location provider client")
-            null
+        val location: Location? = getLocation(context)
+
+        if (location == null) {
+            Timber.e("Somehow location is null even though it was successful")
+            return
         }
+
         var address: Address? = null
-        try {
-            if (location == null) {
-                Timber.e("Somehow location is null even though it was successful")
-                return
-            }
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val sensorSettings = sensorDao.getSettings(geocodedLocation.id)
+        val minAccuracy = sensorSettings
+            .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
+            ?: DEFAULT_MINIMUM_ACCURACY
+        sensorDao.add(SensorSetting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER))
 
-            val sensorDao = AppDatabase.getInstance(context).sensorDao()
-            val sensorSettings = sensorDao.getSettings(geocodedLocation.id)
-            val minAccuracy = sensorSettings
-                .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
-                ?: DEFAULT_MINIMUM_ACCURACY
-            sensorDao.add(SensorSetting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER))
+        if (location.accuracy <= minAccuracy) {
+            address = Geocoder(context)
+                .getFromLocationAwait(location.latitude, location.longitude, 1)
+                .firstOrNull()
+        } else {
+            Timber.w("Skipping geocoded update as accuracy was not met: ${location.accuracy}")
+            return
+        }
 
-            if (location.accuracy <= minAccuracy) {
-                address = Geocoder(context)
-                    .getFromLocationAwait(location.latitude, location.longitude, 1)
-                    .firstOrNull()
-            } else {
-                Timber.w("Skipping geocoded update as accuracy was not met: ${location.accuracy}")
-                return
-            }
-
-            val now = System.currentTimeMillis()
-            if (now - location.time > 300000) {
-                Timber.w("Skipping geocoded update due to old timestamp ${location.time} compared to $now")
-                return
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to get geocoded location")
+        val now = System.currentTimeMillis()
+        if (now - location.time > 300000) {
+            Timber.w("Skipping geocoded update due to old timestamp ${location.time} compared to $now")
+            return
         }
         val attributes = address?.let {
             mapOf(
@@ -128,13 +120,11 @@ class GeocodeSensorManager : SensorManager {
 
         val prettyAddress = address?.getAddressLine(0)
 
-        if (location != null) {
-            HighAccuracyLocationService.updateNotificationAddress(
-                context,
-                location,
-                if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(commonR.string.unknown_address)
-            )
-        }
+        HighAccuracyLocationService.updateNotificationAddress(
+            context,
+            location,
+            if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(commonR.string.unknown_address)
+        )
 
         onSensorUpdated(
             context,
