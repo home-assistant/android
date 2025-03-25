@@ -62,10 +62,23 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                 }
 
                 lint {
-                    abortOnError = false
+                    // Lint task should fail if there are issues so the CI doesn't allow addition of lint issue.
+                    abortOnError = true
+                    // This is an aggressive settings but it helps keeping the code base out of warnings
+                    warningsAsErrors = true
+                    // We need to disable MissingTranslation since we use localize and the translation might comes later
                     disable += "MissingTranslation"
                     // This report is used by Github Actions to parse the new issues and report them into the PR.
                     sarifReport = true
+                    // Sometimes we need to bypass lint issues we use this file to keep track of them.
+                    baseline = file("lint-baseline.xml")
+                    // We already have renovate for this
+                    checkDependencies = false
+                    disable += listOf("GradleDependency", "AndroidGradlePluginVersion")
+                    // Since we use baseline we should not have full path in the files
+                    absolutePaths = false
+
+                    // Update some rules issue level
                     error += "LogNotTimber"
                 }
 
