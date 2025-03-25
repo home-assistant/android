@@ -30,7 +30,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="97"
+            line="95"
             column="26"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="98"
+            line="96"
             column="25"/>
     </issue>
 
@@ -52,7 +52,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/util/ForegroundServiceLauncher.kt"
-            line="52"
+            line="48"
             column="33"/>
     </issue>
 
@@ -85,7 +85,7 @@
         errorLine2="                        ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/controls/HaControlsProviderService.kt"
-            line="46"
+            line="44"
             column="25"/>
     </issue>
 
@@ -96,7 +96,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/sensors/SensorReceiver.kt"
-            line="63"
+            line="59"
             column="13"/>
     </issue>
 
@@ -107,7 +107,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/sensors/SensorReceiver.kt"
-            line="65"
+            line="61"
             column="13"/>
     </issue>
 
@@ -532,7 +532,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/SensorDetailViewModel.kt"
-            line="334"
+            line="332"
             column="38"/>
     </issue>
 
@@ -675,7 +675,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/sensors/CarSensorManager.kt"
-            line="264"
+            line="262"
             column="20"/>
     </issue>
 
@@ -686,7 +686,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/sensors/CarSensorManager.kt"
-            line="275"
+            line="273"
             column="33"/>
     </issue>
 
@@ -697,7 +697,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/sensors/CarSensorManager.kt"
-            line="305"
+            line="303"
             column="13"/>
     </issue>
 
@@ -708,7 +708,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="482"
+            line="478"
             column="17"/>
     </issue>
 
@@ -719,7 +719,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="482"
+            line="478"
             column="17"/>
     </issue>
 
@@ -741,7 +741,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="35"
+            line="33"
             column="9"/>
     </issue>
 
@@ -752,7 +752,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="37"
+            line="35"
             column="9"/>
     </issue>
 
@@ -851,7 +851,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="114"
+            line="110"
             column="21"/>
     </issue>
 
@@ -862,7 +862,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/qs/ManageTilesViewModel.kt"
-            line="150"
+            line="148"
             column="29"/>
     </issue>
 
@@ -873,7 +873,7 @@
         errorLine2="                             ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/qs/ManageTilesViewModel.kt"
-            line="157"
+            line="155"
             column="30"/>
     </issue>
 
@@ -884,7 +884,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/matter/MatterCommissioningViewModel.kt"
-            line="44"
+            line="40"
             column="21"/>
     </issue>
 
@@ -1196,7 +1196,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="162"
+            line="158"
             column="13"/>
     </issue>
 
@@ -1207,7 +1207,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/authentication/AuthenticationFragment.kt"
-            line="197"
+            line="194"
             column="20"/>
     </issue>
 
@@ -1218,7 +1218,7 @@
         errorLine2="                                                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/barcode/BarcodeScannerActivity.kt"
-            line="145"
+            line="143"
             column="80"/>
     </issue>
 
@@ -1229,7 +1229,7 @@
         errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/vehicle/EntityGridVehicleScreen.kt"
-            line="190"
+            line="186"
             column="49"/>
     </issue>
 
@@ -1262,7 +1262,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/vehicle/MapVehicleScreen.kt"
-            line="135"
+            line="131"
             column="33"/>
     </issue>
 
@@ -1273,7 +1273,7 @@
         errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1459"
+            line="1454"
             column="16"/>
     </issue>
 
@@ -1284,7 +1284,7 @@
         errorLine2="                                ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1589"
+            line="1584"
             column="33"/>
     </issue>
 
@@ -1295,7 +1295,7 @@
         errorLine2="                                ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1589"
+            line="1584"
             column="33"/>
     </issue>
 
@@ -1306,7 +1306,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1624"
+            line="1619"
             column="41"/>
     </issue>
 
@@ -1317,7 +1317,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1624"
+            line="1619"
             column="41"/>
     </issue>
 
@@ -1328,7 +1328,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1664"
+            line="1659"
             column="13"/>
     </issue>
 
@@ -1339,7 +1339,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1680"
+            line="1675"
             column="13"/>
     </issue>
 
@@ -1350,7 +1350,7 @@
         errorLine2="                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1689"
+            line="1684"
             column="23"/>
     </issue>
 
@@ -1361,7 +1361,7 @@
         errorLine2="                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1689"
+            line="1684"
             column="23"/>
     </issue>
 
@@ -1372,7 +1372,7 @@
         errorLine2="                                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1807"
+            line="1802"
             column="68"/>
     </issue>
 
@@ -1383,7 +1383,7 @@
         errorLine2="                                    ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1876"
+            line="1871"
             column="37"/>
     </issue>
 
@@ -1394,7 +1394,7 @@
         errorLine2="                                    ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1876"
+            line="1871"
             column="37"/>
     </issue>
 
@@ -1449,7 +1449,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="312"
+            line="308"
             column="52"/>
     </issue>
 
@@ -1460,7 +1460,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="312"
+            line="308"
             column="52"/>
     </issue>
 
@@ -1471,7 +1471,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="333"
+            line="329"
             column="52"/>
     </issue>
 
@@ -1482,7 +1482,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="333"
+            line="329"
             column="52"/>
     </issue>
 
@@ -1493,7 +1493,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="515"
+            line="511"
             column="21"/>
     </issue>
 
@@ -1526,7 +1526,7 @@
         errorLine2="                                                        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="449"
+            line="448"
             column="57"/>
     </issue>
 
@@ -1537,7 +1537,7 @@
         errorLine2="                                                        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="449"
+            line="448"
             column="57"/>
     </issue>
 
@@ -1548,7 +1548,7 @@
         errorLine2="                                                        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="449"
+            line="448"
             column="57"/>
     </issue>
 
@@ -1559,7 +1559,7 @@
         errorLine2="                                                        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="449"
+            line="448"
             column="57"/>
     </issue>
 
@@ -1570,7 +1570,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="468"
+            line="467"
             column="41"/>
     </issue>
 
@@ -1581,7 +1581,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="468"
+            line="467"
             column="41"/>
     </issue>
 
@@ -1592,7 +1592,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="468"
+            line="467"
             column="41"/>
     </issue>
 
@@ -1603,7 +1603,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="468"
+            line="467"
             column="41"/>
     </issue>
 
@@ -1614,7 +1614,7 @@
         errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="970"
+            line="969"
             column="19"/>
     </issue>
 
@@ -1625,7 +1625,7 @@
         errorLine2="                                                               ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1250"
+            line="1249"
             column="64"/>
     </issue>
 
@@ -1636,7 +1636,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1401"
+            line="1400"
             column="31"/>
     </issue>
 
@@ -1647,7 +1647,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1401"
+            line="1400"
             column="31"/>
     </issue>
 
@@ -1658,7 +1658,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1423"
+            line="1422"
             column="21"/>
     </issue>
 
@@ -1669,7 +1669,7 @@
         errorLine2="                  ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1576"
+            line="1575"
             column="19"/>
     </issue>
 
@@ -1680,7 +1680,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1726"
+            line="1725"
             column="25"/>
     </issue>
 
@@ -1691,7 +1691,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewPresenterImpl.kt"
-            line="132"
+            line="128"
             column="27"/>
     </issue>
 
@@ -1702,7 +1702,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewPresenterImpl.kt"
-            line="376"
+            line="372"
             column="13"/>
     </issue>
 
@@ -1812,7 +1812,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/entity/EntityWidgetConfigureActivity.kt"
-            line="140"
+            line="139"
             column="38"/>
     </issue>
 
@@ -1823,7 +1823,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/template/TemplateWidgetConfigureActivity.kt"
-            line="96"
+            line="95"
             column="38"/>
     </issue>
 

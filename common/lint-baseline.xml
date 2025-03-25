@@ -30,7 +30,7 @@
         errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/StorageSensorManager.kt"
-            line="140"
+            line="138"
             column="42"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorReceiverBase.kt"
-            line="387"
+            line="385"
             column="9"/>
     </issue>
 
@@ -162,7 +162,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/DNDSensorManager.kt"
-            line="45"
+            line="43"
             column="13"/>
     </issue>
 
@@ -173,7 +173,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/DNDSensorManager.kt"
-            line="55"
+            line="53"
             column="13"/>
     </issue>
 
@@ -184,7 +184,7 @@
         errorLine2="             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="130"
+            line="129"
             column="14"/>
     </issue>
 
@@ -195,7 +195,7 @@
         errorLine2="             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="132"
+            line="131"
             column="14"/>
     </issue>
 
