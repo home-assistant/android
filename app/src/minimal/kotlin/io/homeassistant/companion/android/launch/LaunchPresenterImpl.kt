@@ -1,11 +1,11 @@
 package io.homeassistant.companion.android.launch
 
-import android.util.Log
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class LaunchPresenterImpl @Inject constructor(
     view: LaunchView,
@@ -24,7 +24,7 @@ class LaunchPresenterImpl @Inject constructor(
                     serverManager.integrationRepository(it.id).getConfig() // Update cached data
                     serverManager.webSocketRepository(it.id).getCurrentUser() // Update cached data
                 } catch (e: Exception) {
-                    Log.e(TAG, "Issue updating Registration", e)
+                    Timber.e(e, "Issue updating Registration")
                 }
             }
         }

@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.data.authentication.impl
 
-import android.util.Log
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -12,6 +11,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import javax.inject.Named
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import timber.log.Timber
 
 class AuthenticationRepositoryImpl @AssistedInject constructor(
     private val authenticationService: AuthenticationService,
@@ -22,7 +22,6 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
 ) : AuthenticationRepository {
 
     companion object {
-        private const val TAG = "AuthRepo"
         private const val PREF_BIOMETRIC_ENABLED = "biometric_enabled"
         private const val PREF_BIOMETRIC_HOME_BYPASS_ENABLED = "biometric_home_bypass_enabled"
     }
@@ -32,7 +31,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     override suspend fun registerAuthorizationCode(authorizationCode: String) {
         val url = server.connection.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
-            Log.e(TAG, "Unable to register auth code.")
+            Timber.e("Unable to register auth code.")
             return
         }
         authenticationService.getToken(
@@ -58,7 +57,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     override suspend fun registerRefreshToken(refreshToken: String) {
         val url = server.connection.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
-            Log.e(TAG, "Unable to register session with refresh token.")
+            Timber.e("Unable to register session with refresh token.")
             return
         }
         refreshSessionWithToken(refreshToken)
@@ -82,7 +81,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     override suspend fun revokeSession() {
         val url = server.connection.getUrl()?.toHttpUrlOrNull()
         if (!server.session.isComplete() || url == null) {
-            Log.e(TAG, "Unable to revoke session.")
+            Timber.e("Unable to revoke session.")
             return
         }
         if (server.version?.isAtLeast(2022, 9, 0) == true) {
@@ -137,7 +136,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     private suspend fun ensureValidSession(forceRefresh: Boolean = false) {
         val url = server.connection.getUrl()?.toHttpUrlOrNull()
         if (!server.session.isComplete() || server.session.installId != installId || url == null) {
-            Log.e(TAG, "Unable to ensure valid session.")
+            Timber.e("Unable to ensure valid session.")
             throw AuthorizationException()
         }
 

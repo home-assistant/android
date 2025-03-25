@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.common.sensors
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.SystemClock
-import android.util.Log
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.database.AppDatabase
@@ -16,10 +15,10 @@ import java.util.Date
 import java.util.GregorianCalendar
 import java.util.TimeZone
 import kotlin.math.absoluteValue
+import timber.log.Timber
 
 class LastRebootSensorManager : SensorManager {
     companion object {
-        private const val TAG = "LastReboot"
         private const val LOCAL_TIME = "Local Time"
         private const val SETTING_DEADBAND = "lastreboot_deadband"
         private const val TIME_MILLISECONDS = "Time in Milliseconds"
@@ -86,7 +85,7 @@ class LastRebootSensorManager : SensorManager {
             sdf.timeZone = TimeZone.getTimeZone("UTC")
             utc = sdf.format(Date(timeInMillis))
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting the last reboot timestamp", e)
+            Timber.e(e, "Error getting the last reboot timestamp")
         }
 
         onSensorUpdated(

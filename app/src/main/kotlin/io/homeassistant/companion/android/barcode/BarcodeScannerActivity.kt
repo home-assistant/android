@@ -34,8 +34,6 @@ import kotlinx.coroutines.launch
 class BarcodeScannerActivity : BaseActivity() {
 
     companion object {
-        private const val TAG = "BarcodeScannerActivity"
-
         private const val EXTRA_MESSAGE_ID = "message_id"
         private const val EXTRA_TITLE = "title"
         private const val EXTRA_SUBTITLE = "subtitle"

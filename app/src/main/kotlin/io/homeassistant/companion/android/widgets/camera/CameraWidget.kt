@@ -10,7 +10,6 @@ import android.content.res.Resources
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.os.BundleCompat
@@ -35,12 +34,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
+import timber.log.Timber
 
 @AndroidEntryPoint
 class CameraWidget : AppWidgetProvider() {
 
     companion object {
-        private const val TAG = "CameraWidget"
         internal const val RECEIVE_DATA =
             "io.homeassistant.companion.android.widgets.camera.CameraWidget.RECEIVE_DATA"
         internal const val UPDATE_IMAGE =
@@ -84,7 +83,7 @@ class CameraWidget : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
     ) {
         if (!context.hasActiveConnection()) {
-            Log.d(TAG, "Skipping widget update since network connection is not active")
+            Timber.d("Skipping widget update since network connection is not active")
             return
         }
         mainScope.launch {
@@ -103,13 +102,13 @@ class CameraWidget : AppWidgetProvider() {
                 .filter { !systemWidgetIds.contains(it.id) }
                 .map { it.id }
             if (invalidWidgetIds.isNotEmpty()) {
-                Log.i(TAG, "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
+                Timber.i("Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
                 onDeleted(context, invalidWidgetIds.toIntArray())
             }
 
             val cameraWidgetList = dbWidgetList.filter { systemWidgetIds.contains(it.id) }
             if (cameraWidgetList.isNotEmpty()) {
-                Log.d(TAG, "Updating all widgets")
+                Timber.d("Updating all widgets")
                 for (item in cameraWidgetList) {
                     updateAppWidget(context, item.id, appWidgetManager)
                 }
@@ -132,7 +131,7 @@ class CameraWidget : AppWidgetProvider() {
                 val baseUrl = serverManager.getServer(widget.serverId)?.connection?.getUrl().toString().removeSuffix("/")
                 url = "$baseUrl$entityPictureUrl"
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to fetch entity or entity does not exist", e)
+                Timber.e(e, "Failed to fetch entity or entity does not exist")
                 widgetCameraError = true
             }
         }
@@ -158,7 +157,7 @@ class CameraWidget : AppWidgetProvider() {
                         R.id.widgetCameraPlaceholder,
                         View.GONE
                     )
-                    Log.d(TAG, "Fetching camera image")
+                    Timber.d("Fetching camera image")
                     Handler(Looper.getMainLooper()).post {
                         try {
                             val request = ImageRequest.Builder(context)
@@ -172,7 +171,7 @@ class CameraWidget : AppWidgetProvider() {
                                 .build()
                             context.imageLoader.enqueue(request)
                         } catch (e: Exception) {
-                            Log.e(TAG, "Unable to fetch image", e)
+                            Timber.e(e, "Unable to fetch image")
                         }
                     }
                 }
@@ -209,8 +208,7 @@ class CameraWidget : AppWidgetProvider() {
         lastIntent = intent.action.toString()
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
-        Log.d(
-            TAG,
+        Timber.d(
             "Broadcast received: " + System.lineSeparator() +
                 "Broadcast action: " + lastIntent + System.lineSeparator() +
                 "AppWidgetId: " + appWidgetId
@@ -233,13 +231,12 @@ class CameraWidget : AppWidgetProvider() {
             ?: WidgetTapAction.REFRESH
 
         if (serverSelection == null || entitySelection == null) {
-            Log.e(TAG, "Did not receive complete configuration data")
+            Timber.e("Did not receive complete configuration data")
             return
         }
 
         mainScope.launch {
-            Log.d(
-                TAG,
+            Timber.d(
                 "Saving camera config data:" + System.lineSeparator() +
                     "entity id: " + entitySelection + System.lineSeparator()
             )

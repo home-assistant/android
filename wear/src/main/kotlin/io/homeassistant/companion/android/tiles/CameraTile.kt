@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.tiles
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.util.Log
 import androidx.wear.protolayout.DimensionBuilders
 import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.LayoutElementBuilders.CONTENT_SCALE_MODE_FIT
@@ -37,6 +36,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import timber.log.Timber
 
 @AndroidEntryPoint
 class CameraTile : TileService() {
@@ -125,7 +125,7 @@ class CameraTile : TileService() {
                             byteArray?.let {
                                 var bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
                                 if (bitmap.width > maxWidth || bitmap.height > maxHeight) {
-                                    Log.d(TAG, "Scaling camera snapshot to fit screen (${bitmap.width}x${bitmap.height} to ${maxWidth.toInt()}x${maxHeight.toInt()} max)")
+                                    Timber.d("Scaling camera snapshot to fit screen (${bitmap.width}x${bitmap.height} to ${maxWidth.toInt()}x${maxHeight.toInt()} max)")
                                     val currentRatio = (bitmap.width.toFloat() / bitmap.height.toFloat())
                                     val screenRatio = (requestParams.deviceConfiguration.screenWidthDp.toFloat() / requestParams.deviceConfiguration.screenHeightDp.toFloat())
                                     imageWidth = maxWidth.toInt()
@@ -152,7 +152,7 @@ class CameraTile : TileService() {
                         null
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unable to fetch entity ${tileConfig?.entityId}", e)
+                    Timber.e(e, "Unable to fetch entity ${tileConfig?.entityId}")
                     null
                 }
             } else {
@@ -218,7 +218,7 @@ class CameraTile : TileService() {
                         getUpdater(this@CameraTile)
                             .requestUpdate(io.homeassistant.companion.android.tiles.CameraTile::class.java)
                     } catch (e: Exception) {
-                        Log.w(TAG, "Unable to request tile update on enter", e)
+                        Timber.w(e, "Unable to request tile update on enter")
                     }
                 }
             }

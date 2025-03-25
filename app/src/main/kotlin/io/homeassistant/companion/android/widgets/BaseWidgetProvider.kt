@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
-import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -19,6 +18,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 /**
  * A widget provider class for widgets that update based on entity state changes.
@@ -148,8 +148,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
         val invalidWidgetIds = dbWidgetIds.minus(systemWidgetIds)
         if (invalidWidgetIds.isNotEmpty()) {
-            Log.i(
-                widgetProvider.shortClassName,
+            Timber.tag(widgetProvider.shortClassName).i(
                 "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted"
             )
             onDeleted(context, invalidWidgetIds.toIntArray())

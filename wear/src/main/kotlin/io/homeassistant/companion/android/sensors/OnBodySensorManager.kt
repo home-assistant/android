@@ -5,16 +5,14 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
-import android.util.Log
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlin.math.roundToInt
+import timber.log.Timber
 
 class OnBodySensorManager : SensorManager, SensorEventListener {
     companion object {
-
-        private const val TAG = "OnBodySensor"
         private var isListenerRegistered = false
         private val onBodySensor = SensorManager.BasicSensor(
             "on_body",
@@ -69,7 +67,7 @@ class OnBodySensorManager : SensorManager, SensorEventListener {
                 onBodySensors,
                 SENSOR_DELAY_NORMAL
             )
-            Log.d(TAG, "On body sensor listener registered")
+            Timber.d("On body sensor listener registered")
             isListenerRegistered = true
         }
     }
@@ -81,7 +79,7 @@ class OnBodySensorManager : SensorManager, SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
         if (event?.sensor?.type == Sensor.TYPE_LOW_LATENCY_OFFBODY_DETECT) {
             val state = event.values[0].roundToInt() != 0
-            Log.d(TAG, "onbody state: $state and ${event.values[0]}")
+            Timber.d("onbody state: $state and ${event.values[0]}")
             onSensorUpdated(
                 latestContext,
                 onBodySensor,

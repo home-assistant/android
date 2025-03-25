@@ -7,7 +7,6 @@ import io.homeassistant.companion.android.sensors.LocationSensorManager
 
 class HighAccuracyLocationReceiver : BroadcastReceiver() {
     companion object {
-        const val TAG = "HighAccuracyLocationReceiver"
         const val HIGH_ACCURACY_LOCATION_DISABLE = "DISABLE_HIGH_ACCURACY_MODE"
     }
 

@@ -8,8 +8,6 @@ import java.util.TimeZone
 
 class TimeZoneManager : SensorManager {
     companion object {
-        private const val TAG = "TimeZone"
-
         val currentTimeZone = SensorManager.BasicSensor(
             "current_time_zone",
             "sensor",

@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.conversation
 
 import android.app.Application
 import android.content.Intent
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -20,6 +19,7 @@ import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import io.homeassistant.companion.android.conversation.views.AssistMessage
 import javax.inject.Inject
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @HiltViewModel
 class ConversationViewModel @Inject constructor(
@@ -29,10 +29,6 @@ class ConversationViewModel @Inject constructor(
     private val wearPrefsRepository: WearPrefsRepository,
     application: Application
 ) : AssistViewModelBase(serverManager, audioRecorder, audioUrlPlayer, application) {
-
-    companion object {
-        private const val TAG = "ConvViewModel"
-    }
 
     private var useAssistPipeline = false
     private var useAssistPipelineStt = false
@@ -230,7 +226,7 @@ class ConversationViewModel @Inject constructor(
         val recording = try {
             recorderProactive || audioRecorder.startRecording()
         } catch (e: Exception) {
-            Log.e(TAG, "Exception while starting recording", e)
+            Timber.e(e, "Exception while starting recording")
             false
         }
 

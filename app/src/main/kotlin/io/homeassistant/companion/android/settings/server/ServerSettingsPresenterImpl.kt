@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.server
 
-import android.util.Log
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
@@ -11,15 +10,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 class ServerSettingsPresenterImpl @Inject constructor(
     private val serverManager: ServerManager,
     private val wifiHelper: WifiHelper
 ) : ServerSettingsPresenter, PreferenceDataStore() {
-
-    companion object {
-        private const val TAG = "ServerSettingsPresImpl"
-    }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     private lateinit var view: ServerSettingsView
@@ -99,7 +95,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
                     try {
                         serverManager.integrationRepository(serverId).sessionTimeOut(value.toString().toInt())
                     } catch (e: Exception) {
-                        Log.e(TAG, "Issue saving session timeout value", e)
+                        Timber.e(e, "Issue saving session timeout value")
                     }
                 }
                 else -> throw IllegalArgumentException("No string found by this key: $key")
@@ -112,7 +108,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
             try {
                 serverManager.authenticationRepository(serverId).revokeSession()
             } catch (e: Exception) {
-                Log.w(TAG, "Unable to revoke session for server", e)
+                Timber.w(e, "Unable to revoke session for server")
                 // Remove server anyway, the user wants to delete and we don't need the server for that
             }
             serverManager.removeServer(serverId)
@@ -179,7 +175,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
         try {
             serverManager.integrationRepository(serverId).setAppActive(active)
         } catch (e: IllegalArgumentException) {
-            Log.w(TAG, "Cannot set app active $active for server $serverId")
+            Timber.w("Cannot set app active $active for server $serverId")
             Unit
         }
     }

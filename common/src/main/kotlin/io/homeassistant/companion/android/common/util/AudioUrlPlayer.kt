@@ -6,7 +6,6 @@ import android.media.AudioManager.OnAudioFocusChangeListener
 import android.media.AudioManager.STREAM_MUSIC
 import android.media.MediaPlayer
 import android.os.Build
-import android.util.Log
 import androidx.annotation.VisibleForTesting
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
@@ -16,6 +15,7 @@ import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 /**
  * Simple interface for playing short streaming audio (from URLs).
@@ -23,10 +23,6 @@ import kotlinx.coroutines.withContext
 class AudioUrlPlayer @VisibleForTesting constructor(private val audioManager: AudioManager?, private val mediaPlayerCreator: () -> MediaPlayer) {
 
     constructor(audioManager: AudioManager?) : this(audioManager, { MediaPlayer() })
-
-    companion object {
-        private const val TAG = "AudioUrlPlayer"
-    }
 
     @VisibleForTesting var player: MediaPlayer? = null
 
@@ -72,7 +68,7 @@ class AudioUrlPlayer @VisibleForTesting constructor(private val audioManager: Au
                         }
                     }
                     setOnErrorListener { _, what, extra ->
-                        Log.e(TAG, "Media player encountered error: $what ($extra)")
+                        Timber.e("Media player encountered error: $what ($extra)")
                         releasePlayer()
                         cont.resume(false)
                         return@setOnErrorListener true
@@ -86,7 +82,7 @@ class AudioUrlPlayer @VisibleForTesting constructor(private val audioManager: Au
                     player?.setDataSource(url)
                     player?.prepareAsync()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Media player couldn't be prepared", e)
+                    Timber.e(e, "Media player couldn't be prepared")
                     cont.resume(false)
                 }
             }
@@ -108,7 +104,7 @@ class AudioUrlPlayer @VisibleForTesting constructor(private val audioManager: Au
         return try {
             audioManager?.getStreamVolume(STREAM_MUSIC) != 0
         } catch (e: RuntimeException) {
-            Log.e(TAG, "Couldn't get stream volume", e)
+            Timber.e(e, "Couldn't get stream volume")
             true
         }
     }

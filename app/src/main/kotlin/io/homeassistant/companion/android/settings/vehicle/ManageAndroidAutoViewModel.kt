@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.settings.vehicle
 
 import android.app.Application
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -20,6 +19,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import org.burnoutcrew.reorderable.ItemPosition
+import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
@@ -29,9 +29,6 @@ class ManageAndroidAutoViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(application) {
 
-    companion object {
-        private const val TAG = "AAViewModel"
-    }
     val favoritesList = mutableStateListOf<String>()
 
     var sortedEntities by mutableStateOf<List<Entity<*>>>(emptyList())
@@ -48,7 +45,7 @@ class ManageAndroidAutoViewModel @Inject constructor(
                                 isVehicleDomain(it)
                             }
                     } catch (e: Exception) {
-                        Log.e(TAG, "Couldn't load entities for server", e)
+                        Timber.e(e, "Couldn't load entities for server")
                         emptyList()
                     }
                 }

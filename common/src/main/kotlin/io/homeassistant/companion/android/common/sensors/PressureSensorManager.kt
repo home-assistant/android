@@ -6,15 +6,13 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
-import android.util.Log
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import java.math.RoundingMode
+import timber.log.Timber
 
 class PressureSensorManager : SensorManager, SensorEventListener {
     companion object {
-
-        private const val TAG = "PressureSensor"
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
         private val pressureSensor = SensorManager.BasicSensor(
@@ -64,7 +62,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
 
         val now = System.currentTimeMillis()
         if (listenerLastRegistered + SensorManager.SENSOR_LISTENER_TIMEOUT < now && isListenerRegistered) {
-            Log.d(TAG, "Re-registering listener as it appears to be stuck")
+            Timber.d("Re-registering listener as it appears to be stuck")
             mySensorManager.unregisterListener(this)
             isListenerRegistered = false
         }
@@ -78,7 +76,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
                 pressureSensors,
                 SENSOR_DELAY_NORMAL
             )
-            Log.d(TAG, "Pressure sensor listener registered")
+            Timber.d("Pressure sensor listener registered")
             isListenerRegistered = true
             listenerLastRegistered = now.toInt()
         }
@@ -101,7 +99,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
             }
         }
         mySensorManager.unregisterListener(this)
-        Log.d(TAG, "Pressure sensor listener unregistered")
+        Timber.d("Pressure sensor listener unregistered")
         isListenerRegistered = false
     }
 }

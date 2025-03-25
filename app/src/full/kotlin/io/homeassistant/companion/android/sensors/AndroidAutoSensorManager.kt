@@ -2,20 +2,16 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import androidx.car.app.connection.CarConnection
 import androidx.lifecycle.Observer
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class AndroidAutoSensorManager : SensorManager, Observer<Int> {
 
     companion object {
-
-        internal const val TAG = "AndroidAutoSM"
-        private var enabled = false
-
         private val androidAutoConnected = SensorManager.BasicSensor(
             "android_auto",
             "binary_sensor",
@@ -59,7 +55,7 @@ class AndroidAutoSensorManager : SensorManager, Observer<Int> {
                 carConnection = try {
                     CarConnection(context.applicationContext)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to get car connection", e)
+                    Timber.e(e, "Failed to get car connection")
                     null
                 }
             }

@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.home
 import android.app.Application
 import android.content.ComponentName
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -48,6 +47,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -58,10 +58,6 @@ class MainViewModel @Inject constructor(
     private val thermostatTileDao: ThermostatTileDao,
     application: Application
 ) : AndroidViewModel(application) {
-
-    companion object {
-        const val TAG = "MainViewModel"
-    }
 
     enum class LoadingState {
         LOADING,
@@ -211,7 +207,7 @@ class MainViewModel @Inject constructor(
                     LoadingState.ERROR
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Exception while loading entities", e)
+                Timber.e(e, "Exception while loading entities")
                 loadingState.value = LoadingState.ERROR
             }
         }
@@ -389,7 +385,7 @@ class MainViewModel @Inject constructor(
                 try {
                     sensorManager.requestSensorUpdate(getApplication())
                 } catch (e: Exception) {
-                    Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+                    Timber.e(e, "Exception while requesting update for sensor $sensorId")
                 }
             }
         }

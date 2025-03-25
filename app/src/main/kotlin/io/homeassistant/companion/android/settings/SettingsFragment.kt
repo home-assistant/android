@@ -12,7 +12,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
-import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.NotificationManagerCompat
@@ -57,15 +56,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import timber.log.Timber
 
 class SettingsFragment(
     private val presenter: SettingsPresenter,
     private val langProvider: LanguagesProvider
 ) : SettingsView, PreferenceFragmentCompat() {
-
-    companion object {
-        private const val TAG = "SettingsFragment"
-    }
 
     private val requestBackgroundAccessResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         updateBackgroundAccessPref()
@@ -277,7 +273,7 @@ class SettingsFragment(
                                 val utcDateTime = Instant.parse(rateLimits.resetsAt)
                                 formattedDate = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).format(utcDateTime.atZone(ZoneId.systemDefault()))
                             } catch (e: Exception) {
-                                Log.d(TAG, "Cannot parse notification rate limit date \"${rateLimits.resetsAt}\"", e)
+                                Timber.d(e, "Cannot parse notification rate limit date \"${rateLimits.resetsAt}\"")
                             }
                         }
                         it.isVisible = true
@@ -447,7 +443,7 @@ class SettingsFragment(
             try {
                 serverPreference.icon = AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_stat_ic_notification_blue)
             } catch (e: Exception) {
-                Log.e(TAG, "Unable to set the server icon", e)
+                Timber.e(e, "Unable to set the server icon")
             }
             serverPreference.setOnPreferenceClickListener {
                 serverAuth = server.id

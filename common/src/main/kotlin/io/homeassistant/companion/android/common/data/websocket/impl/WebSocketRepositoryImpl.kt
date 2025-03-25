@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.data.websocket.impl
 
-import android.util.Log
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.contains
 import com.fasterxml.jackson.module.kotlin.convertValue
@@ -83,6 +82,7 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
+import timber.log.Timber
 
 class WebSocketRepositoryImpl @AssistedInject constructor(
     private val okHttpClient: OkHttpClient,
@@ -91,8 +91,6 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
 ) : WebSocketRepository, WebSocketListener() {
 
     companion object {
-        private const val TAG = "WebSocketRepository"
-
         private const val SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN = "assist_pipeline/run"
         private const val SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS = "subscribe_events"
         private const val SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES = "subscribe_entities"
@@ -396,7 +394,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                                 }
                             }
                             subscription?.let {
-                                Log.d(TAG, "Unsubscribing from $type with data $data")
+                                Timber.d("Unsubscribing from $type with data $data")
                                 sendMessage(
                                     mapOf(
                                         "type" to "unsubscribe_events",
@@ -418,7 +416,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                 )
                 val response = sendMessage(webSocketRequest)
                 if (response == null || response.success != true) {
-                    Log.e(TAG, "Unable to subscribe to $type with data $data")
+                    Timber.e("Unable to subscribe to $type with data $data")
                     synchronized(activeMessages) {
                         activeMessages.entries
                             .firstOrNull { it.value.message == subscribeMessage }
@@ -572,7 +570,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
 
             val url = server?.connection?.getUrl()
             if (url == null) {
-                Log.w(TAG, "No url to connect websocket too.")
+                Timber.w("No url to connect websocket too.")
                 return false
             }
 
@@ -598,7 +596,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                     )
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Unable to connect", e)
+                Timber.e(e, "Unable to connect")
                 return false
             }
 
@@ -615,7 +613,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                                     "coalesce_messages" to 1
                                 )
                             )
-                            Log.d(TAG, "Sending message ${supportedFeaturesMessage["id"]}: $supportedFeaturesMessage")
+                            Timber.d("Sending message ${supportedFeaturesMessage["id"]}: $supportedFeaturesMessage")
                             it.send(
                                 mapper.writeValueAsString(supportedFeaturesMessage)
                             )
@@ -623,7 +621,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                     }
                     didConnect
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unable to authenticate", e)
+                    Timber.e(e, "Unable to authenticate")
                     false
                 }
             }
@@ -644,22 +642,22 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                             synchronized(it) {
                                 val requestId = id.getAndIncrement()
                                 val outbound = request.message.plus("id" to requestId)
-                                Log.d(TAG, "Sending message $requestId: $outbound")
+                                Timber.d("Sending message $requestId: $outbound")
                                 activeMessages[requestId] = request.apply {
                                     onResponse = cont
                                 }
                                 connection?.send(mapper.writeValueAsString(outbound))
-                                Log.d(TAG, "Message number $requestId sent")
+                                Timber.d("Message number $requestId sent")
                             }
                         }
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Exception while sending message", e)
+                    Timber.e(e, "Exception while sending message")
                     null
                 }
             }
         } else {
-            Log.w(TAG, "Unable to send message, not connected: $request")
+            Timber.w("Unable to send message, not connected: $request")
             null
         }
     }
@@ -674,12 +672,12 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                         }
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Exception while sending bytes", e)
+                    Timber.e(e, "Exception while sending bytes")
                     null
                 }
             }
         } else {
-            Log.w(TAG, "Unable to send bytes, not connected")
+            Timber.w("Unable to send bytes, not connected")
             null
         }
     }
@@ -705,7 +703,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                 if (!it.hasContinuationBeenInvoked.getAndSet(true) && cont.isActive) {
                     cont.resumeWith(Result.success(response))
                 } else {
-                    Log.w(TAG, "Response continuation has already been invoked for ${response.id}, ${response.event}")
+                    Timber.w("Response continuation has already been invoked for ${response.id}, ${response.event}")
                 }
             }
             if (it.eventFlow == null) {
@@ -735,7 +733,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                     if (trigger != null) {
                         mapper.convertValue(trigger, TriggerEvent::class.java)
                     } else {
-                        Log.w(TAG, "Received no trigger value for trigger subscription, skipping")
+                        Timber.w("Received no trigger value for trigger subscription, skipping")
                         return
                     }
                 } else if (subscriptionType == SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN) {
@@ -751,13 +749,13 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                             AssistPipelineEventType.TTS_END -> mapper.convertValue(eventDataMap, AssistPipelineTtsEnd::class.java)
                             AssistPipelineEventType.ERROR -> mapper.convertValue(eventDataMap, AssistPipelineError::class.java)
                             else -> {
-                                Log.d(TAG, "Unknown event type ignoring. received data = \n$response")
+                                Timber.d("Unknown event type ignoring. received data = \n$response")
                                 null
                             }
                         }
                         AssistPipelineEvent(eventType.textValue(), eventData)
                     } else {
-                        Log.w(TAG, "Received Assist pipeline event without type, skipping")
+                        Timber.w("Received Assist pipeline event without type, skipping")
                         return
                     }
                 } else if (eventResponseType != null && eventResponseType.isTextual) {
@@ -775,7 +773,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                             object :
                                 TypeReference<EventResponse<EntityRegistryUpdatedEvent>>() {}
                         else -> {
-                            Log.d(TAG, "Unknown event type received")
+                            Timber.d("Unknown event type received")
                             object : TypeReference<EventResponse<Any>>() {}
                         }
                     }
@@ -785,17 +783,17 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                         eventResponseClass
                     ).data
                 } else {
-                    Log.d(TAG, "Unknown event for subscription received, skipping")
+                    Timber.d("Unknown event for subscription received, skipping")
                     return
                 }
 
             try {
                 messageData.onEvent?.send(message)
             } catch (e: Exception) {
-                Log.e(TAG, "Unable to send event message to channel", e)
+                Timber.e(e, "Unable to send event message to channel")
             }
         } ?: run {
-            Log.d(TAG, "Received event for unknown subscription, unsubscribing")
+            Timber.d("Received event for unknown subscription, unsubscribing")
             sendMessage(
                 mapOf(
                     "type" to "unsubscribe_events",
@@ -826,7 +824,7 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                                 if (!it.value.hasContinuationBeenInvoked.getAndSet(true) && cont.isActive) {
                                     cont.resumeWithException(IOException())
                                 } else {
-                                    Log.w(TAG, "Response continuation has already been invoked, skipping IOException")
+                                    Timber.w("Response continuation has already been invoked, skipping IOException")
                                 }
                             }
                             activeMessages.remove(it.key)
@@ -842,13 +840,13 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
             ioScope.launch {
                 delay(10000)
                 if (connect()) {
-                    Log.d(TAG, "Resubscribing to active subscriptions...")
+                    Timber.d("Resubscribing to active subscriptions...")
                     synchronized(activeMessages) {
                         activeMessages.filterValues { it.eventFlow != null }.entries
                     }.forEach { (oldId, oldMessage) ->
                         val response = sendMessage(oldMessage)
                         if (response == null || response.success != true) {
-                            Log.e(TAG, "Issue re-registering subscription with ${oldMessage.message}")
+                            Timber.e("Issue re-registering subscription with ${oldMessage.message}")
                         } else {
                             // sendMessage will have created a new item for this subscription
                             activeMessages.remove(oldId)
@@ -860,11 +858,11 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
     }
 
     override fun onOpen(webSocket: WebSocket, response: Response) {
-        Log.d(TAG, "Websocket: onOpen")
+        Timber.d("Websocket: onOpen")
     }
 
     override fun onMessage(webSocket: WebSocket, text: String) {
-        Log.d(TAG, "Websocket: onMessage (${if (BuildConfig.DEBUG) "text: $text" else "text"})")
+        Timber.d("Websocket: onMessage (${if (BuildConfig.DEBUG) "text: $text" else "text"})")
         val textTree = mapper.readTree(text)
         val messages: List<SocketResponse> = if (textTree.isArray) {
             textTree.elements().asSequence().toList().map { mapper.convertValue(it) }
@@ -874,39 +872,39 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
 
         // Send messages to the queue to ensure they are handled in order and don't block the function
         messages.forEach { message ->
-            Log.d(TAG, "Message number ${message.id} received")
+            Timber.d("Message number ${message.id} received")
             val success = messageQueue.trySend(
                 ioScope.launch(start = CoroutineStart.LAZY) {
                     when (message.type) {
-                        "auth_required" -> Log.d(TAG, "Auth Requested")
+                        "auth_required" -> Timber.d("Auth Requested")
                         "auth_ok" -> handleAuthComplete(true, message.haVersion)
                         "auth_invalid" -> handleAuthComplete(false, message.haVersion)
                         "pong", "result" -> handleMessage(message)
                         "event" -> handleEvent(message)
-                        else -> Log.d(TAG, "Unknown message type: ${message.type}")
+                        else -> Timber.d("Unknown message type: ${message.type}")
                     }
                 }
             )
-            if (!success.isSuccess) Log.w(TAG, "Message number ${message.id} not being processed")
+            if (!success.isSuccess) Timber.w("Message number ${message.id} not being processed")
         }
     }
 
     override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-        Log.d(TAG, "Websocket: onMessage (bytes)")
+        Timber.d("Websocket: onMessage (bytes)")
     }
 
     override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-        Log.d(TAG, "Websocket: onClosing code: $code, reason: $reason")
+        Timber.d("Websocket: onClosing code: $code, reason: $reason")
         handleClosingSocket()
     }
 
     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-        Log.d(TAG, "Websocket: onClosed")
+        Timber.d("Websocket: onClosed")
         handleClosingSocket()
     }
 
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-        Log.e(TAG, "Websocket: onFailure", t)
+        Timber.e(t, "Websocket: onFailure")
         if (connected.isActive) {
             connected.completeExceptionally(t)
         }

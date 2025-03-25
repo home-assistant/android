@@ -9,7 +9,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
 import android.os.Build
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
@@ -38,6 +37,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 abstract class SensorReceiverBase : BroadcastReceiver() {
     companion object {
@@ -62,7 +62,6 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
-    protected abstract val tag: String
     protected abstract val currentAppVersion: String
     protected abstract val managers: List<SensorManager>
 
@@ -89,14 +88,13 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
     ): PendingIntent?
 
     override fun onReceive(context: Context, intent: Intent) {
-        Log.d(tag, "Received intent: ${intent.action}")
+        Timber.d("Received intent: ${intent.action}")
         skippableActions[intent.action]?.let { sensors ->
             val noSensorsEnabled = sensors.none {
                 isSensorEnabled(it)
             }
             if (noSensorsEnabled) {
-                Log.d(
-                    tag,
+                Timber.d(
                     String.format(
                         "Sensor(s) %s corresponding to received event %s are disabled, skipping sensors update",
                         sensors.toString(),
@@ -123,7 +121,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                             ?.associate { it.toString() to intent.extras?.get(it).toString() }
                             ?.plus("intent" to intent.action.toString())
                             ?: mapOf("intent" to intent.action.toString())
-                        Log.d(tag, "Event data: $eventData")
+                        Timber.d("Event data: $eventData")
                         sensorDao.get(LastUpdateManager.lastUpdate.id).forEach { sensor ->
                             if (!sensor.enabled) return@forEach
                             try {
@@ -131,9 +129,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                                     "android.intent_received",
                                     eventData as Map<String, Any>
                                 )
-                                Log.d(tag, "Event successfully sent to Home Assistant")
+                                Timber.d("Event successfully sent to Home Assistant")
                             } catch (e: Exception) {
-                                Log.e(tag, "Unable to send event data to Home Assistant", e)
+                                Timber.e(e, "Unable to send event data to Home Assistant")
                             }
                         }
                     }
@@ -143,7 +141,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
         ioScope.launch {
             if (intent.action == Intent.ACTION_TIME_TICK && !shouldDoFastUpdates(context)) {
-                Log.i(tag, "Skipping faster update because not charging/different preference")
+                Timber.i("Skipping faster update because not charging/different preference")
                 return@launch
             }
             if (intent.action == ACTION_UPDATE_SENSOR) {
@@ -174,7 +172,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         intent: Intent?
     ) {
         if (!serverManager.isRegistered()) {
-            Log.w(tag, "Device not registered, skipping sensor update/registration")
+            Timber.w("Device not registered, skipping sensor update/registration")
             return
         }
 
@@ -184,7 +182,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 try {
                     manager.requestSensorUpdate(context, intent)
                 } catch (e: Exception) {
-                    Log.e(tag, "Issue requesting updates for ${context.getString(manager.name)}", e)
+                    Timber.e(e, "Issue requesting updates for ${context.getString(manager.name)}")
                 }
             }
         }
@@ -193,9 +191,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             serverManager.defaultServers.map { server ->
                 ioScope.async { syncSensorsWithServer(context, serverManager, server, sensorDao) }
             }.awaitAll()
-            Log.i(tag, "Sensor updates and sync completed")
+            Timber.i("Sensor updates and sync completed")
         } catch (e: Exception) {
-            Log.e(tag, "Exception while awaiting sensor updates.", e)
+            Timber.e(e, "Exception while awaiting sensor updates.")
         }
     }
 
@@ -216,7 +214,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         ?.filter { it.value["disabled"] != null }
                         ?.mapValues { !(it.value["disabled"] as Boolean) } // Map to sensor id -> enabled
                 } catch (e: Exception) {
-                    Log.e(tag, "Error while getting core config to sync sensor status", e)
+                    Timber.e(e, "Error while getting core config to sync sensor status")
                     null
                 }
             } else {
@@ -262,7 +260,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         sensor.appRegistration = currentAppVersion
                         sensorDao.update(sensor)
                     } catch (e: Exception) {
-                        Log.e(tag, "Issue registering sensor ${basicSensor.id}", e)
+                        Timber.e(e, "Issue registering sensor ${basicSensor.id}")
                     }
                 } else if (
                     canBeRegistered &&
@@ -307,7 +305,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         sensor.appRegistration = currentAppVersion
                         sensorDao.update(sensor)
                     } catch (e: Exception) {
-                        Log.e(tag, "Issue enabling/disabling sensor ${basicSensor.id}", e)
+                        Timber.e(e, "Issue enabling/disabling sensor ${basicSensor.id}")
                     }
                 } else if (
                     canBeRegistered &&
@@ -324,9 +322,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         sensor.appRegistration = currentAppVersion
                         sensorDao.update(sensor)
                     } catch (e: Exception) {
-                        Log.e(tag, "Issue re-registering sensor ${basicSensor.id}", e)
+                        Timber.e(e, "Issue re-registering sensor ${basicSensor.id}")
                         if (e is IntegrationException && (e.cause is ConnectException || e.cause is SocketTimeoutException)) {
-                            Log.w(tag, "Server can't be reached, skipping other registrations for sensors due to version change")
+                            Timber.w("Server can't be reached, skipping other registrations for sensors due to version change")
                             serverIsReachable = false
                         }
                     }
@@ -351,9 +349,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 val exceptionOk = e is IntegrationException &&
                     (e.cause is IOException || e.cause is CancellationException)
                 if (exceptionOk) {
-                    Log.w(tag, "Exception while updating sensors: ${e::class.java.simpleName}: ${e.cause?.let { it::class.java.name } }")
+                    Timber.w("Exception while updating sensors: ${e::class.java.simpleName}: ${e.cause?.let { it::class.java.name } }")
                 } else {
-                    Log.e(tag, "Exception while updating sensors.", e)
+                    Timber.e(e, "Exception while updating sensors.")
                 }
                 exceptionOk
             }
@@ -371,7 +369,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 }
             }
         } else {
-            Log.d(tag, "Nothing to update for server ${server.id} (${server.friendlyName})")
+            Timber.d("Nothing to update for server ${server.id} (${server.friendlyName})")
         }
         return success
     }
@@ -400,7 +398,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         try {
             sensorManager.requestSensorUpdate(context)
         } catch (e: Exception) {
-            Log.e(tag, "Issue requesting updates for ${context.getString(sensorManager.name)}", e)
+            Timber.e(e, "Issue requesting updates for ${context.getString(sensorManager.name)}")
         }
         val basicSensor = sensorManager.getAvailableSensors(context).firstOrNull { it.id == sensorId } ?: return
         val fullSensors = sensorDao.getFull(sensorId).toSensorsWithAttributes()
@@ -418,7 +416,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         fullSensor.sensor.icon
                     )
                 } catch (e: Exception) {
-                    Log.e(tag, "Exception while updating individual sensor.", e)
+                    Timber.e(e, "Exception while updating individual sensor.")
                 }
             }
         }

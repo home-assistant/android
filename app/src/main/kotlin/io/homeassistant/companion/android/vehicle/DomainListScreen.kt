@@ -35,10 +35,6 @@ class DomainListScreen(
     private val entityRegistry: List<EntityRegistryResponse>?
 ) : BaseVehicleScreen(carContext) {
 
-    companion object {
-        private const val TAG = "DomainList"
-    }
-
     private val domains = mutableSetOf<String>()
     private var domainsAdded = false
 

@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.common.util.tts
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioManager
-import android.util.Log
 import android.widget.Toast
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R
@@ -14,8 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
-
-private const val TAG = "TextToSpeechClient"
+import timber.log.Timber
 
 /**
  * Entry point for speech synthesis and playback.
@@ -49,7 +47,7 @@ class TextToSpeechClient(
             if (tts.isNullOrEmpty()) {
                 tts = applicationContext.getString(R.string.tts_no_text)
             }
-            Log.d(TAG, "processing utterance ID: $utteranceId; msg: $tts")
+            Timber.d("processing utterance ID: $utteranceId; msg: $tts")
 
             val streamVolumeAdjustment = getStreamVolumeAdjustment(applicationContext, data)
             val audioAttributes = getAudioAttributes(data)
@@ -71,7 +69,7 @@ class TextToSpeechClient(
      * Interrupts any playback and clears the queue.
      */
     fun stopTTS() {
-        Log.d(TAG, "stopped TTS")
+        Timber.d("stopped TTS")
         mainJob.cancelChildren()
         utteranceQueue.clear()
         textToSpeechEngine.release()
@@ -85,10 +83,9 @@ class TextToSpeechClient(
     private suspend fun play() {
         isPlaying = true
         textToSpeechEngine.initialize().onFailure { throwable ->
-            Log.e(
-                TAG,
-                "Failed to initialize engine.",
-                throwable
+            Timber.e(
+                throwable,
+                "Failed to initialize engine."
             )
             handleError(applicationContext.getString(R.string.tts_error_init))
             utteranceQueue.clear()
@@ -96,7 +93,7 @@ class TextToSpeechClient(
             while (utteranceQueue.isNotEmpty()) {
                 utteranceQueue.removeFirst().let { utterance ->
                     textToSpeechEngine.play(utterance).onFailure { throwable ->
-                        Log.e(TAG, "Failed to play utterance '${utterance.id}'", throwable)
+                        Timber.e(throwable, "Failed to play utterance '${utterance.id}'")
                         handleError(
                             applicationContext.getString(R.string.tts_error_utterance, utterance.text)
                         )

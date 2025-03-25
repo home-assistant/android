@@ -4,7 +4,6 @@ import android.app.Application
 import android.appwidget.AppWidgetManager
 import android.os.Build
 import android.os.RemoteException
-import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.getSystemService
@@ -19,6 +18,7 @@ import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @HiltViewModel
 class ManageWidgetsViewModel @Inject constructor(
@@ -30,8 +30,6 @@ class ManageWidgetsViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(application) {
     companion object {
-        private const val TAG = "ManageWidgetsViewModel"
-
         const val CONFIGURE_REQUEST_LAUNCHER =
             "io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER"
     }
@@ -53,7 +51,7 @@ class ManageWidgetsViewModel @Inject constructor(
             try {
                 return appWidgetManager?.isRequestPinAppWidgetSupported ?: false
             } catch (e: RemoteException) {
-                Log.e(TAG, "Unable to read isRequestPinAppWidgetSupported", e)
+                Timber.e(e, "Unable to read isRequestPinAppWidgetSupported")
             }
         }
         return false

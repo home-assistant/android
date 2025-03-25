@@ -5,21 +5,17 @@ import android.content.Context
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import com.google.android.gms.home.matter.Matter
 import com.google.android.gms.home.matter.commissioning.CommissioningRequest
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import javax.inject.Inject
+import timber.log.Timber
 
 class MatterManagerImpl @Inject constructor(
     private val serverManager: ServerManager,
     private val packageManager: PackageManager
 ) : MatterManager {
-
-    companion object {
-        private const val TAG = "MatterManagerImpl"
-    }
 
     override fun appSupportsCommissioning(): Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 && !packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
@@ -58,7 +54,7 @@ class MatterManagerImpl @Inject constructor(
         return try {
             serverManager.webSocketRepository(serverId).commissionMatterDevice(code)
         } catch (e: Exception) {
-            Log.e(TAG, "Error while executing server commissioning request", e)
+            Timber.e(e, "Error while executing server commissioning request")
             null
         }
     }
@@ -67,7 +63,7 @@ class MatterManagerImpl @Inject constructor(
         return try {
             serverManager.webSocketRepository(serverId).commissionMatterDeviceOnNetwork(pin, ip)
         } catch (e: Exception) {
-            Log.e(TAG, "Error while executing server commissioning request", e)
+            Timber.e(e, "Error while executing server commissioning request")
             null
         }
     }

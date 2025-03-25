@@ -10,7 +10,6 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class QuestSensorManager : SensorManager {
     companion object {
-        private const val TAG = "QuestSensor"
         val headsetMounted = SensorManager.BasicSensor(
             "in_use",
             "binary_sensor",

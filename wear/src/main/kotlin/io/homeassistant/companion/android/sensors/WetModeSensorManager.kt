@@ -7,7 +7,6 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class WetModeSensorManager : SensorManager {
     companion object {
-        private const val TAG = "WetModeSensor"
         val wetModeSensor = SensorManager.BasicSensor(
             "wet_mode",
             "binary_sensor",
