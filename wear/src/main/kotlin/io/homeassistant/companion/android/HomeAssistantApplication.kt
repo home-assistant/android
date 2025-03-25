@@ -10,7 +10,6 @@ import android.net.wifi.WifiManager
 import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
-import android.util.Log
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
@@ -38,8 +37,6 @@ open class HomeAssistantApplication : Application() {
         super.onCreate()
         // We should initialize the logger as early as possible in the lifecycle of the application
         Timber.plant(Timber.DebugTree())
-
-        Log.e("HA", "hello world")
 
         ioScope.launch {
             keyStore.load(applicationContext, KeyStoreRepositoryImpl.ALIAS)
