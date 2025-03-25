@@ -41,7 +41,6 @@ class HomeActivity : ComponentActivity(), HomeView {
     }
 
     companion object {
-        private const val TAG = "HomeActivity"
         private const val EXTRA_FROM_ONBOARDING = "from_onboarding"
 
         fun newInstance(context: Context, fromOnboarding: Boolean = false): Intent {

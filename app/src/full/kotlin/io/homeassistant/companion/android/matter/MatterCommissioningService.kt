@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.matter
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
 import com.google.android.gms.home.matter.commissioning.CommissioningCompleteMetadata
 import com.google.android.gms.home.matter.commissioning.CommissioningRequestMetadata
 import com.google.android.gms.home.matter.commissioning.CommissioningService
@@ -16,13 +15,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class MatterCommissioningService : Service(), CommissioningService.Callback {
-
-    companion object {
-        private const val TAG = "MatterCommissioningServ"
-    }
 
     @Inject
     lateinit var serverManager: ServerManager
@@ -49,7 +45,7 @@ class MatterCommissioningService : Service(), CommissioningService.Callback {
     }
 
     override fun onCommissioningRequested(metadata: CommissioningRequestMetadata) {
-        Log.d(TAG, "Received request to commission Matter device")
+        Timber.d("Received request to commission Matter device")
 
         serviceScope.launch {
             // This service is used from the frontend, where the server requests commissioning. As a
@@ -59,7 +55,7 @@ class MatterCommissioningService : Service(), CommissioningService.Callback {
                 return@launch
             }
             val result = matterManager.commissionOnNetworkDevice(metadata.passcode, metadata.networkLocation.formattedIpAddress, serverId)
-            Log.d(TAG, "Server commissioning was ${if (result?.success == true) "successful" else "not successful (${result?.errorCode})"}")
+            Timber.d("Server commissioning was ${if (result?.success == true) "successful" else "not successful (${result?.errorCode})"}")
 
             if (result?.success == true) {
                 commissioningServiceDelegate.sendCommissioningComplete(

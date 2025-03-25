@@ -6,17 +6,13 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import java.util.Calendar
+import timber.log.Timber
 
 class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
-
-    companion object {
-        internal const val TAG = "ForegrndServiceLauncher"
-    }
 
     private var isStarting = false
     private var shouldStop = false
@@ -29,12 +25,12 @@ class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
             isStarting = true
             shouldStop = false
             ContextCompat.startForegroundService(context, Intent(context, serviceClass).apply { block() })
-            Log.d(TAG, "Start service ${serviceClass.simpleName}")
+            Timber.d("Start service ${serviceClass.simpleName}")
         } else {
             if (restartInProcess) {
-                Log.w(TAG, "Cannot start service ${serviceClass.simpleName}. Service currently restarting...")
+                Timber.w("Cannot start service ${serviceClass.simpleName}. Service currently restarting...")
             } else {
-                Log.w(TAG, "Cannot start service ${serviceClass.simpleName}. Service is not running...")
+                Timber.w("Cannot start service ${serviceClass.simpleName}. Service is not running...")
             }
         }
     }
@@ -44,13 +40,13 @@ class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
         if (isStarting || restartInProcess) {
             shouldStop = true
             if (restartInProcess) {
-                Log.d(TAG, "Stop service ${serviceClass.simpleName}. Service currently restarting. Stopping service after it is restarted.")
+                Timber.d("Stop service ${serviceClass.simpleName}. Service currently restarting. Stopping service after it is restarted.")
             } else {
-                Log.d(TAG, "Stop service ${serviceClass.simpleName}. Service is currently starting. Stopping service after it is started.")
+                Timber.d("Stop service ${serviceClass.simpleName}. Service is currently starting. Stopping service after it is started.")
             }
         } else if (isRunning) {
             context.stopService(Intent(context, serviceClass))
-            Log.d(TAG, "Stop service ${serviceClass.simpleName}")
+            Timber.d("Stop service ${serviceClass.simpleName}")
         }
     }
 
@@ -58,7 +54,7 @@ class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
     fun restartService(context: Context, block: Intent.() -> Unit = {}) {
         if (!restartInProcess && !isStarting) {
             if (isRunning) {
-                Log.d(TAG, "Restart service ${serviceClass.simpleName}")
+                Timber.d("Restart service ${serviceClass.simpleName}")
 
                 stopService(context)
 
@@ -74,14 +70,14 @@ class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
                 calendar.add(Calendar.SECOND, 2)
                 alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, restartServicePI)
             } else {
-                Log.d(TAG, "Restart service ${serviceClass.simpleName}. Service was not running.")
+                Timber.d("Restart service ${serviceClass.simpleName}. Service was not running.")
                 startService(context, block)
             }
         } else {
             if (restartInProcess) {
-                Log.w(TAG, "Cannot restart service ${serviceClass.simpleName}. Service currently restarting...")
+                Timber.w("Cannot restart service ${serviceClass.simpleName}. Service currently restarting...")
             } else {
-                Log.w(TAG, "Cannot restart service ${serviceClass.simpleName}. Service is currently starting...")
+                Timber.w("Cannot restart service ${serviceClass.simpleName}. Service is currently starting...")
             }
         }
     }
@@ -90,14 +86,14 @@ class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
     fun isRunning(): Boolean {
         val running = isRunning && !restartInProcess
 
-        Log.d(TAG, "Check if service ${serviceClass.simpleName} is running. Service running = $running")
+        Timber.d("Check if service ${serviceClass.simpleName} is running. Service running = $running")
 
         return running
     }
 
     @Synchronized
     fun onServiceDestroy(service: Service) {
-        Log.d(TAG, "Service ${serviceClass.simpleName} was destroyed. Stop service")
+        Timber.d("Service ${serviceClass.simpleName} was destroyed. Stop service")
         ServiceCompat.stopForeground(service, ServiceCompat.STOP_FOREGROUND_REMOVE)
         isRunning = false
     }
@@ -110,10 +106,10 @@ class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
         isRunning = true
         restartInProcess = false
 
-        Log.d(TAG, "Service ${serviceClass.simpleName} was created. Start service")
+        Timber.d("Service ${serviceClass.simpleName} was created. Start service")
 
         if (shouldStop) {
-            Log.d(TAG, "Service ${serviceClass.simpleName} should be stopped after. Service will be stopped after is started...")
+            Timber.d("Service ${serviceClass.simpleName} should be stopped after. Service will be stopped after is started...")
             shouldStop = false
             service.stopSelf()
         }

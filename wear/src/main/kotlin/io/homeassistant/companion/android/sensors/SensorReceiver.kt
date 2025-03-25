@@ -45,9 +45,6 @@ import io.homeassistant.companion.android.home.views.DEEPLINK_SENSOR_MANAGER
 @AndroidEntryPoint
 class SensorReceiver : SensorReceiverBase() {
 
-    override val tag: String
-        get() = TAG
-
     override val currentAppVersion: String
         get() = BuildConfig.VERSION_NAME
 
@@ -55,7 +52,6 @@ class SensorReceiver : SensorReceiverBase() {
         get() = MANAGERS
 
     companion object {
-        const val TAG = "SensorReceiver"
         private val allManager = listOf(
             AndroidOsSensorManager(),
             AppSensorManager(),

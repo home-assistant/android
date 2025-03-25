@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.onboarding
 
 import android.annotation.SuppressLint
-import android.util.Log
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.PutDataRequest
@@ -11,20 +10,17 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 @AndroidEntryPoint
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
 class WearOnboardingListener : WearableListenerService() {
 
-    companion object {
-        private const val TAG = "WearOnboardingListener"
-    }
-
     @Inject
     lateinit var serverManager: ServerManager
 
     override fun onMessageReceived(event: MessageEvent) {
-        Log.d("WearOnboardingListener", "onMessageReceived: $event")
+        Timber.d("onMessageReceived: $event")
 
         if (event.path == "/request_home_assistant_instance") {
             val nodeId = event.sourceNodeId
@@ -33,7 +29,7 @@ class WearOnboardingListener : WearableListenerService() {
     }
 
     private fun sendHomeAssistantInstance(nodeId: String) = runBlocking {
-        Log.d("WearOnboardingListener", "sendHomeAssistantInstance: $nodeId")
+        Timber.d("sendHomeAssistantInstance: $nodeId")
         // Retrieve current instance
         val url = serverManager.getServer()?.connection?.getUrl(false)
 
@@ -48,13 +44,12 @@ class WearOnboardingListener : WearableListenerService() {
             try {
                 Wearable.getDataClient(this@WearOnboardingListener).putDataItem(putDataReq)
                     .addOnCompleteListener {
-                        Log.d(
-                            TAG,
+                        Timber.d(
                             "sendHomeAssistantInstance: ${if (it.isSuccessful) "success" else "failed"}"
                         )
                     }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to send home assistant instance", e)
+                Timber.e(e, "Failed to send home assistant instance")
             }
         }
     }

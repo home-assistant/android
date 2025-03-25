@@ -12,7 +12,6 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Base64
-import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -27,10 +26,9 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 object DataUriDownloadManager {
-    private const val TAG = "DataUriDownloadMgr"
-
     suspend fun saveDataUri(
         context: Context,
         url: String,
@@ -121,7 +119,7 @@ object DataUriDownloadManager {
                 return@withContext scanAndGetDownload(context, dataFile.absolutePath, mimetype)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Exception while writing file from data URI", e)
+            Timber.e(e, "Exception while writing file from data URI")
             return@withContext null
         }
     }
@@ -136,7 +134,7 @@ object DataUriDownloadManager {
             arrayOf(path),
             arrayOf(mimetype)
         ) { _, uri ->
-            Log.d(TAG, "Received uri from media scanner for file: $uri")
+            Timber.d("Received uri from media scanner for file: $uri")
             cont.resume(uri)
         }
     }

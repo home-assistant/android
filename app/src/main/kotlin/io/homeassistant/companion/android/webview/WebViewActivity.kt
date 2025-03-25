@@ -22,7 +22,6 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
-import android.util.Log
 import android.util.Rational
 import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
@@ -119,6 +118,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.chromium.net.CronetEngine
 import org.json.JSONObject
+import timber.log.Timber
 
 @OptIn(androidx.media3.common.util.UnstableApi::class)
 @AndroidEntryPoint
@@ -129,7 +129,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         const val EXTRA_SERVER = "server"
         const val EXTRA_SHOW_WHEN_LOCKED = "show_when_locked"
 
-        private const val TAG = "WebviewActivity"
         private const val APP_PREFIX = "app://"
         private const val INTENT_PREFIX = "intent:"
         private const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
@@ -171,7 +170,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 success = true,
                 result = emptyMap<String, String>(),
                 callback = {
-                    Log.d(TAG, "NFC Write Complete $it")
+                    Timber.d("NFC Write Complete $it")
                 }
             )
         )
@@ -343,7 +342,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     description: String?,
                     failingUrl: String?
                 ) {
-                    Log.e(TAG, "onReceivedError: errorCode: $errorCode url:$failingUrl")
+                    Timber.e("onReceivedError: errorCode: $errorCode url:$failingUrl")
                     if (failingUrl == loadedUrl) {
                         showError()
                     }
@@ -360,7 +359,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                             val owner = "onPageFinished:$moreInfoEntity"
                             if (moreInfoMutex.tryLock(owner)) {
                                 delay(2000L)
-                                Log.d(TAG, "More info entity: $moreInfoEntity")
+                                Timber.d("More info entity: $moreInfoEntity")
                                 webView.evaluateJavascript(
                                     "document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$moreInfoEntity\" }}))"
                                 ) {
@@ -377,7 +376,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     request: WebResourceRequest?,
                     errorResponse: WebResourceResponse?
                 ) {
-                    Log.e(TAG, "onReceivedHttpError: ${errorResponse?.statusCode} : ${errorResponse?.reasonPhrase} for: ${request?.url}")
+                    Timber.e("onReceivedHttpError: ${errorResponse?.statusCode} : ${errorResponse?.reasonPhrase} for: ${request?.url}")
                     if (request?.url.toString() == loadedUrl) {
                         showError()
                     }
@@ -401,7 +400,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     handler: SslErrorHandler?,
                     error: SslError?
                 ) {
-                    Log.e(TAG, "onReceivedSslError: $error")
+                    Timber.e("onReceivedSslError: $error")
                     showError(
                         ErrorType.SSL,
                         error,
@@ -413,7 +412,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     view: WebView?,
                     handler: RenderProcessGoneDetail?
                 ): Boolean {
-                    Log.e(TAG, "onRenderProcessGone: webView crashed")
+                    Timber.e("onRenderProcessGone: webView crashed")
                     view?.let {
                         reload()
                         webViewAddJavascriptInterface()
@@ -436,7 +435,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     request?.url?.let {
                         try {
                             if (it.toString().startsWith(APP_PREFIX)) {
-                                Log.d(TAG, "Launching the app")
+                                Timber.d("Launching the app")
                                 val intent = packageManager.getLaunchIntentForPackage(
                                     it.toString().substringAfter(APP_PREFIX)
                                 )
@@ -444,7 +443,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                                     startActivity(intent)
                                 } else {
-                                    Log.w(TAG, "No intent to launch app found, opening app store")
+                                    Timber.w("No intent to launch app found, opening app store")
                                     val marketIntent = Intent(Intent.ACTION_VIEW)
                                     marketIntent.data = Uri.parse(
                                         MARKET_PREFIX + it.toString().substringAfter(APP_PREFIX)
@@ -453,7 +452,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 }
                                 return true
                             } else if (it.toString().startsWith(INTENT_PREFIX)) {
-                                Log.d(TAG, "Launching the intent")
+                                Timber.d("Launching the intent")
                                 val intent =
                                     Intent.parseUri(it.toString(), Intent.URI_INTENT_SCHEME)
                                 val intentPackage = intent.`package`?.let { it1 ->
@@ -462,7 +461,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     )
                                 }
                                 if (intentPackage == null && !intent.`package`.isNullOrEmpty()) {
-                                    Log.w(TAG, "No app found for intent prefix, opening app store")
+                                    Timber.w("No app found for intent prefix, opening app store")
                                     val marketIntent = Intent(Intent.ACTION_VIEW)
                                     marketIntent.data =
                                         Uri.parse(MARKET_PREFIX + intent.`package`.toString())
@@ -472,7 +471,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 }
                                 return true
                             } else if (!webView.url.toString().contains(it.toString())) {
-                                Log.d(TAG, "Launching browser")
+                                Timber.d("Launching browser")
                                 val browserIntent = Intent(Intent.ACTION_VIEW, it)
                                 startActivity(browserIntent)
                                 return true
@@ -480,7 +479,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 // Do nothing.
                             }
                         } catch (e: Exception) {
-                            Log.e(TAG, "Unable to override the URL", e)
+                            Timber.e(e, "Unable to override the URL")
                         }
                     }
                     return false
@@ -636,13 +635,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this)
-            Log.d(TAG, "Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}")
+            Timber.d("Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}")
         }
 
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 presenter.getMatterThreadStepFlow().collect {
-                    Log.d(TAG, "Matter/Thread step changed to $it")
+                    Timber.d("Matter/Thread step changed to $it")
                     when (it) {
                         MatterThreadStep.THREAD_EXPORT_TO_SERVER_MATTER,
                         MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY,
@@ -722,7 +721,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
                     @JavascriptInterface
                     fun externalBus(message: String) {
-                        Log.d(TAG, "External bus $message")
+                        Timber.d("External bus $message")
                         webView.post {
                             val json = JSONObject(message)
                             when (json.get("type")) {
@@ -766,7 +765,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                                 )
                                             ),
                                             callback = {
-                                                Log.d(TAG, "Callback $it")
+                                                Timber.d("Callback $it")
                                             }
                                         )
                                     )
@@ -867,7 +866,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         val colors = trimmedColorString.split(htmlArraySpacer)
 
                         for (color in colors) {
-                            Log.d(TAG, "Color from webview is \"$trimmedColorString\"")
+                            Timber.d("Color from webview is \"$trimmedColorString\"")
                         }
 
                         statusBarColor = presenter.parseWebViewColor(colors[0].trim())
@@ -1015,7 +1014,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 type = "result",
                 success = true,
                 callback = {
-                    Log.d(TAG, "Callback $it")
+                    Timber.d("Callback $it")
                 }
             )
         )
@@ -1091,7 +1090,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     fun processHaptic(hapticType: String) {
         val vm = getSystemService<Vibrator>()
 
-        Log.d(TAG, "Processing haptic tag for $hapticType")
+        Timber.d("Processing haptic tag for $hapticType")
         when (hapticType) {
             "success" -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -1139,16 +1138,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private fun authenticationResult(result: Int) {
         when (result) {
             Authenticator.SUCCESS -> {
-                Log.d(TAG, "Authentication successful, unlocking app")
+                Timber.d("Authentication successful, unlocking app")
                 appLocked = false
                 presenter.setAppActive(true)
                 binding.blurView.setBlurEnabled(false)
             }
             Authenticator.CANCELED -> {
-                Log.d(TAG, "Authentication canceled by user, closing activity")
+                Timber.d("Authentication canceled by user, closing activity")
                 finishAffinity()
             }
-            else -> Log.d(TAG, "Authentication failed, retry attempts allowed")
+            else -> Timber.d("Authentication failed, retry attempts allowed")
         }
         unlockingApp = false
     }
@@ -1250,7 +1249,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                 startActivity(browserIntent)
             } catch (e: Exception) {
-                Log.e(TAG, "Unable to view url", e)
+                Timber.e(e, "Unable to view url")
             }
         }
     }
@@ -1263,12 +1262,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         if (statusBarColor != 0) {
             window.statusBarColor = statusBarColor
         } else {
-            Log.e(TAG, "Cannot set status bar color. Skipping coloring...")
+            Timber.e("Cannot set status bar color. Skipping coloring...")
         }
         if (navigationBarColor != 0) {
             window.navigationBarColor = navigationBarColor
         } else {
-            Log.e(TAG, "Cannot set navigation bar color. Skipping coloring...")
+            Timber.e("Cannot set navigation bar color. Skipping coloring...")
         }
 
         // Set foreground colors
@@ -1566,13 +1565,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val json = JSONObject(map.toMap())
         val script = "externalBus($json);"
 
-        Log.d(TAG, script)
+        Timber.d(script)
 
         webView.evaluateJavascript(script, message.callback)
     }
 
     private fun downloadFile(url: String, contentDisposition: String, mimetype: String) {
-        Log.d(TAG, "WebView requested download of $url")
+        Timber.d("WebView requested download of $url")
         val uri = Uri.parse(url)
         when (uri.scheme?.lowercase()) {
             "http", "https" -> {
@@ -1595,7 +1594,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     // Cannot get cookies, probably not relevant
                 }
 
-                getSystemService<DownloadManager>()?.enqueue(request) ?: Log.d(TAG, "Unable to start download, cannot get DownloadManager")
+                getSystemService<DownloadManager>()?.enqueue(request) ?: Timber.d("Unable to start download, cannot get DownloadManager")
             }
             "data" -> {
                 lifecycleScope.launch {
@@ -1603,14 +1602,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
             }
             else -> {
-                Log.d(TAG, "Received download request for unsupported scheme, forwarding to system")
+                Timber.d("Received download request for unsupported scheme, forwarding to system")
                 try {
                     val browserIntent = Intent(Intent.ACTION_VIEW, uri).apply {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK
                     }
                     startActivity(browserIntent)
                 } catch (e: ActivityNotFoundException) {
-                    Log.e(TAG, "Unable to forward download request to system", e)
+                    Timber.e(e, "Unable to forward download request to system")
                     Toast.makeText(this, commonR.string.failed_unsupported, Toast.LENGTH_SHORT).show()
                 }
             }
@@ -1668,7 +1667,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             // /config/* as these are the settings of HA but NOT /config/dashboard. This is just the overview of the HA settings
             // /hassio/* as these are the addons section of HA settings.
             if (webView.url?.matches(".*://.*/(config/(?!\\bdashboard\\b)|hassio)/*.*".toRegex()) == false) {
-                Log.d(TAG, "Show first view of default dashboard.")
+                Timber.d("Show first view of default dashboard.")
                 webView.evaluateJavascript(
                     """
                     var anchor = 'a:nth-child(1)';
@@ -1682,18 +1681,18 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     null
                 )
             } else {
-                Log.d(TAG, "User is in the Home Assistant config. Will not show first view of the default dashboard.")
+                Timber.d("User is in the Home Assistant config. Will not show first view of the default dashboard.")
             }
         }
     }
 
     private fun scanForImprov() {
         if (!packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            Log.d(TAG, "Improv scan request ignored because device doesn't have Bluetooth")
+            Timber.d("Improv scan request ignored because device doesn't have Bluetooth")
             return
         }
         if (!hasWindowFocus()) {
-            Log.d(TAG, "Improv scan request ignored because webview doesn't have focus")
+            Timber.d("Improv scan request ignored because webview doesn't have focus")
             return
         }
         lifecycleScope.launch {

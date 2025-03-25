@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.developer.location
 
 import android.app.Application
-import android.util.Log
 import androidx.annotation.IdRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,6 +19,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @HiltViewModel
 class LocationTrackingViewModel @Inject constructor(
@@ -29,8 +29,6 @@ class LocationTrackingViewModel @Inject constructor(
 ) : AndroidViewModel(application) {
 
     companion object {
-        private const val TAG = "LocationTrackingViewMod"
-
         private const val PAGE_SIZE = 25
     }
 
@@ -53,7 +51,7 @@ class LocationTrackingViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val historyPagerFlow = historyResultFilter.flatMapLatest { filter ->
         Pager(PagingConfig(pageSize = PAGE_SIZE, maxSize = PAGE_SIZE * 6)) {
-            Log.d(TAG, "Returning PagingSource for history filter: $filter")
+            Timber.d("Returning PagingSource for history filter: $filter")
             when (filter) {
                 HistoryFilter.SENT ->
                     locationHistoryDao.getAll(listOf(LocationHistoryItemResult.SENT.name))

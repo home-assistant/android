@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Handler
-import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
@@ -20,12 +19,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class NotificationActionReceiver : BroadcastReceiver() {
 
     companion object {
-        const val TAG = "NotifActionReceiver"
         const val FIRE_EVENT = "FIRE_EVENT"
         const val EXTRA_NOTIFICATION_TAG = "EXTRA_NOTIFICATION_TAG"
         const val EXTRA_NOTIFICATION_ID = "EXTRA_NOTIFICATION_ID"
@@ -48,7 +47,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         val notificationAction = IntentCompat.getParcelableExtra(intent, EXTRA_NOTIFICATION_ACTION, NotificationAction::class.java)
 
         if (notificationAction == null) {
-            Log.e(TAG, "Failed to get notification action.")
+            Timber.e("Failed to get notification action.")
             return
         }
 
@@ -118,7 +117,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 )
                 onComplete()
             } catch (e: Exception) {
-                Log.e(TAG, "Unable to fire event.", e)
+                Timber.e(e, "Unable to fire event.")
                 onFailure()
             }
         }

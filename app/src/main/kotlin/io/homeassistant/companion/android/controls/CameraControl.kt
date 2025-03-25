@@ -9,7 +9,6 @@ import android.service.controls.Control
 import android.service.controls.DeviceTypes
 import android.service.controls.actions.ControlAction
 import android.service.controls.templates.ThumbnailTemplate
-import android.util.Log
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
@@ -22,11 +21,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.S)
 object CameraControl : HaControl {
-    private const val TAG = "CameraControl"
-
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
@@ -75,7 +73,7 @@ object CameraControl : HaControl {
                 try {
                     image = BitmapFactory.decodeStream(URL(path).openStream())
                 } catch (e: Exception) {
-                    Log.e(TAG, "Couldn't download image for control", e)
+                    Timber.e(e, "Couldn't download image for control")
                 }
             }
         }

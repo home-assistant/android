@@ -13,7 +13,6 @@ import android.media.AudioManager
 import android.media.RingtoneManager
 import android.os.Build
 import android.text.Spanned
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -27,6 +26,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.CHANNEL_GENERAL
 import io.homeassistant.companion.android.common.util.cancel
 import java.util.Locale
+import timber.log.Timber
 
 object NotificationData {
     const val TAG = "MessagingService"
@@ -203,7 +203,7 @@ fun parseColor(
         try {
             return Color.parseColor(colorString)
         } catch (e: Exception) {
-            Log.e(NotificationData.TAG, "Unable to parse color", e)
+            Timber.tag(NotificationData.TAG).e(e, "Unable to parse color")
         }
     }
     return ContextCompat.getColor(context, default)
@@ -287,7 +287,7 @@ fun handleText(
 }
 
 fun clearNotification(context: Context, tag: String) {
-    Log.d(NotificationData.TAG, "Clearing notification with tag: $tag")
+    Timber.tag(NotificationData.TAG).d("Clearing notification with tag: $tag")
     val notificationManagerCompat = NotificationManagerCompat.from(context)
     val messageId = tag.hashCode()
     notificationManagerCompat.cancel(tag, messageId, true)

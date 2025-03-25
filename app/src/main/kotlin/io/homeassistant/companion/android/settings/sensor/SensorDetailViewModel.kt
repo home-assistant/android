@@ -6,7 +6,6 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.NameNotFoundException
 import android.os.Build
-import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -44,6 +43,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 @HiltViewModel
 class SensorDetailViewModel @Inject constructor(
@@ -55,8 +55,6 @@ class SensorDetailViewModel @Inject constructor(
 ) : AndroidViewModel(application) {
 
     companion object {
-        const val TAG = "SensorDetailViewModel"
-
         private const val SENSOR_SETTING_TRANS_KEY_PREFIX = "sensor_setting_"
 
         data class PermissionsDialog(
@@ -131,7 +129,7 @@ class SensorDetailViewModel @Inject constructor(
     val serversStateExpand = serversDoExpand.collectAsState(false)
 
     private val zones by lazy {
-        Log.d(TAG, "Get zones from Home Assistant for listing zones in preferences...")
+        Timber.d("Get zones from Home Assistant for listing zones in preferences...")
         runBlocking {
             val cachedZones = mutableListOf<String>()
             serverManager.defaultServers.map { server ->
@@ -139,12 +137,12 @@ class SensorDetailViewModel @Inject constructor(
                     try {
                         serverManager.integrationRepository(server.id).getZones().map { "${server.id}_${it.entityId}" }
                     } catch (e: Exception) {
-                        Log.e(TAG, "Error receiving zones from Home Assistant", e)
+                        Timber.e(e, "Error receiving zones from Home Assistant")
                         emptyList()
                     }
                 }
             }.awaitAll().forEach { cachedZones.addAll(it) }
-            Log.d(TAG, "Successfully received " + cachedZones.size + " zones (" + cachedZones + ") from Home Assistant")
+            Timber.d("Successfully received " + cachedZones.size + " zones (" + cachedZones + ") from Home Assistant")
             cachedZones
         }
     }
@@ -219,7 +217,7 @@ class SensorDetailViewModel @Inject constructor(
                 try {
                     sensorManager?.requestSensorUpdate(getApplication())
                 } catch (e: Exception) {
-                    Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+                    Timber.e(e, "Exception while requesting update for sensor $sensorId")
                 }
             }
         }
@@ -293,7 +291,7 @@ class SensorDetailViewModel @Inject constructor(
             try {
                 sensorManager?.requestSensorUpdate(getApplication())
             } catch (e: Exception) {
-                Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+                Timber.e(e, "Exception while requesting update for sensor $sensorId")
             }
             refreshSensorData()
         }
@@ -336,10 +334,10 @@ class SensorDetailViewModel @Inject constructor(
             try {
                 return app.getString(stringId, *convertRawVarsToStringVars(rawVars))
             } catch (e: Exception) {
-                Log.w(TAG, "getStringFromIdentifierString: Cannot get translated string for name \"$identifierString\"", e)
+                Timber.w(e, "getStringFromIdentifierString: Cannot get translated string for name \"$identifierString\"")
             }
         } else {
-            Log.e(TAG, "getStringFromIdentifierString: Cannot find string identifier for name \"$identifierString\"")
+            Timber.e("getStringFromIdentifierString: Cannot find string identifier for name \"$identifierString\"")
         }
         return null
     }
@@ -347,29 +345,29 @@ class SensorDetailViewModel @Inject constructor(
     private fun getCleanedKey(key: String): String {
         val varWithUnderscoreRegex = "_var\\d:.*:".toRegex()
         val cleanedKey = key.replace(varWithUnderscoreRegex, "")
-        if (key != cleanedKey) Log.d(TAG, "Cleaned translation key \"$cleanedKey\"")
+        if (key != cleanedKey) Timber.d("Cleaned translation key \"$cleanedKey\"")
         return cleanedKey
     }
 
     private fun getRawVars(key: String): List<String> {
         val varRegex = "var\\d:.*:".toRegex()
         val rawVars = key.split("_").filter { it.matches(varRegex) }
-        if (rawVars.isNotEmpty()) Log.d(TAG, "Vars from translation key \"$key\": $rawVars")
+        if (rawVars.isNotEmpty()) Timber.d("Vars from translation key \"$key\": $rawVars")
         return rawVars
     }
 
     private fun convertRawVarsToStringVars(rawVars: List<String>): Array<String> {
         val stringVars: MutableList<String> = ArrayList()
         if (rawVars.isNotEmpty()) {
-            Log.d(TAG, "Convert raw vars \"$rawVars\" to string vars...")
+            Timber.d("Convert raw vars \"$rawVars\" to string vars...")
             val varPrefixRegex = "var\\d:".toRegex()
             val varSuffixRegex = ":$".toRegex()
             for (rawVar in rawVars) {
                 val stringVar = rawVar.replace(varPrefixRegex, "").replace(varSuffixRegex, "")
-                Log.d(TAG, "Convert raw var \"$rawVar\" to string var \"$stringVar\"")
+                Timber.d("Convert raw var \"$rawVar\" to string var \"$stringVar\"")
                 stringVars.add(stringVar)
             }
-            Log.d(TAG, "Converted raw vars to string vars \"$stringVars\"")
+            Timber.d("Converted raw vars to string vars \"$stringVars\"")
         }
         return stringVars.toTypedArray()
     }

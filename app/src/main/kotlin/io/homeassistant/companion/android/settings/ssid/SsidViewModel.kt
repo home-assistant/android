@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.ssid
 
 import android.app.Application
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +13,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import javax.inject.Inject
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @HiltViewModel
 class SsidViewModel @Inject constructor(
@@ -22,10 +22,6 @@ class SsidViewModel @Inject constructor(
     private val wifiHelper: WifiHelper,
     application: Application
 ) : AndroidViewModel(application) {
-
-    companion object {
-        private const val TAG = "SsidViewModel"
-    }
 
     var wifiSsids = mutableStateListOf<String>()
         private set
@@ -100,7 +96,7 @@ class SsidViewModel @Inject constructor(
             activeSsid = wifiHelper.getWifiSsid()?.removeSurrounding("\"")
             activeBssid = wifiHelper.getWifiBssid()
         } catch (e: Exception) {
-            Log.w(TAG, "Unable to update Wi-Fi state", e)
+            Timber.w(e, "Unable to update Wi-Fi state")
         }
     }
 

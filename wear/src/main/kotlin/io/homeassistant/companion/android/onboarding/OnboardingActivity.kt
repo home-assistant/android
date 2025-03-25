@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
@@ -28,6 +27,7 @@ import io.homeassistant.companion.android.util.LoadingView
 import javax.inject.Inject
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
@@ -39,8 +39,6 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
     private lateinit var remoteActivityHelper: RemoteActivityHelper
 
     companion object {
-        private const val TAG = "OnboardingActivity"
-
         fun newInstance(context: Context): Intent {
             return Intent(context, OnboardingActivity::class.java)
         }
@@ -129,14 +127,14 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
                 showContinueOnPhone()
             } catch (e: Exception) {
                 if (e is RemoteActivityHelper.RemoteIntentException) {
-                    Log.e(TAG, "Unable to open sign in activity on phone with app, falling back to OAuth", e)
+                    Timber.e(e, "Unable to open sign in activity on phone with app, falling back to OAuth")
                     if (instance != null) {
                         presenter.onInstanceClickedWithoutApp(this@OnboardingActivity, instance.url.toString())
                     } else {
                         requestPhoneAppInstall()
                     }
                 } else {
-                    Log.e(TAG, "Unable to open sign in activity on phone", e)
+                    Timber.e(e, "Unable to open sign in activity on phone")
                     showError()
                 }
             }
@@ -175,11 +173,11 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
     }
 
     override fun onInstanceFound(instance: HomeAssistantInstance) {
-        Log.d(TAG, "onInstanceFound: ${instance.name}")
+        Timber.d("onInstanceFound: ${instance.name}")
         if (!adapter.servers.contains(instance)) {
             adapter.servers.add(instance)
             adapter.notifyDataSetChanged()
-            Log.d(TAG, "onInstanceFound: added ${instance.name}")
+            Timber.d("onInstanceFound: added ${instance.name}")
         }
     }
 
@@ -191,9 +189,9 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
     }
 
     private fun findExistingInstances() {
-        Log.d(TAG, "findExistingInstances")
+        Timber.d("findExistingInstances")
         Tasks.await(Wearable.getDataClient(this).getDataItems(Uri.parse("wear://*/home_assistant_instance"))).apply {
-            Log.d(TAG, "findExistingInstances: success, found ${this.count}")
+            Timber.d("findExistingInstances: success, found ${this.count}")
             this.forEach { item ->
                 val instance = presenter.getInstance(DataMapItem.fromDataItem(item).dataMap)
                 this@OnboardingActivity.runOnUiThread {
@@ -204,7 +202,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
     }
 
     private fun requestInstances() {
-        Log.d(TAG, "requestInstances")
+        Timber.d("requestInstances")
 
         // Find all nodes that are capable
         val capabilityInfo: CapabilityInfo = Tasks.await(
@@ -215,7 +213,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
         )
 
         if (capabilityInfo.nodes.size == 0) {
-            Log.d(TAG, "requestInstances: No nodes found")
+            Timber.d("requestInstances: No nodes found")
         }
 
         capabilityInfo.nodes.forEach { node ->
@@ -224,14 +222,14 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
                 "/request_home_assistant_instance",
                 ByteArray(0)
             ).apply {
-                addOnSuccessListener { Log.d(TAG, "requestInstances: request home assistant instances from $node.id: ${node.displayName}") }
-                addOnFailureListener { Log.w(TAG, "requestInstances: failed to request home assistant instances from $node.id: ${node.displayName}") }
+                addOnSuccessListener { Timber.d("requestInstances: request home assistant instances from $node.id: ${node.displayName}") }
+                addOnFailureListener { Timber.w("requestInstances: failed to request home assistant instances from $node.id: ${node.displayName}") }
             }
         }
     }
 
     private fun requestPhoneSignIn() {
-        Log.d(TAG, "requestPhoneSignIn")
+        Timber.d("requestPhoneSignIn")
 
         // Find all nodes that are capable
         val capabilityInfo: CapabilityInfo = Tasks.await(
@@ -241,7 +239,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
             )
         )
 
-        Log.d(TAG, "requestPhoneSignIn: found ${capabilityInfo.nodes.size} nodes")
+        Timber.d("requestPhoneSignIn: found ${capabilityInfo.nodes.size} nodes")
         phoneSignInAvailable = capabilityInfo.nodes.size > 0
 
         if (!phoneSignInAvailable && !phoneInstallOpened) {

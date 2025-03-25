@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.settings
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.MenuItem
 import android.view.ViewGroup
 import androidx.biometric.BiometricManager
@@ -26,6 +25,7 @@ import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 @AndroidEntryPoint
 class SettingsActivity : BaseActivity() {
@@ -40,8 +40,6 @@ class SettingsActivity : BaseActivity() {
     private var externalAuthCallback: ((Int) -> Boolean)? = null
 
     companion object {
-        private const val TAG = "SettingsActivity"
-
         fun newInstance(context: Context): Intent {
             return Intent(context, SettingsActivity::class.java)
         }
@@ -134,7 +132,7 @@ class SettingsActivity : BaseActivity() {
 
     private fun settingsActivityAuthenticationResult(result: Int) {
         val isExtAuth = (externalAuthCallback != null)
-        Log.d(TAG, "settingsActivityAuthenticationResult(): authenticating: $authenticating, externalAuth: $isExtAuth")
+        Timber.d("settingsActivityAuthenticationResult(): authenticating: $authenticating, externalAuth: $isExtAuth")
 
         externalAuthCallback?.let {
             if (it(result)) {
@@ -146,15 +144,15 @@ class SettingsActivity : BaseActivity() {
             authenticating = false
             when (result) {
                 Authenticator.SUCCESS -> {
-                    Log.d(TAG, "Authentication successful, unlocking app")
+                    Timber.d("Authentication successful, unlocking app")
                     blurView.setBlurEnabled(false)
                     setAppActive(true)
                 }
                 Authenticator.CANCELED -> {
-                    Log.d(TAG, "Authentication canceled by user, closing activity")
+                    Timber.d("Authentication canceled by user, closing activity")
                     finishAffinity()
                 }
-                else -> Log.d(TAG, "Authentication failed, retry attempts allowed")
+                else -> Timber.d("Authentication failed, retry attempts allowed")
             }
         }
     }
@@ -173,7 +171,7 @@ class SettingsActivity : BaseActivity() {
             try {
                 serverManager.integrationRepository(it.id).isAppLocked()
             } catch (e: IllegalArgumentException) {
-                Log.w(TAG, "Cannot determine app locked state")
+                Timber.w("Cannot determine app locked state")
                 false
             }
         } ?: false
@@ -194,7 +192,7 @@ class SettingsActivity : BaseActivity() {
             try {
                 serverManager.integrationRepository(it.id).setAppActive(active)
             } catch (e: IllegalArgumentException) {
-                Log.w(TAG, "Cannot set app active $active for server $serverId")
+                Timber.w("Cannot set app active $active for server $serverId")
             }
         }
     }

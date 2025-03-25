@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.launch
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
@@ -41,13 +40,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
+import timber.log.Timber
 
 @AndroidEntryPoint
 class LaunchActivity : AppCompatActivity(), LaunchView {
-
-    companion object {
-        const val TAG = "LaunchActivity"
-    }
 
     @Inject
     lateinit var presenter: LaunchPresenter
@@ -171,7 +167,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                     )
                 }
             } else {
-                Log.e(TAG, "onOnboardingComplete: Activity result returned null intent data")
+                Timber.e("onOnboardingComplete: Activity result returned null intent data")
             }
         }
     }
@@ -213,14 +209,14 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             // - missing mobile_app integration
             // - system version related in OkHttp (cryptography)
             // - general connection issues (offline/unknown)
-            Log.e(TAG, "Exception while registering", e)
+            Timber.e(e, "Exception while registering")
             try {
                 if (serverId != null) {
                     serverManager.authenticationRepository(serverId).revokeSession()
                     serverManager.removeServer(serverId)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Can't revoke session", e)
+                Timber.e(e, "Can't revoke session")
             }
             AlertDialog.Builder(this@LaunchActivity)
                 .setTitle(commonR.string.error_connection_failed)

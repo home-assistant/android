@@ -17,10 +17,6 @@ import okhttp3.HttpUrl
 
 class CookieJarCookieManagerShim : CookieJar {
 
-    companion object {
-        private const val TAG = "CookieJarCookieManagerShim"
-    }
-
     override fun loadForRequest(url: HttpUrl): List<Cookie> {
         val cookies: String = CookieManager.getInstance()
             ?.getCookie(url.toString()) ?: return emptyList()

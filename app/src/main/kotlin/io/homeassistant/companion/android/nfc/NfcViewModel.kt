@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.nfc
 
 import android.app.Application
 import android.nfc.NfcAdapter
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -19,16 +18,13 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @HiltViewModel
 class NfcViewModel @Inject constructor(
     private val serverManager: ServerManager,
     application: Application
 ) : AndroidViewModel(application) {
-
-    companion object {
-        const val TAG = "NfcViewModel"
-    }
 
     var isNfcEnabled by mutableStateOf(false)
         private set
@@ -117,7 +113,7 @@ class NfcViewModel @Inject constructor(
                             serverManager.integrationRepository(server.id).scanTag(hashMapOf("tag_id" to it))
                             true
                         } catch (e: Exception) {
-                            Log.e(TAG, "Unable to send tag to Home Assistant.", e)
+                            Timber.e(e, "Unable to send tag to Home Assistant.")
                             false
                         }
                     }

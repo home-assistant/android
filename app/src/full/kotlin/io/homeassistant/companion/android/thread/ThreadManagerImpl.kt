@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import androidx.activity.result.ActivityResult
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.threadnetwork.IsPreferredCredentialsResult
@@ -22,14 +21,13 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
+import timber.log.Timber
 
 class ThreadManagerImpl @Inject constructor(
     private val serverManager: ServerManager,
     private val packageManager: PackageManager
 ) : ThreadManager {
     companion object {
-        private const val TAG = "ThreadManagerImpl"
-
         // ID is a placeholder used in previous app versions / for older Home Assistant versions
         private const val BORDER_AGENT_ID = "0000000000000001"
     }
@@ -70,7 +68,7 @@ class ThreadManagerImpl @Inject constructor(
         val getDeviceDataset = try {
             getPreferredDatasetFromDevice(context)
         } catch (e: ApiException) {
-            Log.e(TAG, "Thread: export cannot be started", e)
+            Timber.e(e, "Thread: export cannot be started")
             if (e.statusCode == ThreadNetworkStatusCodes.LOCAL_NETWORK_NOT_CONNECTED) {
                 return ThreadManager.SyncResult.NotConnected
             } else {
@@ -82,7 +80,7 @@ class ThreadManagerImpl @Inject constructor(
             ThreadManager.SyncResult.NoneHaveCredentials
         } else {
             val appIsDevicePreferred = appAddedIsPreferredCredentials(context)
-            Log.d(TAG, "Thread: device ${if (appIsDevicePreferred) "prefers" else "doesn't prefer" } dataset from app")
+            Timber.d("Thread: device ${if (appIsDevicePreferred) "prefers" else "doesn't prefer" } dataset from app")
 
             return if (appIsDevicePreferred) {
                 ThreadManager.SyncResult.OnlyOnServer(imported = false)
@@ -111,21 +109,21 @@ class ThreadManagerImpl @Inject constructor(
                 coreThreadDataset.preferredBorderAgentId?.let {
                     serverManager.integrationRepository(serverId).setThreadBorderAgentIds(listOf(it))
                 } // else added using placeholder, will be removed when core is updated
-                Log.d(TAG, "Thread import to device completed")
+                Timber.d("Thread import to device completed")
                 ThreadManager.SyncResult.OnlyOnServer(imported = true)
             } catch (e: Exception) {
-                Log.e(TAG, "Thread import to device failed", e)
+                Timber.e(e, "Thread import to device failed")
                 ThreadManager.SyncResult.OnlyOnServer(imported = false)
             }
         } else if (deviceThreadIntent != null && coreThreadDataset == null) {
-            Log.d(TAG, "Thread export is ready")
+            Timber.d("Thread export is ready")
             ThreadManager.SyncResult.OnlyOnDevice(exportIntent = deviceThreadIntent)
         } else if (deviceThreadIntent != null && coreThreadDataset != null) {
             try {
                 val coreIsDevicePreferred = isPreferredDatasetByDevice(context, coreThreadDataset.datasetId, serverId)
-                Log.d(TAG, "Thread: device ${if (coreIsDevicePreferred) "prefers" else "doesn't prefer" } core preferred dataset")
+                Timber.d("Thread: device ${if (coreIsDevicePreferred) "prefers" else "doesn't prefer" } core preferred dataset")
                 val appIsDevicePreferred = coreIsDevicePreferred || appAddedIsPreferredCredentials(context)
-                Log.d(TAG, "Thread: device ${if (appIsDevicePreferred) "prefers" else "doesn't prefer" } dataset from app")
+                Timber.d("Thread: device ${if (appIsDevicePreferred) "prefers" else "doesn't prefer" } dataset from app")
 
                 var exportFromDevice = false
                 var updated: Boolean? = null
@@ -144,7 +142,7 @@ class ThreadManagerImpl @Inject constructor(
                                     try {
                                         deleteThreadCredential(context, baId)
                                     } catch (e: Exception) {
-                                        Log.e(TAG, "Unable to delete credential for border agent ID $baId", e)
+                                        Timber.e(e, "Unable to delete credential for border agent ID $baId")
                                     }
                                 }
                                 importDatasetFromServer(context, coreThreadDataset.datasetId, coreThreadDataset.preferredBorderAgentId, serverId)
@@ -157,24 +155,24 @@ class ThreadManagerImpl @Inject constructor(
                                         }
                                     )
                                 }
-                                Log.d(TAG, "Thread update device completed: deleted ${localIds.size} datasets, updated 1")
+                                Timber.d("Thread update device completed: deleted ${localIds.size} datasets, updated 1")
                                 true
                             } else { // Core prefers imported from other app, this shouldn't be managed by HA
                                 localIds.forEach { baId ->
                                     try {
                                         deleteThreadCredential(context, baId)
                                     } catch (e: Exception) {
-                                        Log.e(TAG, "Unable to delete credential for border agent ID $baId", e)
+                                        Timber.e(e, "Unable to delete credential for border agent ID $baId")
                                     }
                                 }
                                 serverManager.defaultServers.forEach {
                                     serverManager.integrationRepository(it.id).setThreadBorderAgentIds(emptyList())
                                 }
-                                Log.d(TAG, "Thread update device completed: deleted ${localIds.size} datasets")
+                                Timber.d("Thread update device completed: deleted ${localIds.size} datasets")
                                 false
                             }
                         } catch (e: Exception) {
-                            Log.e(TAG, "Thread update device failed", e)
+                            Timber.e(e, "Thread update device failed")
                         }
                     } else {
                         exportFromDevice = true
@@ -189,7 +187,7 @@ class ThreadManagerImpl @Inject constructor(
                     exportIntent = if (exportFromDevice) deviceThreadIntent else null
                 )
             } catch (e: Exception) {
-                Log.e(TAG, "Thread device/core preferred comparison failed", e)
+                Timber.e(e, "Thread device/core preferred comparison failed")
                 ThreadManager.SyncResult.AllHaveCredentials(matches = null, fromApp = null, updated = null, exportIntent = null)
             }
         } else {
@@ -210,7 +208,7 @@ class ThreadManagerImpl @Inject constructor(
         val tlv = serverManager.webSocketRepository(serverId).getThreadDatasetTlv(datasetId)?.tlvAsByteArray
         if (tlv != null) {
             val borderAgentId = preferredBorderAgentId ?: run {
-                Log.w(TAG, "Adding dataset with placeholder border agent ID")
+                Timber.w("Adding dataset with placeholder border agent ID")
                 BORDER_AGENT_ID
             }
             val idAsBytes = borderAgentId.let { if (it.length == 16) it.toByteArray() else it.hexToByteArray() }
@@ -256,12 +254,12 @@ class ThreadManagerImpl @Inject constructor(
             appCredentials?.any {
                 val isPreferred = isPreferredCredentials(context, it)
                 if (isPreferred) {
-                    Log.d(TAG, "Thread device prefers app added dataset: ${it.networkName} (PAN ${it.panId}, EXTPAN ${String(it.extendedPanId)})")
+                    Timber.d("Thread device prefers app added dataset: ${it.networkName} (PAN ${it.panId}, EXTPAN ${String(it.extendedPanId)})")
                 }
                 isPreferred
             } ?: false
         } catch (e: Exception) {
-            Log.e(TAG, "Thread app added credentials preferred check failed", e)
+            Timber.e(e, "Thread app added credentials preferred check failed")
             false
         }
     }
@@ -280,7 +278,7 @@ class ThreadManagerImpl @Inject constructor(
                 val added = serverManager.webSocketRepository(serverId).addThreadDataset(threadNetworkCredentials.activeOperationalDataset)
                 if (added) return threadNetworkCredentials.networkName
             } catch (e: Exception) {
-                Log.e(TAG, "Error while executing server new Thread credentials request", e)
+                Timber.e(e, "Error while executing server new Thread credentials request")
             }
         }
         return null
@@ -302,7 +300,7 @@ class ThreadManagerImpl @Inject constructor(
             try {
                 deleteThreadCredential(context, it)
             } catch (e: Exception) {
-                Log.w(TAG, "Unable to delete credential for border agent ID $it", e)
+                Timber.w(e, "Unable to delete credential for border agent ID $it")
             }
         }
         serverManager.integrationRepository(serverId).clearOrphanedThreadBorderAgentIds()

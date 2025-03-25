@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.settings.wear
 
 import android.annotation.SuppressLint
 import android.app.Application
-import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.core.net.toUri
@@ -43,6 +42,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import org.burnoutcrew.reorderable.ItemPosition
+import timber.log.Timber
 
 @HiltViewModel
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
@@ -54,7 +54,6 @@ class SettingsWearViewModel @Inject constructor(
     DataClient.OnDataChangedListener {
 
     companion object {
-        private const val TAG = "SettingsWearViewModel"
         private const val CAPABILITY_WEAR_SENDS_CONFIG = "sends_config"
     }
 
@@ -86,7 +85,7 @@ class SettingsWearViewModel @Inject constructor(
         try {
             Wearable.getDataClient(application).addListener(this)
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to get wearable data client", e)
+            Timber.e(e, "Unable to get wearable data client")
         }
         viewModelScope.launch {
             try {
@@ -94,7 +93,7 @@ class SettingsWearViewModel @Inject constructor(
                     .getCapability(CAPABILITY_WEAR_SENDS_CONFIG, CapabilityClient.FILTER_REACHABLE)
                     .await()
                 capabilityInfo.nodes.forEach { node ->
-                    Log.d(TAG, "Requesting config from node ${node.id}")
+                    Timber.d("Requesting config from node ${node.id}")
                     launch {
                         try {
                             Wearable.getMessageClient(application).sendMessage(
@@ -102,14 +101,14 @@ class SettingsWearViewModel @Inject constructor(
                                 "/requestConfig",
                                 ByteArray(0)
                             ).await()
-                            Log.d(TAG, "Request for config sent successfully")
+                            Timber.d("Request for config sent successfully")
                         } catch (e: Exception) {
-                            Log.e(TAG, "Failed to request config", e)
+                            Timber.e(e, "Failed to request config")
                         }
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to send config request to wear", e)
+                Timber.e(e, "Failed to send config request to wear")
                 _resultSnackbar.emit(application.getString(commonR.string.failed_watch_connection))
             }
         }
@@ -119,7 +118,7 @@ class SettingsWearViewModel @Inject constructor(
         try {
             Wearable.getDataClient(getApplication<HomeAssistantApplication>()).removeListener(this)
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to remove listener from wearable data client", e)
+            Timber.e(e, "Unable to remove listener from wearable data client")
         }
 
         if (serverId != 0) {
@@ -136,7 +135,7 @@ class SettingsWearViewModel @Inject constructor(
                     entities[it.entityId] = it
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to load entities for Wear server", e)
+                Timber.e(e, "Failed to load entities for Wear server")
                 entities.clear()
             }
         }
@@ -175,7 +174,7 @@ class SettingsWearViewModel @Inject constructor(
                         .integrationRepository(serverId)
                         .renderTemplate(template, mapOf()).toString()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Exception while rendering template for tile ID $tileId", e)
+                    Timber.e(e, "Exception while rendering template for tile ID $tileId")
                     // JsonMappingException suggests that template is not a String (= error)
                     templateTilesRenderedTemplates[tileId] = getApplication<Application>().getString(
                         if (e.cause is JsonMappingException) {
@@ -222,9 +221,9 @@ class SettingsWearViewModel @Inject constructor(
 
         try {
             Wearable.getDataClient(application).putDataItem(putDataRequest).await()
-            Log.d(TAG, "Successfully sent favorites to wear")
+            Timber.d("Successfully sent favorites to wear")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to send favorites to wear", e)
+            Timber.e(e, "Failed to send favorites to wear")
             _resultSnackbar.emit(application.getString(commonR.string.failure_send_favorites_wear))
         }
     }
@@ -263,15 +262,15 @@ class SettingsWearViewModel @Inject constructor(
         val app = getApplication<HomeAssistantApplication>()
         try {
             Wearable.getDataClient(app).putDataItem(putDataRequest).apply {
-                addOnSuccessListener { Log.d(TAG, "Successfully sent auth to wear") }
+                addOnSuccessListener { Timber.d("Successfully sent auth to wear") }
                 addOnFailureListener { e ->
-                    Log.e(TAG, "Failed to send auth to wear", e)
+                    Timber.e(e, "Failed to send auth to wear")
                     _hasData.value = true
                     watchConnectionError(app)
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to send auth to wear", e)
+            Timber.e(e, "Unable to send auth to wear")
             watchConnectionError(app)
         }
     }
@@ -286,16 +285,16 @@ class SettingsWearViewModel @Inject constructor(
         try {
             Wearable.getDataClient(getApplication<HomeAssistantApplication>())
                 .putDataItem(putDataRequest).apply {
-                    addOnSuccessListener { Log.d(TAG, "Successfully sent tile template to wear") }
-                    addOnFailureListener { e -> Log.e(TAG, "Failed to send tile template to wear", e) }
+                    addOnSuccessListener { Timber.d("Successfully sent tile template to wear") }
+                    addOnFailureListener { e -> Timber.e(e, "Failed to send tile template to wear") }
                 }
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to send template tile to wear", e)
+            Timber.e(e, "Unable to send template tile to wear")
         }
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
-        Log.d(TAG, "onDataChanged ${dataEvents.count}")
+        Timber.d("onDataChanged ${dataEvents.count}")
         dataEvents.forEach { event ->
             if (event.type == DataEvent.TYPE_CHANGED) {
                 event.dataItem.also { item ->
@@ -380,7 +379,7 @@ class SettingsWearViewModel @Inject constructor(
 
             viewModelScope.launch { loadEntities() }
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to add Wear server from data", e)
+            Timber.e(e, "Unable to add Wear server from data")
             if (serverId != 0) {
                 serverManager.removeServer(serverId)
                 serverId = 0
@@ -398,7 +397,7 @@ class SettingsWearViewModel @Inject constructor(
             _resultSnackbar.emit(application.getString(commonR.string.logged_in))
         } else {
             val e = data.getString(WearDataMessages.LOGIN_RESULT_EXCEPTION, "")
-            Log.e(TAG, "Watch was unable to register: $e")
+            Timber.e(e, "Watch was unable to register.")
             _resultSnackbar.emit(application.getString(commonR.string.failed_watch_registration))
         }
 

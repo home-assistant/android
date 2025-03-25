@@ -41,9 +41,6 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 @AndroidEntryPoint
 class SensorReceiver : SensorReceiverBase() {
 
-    override val tag: String
-        get() = TAG
-
     override val currentAppVersion: String
         get() = BuildConfig.VERSION_NAME
 
@@ -51,7 +48,6 @@ class SensorReceiver : SensorReceiverBase() {
         get() = MANAGERS
 
     companion object {
-        const val TAG = "SensorReceiver"
         val MANAGERS = listOf(
             ActivitySensorManager(),
             AndroidAutoSensorManager(),

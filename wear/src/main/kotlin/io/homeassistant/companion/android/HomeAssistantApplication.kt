@@ -23,6 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @HiltAndroidApp
 open class HomeAssistantApplication : Application() {
@@ -34,6 +35,8 @@ open class HomeAssistantApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // We should initialize the logger as early as possible in the lifecycle of the application
+        Timber.plant(Timber.DebugTree())
 
         ioScope.launch {
             keyStore.load(applicationContext, KeyStoreRepositoryImpl.ALIAS)

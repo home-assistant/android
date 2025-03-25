@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.matter
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,13 +21,10 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class MatterCommissioningActivity : AppCompatActivity() {
-
-    companion object {
-        private const val TAG = "MatterCommissioningActi"
-    }
 
     @Inject
     lateinit var serverManager: ServerManager
@@ -67,8 +63,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
         if (intent?.action == Matter.ACTION_COMMISSION_DEVICE) {
             try {
                 val data = SharedDeviceData.fromIntent(intent)
-                Log.d(
-                    TAG,
+                Timber.d(
                     "Matter commissioning data:\n" +
                         "device name: ${data.deviceName}\n" +
                         "room name: ${data.roomName}\n" +
@@ -82,11 +77,11 @@ class MatterCommissioningActivity : AppCompatActivity() {
                 viewModel.checkSetup(newMatterDevice)
                 newMatterDevice = false
             } catch (e: SharedDeviceData.InvalidSharedDeviceDataException) {
-                Log.e(TAG, "Received incomplete Matter commissioning data, launching webview")
+                Timber.e("Received incomplete Matter commissioning data, launching webview")
                 if (!newMatterDevice) continueToApp(true)
             }
         } else {
-            Log.d(TAG, "No Matter commissioning data, launching webview")
+            Timber.d("No Matter commissioning data, launching webview")
             if (!newMatterDevice) continueToApp(true)
         }
     }

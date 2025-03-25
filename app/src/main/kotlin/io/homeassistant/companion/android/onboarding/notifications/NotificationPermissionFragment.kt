@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,17 +16,14 @@ import androidx.fragment.app.activityViewModels
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import timber.log.Timber
 
 class NotificationPermissionFragment : Fragment() {
-
-    companion object {
-        private const val TAG = "NotificationPermFrag"
-    }
 
     private val viewModel by activityViewModels<OnboardingViewModel>()
 
     private val permissionsRequest = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-        Log.i(TAG, "Notification permission was ${if (isGranted) "granted" else "not granted"}")
+        Timber.i("Notification permission was ${if (isGranted) "granted" else "not granted"}")
         viewModel.setNotifications(isGranted)
 
         if (isGranted) {

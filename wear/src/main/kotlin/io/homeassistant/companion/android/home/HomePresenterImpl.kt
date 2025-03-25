@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.home
 
-import android.util.Log
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
@@ -26,6 +25,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class HomePresenterImpl @Inject constructor(
     private val serverManager: ServerManager,
@@ -46,7 +46,6 @@ class HomePresenterImpl @Inject constructor(
             "scene" to commonR.string.scenes
         )
         val supportedDomains = domainsWithNames.keys.toList()
-        const val TAG = "HomePresenter"
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -105,7 +104,7 @@ class HomePresenterImpl @Inject constructor(
                 hashMapOf("entity_id" to entityId)
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Exception when toggling entity", e)
+            Timber.e(e, "Exception when toggling entity")
         }
     }
 
@@ -120,7 +119,7 @@ class HomePresenterImpl @Inject constructor(
                 )
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Exception when setting fan speed", e)
+            Timber.e(e, "Exception when setting fan speed")
         }
     }
 
@@ -135,7 +134,7 @@ class HomePresenterImpl @Inject constructor(
                 )
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Exception when setting light brightness", e)
+            Timber.e(e, "Exception when setting light brightness")
         }
     }
 
@@ -151,7 +150,7 @@ class HomePresenterImpl @Inject constructor(
                 )
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Exception when setting light color temp", e)
+            Timber.e(e, "Exception when setting light color temp")
         }
     }
 
@@ -166,7 +165,7 @@ class HomePresenterImpl @Inject constructor(
                     serverManager.authenticationRepository(it.id).revokeSession()
                     serverManager.removeServer(it.id)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Exception while revoking session", e)
+                    Timber.e(e, "Exception while revoking session")
                     // Remove local data anyway, the user wants to sign out and we don't need the server for that
                     serverManager.removeServer(it.id)
                 }
@@ -193,7 +192,7 @@ class HomePresenterImpl @Inject constructor(
                     )
                     serverManager.webSocketRepository(it.id).getCurrentUser() // Update cached data
                 } catch (e: Exception) {
-                    Log.e(TAG, "Issue updating Registration", e)
+                    Timber.e(e, "Issue updating Registration")
                 }
             }
         }

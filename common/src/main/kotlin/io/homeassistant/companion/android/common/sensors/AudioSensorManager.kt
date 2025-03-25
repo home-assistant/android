@@ -11,7 +11,6 @@ import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 
 class AudioSensorManager : SensorManager {
     companion object {
-        private const val TAG = "AudioSensor"
         const val VOLUME_CHANGED_ACTION = "android.media.VOLUME_CHANGED_ACTION"
 
         val audioSensor = SensorManager.BasicSensor(

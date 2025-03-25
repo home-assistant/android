@@ -9,17 +9,16 @@ import android.telephony.CellSignalStrength
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import timber.log.Timber
 
 class PhoneStateSensorManager : SensorManager {
 
     companion object {
-        private const val TAG = "PhoneStateSM"
         val phoneState = SensorManager.BasicSensor(
             "phone_state",
             "sensor",
@@ -233,7 +232,7 @@ class PhoneStateSensorManager : SensorManager {
                             attrs["data roaming"] = if (info.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) "enable" else "disable"
                         }
                     } catch (e: Exception) {
-                        Log.e(TAG, "Unable to get SIM data", e)
+                        Timber.e(e, "Unable to get SIM data")
                     }
                 }
             }

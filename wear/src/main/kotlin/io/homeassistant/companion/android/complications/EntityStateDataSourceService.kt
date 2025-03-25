@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.complications
 
 import android.graphics.Color
 import android.graphics.drawable.Icon
-import android.util.Log
 import androidx.annotation.StringRes
 import androidx.wear.watchface.complications.data.ComplicationData
 import androidx.wear.watchface.complications.data.ComplicationType
@@ -24,6 +23,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import javax.inject.Inject
 import retrofit2.HttpException
+import timber.log.Timber
 
 @AndroidEntryPoint
 class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
@@ -33,10 +33,6 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
 
     @Inject
     lateinit var entityStateComplicationsDao: EntityStateComplicationsDao
-
-    companion object {
-        const val TAG = "EntityStateDataSourceService"
-    }
 
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData? {
         if (request.complicationType != ComplicationType.SHORT_TEXT && request.complicationType != ComplicationType.LONG_TEXT) {
@@ -51,7 +47,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             serverManager.integrationRepository().getEntity(entityId)
                 ?: return getErrorComplication(request, R.string.state_unknown)
         } catch (t: Throwable) {
-            Log.e(TAG, "Unable to get entity state for $entityId: ${t.message}")
+            Timber.e(t, "Unable to get entity state for $entityId")
             return if (t is HttpException && t.code() == 404) {
                 getErrorComplication(request, R.string.complication_entity_invalid)
             } else {
@@ -146,7 +142,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
                     .build()
             }
             else -> {
-                Log.w(TAG, "Preview for unsupported complication type $type requested")
+                Timber.w("Preview for unsupported complication type $type requested")
                 null
             }
         }

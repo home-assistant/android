@@ -10,7 +10,6 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
@@ -47,6 +46,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.N)
 @AndroidEntryPoint
@@ -78,7 +78,7 @@ abstract class TileExtensions : TileService() {
 
     override fun onTileAdded() {
         super.onTileAdded()
-        Log.d(TAG, "Tile: ${getTileId()} added")
+        Timber.d("Tile: ${getTileId()} added")
         handleInject()
         getTile()?.let { tile ->
             mainScope.launch {
@@ -92,7 +92,7 @@ abstract class TileExtensions : TileService() {
 
     override fun onTileRemoved() {
         super.onTileRemoved()
-        Log.d(TAG, "Tile: ${getTileId()} removed")
+        Timber.d("Tile: ${getTileId()} removed")
         handleInject()
         runBlocking {
             setTileAdded(getTileId(), false)
@@ -101,7 +101,7 @@ abstract class TileExtensions : TileService() {
 
     override fun onStartListening() {
         super.onStartListening()
-        Log.d(TAG, "Tile: ${getTileId()} is in view")
+        Timber.d("Tile: ${getTileId()} is in view")
         getTile()?.let { tile ->
             mainScope.launch {
                 setTileData(getTileId(), tile)
@@ -128,7 +128,7 @@ abstract class TileExtensions : TileService() {
 
     override fun onStopListening() {
         super.onStopListening()
-        Log.d(TAG, "Tile: ${getTileId()} is no longer in view")
+        Timber.d("Tile: ${getTileId()} is no longer in view")
         stateUpdateJob?.cancel()
     }
 
@@ -138,7 +138,7 @@ abstract class TileExtensions : TileService() {
     }
 
     private suspend fun setTileData(tileId: String, tile: Tile): Boolean {
-        Log.d(TAG, "Attempting to set tile data for tile ID: $tileId")
+        Timber.d("Attempting to set tile data for tile ID: $tileId")
         val context = applicationContext
         val tileData = tileDao.get(tileId)
         try {
@@ -156,7 +156,7 @@ abstract class TileExtensions : TileService() {
                             try {
                                 serverManager.integrationRepository(tileData.serverId).getEntity(tileData.entityId)
                             } catch (e: Exception) {
-                                Log.e(TAG, "Unable to get state for tile", e)
+                                Timber.e(e, "Unable to get state for tile")
                                 null
                             }
                         }
@@ -176,14 +176,14 @@ abstract class TileExtensions : TileService() {
                 getTileIcon(tileData.iconName, state, context)?.let { icon ->
                     tile.icon = Icon.createWithBitmap(icon)
                 }
-                Log.d(TAG, "Tile data set for tile ID: $tileId")
+                Timber.d("Tile data set for tile ID: $tileId")
                 tile.updateTile()
                 true
             } else {
                 if (tileData != null) {
-                    Log.d(TAG, "Tile data found but not setup for tile ID: $tileId")
+                    Timber.d("Tile data found but not setup for tile ID: $tileId")
                 } else {
-                    Log.d(TAG, "No tile data found for tile ID: $tileId")
+                    Timber.d("No tile data found for tile ID: $tileId")
                 }
                 tile.state =
                     if (serverManager.isRegistered()) {
@@ -198,7 +198,7 @@ abstract class TileExtensions : TileService() {
                 false
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to set tile data for tile ID: $tileId", e)
+            Timber.e(e, "Unable to set tile data for tile ID: $tileId")
             return false
         }
     }
@@ -208,7 +208,7 @@ abstract class TileExtensions : TileService() {
         tile: Tile,
         isUnlock: Boolean
     ) {
-        Log.d(TAG, "Click detected for tile ID: $tileId")
+        Timber.d("Click detected for tile ID: $tileId")
         val context = applicationContext
         val tileData = tileDao.get(tileId)
         val vm = getSystemService<Vibrator>()
@@ -246,7 +246,7 @@ abstract class TileExtensions : TileService() {
                         tileData.entityId,
                         serverManager.integrationRepository(tileData.serverId)
                     )
-                    Log.d(TAG, "Service call sent for tile ID: $tileId")
+                    Timber.d("Service call sent for tile ID: $tileId")
                 } catch (e: Exception) {
                     tileClickedError(tileData, e)
                 }
@@ -256,7 +256,7 @@ abstract class TileExtensions : TileService() {
                 tile.updateTile()
             }
         } else {
-            Log.d(TAG, "No tile data found for tile ID: $tileId")
+            Timber.d("No tile data found for tile ID: $tileId")
             val tileSettingIntent = SettingsActivity.newInstance(context).apply {
                 putExtra("fragment", "tiles/$tileId")
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -278,7 +278,7 @@ abstract class TileExtensions : TileService() {
     }
 
     private suspend fun tileClickedError(tileData: TileEntity?, e: Exception?) {
-        if (e != null) Log.e(TAG, "Unable to call service for tile ID: ${tileData?.id}", e)
+        if (e != null) Timber.e(e, "Unable to call service for tile ID: ${tileData?.id}")
         if (tileData != null && tileData.shouldVibrate) {
             val vm = getSystemService<Vibrator>()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -320,7 +320,7 @@ abstract class TileExtensions : TileService() {
         }
 
         val highestInUse = tileDao.getHighestInUse()?.numberedId ?: 0
-        Log.d(TAG, "Highest tile in use: $highestInUse")
+        Timber.d("Highest tile in use: $highestInUse")
         updateActiveTileServices(highestInUse, applicationContext)
     }
 
@@ -342,7 +342,6 @@ abstract class TileExtensions : TileService() {
     }
 
     companion object {
-        private const val TAG = "TileExtensions"
         private val toggleDomainsWithLock = EntityExt.DOMAINS_TOGGLE
     }
 

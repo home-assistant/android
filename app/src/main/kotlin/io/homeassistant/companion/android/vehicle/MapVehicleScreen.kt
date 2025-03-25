@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.vehicle
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
@@ -33,6 +32,7 @@ import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.isActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MapVehicleScreen(
@@ -40,10 +40,6 @@ class MapVehicleScreen(
     val integrationRepository: IntegrationRepository,
     private val entitiesFlow: Flow<List<Entity<*>>>
 ) : Screen(carContext) {
-
-    companion object {
-        private const val TAG = "MapVehicleScreen"
-    }
 
     private var loading = true
     var entities: Set<Entity<*>> = setOf()
@@ -89,7 +85,7 @@ class MapVehicleScreen(
             .sortedBy { it.first.friendlyName }
             .forEachIndexed { index, pair ->
                 if (index >= gridLimit) {
-                    Log.i(TAG, "Grid limit ($gridLimit) reached, not adding any more navigation entities (${entities.size})")
+                    Timber.i("Grid limit ($gridLimit) reached, not adding any more navigation entities (${entities.size})")
                     return@forEachIndexed
                 }
                 val icon = pair.first.getIcon(carContext)
@@ -117,7 +113,7 @@ class MapVehicleScreen(
                                 .build()
                         )
                         .setOnClickListener {
-                            Log.i(TAG, "${pair.first.entityId} clicked")
+                            Timber.i("${pair.first.entityId} clicked")
                             lifecycleScope.launch {
                                 try {
                                     integrationRepository.fireEvent(
@@ -127,7 +123,7 @@ class MapVehicleScreen(
                                         )
                                     )
                                 } catch (e: Exception) {
-                                    Log.e(TAG, "Unable to send navigation started event", e)
+                                    Timber.e(e, "Unable to send navigation started event")
                                 }
                             }
                             val intent = Intent(

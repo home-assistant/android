@@ -6,7 +6,6 @@ import android.location.Address
 import android.location.Geocoder
 import android.os.Build
 import android.os.Build.VERSION.SDK_INT
-import android.util.Log
 import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
@@ -19,6 +18,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 
 class GeocodeSensorManager : SensorManager {
 
@@ -26,7 +26,6 @@ class GeocodeSensorManager : SensorManager {
         private const val SETTING_ACCURACY = "geocode_minimum_accuracy"
         const val SETTINGS_INCLUDE_LOCATION = "geocode_include_location_updates"
         private const val DEFAULT_MINIMUM_ACCURACY = 200
-        private const val TAG = "GeocodeSM"
         val geocodedLocation = SensorManager.BasicSensor(
             "geocoded_location",
             "sensor",
@@ -74,13 +73,13 @@ class GeocodeSensorManager : SensorManager {
         val location = try {
             LocationServices.getFusedLocationProviderClient(context).lastLocation.await()
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to get fused location provider client", e)
+            Timber.e(e, "Failed to get fused location provider client")
             null
         }
         var address: Address? = null
         try {
             if (location == null) {
-                Log.e(TAG, "Somehow location is null even though it was successful")
+                Timber.e("Somehow location is null even though it was successful")
                 return
             }
 
@@ -96,17 +95,17 @@ class GeocodeSensorManager : SensorManager {
                     .getFromLocationAwait(location.latitude, location.longitude, 1)
                     .firstOrNull()
             } else {
-                Log.w(TAG, "Skipping geocoded update as accuracy was not met: ${location.accuracy}")
+                Timber.w("Skipping geocoded update as accuracy was not met: ${location.accuracy}")
                 return
             }
 
             val now = System.currentTimeMillis()
             if (now - location.time > 300000) {
-                Log.w(TAG, "Skipping geocoded update due to old timestamp ${location.time} compared to $now")
+                Timber.w("Skipping geocoded update due to old timestamp ${location.time} compared to $now")
                 return
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to get geocoded location", e)
+            Timber.e(e, "Failed to get geocoded location")
         }
         val attributes = address?.let {
             mapOf(

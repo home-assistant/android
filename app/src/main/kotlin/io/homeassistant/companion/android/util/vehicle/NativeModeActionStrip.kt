@@ -2,13 +2,11 @@ package io.homeassistant.companion.android.util.vehicle
 
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.car.app.CarContext
 import androidx.car.app.model.Action
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.launch.LaunchActivity
-
-private const val TAG = "NativeActionStrip"
+import timber.log.Timber
 
 fun nativeModeAction(carContext: CarContext): Action {
     return Action.Builder()
@@ -19,7 +17,7 @@ fun nativeModeAction(carContext: CarContext): Action {
 }
 
 fun startNativeActivity(carContext: CarContext) {
-    Log.i(TAG, "Starting login activity")
+    Timber.i("Starting login activity")
     with(carContext) {
         startActivity(
             Intent(

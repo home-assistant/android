@@ -8,15 +8,13 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.os.Build
-import android.util.Log
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import kotlin.math.roundToInt
+import timber.log.Timber
 
 class StepsSensorManager : SensorManager, SensorEventListener {
     companion object {
-
-        private const val TAG = "StepsSensor"
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
         private val stepsSensor = SensorManager.BasicSensor(
@@ -72,7 +70,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
         if (checkPermission(latestContext, stepsSensor.id)) {
             val now = System.currentTimeMillis()
             if (listenerLastRegistered + SensorManager.SENSOR_LISTENER_TIMEOUT < now && isListenerRegistered) {
-                Log.d(TAG, "Re-registering listener as it appears to be stuck")
+                Timber.d("Re-registering listener as it appears to be stuck")
                 mySensorManager.unregisterListener(this)
                 isListenerRegistered = false
             }
@@ -85,7 +83,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
                     stepsSensors,
                     SENSOR_DELAY_NORMAL
                 )
-                Log.d(TAG, "Steps sensor listener registered")
+                Timber.d("Steps sensor listener registered")
                 isListenerRegistered = true
                 listenerLastRegistered = now.toInt()
             }
@@ -107,7 +105,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
             )
         }
         mySensorManager.unregisterListener(this)
-        Log.d(TAG, "Steps sensor listener unregistered")
+        Timber.d("Steps sensor listener unregistered")
         isListenerRegistered = false
     }
 }

@@ -4,15 +4,14 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.TrafficStats
-import android.util.Log
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import java.math.RoundingMode
 import kotlin.math.absoluteValue
+import timber.log.Timber
 
 class TrafficStatsManager : SensorManager {
     companion object {
-        private const val TAG = "TrafficStats"
         private const val GB = 1000000000
 
         val rxBytesMobile = SensorManager.BasicSensor(
@@ -106,7 +105,7 @@ class TrafficStatsManager : SensorManager {
         val mobileRx = try {
             TrafficStats.getMobileRxBytes().toFloat() / GB
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting the mobile rx bytes", e)
+            Timber.e(e, "Error getting the mobile rx bytes")
             return
         }
 
@@ -127,7 +126,7 @@ class TrafficStatsManager : SensorManager {
         val mobileTx = try {
             TrafficStats.getMobileTxBytes().toFloat() / GB
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting the mobile tx bytes", e)
+            Timber.e(e, "Error getting the mobile tx bytes")
             return
         }
 
@@ -147,7 +146,7 @@ class TrafficStatsManager : SensorManager {
         val totalRx = try {
             TrafficStats.getTotalRxBytes().toFloat().absoluteValue / GB
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting the total rx bytes", e)
+            Timber.e(e, "Error getting the total rx bytes")
             return
         }
 
@@ -168,7 +167,7 @@ class TrafficStatsManager : SensorManager {
         val totalTx = try {
             TrafficStats.getTotalTxBytes().toFloat().absoluteValue / GB
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting the total tx bytes", e)
+            Timber.e(e, "Error getting the total tx bytes")
             return
         }
 

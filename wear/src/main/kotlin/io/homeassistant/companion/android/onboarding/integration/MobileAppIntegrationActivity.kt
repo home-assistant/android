@@ -17,7 +17,6 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationView {
     companion object {
-        private const val TAG = "MobileAppIntegrationActivity"
         const val EXTRA_SERVER = "server"
 
         fun newInstance(context: Context, serverId: Int): Intent {

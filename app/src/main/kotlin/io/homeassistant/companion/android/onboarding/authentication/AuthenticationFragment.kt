@@ -5,7 +5,6 @@ import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -38,12 +37,12 @@ import javax.inject.Inject
 import javax.inject.Named
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import timber.log.Timber
 
 @AndroidEntryPoint
 class AuthenticationFragment : Fragment() {
 
     companion object {
-        private const val TAG = "AuthenticationFragment"
         private const val AUTH_CALLBACK = "homeassistant://auth-callback"
     }
 
@@ -87,8 +86,7 @@ class AuthenticationFragment : Fragment() {
                                 ) {
                                     super.onReceivedError(view, request, error)
                                     if (request?.url?.toString() == authUrl) {
-                                        Log.e(
-                                            TAG,
+                                        Timber.e(
                                             "onReceivedError: Status Code: ${error?.errorCode} Description: ${error?.description}"
                                         )
                                         showError(
@@ -114,8 +112,7 @@ class AuthenticationFragment : Fragment() {
                                 ) {
                                     super.onReceivedHttpError(view, request, errorResponse)
                                     if (request?.url?.toString() == authUrl) {
-                                        Log.e(
-                                            TAG,
+                                        Timber.e(
                                             "onReceivedHttpError: Status Code: ${errorResponse?.statusCode} Description: ${errorResponse?.reasonPhrase}"
                                         )
                                         if (isTLSClientAuthNeeded && !isCertificateChainValid) {
@@ -154,7 +151,7 @@ class AuthenticationFragment : Fragment() {
                                     error: SslError?
                                 ) {
                                     super.onReceivedSslError(view, handler, error)
-                                    Log.e(TAG, "onReceivedSslError: $error")
+                                    Timber.e("onReceivedSslError: $error")
                                     showError(requireContext().getString(commonR.string.error_ssl), error, null)
                                 }
                             }
@@ -186,7 +183,7 @@ class AuthenticationFragment : Fragment() {
                 .build()
                 .toString()
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to build authentication URL", e)
+            Timber.e(e, "Unable to build authentication URL")
             Toast.makeText(context, commonR.string.error_connection_failed, Toast.LENGTH_LONG).show()
             parentFragmentManager.popBackStack()
             ""
