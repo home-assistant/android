@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.homeassistant.android.application)
     alias(libs.plugins.google.services)
-    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.screenshot)
 }
 
@@ -12,7 +11,7 @@ android {
 
         versionName = project.version.toString()
         // We add 1 because the app and wear versions need to have different version codes.
-        versionCode = (System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1) + 1
+        versionCode = 1 + checkNotNull(versionCode) { "Did you forget to apply the convention plugin that set the version code?" }
     }
 
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
