@@ -79,6 +79,20 @@ jobs:
       - name: Validate Lint
         run: ./gradlew lint
 
+      - name: Upload lint reports (HTML)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+            name: lint-reports
+            path: "**/build/reports/lint-results-*.html"
+
+      - name: Upload lint reports (SARIF)
+        if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+            sarif_file: "./"
+            category: "Android Lint"
+
   screenshot:
     runs-on: ubuntu-latest
     steps:
