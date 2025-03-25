@@ -2,9 +2,9 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/colorLaunchScreenBackground" />
 
-    <item android:width="170dp"
-        android:height="170dp"
+    <item android:width="112dp"
+        android:height="112dp"
         android:gravity="center"
-        android:drawable="@drawable/app_icon_round">
+        android:drawable="@drawable/app_icon_launch">
     </item>
 </layer-list>

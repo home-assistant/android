@@ -1,20 +1,12 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt)
+    alias(libs.plugins.homeassistant.android.application)
     alias(libs.plugins.google.services)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.screenshot)
 }
 
 android {
-    namespace = "io.homeassistant.companion.android"
-
-    compileSdk = libs.versions.androidSdk.compile.get().toInt()
-
     defaultConfig {
-        applicationId = "io.homeassistant.companion.android"
         minSdk = libs.versions.androidSdk.wear.min.get().toInt()
         targetSdk = libs.versions.androidSdk.wear.target.get().toInt()
 
@@ -23,49 +15,8 @@ android {
         versionCode = (System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1) + 1
     }
 
-    buildFeatures {
-        viewBinding = true
-        compose = true
-        buildConfig = true
-    }
-
-    signingConfigs {
-        create("release") {
-            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "release_keystore.keystore")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias = System.getenv("KEYSTORE_ALIAS") ?: ""
-            keyPassword = System.getenv("KEYSTORE_ALIAS_PASSWORD") ?: ""
-            enableV1Signing = true
-            enableV2Signing = true
-        }
-    }
-
-    buildTypes {
-        named("debug").configure {
-            applicationIdSuffix = ".debug"
-        }
-        named("release").configure {
-            isDebuggable = false
-            isJniDebuggable = false
-            signingConfig = signingConfigs.getByName("release")
-        }
-    }
-
-    kotlinOptions {
-        jvmTarget = libs.versions.javaVersion.get()
-    }
-
-    compileOptions {
-        isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility(libs.versions.javaVersion.get())
-        targetCompatibility(libs.versions.javaVersion.get())
-    }
-
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
 
-    lint {
-        disable += "MissingTranslation"
-    }
 }
 
 dependencies {
@@ -121,4 +72,8 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     screenshotTestImplementation(libs.compose.uiTooling)
+
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.bundles.androidx.test)
+    androidTestImplementation(libs.bundles.androidx.compose.ui.test)
 }

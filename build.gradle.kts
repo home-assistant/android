@@ -1,3 +1,5 @@
+import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
+
 plugins {
     alias(libs.plugins.ktlint)
 
@@ -14,14 +16,30 @@ plugins {
 
 allprojects {
     apply(plugin = rootProject.libs.plugins.ktlint.get().pluginId)
+
+    ktlint {
+        android.set(true)
+        reporters {
+            reporter(ReporterType.SARIF)
+            reporter(ReporterType.PLAIN)
+        }
+    }
+
+    dependencyLocking {
+        lockAllConfigurations()
+    }
 }
 
 tasks.register("clean").configure {
     delete("build")
 }
 
-ktlint {
-    android.set(true)
+tasks.register("alldependencies").configure {
+    setDependsOn(
+        project.allprojects.flatMap {
+            it.tasks.withType<DependencyReportTask>()
+        }
+    )
 }
 
 tasks.register("versionFile").configure {

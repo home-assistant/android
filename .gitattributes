@@ -1,0 +1,37 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Explicitly declare text files you want to always be normalized and converted to native line endings on checkout.
+*.kt text
+*.kts text
+*.xml text
+*.gradle text
+*.md text
+*.json text
+*.yml text
+*.yaml text
+*.toml text
+*.properties text
+*.pro text
+*.txt text
+*.bash text eol=lf
+*.css text diff=css
+*.sh text eol=lf
+
+# Declare binary files to be preserved as-is
+*.png binary
+*.jpg binary
+*.jar binary
+
+# Custom merge driver for Gradle lock files
+gradle.lockfile merge=union
+
+# Ensure shell scripts have UNIX line endings
+*.sh text eol=lf
+
+# Ensure Windows batch files have CRLF line endings
+*.bat text eol=crlf
+
+# Handle Android Studio specific files
+*.iml text
+*.idea/** text

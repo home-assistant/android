@@ -1,4 +1,4 @@
-# :iphone: Home Assistant Companion for Android  [![Build](https://github.com/home-assistant/android/actions/workflows/onPush.yml/badge.svg)](https://github.com/home-assistant/android/actions/workflows/onPush.yml)
+# Home Assistant Companion for Android  [![Build](https://github.com/home-assistant/android/actions/workflows/onPush.yml/badge.svg)](https://github.com/home-assistant/android/actions/workflows/onPush.yml)
 
 ## Documentation
 If you are looking for documentation around the companion applications check out the [Home Assistant Companion Documentation](https://companion.home-assistant.io/).  This will provide you with instructions on using the applications.
@@ -82,5 +82,20 @@ The project currently uses [Lokalise](https://lokalise.com/public/145814835dd655
   * This should cause the `Play Publish Production` Workflow to execute and should handle the rest for Google Play
   * Some platforms, such as the Amazon App Store, need to be updated manually
   * F-Droid uses the `version_code.txt` file of the latest release to detect a new production release and build it themselves, this may take some time
- 
+
+## Managing Dependencies and Lockfiles
+
+This project utilizes Gradle's [dependency locking](https://docs.gradle.org/current/userguide/dependency_locking.html) feature to ensure consistent and reproducible builds by tracking the precise versions of all libraries used.
+
+**Updating Dependencies and Lockfiles**
+
+When adding or updating a dependency in `gradle/libs.versions.toml`, it's crucial to also update the corresponding lockfiles. This is necessary because the lockfiles capture the exact versions of all direct and transitive dependencies.
+
+To update the lockfiles, run the following command from the project root `./gradlew alldependencies --write-locks`
+This command will resolve all dependencies and update the `gradle.lockfile` in each module.
+
+**Automated Dependency Updates with Renovate**
+
+To streamline dependency management, we've integrated [Renovate](https://docs.renovatebot.com/) into this repository. Renovate automatically creates pull requests to update dependencies and their associated lockfiles.
+
 [![Home Assistant - A project from the Open Home Foundation](https://www.openhomefoundation.org/badges/home-assistant.png)](https://www.openhomefoundation.org/)

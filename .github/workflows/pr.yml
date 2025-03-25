@@ -1,68 +1,80 @@
 name: Pull Request
 
-on:
+on: # yamllint disable-line rule:truthy
   pull_request:
-    branches: [ master ]
+    branches: [master]
+
+# This workflow should cancel previous builds since it means that a new commit has been made to the PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  ktlint:
+  yamllint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4.5.0
-        with:
-          distribution: 'temurin'
-          java-version: '17'
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Mock google-services.json
+      - name: Register yamllint problem matcher
         run: |
-          cp .github/mock-google-services.json app/google-services.json
-          cp .github/mock-google-services.json wear/google-services.json
-          cp .github/mock-google-services.json automotive/google-services.json
+          echo "::add-matcher::.github/workflows/matchers/yamllint.json"
 
-      - uses: gradle/actions/wrapper-validation@v4
-        name: Validate Gradle Wrapper
+      - name: Validate YAML
+        run: yamllint --strict --format github .
 
+  ktlint:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          mock-google-services: "true"
+
+      # Since `build-logic` is added with `includeBuild` we have to call ktlint explicitly on `:convention`.
       - name: Validate ktlint
-        run: ./gradlew ktlintCheck
+        run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck
+
+      - name: Upload lint reports (SARIF)
+        if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "./"
+          category: "KTlint"
+
+  unit_tests:
+    name: "Unit Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          mock-google-services: "true"
+
+      - name: Run test
+        run: ./gradlew :common:testDebugUnitTest # Should be adapted once we have more than one tests
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unit test results
+          path: |
+            **/build/test-results/**/TEST-*.xml
 
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4.5.0
+
+      - uses: ./.github/actions/setup-build-env
         with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Mock google-services.json
-        run: |
-          cp .github/mock-google-services.json app/google-services.json
-          cp .github/mock-google-services.json wear/google-services.json
-          cp .github/mock-google-services.json automotive/google-services.json
-
-      - uses: gradle/actions/wrapper-validation@v4
-        name: Validate Gradle Wrapper
+          mock-google-services: "true"
 
       - name: Validate Lint
         run: ./gradlew lint
@@ -104,57 +116,195 @@ jobs:
           name: screenshot-results
           path: wear/build/reports/screenshotTest
 
+      - name: Upload lint reports (HTML)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-reports
+          path: "**/build/reports/lint-results-*.html"
+
+      - name: Upload lint reports (SARIF)
+        if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "./"
+          category: "Android Lint"
+
   pr_build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Check for modified DB schemas on branch
-      run: |
-        if git diff --name-only --diff-filter=DMR origin/master... | grep "^common/schemas"; then
-          echo -e "\n❌ Existing database schema modified, please increase the database version instead"
-          exit 1
-        else
-          echo -e "\n✔️ No changed database schemas on branch"
-        fi
+      - name: Check for modified DB schemas on branch
+        run: |
+          if git diff --name-only --diff-filter=DMR origin/master... | grep "^common/schemas"; then
+            echo -e "\n❌ Existing database schema modified, please increase the database version instead"
+            exit 1
+          else
+            echo -e "\n✔️ No changed database schemas on branch"
+          fi
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4.5.0
-      with:
-        distribution: 'temurin'
-        java-version: '17'
+      - uses: ./.github/actions/setup-build-env
+        with:
+          mock-google-services: "true"
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v4
+      - name: Build Debug APK
+        run: |
+          ./gradlew :common:assemble :app:assembleDebug :wear:assembleDebug :automotive:assembleDebug
 
-    - name: Mock google-services.json
-      run: |
-        cp .github/mock-google-services.json app/google-services.json
-        cp .github/mock-google-services.json wear/google-services.json
-        cp .github/mock-google-services.json automotive/google-services.json
+      - name: Check for missing/modified DB schemas after build
+        run: |
+          if [[ $(git status common/schemas --porcelain) ]]; then
+            echo $(git status common/schemas --porcelain)
+            echo -e "\n❌ Found uncommitted changes in database schema directory, please make sure to include all changes in your commit(s)"
+            exit 1;
+          else
+            echo -e "\n✔️ No changes in database schema directory after build"
+          fi
 
-    - name: Build Debug APK
-      run: |
-        ./gradlew :common:assemble
-        ./gradlew :app:assembleDebug
-        ./gradlew :wear:assembleDebug
-        ./gradlew :automotive:assembleDebug
+      - name: Archive Debug Build
+        uses: actions/upload-artifact@v4
+        with:
+          path: ./**/*.apk
 
-    - name: Check for missing/modified DB schemas after build
-      run: |
-        if [[ $(git status common/schemas --porcelain) ]]; then
-          echo $(git status common/schemas --porcelain)
-          echo -e "\n❌ Found uncommitted changes in database schema directory, please make sure to include all changes in your commit(s)"
-          exit 1;
-        else
-          echo -e "\n✔️ No changes in database schema directory after build"
-        fi
+  instrumentation_test:
+    name: "Instrumentation Tests"
+    runs-on: ubuntu-latest
+    strategy:
+      # We want the result of each device to be reported, so we can't fail-fast
+      fail-fast: false
+      matrix:
+        configuration:
+          - api-level: 21
+            arch: x86_64
+            profile: "Nexus 5"
+            target: "google_apis"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: 30
+            arch: x86
+            profile: "tv_4k"
+            target: "android-tv"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: 35
+            arch: x86_64
+            profile: "pixel_7"
+            target: "google_apis"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          # Disabled due to Github Actions limitations https://github.com/ReactiveCircus/android-emulator-runner/pull/428
+          # - api-level: 33
+          #   arch: x86_64
+          #   profile: "automotive_1024p_landscape"
+          #   target: "android-automotive"
+          #   gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          # - api-level: "34-ext9" # -ext9 is not usable because of https://github.com/ReactiveCircus/android-emulator-runner/issues/429
+          #   arch: x86_64
+          #   profile: "automotive_ultrawide"
+          #   target: "android-automotive"
+          #   gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: 26
+            arch: x86
+            profile: "wearos_square"
+            target: "android-wear"
+            gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: 34
+            arch: x86_64
+            profile: "wearos_small_round"
+            target: "android-wear"
+            gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
+    steps:
+      - name: Delete unnecessary tools 🔧
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          android: false # Don't remove Android tools
+          tool-cache: true # Remove image tool cache - rm -rf "$AGENT_TOOLSDIRECTORY"
+          docker-images: false # Takes 16s, enable if needed in the future
+          large-packages: false # includes google-cloud-sdk and it's slow
 
-    - name: Archive Debug Build
-      uses: actions/upload-artifact@v4
-      with:
-        path: ./**/*.apk
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          mock-google-services: "true"
+
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          ls /dev/kvm
+
+      - name: AVD cache
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ matrix.configuration.target }}-${{ matrix.configuration.api-level }}
+
+      - name: Create AVD and generate snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.configuration.api-level }}
+          arch: ${{ matrix.configuration.arch }}
+          force-avd-creation: false
+          disable-animations: true
+          disk-size: 1G # We need to ensure that there is enough space for the emulator to run. If not we get 'Failed to commit install' errors.
+          heap-size: 1G
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          profile: ${{ matrix.configuration.profile }}
+          target: ${{ matrix.configuration.target }}
+          script: |
+            echo "Generated AVD snapshot for caching."
+
+      - name: Build projects and run instrumentation tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.configuration.api-level }}
+          arch: ${{ matrix.configuration.arch }}
+          force-avd-creation: false
+          disable-animations: true
+          disk-size: 1G
+          heap-size: 1G
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          profile: ${{ matrix.configuration.profile }}
+          target: ${{ matrix.configuration.target }}
+          script: ./gradlew ${{ matrix.configuration.gradle_target }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Instrumentation test results (API${{ matrix.configuration.api-level }}) ${{ matrix.configuration.target }}
+          path: |
+            **/build/reports/*
+            **/build/outputs/*/connected/*
+
+  publish_test_results:
+    name: "Publish Tests Results"
+    needs: [instrumentation_test, unit_tests]
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+    if: always()
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Publish Test Results EnricoMi
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          comment_mode: "failures"
+          # We want to fail the build to block the merge if any test fail it allows us simplify the setup of the protected branch.
+          action_fail: true
+          files: |
+            **/androidTest-results/**/TEST-*.xml
+            **/build/test-results/**/TEST-*.xml

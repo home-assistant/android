@@ -1,0 +1,35 @@
+name: Tag Weekly Release
+
+on: # yamllint disable-line rule:truthy
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * 0"
+jobs:
+  tag:
+    name: Tag Weekly Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-build-env
+
+      - name: Tag Weekly Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.TAG_PUSH_TOKEN }}
+        run: ./gradlew :reckonTagPush -Preckon.stage=final
+
+      - name: Trigger Workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'onPush.yml',
+              ref: 'master',
+              inputs: {
+                "beta": "true",
+              },
+            })

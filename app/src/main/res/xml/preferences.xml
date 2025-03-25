@@ -217,7 +217,7 @@
             app:enableCopying="true" />
         <Preference
             android:key="version"
-            android:icon="@drawable/app_icon_round"
+            android:icon="@drawable/ic_stat_ic_notification_blue"
             android:title="@string/application_version"
             android:summary="1.0.0 (1)"/>
         <Preference

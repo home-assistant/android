@@ -31,8 +31,7 @@
         <Preference
             android:key="connection_internal_ssids"
             android:icon="@drawable/ic_wifi"
-            android:title="@string/pref_connection_wifi"
-            android:summary="@string/pref_connection_ssids_empty" />
+            android:title="@string/pref_connection_homenetwork"/>
         <EditTextPreference
             android:key="connection_internal"
             android:title="@string/pref_connection_internal"

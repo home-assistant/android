@@ -20,4 +20,8 @@
         android:icon="@drawable/ic_thread"
         android:title="@string/thread_debug"
         android:summary="@string/thread_debug_summary"/>
+    <Preference
+        android:key="webview_clear_cache"
+        android:icon="@drawable/ic_clear"
+        android:title="@string/clear_webview_cache"/>
 </PreferenceScreen>
