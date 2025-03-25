@@ -13,17 +13,15 @@ import android.hardware.SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM
 import android.hardware.SensorManager.SENSOR_STATUS_NO_CONTACT
 import android.hardware.SensorManager.SENSOR_STATUS_UNRELIABLE
 import android.os.Build
-import android.util.Log
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import kotlin.math.roundToInt
+import timber.log.Timber
 
 class HeartRateSensorManager : SensorManager, SensorEventListener {
     companion object {
-
-        private const val TAG = "HRSensor"
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
         private val skipAccuracy = listOf(
@@ -83,7 +81,7 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
 
         val now = System.currentTimeMillis()
         if (listenerLastRegistered + 60000 < now && isListenerRegistered) {
-            Log.d(TAG, "Re-registering listener as it appears to be stuck")
+            Timber.d("Re-registering listener as it appears to be stuck")
             mySensorManager.unregisterListener(this)
             isListenerRegistered = false
         }
@@ -96,7 +94,7 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
                 heartRateSensor,
                 SENSOR_DELAY_NORMAL
             )
-            Log.d(TAG, "Heart Rate sensor listener registered")
+            Timber.d("Heart Rate sensor listener registered")
             isListenerRegistered = true
             listenerLastRegistered = now.toInt()
         }
@@ -111,9 +109,9 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
         val validReading = event?.sensor?.type == Sensor.TYPE_HEART_RATE && event.accuracy !in skipAccuracy &&
             event.values[0].roundToInt() >= 0
         if (event?.sensor?.type == Sensor.TYPE_HEART_RATE) {
-            Log.d(TAG, "HR event received with accuracy: ${getAccuracy(event.accuracy)} and value: ${event.values[0]} with event count: $eventCount")
+            Timber.d("HR event received with accuracy: ${getAccuracy(event.accuracy)} and value: ${event.values[0]} with event count: $eventCount")
         } else {
-            Log.d(TAG, "No HR event received")
+            Timber.d("No HR event received")
         }
         if (event != null && validReading) {
             onSensorUpdated(
@@ -128,7 +126,7 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
         }
         if (validReading || eventCount >= 10) {
             mySensorManager.unregisterListener(this)
-            Log.d(TAG, "Heart Rate sensor listener unregistered")
+            Timber.d("Heart Rate sensor listener unregistered")
             isListenerRegistered = false
             eventCount = 0
         }

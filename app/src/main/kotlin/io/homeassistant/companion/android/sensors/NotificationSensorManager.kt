@@ -13,7 +13,6 @@ import android.os.Build
 import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
@@ -22,10 +21,10 @@ import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class NotificationSensorManager : NotificationListenerService(), SensorManager {
     companion object {
-        private const val TAG = "NotificationManager"
         private const val SETTING_ALLOW_LIST = "notification_allow_list"
         private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
         private const val SETTING_INCLUDE_CONTENTS_AS_ATTRS = "active_notification_count_content_attrs"
@@ -271,7 +270,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
                     attr
                 )
             } catch (e: Exception) {
-                Log.e(TAG, "Unable to update active notifications", e)
+                Timber.e(e, "Unable to update active notifications")
             }
         }
     }
@@ -363,7 +362,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
                 "${key}$keySuffix" to keyValue
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Exception while trying to map notification bundle", e)
+            Timber.e(e, "Exception while trying to map notification bundle")
             null
         }
     }

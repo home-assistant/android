@@ -7,8 +7,6 @@ import androidx.appcompat.app.AppCompatActivity
 class SettingsWearMainView : AppCompatActivity() {
 
     companion object {
-        private const val TAG = "SettingsWearMainView"
-
         fun newInstance(context: Context): Intent {
             return Intent(context, SettingsWearMainView::class.java)
         }

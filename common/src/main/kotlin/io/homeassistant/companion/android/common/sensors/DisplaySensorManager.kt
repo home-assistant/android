@@ -4,16 +4,14 @@ import android.content.Context
 import android.content.res.Configuration
 import android.hardware.display.DisplayManager
 import android.provider.Settings
-import android.util.Log
 import android.view.Display
 import android.view.Surface
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import timber.log.Timber
 
 class DisplaySensorManager : SensorManager {
     companion object {
-        private const val TAG = "DisplaySensors"
-
         val screenBrightness = SensorManager.BasicSensor(
             "screen_brightness",
             "sensor",
@@ -95,7 +93,7 @@ class DisplaySensorManager : SensorManager {
                 Settings.System.SCREEN_BRIGHTNESS_MODE
             ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to get screen brightness settings", e)
+            Timber.e(e, "Unable to get screen brightness settings")
         }
 
         val icon = if (auto) "mdi:brightness-auto" else screenBrightness.statelessIcon
@@ -121,7 +119,7 @@ class DisplaySensorManager : SensorManager {
             timeout =
                 Settings.System.getInt(context.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT)
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to get screen off timeout setting", e)
+            Timber.e(e, "Unable to get screen off timeout setting")
         }
 
         onSensorUpdated(

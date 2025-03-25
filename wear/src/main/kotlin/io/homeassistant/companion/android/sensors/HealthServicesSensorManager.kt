@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.os.Build
 import android.os.SystemClock
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.health.services.client.HealthServices
 import androidx.health.services.client.HealthServicesClient
@@ -26,12 +25,12 @@ import io.homeassistant.companion.android.database.AppDatabase
 import java.time.Instant
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.R)
 class HealthServicesSensorManager : SensorManager {
     companion object {
 
-        private const val TAG = "HealthServices"
         private var callbackLastUpdated = 0L
         private val userActivityState = SensorManager.BasicSensor(
             "activity_state",
@@ -117,7 +116,7 @@ class HealthServicesSensorManager : SensorManager {
         }
         if (passiveMonitoringCapabilities == null) {
             passiveMonitoringCapabilities = passiveMonitoringClient?.getCapabilitiesAsync()?.await()
-            Log.d(TAG, "Supported capabilities: $passiveMonitoringCapabilities")
+            Timber.d("Supported capabilities: $passiveMonitoringCapabilities")
         }
 
         val supportedSensors = mutableListOf(userActivityState)
@@ -196,7 +195,7 @@ class HealthServicesSensorManager : SensorManager {
 
         val passiveListenerCallback: PassiveListenerCallback = object : PassiveListenerCallback {
             override fun onUserActivityInfoReceived(info: UserActivityInfo) {
-                Log.d(TAG, "User activity state: ${info.userActivityState.name}")
+                Timber.d("User activity state: ${info.userActivityState.name}")
                 callbackLastUpdated = System.currentTimeMillis()
                 val forceUpdate = info.userActivityState == UserActivityState.USER_ACTIVITY_EXERCISE
                 onSensorUpdated(
@@ -225,7 +224,7 @@ class HealthServicesSensorManager : SensorManager {
             }
 
             override fun onNewDataPointsReceived(dataPoints: DataPointContainer) {
-                Log.d(TAG, "New data point received: ${dataPoints.dataTypes}")
+                Timber.d("New data point received: ${dataPoints.dataTypes}")
                 callbackLastUpdated = System.currentTimeMillis()
                 val floorsDaily = dataPoints.getData(DataType.FLOORS_DAILY)
                 val distanceDaily = dataPoints.getData(DataType.DISTANCE_DAILY)
@@ -241,8 +240,7 @@ class HealthServicesSensorManager : SensorManager {
                         data.forEachIndexed { indexPoint, dataPoint ->
                             if (dataPoint is IntervalDataPoint) {
                                 val endTime = dataPoint.getEndInstant(bootInstant)
-                                Log.d(
-                                    TAG,
+                                Timber.d(
                                     "Data for ${dataType.name} index: $indexPoint with value: ${dataPoint.value} end time: ${endTime.toEpochMilli()}"
                                 )
                             }
@@ -266,12 +264,12 @@ class HealthServicesSensorManager : SensorManager {
             }
 
             override fun onRegistrationFailed(throwable: Throwable) {
-                Log.e(TAG, "onRegistrationFailed: ", throwable)
+                Timber.e(throwable, "onRegistrationFailed")
                 callBackRegistered = false
             }
 
             override fun onRegistered() {
-                Log.d(TAG, "Health services callback successfully registered for the following data types: ${passiveListenerConfig!!.dataTypes} User Activity Info: ${passiveListenerConfig!!.shouldUserActivityInfoBeRequested} Health Events: ${passiveListenerConfig!!.healthEventTypes}")
+                Timber.d("Health services callback successfully registered for the following data types: ${passiveListenerConfig!!.dataTypes} User Activity Info: ${passiveListenerConfig!!.shouldUserActivityInfoBeRequested} Health Events: ${passiveListenerConfig!!.healthEventTypes}")
                 callBackRegistered = true
             }
         }
@@ -352,7 +350,7 @@ class HealthServicesSensorManager : SensorManager {
         if (dataPoints.isNotEmpty()) {
             dataPoints.forEachIndexed { index, intervalDataPoint ->
                 val endTime = intervalDataPoint.getEndInstant(bootInstant)
-                Log.d(TAG, "${basicSensor.id} data index: $index with value: ${intervalDataPoint.value} end time: ${endTime.toEpochMilli()}")
+                Timber.d("${basicSensor.id} data index: $index with value: ${intervalDataPoint.value} end time: ${endTime.toEpochMilli()}")
                 if (endTime.toEpochMilli() > latest) {
                     latest = endTime.toEpochMilli().toInt()
                     lastIndex = index

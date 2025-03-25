@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.url
 
 import android.app.Application
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,6 +13,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.util.UrlUtil
 import javax.inject.Inject
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @HiltViewModel
 class ExternalUrlViewModel @Inject constructor(
@@ -21,10 +21,6 @@ class ExternalUrlViewModel @Inject constructor(
     private val serverManager: ServerManager,
     application: Application
 ) : AndroidViewModel(application) {
-
-    companion object {
-        private const val TAG = "ExternalUrlViewModel"
-    }
 
     var canUseCloud by mutableStateOf(false)
         private set
@@ -75,7 +71,7 @@ class ExternalUrlViewModel @Inject constructor(
                     )
                     externalUrl = formatted
                 } catch (e: MalformedHttpUrlException) {
-                    Log.e(TAG, "Invalid external URL, ignoring", e)
+                    Timber.e(e, "Invalid external URL, ignoring")
                 }
             }
         }

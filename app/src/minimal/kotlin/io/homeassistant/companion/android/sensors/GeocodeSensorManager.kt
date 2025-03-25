@@ -7,7 +7,6 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 class GeocodeSensorManager : SensorManager {
 
     companion object {
-        private const val TAG = "GeocodeSM"
         val geocodedLocation = SensorManager.BasicSensor(
             "geocoded_location",
             "sensor",

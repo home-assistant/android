@@ -10,8 +10,6 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class DynamicColorSensorManager : SensorManager {
     companion object {
-        private const val TAG = "DynamicColor"
-
         val accentColorSensor = SensorManager.BasicSensor(
             "accent_color",
             "sensor",

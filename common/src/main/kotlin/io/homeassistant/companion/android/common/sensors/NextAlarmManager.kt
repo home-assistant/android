@@ -4,7 +4,6 @@ import android.app.AlarmManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
@@ -18,10 +17,10 @@ import java.util.Date
 import java.util.GregorianCalendar
 import java.util.Locale
 import java.util.TimeZone
+import timber.log.Timber
 
 class NextAlarmManager : SensorManager {
     companion object {
-        private const val TAG = "NextAlarm"
         private const val SETTING_ALLOW_LIST = "nextalarm_allow_list"
 
         val nextAlarm = SensorManager.BasicSensor(
@@ -86,11 +85,11 @@ class NextAlarmManager : SensorManager {
                 pendingIntent = alarmClockInfo.showIntent?.creatorPackage ?: STATE_UNKNOWN
                 triggerTime = alarmClockInfo.triggerTime
 
-                Log.d(TAG, "Next alarm is scheduled by $pendingIntent with trigger time $triggerTime")
+                Timber.d("Next alarm is scheduled by $pendingIntent with trigger time $triggerTime")
                 if (allowPackageList != "") {
                     val allowPackageListing = allowPackageList.split(", ")
                     if (pendingIntent !in allowPackageListing) {
-                        Log.d(TAG, "Skipping update from $pendingIntent as it is not in the allow list")
+                        Timber.d("Skipping update from $pendingIntent as it is not in the allow list")
                         return
                     }
                 } else {
@@ -106,10 +105,10 @@ class NextAlarmManager : SensorManager {
                 sdf.timeZone = TimeZone.getTimeZone("UTC")
                 utc = sdf.format(Date(triggerTime))
             } else {
-                Log.d(TAG, "No alarm is scheduled, sending unavailable")
+                Timber.d("No alarm is scheduled, sending unavailable")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting the next alarm info", e)
+            Timber.e(e, "Error getting the next alarm info")
         }
 
         onSensorUpdated(

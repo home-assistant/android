@@ -7,7 +7,6 @@ import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
-import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ActivityContext
@@ -42,6 +41,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import timber.log.Timber
 
 class WebViewPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
@@ -52,10 +52,6 @@ class WebViewPresenterImpl @Inject constructor(
     private val matterUseCase: MatterManager,
     private val threadUseCase: ThreadManager
 ) : WebViewPresenter {
-
-    companion object {
-        private const val TAG = "WebViewPresenterImpl"
-    }
 
     private val view = context as WebView
 
@@ -81,7 +77,7 @@ class WebViewPresenterImpl @Inject constructor(
                 try {
                     view.sendExternalBusMessage(it)
                 } catch (e: Exception) {
-                    Log.w(TAG, "Unable to send message to external bus $it", e)
+                    Timber.w(e, "Unable to send message to external bus $it")
                 }
             }
         }
@@ -101,7 +97,7 @@ class WebViewPresenterImpl @Inject constructor(
             try {
                 if (serverManager.authenticationRepository(serverId).getSessionState() == SessionState.ANONYMOUS) return@launch
             } catch (e: IllegalArgumentException) {
-                Log.w(TAG, "Unable to get server session state, not continuing")
+                Timber.w("Unable to get server session state, not continuing")
                 return@launch
             }
 
@@ -199,11 +195,11 @@ class WebViewPresenterImpl @Inject constructor(
                     if (serverManager.integrationRepository(serverId).shouldNotifySecurityWarning()) {
                         view.showError(WebView.ErrorType.SECURITY_WARNING)
                     } else {
-                        Log.w(TAG, "Still not updated but have already notified.")
+                        Timber.w("Still not updated but have already notified.")
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Issue getting version/notifying of security issue.", e)
+                Timber.e(e, "Issue getting version/notifying of security issue.")
             }
         }
     }
@@ -213,7 +209,7 @@ class WebViewPresenterImpl @Inject constructor(
             try {
                 view.setExternalAuth("$callback(true, ${serverManager.authenticationRepository(serverId).retrieveExternalAuthentication(force)})")
             } catch (e: Exception) {
-                Log.e(TAG, "Unable to retrieve external auth", e)
+                Timber.e(e, "Unable to retrieve external auth")
                 val anonymousSession = serverManager.getServer(serverId) == null || serverManager.authenticationRepository(serverId).getSessionState() == SessionState.ANONYMOUS
                 view.setExternalAuth("$callback(false)")
                 view.showError(
@@ -243,7 +239,7 @@ class WebViewPresenterImpl @Inject constructor(
                 view.setExternalAuth("$callback(true)")
                 view.relaunchApp()
             } catch (e: Exception) {
-                Log.e(TAG, "Unable to revoke session", e)
+                Timber.e(e, "Unable to revoke session")
                 view.setExternalAuth("$callback(false)")
             }
         }
@@ -278,7 +274,7 @@ class WebViewPresenterImpl @Inject constructor(
             try {
                 serverManager.integrationRepository(serverId).isAppLocked()
             } catch (e: IllegalArgumentException) {
-                Log.w(TAG, "Cannot determine app locked state")
+                Timber.w("Cannot determine app locked state")
                 false
             }
         } else {
@@ -291,7 +287,7 @@ class WebViewPresenterImpl @Inject constructor(
             try {
                 serverManager.integrationRepository(serverId).setAppActive(active)
             } catch (e: IllegalStateException) {
-                Log.w(TAG, "Cannot set app active $active for server $serverId")
+                Timber.w("Cannot set app active $active for server $serverId")
                 Unit
             }
         } ?: Unit
@@ -344,20 +340,20 @@ class WebViewPresenterImpl @Inject constructor(
     override suspend fun parseWebViewColor(webViewColor: String): Int = withContext(Dispatchers.IO) {
         var color = 0
 
-        Log.d(TAG, "Try getting color from webview color \"$webViewColor\".")
+        Timber.d("Try getting color from webview color \"$webViewColor\".")
         if (webViewColor.isNotEmpty() && webViewColor != "null") {
             try {
                 color = parseColorWithRgb(webViewColor)
-                Log.i(TAG, "Found color $color.")
+                Timber.i("Found color $color.")
             } catch (e: Exception) {
-                Log.w(TAG, "Could not get color from webview.", e)
+                Timber.w(e, "Could not get color from webview.")
             }
         } else {
-            Log.w(TAG, "Could not get color from webview. Color \"$webViewColor\" is not a valid color.")
+            Timber.w("Could not get color from webview. Color \"$webViewColor\" is not a valid color.")
         }
 
         if (color == 0) {
-            Log.w(TAG, "Couldn't get color.")
+            Timber.w("Couldn't get color.")
         }
 
         return@withContext color
@@ -395,12 +391,12 @@ class WebViewPresenterImpl @Inject constructor(
         matterUseCase.startNewCommissioningFlow(
             context,
             { intentSender ->
-                Log.d(TAG, "Matter commissioning is ready")
+                Timber.d("Matter commissioning is ready")
                 matterThreadIntentSender = intentSender
                 mutableMatterThreadStep.tryEmit(MatterThreadStep.MATTER_IN_PROGRESS)
             },
             { e ->
-                Log.e(TAG, "Matter commissioning couldn't be prepared", e)
+                Timber.e(e, "Matter commissioning couldn't be prepared")
                 mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_MATTER)
             }
         )
@@ -415,7 +411,7 @@ class WebViewPresenterImpl @Inject constructor(
             mainScope.launch {
                 try {
                     val result = threadUseCase.syncPreferredDataset(context, serverId, true, CoroutineScope(coroutineContext + SupervisorJob()))
-                    Log.d(TAG, "Export preferred Thread dataset returned $result")
+                    Timber.d("Export preferred Thread dataset returned $result")
 
                     when (result) {
                         is ThreadManager.SyncResult.OnlyOnDevice -> {
@@ -434,7 +430,7 @@ class WebViewPresenterImpl @Inject constructor(
                         }
                     }
                 } catch (e: Exception) {
-                    Log.w(TAG, "Unable to export preferred Thread dataset", e)
+                    Timber.w(e, "Unable to export preferred Thread dataset")
                     mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_OTHER)
                 }
             }
@@ -461,7 +457,7 @@ class WebViewPresenterImpl @Inject constructor(
             MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY -> {
                 mainScope.launch {
                     val sent = threadUseCase.sendThreadDatasetExportResult(result, serverId)
-                    Log.d(TAG, "Thread ${if (!sent.isNullOrBlank()) "sent credential for $sent" else "did not send credential"}")
+                    Timber.d("Thread ${if (!sent.isNullOrBlank()) "sent credential for $sent" else "did not send credential"}")
                     if (sent.isNullOrBlank()) {
                         mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_NONE)
                     } else {
@@ -472,9 +468,9 @@ class WebViewPresenterImpl @Inject constructor(
             else -> {
                 // Any errors will have been shown in the UI provided by Play Services
                 if (result.resultCode == Activity.RESULT_OK) {
-                    Log.d(TAG, "Matter commissioning returned success")
+                    Timber.d("Matter commissioning returned success")
                 } else {
-                    Log.d(TAG, "Matter commissioning returned with non-OK code ${result.resultCode}")
+                    Timber.d("Matter commissioning returned with non-OK code ${result.resultCode}")
                 }
             }
         }
@@ -502,7 +498,7 @@ class WebViewPresenterImpl @Inject constructor(
             emptyList<String>()
         }
         return if (returnPermissions.size == 1 && returnPermissions[0] != Manifest.permission.ACCESS_FINE_LOCATION) {
-            Log.d(TAG, "Should request Improv permission: $returnPermissions")
+            Timber.d("Should request Improv permission: $returnPermissions")
             returnPermissions[0]
         } else {
             null
@@ -511,10 +507,10 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun startScanningForImprov(): Boolean {
         if (!improvRepository.hasPermission(view as Context)) {
-            Log.d(TAG, "Improv scan request ignored because app doesn't have permission")
+            Timber.d("Improv scan request ignored because app doesn't have permission")
             return false
         } else {
-            Log.d(TAG, "Improv scan starting")
+            Timber.d("Improv scan starting")
         }
         improvJobStarted = System.currentTimeMillis()
         improvJob = mainScope.launch {
@@ -542,7 +538,7 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun stopScanningForImprov(force: Boolean) {
         if (improvJob?.isActive == true && (force || System.currentTimeMillis() - improvJobStarted > 1000)) {
-            Log.d(TAG, "Improv scan stopping")
+            Timber.d("Improv scan stopping")
             improvRepository.stopScanning()
             improvJob?.cancel()
         }

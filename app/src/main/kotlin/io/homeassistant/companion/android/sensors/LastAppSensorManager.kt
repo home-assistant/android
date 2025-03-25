@@ -5,17 +5,15 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import timber.log.Timber
 
 class LastAppSensorManager : SensorManager {
     companion object {
-        private const val TAG = "LastApp"
-
         val last_used = SensorManager.BasicSensor(
             "last_used_app",
             "sensor",
@@ -77,7 +75,7 @@ class LastAppSensorManager : SensorManager {
             }
             appLabel = pm.getApplicationLabel(appInfo).toString()
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to get package label for: $lastApp", e)
+            Timber.e(e, "Unable to get package label for: $lastApp")
         }
 
         onSensorUpdated(

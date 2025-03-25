@@ -9,7 +9,6 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
@@ -33,12 +32,12 @@ import java.util.LinkedList
 import javax.inject.Inject
 import kotlin.collections.HashMap
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
     companion object {
-        private const val TAG = "MediaPlayCtrlsWidget"
         internal const val RECEIVE_DATA =
             "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.RECEIVE_DATA"
         internal const val UPDATE_MEDIA_IMAGE =
@@ -95,7 +94,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
     ) {
         if (!context.hasActiveConnection()) {
-            Log.d(TAG, "Skipping widget update since network connection is not active")
+            Timber.d("Skipping widget update since network connection is not active")
             return
         }
         widgetScope?.launch {
@@ -268,7 +267,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                         R.id.widgetMediaPlaceholder,
                         View.GONE
                     )
-                    Log.d(TAG, "Fetching media preview image")
+                    Timber.d("Fetching media preview image")
                     Handler(Looper.getMainLooper()).post {
                         try {
                             val request = ImageRequest.Builder(context)
@@ -278,7 +277,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                                 .build()
                             context.imageLoader.enqueue(request)
                         } catch (e: Exception) {
-                            Log.e(TAG, "Unable to load image", e)
+                            Timber.e(e, "Unable to load image")
                         }
                     }
                 }
@@ -419,7 +418,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                 return entities[0]
             }
         } catch (e: Exception) {
-            Log.d(TAG, "Failed to fetch entity or entity does not exist")
+            Timber.d("Failed to fetch entity or entity does not exist")
             if (lastIntent == UPDATE_MEDIA_IMAGE) {
                 Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
             }
@@ -433,8 +432,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         lastIntent = intent.action.toString()
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
-        Log.d(
-            TAG,
+        Timber.d(
             "Broadcast received: " + System.lineSeparator() +
                 "Broadcast action: " + lastIntent + System.lineSeparator() +
                 "AppWidgetId: " + appWidgetId
@@ -475,13 +473,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             ?: WidgetBackgroundType.DAYNIGHT
 
         if (serverId == null || entitySelection == null) {
-            Log.e(TAG, "Did not receive complete configuration data")
+            Timber.e("Did not receive complete configuration data")
             return
         }
 
         widgetScope?.launch {
-            Log.d(
-                TAG,
+            Timber.d(
                 "Saving action call config data:" + System.lineSeparator() +
                     "entity id: " + entitySelection + System.lineSeparator()
             )
@@ -514,16 +511,15 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
     private fun callPreviousTrackAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
-            Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
+            Timber.d("Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
 
             if (entity == null) {
-                Log.d(TAG, "Failed to retrieve media player entity")
+                Timber.d("Failed to retrieve media player entity")
                 return@launch
             }
 
-            Log.d(
-                TAG,
+            Timber.d(
                 "Calling previous track action:" + System.lineSeparator() +
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
@@ -540,16 +536,15 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
     private fun callRewindAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
-            Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
+            Timber.d("Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
 
             if (entity == null) {
-                Log.d(TAG, "Failed to retrieve media player entity")
+                Timber.d("Failed to retrieve media player entity")
                 return@launch
             }
 
-            Log.d(
-                TAG,
+            Timber.d(
                 "Calling rewind action:" + System.lineSeparator() +
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
@@ -560,7 +555,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                 null
             }
             if (currentEntityInfo == null) {
-                Log.d(TAG, "Failed to fetch entity or entity does not exist")
+                Timber.d("Failed to fetch entity or entity does not exist")
                 if (lastIntent != Intent.ACTION_SCREEN_ON) {
                     Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
                 }
@@ -571,7 +566,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             val currentTime = fetchedAttributes["media_position"]?.toString()?.toDoubleOrNull()
 
             if (currentTime == null) {
-                Log.d(TAG, "Failed to get entity current time, aborting call")
+                Timber.d("Failed to get entity current time, aborting call")
                 return@launch
             }
 
@@ -587,23 +582,22 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             try {
                 serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
             } catch (e: Exception) {
-                Log.e(TAG, "Exception calling rewind action", e)
+                Timber.e(e, "Exception calling rewind action")
             }
         }
     }
 
     private fun callPlayPauseAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
-            Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
+            Timber.d("Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
 
             if (entity == null) {
-                Log.d(TAG, "Failed to retrieve media player entity")
+                Timber.d("Failed to retrieve media player entity")
                 return@launch
             }
 
-            Log.d(
-                TAG,
+            Timber.d(
                 "Calling play/pause action:" + System.lineSeparator() +
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
@@ -617,23 +611,22 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             try {
                 serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
             } catch (e: Exception) {
-                Log.e(TAG, "Exception calling play pause action", e)
+                Timber.e(e, "Exception calling play pause action")
             }
         }
     }
 
     private fun callFastForwardAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
-            Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
+            Timber.d("Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
 
             if (entity == null) {
-                Log.d(TAG, "Failed to retrieve media player entity")
+                Timber.d("Failed to retrieve media player entity")
                 return@launch
             }
 
-            Log.d(
-                TAG,
+            Timber.d(
                 "Calling fast forward action:" + System.lineSeparator() +
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
@@ -644,7 +637,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                 null
             }
             if (currentEntityInfo == null) {
-                Log.d(TAG, "Failed to fetch entity or entity does not exist")
+                Timber.d("Failed to fetch entity or entity does not exist")
                 if (lastIntent != Intent.ACTION_SCREEN_ON) {
                     Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
                 }
@@ -655,7 +648,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             val currentTime = fetchedAttributes["media_position"]?.toString()?.toDoubleOrNull()
 
             if (currentTime == null) {
-                Log.d(TAG, "Failed to get entity current time, aborting call")
+                Timber.d("Failed to get entity current time, aborting call")
                 return@launch
             }
 
@@ -671,23 +664,22 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             try {
                 serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
             } catch (e: Exception) {
-                Log.e(TAG, "Exception calling fast forward action", e)
+                Timber.e(e, "Exception calling fast forward action")
             }
         }
     }
 
     private fun callNextTrackAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
-            Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
+            Timber.d("Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
 
             if (entity == null) {
-                Log.d(TAG, "Failed to retrieve media player entity")
+                Timber.d("Failed to retrieve media player entity")
                 return@launch
             }
 
-            Log.d(
-                TAG,
+            Timber.d(
                 "Calling next track action:" + System.lineSeparator() +
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
@@ -701,23 +693,22 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             try {
                 serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
             } catch (e: Exception) {
-                Log.e(TAG, "Exception calling next track action", e)
+                Timber.e(e, "Exception calling next track action")
             }
         }
     }
 
     private fun callVolumeDownAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
-            Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
+            Timber.d("Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
 
             if (entity == null) {
-                Log.d(TAG, "Failed to retrieve media player entity")
+                Timber.d("Failed to retrieve media player entity")
                 return@launch
             }
 
-            Log.d(
-                TAG,
+            Timber.d(
                 "Calling volume down action:" + System.lineSeparator() +
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
@@ -731,23 +722,22 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             try {
                 serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
             } catch (e: Exception) {
-                Log.e(TAG, "Exception calling volume down action", e)
+                Timber.e(e, "Exception calling volume down action")
             }
         }
     }
 
     private fun callVolumeUpAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
-            Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
+            Timber.d("Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
 
             if (entity == null) {
-                Log.d(TAG, "Failed to retrieve media player entity")
+                Timber.d("Failed to retrieve media player entity")
                 return@launch
             }
 
-            Log.d(
-                TAG,
+            Timber.d(
                 "Calling volume up action:" + System.lineSeparator() +
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
@@ -761,7 +751,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             try {
                 serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
             } catch (e: Exception) {
-                Log.e(TAG, "Exception calling volume up action", e)
+                Timber.e(e, "Exception calling volume up action")
             }
         }
     }

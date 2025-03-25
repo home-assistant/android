@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.common.R as commonR
@@ -13,11 +12,11 @@ import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.math.RoundingMode
 import kotlin.math.floor
+import timber.log.Timber
 
 class BatterySensorManager : SensorManager {
 
     companion object {
-        private const val TAG = "BatterySensor"
         private const val SETTING_BATTERY_CURRENT_DIVISOR = "battery_current_divisor"
         private const val DEFAULT_BATTERY_CURRENT_DIVISOR = 1000000
         private const val SETTING_BATTERY_VOLTAGE_DIVISOR = "battery_voltage_divisor"
@@ -339,7 +338,7 @@ class BatterySensorManager : SensorManager {
         var wattage: Float? = null
         var icon = batteryPower.statelessIcon
         if (voltage == null || current == null) {
-            Log.w(TAG, "Invalid voltage/current for battery power: $voltage/$current")
+            Timber.w("Invalid voltage/current for battery power: $voltage/$current")
         } else {
             wattage = voltage * current
             if (wattage <= 0) icon = "mdi:battery-minus"

@@ -7,7 +7,6 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
-import android.util.Log
 import androidx.core.text.HtmlCompat.FROM_HTML_MODE_LEGACY
 import androidx.core.text.HtmlCompat.fromHtml
 import androidx.wear.protolayout.ColorBuilders
@@ -40,13 +39,10 @@ import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 @AndroidEntryPoint
 class TemplateTile : TileService() {
-
-    companion object {
-        private const val TAG = "TemplateTile"
-    }
 
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
@@ -138,7 +134,7 @@ class TemplateTile : TileService() {
                 try {
                     getUpdater(this@TemplateTile).requestUpdate(TemplateTile::class.java)
                 } catch (e: Exception) {
-                    Log.w(TAG, "Unable to request tile update on enter", e)
+                    Timber.w(e, "Unable to request tile update on enter")
                 }
             }
         }
@@ -158,7 +154,7 @@ class TemplateTile : TileService() {
                 ""
             }
         } catch (e: Exception) {
-            Log.e("TemplateTile", "Exception while rendering template", e)
+            Timber.e(e, "Exception while rendering template")
             // JsonMappingException suggests that template is not a String (= error)
             if (e.cause is JsonMappingException) {
                 getString(commonR.string.template_error)

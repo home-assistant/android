@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import androidx.core.content.ContextCompat
 import com.wifi.improv.DeviceState
 import com.wifi.improv.ErrorState
@@ -15,12 +14,9 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import timber.log.Timber
 
 class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManagerCallback {
-
-    companion object {
-        private const val TAG = "ImprovRepository"
-    }
 
     private var manager: ImprovManager? = null
 
@@ -64,9 +60,9 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
         try {
             manager?.findDevices()
         } catch (e: SecurityException) {
-            Log.e(TAG, "Not allowed to start scanning", e)
+            Timber.e(e, "Not allowed to start scanning")
         } catch (e: Exception) {
-            Log.w(TAG, "Unexpectedly cannot start scanning", e)
+            Timber.w(e, "Unexpectedly cannot start scanning")
         }
     }
 
@@ -77,7 +73,7 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
         try {
             manager?.connectToDevice(device)
         } catch (e: SecurityException) {
-            Log.e(TAG, "Not allowed to connect to device", e)
+            Timber.e(e, "Not allowed to connect to device")
         }
     }
 
@@ -85,7 +81,7 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
         try {
             manager?.stopScan()
         } catch (e: Exception) {
-            Log.w(TAG, "Cannot stop scanning", e)
+            Timber.w(e, "Cannot stop scanning")
         }
     }
 

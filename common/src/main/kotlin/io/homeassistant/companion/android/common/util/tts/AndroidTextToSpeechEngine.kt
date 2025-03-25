@@ -3,13 +3,11 @@ package io.homeassistant.companion.android.common.util.tts
 import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
-import android.util.Log
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-
-private const val TAG = "AndroidTTSEngine"
+import timber.log.Timber
 
 /**
  * Implementation of [TextToSpeechEngine] that uses the default [TextToSpeech] engine found on the device.
@@ -54,7 +52,7 @@ class AndroidTextToSpeechEngine(private val applicationContext: Context) : TextT
                     }
 
                     override fun onDone(p0: String?) {
-                        Log.d(TAG, "Done speaking; utterance ID: $p0")
+                        Timber.d("Done speaking; utterance ID: $p0")
                         utterance.streamVolumeAdjustment.resetVolume()
                         continuation.resume(Result.success(Unit))
                     }
@@ -72,7 +70,7 @@ class AndroidTextToSpeechEngine(private val applicationContext: Context) : TextT
                 }
                 textToSpeech.setOnUtteranceProgressListener(listener)
                 textToSpeech.speak(utterance.text, TextToSpeech.QUEUE_FLUSH, null, utterance.id)
-                Log.d(TAG, "Speaking; utterance ID: ${utterance.id}")
+                Timber.d("Speaking; utterance ID: ${utterance.id}")
             }
         }
     }

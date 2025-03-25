@@ -3,15 +3,14 @@ package io.homeassistant.companion.android.common.sensors
 import android.content.Context
 import android.os.Environment
 import android.os.StatFs
-import android.util.Log
 import io.homeassistant.companion.android.common.R as commonR
 import java.io.File
 import kotlin.math.roundToInt
+import timber.log.Timber
 
 class StorageSensorManager : SensorManager {
     companion object {
 
-        private const val TAG = "StorageSensor"
         private val storageSensor = SensorManager.BasicSensor(
             "storage_sensor",
             "sensor",
@@ -37,11 +36,10 @@ class StorageSensorManager : SensorManager {
             val pathsSD = context.getExternalFilesDirs(null)
             var removable: Boolean
             var externalPath: File? = null
-            Log.d(TAG, "PATHS SD ${pathsSD.size}")
+            Timber.d("PATHS SD ${pathsSD.size}")
             for (item in pathsSD) {
                 if (item != null) {
-                    Log.d(
-                        TAG,
+                    Timber.d(
                         "PATH $item is mounted ${Environment.getExternalStorageState(item) == Environment.MEDIA_MOUNTED} and removable is ${Environment.isExternalStorageRemovable(
                             item
                         )}"

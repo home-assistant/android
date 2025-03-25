@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.phone
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.util.Log
 import androidx.wear.tiles.TileService
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -50,6 +49,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 
 @AndroidEntryPoint
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
@@ -76,12 +76,8 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     private val objectMapper = jacksonObjectMapper()
 
-    companion object {
-        private const val TAG = "PhoneSettingsListener"
-    }
-
     override fun onMessageReceived(event: MessageEvent) {
-        Log.d(TAG, "Message received: $event")
+        Timber.d("Message received: $event")
         if (event.path == "/requestConfig") {
             sendPhoneData()
         }
@@ -111,14 +107,14 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
         try {
             Wearable.getDataClient(this@PhoneSettingsListener).putDataItem(putDataRequest).await()
-            Log.d(TAG, "Successfully sent /config to device")
+            Timber.d("Successfully sent /config to device")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to send /config to device", e)
+            Timber.e(e, "Failed to send /config to device")
         }
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
-        Log.d(TAG, "onDataChanged ${dataEvents.count}")
+        Timber.d("onDataChanged ${dataEvents.count}")
         dataEvents.forEach { event ->
             if (event.type == DataEvent.TYPE_CHANGED) {
                 event.dataItem.also { item ->
@@ -198,14 +194,14 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             startActivity(intent)
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to login to Home Assistant", e)
+            Timber.e(e, "Unable to login to Home Assistant")
             try {
                 if (serverId != null) {
                     serverManager.authenticationRepository(serverId).revokeSession()
                     serverManager.removeServer(serverId)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Can't revoke session", e)
+                Timber.e(e, "Can't revoke session")
             }
             launch {
                 sendLoginResult(authId, false, e.stackTraceToString())
@@ -227,9 +223,9 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                 asPutDataRequest()
             }
             Wearable.getDataClient(this@PhoneSettingsListener).putDataItem(putDataRequest).await()
-            Log.d(TAG, "Successfully sent ${WearDataMessages.PATH_LOGIN_RESULT} to device")
+            Timber.d("Successfully sent ${WearDataMessages.PATH_LOGIN_RESULT} to device")
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to send ${WearDataMessages.PATH_LOGIN_RESULT} to device", e)
+            Timber.w(e, "Failed to send ${WearDataMessages.PATH_LOGIN_RESULT} to device")
         }
     }
 
@@ -265,7 +261,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             updater.requestUpdate(ShortcutsTile::class.java)
             updater.requestUpdate(TemplateTile::class.java)
         } catch (e: Exception) {
-            Log.w(TAG, "Unable to request tiles update")
+            Timber.w("Unable to request tiles update")
         }
     }
 }

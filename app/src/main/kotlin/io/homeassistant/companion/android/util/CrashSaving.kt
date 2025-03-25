@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.util
 
 import android.content.Context
-import android.util.Log
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -9,6 +8,7 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 private const val FATAL_CRASH_FILE = "/fatalcrash/last_crash"
 
@@ -30,7 +30,7 @@ fun initCrashSaving(context: Context) {
                 """.trimMargin()
             )
         } catch (e: Exception) {
-            Log.i("CrashSaving", "Tried saving fatal crash but encountered exception", e)
+            Timber.i(e, "Tried saving fatal crash but encountered exception")
         }
 
         // Send to crash handling and/or system (and crash)
@@ -48,7 +48,7 @@ suspend fun getLatestFatalCrash(context: Context): String? = withContext(Dispatc
             toReturn = crashFile.readText().trim().ifBlank { null }
         }
     } catch (e: Exception) {
-        Log.e("CrashSaving", "Encountered exception while reading crash log file", e)
+        Timber.e(e, "Encountered exception while reading crash log file")
     }
     return@withContext toReturn
 }

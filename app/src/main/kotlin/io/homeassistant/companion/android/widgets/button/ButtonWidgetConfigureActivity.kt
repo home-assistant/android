@@ -11,7 +11,6 @@ import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
@@ -51,11 +50,11 @@ import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapt
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import javax.inject.Inject
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     companion object {
-        private const val TAG: String = "ButtonWidgetConfigAct"
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
@@ -122,7 +121,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 val actionText: String = p0.toString()
 
                 if (actions[selectedServerId].orEmpty().keys.contains(actionText)) {
-                    Log.d(TAG, "Valid domain and action--processing dynamic fields")
+                    Timber.d("Valid domain and action--processing dynamic fields")
 
                     // Make sure there are not already any dynamic fields created
                     // This can happen if selecting the drop-down twice or pasting
@@ -135,7 +134,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     val fields = actionData.fields
 
                     val fieldKeys = fields.keys
-                    Log.d(TAG, "Fields applicable to this action: $fields")
+                    Timber.d("Fields applicable to this action: $fields")
 
                     val existingActionData = mutableMapOf<String, Any?>()
                     val addedFields = mutableListOf<String>()
@@ -160,7 +159,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     }
 
                     fieldKeys.sorted().forEach { fieldKey ->
-                        Log.d(TAG, "Creating a text input box for $fieldKey")
+                        Timber.d("Creating a text input box for $fieldKey")
 
                         // Insert a dynamic layout
                         // IDs get priority and go at the top, since the other fields
@@ -172,7 +171,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                         }
                     }
                     addedFields.minus("entity_id").minus(fieldKeys).forEach { extraFieldKey ->
-                        Log.d(TAG, "Creating a text input box for extra $extraFieldKey")
+                        Timber.d("Creating a text input box for extra $extraFieldKey")
                         dynamicFields.add(ActionFieldBinder(actionText, extraFieldKey, existingActionData[extraFieldKey]))
                     }
 
@@ -271,7 +270,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 } catch (e: Exception) {
                     // Custom components can cause actions to not load
                     // Display error text
-                    Log.e(TAG, "Unable to load actions from Home Assistant", e)
+                    Timber.e(e, "Unable to load actions from Home Assistant")
                     if (server.id == selectedServerId) binding.widgetConfigServiceError.visibility = View.VISIBLE
                 }
             }
@@ -373,7 +372,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     @SuppressLint("NotifyDataSetChanged")
     private fun setAdapterActions(serverId: Int) {
-        Log.d(TAG, "Actions found: $actions")
+        Timber.d("Actions found: $actions")
         actionAdapter?.clearAll()
         if (actions[serverId] != null) {
             actionAdapter?.addAll(actions[serverId]?.values.orEmpty().toMutableList())
@@ -492,7 +491,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             )
             finish()
         } catch (e: Exception) {
-            Log.e(TAG, "Issue configuring widget", e)
+            Timber.e(e, "Issue configuring widget")
             showAddWidgetError()
         }
     }

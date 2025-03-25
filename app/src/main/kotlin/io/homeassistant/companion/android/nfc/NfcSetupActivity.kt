@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.nfc.NfcAdapter
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -19,6 +18,7 @@ import io.homeassistant.companion.android.nfc.views.LoadNfcView
 import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class NfcSetupActivity : BaseActivity() {
@@ -35,7 +35,6 @@ class NfcSetupActivity : BaseActivity() {
     }
 
     companion object {
-        val TAG = NfcSetupActivity::class.simpleName
         const val EXTRA_TAG_VALUE = "tag_value"
         const val EXTRA_MESSAGE_ID = "message_id"
 
@@ -119,7 +118,7 @@ class NfcSetupActivity : BaseActivity() {
                     try {
                         val nfcTagUrl = "https://www.home-assistant.io/tag/$nfcTagToWriteUUID"
                         NFCUtil.createNFCMessage(nfcTagUrl, intent)
-                        Log.d(TAG, "Wrote nfc tag with url: $nfcTagUrl")
+                        Timber.d("Wrote nfc tag with url: $nfcTagUrl")
 
                         // If we are a simple write it means the frontend asked us to write. This means
                         // we should return the user as fast as possible back to the UI to continue what
@@ -135,7 +134,7 @@ class NfcSetupActivity : BaseActivity() {
                         }
                     } catch (e: Exception) {
                         viewModel.onNfcWriteFailure()
-                        Log.e(TAG, "Unable to write tag.", e)
+                        Timber.e(e, "Unable to write tag.")
                     }
                 }
             }

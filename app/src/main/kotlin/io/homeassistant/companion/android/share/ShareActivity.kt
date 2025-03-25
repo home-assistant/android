@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.share
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import dagger.hilt.android.AndroidEntryPoint
@@ -12,13 +11,10 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import timber.log.Timber
 
 @AndroidEntryPoint
 class ShareActivity : BaseActivity() {
-
-    companion object {
-        private const val TAG = "ShareActivity"
-    }
 
     @Inject
     lateinit var serverManager: ServerManager
@@ -45,14 +41,14 @@ class ShareActivity : BaseActivity() {
         runBlocking {
             try {
                 serverManager.integrationRepository().fireEvent("mobile_app.share", data)
-                Log.d(TAG, "Share successful!")
+                Timber.d("Share successful!")
                 Toast.makeText(
                     applicationContext,
                     commonR.string.share_success,
                     Toast.LENGTH_SHORT
                 ).show()
             } catch (e: Exception) {
-                Log.e(TAG, "Issue sharing with Home Assistant", e)
+                Timber.e(e, "Issue sharing with Home Assistant")
                 Toast.makeText(
                     applicationContext,
                     commonR.string.share_failed,

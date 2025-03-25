@@ -5,7 +5,6 @@ import android.media.AudioManager
 import android.media.AudioManager.OnAudioFocusChangeListener
 import android.media.MediaPlayer
 import android.os.Build
-import android.util.Log
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
@@ -15,15 +14,12 @@ import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 /**
  * Simple interface for playing short streaming audio (from URLs).
  */
 class AudioUrlPlayer(private val audioManager: AudioManager?) {
-
-    companion object {
-        private const val TAG = "AudioUrlPlayer"
-    }
 
     private var player: MediaPlayer? = null
 
@@ -75,7 +71,7 @@ class AudioUrlPlayer(private val audioManager: AudioManager?) {
                     }
                 }
                 setOnErrorListener { _, what, extra ->
-                    Log.e(TAG, "Media player encountered error: $what ($extra)")
+                    Timber.e("Media player encountered error: $what ($extra)")
                     releasePlayer()
                     cont.resume(false)
                     donePlayingInvocation()
@@ -90,7 +86,7 @@ class AudioUrlPlayer(private val audioManager: AudioManager?) {
                 player?.setDataSource(url)
                 player?.prepareAsync()
             } catch (e: Exception) {
-                Log.e(TAG, "Media player couldn't be prepared", e)
+                Timber.e(e, "Media player couldn't be prepared")
                 cont.resume(false)
                 donePlayingInvocation()
             }

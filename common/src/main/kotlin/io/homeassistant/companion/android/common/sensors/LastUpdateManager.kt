@@ -1,15 +1,14 @@
 package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
-import android.util.Log
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import timber.log.Timber
 
 class LastUpdateManager : SensorManager {
     companion object {
-        private const val TAG = "LastUpdate"
         private const val SETTING_ADD_NEW_INTENT = "lastupdate_add_new_intent"
         private const val INTENT_SETTING_PREFIX = "lastupdate_intent_var1:"
 
@@ -53,7 +52,7 @@ class LastUpdateManager : SensorManager {
             return
         }
 
-        Log.d(TAG, "Last update is $intentAction")
+        Timber.d("Last update is $intentAction")
 
         onSensorUpdated(
             context,

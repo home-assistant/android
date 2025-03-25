@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.vehicle
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarAppService
 import androidx.car.app.Screen
@@ -29,13 +28,13 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.O)
 @AndroidEntryPoint
 class HaCarAppService : CarAppService() {
 
     companion object {
-        private const val TAG = "HaCarAppService"
         var carInfo: CarInfo? = null
             private set
     }
@@ -149,7 +148,7 @@ class HaCarAppService : CarAppService() {
                     allEntities.emit(entities.toImmutableMap())
                 }
             } else {
-                Log.w(TAG, "No entities found?")
+                Timber.w("No entities found?")
                 allEntities.emit(emptyMap())
             }
         }

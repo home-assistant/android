@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.util
 
 import android.net.Uri
-import android.util.Log
 import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import java.net.URI
@@ -9,6 +8,7 @@ import java.net.URL
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import timber.log.Timber
 
 object UrlUtil {
     fun formattedUrlString(url: String): String {
@@ -44,7 +44,7 @@ object UrlUtil {
         val asURI = try {
             URI(input.removePrefix("homeassistant://navigate/"))
         } catch (e: Exception) {
-            Log.w("UrlUtil", "Invalid input, returning base only")
+            Timber.w("Invalid input, returning base only")
             null
         }
         return when {

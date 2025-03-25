@@ -26,7 +26,6 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
-import android.util.Log
 import android.view.KeyEvent
 import android.widget.RemoteViews
 import android.widget.Toast
@@ -104,6 +103,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.sink
 import org.json.JSONObject
+import timber.log.Timber
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
@@ -118,8 +118,6 @@ class MessagingManager @Inject constructor(
     private val permissionRequestMediator: PermissionRequestMediator
 ) {
     companion object {
-        const val TAG = "MessagingService"
-
         const val APP_PREFIX = "app://"
         const val DEEP_LINK_PREFIX = "deep-link://"
         const val INTENT_PREFIX = "intent:"
@@ -303,7 +301,7 @@ class MessagingManager @Inject constructor(
                         serverManager.integrationRepository(receivedServer ?: ServerManager.SERVER_ID_ACTIVE)
                             .fireEvent("mobile_app_notification_received", jsonData)
                     } catch (e: Exception) {
-                        Log.e(TAG, "Unable to send notification received event", e)
+                        Timber.e(e, "Unable to send notification received event")
                     }
                 }
             }
@@ -313,7 +311,7 @@ class MessagingManager @Inject constructor(
             serverManager.getServer(webhookId = webhookId)?.id
         } ?: ServerManager.SERVER_ID_ACTIVE
         if (serverManager.getServer(serverId) == null) {
-            Log.w(TAG, "Received notification but no server for it, discarding")
+            Timber.w("Received notification but no server for it, discarding")
             return
         }
         jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, serverId.toString()) }
@@ -322,14 +320,14 @@ class MessagingManager @Inject constructor(
             val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
             when {
                 jsonData[NotificationData.MESSAGE] == REQUEST_LOCATION_UPDATE && allowCommands -> {
-                    Log.d(TAG, "Request location update")
+                    Timber.d("Request location update")
                     requestAccurateLocationUpdate()
                 }
                 jsonData[NotificationData.MESSAGE] == NotificationData.CLEAR_NOTIFICATION && !jsonData["tag"].isNullOrBlank() -> {
                     clearNotification(context, jsonData["tag"]!!)
                 }
                 jsonData[NotificationData.MESSAGE] == REMOVE_CHANNEL && !jsonData[NotificationData.CHANNEL].isNullOrBlank() -> {
-                    Log.d(TAG, "Removing Notification channel ${jsonData[NotificationData.CHANNEL]}")
+                    Timber.d("Removing Notification channel ${jsonData[NotificationData.CHANNEL]}")
                     removeNotificationChannel(jsonData[NotificationData.CHANNEL]!!)
                 }
                 jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS -> {
@@ -337,22 +335,20 @@ class MessagingManager @Inject constructor(
                 }
                 jsonData[NotificationData.MESSAGE] == TextToSpeechData.COMMAND_STOP_TTS -> textToSpeechClient.stopTTS()
                 jsonData[NotificationData.MESSAGE] in DEVICE_COMMANDS && allowCommands -> {
-                    Log.d(TAG, "Processing device command")
+                    Timber.d("Processing device command")
                     when (jsonData[NotificationData.MESSAGE]) {
                         COMMAND_DND -> {
                             if (jsonData[NotificationData.COMMAND] in DND_COMMANDS) {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                     handleDeviceCommands(jsonData)
                                 } else {
-                                    Log.d(
-                                        TAG,
+                                    Timber.d(
                                         "Posting notification to device as it does not support DND commands"
                                     )
                                     sendNotification(jsonData)
                                 }
                             } else {
-                                Log.d(
-                                    TAG,
+                                Timber.d(
                                     "Invalid DND command received, posting notification to device"
                                 )
                                 sendNotification(jsonData)
@@ -362,8 +358,7 @@ class MessagingManager @Inject constructor(
                             if (jsonData[NotificationData.COMMAND] in RM_COMMANDS) {
                                 handleDeviceCommands(jsonData)
                             } else {
-                                Log.d(
-                                    TAG,
+                                Timber.d(
                                     "Invalid ringer mode command received, posting notification to device"
                                 )
                                 sendNotification(jsonData)
@@ -373,8 +368,8 @@ class MessagingManager @Inject constructor(
                             if (!jsonData[INTENT_ACTION].isNullOrEmpty() && !jsonData[INTENT_PACKAGE_NAME].isNullOrEmpty()) {
                                 handleDeviceCommands(jsonData)
                             } else {
-                                Log.d(
-                                    TAG,
+                                Timber.d(
+
                                     "Invalid broadcast command received, posting notification to device"
                                 )
                                 sendNotification(jsonData)
@@ -386,8 +381,8 @@ class MessagingManager @Inject constructor(
                             ) {
                                 handleDeviceCommands(jsonData)
                             } else {
-                                Log.d(
-                                    TAG,
+                                Timber.d(
+
                                     "Invalid volume command received, posting notification to device"
                                 )
                                 sendNotification(jsonData)
@@ -401,8 +396,8 @@ class MessagingManager @Inject constructor(
                             ) {
                                 handleDeviceCommands(jsonData)
                             } else {
-                                Log.d(
-                                    TAG,
+                                Timber.d(
+
                                     "Invalid bluetooth command received, posting notification to device"
                                 )
                                 sendNotification(jsonData)
@@ -428,8 +423,8 @@ class MessagingManager @Inject constructor(
                             ) {
                                 handleDeviceCommands(jsonData)
                             } else {
-                                Log.d(
-                                    TAG,
+                                Timber.d(
+
                                     "Invalid high accuracy mode command received, posting notification to device"
                                 )
                                 sendNotification(jsonData)
@@ -439,8 +434,8 @@ class MessagingManager @Inject constructor(
                             if (!jsonData[INTENT_ACTION].isNullOrEmpty()) {
                                 handleDeviceCommands(jsonData)
                             } else {
-                                Log.d(
-                                    TAG,
+                                Timber.d(
+
                                     "Invalid activity command received, posting notification to device"
                                 )
                                 sendNotification(jsonData)
@@ -463,8 +458,8 @@ class MessagingManager @Inject constructor(
                             if (!invalid) {
                                 handleDeviceCommands(jsonData)
                             } else {
-                                Log.d(
-                                    TAG,
+                                Timber.d(
+
                                     "Invalid app lock command received, posting notification to device"
                                 )
                                 sendNotification(jsonData)
@@ -481,15 +476,15 @@ class MessagingManager @Inject constructor(
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                                     handleDeviceCommands(jsonData)
                                 } else {
-                                    Log.d(
-                                        TAG,
+                                    Timber.d(
+
                                         "Posting notification to device as it does not support media commands"
                                     )
                                     sendNotification(jsonData)
                                 }
                             } else {
-                                Log.d(
-                                    TAG,
+                                Timber.d(
+
                                     "Invalid media command received, posting notification to device"
                                 )
                                 sendNotification(jsonData)
@@ -500,8 +495,8 @@ class MessagingManager @Inject constructor(
                             if (!jsonData[PACKAGE_NAME].isNullOrEmpty()) {
                                 handleDeviceCommands(jsonData)
                             } else {
-                                Log.d(
-                                    TAG,
+                                Timber.d(
+
                                     "Missing package name for app to launch, posting notification to device"
                                 )
                                 sendNotification(jsonData)
@@ -512,15 +507,15 @@ class MessagingManager @Inject constructor(
 
                             when {
                                 jsonData[PERSISTENT].isNullOrEmpty() -> {
-                                    Log.d(
-                                        TAG,
+                                    Timber.d(
+
                                         "Missing persistent modifier, posting notification to device"
                                     )
                                     sendNotification(jsonData)
                                 }
                                 jsonData[PERSISTENT]!!.uppercase() !in validPersistentTypes -> {
-                                    Log.d(
-                                        TAG,
+                                    Timber.d(
+
                                         "Persistent modifier is not one of $validPersistentTypes"
                                     )
                                     sendNotification(jsonData)
@@ -547,15 +542,15 @@ class MessagingManager @Inject constructor(
                             if (command in DeviceCommandData.ENABLE_COMMANDS && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                 handleDeviceCommands(jsonData)
                             } else {
-                                Log.d(TAG, "Invalid flashlight command received, posting notification to device")
+                                Timber.d("Invalid flashlight command received, posting notification to device")
                                 sendNotification(jsonData)
                             }
                         }
-                        else -> Log.d(TAG, "No command received")
+                        else -> Timber.d("No command received")
                     }
                 }
                 else -> {
-                    Log.d(TAG, "Creating notification with following data: $jsonData")
+                    Timber.d("Creating notification with following data: $jsonData")
                     sendNotification(jsonData, notificationId, now)
                 }
             }
@@ -602,7 +597,7 @@ class MessagingManager @Inject constructor(
                             DND_PRIORITY_ONLY -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_PRIORITY
                             )
-                            else -> Log.d(TAG, "Skipping invalid command")
+                            else -> Timber.d("Skipping invalid command")
                         }
                     }
                 }
@@ -634,10 +629,10 @@ class MessagingManager @Inject constructor(
                     if (!packageName.isNullOrEmpty() && !className.isNullOrEmpty()) {
                         intent.setClassName(packageName, className)
                     }
-                    Log.d(TAG, "Sending broadcast intent")
+                    Timber.d("Sending broadcast intent")
                     context.sendBroadcast(intent)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unable to send broadcast intent please check command format", e)
+                    Timber.e(e, "Unable to send broadcast intent please check command format")
                     Handler(Looper.getMainLooper()).post {
                         Toast.makeText(
                             context,
@@ -674,10 +669,10 @@ class MessagingManager @Inject constructor(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     when (PackageManager.PERMISSION_GRANTED) {
                         ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) -> {
-                            Log.d(TAG, "We have proper bluetooth permissions proceeding with command")
+                            Timber.d("We have proper bluetooth permissions proceeding with command")
                         }
                         else -> {
-                            Log.e(TAG, "Missing Bluetooth permissions, notifying user to grant permissions")
+                            Timber.e("Missing Bluetooth permissions, notifying user to grant permissions")
                             notifyMissingPermission(message.toString(), serverId)
                         }
                     }
@@ -807,7 +802,7 @@ class MessagingManager @Inject constructor(
                     requestCameraPermission()
                 }
             }
-            else -> Log.d(TAG, "No command received")
+            else -> Timber.d("No command received")
         }
     }
 
@@ -990,7 +985,7 @@ class MessagingManager @Inject constructor(
             handleLegacyVibrationPattern(notificationBuilder, data)
         }
 
-        Log.d(TAG, "Show notification with tag \"$tag\" and id \"$messageId\"")
+        Timber.d("Show notification with tag \"$tag\" and id \"$messageId\"")
         if (useCarNotification) {
             CarNotificationManager.from(context).apply {
                 notify(tag, messageId, notificationBuilder)
@@ -1003,11 +998,11 @@ class MessagingManager @Inject constructor(
 
         notificationManagerCompat.apply {
             if (!group.isNullOrBlank()) {
-                Log.d(TAG, "Show group notification with tag \"$group\" and id \"$groupId\"")
+                Timber.d("Show group notification with tag \"$group\" and id \"$groupId\"")
                 notify(group, groupId, getGroupNotificationBuilder(context, channelId, group, data).build())
             } else if (previousGroup.isNotBlank()) {
-                Log.d(
-                    TAG,
+                Timber.d(
+
                     "Remove group notification with tag \"$previousGroup\" and id \"$previousGroupId\""
                 )
                 cancelGroupIfNeeded(previousGroup, previousGroupId)
@@ -1039,7 +1034,7 @@ class MessagingManager @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error while handling chronometer notification", e)
+            Timber.e(e, "Error while handling chronometer notification")
         }
     }
 
@@ -1056,7 +1051,7 @@ class MessagingManager @Inject constructor(
                 builder.setProgress(progressMax, progress, progressIndeterminate)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error while handling progress notification", e)
+            Timber.e(e, "Error while handling progress notification")
         }
     }
 
@@ -1300,7 +1295,7 @@ class MessagingManager @Inject constructor(
                 image = BitmapFactory.decodeStream(response.body?.byteStream())
                 response.close()
             } catch (e: Exception) {
-                Log.e(TAG, "Couldn't download image for notification", e)
+                Timber.e(e, "Couldn't download image for notification")
             }
             return@withContext image
         }
@@ -1336,7 +1331,7 @@ class MessagingManager @Inject constructor(
 
                 response.close()
             } catch (e: Exception) {
-                Log.e(TAG, "Couldn't download image for notification", e)
+                Timber.e(e, "Couldn't download image for notification")
             }
             return@withContext FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
         }
@@ -1351,7 +1346,7 @@ class MessagingManager @Inject constructor(
             val serverId = data[THIS_SERVER_ID]!!.toInt()
             val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), dataVideo)
             getVideoFrames(serverId, url, !UrlUtil.isAbsoluteUrl(dataVideo))?.let { frames ->
-                Log.d(TAG, "Found ${frames.size} frames for video notification")
+                Timber.d("Found ${frames.size} frames for video notification")
                 RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
                     if (frames.isNotEmpty()) {
                         frames.forEach { frame ->
@@ -1437,7 +1432,7 @@ class MessagingManager @Inject constructor(
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                Log.e(TAG, "Couldn't download video for notification", e)
+                Timber.e(e, "Couldn't download video for notification")
             }
 
             val frames = processingFrames.awaitAll().filterNotNull()
@@ -1573,7 +1568,7 @@ class MessagingManager @Inject constructor(
                 try {
                     Intent.parseUri(uri, Intent.URI_INTENT_SCHEME)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unable to parse intent URI", e)
+                    Timber.e(e, "Unable to parse intent URI")
                     null
                 }
             }
@@ -1737,8 +1732,8 @@ class MessagingManager @Inject constructor(
                     )
                     if (!success) {
                         mainScope.launch {
-                            Log.d(
-                                TAG,
+                            Timber.d(
+
                                 "Posting notification as the command was not sent to the session"
                             )
                             sendNotification(data)
@@ -1748,8 +1743,8 @@ class MessagingManager @Inject constructor(
             }
             if (!hasCorrectPackage) {
                 mainScope.launch {
-                    Log.d(
-                        TAG,
+                    Timber.d(
+
                         "Posting notification as the package is not found in the list of media sessions"
                     )
                     sendNotification(data)
@@ -1757,7 +1752,7 @@ class MessagingManager @Inject constructor(
             }
         } else {
             mainScope.launch {
-                Log.d(TAG, "Posting notification as there are no active media sessions")
+                Timber.d("Posting notification as there are no active media sessions")
                 sendNotification(data)
             }
         }
@@ -1768,7 +1763,7 @@ class MessagingManager @Inject constructor(
             RM_NORMAL -> audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
             RM_SILENT -> audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
             RM_VIBRATE -> audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
-            else -> Log.d(TAG, "Skipping invalid command")
+            else -> Timber.d("Skipping invalid command")
         }
     }
 
@@ -1781,7 +1776,7 @@ class MessagingManager @Inject constructor(
             NotificationData.CALL_STREAM -> adjustVolumeStream(AudioManager.STREAM_VOICE_CALL, volume, audioManager)
             NotificationData.SYSTEM_STREAM -> adjustVolumeStream(AudioManager.STREAM_SYSTEM, volume, audioManager)
             NotificationData.DTMF_STREAM -> adjustVolumeStream(AudioManager.STREAM_DTMF, volume, audioManager)
-            else -> Log.d(TAG, "Skipping command due to invalid channel stream")
+            else -> Timber.d("Skipping command due to invalid channel stream")
         }
     }
 
@@ -1825,15 +1820,15 @@ class MessagingManager @Inject constructor(
                 context.startActivity(intent)
             } else {
                 mainScope.launch {
-                    Log.d(
-                        TAG,
+                    Timber.d(
+
                         "Posting notification as we do not have enough data to start the activity"
                     )
                     sendNotification(data)
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to send activity intent please check command format", e)
+            Timber.e(e, "Unable to send activity intent please check command format")
             Handler(Looper.getMainLooper()).post {
                 Toast.makeText(
                     context,
@@ -1860,7 +1855,7 @@ class MessagingManager @Inject constructor(
             intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
             context.startActivity(intent)
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to open webview", e)
+            Timber.e(e, "Unable to open webview")
         }
     }
 
@@ -1870,7 +1865,7 @@ class MessagingManager @Inject constructor(
             if (launchIntent != null) {
                 context.startActivity(launchIntent)
             } else {
-                Log.w(TAG, "No intent to launch app found, opening app store")
+                Timber.w("No intent to launch app found, opening app store")
                 val marketIntent = Intent(Intent.ACTION_VIEW)
                 marketIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 marketIntent.data = Uri.parse(
@@ -1879,7 +1874,7 @@ class MessagingManager @Inject constructor(
                 context.startActivity(marketIntent)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to launch app", e)
+            Timber.e(e, "Unable to launch app")
             mainScope.launch { sendNotification(data) }
         }
     }
@@ -1902,7 +1897,7 @@ class MessagingManager @Inject constructor(
                 serverManager.authenticationRepository(serverId).setLockHomeBypassEnabled(homeBypassEnableValue)
             }
         } else {
-            Log.w(TAG, "Not changing App-Lock settings. BiometricManager cannot Authenticate!")
+            Timber.w("Not changing App-Lock settings. BiometricManager cannot Authenticate!")
             sendNotification(data)
         }
     }

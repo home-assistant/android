@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.data.integration.impl
 
-import android.util.Log
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import io.homeassistant.companion.android.common.BuildConfig
@@ -37,6 +36,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import timber.log.Timber
 
 class IntegrationRepositoryImpl @AssistedInject constructor(
     private val integrationService: IntegrationService,
@@ -67,7 +67,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val PREF_LAST_USED_PIPELINE_ID = "last_used_pipeline"
         private const val PREF_LAST_USED_PIPELINE_STT = "last_used_pipeline_stt"
         private const val PREF_THREAD_BORDER_AGENT_IDS = "thread_border_agent_ids"
-        private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
 
         private const val APPLOCK_TIMEOUT_GRACE_MS = 1000
@@ -89,7 +88,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         val url = server.connection.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
-            Log.e(TAG, "Unable to register device due to missing URL")
+            Timber.e("Unable to register device due to missing URL")
             return
         }
         val response =
@@ -114,7 +113,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             getConfig() // To get version, name, etc stored
             webSocketRepository.getCurrentUser() // To get user info stored
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to save device registration", e)
+            Timber.e(e, "Unable to save device registration")
         }
     }
 
@@ -150,7 +149,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         if (causeException != null) {
             if (allowReregistration && (causeException is IllegalStateException)) {
-                Log.w(TAG, "Device registration broken, reregistering", causeException)
+                Timber.w(causeException, "Device registration broken, reregistering")
                 try {
                     registerDevice(deviceRegistration)
                 } catch (e: Exception) {
@@ -412,7 +411,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val sessionExpired = currentMillis > sessionExpireMillis
         val appLocked = lockEnabled && !appActive && sessionExpired
 
-        Log.d(TAG, "isAppLocked(): $appLocked. (LockEnabled: $lockEnabled, appActive: $appActive, expireMillis: $sessionExpireMillis, currentMillis: $currentMillis)")
+        Timber.d("isAppLocked(): $appLocked. (LockEnabled: $lockEnabled, appActive: $appActive, expireMillis: $sessionExpireMillis, currentMillis: $currentMillis)")
         return appLocked
     }
 
@@ -420,7 +419,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         if (!active && appActive) {
             setSessionExpireMillis(System.currentTimeMillis() + (getSessionTimeOut() * 1000) + APPLOCK_TIMEOUT_GRACE_MS)
         }
-        Log.d(TAG, "setAppActive(): $active")
+        Timber.d("setAppActive(): $active")
         appActive = active
     }
 
@@ -454,7 +453,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 integrationService.getRateLimit(RATE_LIMIT_URL, requestBody).rateLimits
         } catch (e: Exception) {
             causeException = e
-            Log.e(TAG, "Unable to get notification rate limits", e)
+            Timber.e(e, "Unable to get notification rate limits")
         }
         if (checkRateLimits != null) {
             return checkRateLimits
@@ -485,7 +484,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 response.version
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Issue getting new version from core.", e)
+            Timber.e(e, "Issue getting new version from core.")
             server._version ?: ""
         }
     }
@@ -632,7 +631,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     override suspend fun getEntity(entityId: String): Entity<Map<String, Any>>? {
         val url = server.connection.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
-            Log.e(TAG, "Unable to register device due to missing URL")
+            Timber.e("Unable to register device due to missing URL")
             return null
         }
 

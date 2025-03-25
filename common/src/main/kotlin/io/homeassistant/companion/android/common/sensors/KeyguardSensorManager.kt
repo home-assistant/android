@@ -9,8 +9,6 @@ import io.homeassistant.companion.android.common.R as commonR
 
 class KeyguardSensorManager : SensorManager {
     companion object {
-        private const val TAG = "KeyguardManager"
-
         val deviceLocked = SensorManager.BasicSensor(
             "device_locked",
             "binary_sensor",

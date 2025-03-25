@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.qs
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,12 +19,12 @@ import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.qs.views.ManageTilesView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.icondialog.IconDialog
+import timber.log.Timber
 
 @AndroidEntryPoint
 class ManageTilesFragment : Fragment() {
 
     companion object {
-        private const val TAG = "TileFragment"
         val validDomains = EntityExt.APP_PRESS_ACTION_DOMAINS
     }
 
@@ -72,7 +71,7 @@ class ManageTilesFragment : Fragment() {
     }
 
     private fun onIconDialogIconsSelected(selectedIcon: IIcon) {
-        Log.d(TAG, "Selected icon: ${selectedIcon.name}")
+        Timber.d("Selected icon: ${selectedIcon.name}")
         viewModel.selectIcon(selectedIcon)
     }
 }

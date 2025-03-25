@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.onboarding.integration
 
 import android.content.Context
-import android.util.Log
 import androidx.wear.tiles.TileService
 import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.BuildConfig
@@ -18,16 +17,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class MobileAppIntegrationPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
     private val serverManager: ServerManager
 ) : MobileAppIntegrationPresenter {
-
-    companion object {
-        internal const val TAG = "IntegrationPresenter"
-    }
-
     private val view = context as MobileAppIntegrationView
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -48,7 +43,7 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
                 serverManager.integrationRepository(serverId).registerDevice(deviceRegistration)
                 serverManager.convertTemporaryServer(serverId)
             } catch (e: Exception) {
-                Log.e(TAG, "Unable to register with Home Assistant", e)
+                Timber.e(e, "Unable to register with Home Assistant")
                 view.showError()
                 return@launch
             }
@@ -66,7 +61,7 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
             updater.requestUpdate(ShortcutsTile::class.java)
             updater.requestUpdate(TemplateTile::class.java)
         } catch (e: Exception) {
-            Log.w(TAG, "Unable to request tiles update")
+            Timber.w("Unable to request tiles update")
         }
     }
 

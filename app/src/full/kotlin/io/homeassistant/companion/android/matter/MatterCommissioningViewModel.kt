@@ -22,10 +22,6 @@ class MatterCommissioningViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(application) {
 
-    companion object {
-        private const val TAG = "MatterCommissioningView"
-    }
-
     sealed class CommissioningFlowStep {
         object NotStarted : CommissioningFlowStep()
         object NotRegistered : CommissioningFlowStep()

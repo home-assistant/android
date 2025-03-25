@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import androidx.preference.PreferenceDataStore
@@ -44,6 +43,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 class SettingsPresenterImpl @Inject constructor(
     private val serverManager: ServerManager,
@@ -54,10 +54,6 @@ class SettingsPresenterImpl @Inject constructor(
     private val settingsDao: SettingsDao,
     private val sensorDao: SensorDao
 ) : SettingsPresenter, PreferenceDataStore() {
-
-    companion object {
-        private const val TAG = "SettingsPresenter"
-    }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -154,7 +150,7 @@ class SettingsPresenterImpl @Inject constructor(
                 null
             }
         } catch (e: Exception) {
-            Log.d(TAG, "Unable to get rate limits")
+            Timber.d("Unable to get rate limits")
             return@withContext null
         }
     }
@@ -198,14 +194,14 @@ class SettingsPresenterImpl @Inject constructor(
                 }
                 view.onAddServerResult(true, serverId)
             } catch (e: Exception) {
-                Log.e(TAG, "Exception while registering", e)
+                Timber.e(e, "Exception while registering")
                 try {
                     if (serverId != null) {
                         serverManager.authenticationRepository(serverId).revokeSession()
                         serverManager.removeServer(serverId)
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Can't revoke session", e)
+                    Timber.e(e, "Can't revoke session")
                 }
                 view.onAddServerResult(false, null)
             }

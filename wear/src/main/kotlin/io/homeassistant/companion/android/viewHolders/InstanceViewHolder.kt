@@ -1,11 +1,11 @@
 package io.homeassistant.companion.android.viewHolders
 
-import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.HomeAssistantInstance
+import timber.log.Timber
 
 class InstanceViewHolder(v: View, val onClick: (HomeAssistantInstance) -> Unit) :
     RecyclerView.ViewHolder(v), View.OnClickListener {
@@ -24,6 +24,6 @@ class InstanceViewHolder(v: View, val onClick: (HomeAssistantInstance) -> Unit) 
     }
 
     override fun onClick(v: View) {
-        Log.d("ServerListAdapter", "Clicked")
+        Timber.tag("ServerListAdapter").d("Clicked")
     }
 }

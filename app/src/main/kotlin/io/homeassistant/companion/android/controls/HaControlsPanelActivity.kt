@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.KeyguardManager
 import android.os.Bundle
 import android.service.controls.ControlsProviderService
-import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +30,7 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class HaControlsPanelActivity : AppCompatActivity() {
@@ -65,7 +65,7 @@ class HaControlsPanelActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val serverId = prefsRepository.getControlsPanelServer() ?: serverManager.getServer()?.id
             val path = prefsRepository.getControlsPanelPath()
-            Log.d("HaControlsPanel", "Launching WebView…")
+            Timber.d("Launching WebView…")
             startActivity(
                 WebViewActivity.newInstance(
                     context = this@HaControlsPanelActivity,

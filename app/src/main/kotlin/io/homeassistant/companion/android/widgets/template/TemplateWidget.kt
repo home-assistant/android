@@ -9,7 +9,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
@@ -33,12 +32,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class TemplateWidget : AppWidgetProvider() {
     companion object {
-        private const val TAG = "TemplateWidget"
-
         const val UPDATE_VIEW =
             "io.homeassistant.companion.android.widgets.template.TemplateWidget.UPDATE_VIEW"
         const val RECEIVE_DATA =
@@ -182,7 +180,7 @@ class TemplateWidget : AppWidgetProvider() {
 
         val invalidWidgetIds = dbWidgetIds.minus(systemWidgetIds)
         if (invalidWidgetIds.isNotEmpty()) {
-            Log.i(TAG, "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
+            Timber.i("Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
             onDeleted(context, invalidWidgetIds.toIntArray())
         }
 
@@ -246,7 +244,7 @@ class TemplateWidget : AppWidgetProvider() {
                     )
                     setViewVisibility(R.id.widgetTemplateError, View.GONE)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unable to render template: ${widget.template}", e)
+                    Timber.e(e, "Unable to render template: ${widget.template}")
                     setViewVisibility(R.id.widgetTemplateError, View.VISIBLE)
                 }
                 setTextViewText(
@@ -275,7 +273,7 @@ class TemplateWidget : AppWidgetProvider() {
         val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
 
         if (serverId == null || template == null) {
-            Log.e(TAG, "Did not receive complete widget data")
+            Timber.e("Did not receive complete widget data")
             return
         }
 

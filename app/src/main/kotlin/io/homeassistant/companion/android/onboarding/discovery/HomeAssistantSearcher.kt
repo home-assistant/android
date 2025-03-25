@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.onboarding.discovery
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
-import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
@@ -11,6 +10,7 @@ import java.net.MalformedURLException
 import java.net.URL
 import java.util.concurrent.locks.ReentrantLock
 import okio.internal.commonToUtf8String
+import timber.log.Timber
 
 class HomeAssistantSearcher constructor(
     private val nsdManager: NsdManager,
@@ -40,7 +40,7 @@ class HomeAssistantSearcher constructor(
         try {
             nsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, this)
         } catch (e: Exception) {
-            Log.e(TAG, "Issue starting discover.", e)
+            Timber.e(e, "Issue starting discover.")
             isSearching = false
             onError()
             return
@@ -53,7 +53,7 @@ class HomeAssistantSearcher constructor(
                 multicastLock?.acquire()
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Issue acquiring multicast lock", e)
+            Timber.e(e, "Issue acquiring multicast lock")
             // Discovery might still work so continue
         }
     }
@@ -68,7 +68,7 @@ class HomeAssistantSearcher constructor(
             multicastLock?.release()
             multicastLock = null
         } catch (e: Exception) {
-            Log.e(TAG, "Issue stopping discovery", e)
+            Timber.e(e, "Issue stopping discovery")
         }
     }
 
@@ -78,23 +78,23 @@ class HomeAssistantSearcher constructor(
 
     // Called as soon as service discovery begins.
     override fun onDiscoveryStarted(regType: String) {
-        Log.d(TAG, "Service discovery started")
+        Timber.d("Service discovery started")
     }
 
     override fun onServiceFound(foundService: NsdServiceInfo) {
-        Log.i(TAG, "Service discovery found HA: $foundService")
+        Timber.i("Service discovery found HA: $foundService")
         lock.lock()
         nsdManager.resolveService(
             foundService,
             object : NsdManager.ResolveListener {
                 override fun onResolveFailed(failedService: NsdServiceInfo?, errorCode: Int) {
                     // discoveryView.onScanError()
-                    Log.w(TAG, "Failed to resolve service: $failedService, error: $errorCode")
+                    Timber.w("Failed to resolve service: $failedService, error: $errorCode")
                     lock.unlock()
                 }
 
                 override fun onServiceResolved(resolvedService: NsdServiceInfo?) {
-                    Log.i(TAG, "Service resolved: $resolvedService")
+                    Timber.i("Service resolved: $resolvedService")
                     resolvedService?.let {
                         val baseUrl = it.attributes["base_url"]
                         val versionAttr = it.attributes["version"]
@@ -108,7 +108,7 @@ class HomeAssistantSearcher constructor(
                                 )
                                 onInstanceFound(instance)
                             } catch (e: MalformedURLException) {
-                                Log.w(TAG, "Failed to create instance: ${baseUrl.commonToUtf8String()}")
+                                Timber.w("Failed to create instance: ${baseUrl.commonToUtf8String()}")
                             }
                         }
                     }
@@ -121,21 +121,21 @@ class HomeAssistantSearcher constructor(
     override fun onServiceLost(service: NsdServiceInfo) {
         // When the network service is no longer available.
         // Internal bookkeeping code goes here.
-        Log.e(TAG, "service lost: $service")
+        Timber.e("service lost: $service")
     }
 
     override fun onDiscoveryStopped(serviceType: String) {
-        Log.i(TAG, "Discovery stopped: $serviceType")
+        Timber.i("Discovery stopped: $serviceType")
     }
 
     override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
-        Log.e(TAG, "Discovery failed: Error code:$errorCode")
+        Timber.e("Discovery failed: Error code:$errorCode")
         onError()
         stopSearch()
     }
 
     override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {
-        Log.e(TAG, "Discovery failed: Error code:$errorCode")
+        Timber.e("Discovery failed: Error code:$errorCode")
         stopSearch()
     }
 }

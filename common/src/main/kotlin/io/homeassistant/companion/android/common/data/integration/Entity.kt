@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Build
 import android.text.format.DateUtils
-import android.util.Log
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -17,6 +16,7 @@ import java.time.format.DateTimeParseException
 import java.util.Calendar
 import java.util.Locale
 import kotlin.math.round
+import timber.log.Timber
 
 data class Entity<T>(
     val entityId: String,
@@ -154,7 +154,7 @@ fun <T> Entity<T>.getCoverPosition(): EntityPosition? {
             max = maxValue
         )
     } catch (e: Exception) {
-        Log.e(EntityExt.TAG, "Unable to get getCoverPosition", e)
+        Timber.tag(EntityExt.TAG).e(e, "Unable to get getCoverPosition")
         null
     }
 }
@@ -164,7 +164,7 @@ fun <T> Entity<T>.supportsAlarmControlPanelArmAway(): Boolean {
         if (domain != "alarm_control_panel") return false
         ((attributes as Map<*, *>)["supported_features"] as Int) and EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY == EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY
     } catch (e: Exception) {
-        Log.e(EntityExt.TAG, "Unable to get supportsArmedAway", e)
+        Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsArmedAway")
         false
     }
 }
@@ -174,7 +174,7 @@ fun <T> Entity<T>.supportsFanSetSpeed(): Boolean {
         if (domain != "fan") return false
         ((attributes as Map<*, *>)["supported_features"] as Int) and EntityExt.FAN_SUPPORT_SET_SPEED == EntityExt.FAN_SUPPORT_SET_SPEED
     } catch (e: Exception) {
-        Log.e(EntityExt.TAG, "Unable to get supportsFanSetSpeed", e)
+        Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsFanSetSpeed")
         false
     }
 }
@@ -194,7 +194,7 @@ fun <T> Entity<T>.getFanSpeed(): EntityPosition? {
             max = maxValue
         )
     } catch (e: Exception) {
-        Log.e(EntityExt.TAG, "Unable to get getFanSpeed", e)
+        Timber.tag(EntityExt.TAG).e(e, "Unable to get getFanSpeed")
         null
     }
 }
@@ -214,7 +214,7 @@ fun <T> Entity<T>.getFanSteps(): Int? {
             ((attributes as Map<*, *>)["percentage_step"] as? Double)?.toDouble() ?: 1.0
         ) - 1
     } catch (e: Exception) {
-        Log.e(EntityExt.TAG, "Unable to get getFanSteps", e)
+        Timber.tag(EntityExt.TAG).e(e, "Unable to get getFanSteps")
         null
     }
 }
@@ -232,7 +232,7 @@ fun <T> Entity<T>.supportsLightBrightness(): Boolean {
         val supportedFeatures = attributes["supported_features"] as Int
         supportsBrightness || (supportedFeatures and EntityExt.LIGHT_SUPPORT_BRIGHTNESS_DEPR == EntityExt.LIGHT_SUPPORT_BRIGHTNESS_DEPR)
     } catch (e: Exception) {
-        Log.e(EntityExt.TAG, "Unable to get supportsLightBrightness", e)
+        Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsLightBrightness")
         false
     }
 }
@@ -260,7 +260,7 @@ fun <T> Entity<T>.getLightBrightness(): EntityPosition? {
             else -> null
         }
     } catch (e: Exception) {
-        Log.e(EntityExt.TAG, "Unable to get getLightBrightness", e)
+        Timber.tag(EntityExt.TAG).e(e, "Unable to get getLightBrightness")
         null
     }
 }
@@ -276,7 +276,7 @@ fun <T> Entity<T>.supportsLightColorTemperature(): Boolean {
         val supportedFeatures = attributes["supported_features"] as Int
         supportsColorTemp || (supportedFeatures and EntityExt.LIGHT_SUPPORT_COLOR_TEMP_DEPR == EntityExt.LIGHT_SUPPORT_COLOR_TEMP_DEPR)
     } catch (e: Exception) {
-        Log.e(EntityExt.TAG, "Unable to get supportsLightColorTemperature", e)
+        Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsLightColorTemperature")
         false
     }
 }
@@ -294,7 +294,7 @@ fun <T> Entity<T>.getLightColor(): Int? {
             else -> null
         }
     } catch (e: Exception) {
-        Log.e(EntityExt.TAG, "Unable to get getLightColor", e)
+        Timber.tag(EntityExt.TAG).e(e, "Unable to get getLightColor")
         null
     }
 }
@@ -304,7 +304,7 @@ fun <T> Entity<T>.supportsVolumeSet(): Boolean {
         if (domain != "media_player") return false
         ((attributes as Map<*, *>)["supported_features"] as Int) and EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET == EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET
     } catch (e: Exception) {
-        Log.e(EntityExt.TAG, "Unable to get supportsVolumeSet", e)
+        Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsVolumeSet")
         false
     }
 }
@@ -326,7 +326,7 @@ fun <T> Entity<T>.getVolumeLevel(): EntityPosition? {
             max = maxValue
         )
     } catch (e: Exception) {
-        Log.e(EntityExt.TAG, "Unable to get getVolumeLevel", e)
+        Timber.tag(EntityExt.TAG).e(e, "Unable to get getVolumeLevel")
         null
     }
 }
@@ -338,7 +338,7 @@ fun <T> Entity<T>.getVolumeStep(): Float {
         val volumeStep = ((attributes as Map<*, *>)["volume_step"] as? Number)?.toFloat() ?: 0.1f
         volumeStep.coerceAtLeast(0.01f)
     } catch (e: Exception) {
-        Log.e(EntityExt.TAG, "Unable to get getVolumeStep", e)
+        Timber.tag(EntityExt.TAG).e(e, "Unable to get getVolumeStep")
         0.1f
     }
 }

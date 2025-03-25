@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -38,13 +37,10 @@ import java.util.Calendar
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class LogFragment : Fragment() {
-
-    companion object {
-        private const val TAG = "LogFragment"
-    }
 
     @Inject
     lateinit var prefsRepository: PrefsRepository
@@ -152,7 +148,7 @@ class LogFragment : Fragment() {
             .setTitle(getString(commonR.string.share_logs))
             .setMessage(getString(commonR.string.share_logs_sens_message))
             .setPositiveButton(commonR.string.confirm_positive) { _, _ ->
-                Log.d(TAG, "User want to share log")
+                Timber.d("User want to share log")
                 val c = Calendar.getInstance()
                 val year = c.get(Calendar.YEAR)
                 val month = c.get(Calendar.MONTH)
@@ -171,7 +167,7 @@ class LogFragment : Fragment() {
                 val filePathWithoutExt = path + "/homeassistant_companion_log_$month-$day-$year" + "_" + "$hour-$minute-$second"
                 val logFilePath = "$filePathWithoutExt.txt"
 
-                Log.i(TAG, "Create log file to: $logFilePath")
+                Timber.i("Create log file to: $logFilePath")
 
                 val fLogFile = File(logFilePath)
                 fLogFile.appendText(currentLog)
@@ -199,18 +195,18 @@ class LogFragment : Fragment() {
 
                     val packageManager: PackageManager = requireContext().packageManager
                     if (shareIntent.resolveActivity(packageManager) != null) {
-                        Log.i(TAG, "Open share dialog with log file")
+                        Timber.i("Open share dialog with log file")
                         startActivity(shareIntent)
                     } else {
-                        Log.e(TAG, "Cannot open share dialog, because no app can receive the mime type text/plain")
+                        Timber.e("Cannot open share dialog, because no app can receive the mime type text/plain")
                     }
                 } else {
-                    Log.e(TAG, "Could not open share dialog, because log file does not exist.")
+                    Timber.e("Could not open share dialog, because log file does not exist.")
                     Toast.makeText(requireContext(), getString(commonR.string.log_file_not_created), Toast.LENGTH_LONG).show()
                 }
             }
             .setNegativeButton(commonR.string.confirm_negative) { _, _ ->
-                Log.w(TAG, "User don't want to share the log")
+                Timber.w("User don't want to share the log")
                 // Do nothing
             }.show()
     }

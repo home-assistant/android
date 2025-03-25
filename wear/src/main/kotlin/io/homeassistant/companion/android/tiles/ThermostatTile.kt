@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.tiles
 
-import android.util.Log
 import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ColorBuilders
 import androidx.wear.protolayout.DimensionBuilders
@@ -37,6 +36,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 @AndroidEntryPoint
 class ThermostatTile : TileService() {
@@ -141,7 +141,7 @@ class ThermostatTile : TileService() {
                         )
                     ).build()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unable to fetch entity ${tileConfig.entityId}", e)
+                    Timber.e(e, "Unable to fetch entity ${tileConfig.entityId}")
 
                     tile.setTileTimeline(
                         primaryLayoutTimeline(
