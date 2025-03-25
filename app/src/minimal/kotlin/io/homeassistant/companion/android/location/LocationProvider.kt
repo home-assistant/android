@@ -14,6 +14,12 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import timber.log.Timber
 
+private val provider: String = if (SDK_INT >= Build.VERSION_CODES.S) {
+    LocationManager.FUSED_PROVIDER
+} else {
+    LocationManager.GPS_PROVIDER
+}
+
 @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
 suspend fun getLocation(context: Context): Location? {
     val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
@@ -23,7 +29,7 @@ suspend fun getLocation(context: Context): Location? {
         return null
     }
 
-    val lastKnownLocation = locationManager.getLastKnownLocation(getProvider())
+    val lastKnownLocation = locationManager.getLastKnownLocation(provider)
     val now = System.currentTimeMillis()
     // TODO maybe extract this into a constant since it also used in GeocodeSensorManager
     return if (lastKnownLocation == null || now - lastKnownLocation.time > 300000) {
@@ -35,16 +41,8 @@ suspend fun getLocation(context: Context): Location? {
     }
 }
 
-private fun getProvider(): String {
-    return if (SDK_INT >= Build.VERSION_CODES.S) {
-        LocationManager.FUSED_PROVIDER
-    } else {
-        LocationManager.GPS_PROVIDER
-    }
-}
-
 private suspend fun LocationManager.getCurrentLocation(context: Context): Location? {
     return suspendCoroutine {
-        LocationManagerCompat.getCurrentLocation(this, getProvider(), CancellationSignal(), ContextCompat.getMainExecutor(context), it::resume)
+        LocationManagerCompat.getCurrentLocation(this, provider, CancellationSignal(), ContextCompat.getMainExecutor(context), it::resume)
     }
 }
