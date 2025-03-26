@@ -2,8 +2,8 @@ package io.homeassistant.companion.android
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.junit.Assert.assertEquals
 
 private data class DummyData(val name: String)
 

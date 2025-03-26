@@ -26,7 +26,7 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
 
 @AndroidEntryPoint
-class AssistActivity : BaseActivity() {
+class AssistActivity : BaseActivity(){
 
     private val viewModel: AssistViewModel by viewModels()
 

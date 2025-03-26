@@ -15,7 +15,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import com.mikepenz.iconics.utils.colorInt
 import io.homeassistant.companion.android.common.R
 
-class AssistDataSourceService : ComplicationDataSourceService() {
+class AssistDataSourceService : ComplicationDataSourceService(){
 
     override fun onComplicationRequest(request: ComplicationRequest, listener: ComplicationRequestListener) {
         if (request.complicationType != ComplicationType.MONOCHROMATIC_IMAGE) {

@@ -9,7 +9,7 @@ import io.homeassistant.companion.android.home.views.EntityViewList
 import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewEntity2
 
-class EntityListViewPreviewsTest {
+class EntityListViewPreviewsTest{
 
     @Preview(device = WearDevices.LARGE_ROUND)
     @Composable
