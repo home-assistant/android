@@ -46,7 +46,7 @@ jobs:
             echo -e "   ./gradlew alldependencies --write-locks"
             echo -e "   Then commit the updated lockfiles to your branch."
             error_message="Dependency changes detected, but lockfiles are not updated. Run \`./gradlew alldependencies --write-locks\` and commit the changes."
-            echo "::error title=⛔ Lockfile Update Required::${error_message}"
+            echo "::error file=gradle/libs.versions.toml,line=1,title=⛔ Lockfile Update Required::${error_message}"
 
             gh pr comment $PR_URL --body "## ⛔ Lockfile Update Required
             ${error_message}"
