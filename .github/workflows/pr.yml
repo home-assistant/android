@@ -42,7 +42,9 @@ jobs:
             echo -e "🔍 It seems that the dependency lockfiles are outdated. Please update them by running:"
             echo -e "   ./gradlew alldependencies --write-locks"
             echo -e "   Then commit the updated lockfiles to your branch."
-            echo "::error title=⛔ Lockfile Update Required::Dependency changes detected, but lockfiles are not updated. Run './gradlew alldependencies --write-locks' and commit the changes."
+            error_message="Dependency changes detected, but lockfiles are not updated. Run './gradlew alldependencies --write-locks' and commit the changes."
+            echo "::error title=⛔ Lockfile Update Required::${error_message}"
+            gh pr comment $PR_URL --body "${error_message}"
             exit 1;
           else
             echo -e "\n✔️ All dependency lockfiles are up to date. No uncommitted changes detected."
