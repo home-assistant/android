@@ -16,7 +16,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material3.ExperimentalWearMaterial3Api
 import androidx.wear.compose.material3.IconButtonDefaults
 import androidx.wear.compose.material3.IconToggleButton
 import androidx.wear.compose.material3.IconToggleButtonDefaults
@@ -86,7 +85,7 @@ fun DetailsPanelView(
                                 haptic
                             )
                         },
-                        colors = IconToggleButtonDefaults.iconToggleButtonColors(
+                        colors = IconToggleButtonDefaults.colors(
                             checkedContainerColor = wearColorScheme.tertiary.copy(alpha = 0.2f),
                             uncheckedContainerColor = wearColorScheme.surfaceContainerLow
                         ),
@@ -174,7 +173,6 @@ fun DetailsPanelView(
     }
 }
 
-@OptIn(ExperimentalWearMaterial3Api::class)
 @Composable
 fun FanSpeedSlider(
     entity: Entity<*>,
@@ -229,7 +227,6 @@ fun FanSpeedSlider(
     }
 }
 
-@OptIn(ExperimentalWearMaterial3Api::class)
 @Composable
 fun BrightnessSlider(
     entity: Entity<*>,
@@ -283,7 +280,6 @@ fun BrightnessSlider(
     }
 }
 
-@OptIn(ExperimentalWearMaterial3Api::class)
 @Composable
 fun ColorTempSlider(
     attributes: Map<*, *>,
