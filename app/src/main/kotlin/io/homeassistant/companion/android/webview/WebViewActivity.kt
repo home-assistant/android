@@ -22,6 +22,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
+import android.util.Log
 import android.util.Rational
 import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
@@ -122,7 +123,7 @@ import timber.log.Timber
 
 @OptIn(androidx.media3.common.util.UnstableApi::class)
 @AndroidEntryPoint
-class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webview.WebView {
+class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webview.WebView{
 
     companion object {
         const val EXTRA_PATH = "path"
@@ -134,6 +135,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         private const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
 
         fun newInstance(context: Context, path: String? = null, serverId: Int? = null): Intent {
+            Log.e("WebViewActivity", "newInstance")
             return Intent(context, WebViewActivity::class.java).apply {
                 putExtra(EXTRA_PATH, path)
                 putExtra(EXTRA_SERVER, serverId)

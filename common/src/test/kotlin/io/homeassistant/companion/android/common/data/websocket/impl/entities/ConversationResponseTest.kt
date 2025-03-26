@@ -6,7 +6,7 @@ import io.homeassistant.companion.android.common.util.jacksonObjectMapperForHACo
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class ConversationResponseTest {
+class ConversationResponseTest{
 
     private val objectMapper: ObjectMapper = jacksonObjectMapperForHACore()
 
