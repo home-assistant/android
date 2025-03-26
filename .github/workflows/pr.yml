@@ -100,7 +100,7 @@ jobs:
 
       - uses: ./.github/actions/setup-build-env
         with:
-            mock-google-services: "true"
+          mock-google-services: "true"
 
       - name: Validate Screenshot Previews
         run: ./gradlew validateDebugScreenshotTest
@@ -109,9 +109,9 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-            name: Screenshot test results
-            path: |
-                **/build/test-results/**/TEST-*.xml
+          name: Screenshot test results
+          path: |
+              **/build/test-results/**/TEST-*.xml
 
   pr_build:
     runs-on: ubuntu-latest
