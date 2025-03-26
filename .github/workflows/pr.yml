@@ -22,6 +22,32 @@ jobs:
       - name: Validate YAML
         run: yamllint --strict --format github .
 
+  lockfiles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          mock-google-services: "true"
+
+      - name: Update lockfiles
+        run: ./gradlew alldependencies --write-locks
+
+      - name: Check for missing lockfiles update
+        run: |
+          if [[ $(git status --porcelain) ]]; then
+            echo $(git status --porcelain)
+            echo -e "\n❌ Uncommitted changes detected in the repository."
+            echo -e "🔍 It seems that the dependency lockfiles are outdated. Please update them by running:"
+            echo -e "   ./gradlew alldependencies --write-locks"
+            echo -e "   Then commit the updated lockfiles to your branch."
+            echo "::error title=⛔ Lockfile Update Required::Dependency changes detected, but lockfiles are not updated. Run './gradlew alldependencies --write-locks' and commit the changes."
+            exit 1;
+          else
+            echo -e "\n✔️ All dependency lockfiles are up to date. No uncommitted changes detected."
+          fi
+
   ktlint:
     runs-on: ubuntu-latest
     permissions:
