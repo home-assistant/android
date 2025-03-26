@@ -35,6 +35,9 @@ jobs:
         run: ./gradlew alldependencies --write-locks
 
       - name: Check for missing lockfiles update
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.ref }}
         run: |
           if [[ $(git status --porcelain) ]]; then
             echo $(git status --porcelain)
