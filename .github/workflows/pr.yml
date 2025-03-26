@@ -57,6 +57,7 @@ jobs:
           fi
 
   ktlint:
+    needs: [yamllint, lockfiles]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -78,28 +79,8 @@ jobs:
           sarif_file: "./"
           category: "KTlint"
 
-  unit_tests:
-    name: "Unit Tests"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: ./.github/actions/setup-build-env
-        with:
-          mock-google-services: "true"
-
-      - name: Run test
-        run: ./gradlew :common:testDebugUnitTest # Should be adapted once we have more than one tests
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Unit test results
-          path: |
-            **/build/test-results/**/TEST-*.xml
-
   lint:
+    needs: [yamllint, lockfiles]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -128,6 +109,7 @@ jobs:
           category: "Android Lint"
 
   pr_build:
+    needs: [yamllint, lockfiles]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -168,8 +150,31 @@ jobs:
         with:
           path: ./**/*.apk
 
+  unit_tests:
+    name: "Unit Tests"
+    needs: [lint, lockfiles, ktlint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          mock-google-services: "true"
+
+      - name: Run test
+        run: ./gradlew :common:testDebugUnitTest # Should be adapted once we have more than one tests
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unit test results
+          path: |
+            **/build/test-results/**/TEST-*.xml
+
   instrumentation_test:
     name: "Instrumentation Tests"
+    needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     strategy:
       # We want the result of each device to be reported, so we can't fail-fast
