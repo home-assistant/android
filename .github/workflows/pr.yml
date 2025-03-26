@@ -35,9 +35,6 @@ jobs:
         run: ./gradlew alldependencies --write-locks
 
       - name: Check for missing lockfiles update
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
           if [[ $(git status --porcelain) ]]; then
             echo $(git status --porcelain)
@@ -47,10 +44,6 @@ jobs:
             echo -e "   Then commit the updated lockfiles to your branch."
             error_message="Dependency changes detected, but lockfiles are not updated. Run \`./gradlew alldependencies --write-locks\` and commit the changes."
             echo "::error file=gradle/libs.versions.toml,line=1,title=⛔ Lockfile Update Required::${error_message}"
-
-            gh pr comment $PR_URL --body "## ⛔ Lockfile Update Required
-            ${error_message}"
-
             exit 1;
           else
             echo -e "\n✔️ All dependency lockfiles are up to date. No uncommitted changes detected."
