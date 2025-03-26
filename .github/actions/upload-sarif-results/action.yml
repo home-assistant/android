@@ -2,7 +2,7 @@ name: "Upload SARIF results"
 description: "Merge and adjust the SARIF files to be compatible with GitHub Security Code Scanning and upload it to the GitHub Security tab."
 inputs:
   category:
-    description: "Categy used to group the SARIF results."
+    description: "Category used to group the SARIF results."
     required: true
 runs:
   using: "composite"
