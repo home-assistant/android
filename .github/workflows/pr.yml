@@ -40,6 +40,13 @@ jobs:
       - name: Merge Ktlint report into one
         run: python3 ./.github/scripts/merge_sarif.py
 
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Upload SARIF results for debug
+          path: merged_results.sarif
+
       - name: Upload lint reports (SARIF)
         if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }}
         uses: github/codeql-action/upload-sarif@v3
