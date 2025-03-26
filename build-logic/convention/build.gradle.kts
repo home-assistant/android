@@ -21,7 +21,7 @@ allprojects {
         // Fix for an implicit_dependency after bumping typesafe-conventions to 0.5.1
         // https://github.com/radoslaw-panuszewski/typesafe-conventions-gradle-plugin/issues/34
         filter {
-            exclude { it.file.path.contains("build/generated-sources") }
+            exclude { it.file.path.contains("build${File.separator}generated-sources") }
         }
     }
 }
