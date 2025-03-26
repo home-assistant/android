@@ -38,17 +38,18 @@ jobs:
         run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck
       
       - name: Merge Ktlint report into one
+        if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }} 
         run: python3 ./.github/scripts/merge_sarif.py
 
       - name: Upload test results
-        if: always()
+        if: ${{ !cancelled() && hashFiles('merged_results.sarif') != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: Upload SARIF results for debug
           path: merged_results.sarif
 
       - name: Upload lint reports (SARIF)
-        if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }}
+        if: ${{ !cancelled() && hashFiles('merged_results.sarif') != '' }}
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "./merged_results.sarif"
