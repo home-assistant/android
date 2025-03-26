@@ -1,0 +1,27 @@
+name: "Upload SARIF results"
+description: "Merge and adjust the SARIF files to be compatible with GitHub Security Code Scanning and upload it to the GitHub Security tab."
+inputs:
+  category:
+    description: "Categy used to group the SARIF results."
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Merge ${{ inputs.category }} report into one
+      shell: bash
+      if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }} 
+      run: python3 ./.github/scripts/merge_sarif.py
+
+    - name: Upload SARIF results
+      if: ${{ !cancelled() && hashFiles('merged_results.sarif') != '' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.category }}_sarif_results
+        path: merged_results.sarif
+
+    - name: Upload ${{ inputs.category }} reports (SARIF)
+      if: ${{ !cancelled() && hashFiles('merged_results.sarif') != '' }}
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: "./merged_results.sarif"
+        category: ${{ inputs.category }}
