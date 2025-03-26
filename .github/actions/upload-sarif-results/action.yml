@@ -9,7 +9,7 @@ runs:
   steps:
     - name: Merge ${{ inputs.category }} report into one
       shell: bash
-      if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }} 
+      if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }}
       run: python3 ./.github/scripts/merge_sarif.py
 
     - name: Upload SARIF results
