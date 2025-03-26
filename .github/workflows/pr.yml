@@ -35,7 +35,7 @@ jobs:
 
       # Since `build-logic` is added with `includeBuild` we have to call ktlint explicitly on `:convention`.
       - name: Validate ktlint
-        run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck
+        run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck --continue
 
       - name: Upload lint reports (SARIF)
         if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }}
@@ -77,7 +77,7 @@ jobs:
           mock-google-services: "true"
 
       - name: Validate Lint
-        run: ./gradlew lint
+        run: ./gradlew lint --continue
 
       - name: Upload lint reports (HTML)
         if: ${{ !cancelled() }}
