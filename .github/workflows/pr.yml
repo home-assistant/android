@@ -63,13 +63,11 @@ jobs:
 
       # Since `build-logic` is added with `includeBuild` we have to call ktlint explicitly on `:convention`.
       - name: Validate ktlint
-        run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck
+        run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck --continue
 
-      - name: Upload lint reports (SARIF)
-        if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }}
-        uses: github/codeql-action/upload-sarif@v3
+      - uses: ./.github/actions/upload-sarif-results
+        if: always()
         with:
-          sarif_file: "./"
           category: "KTlint"
 
   lint:
@@ -85,7 +83,7 @@ jobs:
           mock-google-services: "true"
 
       - name: Validate Lint
-        run: ./gradlew lint
+        run: ./gradlew lint --continue
 
       - name: Upload lint reports (HTML)
         if: ${{ !cancelled() }}
@@ -94,11 +92,9 @@ jobs:
           name: lint-reports
           path: "**/build/reports/lint-results-*.html"
 
-      - name: Upload lint reports (SARIF)
-        if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }}
-        uses: github/codeql-action/upload-sarif@v3
+      - uses: ./.github/actions/upload-sarif-results
+        if: always()
         with:
-          sarif_file: "./"
           category: "Android Lint"
 
   pr_build:
