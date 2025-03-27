@@ -98,7 +98,8 @@ jobs:
           category: "Android Lint"
 
   screenshot_test:
-    needs: [ lint, lockfiles, ktlint ]
+    name: "Screenshot Tests"
+    needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
