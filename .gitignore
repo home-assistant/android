@@ -354,3 +354,6 @@ playStorePublishServiceCredentialsFile.json
 .idea/emulatorDisplays.xml
 .idea/runConfigurations.xml
 .idea/studiobot.xml
+
+## Temp results from the CI
+merged_results.sarif

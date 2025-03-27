@@ -22,7 +22,35 @@ jobs:
       - name: Validate YAML
         run: yamllint --strict --format github .
 
+  lockfiles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          mock-google-services: "true"
+
+      - name: Update lockfiles
+        run: ./gradlew alldependencies --write-locks
+
+      - name: Check for missing lockfiles update
+        run: |
+          if [[ $(git status --porcelain) ]]; then
+            echo $(git status --porcelain)
+            echo -e "\n❌ Uncommitted changes detected in the repository."
+            echo -e "🔍 It seems that the dependency lockfiles are outdated. Please update them by running:"
+            echo -e "   ./gradlew alldependencies --write-locks"
+            echo -e "   Then commit the updated lockfiles to your branch."
+            error_message="Dependency changes detected, but lockfiles are not updated. Run \`./gradlew alldependencies --write-locks\` and commit the changes."
+            echo "::error file=gradle/libs.versions.toml,line=1,title=⛔ Lockfile Update Required::${error_message}"
+            exit 1;
+          else
+            echo -e "\n✔️ All dependency lockfiles are up to date. No uncommitted changes detected."
+          fi
+
   ktlint:
+    needs: [yamllint, lockfiles]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -35,37 +63,15 @@ jobs:
 
       # Since `build-logic` is added with `includeBuild` we have to call ktlint explicitly on `:convention`.
       - name: Validate ktlint
-        run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck
+        run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck --continue
 
-      - name: Upload lint reports (SARIF)
-        if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }}
-        uses: github/codeql-action/upload-sarif@v3
+      - uses: ./.github/actions/upload-sarif-results
+        if: always()
         with:
-          sarif_file: "./"
           category: "KTlint"
 
-  unit_tests:
-    name: "Unit Tests"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: ./.github/actions/setup-build-env
-        with:
-          mock-google-services: "true"
-
-      - name: Run test
-        run: ./gradlew :common:testDebugUnitTest # Should be adapted once we have more than one tests
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Unit test results
-          path: |
-            **/build/test-results/**/TEST-*.xml
-
   lint:
+    needs: [yamllint, lockfiles]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -77,7 +83,7 @@ jobs:
           mock-google-services: "true"
 
       - name: Validate Lint
-        run: ./gradlew lint
+        run: ./gradlew lint --continue
 
       - name: Upload lint reports (HTML)
         if: ${{ !cancelled() }}
@@ -86,11 +92,9 @@ jobs:
           name: lint-reports
           path: "**/build/reports/lint-results-*.html"
 
-      - name: Upload lint reports (SARIF)
-        if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }}
-        uses: github/codeql-action/upload-sarif@v3
+      - uses: ./.github/actions/upload-sarif-results
+        if: always()
         with:
-          sarif_file: "./"
           category: "Android Lint"
 
   screenshot_test:
@@ -114,6 +118,7 @@ jobs:
               **/build/test-results/**/TEST-*.xml
 
   pr_build:
+    needs: [yamllint, lockfiles]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -154,8 +159,31 @@ jobs:
         with:
           path: ./**/*.apk
 
+  unit_tests:
+    name: "Unit Tests"
+    needs: [lint, lockfiles, ktlint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          mock-google-services: "true"
+
+      - name: Run test
+        run: ./gradlew :common:testDebugUnitTest # Should be adapted once we have more than one tests
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unit test results
+          path: |
+            **/build/test-results/**/TEST-*.xml
+
   instrumentation_test:
     name: "Instrumentation Tests"
+    needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     strategy:
       # We want the result of each device to be reported, so we can't fail-fast
