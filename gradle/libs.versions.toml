@@ -62,6 +62,7 @@ recyclerview = "1.4.0"
 reorderable = "0.9.6"
 retrofit = "2.9.0"
 room = "2.6.1"
+screenshot = "0.0.1-alpha09"
 sentry-android = "8.5.0"
 timber = "5.0.1"
 tools-desugar-jdk-libs = "2.1.5"
@@ -90,6 +91,7 @@ kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref =
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot" }
 
 # Plugins defined by this project in `:build-logic:convention` module.
 homeassistant-android-application = { id = "homeassistant.android.application" }

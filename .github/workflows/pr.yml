@@ -97,6 +97,26 @@ jobs:
         with:
           category: "Android Lint"
 
+  screenshot_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          mock-google-services: "true"
+
+      - name: Validate Screenshot Previews
+        run: ./gradlew validateDebugScreenshotTest
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Screenshot test results
+          path: |
+              **/build/test-results/**/TEST-*.xml
+
   pr_build:
     needs: [yamllint, lockfiles]
     runs-on: ubuntu-latest
@@ -278,7 +298,7 @@ jobs:
 
   publish_test_results:
     name: "Publish Tests Results"
-    needs: [instrumentation_test, unit_tests]
+    needs: [instrumentation_test, unit_tests, screenshot_test]
     runs-on: ubuntu-latest
     permissions:
       checks: write
