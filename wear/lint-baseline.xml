@@ -1,0 +1,735 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.9.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.9.0)" variant="all" version="8.9.0">
+
+    <issue
+        id="CustomSplashScreen"
+        message="The application should not provide its own launch screen"
+        errorLine1="class SplashActivity : AppCompatActivity() {"
+        errorLine2="      ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/splash/SplashActivity.kt"
+            line="8"
+            column="7"/>
+    </issue>
+
+    <issue
+        id="IntentFilterUniqueDataAttributes"
+        message="Consider splitting data tag into multiple tags with individual attributes to avoid confusion"
+        errorLine1="                &lt;data android:scheme=&quot;wear&quot; android:host=&quot;*&quot;"
+        errorLine2="                ^">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="289"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="IntentFilterUniqueDataAttributes"
+        message="Consider splitting data tag into multiple tags with individual attributes to avoid confusion"
+        errorLine1="                &lt;data android:scheme=&quot;wear&quot; android:host=&quot;*&quot;"
+        errorLine2="                ^">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="291"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="IntentFilterUniqueDataAttributes"
+        message="Consider splitting data tag into multiple tags with individual attributes to avoid confusion"
+        errorLine1="                &lt;data android:scheme=&quot;wear&quot; android:host=&quot;*&quot;"
+        errorLine2="                ^">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="293"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="IntentFilterUniqueDataAttributes"
+        message="Consider splitting data tag into multiple tags with individual attributes to avoid confusion"
+        errorLine1="                &lt;data android:scheme=&quot;wear&quot; android:host=&quot;*&quot;"
+        errorLine2="                ^">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="295"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="ProtoLayoutPrimaryLayoutResponsive"
+        message="PrimaryLayout used, but responsiveness isn&apos;t set: Please call&#xA;`setResponsiveContentInsetEnabled(true)` for the best results across&#xA;different screen sizes."
+        errorLine1="    val builder = PrimaryLayout.Builder(requestParams.deviceConfiguration)"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/tiles/TileViews.kt"
+            line="92"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="PrivateResource"
+        message="The resource `@color/white` is marked as private in androidx.wear:wear-input:1.2.0-alpha02"
+        errorLine1="        android:textColor=&quot;@color/white&quot;"
+        errorLine2="                           ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/listitem_loading.xml"
+            line="22"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="PrivateResource"
+        message="The resource `@color/white` is marked as private in androidx.wear:wear-input:1.2.0-alpha02"
+        errorLine1="        &lt;item name=&quot;colorOnSecondary&quot;>@color/white&lt;/item>"
+        errorLine2="                                      ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/styles.xml"
+            line="6"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="PrivateResource"
+        message="The resource `@color/white` is marked as private in androidx.wear:wear-input:1.2.0-alpha02"
+        errorLine1="        &lt;item name=&quot;android:textColor&quot;>@color/white&lt;/item>"
+        errorLine2="                                       ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/styles.xml"
+            line="12"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="PrivateResource"
+        message="The resource `@color/white` is marked as private in androidx.wear:wear-input:1.2.0-alpha02"
+        errorLine1="        &lt;item name=&quot;android:textColor&quot;>@color/white&lt;/item>"
+        errorLine2="                                       ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/styles.xml"
+            line="20"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="AcceptsUserCertificates"
+        message="The Network Security Configuration allows the use of user certificates in the release version of your app"
+        errorLine1="            &lt;certificates src=&quot;user&quot;/>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/network_security_config.xml"
+            line="10"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="InsecureBaseConfiguration"
+        message="Insecure Base Configuration"
+        errorLine1="    &lt;base-config cleartextTrafficPermitted=&quot;true&quot;>"
+        errorLine2="                                            ~~~~">
+        <location
+            file="src/main/res/xml/network_security_config.xml"
+            line="5"
+            column="45"/>
+    </issue>
+
+    <issue
+        id="NotifyDataSetChanged"
+        message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
+        errorLine1="            adapter.notifyDataSetChanged()"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
+            line="181"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NotifyDataSetChanged"
+        message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
+        errorLine1="            adapter.notifyDataSetChanged()"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
+            line="189"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 30"
+        errorLine1="        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R"
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/sensors/HealthServicesSensorManager.kt"
+            line="145"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v26`) is unnecessary; `minSdkVersion` is 26. Merge all the resources in this folder into `mipmap-anydpi`.">
+        <location
+            file="src/debug/res/mipmap-anydpi-v26"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v26`) is unnecessary; `minSdkVersion` is 26. Merge all the resources in this folder into `mipmap-anydpi`.">
+        <location
+            file="src/main/res/mipmap-anydpi-v26"/>
+    </issue>
+
+    <issue
+        id="VectorPath"
+        message="Very long vector path (901 characters), which is bad for performance. Considering reducing precision, removing minor details or rasterizing vector."
+        errorLine1="    &lt;path android:fillColor=&quot;#F2F2F2&quot; android:pathData=&quot;M296.22,200.98L223.78,128.54C219.51,124.26 212.5,124.26 208.23,128.54L135.78,200.98C131.51,205.25 128,213.71 128,219.76V285.76C128,291.81 132.95,296.76 139,296.76H206.66L176.87,266.96C175.34,267.49 173.7,267.79 172,267.79C163.71,267.79 156.97,261.05 156.97,252.76C156.97,244.47 163.71,237.73 172,237.73C180.29,237.73 187.03,244.47 187.03,252.76C187.03,254.47 186.73,256.1 186.21,257.64L209.4,280.83V195.85C204.41,193.4 200.97,188.29 200.97,182.37C200.97,174.08 207.71,167.33 216,167.33C224.29,167.33 231.03,174.08 231.03,182.37C231.03,188.29 227.59,193.4 222.6,195.85V255.45L245.67,232.38C245.22,230.94 244.97,229.42 244.97,227.83C244.97,219.55 251.71,212.8 260,212.8C268.29,212.8 275.03,219.55 275.03,227.83C275.03,236.12 268.29,242.87 260,242.87C258.17,242.87 256.42,242.52 254.8,241.92L222.6,274.12V296.77H293C299.05,296.77 304,291.82 304,285.77V219.77C304,213.72 300.5,205.27 296.22,200.99V200.98Z&quot;/>"
+        errorLine2="                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/drawable/ic_launcher_foreground.xml"
+            line="3"
+            column="57"/>
+    </issue>
+
+    <issue
+        id="VectorPath"
+        message="Very long vector path (893 characters), which is bad for performance. Considering reducing precision, removing minor details or rasterizing vector."
+        errorLine1="    &lt;path android:fillColor=&quot;#F2F2F2&quot; android:pathData=&quot;M296.22,190.31L223.78,117.87C219.51,113.6 212.5,113.6 208.23,117.87L135.78,190.31C131.51,194.59 128,203.04 128,209.09V275.09C128,281.14 132.95,286.09 139,286.09H206.66L176.87,256.3C175.34,256.83 173.7,257.13 172,257.13C163.71,257.13 156.97,250.38 156.97,242.09C156.97,233.81 163.71,227.06 172,227.06C180.29,227.06 187.03,233.81 187.03,242.09C187.03,243.8 186.73,245.44 186.21,246.97L209.4,270.16V185.19C204.41,182.74 200.97,177.62 200.97,171.7C200.97,163.41 207.71,156.67 216,156.67C224.29,156.67 231.03,163.41 231.03,171.7C231.03,177.62 227.59,182.74 222.6,185.19V244.78L245.67,221.71C245.22,220.28 244.97,218.75 244.97,217.17C244.97,208.88 251.71,202.13 260,202.13C268.29,202.13 275.03,208.88 275.03,217.17C275.03,225.45 268.29,232.2 260,232.2C258.17,232.2 256.42,231.85 254.8,231.25L222.6,263.45V286.1H293C299.05,286.1 304,281.15 304,275.1V209.1C304,203.05 300.5,194.6 296.22,190.32V190.31Z&quot;/>"
+        errorLine2="                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/drawable/ic_launcher_foreground_round.xml"
+            line="3"
+            column="57"/>
+    </issue>
+
+    <issue
+        id="MergeRootFrame"
+        message="This `&lt;FrameLayout>` can be replaced with a `&lt;merge>` tag"
+        errorLine1="&lt;FrameLayout"
+        errorLine2="^">
+        <location
+            file="src/main/res/layout/activity_onboarding.xml"
+            line="3"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `@android:color/black` with a theme that also paints a background (inferred theme is `@style/Theme.HomeAssistant`)"
+        errorLine1="    android:background=&quot;@android:color/black&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/view_loading.xml"
+            line="7"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.colorDialogBackground` appears to be unused"
+        errorLine1="    &lt;color name=&quot;colorDialogBackground&quot;>#111111&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="3"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.colorDialogMessage` appears to be unused"
+        errorLine1="    &lt;color name=&quot;colorDialogMessage&quot;>@android:color/white&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="4"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.colorDialogTitle` appears to be unused"
+        errorLine1="    &lt;color name=&quot;colorDialogTitle&quot;>@android:color/white&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="5"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.colorPrimaryDark` appears to be unused"
+        errorLine1="    &lt;color name=&quot;colorPrimaryDark&quot;>#111111&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="7"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.colorWarning` appears to be unused"
+        errorLine1="    &lt;color name=&quot;colorWarning&quot;>#D32F2F&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="8"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.colorHeadline1` appears to be unused"
+        errorLine1="    &lt;color name=&quot;colorHeadline1&quot;>@android:color/white&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="10"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.colorHeadline2` appears to be unused"
+        errorLine1="    &lt;color name=&quot;colorHeadline2&quot;>@android:color/white&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="11"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.colorActionBar` appears to be unused"
+        errorLine1="    &lt;color name=&quot;colorActionBar&quot;>#1c1c1c&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="12"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.colorIcon` appears to be unused"
+        errorLine1="    &lt;color name=&quot;colorIcon&quot;>@android:color/white&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="13"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.colorWidgetButtonBackground` appears to be unused"
+        errorLine1="    &lt;color name=&quot;colorWidgetButtonBackground&quot;>#1c1c1c&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="16"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.colorWidgetButtonLabel` appears to be unused"
+        errorLine1="    &lt;color name=&quot;colorWidgetButtonLabel&quot;>#E6E6E6&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="17"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.box_inset_layout_padding` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;box_inset_layout_padding&quot;>0dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="7"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="MonochromeLauncherIcon"
+        message="The application adaptive icon is missing a monochrome tag"
+        errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
+        errorLine2="^">
+        <location
+            file="src/debug/res/mipmap-anydpi-v26/ic_launcher.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="MonochromeLauncherIcon"
+        message="The application adaptive icon is missing a monochrome tag"
+        errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
+        errorLine2="^">
+        <location
+            file="src/main/res/mipmap-anydpi-v26/ic_launcher.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="MonochromeLauncherIcon"
+        message="The application adaptive roundIcon is missing a monochrome tag"
+        errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
+        errorLine2="^">
+        <location
+            file="src/debug/res/mipmap-anydpi-v26/ic_launcher_round.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="MonochromeLauncherIcon"
+        message="The application adaptive roundIcon is missing a monochrome tag"
+        errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
+        errorLine2="^">
+        <location
+            file="src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="SquareAndRoundTilePreviews"
+        message="Tiles need a preview asset in both drawable-round and drawable"
+        errorLine1="                android:resource=&quot;@drawable/favorite_entities_tile_example&quot; />"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="153"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="SquareAndRoundTilePreviews"
+        message="Tiles need a preview asset in both drawable-round and drawable"
+        errorLine1="                android:resource=&quot;@drawable/template_tile_example&quot; />"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="174"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="SquareAndRoundTilePreviews"
+        message="Tiles need a preview asset in both drawable-round and drawable"
+        errorLine1="                android:resource=&quot;@drawable/conversation_tile_example&quot; />"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="194"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="SquareAndRoundTilePreviews"
+        message="Tiles need a preview asset in both drawable-round and drawable"
+        errorLine1="                android:resource=&quot;@drawable/thermostat_tile_example&quot; />"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="228"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/camera_tile_example.png` in densityless folder">
+        <location
+            file="src/main/res/drawable/camera_tile_example.png"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/conversation_tile_example.png` in densityless folder">
+        <location
+            file="src/main/res/drawable/conversation_tile_example.png"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/favorite_entities_tile_example.png` in densityless folder">
+        <location
+            file="src/main/res/drawable/favorite_entities_tile_example.png"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/template_tile_example.png` in densityless folder">
+        <location
+            file="src/main/res/drawable/template_tile_example.png"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/thermostat_tile_example.png` in densityless folder">
+        <location
+            file="src/main/res/drawable/thermostat_tile_example.png"/>
+    </issue>
+
+    <issue
+        id="WearRecents"
+        message="Set `taskAffinity` for Wear activities to make them appear correctly in recents"
+        errorLine1="        &lt;activity android:name=&quot;.home.HomeActivity&quot; />"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="66"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="WearRecents"
+        message="Set `taskAffinity` for Wear activities to make them appear correctly in recents"
+        errorLine1="        &lt;activity android:name=&quot;.splash.SplashActivity&quot;"
+        errorLine2="        ^">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="67"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="WearRecents"
+        message="Set `taskAffinity` for Wear activities to make them appear correctly in recents"
+        errorLine1="        &lt;activity android:name=&quot;.onboarding.OnboardingActivity&quot; />"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="75"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="WearRecents"
+        message="Set `taskAffinity` for Wear activities to make them appear correctly in recents"
+        errorLine1="        &lt;activity android:name=&quot;.onboarding.integration.MobileAppIntegrationActivity&quot; />"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="76"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="WearRecents"
+        message="Set `taskAffinity` for Wear activities to make them appear correctly in recents"
+        errorLine1="        &lt;activity android:name=&quot;.onboarding.manual.ManualSetupActivity&quot; />"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="77"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="WearRecents"
+        message="Set `taskAffinity` for Wear activities to make them appear correctly in recents"
+        errorLine1="        &lt;activity android:name=&quot;.onboarding.phoneinstall.PhoneInstallActivity&quot; />"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="78"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="WearRecents"
+        message="Set `taskAffinity` for Wear activities to make them appear correctly in recents"
+        errorLine1="        &lt;activity android:name=&quot;.complications.ComplicationConfigActivity&quot;"
+        errorLine2="        ^">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="79"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="WearRecents"
+        message="In addition to `excludeFromRecents`, set `noHistory` flag to avoid showing this activity in recents"
+        errorLine1="        &lt;activity"
+        errorLine2="        ^">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="88"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="WearRecents"
+        message="Set `taskAffinity` for Wear activities to make them appear correctly in recents"
+        errorLine1="        &lt;activity android:name=&quot;androidx.wear.activity.ConfirmationActivity&quot; />"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="115"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="WearRecents"
+        message="Set `taskAffinity` for Wear activities to make them appear correctly in recents"
+        errorLine1="        &lt;activity"
+        errorLine2="        ^">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="117"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="WearRecents"
+        message="Avoid using `FLAG_ACTIVITY_NEW_TASK` and `FLAG_ACTIVITY_CLEAR_TOP`"
+        errorLine1="        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/integration/MobileAppIntegrationActivity.kt"
+            line="62"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="WearRecents"
+        message="Avoid using `FLAG_ACTIVITY_NEW_TASK` and `FLAG_ACTIVITY_CLEAR_TOP`"
+        errorLine1="        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/integration/MobileAppIntegrationActivity.kt"
+            line="62"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="WearRecents"
+        message="Avoid using `FLAG_ACTIVITY_NEW_TASK` and `FLAG_ACTIVITY_CLEAR_TOP`"
+        errorLine1="            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/phone/PhoneSettingsListener.kt"
+            line="198"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="WearRecents"
+        message="Avoid using `FLAG_ACTIVITY_NEW_TASK` and `FLAG_ACTIVITY_CLEAR_TOP`"
+        errorLine1="            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/phone/PhoneSettingsListener.kt"
+            line="198"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `Bitmap.scale` instead?"
+        errorLine1="                                    bitmap = Bitmap.createScaledBitmap(bitmap, imageWidth, imageHeight, true)"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/tiles/CameraTile.kt"
+            line="138"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `Context.withStyledAttributes` instead?"
+        errorLine1="        val attributes = context.obtainStyledAttributes(attrs, R.styleable.LoadingView)"
+        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/util/LoadingView.kt"
+            line="18"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                        Uri.parse(UrlUtil.buildAuthenticationUrl(url))"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/manual/ManualSetupPresenterImpl.kt"
+            line="49"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                        data = Uri.parse(url)"
+        errorLine2="                               ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
+            line="124"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                        data = Uri.parse(url)"
+        errorLine2="                               ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
+            line="124"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        Tasks.await(Wearable.getDataClient(this).getDataItems(Uri.parse(&quot;wear://*/home_assistant_instance&quot;))).apply {"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
+            line="195"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                        Uri.parse(UrlUtil.buildAuthenticationUrl(url))"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingPresenterImpl.kt"
+            line="59"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                        data = Uri.parse(&quot;https://play.google.com/store/apps/details?id=${BuildConfig.APPLICATION_ID}&quot;)"
+        errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/phoneinstall/PhoneInstallActivity.kt"
+            line="60"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                        data = Uri.parse(&quot;https://play.google.com/store/apps/details?id=${BuildConfig.APPLICATION_ID}&quot;)"
+        errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/phoneinstall/PhoneInstallActivity.kt"
+            line="60"
+            column="32"/>
+    </issue>
+
+</issues>
