@@ -272,6 +272,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           profile: ${{ matrix.configuration.profile }}
           target: ${{ matrix.configuration.target }}
+          system-image-api-level: ${{ matrix.system-image-api-level }}
           script: |
             echo "Generated AVD snapshot for caching."
 
@@ -287,6 +288,7 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           profile: ${{ matrix.configuration.profile }}
           target: ${{ matrix.configuration.target }}
+          system-image-api-level: ${{ matrix.system-image-api-level }}
           script: ./gradlew ${{ matrix.configuration.gradle_target }}
 
       - name: Upload test results
