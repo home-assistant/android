@@ -13,6 +13,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dagger.multibindings.Multibinds
 import io.homeassistant.companion.android.common.LocalStorageImpl
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationService
@@ -179,4 +180,9 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindServerManager(serverManager: ServerManagerImpl): ServerManager
+
+    @Multibinds
+    abstract fun bindOkHttpClientConfigurator(): Set<@JvmSuppressWildcards OkHttpConfigurator>
 }
+
+interface OkHttpConfigurator: (OkHttpClient.Builder) -> Unit
