@@ -77,6 +77,6 @@ class WearDns @Inject constructor(
 
     companion object {
         private const val CAPABILITY_DNS_VIA_MOBILE = "mobile_network_helper"
-        private const val REQUEST_DNS_VIA_MOBILE = "/dns_lookup"
+        private const val REQUEST_DNS_VIA_MOBILE = "/dnsLookup"
     }
 }

@@ -131,6 +131,14 @@
                 android:name="home:0:preferred"
                 android:value=""/>
         </service>
+
+        <service android:name=".data.wear.WearDataListener" android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.REQUEST_RECEIVED" />
+                <data android:scheme="wear" android:host="*"
+                    android:path="/dnsLookup" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

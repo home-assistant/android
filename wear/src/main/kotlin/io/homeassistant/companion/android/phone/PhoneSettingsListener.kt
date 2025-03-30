@@ -49,9 +49,9 @@ import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import okhttp3.Dns
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -83,21 +83,6 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
         Timber.d("Message received: $event")
         if (event.path == "/requestConfig") {
             sendPhoneData()
-        }
-    }
-
-    override fun onRequest(nodeId: String, path: String, request: ByteArray): Task<ByteArray>? {
-        try {
-            if (path == "/dns_lookup") {
-                val hostname = String(request, Charsets.UTF_8)
-                val addresses = Dns.SYSTEM.lookup(hostname)
-                return Tasks.forResult(addresses.first().address)
-            } else {
-                // Not supported by this listener
-                return null
-            }
-        } catch (e: Exception) {
-            return Tasks.forException(e)
         }
     }
 
