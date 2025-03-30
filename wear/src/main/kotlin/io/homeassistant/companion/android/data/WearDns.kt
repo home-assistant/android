@@ -19,7 +19,7 @@ import okhttp3.Dns
  * but can fall back to relying on mobile Dns to resolve dns issues.
  */
 class WearDns @Inject constructor(
-    @ApplicationContext private val appContext: Context,
+    @ApplicationContext private val appContext: Context
 ) : Dns {
     private val dnsHelperCache = ConcurrentHashMap<String, CacheResult>()
 
