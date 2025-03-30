@@ -17,7 +17,7 @@ import retrofit2.converter.jackson.JacksonConverterFactory
 class HomeAssistantApis @Inject constructor(
     private val tlsHelper: TLSHelper,
     @ApplicationContext private val appContext: Context,
-    private val configurers: Set<@JvmSuppressWildcards OkHttpConfigurator>,
+    private val configurers: Set<@JvmSuppressWildcards OkHttpConfigurator>
 ) {
     companion object {
         private const val LOCAL_HOST = "http://localhost/"
@@ -27,6 +27,7 @@ class HomeAssistantApis @Inject constructor(
         private const val CALL_TIMEOUT = 30L
         private const val READ_TIMEOUT = 30L
     }
+
     private fun configureOkHttpClient(builder: OkHttpClient.Builder): OkHttpClient.Builder {
         if (BuildConfig.DEBUG) {
             builder.addInterceptor(

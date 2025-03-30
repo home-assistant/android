@@ -185,4 +185,4 @@ abstract class DataModule {
     abstract fun bindOkHttpClientConfigurator(): Set<@JvmSuppressWildcards OkHttpConfigurator>
 }
 
-interface OkHttpConfigurator: (OkHttpClient.Builder) -> Unit
+interface OkHttpConfigurator : (OkHttpClient.Builder) -> Unit

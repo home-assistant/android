@@ -4,12 +4,12 @@ import android.content.Context
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.tasks.await
-import okhttp3.Dns
 import java.net.InetAddress
 import java.net.UnknownHostException
 import javax.inject.Inject
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.tasks.await
+import okhttp3.Dns
 
 /**
  * Wear specific implementation of Dns that defaults to the System DNS,

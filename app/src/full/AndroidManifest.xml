@@ -132,7 +132,8 @@
                 android:value=""/>
         </service>
 
-        <service android:name=".data.wear.WearDataListener" android:exported="true">
+        <service android:name=".data.wear.WearDataListener" android:exported="true"
+            tools:ignore="ExportedService">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.REQUEST_RECEIVED" />
                 <data android:scheme="wear" android:host="*"
