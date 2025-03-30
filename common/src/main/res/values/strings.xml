@@ -252,6 +252,7 @@
     <string name="entity_id">Entity ID</string>
     <string name="entity_id_name">Entity ID: %1$s</string>
     <string name="entity_widget_desc">View any entity\'s current state and toggle it</string>
+    <string name="todo_widget_desc">View configured todo list</string>
     <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
     <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
     <string name="error_connection_failed_to">Unable to connect to %1$s</string>
@@ -1010,6 +1011,7 @@
     <string name="welcome_hass">Welcome to Home Assistant Companion!</string>
     <string name="what_is_this_crash">Unable to load Home Assistant home page, do you have a browser installed?</string>
     <string name="widget_attribute_separator_label">Separator between attributes:</string>
+    <string name="widget_background_type_title">Select widget theme</string>
     <string name="widget_background_type_label">Widget theme:</string>
     <string name="widget_background_type_daynight">Light/dark theme</string>
     <string name="widget_background_type_dynamiccolor">Dynamic color</string>
@@ -1045,6 +1047,11 @@
     <string name="widget_spinner_server">Server:</string>
     <string name="widget_state_separator_label">State and attribute separator:</string>
     <string name="widget_static_image_description">Entity state</string>
+    <string name="todo_widgets">Todo widgets</string>
+    <string name="todo_widget">Todo widget</string>
+    <string name="widget_todo_label">Todo list</string>
+    <string name="widget_todo_active">Active</string>
+    <string name="widget_todo_completed">Completed</string>
     <string name="widget_tap_action_label">Tap action:</string>
     <string name="widget_tap_action_open">Open</string>
     <string name="widget_tap_action_toggle">Toggle</string>
@@ -1057,6 +1064,7 @@
     <string name="widget_text_size_label">Widget text size:</string>
     <string name="widget_text_size_template">12</string>
     <string name="widget_text_color_black">Black</string>
+    <string name="widget_text_color_title">Select widget text color</string>
     <string name="widget_text_color_label">Widget text color:</string>
     <string name="widget_text_color_label_icon">Widget text/icon color:</string>
     <string name="widget_text_color_white">White</string>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widgetLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_button_background"
+    android:minWidth="40dp"
+    android:minHeight="40dp"
+    android:padding="4dp">
+
+    <LinearLayout
+        android:id="@+id/widgetContentLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingVertical="4dp">
+
+        <TextView
+            android:id="@+id/widget_todo_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:padding="8dp"
+            android:textColor="?colorWidgetOnBackground"
+            android:textSize="16sp"
+            android:drawableEnd="@drawable/ic_launch" />
+
+        <ListView
+            android:id="@+id/widget_todo_list"
+            android:divider="@android:color/transparent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/widget_overlay"
+        android:background="@android:color/darker_gray"
+        android:alpha="0.5"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <ProgressBar
+        android:id="@+id/widgetProgressBar"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center"
+        android:indeterminate="true"
+        android:indeterminateTint="@color/colorAccent"
+        android:visibility="invisible" />
+</FrameLayout>
