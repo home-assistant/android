@@ -6,6 +6,9 @@ import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.net.InetAddress
 import java.net.UnknownHostException
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
@@ -18,6 +21,8 @@ import okhttp3.Dns
 class WearDns @Inject constructor(
     @ApplicationContext private val appContext: Context,
 ) : Dns {
+    private val dnsHelperCache = ConcurrentHashMap<String, CacheResult>()
+
     override fun lookup(hostname: String): List<InetAddress> {
         return try {
             Dns.SYSTEM.lookup(hostname)
@@ -28,8 +33,6 @@ class WearDns @Inject constructor(
                 if (result != null) {
                     return result
                 }
-
-                // TODO consider requesting wifi instead of relying on Mobile
             }
 
             throw e
@@ -40,12 +43,29 @@ class WearDns @Inject constructor(
         hostname: String,
         e: Exception
     ): List<InetAddress>? {
-        // TODO implement some sort of caching to avoid so much chatter
+        val now = Instant.now()
+
+        val cached = dnsHelperCache[hostname]
+        if (cached != null && cached.storedAt.plus(5L, ChronoUnit.MINUTES) > now) {
+            when (cached) {
+                is NegativeCacheHit -> throw cached.exception
+                is PositiveCacheHit -> return cached.value
+            }
+        }
+
         try {
             val nodeId = nodeIdWithDns() ?: return null
-            return dnsViaMobile(nodeId, hostname)
+            val addresses = dnsViaMobile(nodeId, hostname)
+
+            dnsHelperCache[hostname] = PositiveCacheHit(addresses, now)
+
+            return addresses
         } catch (e2: Exception) {
-            throw e2.apply { addSuppressed(e) }
+            e2.addSuppressed(e)
+
+            dnsHelperCache[hostname] = NegativeCacheHit(e2, now)
+
+            throw e2
         }
     }
 
@@ -71,9 +91,15 @@ class WearDns @Inject constructor(
     }
 
     private fun couldBeWearDnsIssue(e: Exception): Boolean {
-        // TODO define what a Wear Dns BT failure looks like
-        return true
+        return e is UnknownHostException
     }
+
+    sealed interface CacheResult {
+        val storedAt: Instant
+    }
+
+    data class NegativeCacheHit(val exception: Exception, override val storedAt: Instant) : CacheResult
+    data class PositiveCacheHit(val value: List<InetAddress>, override val storedAt: Instant) : CacheResult
 
     companion object {
         private const val CAPABILITY_DNS_VIA_MOBILE = "mobile_network_helper"
