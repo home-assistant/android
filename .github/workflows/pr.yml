@@ -215,7 +215,7 @@ jobs:
           - api-level: "34"
             system-image-api-level: "34-ext9"
             arch: x86_64
-            profile: "automotive_1080p_landscape"
+            profile: "automotive_1024p_landscape"
             target: "android-automotive"
             gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           - api-level: 26
