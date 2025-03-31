@@ -26,16 +26,8 @@ class WearDns @Inject constructor(
     override fun lookup(hostname: String): List<InetAddress> {
         return try {
             Dns.SYSTEM.lookup(hostname)
-        } catch (e: Exception) {
-            if (couldBeWearDnsIssue(e)) {
-                val result = runBlocking { attemptLookupViaMobile(hostname, e) }
-
-                if (result != null) {
-                    return result
-                }
-            }
-
-            throw e
+        } catch (e: UnknownHostException) {
+            return runBlocking { attemptLookupViaMobile(hostname, e) }
         }
     }
 
