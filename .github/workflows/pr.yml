@@ -207,17 +207,17 @@ jobs:
             profile: "pixel_7"
             target: "google_apis"
             gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
-          # Disabled due to Github Actions limitations https://github.com/ReactiveCircus/android-emulator-runner/pull/428
-          # - api-level: 33
-          #   arch: x86_64
-          #   profile: "automotive_1024p_landscape"
-          #   target: "android-automotive"
-          #   gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
-          # - api-level: "34-ext9" # -ext9 is not usable because of https://github.com/ReactiveCircus/android-emulator-runner/issues/429
-          #   arch: x86_64
-          #   profile: "automotive_ultrawide"
-          #   target: "android-automotive"
-          #   gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: 33
+            arch: x86_64
+            profile: "automotive_1024p_landscape"
+            target: "android-automotive"
+            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: "34"
+            system-image-api-level: "34-ext9"
+            arch: x86_64
+            profile: "automotive_1024p_landscape"
+            target: "android-automotive"
+            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           - api-level: 26
             arch: x86
             profile: "wearos_square"
@@ -272,6 +272,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           profile: ${{ matrix.configuration.profile }}
           target: ${{ matrix.configuration.target }}
+          system-image-api-level: ${{ matrix.configuration.system-image-api-level }}
           script: |
             echo "Generated AVD snapshot for caching."
 
@@ -287,6 +288,7 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           profile: ${{ matrix.configuration.profile }}
           target: ${{ matrix.configuration.target }}
+          system-image-api-level: ${{ matrix.configuration.system-image-api-level }}
           script: ./gradlew ${{ matrix.configuration.gradle_target }}
 
       - name: Upload test results
