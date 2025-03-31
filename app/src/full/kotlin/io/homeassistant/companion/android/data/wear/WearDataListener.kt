@@ -23,7 +23,7 @@ class WearDataListener : WearableListenerService() {
                 Dns.SYSTEM.lookup(hostname).first().address
             }.asTask()
         } else {
-            // Not supported by this listener
+            Timber.w("Received a path ($path) that is not supported by this listener. Check the manifest intent-filter")
             return null
         }
     }
