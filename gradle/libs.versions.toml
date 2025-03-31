@@ -3,7 +3,7 @@
 # you can do that with `./gradlew alldependencies --write-locks`
 [versions]
 activity-compose = "1.10.1"
-androidBeaconLibrary = "2.20.7"
+androidBeaconLibrary = "2.21.1"
 androidGradlePlugin = "8.9.1"
 androidSdk-compile = "35"
 androidSdk-min = "21"
@@ -32,7 +32,7 @@ firebase-bom = "33.11.0"
 firebaseAppdistributionGradle = "5.1.1"
 fragment-ktx = "1.8.6"
 googleServices = "4.4.2"
-guava = "33.4.0-android"
+guava = "33.4.6-android"
 healthServicesClient = "1.1.0-alpha05"
 hilt = "2.55"
 iconics = "5.4.0"
@@ -49,6 +49,7 @@ lifecycle = "2.8.7"
 material = "1.12.0"
 media = "1.7.0"
 media3 = "1.5.1"
+mockk = "1.13.17"
 navigation-compose = "2.8.9"
 okhttp = "5.0.0-alpha.14"
 paging = "3.3.6"
@@ -61,6 +62,7 @@ preference-ktx = "1.2.1"
 recyclerview = "1.4.0"
 reorderable = "0.9.6"
 retrofit = "2.9.0"
+robolectric = "4.14"
 room = "2.6.1"
 screenshot = "0.0.1-alpha09"
 sentry-android = "8.5.0"
@@ -160,11 +162,13 @@ jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+junit-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine" }
 kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
@@ -176,6 +180,7 @@ media3-datasource-cronet = { module = "androidx.media3:media3-datasource-cronet"
 media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
 media3-exoplayer-hls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "media3" }
 media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "paging" }
 paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
 play-services-threadnetwork = { module = "com.google.android.gms:play-services-threadnetwork", version.ref = "play-services-threadnetwork" }
@@ -187,6 +192,7 @@ recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "r
 reorderable = { module = "org.burnoutcrew.composereorderable:reorderable", version.ref = "reorderable" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofit-converter-jackson = { module = "com.squareup.retrofit2:converter-jackson", version.ref = "retrofit"  }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 sentry-android = { module = "io.sentry:sentry-android", version.ref = "sentry-android" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 tools-desugar-jdk = { module = "com.android.tools:desugar_jdk_libs", version.ref = "tools-desugar-jdk-libs" }
