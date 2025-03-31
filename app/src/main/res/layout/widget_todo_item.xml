@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
+    android:background="@drawable/widget_transparent_background"
     android:paddingHorizontal="8dp"
     android:paddingVertical="4dp">
 
@@ -14,7 +15,8 @@
         android:layout_marginEnd="8dp"
         android:contentDescription="@null"
         android:padding="8dp"
-        android:src="@drawable/ic_checkbox_on" />
+        android:src="@drawable/ic_checkbox_on"
+        android:visibility="gone" />
 
     <ImageView
         android:id="@+id/widget_todo_done_disabled"
@@ -31,6 +33,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:textColor="?colorWidgetOnBackground"
+        android:text="?todoWidgetPreviewText"
         android:textSize="14sp" />
 
 </LinearLayout>

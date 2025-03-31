@@ -39,6 +39,7 @@ class TodoWidget : BaseWidgetProvider() {
 
     companion object {
         private const val OPEN_TODO_LIST = "io.homeassistant.companion.android.widgets.todo.TodoWidget.OPEN_TODO"
+        private const val ADD_TODO_LIST = "io.homeassistant.companion.android.widgets.todo.TodoWidget.ADD_TODO"
         private const val TOGGLE_TODO_ITEM = "io.homeassistant.companion.android.widgets.todo.TodoWidget.TOGGLE_TODO_ITEM"
         internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
@@ -65,6 +66,8 @@ class TodoWidget : BaseWidgetProvider() {
         val views = RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_todo_wrapper_dynamiccolor else R.layout.widget_todo_wrapper_default).apply {
             if (todo != null) {
                 setup(context = context, appWidgetId = appWidgetId, todoEntity = todo)
+            } else {
+                Toast.makeText(context, RCommon.string.widget_todo_load_error, Toast.LENGTH_LONG).show()
             }
         }
 
@@ -78,6 +81,7 @@ class TodoWidget : BaseWidgetProvider() {
         val todos = webSocketRepository.getTodos(todoEntity.entityId)?.response?.get(todoEntity.entityId)?.items.orEmpty()
             .groupBy { it.isDone }
 
+        setViewVisibility(R.id.widget_todo_preview_items, View.GONE)
         setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
         setViewVisibility(R.id.widget_overlay, View.INVISIBLE)
 
@@ -89,21 +93,48 @@ class TodoWidget : BaseWidgetProvider() {
         }
         setTextViewText(R.id.widget_todo_title, name)
         setTextColor(R.id.widget_todo_title, textColor)
-        val intent = Intent(context, TodoWidget::class.java).apply {
-            action = OPEN_TODO_LIST
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-            putExtra(EXTRA_SERVER_ID, todoEntity.serverId)
-            putExtra(EXTRA_ENTITY_ID, todoEntity.entityId)
-        }
         setOnClickPendingIntent(
             R.id.widget_todo_title,
             PendingIntent.getBroadcast(
                 context,
                 appWidgetId,
-                intent,
+                Intent(context, TodoWidget::class.java).apply {
+                    action = OPEN_TODO_LIST
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                    putExtra(EXTRA_SERVER_ID, todoEntity.serverId)
+                    putExtra(EXTRA_ENTITY_ID, todoEntity.entityId)
+                },
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
         )
+        setOnClickPendingIntent(
+            R.id.widget_todo_refresh,
+            PendingIntent.getBroadcast(
+                context,
+                appWidgetId,
+                Intent(context, TodoWidget::class.java).apply {
+                    action = UPDATE_VIEW
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        )
+        setOnClickPendingIntent(
+            R.id.widget_todo_add,
+            PendingIntent.getBroadcast(
+                context,
+                appWidgetId,
+                Intent(context, TodoWidget::class.java).apply {
+                    action = ADD_TODO_LIST
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                    putExtra(EXTRA_SERVER_ID, todoEntity.serverId)
+                    putExtra(EXTRA_ENTITY_ID, todoEntity.entityId)
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        )
+        setViewVisibility(R.id.widget_todo_empty_text, if (todos.isEmpty()) View.VISIBLE else View.GONE)
+        setViewVisibility(R.id.widget_todo_list, if (todos.isNotEmpty()) View.VISIBLE else View.GONE)
 
         val remoteCollectionItems = RemoteViewsCompat.RemoteCollectionItems.Builder()
             .setViewTypeCount(2)
@@ -196,8 +227,8 @@ class TodoWidget : BaseWidgetProvider() {
 
     private fun headerRemoteView(context: Context, @StringRes text: Int, @ColorInt textColor: Int?) =
         RemoteViews(context.packageName, R.layout.widget_todo_item_header).apply {
-            setTextViewText(R.id.widget_todo_text, context.getString(text))
-            setTextColor(R.id.widget_todo_text, textColor)
+            setTextViewText(R.id.widget_todo_header_text, context.getString(text))
+            setTextColor(R.id.widget_todo_header_text, textColor)
         }
 
     private fun RemoteViews.setTextColor(@IdRes id: Int, @ColorInt color: Int?) {
@@ -257,7 +288,10 @@ class TodoWidget : BaseWidgetProvider() {
                 entityId = intent.getStringExtra(EXTRA_ENTITY_ID),
                 serverId = intent.getIntExtra(EXTRA_SERVER_ID, ServerManager.SERVER_ID_ACTIVE)
             )
-
+            ADD_TODO_LIST -> context.openTodoList(
+                entityId = intent.getStringExtra(EXTRA_ENTITY_ID),
+                serverId = intent.getIntExtra(EXTRA_SERVER_ID, ServerManager.SERVER_ID_ACTIVE)
+            )
             TOGGLE_TODO_ITEM -> context.toggleItem(
                 appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1),
                 serverId = intent.getIntExtra(EXTRA_SERVER_ID, ServerManager.SERVER_ID_ACTIVE),
@@ -288,6 +322,13 @@ class TodoWidget : BaseWidgetProvider() {
 
                 val views = getWidgetRemoteViews(this@toggleItem, appWidgetId)
                 appWidgetManager.updateAppWidget(appWidgetId, views)
+            } else {
+                sendBroadcast(
+                    Intent(this@toggleItem, TodoWidget::class.java).apply {
+                        action = UPDATE_VIEW
+                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                    }
+                )
             }
         }
     }

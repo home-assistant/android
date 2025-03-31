@@ -252,7 +252,7 @@
     <string name="entity_id">Entity ID</string>
     <string name="entity_id_name">Entity ID: %1$s</string>
     <string name="entity_widget_desc">View any entity\'s current state and toggle it</string>
-    <string name="todo_widget_desc">View configured todo list</string>
+    <string name="todo_widget_desc">View configured to-do list</string>
     <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
     <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
     <string name="error_connection_failed_to">Unable to connect to %1$s</string>
@@ -1047,11 +1047,15 @@
     <string name="widget_spinner_server">Server:</string>
     <string name="widget_state_separator_label">State and attribute separator:</string>
     <string name="widget_static_image_description">Entity state</string>
-    <string name="todo_widgets">Todo widgets</string>
-    <string name="todo_widget">Todo widget</string>
-    <string name="widget_todo_label">Todo list</string>
+    <string name="todo_widgets">To-do widgets</string>
+    <string name="todo_widget">To-do widget</string>
+    <string name="widget_todo_add">Add to-do</string>
+    <string name="widget_todo_refresh">Refresh to-do</string>
+    <string name="widget_todo_label">To-do list</string>
+    <string name="widget_todo_empty">No items in the to-do list</string>
     <string name="widget_todo_active">Active</string>
     <string name="widget_todo_completed">Completed</string>
+    <string name="widget_todo_load_error">Unable to load widget. Please configure your widget again.</string>
     <string name="widget_tap_action_label">Tap action:</string>
     <string name="widget_tap_action_open">Open</string>
     <string name="widget_tap_action_toggle">Toggle</string>
