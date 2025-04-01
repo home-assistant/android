@@ -9,7 +9,7 @@ on: # yamllint disable-line rule:truthy
         default: "false"
   push:
     branches:
-      - master
+      - main
 
 env:
   SUPPLY_UPLOAD_MAX_RETRIES: 5
