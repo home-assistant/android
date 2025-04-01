@@ -2,7 +2,7 @@ name: Pull Request
 
 on: # yamllint disable-line rule:truthy
   pull_request:
-    branches: [master]
+    branches: [main]
 
 # This workflow should cancel previous builds since it means that a new commit has been made to the PR
 concurrency:
@@ -131,7 +131,7 @@ jobs:
 
       - name: Check for modified DB schemas on branch
         run: |
-          if git diff --name-only --diff-filter=DMR origin/master... | grep "^common/schemas"; then
+          if git diff --name-only --diff-filter=DMR origin/main... | grep "^common/schemas"; then
             echo -e "\n❌ Existing database schema modified, please increase the database version instead"
             exit 1
           else
