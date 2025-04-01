@@ -40,7 +40,7 @@
             "packagePatterns": [
                 "^com.google.guava:"
             ],
-            "versionScheme": "docker"
+            "versioning": "docker"
         },
         {
             "groupName": "org.jetbrains.kotlin:*",
