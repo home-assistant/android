@@ -15,5 +15,7 @@ data class TodoWidgetEntity(
     @ColumnInfo(name = "background_type", defaultValue = "DAYNIGHT")
     override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
     @ColumnInfo(name = "text_color")
-    override val textColor: String? = null
+    override val textColor: String? = null,
+    @ColumnInfo(name = "show_completed", defaultValue = "true")
+    val showCompleted: Boolean = true
 ) : WidgetEntity, ThemeableWidgetEntity

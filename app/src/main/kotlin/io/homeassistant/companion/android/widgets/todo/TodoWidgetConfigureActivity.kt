@@ -11,18 +11,23 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Scaffold
+import androidx.compose.material.Switch
+import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -176,6 +181,23 @@ private fun TodoWidgetConfigureScreen(
                     true
                 }
             )
+
+            Row(
+                modifier = Modifier.clickable { viewModel.setShowCompleted(!viewModel.showCompletedState) }
+            ) {
+                Text(
+                    text = stringResource(R.string.widget_todo_show_completed),
+                    modifier = Modifier
+                        .align(Alignment.CenterVertically)
+                        .weight(1f)
+                )
+
+                Switch(
+                    checked = viewModel.showCompletedState,
+                    onCheckedChange = { viewModel.setShowCompleted(it) },
+                    colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb))
+                )
+            }
 
             WidgetBackgroundTypeExposedDropdownMenu(
                 current = viewModel.selectedBackgroundType,

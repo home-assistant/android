@@ -43,6 +43,7 @@ class TodoWidget : BaseWidgetProvider() {
         private const val TOGGLE_TODO_ITEM = "io.homeassistant.companion.android.widgets.todo.TodoWidget.TOGGLE_TODO_ITEM"
         internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
+        internal const val EXTRA_SHOW_COMPLETED = "EXTRA_SHOW_COMPLETED"
         internal const val EXTRA_TOGGLE_SUMMARY = "EXTRA_TOGGLE_SUMMARY"
         internal const val EXTRA_TOGGLE_TARGET_STATUS = "EXTRA_TOGGLE_TARGET_STATUS"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
@@ -159,7 +160,7 @@ class TodoWidget : BaseWidgetProvider() {
                 }
 
                 val doneTodos = todos[true].orEmpty()
-                if (doneTodos.isNotEmpty()) {
+                if (doneTodos.isNotEmpty() && todoEntity.showCompleted) {
                     addItem(
                         id = "completed".hashCode().toLong(),
                         view = headerRemoteView(
@@ -255,6 +256,7 @@ class TodoWidget : BaseWidgetProvider() {
         val backgroundType = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
             ?: WidgetBackgroundType.DAYNIGHT
         val textColor = extras.getString(EXTRA_TEXT_COLOR)
+        val showCompleted = extras.getBoolean(EXTRA_SHOW_COMPLETED)
         widgetScope?.launch {
             todoWidgetDao.add(
                 TodoWidgetEntity(
@@ -262,7 +264,8 @@ class TodoWidget : BaseWidgetProvider() {
                     serverId = serverId,
                     entityId = entityId,
                     backgroundType = backgroundType,
-                    textColor = textColor
+                    textColor = textColor,
+                    showCompleted = showCompleted
                 )
             )
 

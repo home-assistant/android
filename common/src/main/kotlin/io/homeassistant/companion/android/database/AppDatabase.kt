@@ -103,7 +103,7 @@ import timber.log.Timber
         Server::class,
         Setting::class
     ],
-    version = 50,
+    version = 51,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -129,7 +129,8 @@ import timber.log.Timber
         AutoMigration(from = 46, to = 47),
         AutoMigration(from = 47, to = 48),
         AutoMigration(from = 48, to = 49),
-        AutoMigration(from = 49, to = 50)
+        AutoMigration(from = 49, to = 50),
+        AutoMigration(from = 50, to = 51)
     ]
 )
 @TypeConverters(

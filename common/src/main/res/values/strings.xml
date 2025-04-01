@@ -1054,6 +1054,7 @@
     <string name="widget_todo_label">To-do list</string>
     <string name="widget_todo_empty">No items in the to-do list</string>
     <string name="widget_todo_active">Active</string>
+    <string name="widget_todo_show_completed">Show completed items</string>
     <string name="widget_todo_completed">Completed</string>
     <string name="widget_todo_load_error">Unable to load widget. Please configure your widget again.</string>
     <string name="widget_tap_action_label">Tap action:</string>

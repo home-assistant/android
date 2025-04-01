@@ -58,6 +58,8 @@ class TodoWidgetViewModel @Inject constructor(
         private set
     var textColorIndex by mutableIntStateOf(0)
         private set
+    var showCompletedState by mutableStateOf(true)
+        private set
 
     fun onSetup(widgetId: Int) {
         if (this.widgetId == AppWidgetManager.INVALID_APPWIDGET_ID && selectedEntityId == null) {
@@ -73,6 +75,7 @@ class TodoWidgetViewModel @Inject constructor(
             selectedBackgroundType = it.backgroundType
             val colorIndex = textColors.indexOf(it.textColor)
             textColorIndex = if (colorIndex == -1) 0 else colorIndex
+            showCompletedState = it.showCompleted
         }
     }
 
@@ -99,6 +102,10 @@ class TodoWidgetViewModel @Inject constructor(
         this.textColorIndex = colorIndex
     }
 
+    fun setShowCompleted(completed: Boolean) {
+        showCompletedState = completed
+    }
+
     fun prepareData(): Intent? {
         if (!isValidSelection()) return null
         if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) return null
@@ -110,6 +117,7 @@ class TodoWidgetViewModel @Inject constructor(
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)
             putExtra(TodoWidget.EXTRA_SERVER_ID, selectedServerId)
             putExtra(TodoWidget.EXTRA_ENTITY_ID, selectedEntityId)
+            putExtra(TodoWidget.EXTRA_SHOW_COMPLETED, showCompletedState)
             putExtra(TodoWidget.EXTRA_BACKGROUND_TYPE, selectedBackgroundType)
             if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
                 val hexForColor = textColors.getOrNull(textColorIndex) ?: textColors.first()
