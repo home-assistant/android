@@ -40,7 +40,7 @@
             "packagePatterns": [
                 "^com.google.guava:"
             ],
-            "versionCompatibility": "^(?<version>.*)-android$"
+            "versionCompatibility": "^(?<version>.*)-android$",
             "versioning": "semver"
         },
         {
