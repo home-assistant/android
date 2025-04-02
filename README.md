@@ -63,6 +63,5 @@ It helps others discover the project and motivates us to keep improving.
   </picture>
 </a>
 
-## 🏆 A Project by the Open Home Foundation
 
 [![Home Assistant - A project from the Open Home Foundation](https://www.openhomefoundation.org/badges/home-assistant.png)](https://www.openhomefoundation.org/)
