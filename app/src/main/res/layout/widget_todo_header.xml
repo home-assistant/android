@@ -31,7 +31,7 @@
         android:layout_marginEnd="4dp"
         android:background="?selectableItemBackground"
         android:contentDescription="@string/widget_todo_refresh"
-        android:padding="12dp"
+        android:padding="4dp"
         android:src="@drawable/ic_refresh_toolbar" />
 
     <ImageView
@@ -41,7 +41,7 @@
         android:layout_gravity="center"
         android:background="@drawable/widget_button_background_accent"
         android:contentDescription="@string/widget_todo_add"
-        android:padding="12dp"
+        android:padding="4dp"
         android:src="@drawable/ic_plus"
         android:tint="@android:color/white"
         tools:ignore="UseAppTint" />

@@ -65,10 +65,9 @@ class TodoWidget : BaseWidgetProvider() {
 
         val useDynamicColors = todo?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
         val views = RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_todo_wrapper_dynamiccolor else R.layout.widget_todo_wrapper_default).apply {
+            // can be called before configure screen - no data to show
             if (todo != null) {
                 setup(context = context, appWidgetId = appWidgetId, todoEntity = todo)
-            } else {
-                Toast.makeText(context, RCommon.string.widget_todo_load_error, Toast.LENGTH_LONG).show()
             }
         }
 

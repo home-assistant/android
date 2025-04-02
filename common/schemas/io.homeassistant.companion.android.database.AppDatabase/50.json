@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 50,
-    "identityHash": "56c496b5db009da74c4e4935d5b08fd4",
+    "identityHash": "eede025e777461c313a8d757f5ba8554",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -532,7 +532,7 @@
       },
       {
         "tableName": "todo_widget",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `show_completed` INTEGER NOT NULL DEFAULT true, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -565,6 +565,13 @@
             "columnName": "text_color",
             "affinity": "TEXT",
             "notNull": false
+          },
+          {
+            "fieldPath": "showCompleted",
+            "columnName": "show_completed",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "true"
           }
         ],
         "primaryKey": {
@@ -1223,7 +1230,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '56c496b5db009da74c4e4935d5b08fd4')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'eede025e777461c313a8d757f5ba8554')"
     ]
   }
 }
