@@ -37,6 +37,13 @@
             "registryUrls": ["https://repo1.maven.org/maven2/", "https://plugins.gradle.org/m2/", "https://dl.google.com/android/maven2/", "https://jitpack.io"]
         },
         {
+            "packagePatterns": [
+                "^com.google.guava:"
+            ],
+            "versionCompatibility": "^(?<version>.*)-android$",
+            "versioning": "semver"
+        },
+        {
             "groupName": "org.jetbrains.kotlin:*",
             "matchPackageNames": [
                 "org.jetbrains.kotlin:{/,}**",
