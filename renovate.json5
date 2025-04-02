@@ -40,7 +40,8 @@
             "packagePatterns": [
                 "^com.google.guava:"
             ],
-            "versioning": "docker"
+            "versionCompatibility": "^(?<version>.*)-android$"
+            "versioning": "semver"
         },
         {
             "groupName": "org.jetbrains.kotlin:*",
