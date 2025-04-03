@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.widgets.todo
 
-import android.app.Application
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
@@ -9,40 +8,37 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
-import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import javax.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @HiltViewModel
 class TodoWidgetViewModel @Inject constructor(
-    private val application: Application,
     private val todoWidgetDao: TodoWidgetDao,
     private val serverManager: ServerManager
-) : AndroidViewModel(application) {
-    private val textColors = listOf(
-        application.getHexForColor(R.color.colorWidgetButtonLabelBlack),
-        application.getHexForColor(android.R.color.white)
-    )
+) : ViewModel() {
+    private var supportedTextColors: List<String> = emptyList()
     private var widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID
     val servers = serverManager.defaultServersFlow
     var selectedServerId by mutableIntStateOf(ServerManager.SERVER_ID_ACTIVE)
         private set
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     val entities: StateFlow<List<Entity<*>>> = snapshotFlow { selectedServerId }
         .distinctUntilChanged()
         .mapLatest { serverId ->
@@ -60,8 +56,11 @@ class TodoWidgetViewModel @Inject constructor(
         private set
     var showCompletedState by mutableStateOf(true)
         private set
+    var isUpdateWidget by mutableStateOf(false)
+        private set
 
-    fun onSetup(widgetId: Int) {
+    fun onSetup(widgetId: Int, supportedTextColors: List<String>) {
+        this.supportedTextColors = supportedTextColors
         if (this.widgetId == AppWidgetManager.INVALID_APPWIDGET_ID && selectedEntityId == null) {
             loadPreviousState(widgetId)
         }
@@ -70,10 +69,11 @@ class TodoWidgetViewModel @Inject constructor(
 
     private fun loadPreviousState(widgetId: Int) = viewModelScope.launch {
         todoWidgetDao.get(widgetId)?.let {
+            isUpdateWidget = true
             selectedServerId = it.serverId
             selectedEntityId = it.entityId
             selectedBackgroundType = it.backgroundType
-            val colorIndex = textColors.indexOf(it.textColor)
+            val colorIndex = supportedTextColors.indexOf(it.textColor)
             textColorIndex = if (colorIndex == -1) 0 else colorIndex
             showCompletedState = it.showCompleted
         }
@@ -106,13 +106,19 @@ class TodoWidgetViewModel @Inject constructor(
         showCompletedState = completed
     }
 
-    fun prepareData(): Intent? {
-        if (!isValidSelection()) return null
-        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) return null
+    fun prepareData(componentName: ComponentName): Intent? {
+        if (!isValidSelection()) {
+            Timber.d("Widget data is invalid")
+            return null
+        }
+        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+            Timber.d("Widget ID is invalid")
+            return null
+        }
 
         return Intent().apply {
             action = BaseWidgetProvider.RECEIVE_DATA
-            component = ComponentName(application, TodoWidget::class.java)
+            component = componentName
 
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)
             putExtra(TodoWidget.EXTRA_SERVER_ID, selectedServerId)
@@ -120,7 +126,7 @@ class TodoWidgetViewModel @Inject constructor(
             putExtra(TodoWidget.EXTRA_SHOW_COMPLETED, showCompletedState)
             putExtra(TodoWidget.EXTRA_BACKGROUND_TYPE, selectedBackgroundType)
             if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
-                val hexForColor = textColors.getOrNull(textColorIndex) ?: textColors.first()
+                val hexForColor = supportedTextColors.getOrNull(textColorIndex) ?: supportedTextColors.first()
                 putExtra(TodoWidget.EXTRA_TEXT_COLOR, hexForColor)
             }
         }

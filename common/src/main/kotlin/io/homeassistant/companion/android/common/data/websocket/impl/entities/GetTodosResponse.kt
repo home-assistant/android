@@ -9,13 +9,19 @@ data class GetTodosResponse(
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     data class TodoResponse(
-        val items: List<Todo>
+        val items: List<TodoItem>
     )
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    data class Todo(
-        val uid: String,
-        val summary: String,
-        val status: String
-    )
+    data class TodoItem(
+        val uid: String?,
+        val summary: String?,
+        val status: String?
+    ) {
+
+        companion object {
+            const val COMPLETED_STATUS = "completed"
+            const val NEEDS_ACTION_STATUS = "needs_action"
+        }
+    }
 }

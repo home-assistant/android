@@ -129,7 +129,7 @@ import timber.log.Timber
         AutoMigration(from = 46, to = 47),
         AutoMigration(from = 47, to = 48),
         AutoMigration(from = 48, to = 49),
-        AutoMigration(from = 49, to = 50)
+        AutoMigration(from = 49, to = 50),
     ]
 )
 @TypeConverters(

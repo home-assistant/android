@@ -31,12 +31,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.getSystemService
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.compose.ExposedDropdownMenu
@@ -44,7 +47,12 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
 import io.homeassistant.companion.android.util.compose.WidgetBackgroundTypeExposedDropdownMenu
-import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidget
+import io.homeassistant.companion.android.util.getHexForColor
+import io.homeassistant.companion.android.util.previewEntity1
+import io.homeassistant.companion.android.util.previewEntity2
+import io.homeassistant.companion.android.util.previewServer1
+import io.homeassistant.companion.android.util.previewServer2
+import timber.log.Timber
 
 @AndroidEntryPoint
 class TodoWidgetConfigureActivity : BaseActivity() {
@@ -53,6 +61,11 @@ class TodoWidgetConfigureActivity : BaseActivity() {
     }
 
     private val viewModel: TodoWidgetViewModel by viewModels()
+    private val supportedTextColors: List<String>
+        get() = listOf(
+            application.getHexForColor(R.color.colorWidgetButtonLabelBlack),
+            application.getHexForColor(android.R.color.white),
+        )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,15 +75,15 @@ class TodoWidgetConfigureActivity : BaseActivity() {
         setResult(RESULT_CANCELED)
         val widgetId = intent.extras?.getInt(
             AppWidgetManager.EXTRA_APPWIDGET_ID,
-            AppWidgetManager.INVALID_APPWIDGET_ID
+            AppWidgetManager.INVALID_APPWIDGET_ID,
         ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
-        viewModel.onSetup(widgetId)
+        viewModel.onSetup(widgetId, supportedTextColors)
 
         setContent {
             HomeAssistantAppTheme {
                 TodoWidgetConfigureScreen(
                     viewModel = viewModel,
-                    onAddWidget = { onSetupWidget() }
+                    onAddWidget = { onSetupWidget() },
                 )
             }
         }
@@ -78,13 +91,17 @@ class TodoWidgetConfigureActivity : BaseActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        val extras = intent.extras ?: return
+        val extras = intent.extras
+        if (extras == null) {
+            Timber.d("Received new intent without data")
+            return
+        }
         val widgetId = extras.getInt(
             AppWidgetManager.EXTRA_APPWIDGET_ID,
-            AppWidgetManager.INVALID_APPWIDGET_ID
+            AppWidgetManager.INVALID_APPWIDGET_ID,
         )
         if (extras.getBoolean(PIN_WIDGET_CALLBACK, false)) {
-            viewModel.onSetup(widgetId)
+            viewModel.onSetup(widgetId, supportedTextColors)
             onAddWidget()
         }
     }
@@ -109,7 +126,7 @@ class TodoWidgetConfigureActivity : BaseActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     private fun requestPinWidget() {
         getSystemService<AppWidgetManager>()?.requestPinAppWidget(
-            ComponentName(this, MediaPlayerControlsWidget::class.java),
+            ComponentName(this, TodoWidget::class.java),
             null,
             PendingIntent.getActivity(
                 this,
@@ -117,13 +134,13 @@ class TodoWidgetConfigureActivity : BaseActivity() {
                 Intent(this, TodoWidgetConfigureActivity::class.java)
                     .putExtra(PIN_WIDGET_CALLBACK, true)
                     .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-            )
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+            ),
         )
     }
 
     private fun onAddWidget() {
-        val intent = viewModel.prepareData()
+        val intent = viewModel.prepareData(ComponentName(this, TodoWidget::class.java))
         if (intent == null) {
             showAddWidgetError()
             return
@@ -142,88 +159,152 @@ class TodoWidgetConfigureActivity : BaseActivity() {
 @Composable
 private fun TodoWidgetConfigureScreen(
     viewModel: TodoWidgetViewModel,
-    onAddWidget: () -> Unit
+    onAddWidget: () -> Unit,
 ) {
     val servers by viewModel.servers.collectAsStateWithLifecycle()
     val entities by viewModel.entities.collectAsStateWithLifecycle()
 
+    TodoWidgetConfigureView(
+        servers = servers,
+        selectedServerId = viewModel.selectedServerId,
+        onServerSelected = viewModel::setServer,
+        entities = entities,
+        selectedEntityId = viewModel.selectedEntityId,
+        onEntitySelected = viewModel::setEntity,
+        showCompleted = viewModel.showCompletedState,
+        onShowCompletedChanged = viewModel::setShowCompleted,
+        selectedBackgroundType = viewModel.selectedBackgroundType,
+        onBackgroundTypeSelected = viewModel::setBackgroundType,
+        textColorIndex = viewModel.textColorIndex,
+        onTextColorSelected = viewModel::setTextColor,
+        isUpdateWidget = viewModel.isUpdateWidget,
+        onAddWidget = onAddWidget,
+    )
+}
+
+@Composable
+private fun TodoWidgetConfigureView(
+    servers: List<Server>,
+    selectedServerId: Int,
+    onServerSelected: (Int) -> Unit,
+    entities: List<Entity<*>>,
+    selectedEntityId: String?,
+    onEntitySelected: (String?) -> Unit,
+    showCompleted: Boolean,
+    onShowCompletedChanged: (Boolean) -> Unit,
+    selectedBackgroundType: WidgetBackgroundType,
+    onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
+    textColorIndex: Int,
+    onTextColorSelected: (Int) -> Unit,
+    isUpdateWidget: Boolean,
+    onAddWidget: () -> Unit,
+) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.widget_todo_label)) },
                 backgroundColor = colorResource(R.color.colorBackground),
-                contentColor = colorResource(R.color.colorOnBackground)
+                contentColor = colorResource(R.color.colorOnBackground),
             )
-        }
+        },
     ) { padding ->
         Column(
             modifier = Modifier
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(all = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (servers.size > 1) {
                 ServerExposedDropdownMenu(
                     servers = servers,
-                    current = viewModel.selectedServerId,
-                    onSelected = { viewModel.setServer(it) },
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    current = selectedServerId,
+                    onSelected = { onServerSelected(it) },
+                    modifier = Modifier.padding(bottom = 16.dp),
                 )
             }
 
             SingleEntityPicker(
                 entities = entities,
-                currentEntity = viewModel.selectedEntityId,
-                onEntityCleared = { viewModel.setEntity(null) },
+                currentEntity = selectedEntityId,
+                onEntityCleared = { onEntitySelected(null) },
                 onEntitySelected = {
-                    viewModel.setEntity(it)
+                    onEntitySelected(it)
                     true
-                }
+                },
             )
 
             Row(
-                modifier = Modifier.clickable { viewModel.setShowCompleted(!viewModel.showCompletedState) }
+                modifier = Modifier.clickable { onShowCompletedChanged(!showCompleted) },
             ) {
                 Text(
                     text = stringResource(R.string.widget_todo_show_completed),
                     modifier = Modifier
                         .align(Alignment.CenterVertically)
-                        .weight(1f)
+                        .weight(1f),
                 )
 
                 Switch(
-                    checked = viewModel.showCompletedState,
-                    onCheckedChange = { viewModel.setShowCompleted(it) },
-                    colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb))
+                    checked = showCompleted,
+                    onCheckedChange = { onShowCompletedChanged(it) },
+                    colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb)),
                 )
             }
 
             WidgetBackgroundTypeExposedDropdownMenu(
-                current = viewModel.selectedBackgroundType,
-                onSelected = { viewModel.setBackgroundType(it) },
-                modifier = Modifier.padding(bottom = 16.dp)
+                current = selectedBackgroundType,
+                onSelected = { onBackgroundTypeSelected(it) },
+                modifier = Modifier.padding(bottom = 16.dp),
             )
 
-            if (viewModel.selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
+            if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
                 ExposedDropdownMenu(
                     label = stringResource(R.string.widget_text_color_title),
                     keys = listOf(
                         stringResource(R.string.widget_text_color_black),
-                        stringResource(R.string.widget_text_color_white)
+                        stringResource(R.string.widget_text_color_white),
                     ),
-                    currentIndex = viewModel.textColorIndex,
-                    onSelected = { viewModel.setTextColor(it) },
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    currentIndex = textColorIndex,
+                    onSelected = { onTextColorSelected(it) },
+                    modifier = Modifier.padding(bottom = 16.dp),
                 )
             }
 
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { onAddWidget() }
+                onClick = { onAddWidget() },
             ) {
-                Text(stringResource(R.string.add_widget))
+                Text(stringResource(if (isUpdateWidget) R.string.update_widget else R.string.add_widget))
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun TodoWidgetConfigureViewPreview() {
+    HomeAssistantAppTheme {
+        TodoWidgetConfigureView(
+            servers = listOf(
+                previewServer1,
+                previewServer2,
+            ),
+            selectedServerId = 0,
+            onServerSelected = {},
+            entities = listOf(
+                previewEntity1,
+                previewEntity2,
+            ),
+            selectedEntityId = previewEntity1.entityId,
+            onEntitySelected = {},
+            showCompleted = true,
+            onShowCompletedChanged = {},
+            selectedBackgroundType = WidgetBackgroundType.TRANSPARENT,
+            onBackgroundTypeSelected = {},
+            textColorIndex = 0,
+            onTextColorSelected = {},
+            isUpdateWidget = true,
+            onAddWidget = {},
+        )
     }
 }

@@ -8,9 +8,9 @@
         <item name="todoWidgetPreviewText">@string/widget_todo_active</item>
     </style>
     <style name="TodoWidget.Item1">
-        <item name="todoWidgetPreviewText">Eggs</item>
+        <item name="todoWidgetPreviewText">@string/widget_todo_preview_item_1</item>
     </style>
     <style name="TodoWidget.Item2">
-        <item name="todoWidgetPreviewText">Milk</item>
+        <item name="todoWidgetPreviewText">@string/widget_todo_preview_item_2</item>
     </style>
 </resources>
