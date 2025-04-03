@@ -147,7 +147,8 @@ class HaControlsProviderService : ControlsProviderService() {
                                     entityId = entity.entityId,
                                     serverId = serverId,
                                     serverName = serverNames[serverId],
-                                    area = getAreaForEntity(entity.entityId, serverId)
+                                    area = getAreaForEntity(entity.entityId, serverId),
+                                    splitMultiServerIntoStructure = splitMultiServersIntoStructures()
                                 ) // No auth for preview, no base url to prevent downloading images
                                 domainToHaControl[entity.domain]?.createControl(
                                     applicationContext,
@@ -265,7 +266,8 @@ class HaControlsProviderService : ControlsProviderService() {
                         systemId = it,
                         entityId = entityId,
                         serverId = serverId,
-                        area = getAreaForEntity(entity.entityId, serverId)
+                        area = getAreaForEntity(entity.entityId, serverId),
+                        splitMultiServerIntoStructure = splitMultiServersIntoStructures()
                     )
                 )?.let { control -> subscriber.onNext(control) }
             }
@@ -342,7 +344,8 @@ class HaControlsProviderService : ControlsProviderService() {
                                 serverId = serverId,
                                 area = getAreaForEntity(entity.entityId, serverId),
                                 authRequired = entityRequiresAuth(entity.entityId, serverId),
-                                baseUrl = baseUrl
+                                baseUrl = baseUrl,
+                                splitMultiServerIntoStructure = splitMultiServersIntoStructures()
                             )
                         )?.let { control -> subscriber.onNext(control) }
                     }
@@ -375,7 +378,8 @@ class HaControlsProviderService : ControlsProviderService() {
                                 serverId = serverId,
                                 area = getAreaForEntity(entity.entityId, serverId),
                                 authRequired = entityRequiresAuth(entity.entityId, serverId),
-                                baseUrl = baseUrl
+                                baseUrl = baseUrl,
+                                splitMultiServerIntoStructure = splitMultiServersIntoStructures()
                             )
                         )?.let { control -> subscriber.onNext(control) }
                     }
@@ -394,7 +398,8 @@ class HaControlsProviderService : ControlsProviderService() {
                             serverId = serverId,
                             area = getAreaForEntity(it.entityId, serverId),
                             authRequired = entityRequiresAuth(it.entityId, serverId),
-                            baseUrl = baseUrl
+                            baseUrl = baseUrl,
+                            splitMultiServerIntoStructure = splitMultiServersIntoStructures()
                         )
                     )
                     if (control != null) {
@@ -448,7 +453,8 @@ class HaControlsProviderService : ControlsProviderService() {
                     serverId = serverId,
                     area = getAreaForEntity(it.value.entityId, serverId),
                     authRequired = entityRequiresAuth(it.value.entityId, serverId),
-                    baseUrl = baseUrl
+                    baseUrl = baseUrl,
+                    splitMultiServerIntoStructure = splitMultiServersIntoStructures()
                 )
                 val control = try {
                     domainToHaControl[it.key.split(".")[0]]?.createControl(
@@ -504,5 +510,9 @@ class HaControlsProviderService : ControlsProviderService() {
         } else {
             false
         }
+    }
+
+    private suspend fun splitMultiServersIntoStructures(): Boolean {
+        return prefsRepository.getControlsEnableStructure()
     }
 }

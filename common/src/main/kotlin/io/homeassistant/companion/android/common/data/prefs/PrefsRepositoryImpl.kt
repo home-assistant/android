@@ -22,6 +22,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_SCREEN_ORIENTATION = "screen_orientation"
         private const val PREF_CONTROLS_AUTH_REQUIRED = "controls_auth_required"
         private const val PREF_CONTROLS_AUTH_ENTITIES = "controls_auth_entities"
+        private const val PREF_CONTROLS_ENABLE_STRUCTURE = "controls_enable_structure"
         private const val CONTROLS_PANEL_SERVER = "controls_panel_server"
         private const val CONTROLS_PANEL_PATH = "controls_panel_path"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
@@ -122,6 +123,14 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setControlsAuthRequired(setting: ControlsAuthRequiredSetting) {
         localStorage.putString(PREF_CONTROLS_AUTH_REQUIRED, setting.name)
+    }
+
+    override suspend fun getControlsEnableStructure(): Boolean {
+        return localStorage.getBooleanOrNull(PREF_CONTROLS_ENABLE_STRUCTURE) ?: false
+    }
+
+    override suspend fun setControlsEnableStructure(enabled: Boolean) {
+        localStorage.putBoolean(PREF_CONTROLS_ENABLE_STRUCTURE, enabled)
     }
 
     override suspend fun getControlsAuthEntities(): List<String> {

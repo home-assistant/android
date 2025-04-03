@@ -9,5 +9,6 @@ data class HaControlInfo(
     val serverName: String? = null,
     val area: AreaRegistryResponse? = null,
     val authRequired: Boolean = false,
-    val baseUrl: String? = null
+    val baseUrl: String? = null,
+    val splitMultiServerIntoStructure: Boolean
 )
