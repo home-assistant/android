@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
+import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import javax.inject.Singleton
 
 @Module
@@ -52,6 +53,9 @@ object DatabaseModule {
 
     @Provides
     fun provideStaticWidgetDao(database: AppDatabase): StaticWidgetDao = database.staticWidgetDao()
+
+    @Provides
+    fun provideTodoWidgetDao(database: AppDatabase): TodoWidgetDao = database.todoWidgetDao()
 
     @Provides
     fun provideTemplateWidgetDao(database: AppDatabase): TemplateWidgetDao =

@@ -40,6 +40,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EventResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
@@ -145,6 +146,40 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
         )
 
         return mapResponse(socketResponse)
+    }
+
+    override suspend fun getTodos(entityId: String): GetTodosResponse? {
+        val response = sendMessage(
+            mapOf(
+                "type" to "call_service",
+                "domain" to "todo",
+                "service" to "get_items",
+                "target" to mapOf(
+                    "entity_id" to entityId
+                ),
+                "return_response" to true
+            )
+        )
+        return mapResponse(response)
+    }
+
+    override suspend fun updateTodo(entityId: String, todoItem: String, newName: String?, status: String?): Boolean {
+        val response = sendMessage(
+            mapOf(
+                "type" to "call_service",
+                "domain" to "todo",
+                "service" to "update_item",
+                "target" to mapOf(
+                    "entity_id" to entityId
+                ),
+                "service_data" to mapOf(
+                    "item" to todoItem,
+                    "status" to status,
+                    "rename" to newName
+                ).filterValues { it != null }
+            )
+        )
+        return response?.success == true
     }
 
     override suspend fun getCurrentUser(): CurrentUserResponse? {
@@ -763,15 +798,19 @@ class WebSocketRepositoryImpl @AssistedInject constructor(
                         EVENT_STATE_CHANGED ->
                             object :
                                 TypeReference<EventResponse<StateChangedEvent>>() {}
+
                         EVENT_AREA_REGISTRY_UPDATED ->
                             object :
                                 TypeReference<EventResponse<AreaRegistryUpdatedEvent>>() {}
+
                         EVENT_DEVICE_REGISTRY_UPDATED ->
                             object :
                                 TypeReference<EventResponse<DeviceRegistryUpdatedEvent>>() {}
+
                         EVENT_ENTITY_REGISTRY_UPDATED ->
                             object :
                                 TypeReference<EventResponse<EntityRegistryUpdatedEvent>>() {}
+
                         else -> {
                             Timber.d("Unknown event type received")
                             object : TypeReference<EventResponse<Any>>() {}

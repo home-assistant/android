@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_item_layout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@drawable/widget_transparent_background"
+    android:paddingHorizontal="8dp"
+    android:paddingVertical="4dp">
+
+    <ImageView
+        android:id="@+id/widget_todo_done"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="@null"
+        android:padding="8dp"
+        android:src="@drawable/ic_checkbox_on"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/widget_todo_done_disabled"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="@null"
+        android:padding="8dp"
+        android:src="@drawable/ic_checkbox_off" />
+
+    <TextView
+        android:id="@+id/widget_todo_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textColor="?colorWidgetOnBackground"
+        android:text="?todoWidgetPreviewText"
+        android:textSize="14sp" />
+
+</LinearLayout>
