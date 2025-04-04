@@ -147,7 +147,8 @@ class HaControlsProviderService : ControlsProviderService() {
                                     entityId = entity.entityId,
                                     serverId = serverId,
                                     serverName = serverNames[serverId],
-                                    area = getAreaForEntity(entity.entityId, serverId)
+                                    area = getAreaForEntity(entity.entityId, serverId),
+                                    splitMultiServerIntoStructure = splitMultiServersIntoStructures()
                                 ) // No auth for preview, no base url to prevent downloading images
                                 domainToHaControl[entity.domain]?.createControl(
                                     applicationContext,
@@ -249,7 +250,15 @@ class HaControlsProviderService : ControlsProviderService() {
         webSocketScope: CoroutineScope,
         subscriber: Flow.Subscriber<in Control>
     ) {
-        if (serverManager.getServer(serverId) == null) {
+        val serverCount = serverManager.defaultServers.size
+        val server = serverManager.getServer(serverId)
+
+        var serverName: String? = null
+        if (server != null && serverCount > 1) {
+            serverName = server.friendlyName
+        }
+
+        if (server == null) {
             controlIds.forEach {
                 val entityId =
                     if (it.split(".")[0].toIntOrNull() != null) {
@@ -265,7 +274,8 @@ class HaControlsProviderService : ControlsProviderService() {
                         systemId = it,
                         entityId = entityId,
                         serverId = serverId,
-                        area = getAreaForEntity(entity.entityId, serverId)
+                        area = getAreaForEntity(entity.entityId, serverId),
+                        splitMultiServerIntoStructure = splitMultiServersIntoStructures()
                     )
                 )?.let { control -> subscriber.onNext(control) }
             }
@@ -328,7 +338,7 @@ class HaControlsProviderService : ControlsProviderService() {
                             }
                         }
                         Timber.d("Sending ${toSend.size} entities to subscriber")
-                        sendEntitiesToSubscriber(subscriber, controlIds, toSend, serverId, webSocketScope, baseUrl)
+                        sendEntitiesToSubscriber(subscriber, controlIds, toSend, serverId, serverName, webSocketScope, baseUrl)
                     } ?: run {
                     entityIds.forEachIndexed { index, entityId ->
                         val entity = getFailedEntity(entityId, Exception())
@@ -342,7 +352,9 @@ class HaControlsProviderService : ControlsProviderService() {
                                 serverId = serverId,
                                 area = getAreaForEntity(entity.entityId, serverId),
                                 authRequired = entityRequiresAuth(entity.entityId, serverId),
-                                baseUrl = baseUrl
+                                baseUrl = baseUrl,
+                                serverName = serverName,
+                                splitMultiServerIntoStructure = splitMultiServersIntoStructures()
                             )
                         )?.let { control -> subscriber.onNext(control) }
                     }
@@ -375,7 +387,9 @@ class HaControlsProviderService : ControlsProviderService() {
                                 serverId = serverId,
                                 area = getAreaForEntity(entity.entityId, serverId),
                                 authRequired = entityRequiresAuth(entity.entityId, serverId),
-                                baseUrl = baseUrl
+                                baseUrl = baseUrl,
+                                serverName = serverName,
+                                splitMultiServerIntoStructure = splitMultiServersIntoStructures()
                             )
                         )?.let { control -> subscriber.onNext(control) }
                     }
@@ -394,7 +408,9 @@ class HaControlsProviderService : ControlsProviderService() {
                             serverId = serverId,
                             area = getAreaForEntity(it.entityId, serverId),
                             authRequired = entityRequiresAuth(it.entityId, serverId),
-                            baseUrl = baseUrl
+                            baseUrl = baseUrl,
+                            serverName = serverName,
+                            splitMultiServerIntoStructure = splitMultiServersIntoStructures()
                         )
                     )
                     if (control != null) {
@@ -406,20 +422,20 @@ class HaControlsProviderService : ControlsProviderService() {
         webSocketScope.launch {
             serverManager.webSocketRepository(serverId).getAreaRegistryUpdates()?.collect {
                 areaRegistry[serverId] = serverManager.webSocketRepository(serverId).getAreaRegistry()
-                sendEntitiesToSubscriber(subscriber, controlIds, entities, serverId, webSocketScope, baseUrl)
+                sendEntitiesToSubscriber(subscriber, controlIds, entities, serverId, serverName, webSocketScope, baseUrl)
             }
         }
         webSocketScope.launch {
             serverManager.webSocketRepository(serverId).getDeviceRegistryUpdates()?.collect {
                 deviceRegistry[serverId] = serverManager.webSocketRepository(serverId).getDeviceRegistry()
-                sendEntitiesToSubscriber(subscriber, controlIds, entities, serverId, webSocketScope, baseUrl)
+                sendEntitiesToSubscriber(subscriber, controlIds, entities, serverId, serverName, webSocketScope, baseUrl)
             }
         }
         webSocketScope.launch {
             serverManager.webSocketRepository(serverId).getEntityRegistryUpdates()?.collect { event ->
                 if (event.action == "update" && entityIds.contains(event.entityId)) {
                     entityRegistry[serverId] = serverManager.webSocketRepository(serverId).getEntityRegistry()
-                    sendEntitiesToSubscriber(subscriber, controlIds, entities, serverId, webSocketScope, baseUrl)
+                    sendEntitiesToSubscriber(subscriber, controlIds, entities, serverId, serverName, webSocketScope, baseUrl)
                 }
             }
         }
@@ -430,6 +446,7 @@ class HaControlsProviderService : ControlsProviderService() {
         controlIds: List<String>,
         entities: Map<String, Entity<Map<String, Any>>>,
         serverId: Int,
+        serverName: String?,
         coroutineScope: CoroutineScope,
         baseUrl: String
     ) {
@@ -446,9 +463,11 @@ class HaControlsProviderService : ControlsProviderService() {
                     systemId = controlIds[entityIds.indexOf(it.value.entityId)],
                     entityId = it.value.entityId,
                     serverId = serverId,
+                    serverName = serverName,
                     area = getAreaForEntity(it.value.entityId, serverId),
                     authRequired = entityRequiresAuth(it.value.entityId, serverId),
-                    baseUrl = baseUrl
+                    baseUrl = baseUrl,
+                    splitMultiServerIntoStructure = splitMultiServersIntoStructures()
                 )
                 val control = try {
                     domainToHaControl[it.key.split(".")[0]]?.createControl(
@@ -504,5 +523,9 @@ class HaControlsProviderService : ControlsProviderService() {
         } else {
             false
         }
+    }
+
+    private suspend fun splitMultiServersIntoStructures(): Boolean {
+        return prefsRepository.getControlsEnableStructure()
     }
 }

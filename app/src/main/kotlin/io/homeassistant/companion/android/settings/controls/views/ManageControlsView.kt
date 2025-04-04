@@ -27,6 +27,8 @@ import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.RadioButton
+import androidx.compose.material.Switch
+import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
@@ -40,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -70,12 +73,14 @@ fun ManageControlsView(
     entitiesList: Map<Int, List<Entity<*>>>,
     panelSetting: Pair<String?, Int>?,
     serversList: List<Server>,
+    structureEnabled: Boolean,
     defaultServer: Int,
     onSetPanelEnabled: (Boolean) -> Unit,
     onSelectAll: () -> Unit,
     onSelectNone: () -> Unit,
     onSelectEntity: (String, Int) -> Unit,
-    onSetPanelSetting: (String, Int) -> Unit
+    onSetPanelSetting: (String, Int) -> Unit,
+    onSetStructureEnabled: (Boolean) -> Unit
 ) {
     var selectedServer by remember { mutableIntStateOf(defaultServer) }
     val initialPanelEnabled by rememberSaveable { mutableStateOf(panelEnabled) }
@@ -119,6 +124,25 @@ fun ManageControlsView(
         }
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || !panelEnabled) {
+            if (serversList.size > 1) {
+                item {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
+                    ) {
+                        Text(
+                            text = stringResource(commonR.string.controls_structure_enabled),
+                            fontSize = 15.sp
+                        )
+                        Switch(
+                            checked = structureEnabled,
+                            onCheckedChange = { onSetStructureEnabled(it) },
+                            colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb))
+                        )
+                    }
+                }
+            }
+
             item {
                 Text(
                     text = stringResource(commonR.string.controls_setting_choose_setting),

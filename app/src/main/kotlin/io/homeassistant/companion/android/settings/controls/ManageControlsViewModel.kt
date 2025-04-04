@@ -49,6 +49,9 @@ class ManageControlsViewModel @Inject constructor(
     var panelSetting by mutableStateOf<Pair<String?, Int>?>(null)
         private set
 
+    var structureEnabled by mutableStateOf(false)
+        private set
+
     init {
         viewModelScope.launch {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -68,6 +71,8 @@ class ManageControlsViewModel @Inject constructor(
 
             authRequired = prefsRepository.getControlsAuthRequired()
             authRequiredList.addAll(prefsRepository.getControlsAuthEntities())
+
+            structureEnabled = prefsRepository.getControlsEnableStructure()
 
             serverManager.defaultServers.map { server ->
                 async {
@@ -166,5 +171,13 @@ class ManageControlsViewModel @Inject constructor(
         prefsRepository.setControlsPanelServer(serverId)
         prefsRepository.setControlsPanelPath(cleanedPath)
         panelSetting = Pair(cleanedPath, serverId)
+    }
+
+    fun setStructureEnable(enabled: Boolean) {
+        structureEnabled = enabled
+
+        viewModelScope.launch {
+            prefsRepository.setControlsEnableStructure(enabled)
+        }
     }
 }
