@@ -254,8 +254,9 @@ class HaControlsProviderService : ControlsProviderService() {
         val server = serverManager.getServer(serverId)
 
         var serverName: String? = null
-        if (server != null && serverCount > 1)
+        if (server != null && serverCount > 1) {
             serverName = server.friendlyName
+        }
 
         if (server == null) {
             controlIds.forEach {
