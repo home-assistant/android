@@ -185,7 +185,7 @@
     <string name="controls_setting_choose_empty">No entities available</string>
     <string name="controls_setting_alert">If you previously used built-in device controls, you may need to remove all controls before the dashboard will be shown</string>
     <string name="controls_setting_dashboard_setting">Enter the dashboard path you want to use. When left empty, the default dashboard will be used.</string>
-    <string name="controls_structure_enabled">Split multiple servers into individual structures</string>
+    <string name="controls_structure_enabled">Split multiple servers into individual pages within device controls</string>
     <string name="covers">Covers</string>
     <string name="crash_reporting_summary">Help the developers fix bugs and crashes by leaving this enabled. If the application crashes this will automatically generate and send a report. If you notice a crash also create an issue on GitHub!</string>
     <string name="crash_reporting">Crash reporting</string>
