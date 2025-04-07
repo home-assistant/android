@@ -253,6 +253,8 @@ class HaControlsProviderService : ControlsProviderService() {
         val serverCount = serverManager.defaultServers.size
         val server = serverManager.getServer(serverId)
 
+        // Server name should only be specified if there's more than one server, as controls being split by structure (or the area names appended with the server name)
+        // is done based on the presence of a server name.
         var serverName: String? = null
         if (server != null && serverCount > 1) {
             serverName = server.friendlyName
