@@ -8,7 +8,7 @@ pluginManagement {
 plugins {
     // This is used to be able to use version catalog within this project (`libs` variable)
     // because of that we can't have the version of this plugin in the version catalog.
-    id("dev.panuszewski.typesafe-conventions") version "0.5.1"
+    id("dev.panuszewski.typesafe-conventions") version "0.6.0"
 }
 
 dependencyResolutionManagement {

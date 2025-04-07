@@ -28,7 +28,7 @@ coreKtx = "1.15.0"
 core-splashscreen = "1.1.0-rc01"
 cronet-embedded = "119.6045.31"
 emojiJava = "5.1.1"
-firebase-bom = "33.11.0"
+firebase-bom = "33.12.0"
 firebaseAppdistributionGradle = "5.1.1"
 fragment-ktx = "1.8.6"
 googleServices = "4.4.2"
@@ -172,6 +172,7 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
+leakcanary-android-instrumentation = { module = "com.squareup.leakcanary:leakcanary-android-instrumentation", version.ref = "leakcanaryAndroid" }
 logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation-compose" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }

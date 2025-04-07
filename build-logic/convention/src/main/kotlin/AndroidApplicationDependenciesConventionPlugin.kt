@@ -103,6 +103,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "androidTestImplementation"(platform(libs.compose.bom))
                     "androidTestImplementation"(libs.bundles.androidx.test)
                     "androidTestImplementation"(libs.bundles.androidx.compose.ui.test)
+                    "androidTestImplementation"(libs.leakcanary.android.instrumentation)
                 }
             }
         }
