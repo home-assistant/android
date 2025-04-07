@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.common.data.websocket
 
-import dagger.assisted.AssistedFactory
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketRepositoryImpl
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
@@ -23,9 +23,12 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Te
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetTlvResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
+import javax.inject.Inject
+import javax.inject.Provider
 import kotlinx.coroutines.flow.Flow
 
 interface WebSocketRepository {
+    // TODO Should not return ? but instead throw an exception?
     fun getConnectionState(): WebSocketState?
     fun shutdown()
     suspend fun sendPing(): Boolean
@@ -108,7 +111,7 @@ interface WebSocketRepository {
     suspend fun runAssistPipelineForText(
         text: String,
         pipelineId: String? = null,
-        conversationId: String? = null
+        conversationId: String? = null,
     ): Flow<AssistPipelineEvent>?
 
     /**
@@ -119,7 +122,7 @@ interface WebSocketRepository {
         sampleRate: Int,
         outputTts: Boolean,
         pipelineId: String? = null,
-        conversationId: String? = null
+        conversationId: String? = null,
     ): Flow<AssistPipelineEvent>?
 
     /**
@@ -129,7 +132,13 @@ interface WebSocketRepository {
     suspend fun sendVoiceData(binaryHandlerId: Int, data: ByteArray): Boolean?
 }
 
-@AssistedFactory
-interface WebSocketRepositoryFactory {
-    fun create(serverId: Int): WebSocketRepositoryImpl
+class WebSocketRepositoryFactory @Inject internal constructor(
+    private val coreFactory: WebSocketCoreFactory,
+    // Use a Provider to avoid a dependency circle since serverManager needs WebSocketCoreFactory
+    private val serverManagerProvider: Provider<ServerManager>,
+) {
+
+    fun create(serverId: Int): WebSocketRepository {
+        return WebSocketRepositoryImpl(coreFactory.create(serverId), serverManagerProvider.get())
+    }
 }
