@@ -24,7 +24,7 @@
 -->
 
 - [ ] New or updated tests have been added to cover the changes following the testing [guidelines](https://developers.home-assistant.io/docs/android/testing/introduction).
-- [ ] The code follows the project's [code style](https://developers.home-assistant.io/docs/android/codestyle) and [best_practices].(https://developers.home-assistant.io/docs/android/best_practices).
+- [ ] The code follows the project's [code style](https://developers.home-assistant.io/docs/android/codestyle) and [best_practices](https://developers.home-assistant.io/docs/android/best_practices).
 - [ ] The changes have been thoroughly tested, and edge cases have been considered.
 - [ ] The changes are backward compatible or any compatibility break is documented with previous versions of Home Assistant Core.
 
