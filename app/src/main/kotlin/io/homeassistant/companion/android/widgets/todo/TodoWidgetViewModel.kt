@@ -112,7 +112,7 @@ class TodoWidgetViewModel @Inject constructor(
             return null
         }
         if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-            Timber.d("Widget ID is invalid")
+            Timber.w("Widget ID is invalid")
             return null
         }
 

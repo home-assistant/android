@@ -167,49 +167,32 @@ class TodoWidget : BaseWidgetProvider() {
     }
 
     private fun RemoteViews.setClicks(context: Context, entity: TodoWidgetEntity) {
-        val openIntent = Intent(context, TodoWidget::class.java).apply {
-            action = OPEN_TODO_LIST
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, entity.id)
-            putExtra(EXTRA_SERVER_ID, entity.serverId)
-            putExtra(EXTRA_ENTITY_ID, entity.entityId)
-        }
+        val openIntent = context.createIntent(entity, OPEN_TODO_LIST)
+        val openPendingIntent = PendingIntent.getBroadcast(
+            context,
+            entity.id,
+            openIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
         setOnClickPendingIntent(
             R.id.widget_todo_title,
-            PendingIntent.getBroadcast(
-                context,
-                entity.id,
-                openIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-            ),
+            openPendingIntent,
         )
         setOnClickPendingIntent(
             R.id.widget_todo_add,
-            PendingIntent.getBroadcast(
-                context,
-                entity.id,
-                openIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-            ),
+            openPendingIntent,
         )
         setOnClickPendingIntent(
             R.id.widget_todo_refresh,
             PendingIntent.getBroadcast(
                 context,
                 entity.id,
-                Intent(context, TodoWidget::class.java).apply {
-                    action = UPDATE_VIEW
-                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, entity.id)
-                },
+                context.createIntent(entity, UPDATE_VIEW),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             ),
         )
 
-        val toggleIntent = Intent(context, TodoWidget::class.java).apply {
-            action = TOGGLE_TODO_ITEM
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, entity.id)
-            putExtra(EXTRA_SERVER_ID, entity.serverId)
-            putExtra(EXTRA_ENTITY_ID, entity.entityId)
-        }
+        val toggleIntent = context.createIntent(entity, TOGGLE_TODO_ITEM)
         setPendingIntentTemplate(
             R.id.widget_todo_list,
             PendingIntent.getBroadcast(
@@ -219,6 +202,18 @@ class TodoWidget : BaseWidgetProvider() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
             ),
         )
+    }
+
+    private fun Context.createIntent(
+        entity: TodoWidgetEntity,
+        action: String,
+    ): Intent {
+        return Intent(this, TodoWidget::class.java).apply {
+            this.action = action
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, entity.id)
+            putExtra(EXTRA_SERVER_ID, entity.serverId)
+            putExtra(EXTRA_ENTITY_ID, entity.entityId)
+        }
     }
 
     private fun RemoteViews.setInitialVisibility() {
@@ -284,12 +279,14 @@ class TodoWidget : BaseWidgetProvider() {
 
     override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
         if (extras == null) return
-        if (!extras.containsKey(EXTRA_SERVER_ID) || !extras.containsKey(EXTRA_ENTITY_ID)) {
+
+        val serverId = extras.getInt(EXTRA_SERVER_ID)
+        val entityId = extras.getString(EXTRA_ENTITY_ID)
+        if (!extras.containsKey(EXTRA_SERVER_ID) || entityId == null) {
+            Timber.e("Missing intent extras!")
             return
         }
 
-        val serverId = extras.getInt(EXTRA_SERVER_ID)
-        val entityId = extras.getString(EXTRA_ENTITY_ID) ?: return
         val backgroundType = BundleCompat.getSerializable(
             extras,
             EXTRA_BACKGROUND_TYPE,
