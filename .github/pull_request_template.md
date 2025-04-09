@@ -45,7 +45,7 @@
     2. Add the documentation pull request number after the "#" below.
     3. Add the `<span class='beta'>BETA</span> ` flag in the documentation to mark it as such.
 
-    Note: Remove this section if there are no PR.
+    Note: Remove this section if there is no PR.
 -->
 User Documentation: home-assistant/companion.home-assistant#
 
@@ -57,7 +57,7 @@ User Documentation: home-assistant/companion.home-assistant#
     1. Create a pull request in the documentation repository.
     2. Add the documentation pull request number after the "#" below.
 
-    Note: Remove this section if there are no PR.
+    Note: Remove this section if there is no PR.
 -->
 Developer Documentation: home-assistant/developers.home-assistant#
 
