@@ -44,13 +44,15 @@ import io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureAc
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity
+import io.homeassistant.companion.android.widgets.todo.TodoWidgetConfigureActivity
 
 enum class WidgetType(val widgetIcon: IIcon) {
     BUTTON(CommunityMaterial.Icon2.cmd_gesture_tap),
     CAMERA(CommunityMaterial.Icon.cmd_camera_image),
     STATE(CommunityMaterial.Icon3.cmd_shape),
     MEDIA(CommunityMaterial.Icon3.cmd_play_box_multiple),
-    TEMPLATE(CommunityMaterial.Icon.cmd_code_braces);
+    TEMPLATE(CommunityMaterial.Icon.cmd_code_braces),
+    TODO(CommunityMaterial.Icon.cmd_clipboard_list);
 
     fun configureActivity() = when (this) {
         BUTTON -> ButtonWidgetConfigureActivity::class.java
@@ -58,6 +60,7 @@ enum class WidgetType(val widgetIcon: IIcon) {
         MEDIA -> MediaPlayerControlsWidgetConfigureActivity::class.java
         STATE -> EntityWidgetConfigureActivity::class.java
         TEMPLATE -> TemplateWidgetConfigureActivity::class.java
+        TODO -> TodoWidgetConfigureActivity::class.java
     }
 }
 
@@ -83,7 +86,8 @@ fun ManageWidgetsView(
                 stringResource(R.string.widget_camera_description) to WidgetType.CAMERA,
                 stringResource(R.string.widget_static_image_description) to WidgetType.STATE,
                 stringResource(R.string.widget_media_player_description) to WidgetType.MEDIA,
-                stringResource(R.string.template_widget) to WidgetType.TEMPLATE
+                stringResource(R.string.template_widget) to WidgetType.TEMPLATE,
+                stringResource(R.string.todo_widget) to WidgetType.TODO
             ).sortedBy { it.first }
 
             MdcAlertDialog(
@@ -110,7 +114,7 @@ fun ManageWidgetsView(
         ) {
             if (viewModel.buttonWidgetList.value.isEmpty() && viewModel.staticWidgetList.value.isEmpty() &&
                 viewModel.mediaWidgetList.value.isEmpty() && viewModel.templateWidgetList.value.isEmpty() &&
-                viewModel.cameraWidgetList.value.isEmpty()
+                viewModel.cameraWidgetList.value.isEmpty() && viewModel.todoWidgetList.value.isEmpty()
             ) {
                 item {
                     EmptyState(
@@ -158,6 +162,12 @@ fun ManageWidgetsView(
                 widgetType = WidgetType.TEMPLATE,
                 title = R.string.template_widgets,
                 widgetLabel = { item -> item.template }
+            )
+            widgetItems(
+                viewModel.todoWidgetList.value,
+                widgetType = WidgetType.TODO,
+                title = R.string.todo_widgets,
+                widgetLabel = { item -> item.entityId }
             )
         }
     }

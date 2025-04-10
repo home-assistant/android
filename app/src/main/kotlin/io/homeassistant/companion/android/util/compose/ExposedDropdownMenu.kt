@@ -14,10 +14,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.widgets.common.WidgetUtils
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -68,6 +71,25 @@ fun ServerExposedDropdownMenu(
         keys = keys,
         currentIndex = currentIndex,
         onSelected = { onSelected(ids[it]) },
+        modifier = modifier
+    )
+}
+
+@Composable
+fun WidgetBackgroundTypeExposedDropdownMenu(
+    current: WidgetBackgroundType?,
+    onSelected: (WidgetBackgroundType) -> Unit,
+    modifier: Modifier = Modifier,
+    @StringRes title: Int = commonR.string.widget_background_type_title
+) {
+    val context = LocalContext.current
+    val keys = remember { WidgetUtils.getBackgroundOptionList(context) }
+    val currentIndex = remember(current) { current?.let { WidgetUtils.getSelectedBackgroundOption(context, current, keys) } }
+    ExposedDropdownMenu(
+        label = stringResource(title),
+        keys = keys.toList(),
+        currentIndex = currentIndex,
+        onSelected = { onSelected(WidgetUtils.getWidgetBackgroundType(context, keys[it])) },
         modifier = modifier
     )
 }
