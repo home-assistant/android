@@ -25,7 +25,7 @@ data class WebSocketRequest(
     val timeout: Duration = 30.seconds,
     val eventFlow: SharedFlow<Any>? = null,
     val onEvent: Channel<Any>? = null,
-    var onResponse: CancellableContinuation<SocketResponse>? = null,
+    var onResponse: CancellableContinuation<SocketResponse>? = null
 ) {
     val hasContinuationBeenInvoked = AtomicBoolean(false)
 }
