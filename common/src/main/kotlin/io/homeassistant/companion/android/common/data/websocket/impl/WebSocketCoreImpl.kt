@@ -75,11 +75,8 @@ internal class WebSocketCoreImpl(
 
     private val coroutineExceptionHandler = CoroutineExceptionHandler { ctx, err -> Timber.e(err, "Uncaught exception in WebSocketRepositoryImpl") }
 
-    // TODO We never close the scope? (Should we tight it to some other scope?)
-    // TODO check SupervisorJob or Job?
     private val ioScope = CoroutineScope(Dispatchers.IO + Job() + coroutineExceptionHandler)
 
-    // TODO any reason to not use a ConcurrentHashMap?
     private val activeMessages = Collections.synchronizedMap(mutableMapOf<Long, WebSocketRequest>())
 
     // Each message that we send needs a unique ID to match it to the answer
@@ -89,11 +86,15 @@ internal class WebSocketCoreImpl(
     private var connectionHaVersion: HomeAssistantVersion? = null
     private val connectedMutex = Mutex()
 
-    // TODO Can't we just keep it in an AtomicBool?
+    /**
+     * A [CompletableDeferred] that completes with `true` when the WebSocket connection is
+     * established and authenticated successfully, or with an [Exception] when the connection.
+     *
+     * A new instance will be created when the connection is close, so it can be reuse.
+     */
     private var connected = CompletableDeferred<Boolean>()
     private val eventSubscriptionMutex = Mutex()
 
-    // TODO Clarify what is the goal here
     private val messageQueue = Channel<Job>(capacity = Channel.UNLIMITED).apply {
         ioScope.launch {
             consumeEach { it.join() } // Run a job, and wait for it to complete before starting the next one
@@ -281,7 +282,10 @@ internal class WebSocketCoreImpl(
                                 )
                             }
                             if (activeMessages.isEmpty()) {
+                                Timber.i("No more subscriptions, closing connection.")
                                 connection?.close(1001, "Done listening to subscriptions.")
+                            } else {
+                                Timber.i("Still ${activeMessages.size} messages in the queue, not closing connection.")
                             }
                         }
                     }
@@ -308,6 +312,7 @@ internal class WebSocketCoreImpl(
     }
 
     override fun shutdown() {
+        Timber.i("Shutting down websocket")
         connection?.close(1001, "Session removed from app.")
     }
 
