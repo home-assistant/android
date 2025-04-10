@@ -278,7 +278,7 @@ class WebSocketRepositoryImpl internal constructor(
                 "webhook_id" to it.connection.webhookId!!,
                 "support_confirm" to true
             ),
-            10.seconds,
+            10.seconds
         )
     }
 
@@ -289,7 +289,7 @@ class WebSocketRepositoryImpl internal constructor(
                     "type" to "mobile_app/push_notification_confirm",
                     "webhook_id" to it.connection.webhookId!!,
                     "confirm_id" to confirmId
-                ),
+                )
             )
         }
         return response?.success == true
@@ -304,7 +304,7 @@ class WebSocketRepositoryImpl internal constructor(
                 ),
                 // Matter commissioning takes at least 60 seconds + interview
                 timeout = matterTimeout
-            ),
+            )
         )
 
         return response?.let {
@@ -331,7 +331,7 @@ class WebSocketRepositoryImpl internal constructor(
                 message = if (webSocketCore.server()?.version?.isAtLeast(2024, 1) == true) data.plus("ip_addr" to ip) else data,
                 // Matter commissioning takes at least 60 seconds + interview
                 timeout = matterTimeout
-            ),
+            )
         )
 
         return response?.let {
