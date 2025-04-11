@@ -128,16 +128,23 @@ fun ManageControlsView(
                 item {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
+                        modifier = Modifier
+                            .padding(start = 16.dp, bottom = 16.dp, end = 16.dp)
+                            .fillMaxWidth()
                     ) {
-                        Text(
-                            text = stringResource(commonR.string.controls_structure_enabled),
-                            fontSize = 15.sp
-                        )
+                        Box(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = stringResource(commonR.string.controls_structure_enabled),
+                                fontSize = 15.sp,
+                            )
+                        }
                         Switch(
                             checked = structureEnabled,
                             onCheckedChange = { onSetStructureEnabled(it) },
-                            colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb))
+                            colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb)),
+                            modifier = Modifier.padding(start = 8.dp)
                         )
                     }
                 }

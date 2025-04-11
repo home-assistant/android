@@ -97,6 +97,9 @@ class HaControlsProviderService : ControlsProviderService() {
 
                 val entities = mutableMapOf<Int, List<Entity<Any>>?>()
                 val areaForEntity = mutableMapOf<Int, Map<String, AreaRegistryResponse?>>()
+
+                val splitServersIntoMultipleStructures = splitMultiServersIntoStructures()
+
                 serverManager.defaultServers.map { server ->
                     async {
                         try {
@@ -148,7 +151,7 @@ class HaControlsProviderService : ControlsProviderService() {
                                     serverId = serverId,
                                     serverName = serverNames[serverId],
                                     area = getAreaForEntity(entity.entityId, serverId),
-                                    splitMultiServerIntoStructure = splitMultiServersIntoStructures()
+                                    splitMultiServerIntoStructure = splitServersIntoMultipleStructures
                                 ) // No auth for preview, no base url to prevent downloading images
                                 domainToHaControl[entity.domain]?.createControl(
                                     applicationContext,
@@ -260,6 +263,8 @@ class HaControlsProviderService : ControlsProviderService() {
             serverName = server.friendlyName
         }
 
+        val splitMultiServersIntoStructures = splitMultiServersIntoStructures()
+
         if (server == null) {
             controlIds.forEach {
                 val entityId =
@@ -277,7 +282,7 @@ class HaControlsProviderService : ControlsProviderService() {
                         entityId = entityId,
                         serverId = serverId,
                         area = getAreaForEntity(entity.entityId, serverId),
-                        splitMultiServerIntoStructure = splitMultiServersIntoStructures()
+                        splitMultiServerIntoStructure = splitMultiServersIntoStructures
                     )
                 )?.let { control -> subscriber.onNext(control) }
             }
@@ -356,7 +361,7 @@ class HaControlsProviderService : ControlsProviderService() {
                                 authRequired = entityRequiresAuth(entity.entityId, serverId),
                                 baseUrl = baseUrl,
                                 serverName = serverName,
-                                splitMultiServerIntoStructure = splitMultiServersIntoStructures()
+                                splitMultiServerIntoStructure = splitMultiServersIntoStructures
                             )
                         )?.let { control -> subscriber.onNext(control) }
                     }
@@ -391,7 +396,7 @@ class HaControlsProviderService : ControlsProviderService() {
                                 authRequired = entityRequiresAuth(entity.entityId, serverId),
                                 baseUrl = baseUrl,
                                 serverName = serverName,
-                                splitMultiServerIntoStructure = splitMultiServersIntoStructures()
+                                splitMultiServerIntoStructure = splitMultiServersIntoStructures
                             )
                         )?.let { control -> subscriber.onNext(control) }
                     }
@@ -412,7 +417,7 @@ class HaControlsProviderService : ControlsProviderService() {
                             authRequired = entityRequiresAuth(it.entityId, serverId),
                             baseUrl = baseUrl,
                             serverName = serverName,
-                            splitMultiServerIntoStructure = splitMultiServersIntoStructures()
+                            splitMultiServerIntoStructure = splitMultiServersIntoStructures
                         )
                     )
                     if (control != null) {
@@ -459,6 +464,7 @@ class HaControlsProviderService : ControlsProviderService() {
                 it
             }
         }
+        val splitMultiServersIntoStructures = splitMultiServersIntoStructures()
         entities.forEach {
             coroutineScope.launch {
                 val info = HaControlInfo(
@@ -469,7 +475,7 @@ class HaControlsProviderService : ControlsProviderService() {
                     area = getAreaForEntity(it.value.entityId, serverId),
                     authRequired = entityRequiresAuth(it.value.entityId, serverId),
                     baseUrl = baseUrl,
-                    splitMultiServerIntoStructure = splitMultiServersIntoStructures()
+                    splitMultiServerIntoStructure = splitMultiServersIntoStructures
                 )
                 val control = try {
                     domainToHaControl[it.key.split(".")[0]]?.createControl(
