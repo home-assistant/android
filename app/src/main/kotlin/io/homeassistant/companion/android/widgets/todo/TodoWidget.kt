@@ -26,7 +26,6 @@ import io.homeassistant.companion.android.common.R as RCommon
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
@@ -53,6 +52,12 @@ class TodoWidget : BaseWidgetProvider() {
         internal const val EXTRA_TOGGLE_TARGET_STATUS = "EXTRA_TOGGLE_TARGET_STATUS"
         internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
         internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
+
+        private data class TodoWidgetData(
+            val name: String?,
+            val itemsByStatus: Map<Boolean, List<GetTodosResponse.TodoItem>>,
+            val error: Boolean = false,
+        )
     }
 
     @Inject
@@ -89,12 +94,10 @@ class TodoWidget : BaseWidgetProvider() {
         appWidgetId: Int,
         entity: TodoWidgetEntity,
     ) {
-        val integrationRepository = serverManager.integrationRepository(entity.serverId)
-        val webSocketRepository = serverManager.webSocketRepository(entity.serverId)
-        val name = integrationRepository.getEntity(entity.entityId)?.friendlyName
-        val todos = webSocketRepository.getTodosGroupedByStatus(entity.entityId)
+        val data = readData(entity)
 
         setInitialVisibility()
+        setViewVisibility(R.id.widget_todo_error, if (data.error) View.VISIBLE else View.GONE)
         setClicks(context, entity)
 
         val textColor = if (entity.backgroundType == WidgetBackgroundType.TRANSPARENT) {
@@ -104,16 +107,16 @@ class TodoWidget : BaseWidgetProvider() {
             setInt(R.id.widgetLayout, "setBackgroundResource", R.drawable.widget_button_background)
             context.getAttribute(R.attr.colorWidgetOnBackground, ContextCompat.getColor(context, RCommon.color.colorWidgetButtonLabel))
         }
-        setTextViewText(R.id.widget_todo_title, name)
+        setTextViewText(R.id.widget_todo_title, data.name)
         setTextColor(R.id.widget_todo_title, textColor)
 
         setViewVisibility(
             R.id.widget_todo_empty_text,
-            if (todos.isEmpty()) View.VISIBLE else View.GONE,
+            if (data.itemsByStatus.isEmpty()) View.VISIBLE else View.GONE,
         )
         setViewVisibility(
             R.id.widget_todo_list,
-            if (todos.isNotEmpty()) View.VISIBLE else View.GONE,
+            if (data.itemsByStatus.isNotEmpty()) View.VISIBLE else View.GONE,
         )
         val remoteCollectionItems = RemoteViewsCompat.RemoteCollectionItems.Builder()
             .setViewTypeCount(2) // header and item types
@@ -121,13 +124,13 @@ class TodoWidget : BaseWidgetProvider() {
             .setupItems(
                 context = context,
                 header = RCommon.string.widget_todo_active,
-                items = todos[false].orEmpty(),
+                items = data.itemsByStatus[false].orEmpty(),
                 textColor = textColor,
             )
             .setupItems(
                 context = context,
                 header = RCommon.string.widget_todo_completed,
-                items = todos[true].orEmpty(),
+                items = data.itemsByStatus[true].orEmpty(),
                 textColor = textColor,
             )
             .build()
@@ -222,9 +225,55 @@ class TodoWidget : BaseWidgetProvider() {
         setViewVisibility(R.id.widget_overlay, View.GONE)
     }
 
-    private suspend fun WebSocketRepository.getTodosGroupedByStatus(entityId: String) =
-        getTodos(entityId)?.response?.get(entityId)?.items.orEmpty()
-            .groupBy { it.isComplete }
+    private suspend fun readData(entity: TodoWidgetEntity): TodoWidgetData {
+        val lastEntityName = entity.latestUpdateData?.entityName
+        return runCatching {
+            val integrationRepository = serverManager.integrationRepository(entity.serverId)
+            val webSocketRepository = serverManager.webSocketRepository(entity.serverId)
+            val name = integrationRepository.getEntity(entity.entityId)?.friendlyName ?: lastEntityName
+            val todos = webSocketRepository.getTodos(entity.entityId)?.response?.get(entity.entityId)?.items.orEmpty()
+
+            updateLatestData(entity.id, name, todos)
+            TodoWidgetData(
+                name = name,
+                itemsByStatus = todos.groupBy { it.isComplete },
+            )
+        }.getOrElse {
+            Timber.e(it, "Failed to read todos")
+            val lastTodos = entity.latestUpdateData?.todos?.map { todo ->
+                GetTodosResponse.TodoItem(
+                    uid = todo.uid,
+                    summary = todo.summary,
+                    status = todo.status,
+                )
+            }.orEmpty()
+            TodoWidgetData(
+                name = lastEntityName,
+                itemsByStatus = lastTodos.groupBy { it.isComplete },
+                error = true,
+            )
+        }
+    }
+
+    private suspend fun updateLatestData(
+        entityId: Int,
+        name: String?,
+        todos: List<GetTodosResponse.TodoItem>,
+    ) = runCatching {
+        todoWidgetDao.updateWidgetLastUpdate(
+            widgetId = entityId,
+            lastUpdateData = TodoWidgetEntity.LastUpdateData(
+                entityName = name,
+                todos = todos.map {
+                    TodoWidgetEntity.TodoItem(
+                        uid = it.uid,
+                        summary = it.summary,
+                        status = it.status,
+                    )
+                },
+            ),
+        )
+    }.onFailure { Timber.e(it, "Failed to update latest data") }
 
     private fun GetTodosResponse.TodoItem.todoItemView(context: Context, @ColorInt textColor: Int?) =
         RemoteViews(context.packageName, R.layout.widget_todo_item).apply {

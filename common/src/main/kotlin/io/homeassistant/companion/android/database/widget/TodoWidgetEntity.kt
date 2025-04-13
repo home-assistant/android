@@ -3,7 +3,11 @@ package io.homeassistant.companion.android.database.widget
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import io.homeassistant.companion.android.database.widget.converters.TodoLastUpdateDataConverter
 
+@TypeConverters(TodoLastUpdateDataConverter::class)
 @Entity(tableName = "todo_widget")
 data class TodoWidgetEntity(
     @PrimaryKey
@@ -17,5 +21,20 @@ data class TodoWidgetEntity(
     @ColumnInfo(name = "text_color")
     override val textColor: String? = null,
     @ColumnInfo(name = "show_completed", defaultValue = "true")
-    val showCompleted: Boolean = true
-) : WidgetEntity, ThemeableWidgetEntity
+    val showCompleted: Boolean = true,
+    @ColumnInfo(name = "latest_update_data") val latestUpdateData: LastUpdateData? = null,
+) : WidgetEntity, ThemeableWidgetEntity {
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class LastUpdateData(
+        val entityName: String?,
+        val todos: List<TodoItem>,
+    )
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class TodoItem(
+        val uid: String?,
+        val summary: String?,
+        val status: String?,
+    )
+}

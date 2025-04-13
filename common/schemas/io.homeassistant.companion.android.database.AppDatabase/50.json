@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 50,
-    "identityHash": "eede025e777461c313a8d757f5ba8554",
+    "identityHash": "cd63ba224299a1fd7cf37e0611d5b819",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -532,7 +532,7 @@
       },
       {
         "tableName": "todo_widget",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `show_completed` INTEGER NOT NULL DEFAULT true, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `show_completed` INTEGER NOT NULL DEFAULT true, `latest_update_data` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -572,6 +572,12 @@
             "affinity": "INTEGER",
             "notNull": true,
             "defaultValue": "true"
+          },
+          {
+            "fieldPath": "latestUpdateData",
+            "columnName": "latest_update_data",
+            "affinity": "TEXT",
+            "notNull": false
           }
         ],
         "primaryKey": {
@@ -1230,7 +1236,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'eede025e777461c313a8d757f5ba8554')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cd63ba224299a1fd7cf37e0611d5b819')"
     ]
   }
 }

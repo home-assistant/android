@@ -48,16 +48,10 @@ class TodoWidgetViewModel @Inject constructor(
                 .filter { entity -> entity.domain == "todo" }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500), emptyList())
     var selectedEntityId by mutableStateOf<String?>(null)
-        private set
-
     var selectedBackgroundType by mutableStateOf(WidgetBackgroundType.DAYNIGHT)
-        private set
     var textColorIndex by mutableIntStateOf(0)
-        private set
     var showCompletedState by mutableStateOf(true)
-        private set
     var isUpdateWidget by mutableStateOf(false)
-        private set
 
     fun onSetup(widgetId: Int, supportedTextColors: List<String>) {
         this.supportedTextColors = supportedTextColors
@@ -85,25 +79,9 @@ class TodoWidgetViewModel @Inject constructor(
         selectedEntityId = null
     }
 
-    fun setEntity(entityId: String?) {
-        selectedEntityId = entityId
-    }
-
     fun isValidSelection(): Boolean {
         return serverManager.getServer(selectedServerId) != null &&
             selectedEntityId in entities.value.map { it.entityId }
-    }
-
-    fun setBackgroundType(backgroundType: WidgetBackgroundType) {
-        this.selectedBackgroundType = backgroundType
-    }
-
-    fun setTextColor(colorIndex: Int) {
-        this.textColorIndex = colorIndex
-    }
-
-    fun setShowCompleted(completed: Boolean) {
-        showCompletedState = completed
     }
 
     fun prepareData(componentName: ComponentName): Intent? {
