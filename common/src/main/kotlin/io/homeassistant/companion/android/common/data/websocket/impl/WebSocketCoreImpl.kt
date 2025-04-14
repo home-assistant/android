@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.websocket.impl
 
+import androidx.annotation.VisibleForTesting
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.contains
 import com.fasterxml.jackson.module.kotlin.convertValue
@@ -41,6 +42,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.St
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import java.io.IOException
+import java.net.URL
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.resumeWithException
@@ -76,17 +78,33 @@ import okio.ByteString
 import okio.ByteString.Companion.toByteString
 import timber.log.Timber
 
+private const val WEBSOCKET_PATH = "api/websocket"
+
+private fun URL.toWebSocketURL(): String {
+    val protocol = when (protocol) {
+        "https" -> "wss"
+        "http" -> "ws"
+        else -> throw IllegalArgumentException("Unsupported protocol: $protocol")
+    }
+    val path = if (path.endsWith("/")) {
+        "$path$WEBSOCKET_PATH"
+    } else {
+        "$path/$WEBSOCKET_PATH"
+    }
+    return "$protocol://$path"
+}
+
 internal class WebSocketCoreImpl(
     private val okHttpClient: OkHttpClient,
     private val serverManager: ServerManager,
     private val serverId: Int,
+    private val wsScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job() + CoroutineExceptionHandler { ctx, err -> Timber.e(err, "Uncaught exception in WebSocketCoreImpl") }),
+    // We need a dedicated scope in test to control job that are in background
+    private val backgroundScope: CoroutineScope = wsScope,
 ) : WebSocketCore, WebSocketListener() {
 
-    private val coroutineExceptionHandler = CoroutineExceptionHandler { ctx, err -> Timber.e(err, "Uncaught exception in WebSocketCoreImpl") }
-
-    private val ioScope = CoroutineScope(Dispatchers.IO + Job() + coroutineExceptionHandler)
-
-    private val activeMessages = Collections.synchronizedMap(mutableMapOf<Long, WebSocketRequest>())
+    @VisibleForTesting
+    val activeMessages: MutableMap<Long, WebSocketRequest> = Collections.synchronizedMap(mutableMapOf<Long, WebSocketRequest>())
 
     // Each message that we send needs a unique ID to match it to the answer
     private val id = AtomicLong(1)
@@ -108,7 +126,7 @@ internal class WebSocketCoreImpl(
     private val eventSubscriptionMutex = Mutex()
 
     private val messageQueue = Channel<Job>(capacity = Channel.UNLIMITED).apply {
-        ioScope.launch {
+        backgroundScope.launch {
             consumeEach { it.join() } // Run a job, and wait for it to complete before starting the next one
         }
     }
@@ -127,14 +145,9 @@ internal class WebSocketCoreImpl(
                 return false
             }
 
-            val urlString = url.toString()
-                .replace("https://", "wss://")
-                .replace("http://", "ws://")
-                .plus("api/websocket")
-
             try {
                 connection = okHttpClient.newWebSocket(
-                    Request.Builder().url(urlString).header(USER_AGENT, USER_AGENT_STRING).build(),
+                    Request.Builder().url(url.toWebSocketURL()).header(USER_AGENT, USER_AGENT_STRING).build(),
                     this,
                 ).also {
                     // Preemptively send auth
@@ -189,24 +202,37 @@ internal class WebSocketCoreImpl(
     override suspend fun sendMessage(request: WebSocketRequest): SocketResponse? {
         return if (connect()) {
             withTimeoutOrNull(request.timeout) {
+                var requestId: Long? = null
                 try {
                     suspendCancellableCoroutine { cont ->
                         // Lock on the connection so that we fully send before allowing another send.
                         // This should prevent out of order errors.
                         connection?.let {
                             synchronized(it) {
-                                val requestId = id.getAndIncrement()
+                                requestId = id.getAndIncrement()
                                 val outbound = request.message.plus("id" to requestId)
                                 Timber.d("Sending message $requestId: $outbound")
                                 activeMessages[requestId] = request.apply {
                                     onResponse = cont
                                 }
-                                connection?.send(webSocketJsonMapper.writeValueAsString(outbound))
+                                // TODO CRITICAL #1 stay on active message if send fails (returns false)
+                                // TODO Should we remove the active message on false?
+                                // If we don't have any answer the message stays in the activeMessage and it grows !!!!
+                                val result = connection?.send(webSocketJsonMapper.writeValueAsString(outbound))
+                                // if (result == false) {
+                                //     activeMessages.remove(requestId)
+                                // }
                                 Timber.d("Message number $requestId sent")
                             }
                         }
-                    }
+                    } // TODO What can throw above? It seems that the only thing that throw is the timeout
                 } catch (e: Exception) {
+                    // TODO CRITICAL #2 stay in active message on timeout
+                    // TODO remove message on timeout
+                    // Get ID try to remove message. It might not be in the activeMessage
+                    // requestId?.let {
+                    //     activeMessages.remove(it)
+                    // }
                     Timber.e(e, "Exception while sending message")
                     null
                 }
@@ -219,7 +245,10 @@ internal class WebSocketCoreImpl(
 
     override suspend fun sendBytes(data: ByteArray): Boolean? {
         return if (connect()) {
-            withTimeoutOrNull(30.seconds) {
+            // TODO Timeout can never happen here and it should be removed.
+            // since send returns immediately and we can't timeout a synchronized call
+            // but we should check the return of send
+            withTimeoutOrNull(3.seconds) {
                 try {
                     connection?.let {
                         synchronized(it) {
@@ -260,7 +289,7 @@ internal class WebSocketCoreImpl(
                         }
                     }
                     awaitClose {
-                        ioScope.launch {
+                        wsScope.launch {
                             var subscription: Long? = null
                             eventSubscriptionMutex.withLock {
                                 synchronized(activeMessages) {
@@ -289,7 +318,7 @@ internal class WebSocketCoreImpl(
                             }
                         }
                     }
-                }.shareIn(ioScope, SharingStarted.WhileSubscribed(timeout.inWholeMilliseconds, 0))
+                }.shareIn(backgroundScope, SharingStarted.WhileSubscribed(timeout.inWholeMilliseconds, 0))
 
                 val webSocketRequest = WebSocketRequest(
                     message = subscribeMessage,
@@ -308,6 +337,7 @@ internal class WebSocketCoreImpl(
                 }
             }
         }
+        // TODO we could avoid this by just returning the flow to avoid another synchronized block
         return synchronized(activeMessages) { activeMessages.values.find { it.message == subscribeMessage }?.eventFlow as? Flow<T> }
     }
 
@@ -334,7 +364,7 @@ internal class WebSocketCoreImpl(
         messages.forEach { message ->
             Timber.d("Message number ${message.id} received")
             val success = messageQueue.trySend(
-                ioScope.launch(start = CoroutineStart.LAZY) {
+                wsScope.launch(start = CoroutineStart.LAZY) {
                     when (message.type) {
                         "auth_required" -> Timber.d("Auth Requested")
                         "auth_ok" -> handleAuthComplete(true, message.haVersion)
@@ -395,10 +425,11 @@ internal class WebSocketCoreImpl(
             if (it.eventFlow == null) {
                 activeMessages.remove(id)
             }
-        }
+        } ?: { Timber.w("Response for message not in activeMessage id($id) skipping") }
     }
 
     private suspend fun handleEvent(response: SocketResponse) {
+        // TODO this probably should be in a separate class to be properly tested
         val subscriptionId = response.id
         activeMessages[subscriptionId]?.let { messageData ->
             val subscriptionType = messageData.message["type"]
@@ -494,7 +525,7 @@ internal class WebSocketCoreImpl(
     }
 
     private fun handleClosingSocket() {
-        ioScope.launch {
+        wsScope.launch {
             connectedMutex.withLock {
                 connected = CompletableDeferred()
                 connection = null
@@ -520,14 +551,22 @@ internal class WebSocketCoreImpl(
         }
         // If we still have flows flowing
         val hasFlowMessages = synchronized(activeMessages) { activeMessages.any { it.value.eventFlow != null } }
-        if (hasFlowMessages && ioScope.isActive) {
-            ioScope.launch {
+        if (hasFlowMessages && wsScope.isActive) {
+            wsScope.launch {
+                // TODO Why a delay ? and why 10s I guess you want to wait for the logic above to finish but 10s is quite arbitrary
+                // You could wait for the job above to finish instead
                 delay(10.seconds)
                 if (connect()) {
                     Timber.d("Resubscribing to active subscriptions...")
+                    // TODO The whole forEach is not synchronized because it sendMessage within but we modify the map while iterating on it
+                    // It never happened because of CRITICAL #2 but it might throw when we are going to remove no?
                     synchronized(activeMessages) {
                         activeMessages.filterValues { it.eventFlow != null }.entries
                     }.forEach { (oldId, oldMessage) ->
+                        // TODO CRITICAL #3 if I'm not wrong we should set back this field to false but I think we should probably create new message instead
+                        // otherwise the two messages stay in activeMessage list (new and old)
+                        // oldMessage.hasContinuationBeenInvoked.set(false)
+
                         val response = sendMessage(oldMessage)
                         if (response == null || response.success != true) {
                             Timber.e("Issue re-registering subscription with ${oldMessage.message}")
@@ -536,6 +575,9 @@ internal class WebSocketCoreImpl(
                             activeMessages.remove(oldId)
                         }
                     }
+                } else {
+                    // TODO in that case what will happen to the active messages?
+                    Timber.w("Unable to reconnect cannot resubscribe to active subscriptions")
                 }
             }
         }
