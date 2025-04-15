@@ -9,6 +9,9 @@ inputs:
     description: When 'true', all caching is disabled. No entries will be written to or read from the cache.
     required: false
     default: "false"
+  cache-encryption-key:
+    description: "The key used to encrypt the cache. This is a secret and should not be exposed."
+    required: true
 runs:
   using: "composite"
   steps:
@@ -30,4 +33,4 @@ runs:
       uses: gradle/actions/setup-gradle@v4
       with:
         cache-disabled: ${{ inputs.cache-disabled == 'true'}}
-        cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+        cache-encryption-key: ${{ inputs.cache-encryption-key}}
