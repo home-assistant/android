@@ -17,15 +17,14 @@ import kotlinx.coroutines.flow.SharedFlow
  *                  Defaults to 30 seconds.
  * @param eventFlow Flow (using callbackFlow) that will emit events for a subscription, else `null`
  * @param onEvent Channel that can receive events for a subscription, else `null`
- * @param onResponse Continuation for the initial response to this message. Don't set this when
- * creating this class, it will be set when a message is sent on the websocket.
  */
 data class WebSocketRequest(
     val message: Map<*, *>,
     val timeout: Duration = 30.seconds,
     val eventFlow: SharedFlow<Any>? = null,
     val onEvent: Channel<Any>? = null,
-    var onResponse: CancellableContinuation<SocketResponse>? = null
 ) {
+    // These variables are set when a message is sent on the websocket.
+    var onResponse: CancellableContinuation<SocketResponse>? = null
     val hasContinuationBeenInvoked = AtomicBoolean(false)
 }
