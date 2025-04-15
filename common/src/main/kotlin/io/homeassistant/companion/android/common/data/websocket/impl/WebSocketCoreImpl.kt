@@ -43,7 +43,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Te
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import java.io.IOException
 import java.net.URL
-import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.resumeWithException
 import kotlin.time.Duration.Companion.seconds
@@ -54,11 +54,10 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.consumeAsFlow
@@ -88,7 +87,7 @@ internal class WebSocketCoreImpl(
 ) : WebSocketCore, WebSocketListener() {
 
     @VisibleForTesting
-    val activeMessages: MutableMap<Long, WebSocketRequest> = Collections.synchronizedMap(mutableMapOf<Long, WebSocketRequest>())
+    val activeMessages = ConcurrentHashMap<Long, WebSocketRequest>()
 
     // Each message that we send needs a unique ID to match it to the answer
     private val id = AtomicLong(1)
@@ -199,25 +198,23 @@ internal class WebSocketCoreImpl(
                                 activeMessages[requestId] = request.apply {
                                     onResponse = cont
                                 }
-                                // TODO CRITICAL #1 stay on active message if send fails (returns false)
-                                // TODO Should we remove the active message on false?
-                                // If we don't have any answer the message stays in the activeMessage and it grows !!!!
                                 val result = connection?.send(webSocketJsonMapper.writeValueAsString(outbound))
-                                // if (result == false) {
-                                //     activeMessages.remove(requestId)
-                                // }
-                                Timber.d("Message number $requestId sent")
+                                if (result == false) {
+                                    // Something got wrong when sending the message we won't get any answer let's stop there
+                                    cont.resumeWithException(IOException("Error sending message"))
+                                } else {
+                                    Timber.d("Message number $requestId sent awaiting answer from WebSocket")
+                                }
                             }
                         }
-                    } // TODO What can throw above? It seems that the only thing that throw is the timeout
+                    }
                 } catch (e: Exception) {
-                    // TODO CRITICAL #2 stay in active message on timeout
-                    // TODO remove message on timeout
-                    // Get ID try to remove message. It might not be in the activeMessage
-                    // requestId?.let {
-                    //     activeMessages.remove(it)
-                    // }
+                    // It can be either IOException or CancellationException
+                    // In any case we remove the message from the activeMessages to not keep it forever since it won't get remove otherwise.
                     Timber.e(e, "Exception while sending message")
+                    requestId?.let {
+                        activeMessages.remove(it)
+                    }
                     null
                 }
             }
@@ -229,19 +226,9 @@ internal class WebSocketCoreImpl(
 
     override suspend fun sendBytes(data: ByteArray): Boolean? {
         return if (connect()) {
-            // TODO Timeout can never happen here and it should be removed.
-            // since send returns immediately and we can't timeout a synchronized call
-            // but we should check the return of send
-            withTimeoutOrNull(3.seconds) {
-                try {
-                    connection?.let {
-                        synchronized(it) {
-                            it.send(data.toByteString())
-                        }
-                    }
-                } catch (e: Exception) {
-                    Timber.e(e, "Exception while sending bytes")
-                    null
+            connection?.let {
+                synchronized(it) {
+                    it.send(data.toByteString())
                 }
             }
         } else {
@@ -259,70 +246,12 @@ internal class WebSocketCoreImpl(
             "type" to type,
         ).plus(data)
 
-        eventSubscriptionMutex.withLock {
-            val isNewMessage = synchronized(activeMessages) {
-                activeMessages.values.none { it.message == subscribeMessage }
-            }
-            if (isNewMessage) {
-                val channel = Channel<Any>(capacity = Channel.BUFFERED)
-                val flow = callbackFlow<T> {
-                    val producer = this as ProducerScope<Any>
-                    launch {
-                        channel.consumeAsFlow().collect {
-                            producer.send(it)
-                        }
-                    }
-                    awaitClose {
-                        wsScope.launch {
-                            var subscription: Long? = null
-                            eventSubscriptionMutex.withLock {
-                                synchronized(activeMessages) {
-                                    activeMessages.entries.firstOrNull { it.value.message == subscribeMessage }
-                                        ?.let {
-                                            subscription = it.key
-                                            channel.close()
-                                            activeMessages.remove(subscription)
-                                        }
-                                }
-                            }
-                            subscription?.let {
-                                Timber.d("Unsubscribing from $type with data $data")
-                                sendMessage(
-                                    mapOf(
-                                        "type" to "unsubscribe_events",
-                                        "subscription" to it,
-                                    ),
-                                )
-                            }
-                            if (activeMessages.isEmpty()) {
-                                Timber.i("No more subscriptions, closing connection.")
-                                connection?.close(1001, "Done listening to subscriptions.")
-                            } else {
-                                Timber.i("Still ${activeMessages.size} messages in the queue, not closing connection.")
-                            }
-                        }
-                    }
-                }.shareIn(backgroundScope, SharingStarted.WhileSubscribed(timeout.inWholeMilliseconds, 0))
-
-                val webSocketRequest = WebSocketRequest(
-                    message = subscribeMessage,
-                    eventFlow = flow,
-                    onEvent = channel,
-                )
-                val response = sendMessage(webSocketRequest)
-                if (response == null || response.success != true) {
-                    Timber.e("Unable to subscribe to $type with data $data")
-                    synchronized(activeMessages) {
-                        activeMessages.entries
-                            .firstOrNull { it.value.message == subscribeMessage }
-                            ?.let { activeMessages.remove(it.key) }
-                    }
-                    return null
-                }
-            }
+        return eventSubscriptionMutex.withLock<Flow<T>?> {
+            ( // Check for existing subscription before creating a new one
+                activeMessages.entries.firstOrNull { it.value.message == subscribeMessage }?.value?.eventFlow
+                    ?: createSubscriptionFlow<T>(subscribeMessage, timeout)
+                ) as? Flow<T>
         }
-        // TODO we could avoid this by just returning the flow to avoid another synchronized block
-        return synchronized(activeMessages) { activeMessages.values.find { it.message == subscribeMessage }?.eventFlow as? Flow<T> }
     }
 
     override fun shutdown() {
@@ -383,6 +312,60 @@ internal class WebSocketCoreImpl(
             connected.completeExceptionally(t)
         }
         handleClosingSocket()
+    }
+
+    private suspend fun <T> createSubscriptionFlow(
+        subscribeMessage: Map<Any, Any>,
+        timeout: kotlin.time.Duration,
+    ): Flow<T>? {
+        val channel = Channel<T>(capacity = Channel.BUFFERED)
+        val flow = callbackFlow<T> {
+            launch { channel.consumeAsFlow().collect(::send) }
+            awaitClose {
+                wsScope.launch {
+                    var subscription: Long? = null
+                    eventSubscriptionMutex.withLock {
+                        activeMessages.entries.firstOrNull { it.value.message == subscribeMessage }
+                            ?.let {
+                                subscription = it.key
+                                channel.close()
+                                activeMessages.remove(subscription)
+                            }
+                    }
+                    subscription?.let {
+                        Timber.d("Unsubscribing from $subscribeMessage")
+                        sendMessage(
+                            mapOf(
+                                "type" to "unsubscribe_events",
+                                "subscription" to it,
+                            ),
+                        )
+                    }
+                    if (activeMessages.isEmpty()) {
+                        Timber.i("No more subscriptions, closing connection.")
+                        connection?.close(1001, "Done listening to subscriptions.")
+                    } else {
+                        Timber.i("Still ${activeMessages.size} messages in the queue, not closing connection.")
+                    }
+                }
+            }
+        }.shareIn(backgroundScope, SharingStarted.WhileSubscribed(timeout.inWholeMilliseconds, 0))
+
+        val webSocketRequest = WebSocketRequest(
+            message = subscribeMessage,
+            eventFlow = flow as SharedFlow<Any>?,
+            onEvent = channel as Channel<Any>?,
+        )
+        val response = sendMessage(webSocketRequest)
+        if (response == null || response.success != true) {
+            Timber.e("Unable to subscribe to $subscribeMessage")
+            activeMessages.entries
+                .firstOrNull { it.value.message == subscribeMessage }
+                ?.let { activeMessages.remove(it.key) }
+            return null
+        } else {
+            return flow
+        }
     }
 
     private fun handleAuthComplete(successful: Boolean, haVersion: String?) {
@@ -509,7 +492,7 @@ internal class WebSocketCoreImpl(
     }
 
     private fun handleClosingSocket() {
-        wsScope.launch {
+        val cancelPendingMessagesJob = wsScope.launch {
             connectedMutex.withLock {
                 connected = CompletableDeferred()
                 connection = null
@@ -517,48 +500,42 @@ internal class WebSocketCoreImpl(
                 if (connectionState != WebSocketState.CLOSED_AUTH) {
                     connectionState = WebSocketState.CLOSED_OTHER
                 }
-                synchronized(activeMessages) {
-                    activeMessages
-                        .filterValues { it.eventFlow == null }
-                        .forEach {
-                            it.value.onResponse?.let { cont ->
-                                if (!it.value.hasContinuationBeenInvoked.getAndSet(true) && cont.isActive) {
-                                    cont.resumeWithException(IOException())
-                                } else {
-                                    Timber.w("Response continuation has already been invoked, skipping IOException")
-                                }
+                activeMessages
+                    .filterValues { it.eventFlow == null }
+                    .forEach {
+                        it.value.onResponse?.let { cont ->
+                            if (!it.value.hasContinuationBeenInvoked.getAndSet(true) && cont.isActive) {
+                                cont.resumeWithException(IOException("Connection closed"))
+                            } else {
+                                Timber.w("Response continuation has already been invoked, skipping IOException")
                             }
-                            activeMessages.remove(it.key)
                         }
-                }
+                        activeMessages.remove(it.key)
+                    }
             }
         }
         // If we still have flows flowing
-        val hasFlowMessages = synchronized(activeMessages) { activeMessages.any { it.value.eventFlow != null } }
+        val hasFlowMessages = activeMessages.any { it.value.eventFlow != null }
         if (hasFlowMessages && wsScope.isActive) {
             wsScope.launch {
-                // TODO Why a delay ? and why 10s I guess you want to wait for the logic above to finish but 10s is quite arbitrary
-                // You could wait for the job above to finish instead
-                delay(10.seconds)
+                cancelPendingMessagesJob.join()
                 if (connect()) {
                     Timber.d("Resubscribing to active subscriptions...")
-                    // TODO The whole forEach is not synchronized because it sendMessage within but we modify the map while iterating on it
-                    // It never happened because of CRITICAL #2 but it might throw when we are going to remove no?
-                    synchronized(activeMessages) {
-                        activeMessages.filterValues { it.eventFlow != null }.entries
-                    }.forEach { (oldId, oldMessage) ->
-                        // TODO CRITICAL #3 if I'm not wrong we should set back this field to false but I think we should probably create new message instead
-                        // otherwise the two messages stay in activeMessage list (new and old)
-                        // oldMessage.hasContinuationBeenInvoked.set(false)
-
-                        val response = sendMessage(oldMessage)
-                        if (response == null || response.success != true) {
-                            Timber.e("Issue re-registering subscription with ${oldMessage.message}")
-                        } else {
-                            // sendMessage will have created a new item for this subscription
+                    activeMessages.filterValues { it.eventFlow != null }.entries
+                        .forEach { (oldId, oldMessage) ->
                             activeMessages.remove(oldId)
+
+                            val newMessage = WebSocketRequest(
+                                message = oldMessage.message,
+                                eventFlow = oldMessage.eventFlow,
+                                onEvent = oldMessage.onEvent,
+                            )
+
+                            val response = sendMessage(newMessage)
+                            if (response == null || response.success != true) {
+                                Timber.e("Issue re-registering subscription with ${oldMessage.message}")
+                            }
                         }
-                    }
                 } else {
                     // TODO in that case what will happen to the active messages?
                     Timber.w("Unable to reconnect cannot resubscribe to active subscriptions")
