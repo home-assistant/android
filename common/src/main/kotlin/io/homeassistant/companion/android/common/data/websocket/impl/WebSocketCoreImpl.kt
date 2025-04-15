@@ -73,7 +73,7 @@ internal class WebSocketCoreImpl(
     private val serverId: Int,
 ) : WebSocketCore, WebSocketListener() {
 
-    private val coroutineExceptionHandler = CoroutineExceptionHandler { ctx, err -> Timber.e(err, "Uncaught exception in WebSocketRepositoryImpl") }
+    private val coroutineExceptionHandler = CoroutineExceptionHandler { ctx, err -> Timber.e(err, "Uncaught exception in WebSocketCoreImpl") }
 
     private val ioScope = CoroutineScope(Dispatchers.IO + Job() + coroutineExceptionHandler)
 
@@ -87,10 +87,14 @@ internal class WebSocketCoreImpl(
     private val connectedMutex = Mutex()
 
     /**
-     * A [CompletableDeferred] that completes with `true` when the WebSocket connection is
-     * established and authenticated successfully, or with an [Exception] when the connection.
+     * A [CompletableDeferred] that signals the establishment and authentication of a WebSocket connection.
      *
-     * A new instance will be created when the connection is close, so it can be reuse.
+     * This deferred value completes with `true` upon successful connection and authentication.
+     * It completes with an [Exception] if [onFailure] is invoked.
+     * It completes with an [AuthorizationException] if the authentication fail.
+     *
+     * A new instance is created when the connection closed. It is not when the authentication fail because it
+     * means it cannot recover without new credentials.
      */
     private var connected = CompletableDeferred<Boolean>()
     private val eventSubscriptionMutex = Mutex()
@@ -225,18 +229,6 @@ internal class WebSocketCoreImpl(
         }
     }
 
-    /**
-     * Start a subscription for events on the websocket connection and get a Flow for listening to
-     * new messages. When there are no more listeners, the subscription will automatically be cancelled
-     * using `unsubscribe_events`. If the subscription already exists, the existing Flow is returned.
-     *
-     * @param type value for the `type` key in the subscription message, for example `subscribe_events`
-     * @param data a key/value map of additional data to be included in the subscription message, for
-     *             example the `event_type` + value when subscribing with `subscribe_events`
-     * @param timeout timeout until the subscription is ended after the flow is no longer collected
-     * @return a Flow that will emit messages delivered to this subscription, or `null` if an error
-     *         occurred
-     */
     override suspend fun <T : Any> subscribeTo(
         type: String,
         data: Map<Any, Any>,
