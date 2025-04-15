@@ -142,6 +142,9 @@ jobs:
         with:
           mock-google-services: "true"
 
+      - name: Check version file creation
+        run: ./gradlew versionFile
+
       - name: Build Debug APK
         run: |
           ./gradlew :common:assemble :app:assembleDebug :wear:assembleDebug :automotive:assembleDebug
