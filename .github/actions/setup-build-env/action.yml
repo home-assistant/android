@@ -30,3 +30,4 @@ runs:
       uses: gradle/actions/setup-gradle@v4
       with:
         cache-disabled: ${{ inputs.cache-disabled == 'true'}}
+        cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
