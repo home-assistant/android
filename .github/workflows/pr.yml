@@ -84,6 +84,7 @@ jobs:
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
+          cache-disabled: "true"
 
       - name: Validate Lint
         run: ./gradlew lint --continue
