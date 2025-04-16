@@ -281,8 +281,7 @@ class HaControlsProviderService : ControlsProviderService() {
                         systemId = it,
                         entityId = entityId,
                         serverId = serverId,
-                        area = getAreaForEntity(entity.entityId, serverId),
-                        splitMultiServerIntoStructure = splitMultiServersIntoStructures
+                        area = getAreaForEntity(entity.entityId, serverId)
                     )
                 )?.let { control -> subscriber.onNext(control) }
             }
