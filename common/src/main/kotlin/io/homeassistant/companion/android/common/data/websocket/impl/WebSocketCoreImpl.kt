@@ -47,6 +47,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -126,7 +127,7 @@ internal class WebSocketCoreImpl(
                 ).also {
                     // Preemptively send auth
                     connectionState = WebSocketState.AUTHENTICATING
-                    it.send(
+                    val result = it.send(
                         webSocketMapper.writeValueAsString(
                             mapOf(
                                 "type" to "auth",
@@ -134,6 +135,9 @@ internal class WebSocketCoreImpl(
                             ),
                         ),
                     )
+                    if (!result) {
+                        return false
+                    }
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Unable to connect")
@@ -154,9 +158,14 @@ internal class WebSocketCoreImpl(
                                 ),
                             )
                             Timber.d("Sending message ${supportedFeaturesMessage["id"]}: $supportedFeaturesMessage")
-                            it.send(
+                            val result = it.send(
                                 webSocketMapper.writeValueAsString(supportedFeaturesMessage),
                             )
+                            if (!result) {
+                                // Something got wrong when sending the message but we should not change the status of the
+                                // connection here. If an error occur in the WS it will be handled in the onFailure.
+                                Timber.e("Unable to send supported features message")
+                            }
                         }
                     }
                     didConnect
@@ -510,6 +519,7 @@ internal class WebSocketCoreImpl(
         if (hasFlowMessages && wsScope.isActive) {
             wsScope.launch {
                 cancelPendingMessagesJob.join()
+                delay(10.seconds)
                 if (connect()) {
                     Timber.d("Resubscribing to active subscriptions...")
                     activeMessages.filterValues { it.eventFlow != null }.entries
