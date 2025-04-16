@@ -21,11 +21,12 @@ blurView = "version-2.0.6"
 car-versions = "1.4.0"
 changeLog = "3.7.1"
 community-material-typeface = "7.0.96.1-kotlin"
-compose-bom = "2025.03.01"
+compose-bom = "2025.04.00"
 connectClient = "1.1.0-beta01"
 constraintlayout = "2.2.1"
 coreKtx = "1.15.0"
 core-splashscreen = "1.1.0-rc01"
+core-remoteviews = "1.1.0"
 cronet-embedded = "119.6045.31"
 emojiJava = "5.1.1"
 firebase-bom = "33.12.0"
@@ -71,7 +72,7 @@ tools-desugar-jdk-libs = "2.1.5"
 watchfaceComplicationsDataSourceKtx = "1.2.1"
 wear = "1.3.0"
 wear-compose-foundation = "1.4.1"
-wear-compose-material = "1.0.0-alpha35"
+wear-compose-material = "1.0.0-alpha36"
 wear-protolayout = "1.2.1"
 wear-tiles = "1.4.1"
 wear-tooling = "1.0.0"
@@ -146,6 +147,7 @@ compose-ui-test = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 compose-ui-testManifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "core-splashscreen" }
+core-remoteviews = { module = "androidx.core:core-remoteviews", version.ref = "core-remoteviews" }
 cronet-embedded = { module = "org.chromium.net:cronet-embedded", version.ref = "cronet-embedded" }
 emojiJava = { module = "com.vdurmont:emoji-java", version.ref = "emojiJava" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
