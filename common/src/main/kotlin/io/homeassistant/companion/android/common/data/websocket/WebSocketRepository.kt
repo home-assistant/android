@@ -28,7 +28,6 @@ import javax.inject.Provider
 import kotlinx.coroutines.flow.Flow
 
 interface WebSocketRepository {
-    // TODO Should not return ? but instead throw an exception?
     fun getConnectionState(): WebSocketState?
     fun shutdown()
     suspend fun sendPing(): Boolean

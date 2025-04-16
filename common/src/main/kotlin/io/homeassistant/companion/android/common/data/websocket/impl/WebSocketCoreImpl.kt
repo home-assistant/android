@@ -93,8 +93,7 @@ internal class WebSocketCoreImpl(
      * It completes with an [Exception] if [onFailure] is invoked.
      * It completes with an [AuthorizationException] if the authentication fail.
      *
-     * A new instance is created when the connection closed. It is not when the authentication fail because it
-     * means it cannot recover without new credentials.
+     * A new instance is created when the connection closed, so it can be reused to reconnect.
      */
     private var connected = CompletableDeferred<Boolean>()
     private val eventSubscriptionMutex = Mutex()

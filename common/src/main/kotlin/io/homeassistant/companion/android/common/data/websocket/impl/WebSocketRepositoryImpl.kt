@@ -52,7 +52,6 @@ class WebSocketRepositoryImpl internal constructor(
         return webSocketCore.shutdown()
     }
 
-    // TODO All of this should be moved and injected through a delegate
     override suspend fun sendPing(): Boolean {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
