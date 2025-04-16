@@ -29,6 +29,7 @@ jobs:
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Update lockfiles
@@ -59,6 +60,7 @@ jobs:
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       # Since `build-logic` is added with `includeBuild` we have to call ktlint explicitly on `:convention`.
@@ -80,6 +82,7 @@ jobs:
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Validate Lint
@@ -106,6 +109,7 @@ jobs:
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Validate Screenshot Previews
@@ -140,7 +144,11 @@ jobs:
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
+
+      - name: Check version file creation
+        run: ./gradlew versionFile
 
       - name: Build Debug APK
         run: |
@@ -170,6 +178,7 @@ jobs:
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Run test
@@ -241,6 +250,7 @@ jobs:
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Enable KVM group perms
