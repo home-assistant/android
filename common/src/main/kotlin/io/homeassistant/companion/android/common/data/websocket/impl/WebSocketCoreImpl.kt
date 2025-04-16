@@ -69,22 +69,6 @@ import okio.ByteString
 import okio.ByteString.Companion.toByteString
 import timber.log.Timber
 
-private const val WEBSOCKET_PATH = "api/websocket"
-
-private fun URL.toWebSocketURL(): String {
-    val protocol = when (protocol) {
-        "https" -> "wss"
-        "http" -> "ws"
-        else -> throw IllegalArgumentException("Unsupported protocol: $protocol")
-    }
-    val path = if (path.endsWith("/")) {
-        "$path$WEBSOCKET_PATH"
-    } else {
-        "$path/$WEBSOCKET_PATH"
-    }
-    return "$protocol://$path"
-}
-
 internal class WebSocketCoreImpl(
     private val okHttpClient: OkHttpClient,
     private val serverManager: ServerManager,
@@ -572,5 +556,12 @@ internal class WebSocketCoreImpl(
                 }
             }
         }
+    }
+
+    private fun URL.toWebSocketURL(): String {
+        return toString()
+            .replace("https://", "wss://")
+            .replace("http://", "ws://")
+            .plus("api/websocket")
     }
 }
