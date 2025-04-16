@@ -337,6 +337,9 @@ google-services.json
 *.keystore
 version.txt
 
+## Kotlin daemon
+.kotlin
+
 ## Make sure our translation downloads don't make our repo dirty when building.
 strings.zip
 common/src/main/res/*/strings.xml
