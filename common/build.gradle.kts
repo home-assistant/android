@@ -60,8 +60,10 @@ dependencies {
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.junit.jupiter)
+    testImplementation(libs.junit.jupiter.params)
     testImplementation(libs.junit.vintage.engine)
     testImplementation(libs.mockk)
+    testImplementation(libs.turbine)
     testImplementation(libs.robolectric)
     testRuntimeOnly(libs.junit.platform.launcher)
 
