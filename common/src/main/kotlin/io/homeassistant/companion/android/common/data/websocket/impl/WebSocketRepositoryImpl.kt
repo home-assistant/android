@@ -73,7 +73,7 @@ class WebSocketRepositoryImpl internal constructor(
     }
 
     override suspend fun getTodos(entityId: String): GetTodosResponse? {
-        val response = sendMessage(
+        val response = webSocketCore.sendMessage(
             mapOf(
                 "type" to "call_service",
                 "domain" to "todo",
@@ -88,7 +88,7 @@ class WebSocketRepositoryImpl internal constructor(
     }
 
     override suspend fun updateTodo(entityId: String, todoItem: String, newName: String?, status: String?): Boolean {
-        val response = sendMessage(
+        val response = webSocketCore.sendMessage(
             mapOf(
                 "type" to "call_service",
                 "domain" to "todo",
