@@ -72,6 +72,8 @@ import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
+import io.homeassistant.companion.android.database.widget.TodoWidgetDao
+import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundTypeConverter
 import io.homeassistant.companion.android.database.widget.WidgetTapActionConverter
 import java.util.UUID
@@ -88,6 +90,7 @@ import timber.log.Timber
         CameraWidgetEntity::class,
         MediaPlayerControlsWidgetEntity::class,
         StaticWidgetEntity::class,
+        TodoWidgetEntity::class,
         TemplateWidgetEntity::class,
         NotificationItem::class,
         LocationHistoryItem::class,
@@ -100,7 +103,7 @@ import timber.log.Timber
         Server::class,
         Setting::class
     ],
-    version = 49,
+    version = 50,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -125,7 +128,8 @@ import timber.log.Timber
         AutoMigration(from = 45, to = 46),
         AutoMigration(from = 46, to = 47),
         AutoMigration(from = 47, to = 48),
-        AutoMigration(from = 48, to = 49)
+        AutoMigration(from = 48, to = 49),
+        AutoMigration(from = 49, to = 50),
     ]
 )
 @TypeConverters(
@@ -143,6 +147,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cameraWidgetDao(): CameraWidgetDao
     abstract fun mediaPlayCtrlWidgetDao(): MediaPlayerControlsWidgetDao
     abstract fun staticWidgetDao(): StaticWidgetDao
+    abstract fun todoWidgetDao(): TodoWidgetDao
     abstract fun templateWidgetDao(): TemplateWidgetDao
     abstract fun notificationDao(): NotificationDao
     abstract fun locationHistoryDao(): LocationHistoryDao
