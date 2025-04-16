@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Do
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
@@ -49,6 +50,9 @@ interface WebSocketRepository {
     suspend fun getTemplateUpdates(template: String): Flow<TemplateUpdatedEvent>?
     suspend fun getNotifications(): Flow<Map<String, Any>>?
     suspend fun ackNotification(confirmId: String): Boolean
+
+    suspend fun getTodos(entityId: String): GetTodosResponse?
+    suspend fun updateTodo(entityId: String, todoItem: String, newName: String?, status: String?): Boolean
 
     /**
      * Request the server to add a Matter device to the network and commission it.
