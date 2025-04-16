@@ -65,6 +65,7 @@ reorderable = "0.9.6"
 retrofit = "2.9.0"
 robolectric = "4.14.1"
 room = "2.7.0"
+runtimeLint = "1.8.0-rc03"
 screenshot = "0.0.1-alpha09"
 sentry-android = "8.7.0"
 timber = "5.0.1"
@@ -117,6 +118,7 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
+androidx-runtime-lint = { module = "androidx.compose.runtime:runtime-lint", version.ref = "runtimeLint" }
 androidx-watchface-complications-data-source-ktx = { module = "androidx.wear.watchface:watchface-complications-data-source-ktx", version.ref = "watchfaceComplicationsDataSourceKtx" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }

@@ -66,4 +66,6 @@ dependencies {
     testRuntimeOnly(libs.junit.platform.launcher)
 
     androidTestImplementation(libs.bundles.androidx.test)
+
+    lintChecks(libs.androidx.runtime.lint)
 }
