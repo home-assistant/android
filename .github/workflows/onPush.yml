@@ -26,6 +26,8 @@ jobs:
           fetch-depth: 0
 
       - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -132,6 +134,8 @@ jobs:
           fetch-depth: 0
 
       - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - uses: ruby/setup-ruby@v1
         with:
