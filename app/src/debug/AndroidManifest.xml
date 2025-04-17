@@ -10,6 +10,13 @@
 
         <activity android:name=".developer.DevPlaygroundActivity"/>
 
+        <activity android:name=".developer.DemoExoPlayerActivity"
+            android:supportsPictureInPicture="true"
+            android:resizeableActivity="true"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation"
+            tools:ignore="UnusedAttribute" />
+
     </application>
 
 </manifest>
