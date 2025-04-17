@@ -35,15 +35,15 @@ fragment-ktx = "1.8.6"
 googleServices = "4.4.2"
 guava = "33.4.6-android"
 healthServicesClient = "1.1.0-alpha05"
-hilt = "2.55"
+hilt = "2.56.1"
 iconics = "5.4.0"
 improv = "0.1.1"
 jackson-module-kotlin = "2.13.5" # WARNING: https://github.com/home-assistant/android/issues/3518
 javaVersion = "11" # https://developer.android.com/studio/write/java11-minimal-support-table
 junit = "5.12.2"
-kotlinx-coroutines = "1.9.0"
-kotlin = "2.0.21"
-ksp = "2.0.21-1.0.25"
+kotlinx-coroutines = "1.10.2"
+kotlin = "2.1.20"
+ksp = "2.1.20-2.0.0"
 ktlint = "12.2.0"
 leakcanaryAndroid = "2.14"
 lifecycle = "2.8.7"
@@ -64,7 +64,8 @@ recyclerview = "1.4.0"
 reorderable = "0.9.6"
 retrofit = "2.9.0"
 robolectric = "4.14.1"
-room = "2.6.1"
+room = "2.7.0"
+runtimeLint = "1.8.0-rc03"
 screenshot = "0.0.1-alpha09"
 sentry-android = "8.7.0"
 timber = "5.0.1"
@@ -117,6 +118,7 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
+androidx-runtime-lint = { module = "androidx.compose.runtime:runtime-lint", version.ref = "runtimeLint" }
 androidx-watchface-complications-data-source-ktx = { module = "androidx.wear.watchface:watchface-complications-data-source-ktx", version.ref = "watchfaceComplicationsDataSourceKtx" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
