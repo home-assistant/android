@@ -198,7 +198,7 @@ reorderable = { module = "org.burnoutcrew.composereorderable:reorderable", versi
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofit-converter-jackson = { module = "com.squareup.retrofit2:converter-jackson", version.ref = "retrofit"  }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
-sentry-android = { module = "io.sentry:sentry-android", version.ref = "sentry-android" }
+sentry-android-core = { module = "io.sentry:sentry-android-core", version.ref = "sentry-android" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 tools-desugar-jdk = { module = "com.android.tools:desugar_jdk_libs", version.ref = "tools-desugar-jdk-libs" }
 wear = { module = "androidx.wear:wear", version.ref = "wear" }
