@@ -43,10 +43,16 @@ interface HaControl {
         control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
         control.setSubtitle(info.area?.name ?: "")
         control.setDeviceType(getDeviceType(entity))
-        control.setZone(
-            (if (info.serverName != null) "${info.serverName}: " else "") +
-                (info.area?.name ?: getDomainString(context, entity))
-        )
+
+        if (info.splitMultiServerIntoStructure && info.serverName != null) {
+            control.setZone(info.area?.name ?: getDomainString(context, entity))
+            control.setStructure(info.serverName)
+        } else {
+            control.setZone(
+                (if (info.serverName != null) "${info.serverName}: " else "") +
+                    (info.area?.name ?: getDomainString(context, entity))
+            )
+        }
         control.setStatus(Control.STATUS_OK)
         control.setStatusText(entity.friendlyState(context))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
