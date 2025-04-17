@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.developer
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -30,7 +31,9 @@ class DevPlaygroundActivity : AppCompatActivity() {
 
         setContent {
             HomeAssistantAppTheme {
-                DevPlayGroundScreen()
+                DevPlayGroundScreen(onDemoExoPlayerClick = {
+                    startActivity(Intent(this, DemoExoPlayerActivity::class.java))
+                })
             }
         }
     }
@@ -39,7 +42,7 @@ class DevPlaygroundActivity : AppCompatActivity() {
 private class DummyException : Throwable()
 
 @Composable
-private fun DevPlayGroundScreen() {
+private fun DevPlayGroundScreen(onDemoExoPlayerClick: () -> Unit = {}) {
     Column(
         modifier = Modifier
             .fillMaxWidth(),
@@ -49,6 +52,11 @@ private fun DevPlayGroundScreen() {
             throw DummyException()
         }) {
             Text("Crash the app")
+        }
+        Button(modifier = Modifier.padding(top = 16.dp), onClick = {
+            onDemoExoPlayerClick()
+        }) {
+            Text("Demo ExoPlayer")
         }
     }
 }
