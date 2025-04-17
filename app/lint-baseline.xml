@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.9.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.9.0)" variant="all" version="8.9.0">
+<issues format="6" by="lint 8.9.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.9.1)" variant="all" version="8.9.1">
 
     <issue
         id="SuspiciousImport"
@@ -30,7 +30,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="97"
+            line="95"
             column="26"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="98"
+            line="96"
             column="25"/>
     </issue>
 
@@ -52,7 +52,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/util/ForegroundServiceLauncher.kt"
-            line="52"
+            line="48"
             column="33"/>
     </issue>
 
@@ -85,7 +85,7 @@
         errorLine2="                        ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/controls/HaControlsProviderService.kt"
-            line="46"
+            line="44"
             column="25"/>
     </issue>
 
@@ -96,7 +96,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/sensors/SensorReceiver.kt"
-            line="63"
+            line="59"
             column="13"/>
     </issue>
 
@@ -107,7 +107,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/sensors/SensorReceiver.kt"
-            line="65"
+            line="61"
             column="13"/>
     </issue>
 
@@ -338,7 +338,7 @@
         errorLine2="             ~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="281"
+            line="304"
             column="14"/>
     </issue>
 
@@ -349,7 +349,7 @@
         errorLine2="                                  ~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="288"
+            line="311"
             column="35"/>
     </issue>
 
@@ -388,14 +388,14 @@
 
     <issue
         id="PrivateResource"
-        message="Overriding `@layout/exo_player_control_view` which is marked as private in androidx.media3:media3-ui:1.5.1. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name.">
+        message="Overriding `@layout/exo_player_control_view` which is marked as private in androidx.media3:media3-ui:1.6.1. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name.">
         <location
             file="src/main/res/layout/exo_player_control_view.xml"/>
     </issue>
 
     <issue
         id="PrivateResource"
-        message="The resource `@color/exo_black_opacity_60` is marked as private in androidx.media3:media3-ui:1.5.1"
+        message="The resource `@color/exo_black_opacity_60` is marked as private in androidx.media3:media3-ui:1.6.1"
         errorLine1="        android:background=&quot;@color/exo_black_opacity_60&quot;/>"
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -406,7 +406,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_height` is marked as private in androidx.media3:media3-ui:1.5.1"
+        message="The resource `@dimen/exo_styled_bottom_bar_height` is marked as private in androidx.media3:media3-ui:1.6.1"
         errorLine1="        android:layout_height=&quot;@dimen/exo_styled_bottom_bar_height&quot;"
         errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -417,7 +417,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_margin_top` is marked as private in androidx.media3:media3-ui:1.5.1"
+        message="The resource `@dimen/exo_styled_bottom_bar_margin_top` is marked as private in androidx.media3:media3-ui:1.6.1"
         errorLine1="        android:layout_marginTop=&quot;@dimen/exo_styled_bottom_bar_margin_top&quot;"
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -428,7 +428,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@color/exo_bottom_bar_background` is marked as private in androidx.media3:media3-ui:1.5.1"
+        message="The resource `@color/exo_bottom_bar_background` is marked as private in androidx.media3:media3-ui:1.6.1"
         errorLine1="        android:background=&quot;@color/exo_bottom_bar_background&quot;"
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -439,7 +439,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.5.1"
+        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.6.1"
         errorLine1="            android:paddingStart=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -450,7 +450,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.5.1"
+        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.6.1"
         errorLine1="            android:paddingEnd=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -461,7 +461,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.5.1"
+        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.6.1"
         errorLine1="            android:paddingLeft=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
         errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -472,7 +472,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.5.1"
+        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.6.1"
         errorLine1="            android:paddingRight=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -483,7 +483,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_progress_layout_height` is marked as private in androidx.media3:media3-ui:1.5.1"
+        message="The resource `@dimen/exo_styled_progress_layout_height` is marked as private in androidx.media3:media3-ui:1.6.1"
         errorLine1="        android:layout_height=&quot;@dimen/exo_styled_progress_layout_height&quot;"
         errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -494,7 +494,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_progress_margin_bottom` is marked as private in androidx.media3:media3-ui:1.5.1"
+        message="The resource `@dimen/exo_styled_progress_margin_bottom` is marked as private in androidx.media3:media3-ui:1.6.1"
         errorLine1="        android:layout_marginBottom=&quot;@dimen/exo_styled_progress_margin_bottom&quot;/>"
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -505,7 +505,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_minimal_controls_margin_bottom` is marked as private in androidx.media3:media3-ui:1.5.1"
+        message="The resource `@dimen/exo_styled_minimal_controls_margin_bottom` is marked as private in androidx.media3:media3-ui:1.6.1"
         errorLine1="        android:layout_marginBottom=&quot;@dimen/exo_styled_minimal_controls_margin_bottom&quot;"
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -516,7 +516,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_controls_padding` is marked as private in androidx.media3:media3-ui:1.5.1"
+        message="The resource `@dimen/exo_styled_controls_padding` is marked as private in androidx.media3:media3-ui:1.6.1"
         errorLine1="        android:padding=&quot;@dimen/exo_styled_controls_padding&quot;"
         errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -532,7 +532,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/SensorDetailViewModel.kt"
-            line="334"
+            line="332"
             column="38"/>
     </issue>
 
@@ -598,7 +598,7 @@
         errorLine2="         ~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="250"
+            line="273"
             column="10"/>
     </issue>
 
@@ -609,7 +609,7 @@
         errorLine2="         ~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="259"
+            line="282"
             column="10"/>
     </issue>
 
@@ -620,7 +620,7 @@
         errorLine2="         ~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="895"
+            line="918"
             column="10"/>
     </issue>
 
@@ -675,7 +675,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/sensors/CarSensorManager.kt"
-            line="264"
+            line="262"
             column="20"/>
     </issue>
 
@@ -686,7 +686,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/sensors/CarSensorManager.kt"
-            line="275"
+            line="273"
             column="33"/>
     </issue>
 
@@ -697,7 +697,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/sensors/CarSensorManager.kt"
-            line="305"
+            line="303"
             column="13"/>
     </issue>
 
@@ -708,7 +708,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="482"
+            line="478"
             column="17"/>
     </issue>
 
@@ -719,7 +719,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="482"
+            line="478"
             column="17"/>
     </issue>
 
@@ -741,7 +741,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="35"
+            line="33"
             column="9"/>
     </issue>
 
@@ -752,7 +752,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="37"
+            line="35"
             column="9"/>
     </issue>
 
@@ -851,7 +851,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="114"
+            line="110"
             column="21"/>
     </issue>
 
@@ -862,7 +862,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/qs/ManageTilesViewModel.kt"
-            line="150"
+            line="148"
             column="29"/>
     </issue>
 
@@ -873,7 +873,7 @@
         errorLine2="                             ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/qs/ManageTilesViewModel.kt"
-            line="157"
+            line="155"
             column="30"/>
     </issue>
 
@@ -884,7 +884,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/matter/MatterCommissioningViewModel.kt"
-            line="44"
+            line="40"
             column="21"/>
     </issue>
 
@@ -1043,17 +1043,6 @@
     </issue>
 
     <issue
-        id="UnusedResources"
-        message="The resource `R.array.android_wear_capabilities` appears to be unused"
-        errorLine1="    &lt;string-array name=&quot;android_wear_capabilities&quot;>"
-        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/full/res/values/wear.xml"
-            line="3"
-            column="19"/>
-    </issue>
-
-    <issue
         id="UselessParent"
         message="This `LinearLayout` layout or its `FrameLayout` parent is possibly unnecessary; transfer the `background` attribute to the other view"
         errorLine1="    &lt;LinearLayout"
@@ -1062,41 +1051,6 @@
             file="src/main/res/layout/widget_media_controls.xml"
             line="13"
             column="6"/>
-    </issue>
-
-    <issue
-        id="IconLocation"
-        message="Found bitmap drawable `res/drawable/widget_example_button.png` in densityless folder">
-        <location
-            file="src/main/res/drawable/widget_example_button.png"/>
-    </issue>
-
-    <issue
-        id="IconLocation"
-        message="Found bitmap drawable `res/drawable/widget_example_camera.jpg` in densityless folder">
-        <location
-            file="src/main/res/drawable/widget_example_camera.jpg"/>
-    </issue>
-
-    <issue
-        id="IconLocation"
-        message="Found bitmap drawable `res/drawable/widget_example_entity.png` in densityless folder">
-        <location
-            file="src/main/res/drawable/widget_example_entity.png"/>
-    </issue>
-
-    <issue
-        id="IconLocation"
-        message="Found bitmap drawable `res/drawable/widget_example_media_player_controls.png` in densityless folder">
-        <location
-            file="src/main/res/drawable/widget_example_media_player_controls.png"/>
-    </issue>
-
-    <issue
-        id="IconLocation"
-        message="Found bitmap drawable `res/drawable/widget_example_template.png` in densityless folder">
-        <location
-            file="src/main/res/drawable/widget_example_template.png"/>
     </issue>
 
     <issue
@@ -1196,7 +1150,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="162"
+            line="158"
             column="13"/>
     </issue>
 
@@ -1207,7 +1161,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/authentication/AuthenticationFragment.kt"
-            line="197"
+            line="194"
             column="20"/>
     </issue>
 
@@ -1218,7 +1172,7 @@
         errorLine2="                                                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/barcode/BarcodeScannerActivity.kt"
-            line="145"
+            line="143"
             column="80"/>
     </issue>
 
@@ -1229,7 +1183,7 @@
         errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/vehicle/EntityGridVehicleScreen.kt"
-            line="190"
+            line="186"
             column="49"/>
     </issue>
 
@@ -1262,7 +1216,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/vehicle/MapVehicleScreen.kt"
-            line="135"
+            line="131"
             column="33"/>
     </issue>
 
@@ -1273,7 +1227,7 @@
         errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1459"
+            line="1454"
             column="16"/>
     </issue>
 
@@ -1284,7 +1238,7 @@
         errorLine2="                                ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1589"
+            line="1584"
             column="33"/>
     </issue>
 
@@ -1295,7 +1249,7 @@
         errorLine2="                                ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1589"
+            line="1584"
             column="33"/>
     </issue>
 
@@ -1306,7 +1260,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1624"
+            line="1619"
             column="41"/>
     </issue>
 
@@ -1317,7 +1271,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1624"
+            line="1619"
             column="41"/>
     </issue>
 
@@ -1328,7 +1282,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1664"
+            line="1659"
             column="13"/>
     </issue>
 
@@ -1339,7 +1293,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1680"
+            line="1675"
             column="13"/>
     </issue>
 
@@ -1350,7 +1304,7 @@
         errorLine2="                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1689"
+            line="1684"
             column="23"/>
     </issue>
 
@@ -1361,7 +1315,7 @@
         errorLine2="                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1689"
+            line="1684"
             column="23"/>
     </issue>
 
@@ -1372,7 +1326,7 @@
         errorLine2="                                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1807"
+            line="1802"
             column="68"/>
     </issue>
 
@@ -1383,7 +1337,7 @@
         errorLine2="                                    ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1876"
+            line="1871"
             column="37"/>
     </issue>
 
@@ -1394,7 +1348,7 @@
         errorLine2="                                    ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1876"
+            line="1871"
             column="37"/>
     </issue>
 
@@ -1449,7 +1403,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="312"
+            line="308"
             column="52"/>
     </issue>
 
@@ -1460,7 +1414,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="312"
+            line="308"
             column="52"/>
     </issue>
 
@@ -1471,7 +1425,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="333"
+            line="329"
             column="52"/>
     </issue>
 
@@ -1482,7 +1436,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="333"
+            line="329"
             column="52"/>
     </issue>
 
@@ -1493,7 +1447,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="515"
+            line="511"
             column="21"/>
     </issue>
 
@@ -1526,7 +1480,7 @@
         errorLine2="                                                        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="449"
+            line="448"
             column="57"/>
     </issue>
 
@@ -1537,7 +1491,7 @@
         errorLine2="                                                        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="449"
+            line="448"
             column="57"/>
     </issue>
 
@@ -1548,7 +1502,7 @@
         errorLine2="                                                        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="449"
+            line="448"
             column="57"/>
     </issue>
 
@@ -1559,7 +1513,7 @@
         errorLine2="                                                        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="449"
+            line="448"
             column="57"/>
     </issue>
 
@@ -1570,7 +1524,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="468"
+            line="467"
             column="41"/>
     </issue>
 
@@ -1581,7 +1535,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="468"
+            line="467"
             column="41"/>
     </issue>
 
@@ -1592,7 +1546,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="468"
+            line="467"
             column="41"/>
     </issue>
 
@@ -1603,7 +1557,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="468"
+            line="467"
             column="41"/>
     </issue>
 
@@ -1614,7 +1568,7 @@
         errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="970"
+            line="969"
             column="19"/>
     </issue>
 
@@ -1625,7 +1579,7 @@
         errorLine2="                                                               ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1250"
+            line="1249"
             column="64"/>
     </issue>
 
@@ -1636,7 +1590,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1401"
+            line="1400"
             column="31"/>
     </issue>
 
@@ -1647,7 +1601,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1401"
+            line="1400"
             column="31"/>
     </issue>
 
@@ -1658,7 +1612,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1423"
+            line="1422"
             column="21"/>
     </issue>
 
@@ -1669,7 +1623,7 @@
         errorLine2="                  ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1576"
+            line="1575"
             column="19"/>
     </issue>
 
@@ -1680,7 +1634,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1726"
+            line="1725"
             column="25"/>
     </issue>
 
@@ -1691,7 +1645,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewPresenterImpl.kt"
-            line="132"
+            line="128"
             column="27"/>
     </issue>
 
@@ -1702,7 +1656,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewPresenterImpl.kt"
-            line="376"
+            line="372"
             column="13"/>
     </issue>
 
@@ -1812,7 +1766,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/entity/EntityWidgetConfigureActivity.kt"
-            line="140"
+            line="139"
             column="38"/>
     </issue>
 
@@ -1823,7 +1777,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/template/TemplateWidgetConfigureActivity.kt"
-            line="96"
+            line="95"
             column="38"/>
     </issue>
 
