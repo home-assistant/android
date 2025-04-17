@@ -86,11 +86,11 @@ jobs:
           mock-google-services: "true"
           cache-disabled: "true"
 
-      -   name: Setup upterm session
-          uses: lhotari/action-upterm@v1
-          with:
-              limit-access-to-actor: true
-              limit-access-to-users: TimoPtr
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+        with:
+          limit-access-to-actor: true
+          limit-access-to-users: TimoPtr
 
       - name: Validate Lint
         run: ./gradlew lint --continue
