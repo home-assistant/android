@@ -2,7 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2025.4.3 - Main" versioncode="3">
-        <change>Add To-Do widget</change>
+        <change>Add To-do list widget</change>
         <change>Add Device Controls setting to allow multi-server setups to split servers to pages</change>
         <change>Add battery cycle count sensor</change>
         <change>Add more Health Connect sensors</change>
