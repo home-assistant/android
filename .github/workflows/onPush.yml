@@ -84,7 +84,7 @@ jobs:
 
       - name: Create Github Pre-Release
         if: github.event.inputs.beta == 'true'
-        uses: softprops/action-gh-release@v2.2.1
+        uses: softprops/action-gh-release@v2.2.2
         with:
           tag_name: ${{ steps.rel_number.outputs.version }}
           body_path: ./app/build/outputs/changelogGithub
