@@ -46,6 +46,7 @@ private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
 private const val PREF_SHOW_PRIVACY_HINT = "show_privacy_hint"
 private const val PREF_WAKE_WORD_ENABLED = "wake_word_enabled"
 private const val PREF_SELECTED_WAKE_WORD = "selected_wake_word"
+private const val PREF_UNIFIEDPUSH_DISTRIBUTOR = "unifiedpush_distributor"
 
 /**
  * This class ensure that when we use the local storage in [PrefsRepositoryImpl] the migrations has been made
@@ -343,6 +344,17 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setChangeLogPopupEnabled(enabled: Boolean) {
         localStorage().putBoolean(PREF_CHANGE_LOG_POPUP_ENABLED, enabled)
+    }
+
+    override suspend fun getUnifiedPushDistributor(): String? =
+        localStorage.getString(PREF_UNIFIEDPUSH_DISTRIBUTOR)
+
+    override suspend fun setUnifiedPushDistributor(distributor: String?) {
+        if (distributor.isNullOrBlank() || distributor == "disabled") {
+            localStorage.remove(PREF_UNIFIEDPUSH_DISTRIBUTOR)
+        } else {
+            localStorage.putString(PREF_UNIFIEDPUSH_DISTRIBUTOR, distributor)
+        }
     }
 
     override suspend fun removeServer(serverId: Int) {
