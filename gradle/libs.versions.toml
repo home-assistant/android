@@ -87,6 +87,7 @@ sentry-android = "8.35.0"
 timber = "5.0.1"
 tools-desugar-jdk-libs = "2.1.5"
 turbine = "1.2.1"
+unifiedpush-connector = "3.0.9"
 watchfaceComplicationsDataSourceKtx = "1.3.0"
 wear = "1.4.0"
 wear-compose = "1.5.6"
@@ -257,6 +258,7 @@ play-services-tflite = { module = "com.google.android.gms:play-services-tflite-j
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 tools-desugar-jdk = { module = "com.android.tools:desugar_jdk_libs", version.ref = "tools-desugar-jdk-libs" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+unifiedpush-connector = { module = "org.unifiedpush.android:connector", version.ref = "unifiedpush-connector" }
 wear = { module = "androidx.wear:wear", version.ref = "wear" }
 wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wear-compose" }
 wear-compose-material = { module = "androidx.wear.compose:compose-material3", version.ref = "wear-compose" }
@@ -281,3 +283,4 @@ coil = ["coil-views", "coil-okhttp", "coil-svg"]
 media3 = ["media3-exoplayer", "media3-exoplayer-hls", "media3-ui-compose", "media3-session"]
 paging = ["paging-runtime", "paging-compose"]
 wear-tiles = ["wear-tiles", "wear-protolayout-main", "wear-protolayout-expression", "wear-protolayout-material"]
+unifiedpush = ["unifiedpush-connector"]
