@@ -56,6 +56,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.unifiedpush.android.connector.UnifiedPush
 import timber.log.Timber
 
 class SettingsFragment(
@@ -229,6 +230,7 @@ class SettingsFragment(
         }
 
         updateNotificationChannelPrefs()
+        updateNotificationUnifiedPushPrefs()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             findPreference<Preference>("notification_permission")?.let {
@@ -260,6 +262,13 @@ class SettingsFragment(
             }
         }
 
+        findPreference<ListPreference>("notification_unifiedpush")?.let {
+            it.setOnPreferenceChangeListener { _, newValue ->
+                registerUnifiedPushDistributor(newValue as String)
+                return@setOnPreferenceChangeListener true
+            }
+        }
+
         if (BuildConfig.FLAVOR == "full") {
             findPreference<Preference>("notification_rate_limit")?.let {
                 lifecycleScope.launch(Dispatchers.Main) {
@@ -284,6 +293,8 @@ class SettingsFragment(
                 }
             }
         }
+
+
         findPreference<SwitchPreference>("crash_reporting")?.let {
             it.isVisible = BuildConfig.FLAVOR == "full"
         }
@@ -480,6 +491,29 @@ class SettingsFragment(
         }
     }
 
+    private fun updateNotificationUnifiedPushPrefs() {
+        val notificationsEnabled =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+                NotificationManagerCompat.from(requireContext()).areNotificationsEnabled()
+
+        findPreference<ListPreference>("notification_unifiedpush")?.let {
+            val distributors = UnifiedPush.getDistributors(requireContext())
+            it.isVisible = notificationsEnabled && distributors.isNotEmpty()
+            val pm = requireContext().packageManager
+            it.entries = distributors.map { distributor ->
+                try {
+                    pm.getApplicationLabel(pm.getApplicationInfo(distributor, PackageManager.GET_META_DATA)).toString()
+                } catch (_: PackageManager.NameNotFoundException) {
+                    distributor
+                }
+            }.toTypedArray() + "Disabled"
+            it.entryValues = distributors.toTypedArray() + "disabled"
+            if (it.value == null) {
+                it.value = "disabled"
+            }
+        }
+    }
+
     private fun onServerLockResult(result: Int): Boolean {
         if (result == Authenticator.SUCCESS && serverAuth != null) {
             (activity as? SettingsActivity)?.setAppActive(serverAuth, true)
@@ -499,6 +533,18 @@ class SettingsFragment(
     private fun onOnboardingComplete(result: OnboardApp.Output?) {
         lifecycleScope.launch {
             presenter.addServer(result)
+        }
+    }
+
+    private fun registerUnifiedPushDistributor(distributor: String) {
+        lifecycleScope.launch {
+            val context = requireContext()
+            if (distributor == "disabled") {
+                UnifiedPush.unregister(context)
+            } else {
+                UnifiedPush.saveDistributor(context, distributor)
+                UnifiedPush.register(context)
+            }
         }
     }
 

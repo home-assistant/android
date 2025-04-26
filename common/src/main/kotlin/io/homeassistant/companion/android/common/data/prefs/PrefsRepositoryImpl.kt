@@ -38,6 +38,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_AUTO_FAVORITES = "auto_favorites"
         private const val PREF_LOCATION_HISTORY_DISABLED = "location_history"
         private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displayed"
+        private const val PREF_UNIFIEDPUSH_DISTRIBUTOR = "unifiedpush_distributor"
     }
 
     init {
@@ -258,6 +259,17 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun addImprovPermissionDisplayedCount() {
         localStorage.putInt(PREF_IMPROV_PERMISSION_DISPLAYED, getImprovPermissionDisplayedCount() + 1)
+    }
+
+    override suspend fun getUnifiedPushDistributor(): String? =
+        localStorage.getString(PREF_UNIFIEDPUSH_DISTRIBUTOR)
+
+    override suspend fun setUnifiedPushDistributor(distributor: String?) {
+        if (distributor.isNullOrBlank() || distributor == "disabled") {
+            localStorage.remove(PREF_UNIFIEDPUSH_DISTRIBUTOR)
+        } else {
+            localStorage.putString(PREF_UNIFIEDPUSH_DISTRIBUTOR, distributor)
+        }
     }
 
     override suspend fun removeServer(serverId: Int) {

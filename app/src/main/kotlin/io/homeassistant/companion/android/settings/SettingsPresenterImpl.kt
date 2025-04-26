@@ -108,6 +108,7 @@ class SettingsPresenterImpl @Inject constructor(
             "languages" -> langsManager.getCurrentLang()
             "page_zoom" -> prefsRepository.getPageZoomLevel().toString()
             "screen_orientation" -> prefsRepository.getScreenOrientation()
+            "notification_unifiedpush" -> prefsRepository.getUnifiedPushDistributor()
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
     }
@@ -119,6 +120,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "languages" -> langsManager.saveLang(value)
                 "page_zoom" -> prefsRepository.setPageZoomLevel(value?.toIntOrNull())
                 "screen_orientation" -> prefsRepository.saveScreenOrientation(value)
+                "notification_unifiedpush" -> prefsRepository.setUnifiedPushDistributor(value)
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }

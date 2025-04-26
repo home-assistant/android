@@ -95,6 +95,10 @@ interface PrefsRepository {
 
     suspend fun addImprovPermissionDisplayedCount()
 
+    suspend fun getUnifiedPushDistributor(): String?
+
+    suspend fun setUnifiedPushDistributor(source: String?)
+
     /** Clean up any app-level preferences that might reference servers */
     suspend fun removeServer(serverId: Int)
 }
