@@ -52,6 +52,8 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "implementation"(libs.jackson.module.kotlin)
                     "implementation"(libs.okhttp)
 
+                    "implementation"(libs.unifiedpush.connector)
+
                     "implementation"(libs.bundles.coil)
 
                     "fullImplementation"(libs.play.services.location)

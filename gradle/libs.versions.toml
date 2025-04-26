@@ -70,6 +70,7 @@ screenshot = "0.0.1-alpha09"
 sentry-android = "8.8.0"
 timber = "5.0.1"
 tools-desugar-jdk-libs = "2.1.5"
+unifiedpush-connector = "3.0.9"
 watchfaceComplicationsDataSourceKtx = "1.2.1"
 wear = "1.3.0"
 wear-compose-foundation = "1.4.1"
@@ -201,6 +202,7 @@ robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectr
 sentry-android-core = { module = "io.sentry:sentry-android-core", version.ref = "sentry-android" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 tools-desugar-jdk = { module = "com.android.tools:desugar_jdk_libs", version.ref = "tools-desugar-jdk-libs" }
+unifiedpush-connector = { module = "org.unifiedpush.android:connector", version.ref = "unifiedpush-connector" }
 wear = { module = "androidx.wear:wear", version.ref = "wear" }
 wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wear-compose-foundation" }
 wear-compose-material = { module = "androidx.wear.compose:compose-material3", version.ref = "wear-compose-material" }
@@ -223,3 +225,4 @@ paging = ["paging-runtime", "paging-compose"]
 wear-tiles = ["wear-tiles", "wear-protolayout-main", "wear-protolayout-expression", "wear-protolayout-material"]
 androidx-test =["androidx-test-core", "androidx-test-ext", "androidx-test-rules", "androidx-test-runner"]
 androidx-compose-ui-test = ["compose-ui-test", "compose-ui-testManifest"]
+unifiedpush = ["unifiedpush-connector"]
