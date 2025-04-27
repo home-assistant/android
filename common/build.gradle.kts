@@ -50,7 +50,7 @@ dependencies {
     implementation(libs.jackson.module.kotlin)
     implementation(libs.android.beacon.library)
 
-    implementation(libs.unifiedpush.connector)
+    //implementation(libs.unifiedpush.connector)
 
     implementation(libs.iconics.core)
     implementation(libs.community.material.typeface)
