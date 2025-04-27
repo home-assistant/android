@@ -54,7 +54,10 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "implementation"(platform(libs.okhttp.bom))
                     "implementation"(libs.okhttp.android)
 
-                    "implementation"(libs.unifiedpush.connector)
+                    "fullImplementation"(libs.unifiedpush.connector)
+                    "minimalImplementation"(libs.unifiedpush.connector) {
+                        exclude(group = "com.google.protobuf", module = "protobuf-java")
+                    }
 
                     "implementation"(libs.bundles.coil)
 
