@@ -506,7 +506,7 @@ class SettingsFragment(
                 } catch (_: PackageManager.NameNotFoundException) {
                     distributor
                 }
-            }.toTypedArray() + "Disabled"
+            }.toTypedArray() + getString(commonR.string.disabled)
             it.entryValues = distributors.toTypedArray() + "disabled"
             if (it.value == null) {
                 it.value = "disabled"
@@ -538,13 +538,7 @@ class SettingsFragment(
 
     private fun registerUnifiedPushDistributor(distributor: String) {
         lifecycleScope.launch {
-            val context = requireContext()
-            if (distributor == "disabled") {
-                UnifiedPush.unregister(context)
-            } else {
-                UnifiedPush.saveDistributor(context, distributor)
-                UnifiedPush.register(context)
-            }
+            presenter.registerUnifiedPushDistributor(requireContext(), distributor)
         }
     }
 

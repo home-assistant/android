@@ -43,6 +43,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.unifiedpush.android.connector.UnifiedPush
 import timber.log.Timber
 
 class SettingsPresenterImpl @Inject constructor(
@@ -154,6 +155,15 @@ class SettingsPresenterImpl @Inject constructor(
         } catch (e: Exception) {
             Timber.d("Unable to get rate limits")
             return@withContext null
+        }
+    }
+
+    override fun registerUnifiedPushDistributor(context: Context, distributor: String) {
+        if (distributor == "disabled") {
+            UnifiedPush.unregister(context)
+        } else {
+            UnifiedPush.saveDistributor(context, distributor)
+            UnifiedPush.register(context)
         }
     }
 

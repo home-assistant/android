@@ -915,6 +915,14 @@
                 android:value="true" />
         </service>
 
+        <service
+            android:name=".notifications.UnifiedPushService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="org.unifiedpush.android.connector.PUSH_EVENT"/>
+            </intent-filter>
+        </service>
+
         <receiver
             android:name=".notifications.NotificationActionReceiver"
             android:enabled="true"

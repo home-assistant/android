@@ -97,7 +97,7 @@ interface PrefsRepository {
 
     suspend fun getUnifiedPushDistributor(): String?
 
-    suspend fun setUnifiedPushDistributor(source: String?)
+    suspend fun setUnifiedPushDistributor(distributor: String?)
 
     /** Clean up any app-level preferences that might reference servers */
     suspend fun removeServer(serverId: Int)

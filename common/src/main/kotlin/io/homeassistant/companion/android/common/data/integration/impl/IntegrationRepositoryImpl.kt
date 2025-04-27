@@ -57,6 +57,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         private const val PREF_APP_VERSION = "app_version" // Note: _not_ server-specific
         private const val PREF_PUSH_TOKEN = "push_token" // Note: _not_ server-specific
+        private const val PREF_PUSH_URL = "push_url" // Note: _not_ server-specific
         private const val PREF_ORPHANED_THREAD_BORDER_AGENT_IDS = "orphaned_thread_border_agent_ids" // Note: _not_ server-specific
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
@@ -167,7 +168,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         return DeviceRegistration(
             localStorage.getString(PREF_APP_VERSION),
             server.deviceName,
-            localStorage.getString(PREF_PUSH_TOKEN)
+            localStorage.getString(PREF_PUSH_TOKEN),
+            localStorage.getString(PREF_PUSH_URL)
         )
     }
 
@@ -180,6 +182,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
         if (deviceRegistration.pushToken != null) {
             localStorage.putString(PREF_PUSH_TOKEN, deviceRegistration.pushToken)
+        }
+        if (deviceRegistration.pushUrl != null) {
+            localStorage.putString(PREF_PUSH_URL, deviceRegistration.pushUrl)
         }
     }
 
@@ -815,11 +820,15 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
         val oldDeviceRegistration = getRegistration()
         val pushToken = deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
+        val pushUrl = deviceRegistration.pushUrl ?: oldDeviceRegistration.pushUrl
 
         val appData = mutableMapOf<String, Any>("push_websocket_channel" to deviceRegistration.pushWebsocket)
         if (!pushToken.isNullOrBlank()) {
-            appData["push_url"] = PUSH_URL
+            appData["push_url"] = pushUrl ?: PUSH_URL
             appData["push_token"] = pushToken
+        } else if (!pushUrl.isNullOrBlank()) {
+            appData["push_url"] = pushUrl
+            appData["push_token"] = ""
         }
 
         return RegisterDeviceRequest(
