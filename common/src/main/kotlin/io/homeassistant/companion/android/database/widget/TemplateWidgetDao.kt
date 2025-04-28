@@ -19,7 +19,7 @@ interface TemplateWidgetDao : WidgetDao {
     override suspend fun delete(id: Int)
 
     @Query("DELETE FROM template_widgets WHERE id IN (:ids)")
-    suspend fun deleteAll(ids: IntArray)
+    override suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM template_widgets")
     suspend fun getAll(): List<TemplateWidgetEntity>
