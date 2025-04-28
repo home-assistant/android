@@ -86,6 +86,10 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "implementation"(libs.navigation.compose)
                     "implementation"(libs.androidx.lifecycle.runtime.compose)
                     "implementation"(libs.core.remoteviews)
+                    "implementation"(libs.androidx.glance.appwidget)
+                    "implementation"(libs.androidx.glance.material)
+                    "implementation"(libs.androidx.glance.preview)
+                    "implementation"(libs.androidx.glance.appwidget.preview)
 
                     "implementation"(libs.iconics.core)
                     "implementation"(libs.iconics.compose)
@@ -105,6 +109,9 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "androidTestImplementation"(libs.bundles.androidx.test)
                     "androidTestImplementation"(libs.bundles.androidx.compose.ui.test)
                     "androidTestImplementation"(libs.leakcanary.android.instrumentation)
+
+                    "testImplementation"(libs.androidx.glance.testing)
+                    "testImplementation"(libs.androidx.glance.appwidget.testing)
                 }
             }
         }

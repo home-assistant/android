@@ -32,6 +32,7 @@ emojiJava = "5.1.1"
 firebase-bom = "33.13.0"
 firebaseAppdistributionGradle = "5.1.1"
 fragment-ktx = "1.8.6"
+glance = "1.1.1"
 googleServices = "4.4.2"
 guava = "33.4.6-android"
 healthServicesClient = "1.1.0-alpha05"
@@ -70,6 +71,7 @@ screenshot = "0.0.1-alpha09"
 sentry-android = "8.8.0"
 timber = "5.0.1"
 tools-desugar-jdk-libs = "2.1.5"
+turbine = "1.2.0"
 watchfaceComplicationsDataSourceKtx = "1.2.1"
 wear = "1.3.0"
 wear-compose-foundation = "1.4.1"
@@ -108,6 +110,12 @@ activity-compose = { module = "androidx.activity:activity-compose", version.ref 
 activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity-compose" }
 android-beacon-library = { module = "org.altbeacon:android-beacon-library", version.ref = "androidBeaconLibrary" }
 android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
+androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
+androidx-glance-material = { module = "androidx.glance:glance-material", version.ref = "glance" }
+androidx-glance-preview = { module = "androidx.glance:glance-preview", version.ref = "glance" }
+androidx-glance-appwidget-preview = { module = "androidx.glance:glance-appwidget-preview", version.ref = "glance" }
+androidx-glance-testing = { module = "androidx.glance:glance-testing", version.ref = "glance" }
+androidx-glance-appwidget-testing = { module = "androidx.glance:glance-appwidget-testing", version.ref = "glance" }
 androidx-health-connect-client = { module = "androidx.health.connect:connect-client", version.ref = "connectClient" }
 androidx-health-services-client = { module = "androidx.health:health-services-client", version.ref = "healthServicesClient" }
 androidx-media = { module = "androidx.media:media", version.ref = "media" }
@@ -201,6 +209,7 @@ robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectr
 sentry-android-core = { module = "io.sentry:sentry-android-core", version.ref = "sentry-android" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 tools-desugar-jdk = { module = "com.android.tools:desugar_jdk_libs", version.ref = "tools-desugar-jdk-libs" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 wear = { module = "androidx.wear:wear", version.ref = "wear" }
 wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wear-compose-foundation" }
 wear-compose-material = { module = "androidx.wear.compose:compose-material3", version.ref = "wear-compose-material" }
