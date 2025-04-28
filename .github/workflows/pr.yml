@@ -182,7 +182,7 @@ jobs:
           mock-google-services: "true"
 
       - name: Run test
-        run: ./gradlew :common:testDebugUnitTest # Should be adapted once we have more than one tests
+        run: ./gradlew :common:testDebugUnitTest :app:testFullDebugUnitTest # Should be adapted once we have more than one tests
 
       - name: Upload test results
         if: always()
