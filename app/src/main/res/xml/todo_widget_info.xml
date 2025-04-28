@@ -2,7 +2,7 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:configure="io.homeassistant.companion.android.widgets.todo.TodoWidgetConfigureActivity"
-    android:initialLayout="@layout/widget_todo"
+    android:initialLayout="@layout/glance_default_loading_layout"
     android:minWidth="150dp"
     android:minHeight="200dp"
     android:minResizeWidth="150dp"
@@ -15,5 +15,4 @@
     android:description="@string/todo_widget_desc"
     android:widgetCategory="home_screen"
     android:previewImage="@drawable/widget_example_todo"
-    android:previewLayout="@layout/widget_todo_wrapper_dynamiccolor"
     tools:ignore="UnusedAttribute,UnusedResources" />

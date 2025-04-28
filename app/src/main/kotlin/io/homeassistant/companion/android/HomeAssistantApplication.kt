@@ -33,7 +33,7 @@ import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidget
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
-import io.homeassistant.companion.android.widgets.todo.TodoWidget
+import io.homeassistant.companion.android.widgets.todo.TodoWidgetReceiver
 import javax.inject.Inject
 import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
@@ -303,7 +303,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
             val entityWidget = EntityWidget()
             val mediaPlayerWidget = MediaPlayerControlsWidget()
             val templateWidget = TemplateWidget()
-            val todoWidget = TodoWidget()
+            TodoWidgetReceiver().registerReceiver(this)
 
             val screenIntentFilter = IntentFilter()
             screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)
@@ -313,7 +313,6 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
             ContextCompat.registerReceiver(this, entityWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
             ContextCompat.registerReceiver(this, mediaPlayerWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
             ContextCompat.registerReceiver(this, templateWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
-            ContextCompat.registerReceiver(this, todoWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
         }
     }
 

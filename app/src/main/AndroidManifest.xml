@@ -144,15 +144,10 @@
                 android:resource="@xml/entity_widget_info" />
         </receiver>
 
-        <receiver android:name=".widgets.todo.TodoWidget" android:label="@string/widget_todo_label"
+        <receiver android:name=".widgets.todo.TodoWidgetReceiver" android:label="@string/widget_todo_label"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.template.TemplateWidget.RECEIVE_DATA"/>
-                <action android:name="io.homeassistant.companion.android.widgets.template.BaseWidgetProvider.UPDATE_VIEW"/>
-                <action android:name="io.homeassistant.companion.android.widgets.todo.TodoWidget.OPEN_TODO"/>
-                <action android:name="io.homeassistant.companion.android.widgets.todo.TodoWidget.ADD_TODO"/>
-                <action android:name="io.homeassistant.companion.android.widgets.todo.TodoWidget.TOGGLE_TODO_ITEM"/>
             </intent-filter>
 
             <meta-data

@@ -1054,9 +1054,8 @@
     <string name="widget_todo_refresh">Refresh to-do</string>
     <string name="widget_todo_label">To-do list</string>
     <string name="widget_todo_empty">You have no to-do items!</string>
+    <string name="widget_todo_no_configuration">Oops. It looks like this widget is not configured.</string>
     <string name="widget_todo_active">Active</string>
-    <string name="widget_todo_preview_item_1">Eggs</string>
-    <string name="widget_todo_preview_item_2">Milk</string>
     <string name="widget_todo_show_completed">Show completed items</string>
     <string name="widget_todo_completed">Completed</string>
     <string name="widget_tap_action_label">Tap action:</string>
