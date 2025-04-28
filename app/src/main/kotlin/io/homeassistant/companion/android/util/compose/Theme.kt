@@ -7,7 +7,17 @@ import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.glance.GlanceTheme
+import androidx.glance.color.ColorProviders
+import androidx.glance.material.ColorProviders
+import androidx.glance.text.FontWeight
+import androidx.glance.text.TextStyle
 
 val colorPrimary = Color(0xFF03A9F4)
 val colorPrimaryDark = Color(0xFF0288D1)
@@ -21,7 +31,7 @@ private val haLightColors = lightColors(
     secondary = colorPrimary,
     secondaryVariant = colorPrimary,
     onPrimary = Color.White,
-    onSecondary = Color.White
+    onSecondary = Color.White,
 )
 private val haDarkColors = darkColors(
     primary = colorPrimary,
@@ -30,7 +40,7 @@ private val haDarkColors = darkColors(
     secondaryVariant = colorPrimary,
     background = darkColorBackground,
     onPrimary = Color.White,
-    onSecondary = Color.White
+    onSecondary = Color.White,
 )
 
 /**
@@ -39,15 +49,94 @@ private val haDarkColors = darkColors(
  */
 @Composable
 fun HomeAssistantAppTheme(
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     MaterialTheme(
-        colors = if (isSystemInDarkTheme()) haDarkColors else haLightColors
+        colors = if (isSystemInDarkTheme()) haDarkColors else haLightColors,
     ) {
         // Copied from MdcTheme:
         CompositionLocalProvider(
             LocalContentColor provides MaterialTheme.colors.onBackground,
-            content = content
+            content = content,
         )
     }
+}
+
+@Composable
+fun HomeAssistantGlanceTheme(
+    colors: ColorProviders = HomeAssistantGlanceTheme.colors,
+    content:
+    @Composable
+    () -> Unit,
+) {
+    CompositionLocalProvider(
+        LocalGlanceColors provides colors,
+    ) {
+        GlanceTheme(colors = LocalGlanceColors.current, content = content)
+    }
+}
+
+object HomeAssistantGlanceTypography {
+    val titleLarge: TextStyle
+        @Composable
+        get() = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = HomeAssistantGlanceTheme.colors.onSurface)
+    val titleMedium: TextStyle
+        @Composable
+        get() = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Medium, color = HomeAssistantGlanceTheme.colors.onSurface)
+    val titleSmall: TextStyle
+        @Composable
+        get() = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Normal, color = HomeAssistantGlanceTheme.colors.onSurface)
+    val bodyLarge: TextStyle
+        @Composable
+        get() = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold, color = HomeAssistantGlanceTheme.colors.onSurface)
+    val bodyMedium: TextStyle
+        @Composable
+        get() = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium, color = HomeAssistantGlanceTheme.colors.onSurface)
+    val bodySmall: TextStyle
+        @Composable
+        get() = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Normal, color = HomeAssistantGlanceTheme.colors.onSurface)
+}
+
+object HomeAssistantGlanceDimensions {
+    val iconSize: Dp
+        @Composable
+        get() = 48.dp
+}
+
+val glanceHaLightColors = lightColors(
+    primary = colorPrimary,
+    primaryVariant = colorPrimaryDark,
+    secondary = colorPrimary,
+    secondaryVariant = colorPrimary,
+    onPrimary = Color.White,
+    onSecondary = Color.White,
+    onSurface = darkColorBackground,
+)
+
+val glanceHaDarkColors = darkColors(
+    primary = colorPrimary,
+    primaryVariant = colorPrimaryDark,
+    secondary = colorPrimary,
+    secondaryVariant = colorPrimary,
+    background = darkColorBackground,
+    onPrimary = Color.White,
+    onSecondary = Color.White,
+    onSurface = Color.White,
+)
+
+internal val LocalGlanceColors: ProvidableCompositionLocal<ColorProviders> = staticCompositionLocalOf {
+    ColorProviders(glanceHaLightColors, glanceHaDarkColors)
+}
+
+object HomeAssistantGlanceTheme {
+    val colors: ColorProviders
+        @Composable
+        get() = LocalGlanceColors.current
+
+    val typography: HomeAssistantGlanceTypography
+        @Composable
+        get() = HomeAssistantGlanceTypography
+    val dimensions: HomeAssistantGlanceDimensions
+        @Composable
+        get() = HomeAssistantGlanceDimensions
 }
