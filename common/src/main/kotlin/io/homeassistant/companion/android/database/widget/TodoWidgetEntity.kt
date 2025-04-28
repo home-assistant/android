@@ -37,4 +37,11 @@ data class TodoWidgetEntity(
         val summary: String?,
         val status: String?,
     )
+
+    fun isSameConfiguration(other: TodoWidgetEntity): Boolean {
+        // The only field that is not part of the configuration is latestUpdateData
+        // We make copy of the data classes without the latestUpdateData field so that we can use the equals method generated
+        // By doing this we make the check more future proof, if a new configuration field is added
+        return other.copy(latestUpdateData = null) == this.copy(latestUpdateData = null)
+    }
 }
