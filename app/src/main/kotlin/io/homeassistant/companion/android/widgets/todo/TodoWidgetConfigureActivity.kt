@@ -28,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -169,9 +168,6 @@ private fun TodoWidgetConfigureScreen(
 ) {
     val servers by viewModel.servers.collectAsStateWithLifecycle()
     val entities by viewModel.entities.collectAsStateWithLifecycle()
-    val configuration = LocalConfiguration.current
-
-    Timber.e("Make lint fail ${configuration.screenHeightDp.dp}")
 
     TodoWidgetConfigureView(
         servers = servers,
