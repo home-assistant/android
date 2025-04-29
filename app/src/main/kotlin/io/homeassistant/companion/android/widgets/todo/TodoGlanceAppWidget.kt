@@ -167,7 +167,7 @@ private fun EmptyScreen() {
             modifier = GlanceModifier.padding(bottom = 8.dp).size(HomeAssistantGlanceTheme.dimensions.iconSize),
         )
         Text(
-            text = glanceStringResource(commonR.string.widget_todo_no_configuration),
+            text = glanceStringResource(commonR.string.widget_no_configuration),
             style = HomeAssistantGlanceTypography.titleSmall.copy(textAlign = TextAlign.Center),
             modifier = GlanceModifier.padding(horizontal = 8.dp),
         )

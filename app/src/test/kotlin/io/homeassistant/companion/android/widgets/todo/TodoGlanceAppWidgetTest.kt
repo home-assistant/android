@@ -57,7 +57,7 @@ class TodoGlanceAppWidgetTest {
         onNode(hasTestTag("EmptyScreen"))
             .assertExists()
 
-        onNode(hasTextEqualTo(context.getString(R.string.widget_todo_no_configuration)))
+        onNode(hasTextEqualTo(context.getString(R.string.widget_no_configuration)))
     }
 
     @Test
