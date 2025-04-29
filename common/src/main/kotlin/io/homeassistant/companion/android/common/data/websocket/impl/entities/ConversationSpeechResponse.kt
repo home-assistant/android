@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ConversationSpeechResponse(
-    val speech: ConversationSpeechPlainResponse,
+    val speech: ConversationSpeechPlainResponse?,
     val card: Any?,
     val language: String?,
     val responseType: String?,
