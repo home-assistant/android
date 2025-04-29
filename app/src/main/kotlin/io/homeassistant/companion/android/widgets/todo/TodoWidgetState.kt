@@ -75,6 +75,15 @@ internal data class TodoStateWithData(
     val outOfSync: Boolean,
     val showComplete: Boolean,
 ) : TodoState {
+
+    fun hasDisplayableItems(): Boolean {
+        return if (showComplete) {
+            todoItems.isNotEmpty()
+        } else {
+            todoItems.any { !it.done }
+        }
+    }
+
     companion object {
         /**
          * Create a complete [TodoStateWithData] from the DB and from the server. Set the flag [outOfSync] to false, since the data

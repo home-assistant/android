@@ -185,12 +185,15 @@ private fun Screen(state: TodoStateWithData) {
                 outOfSync = state.outOfSync,
             )
         },
+        // We manually set the padding on each item since the checkbox comes with an embedded padding that
+        // we cannot modify.
+        horizontalPadding = 0.dp,
         modifier = GlanceModifier.todoWidgetBackground().semantics { testTag = "Screen" },
     ) {
-        if (state.todoItems.isEmpty()) {
-            EmptyContent()
-        } else {
+        if (state.hasDisplayableItems()) {
             ListContent(state.todoItems, state.showComplete)
+        } else {
+            EmptyContent()
         }
     }
 }
@@ -200,15 +203,18 @@ private fun EmptyContent() {
     Text(
         text = glanceStringResource(commonR.string.widget_todo_empty),
         style = HomeAssistantGlanceTypography.bodyMedium,
+        modifier = GlanceModifier.padding(all = 16.dp),
     )
 }
 
 @Composable
 private fun ListContent(todoItems: List<TodoItemState>, displayComplete: Boolean) {
-    LazyColumn(modifier = GlanceModifier.padding(top = 4.dp)) {
-        item { HeaderItem(glanceStringResource(commonR.string.widget_todo_active)) }
-        todoItems.filter { !it.done }.forEach {
-            item { TodoItem(it) }
+    LazyColumn {
+        if (todoItems.any { !it.done }) {
+            item { HeaderItem(glanceStringResource(commonR.string.widget_todo_active)) }
+            todoItems.filter { !it.done }.forEach {
+                item { TodoItem(it) }
+            }
         }
         if (displayComplete && todoItems.any { it.done }) {
             item { HeaderItem(glanceStringResource(commonR.string.widget_todo_completed)) }
@@ -222,7 +228,8 @@ private fun ListContent(todoItems: List<TodoItemState>, displayComplete: Boolean
 @Composable
 private fun TitleBar(listName: String?, serverId: Int, listEntityId: String, outOfSync: Boolean) {
     Row(
-        modifier = GlanceModifier.padding(top = 8.dp, end = 8.dp, start = 8.dp).fillMaxWidth(),
+        // Try to align the paddings with Google Calendar widget
+        modifier = GlanceModifier.padding(top = 12.dp, end = 12.dp, start = 16.dp).fillMaxWidth(),
         verticalAlignment = Alignment.Vertical.CenterVertically,
     ) {
         Text(
@@ -256,13 +263,15 @@ private fun TodoItem(todoItem: TodoItemState) {
         onCheckedChange = actionToggleTodo(todoItem),
         text = todoItem.name,
         style = HomeAssistantGlanceTypography.bodySmall,
-        modifier = GlanceModifier.padding(vertical = 8.dp),
+        // The checkbox comes with an embedded padding that we cannot modify of 6.5.dp we add 9.5.dp to align with the rest of the screen at 16dp.
+        // 4.dp at the end is to avoid that the scrollbar go over the text
+        modifier = GlanceModifier.padding(vertical = 8.dp).padding(start = 9.5.dp, end = 4.dp),
     )
 }
 
 @Composable
 private fun HeaderItem(name: String) {
-    Text(text = name, style = HomeAssistantGlanceTypography.bodyLarge)
+    Text(text = name, style = HomeAssistantGlanceTypography.bodyLarge, modifier = GlanceModifier.padding(horizontal = 16.dp))
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)

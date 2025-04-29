@@ -91,7 +91,7 @@ class TodoWidgetStateTest {
             textColor = "#FFFFFa",
             serverId = 2,
             entityId = "41",
-            showCompleted = false
+            showCompleted = false,
         )
 
         // When
@@ -106,5 +106,55 @@ class TodoWidgetStateTest {
         assertTrue(result.todoItems.isEmpty())
         assertTrue(result.outOfSync)
         assertFalse(result.showComplete)
+    }
+
+    @Test
+    fun `Given TodoStateWithData with items not completed and completed when invoking hasDisplayableItems then returns true`() {
+        val todoState = TodoStateWithData(
+            backgroundType = WidgetBackgroundType.DAYNIGHT,
+            textColor = "#FFFFFF",
+            serverId = 1,
+            listEntityId = "41",
+            listName = "home",
+            todoItems = listOf(TodoItemState(uid = "Test", name = "Test", done = false), TodoItemState(uid = "Test", name = "Test", done = true)),
+            outOfSync = false,
+            showComplete = true,
+        )
+
+        assertTrue(todoState.hasDisplayableItems())
+        assertTrue(todoState.copy(showComplete = false).hasDisplayableItems())
+    }
+
+    @Test
+    fun `Given TodoStateWithData with items completed when invoking hasDisplayableItems then returns true only when showComplete is true`() {
+        val todoState = TodoStateWithData(
+            backgroundType = WidgetBackgroundType.DAYNIGHT,
+            textColor = "#FFFFFF",
+            serverId = 1,
+            listEntityId = "41",
+            listName = "home",
+            todoItems = listOf(TodoItemState(uid = "Test", name = "Test", done = true), TodoItemState(uid = "Test", name = "Test", done = true)),
+            outOfSync = false,
+            showComplete = true,
+        )
+
+        assertTrue(todoState.hasDisplayableItems())
+        assertFalse(todoState.copy(showComplete = false).hasDisplayableItems())
+    }
+
+    @Test
+    fun `Given TodoStateWithData with no items when invoking hasDisplayableItems then returns false`() {
+        val todoState = TodoStateWithData(
+            backgroundType = WidgetBackgroundType.DAYNIGHT,
+            textColor = "#FFFFFF",
+            serverId = 1,
+            listEntityId = "41",
+            listName = "home",
+            todoItems = emptyList(),
+            outOfSync = false,
+            showComplete = true,
+        )
+
+        assertFalse(todoState.hasDisplayableItems())
     }
 }
