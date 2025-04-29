@@ -57,44 +57,13 @@ import io.homeassistant.companion.android.widgets.todo.TodoState.Companion.getCo
  *
  * This widget display a list from a specified `entity_id` of `todo` domain.
  * It provides functionality to add new items, refresh the list, and toggle the completion status of tasks.
- * The widget dynamically updates its content based on the current state of the Todo list until it is in composition state.
- *
- * ### Key Features:
- * - **Dynamic state management**: The widget supports multiple states, including:
- *   - Loading: Displays a loading indicator while data is being fetched for the first time.
- *   - Empty: Displays a message when the widget is not configured.
- *   - Populated: Displays the list of items, categorized into active and completed items.
- * - **User Actions**:
- *   - Add new items: Opens a web view to add tasks directly to the list.
- *   - Refresh: Updates the list to reflect the latest state from the server.
- *   - Toggle item completion: Allows users to mark tasks as complete or incomplete.
- * - **Customizable appearance**: The widget's theme can be overridden via the [TodoWidgetConfigureActivity].
- *
- * ### Dependencies:
- * - **Hilt dependency injection**: Injects required dependencies using the [TodoGlanceWidgetEntryPoint].
- * - **State Updater**: Uses [TodoWidgetStateUpdater] to manage the widget's state and ensure it stays up to date during composition.
+ * The widget's theme can be overridden via the [TodoWidgetConfigureActivity].
  *
  * ### Limitations:
  * - No error messages are displayed except for the out-of-sync indicator.
  * - No loading information is shown for toggle actions.
  * - No information when the widget is not up to date because out of composition.
  *
- * ### Implementation Details:
- * - **Composable architecture**: The widget uses Jetpack Compose for its UI, leveraging Glance APIs for widget-specific components.
- * - **State handling**: The widget observes a state flow to dynamically update its content based on the current state while it's in composition.
- * - **Previews**: Includes multiple preview functions to visualize different widget states during development.
- *
- * ### Usage:
- * To use this widget, ensure [TodoWidget] is registered in the [io.homeassistant.companion.android.HomeAssistantApplication].
- * Otherwise the widget won't update at all after the composition ends.
- * Example:
- * ```kotlin
- * override fun onCreate() {
- *     super.onCreate()
- *     ...
- *     TodoWidget().registerReceiver(this)
- * }
- * ```
  */
 class TodoGlanceAppWidget : GlanceAppWidget() {
 
