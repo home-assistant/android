@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
 import timber.log.Timber
 
 /**
@@ -57,7 +58,11 @@ internal class TodoWidgetStateUpdater @Inject constructor(
             Timber.w("Integration return null for entity update the widget won't update")
         }
 
-        return entityUpdateFlow?.let { merge(flowOf(currentEntity), it) }
+        return entityUpdateFlow?.onStart {
+            currentEntity?.let {
+                emit(currentEntity)
+            }
+        }
     }
 
     private fun getInitialStateFlow(widgetId: Int): Flow<TodoState> {

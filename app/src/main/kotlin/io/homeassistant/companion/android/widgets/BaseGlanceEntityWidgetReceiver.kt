@@ -240,12 +240,8 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
             deleteWidgetsFromDatabase(invalidWidgetIds.toIntArray())
         }
 
-        val entitiesPerServerWithoutInvalid = entitiesPerServer.toMutableMap().apply {
-            invalidWidgetIds.forEach {
-                // strip the server and entities from the map since they are not used anymore
-                remove(key = it)
-            }
-        }
+        // strip the server and entities from the map since they are not used anymore
+        val entitiesPerServerWithoutInvalid = entitiesPerServer - invalidWidgetIds
 
         return entitiesPerServerWithoutInvalid
     }

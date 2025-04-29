@@ -37,6 +37,7 @@ import androidx.glance.semantics.semantics
 import androidx.glance.semantics.testTag
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
+import androidx.glance.text.TextDecoration
 import dagger.hilt.EntryPoint
 import dagger.hilt.EntryPoints
 import dagger.hilt.InstallIn
@@ -258,11 +259,13 @@ private fun TitleBar(listName: String?, serverId: Int, listEntityId: String, out
 
 @Composable
 private fun TodoItem(todoItem: TodoItemState) {
+    var textStyle = HomeAssistantGlanceTypography.bodySmall
+    if (todoItem.done) textStyle = textStyle.copy(textDecoration = TextDecoration.LineThrough)
     CheckBox(
         checked = todoItem.done,
         onCheckedChange = actionToggleTodo(todoItem),
         text = todoItem.name,
-        style = HomeAssistantGlanceTypography.bodySmall,
+        style = textStyle,
         // The checkbox comes with an embedded padding that we cannot modify of 6.5.dp we add 9.5.dp to align with the rest of the screen at 16dp.
         // 4.dp at the end is to avoid that the scrollbar go over the text
         modifier = GlanceModifier.padding(vertical = 8.dp).padding(start = 9.5.dp, end = 4.dp),
