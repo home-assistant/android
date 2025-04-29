@@ -71,7 +71,7 @@ class RefreshAction : ActionCallback {
         glanceId: GlanceId,
         parameters: ActionParameters,
     ) {
-        TodoWidget().update(context, glanceId)
+        TodoGlanceAppWidget().update(context, glanceId)
     }
 }
 
@@ -145,6 +145,6 @@ class ToggleTodoAction : ActionCallback {
             // TODO we could modify the entry in DB to add the error message
         }
 
-        TodoWidget().update(context, glanceId)
+        TodoGlanceAppWidget().update(context, glanceId)
     }
 }

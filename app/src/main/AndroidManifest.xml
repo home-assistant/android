@@ -144,7 +144,7 @@
                 android:resource="@xml/entity_widget_info" />
         </receiver>
 
-        <receiver android:name=".widgets.todo.TodoWidgetReceiver" android:label="@string/widget_todo_label"
+        <receiver android:name=".widgets.todo.TodoWidget" android:label="@string/widget_todo_label"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

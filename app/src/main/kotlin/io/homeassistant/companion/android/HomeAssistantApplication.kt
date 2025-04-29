@@ -33,7 +33,7 @@ import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidget
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
-import io.homeassistant.companion.android.widgets.todo.TodoWidgetReceiver
+import io.homeassistant.companion.android.widgets.todo.TodoWidget
 import javax.inject.Inject
 import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
@@ -303,7 +303,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
             val entityWidget = EntityWidget()
             val mediaPlayerWidget = MediaPlayerControlsWidget()
             val templateWidget = TemplateWidget()
-            TodoWidgetReceiver().registerReceiver(this)
+            TodoWidget().registerReceiver(this)
 
             val screenIntentFilter = IntentFilter()
             screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)

@@ -137,7 +137,7 @@ class TodoWidgetConfigureViewModel @Inject constructor(
         val appContext = context.applicationContext
         viewModelScope.launch {
             val glanceId = GlanceAppWidgetManager(appContext).getGlanceIdBy(widgetId)
-            TodoWidget().update(appContext, glanceId)
+            TodoGlanceAppWidget().update(appContext, glanceId)
         }
     }
 }

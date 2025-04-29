@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.onCompletion
 import timber.log.Timber
 
 /**
- * This class allow the [io.homeassistant.companion.android.widgets.todo.TodoWidget] to get their
+ * This class allow the [io.homeassistant.companion.android.widgets.todo.TodoGlanceAppWidget] to get their
  * states while in composition state by exposing a flow through [stateFlow].
  */
 internal class TodoWidgetStateUpdater @Inject constructor(

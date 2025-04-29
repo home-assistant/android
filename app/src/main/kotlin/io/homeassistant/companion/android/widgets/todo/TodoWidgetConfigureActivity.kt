@@ -131,7 +131,7 @@ class TodoWidgetConfigureActivity : BaseActivity() {
         lifecycleScope.launch {
             GlanceAppWidgetManager(context)
                 .requestPinGlanceAppWidget(
-                    TodoWidgetReceiver::class.java,
+                    TodoWidget::class.java,
                     successCallback = PendingIntent.getActivity(
                         context,
                         System.currentTimeMillis().toInt(),
