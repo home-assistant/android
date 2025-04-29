@@ -47,6 +47,7 @@ import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoSett
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
+import io.homeassistant.companion.android.unifiedpush.UnifiedPushManager
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.time.Instant
 import java.time.ZoneId
@@ -259,13 +260,6 @@ class SettingsFragment(
                     addToBackStack(getString(commonR.string.notifications))
                 }
                 return@setOnPreferenceClickListener true
-            }
-        }
-
-        findPreference<ListPreference>("notification_unifiedpush")?.let {
-            it.setOnPreferenceChangeListener { _, newValue ->
-                registerUnifiedPushDistributor(newValue as String)
-                return@setOnPreferenceChangeListener true
             }
         }
 
@@ -497,7 +491,7 @@ class SettingsFragment(
                 NotificationManagerCompat.from(requireContext()).areNotificationsEnabled()
 
         findPreference<ListPreference>("notification_unifiedpush")?.let {
-            val distributors = UnifiedPush.getDistributors(requireContext())
+            val distributors = presenter.getUnifiedPushDistributors()
             it.isVisible = notificationsEnabled && distributors.isNotEmpty()
             val pm = requireContext().packageManager
             it.entries = distributors.map { distributor ->
@@ -507,9 +501,9 @@ class SettingsFragment(
                     distributor
                 }
             }.toTypedArray() + getString(commonR.string.disabled)
-            it.entryValues = distributors.toTypedArray() + "disabled"
+            it.entryValues = distributors.toTypedArray() + UnifiedPushManager.DISTRIBUTOR_DISABLED
             if (it.value == null) {
-                it.value = "disabled"
+                it.value = UnifiedPushManager.DISTRIBUTOR_DISABLED
             }
         }
     }
@@ -533,12 +527,6 @@ class SettingsFragment(
     private fun onOnboardingComplete(result: OnboardApp.Output?) {
         lifecycleScope.launch {
             presenter.addServer(result)
-        }
-    }
-
-    private fun registerUnifiedPushDistributor(distributor: String) {
-        lifecycleScope.launch {
-            presenter.registerUnifiedPushDistributor(requireContext(), distributor)
         }
     }
 

@@ -820,7 +820,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
         val oldDeviceRegistration = getRegistration()
         val pushToken = deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
-        val pushUrl = deviceRegistration.pushUrl ?: oldDeviceRegistration.pushUrl
+        val pushUrl = deviceRegistration.pushUrl?.ifBlank { PUSH_URL } ?: oldDeviceRegistration.pushUrl
 
         val appData = mutableMapOf<String, Any>("push_websocket_channel" to deviceRegistration.pushWebsocket)
         if (!pushToken.isNullOrBlank()) {

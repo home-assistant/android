@@ -915,13 +915,17 @@
                 android:value="true" />
         </service>
 
-        <service
-            android:name=".notifications.UnifiedPushService"
-            android:exported="false">
+        <receiver
+            android:name=".unifiedpush.UnifiedPushReceiver"
+            android:enabled="true"
+            android:exported="true">
             <intent-filter>
-                <action android:name="org.unifiedpush.android.connector.PUSH_EVENT"/>
+                <action android:name="org.unifiedpush.android.connector.MESSAGE"/>
+                <action android:name="org.unifiedpush.android.connector.UNREGISTERED"/>
+                <action android:name="org.unifiedpush.android.connector.NEW_ENDPOINT"/>
+                <action android:name="org.unifiedpush.android.connector.REGISTRATION_FAILED"/>
             </intent-filter>
-        </service>
+        </receiver>
 
         <receiver
             android:name=".notifications.NotificationActionReceiver"
