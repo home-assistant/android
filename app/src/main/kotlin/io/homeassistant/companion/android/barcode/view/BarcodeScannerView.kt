@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,7 +12,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
@@ -42,7 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -56,6 +52,8 @@ import com.journeyapps.barcodescanner.CaptureManager
 import com.journeyapps.barcodescanner.DecoratedBarcodeView
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.util.compose.darkColorBackground
+import io.homeassistant.companion.android.util.compose.safeScreenHeight
+import io.homeassistant.companion.android.util.compose.screenWidth
 import io.homeassistant.companion.android.util.getActivity
 
 @Composable
@@ -117,10 +115,9 @@ fun BarcodeScannerView(
                 .safeDrawingPadding()
                 .fillMaxSize()
         ) {
-            val configuration = LocalConfiguration.current
-            val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-            val screenHeight = configuration.screenHeightDp.dp - systemBarsPadding.calculateTopPadding() - systemBarsPadding.calculateBottomPadding()
-            val screenWidth = configuration.screenWidthDp.dp
+            val screenHeight = safeScreenHeight()
+            val screenWidth = screenWidth()
+
             val cutoutSize = minOf(minOf(screenHeight, screenWidth) - 48.dp, 320.dp)
 
             val scaffoldState = rememberScaffoldState()
