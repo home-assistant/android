@@ -114,19 +114,19 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
         super.onReceive(context, intent)
 
         when (intent.action) {
-            Intent.ACTION_SCREEN_ON -> watchingForEntitiesChanges(context)
+            Intent.ACTION_SCREEN_ON -> startWatchingForEntitiesChanges(context)
             Intent.ACTION_SCREEN_OFF -> stopWatchingForEntitiesChanges()
+            /**
+             * This action will trigger an update for all widgets but will not monitor for changes.
+             *
+             * WARNING: This action is received from a different instance of this class than the others above, so you should not start something that
+             * needs to be canceled here like [startWatchingForEntitiesChanges] otherwise it won't ever be canceled.
+             *
+             * Extract from the action documentation:
+             * <p>This action may be sent in response to a new instance of this AppWidget provider being instantiated,
+             * the requested {@link AppWidgetProviderInfo#updatePeriodMillis update interval} elapsing, or the system booting.
+             */
             AppWidgetManager.ACTION_APPWIDGET_UPDATE -> {
-                /*
-                 * WARNING: This action is received from another object thant the other above so you shouldn't entities, otherwise it
-                 * won't ever be cancel.
-                 *
-                 * This will trigger an update of all the widget, but won't watch for changes.
-                 *
-                 * <p>This may be sent in response to a new instance for this AppWidget provider having
-                 * been instantiated, the requested {@link AppWidgetProviderInfo#updatePeriodMillis update interval}
-                 * having lapsed, or the system booting.
-                 */
                 widgetScope.launch {
                     Timber.tag(widgetClassName).i("Update all widgets")
                     glanceAppWidget.updateAll(context)
@@ -172,7 +172,7 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
         }
     }
 
-    private fun watchingForEntitiesChanges(context: Context) {
+    private fun startWatchingForEntitiesChanges(context: Context) {
         setupWidgetScope()
         if (!serverManager.isRegistered()) {
             Timber.tag(widgetClassName).d("No server registered won't watch for entities")
