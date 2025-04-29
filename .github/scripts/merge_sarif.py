@@ -28,7 +28,8 @@ print(f"Looking for SARIF files in: {sarif_directory}")
 # Initialize the merged SARIF structure
 merged_sarif = None
 merged_results = []
-merged_rules = []
+# Use a dictionary to track unique rules by their 'id'
+unique_rules = {}
 
 
 # Function to clean the 'uri' field inside 'artifactLocation' blocks from CI paths so that Github
@@ -58,8 +59,12 @@ for sarif_file in glob.glob(
             merged_sarif = sarif_data
         # Merge the `results` array
         merged_results.extend(sarif_data.get("runs", [])[0].get("results", []))
-        # Merge the `rules` array
-        merged_rules.extend(sarif_data.get("runs", [])[0].get("tool", {}).get("driver", {}).get("rules", []))
+        # Merge the `rules` array, ensuring no duplicates by using the rule ID
+        for rule in sarif_data.get("runs", [])[0].get("tool", {}).get("driver", {}).get("rules", []):
+            rule_id = rule.get("id")
+            if rule_id and rule_id not in unique_rules:
+                unique_rules[rule_id] = rule
+
 
 # Clean up 'uri' fields in the 'artifactLocation' blocks
 clean_artifact_location_uris(merged_results)
@@ -67,7 +72,7 @@ clean_artifact_location_uris(merged_results)
 # Update the merged SARIF structure with the combined results
 if merged_sarif:
     merged_sarif["runs"][0]["results"] = merged_results
-    merged_sarif["runs"][0]["tool"]["driver"]["rules"] = merged_rules
+    merged_sarif["runs"][0]["tool"]["driver"]["rules"] = list(unique_rules.values())
 
     # Write the merged SARIF to a new file
     with open(output_file, "w") as file:
