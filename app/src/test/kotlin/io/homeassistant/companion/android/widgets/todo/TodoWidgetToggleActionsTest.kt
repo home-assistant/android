@@ -116,7 +116,7 @@ class TodoWidgetToggleActionsTest {
     }
 
     @Test
-    fun `toggleStatus mapping is valid`() {
+    fun `Given boolean value when invoking toggleStatus then mapping is valid from the API point of view`() {
         val action = ToggleTodoAction()
         assertEquals(NEEDS_ACTION_STATUS, action.toggleStatus(true))
         assertEquals(COMPLETED_STATUS, action.toggleStatus(false))
