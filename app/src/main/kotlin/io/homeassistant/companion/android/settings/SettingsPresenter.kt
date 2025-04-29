@@ -21,6 +21,7 @@ interface SettingsPresenter {
     fun getSuggestionFlow(): StateFlow<SettingsHomeSuggestion?>
     suspend fun getServersFlow(): Flow<List<Server>>
     suspend fun getNotificationRateLimits(): RateLimitResponse?
+    fun getUnifiedPushDistributors(): List<String>
     fun registerUnifiedPushDistributor(context: Context, distributor: String)
     suspend fun showChangeLog(context: Context)
     suspend fun isChangeLogPopupEnabled(): Boolean
