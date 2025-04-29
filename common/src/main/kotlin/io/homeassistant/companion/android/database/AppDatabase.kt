@@ -208,7 +208,6 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_23_24,
                     Migration40to41(context.assets)
                 )
-                .fallbackToDestructiveMigration()
                 .build()
         }
 
