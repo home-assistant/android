@@ -81,7 +81,7 @@ import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import kotlinx.coroutines.launch
 
 private val HEADER_HEIGHT = 48.dp
-private val CONTROL_HEIGHT = 112.dp
+private val CONTROLS_HEIGHT = 112.dp
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -142,7 +142,7 @@ fun AssistSheetView(
                         modifier = Modifier
                             .padding(vertical = 16.dp)
                             .heightIn(
-                                max = safeScreenHeight() - HEADER_HEIGHT - CONTROL_HEIGHT
+                                max = safeScreenHeight() - HEADER_HEIGHT - CONTROLS_HEIGHT
                             ),
                     ) {
                         items(conversation) {
