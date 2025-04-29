@@ -128,7 +128,7 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
                  * having lapsed, or the system booting.
                  */
                 widgetScope.launch {
-                    Timber.d("Update all widgets")
+                    Timber.tag(widgetClassName).i("Update all widgets")
                     glanceAppWidget.updateAll(context)
                 }
             }
@@ -136,7 +136,7 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        Timber.d("onDeleted $appWidgetIds")
+        Timber.tag(widgetClassName).d("onDeleted $appWidgetIds")
         super.onDeleted(context, appWidgetIds)
         deleteWidgetsFromDatabase(appWidgetIds)
     }
@@ -179,7 +179,6 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
             return
         }
 
-        Timber.e("Watching for entities $widgetScope")
         widgetScope.launch {
             val entitiesPerServer = cleanupOrphansWidgetAndGetEntitiesByServer(context)
 
@@ -203,7 +202,7 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
                         }
                     }
                 } else {
-                    Timber.tag(widgetClassName).d("Entity updates is null for widget $appWidgetId not watching")
+                    Timber.tag(widgetClassName).w("Entity updates is null for widget $appWidgetId not watching")
                     // Shouldn't do anything since the job should have been canceled already
                     removeSubscription(appWidgetId)
                 }
@@ -212,7 +211,7 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
     }
 
     private fun stopWatchingForEntitiesChanges() {
-        Timber.i("Stop watching for ${glanceAppWidget.javaClass}")
+        Timber.tag(widgetClassName).d("Stop watching.")
         widgetScope.cancel()
         widgetJobs.clear()
     }
@@ -236,7 +235,7 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
 
         if (invalidWidgetIds.isNotEmpty()) {
             Timber.tag(widgetClassName).i(
-                "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted",
+                "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - removing it from the database.",
             )
             deleteWidgetsFromDatabase(invalidWidgetIds.toIntArray())
         }
