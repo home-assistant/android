@@ -278,7 +278,7 @@ private fun HeaderItem(name: String) {
 @Preview(250, 320)
 @Composable
 private fun ScreenPreview() {
-    GlanceTheme {
+    HomeAssistantGlanceTheme {
         Screen(
             TodoStateWithData(
                 backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
@@ -298,7 +298,7 @@ private fun ScreenPreview() {
 @Preview
 @Composable
 private fun ScreenPreviewEmptyItems() {
-    GlanceTheme {
+    HomeAssistantGlanceTheme {
         Screen(
             TodoStateWithData(
                 backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
@@ -318,7 +318,7 @@ private fun ScreenPreviewEmptyItems() {
 @Preview
 @Composable
 private fun ScreenPreviewOutOfSync() {
-    GlanceTheme {
+    HomeAssistantGlanceTheme {
         Screen(
             TodoStateWithData(
                 backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
@@ -338,7 +338,7 @@ private fun ScreenPreviewOutOfSync() {
 @Preview
 @Composable
 private fun ScreenPreviewEmpty() {
-    GlanceTheme {
+    HomeAssistantGlanceTheme {
         EmptyScreen()
     }
 }
@@ -347,7 +347,7 @@ private fun ScreenPreviewEmpty() {
 @Preview
 @Composable
 private fun ScreenPreviewLoading() {
-    GlanceTheme {
+    HomeAssistantGlanceTheme {
         LoadingScreen()
     }
 }
