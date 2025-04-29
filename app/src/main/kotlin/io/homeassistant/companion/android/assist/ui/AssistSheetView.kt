@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,7 +21,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -67,7 +64,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -81,7 +77,11 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
+import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import kotlinx.coroutines.launch
+
+private val HEADER_HEIGHT = 48.dp
+private val CONTROLS_HEIGHT = 112.dp
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -109,7 +109,6 @@ fun AssistSheetView(
             true
         }
     )
-    val configuration = LocalConfiguration.current
 
     val sheetCornerRadius = dimensionResource(R.dimen.bottom_sheet_corner_radius)
 
@@ -143,11 +142,8 @@ fun AssistSheetView(
                         modifier = Modifier
                             .padding(vertical = 16.dp)
                             .heightIn(
-                                max = configuration.screenHeightDp.dp -
-                                    WindowInsets.safeContent.asPaddingValues().calculateBottomPadding() -
-                                    WindowInsets.safeContent.asPaddingValues().calculateTopPadding() -
-                                    96.dp
-                            )
+                                max = safeScreenHeight() - HEADER_HEIGHT - CONTROLS_HEIGHT
+                            ),
                     ) {
                         items(conversation) {
                             SpeechBubble(text = it.message, isResponse = !it.isInput)
