@@ -226,9 +226,11 @@ webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 zxing = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxing" }
 
 [bundles]
+androidx-test =["androidx-test-core", "androidx-test-ext", "androidx-test-rules", "androidx-test-runner"]
+androidx-compose-ui-test = ["compose-ui-test", "compose-ui-testManifest"]
+androidx-glance = ["androidx-glance-appwidget", "androidx-glance-appwidget-preview", "androidx-glance-material", "androidx-glance-preview"]
+androidx-glance-testing = ["androidx-glance-testing", "androidx-glance-appwidget-testing"]
 coil = ["coil-views", "coil-oktthp", "coil-svg"]
 media3 = ["media3-exoplayer", "media3-exoplayer-hls", "media3-ui"]
 paging = ["paging-runtime", "paging-compose"]
 wear-tiles = ["wear-tiles", "wear-protolayout-main", "wear-protolayout-expression", "wear-protolayout-material"]
-androidx-test =["androidx-test-core", "androidx-test-ext", "androidx-test-rules", "androidx-test-runner"]
-androidx-compose-ui-test = ["compose-ui-test", "compose-ui-testManifest"]
