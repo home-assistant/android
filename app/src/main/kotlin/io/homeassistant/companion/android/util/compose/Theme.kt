@@ -65,9 +65,7 @@ fun HomeAssistantAppTheme(
 @Composable
 fun HomeAssistantGlanceTheme(
     colors: ColorProviders = HomeAssistantGlanceTheme.colors,
-    content:
-    @Composable
-    () -> Unit,
+    content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(
         LocalGlanceColors provides colors,
@@ -132,7 +130,6 @@ object HomeAssistantGlanceTheme {
     val colors: ColorProviders
         @Composable
         get() = LocalGlanceColors.current
-
     val typography: HomeAssistantGlanceTypography
         @Composable
         get() = HomeAssistantGlanceTypography

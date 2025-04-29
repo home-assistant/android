@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.util.compose.glance
+package io.homeassistant.companion.android.util.compose
 
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable

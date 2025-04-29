@@ -46,7 +46,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTheme
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTypography
-import io.homeassistant.companion.android.util.compose.glance.glanceStringResource
+import io.homeassistant.companion.android.util.compose.glanceStringResource
 import io.homeassistant.companion.android.widgets.todo.TodoState.Companion.getColors
 
 /**
