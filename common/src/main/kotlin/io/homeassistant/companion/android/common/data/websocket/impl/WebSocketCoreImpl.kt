@@ -21,7 +21,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketCo
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_RENDER_TEMPLATE
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER
-import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.jsonMapper
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.webSocketJsonMapper
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineError
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
@@ -140,7 +140,7 @@ internal class WebSocketCoreImpl(
                     // Preemptively send auth
                     connectionState = WebSocketState.AUTHENTICATING
                     it.send(
-                        jsonMapper.writeValueAsString(
+                        webSocketJsonMapper.writeValueAsString(
                             mapOf(
                                 "type" to "auth",
                                 "access_token" to serverManager.authenticationRepository(serverId).retrieveAccessToken(),
@@ -168,7 +168,7 @@ internal class WebSocketCoreImpl(
                             )
                             Timber.d("Sending message ${supportedFeaturesMessage["id"]}: $supportedFeaturesMessage")
                             it.send(
-                                jsonMapper.writeValueAsString(supportedFeaturesMessage),
+                                webSocketJsonMapper.writeValueAsString(supportedFeaturesMessage),
                             )
                         }
                     }
@@ -201,7 +201,7 @@ internal class WebSocketCoreImpl(
                                 activeMessages[requestId] = request.apply {
                                     onResponse = cont
                                 }
-                                connection?.send(jsonMapper.writeValueAsString(outbound))
+                                connection?.send(webSocketJsonMapper.writeValueAsString(outbound))
                                 Timber.d("Message number $requestId sent")
                             }
                         }
@@ -323,11 +323,11 @@ internal class WebSocketCoreImpl(
 
     override fun onMessage(webSocket: WebSocket, text: String) {
         Timber.d("Websocket: onMessage (${if (BuildConfig.DEBUG) "text: $text" else "text"})")
-        val textTree = jsonMapper.readTree(text)
+        val textTree = webSocketJsonMapper.readTree(text)
         val messages: List<SocketResponse> = if (textTree.isArray) {
-            textTree.elements().asSequence().toList().map { jsonMapper.convertValue(it) }
+            textTree.elements().asSequence().toList().map { webSocketJsonMapper.convertValue(it) }
         } else {
-            listOf(jsonMapper.readValue(text))
+            listOf(webSocketJsonMapper.readValue(text))
         }
 
         // Send messages to the queue to ensure they are handled in order and don't block the function
@@ -406,18 +406,18 @@ internal class WebSocketCoreImpl(
 
             val message: Any =
                 if (response.event?.contains("hass_confirm_id") == true) {
-                    jsonMapper.convertValue(
+                    webSocketJsonMapper.convertValue(
                         response.event,
                         object : TypeReference<Map<String, Any>>() {},
                     )
                 } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES) {
-                    jsonMapper.convertValue(response.event, CompressedStateChangedEvent::class.java)
+                    webSocketJsonMapper.convertValue(response.event, CompressedStateChangedEvent::class.java)
                 } else if (subscriptionType == SUBSCRIBE_TYPE_RENDER_TEMPLATE) {
-                    jsonMapper.convertValue(response.event, TemplateUpdatedEvent::class.java)
+                    webSocketJsonMapper.convertValue(response.event, TemplateUpdatedEvent::class.java)
                 } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER) {
                     val trigger = response.event?.get("variables")?.get("trigger")
                     if (trigger != null) {
-                        jsonMapper.convertValue(trigger, TriggerEvent::class.java)
+                        webSocketJsonMapper.convertValue(trigger, TriggerEvent::class.java)
                     } else {
                         Timber.w("Received no trigger value for trigger subscription, skipping")
                         return
@@ -427,13 +427,13 @@ internal class WebSocketCoreImpl(
                     if (eventType?.isTextual == true) {
                         val eventDataMap = response.event.get("data")
                         val eventData = when (eventType.textValue()) {
-                            AssistPipelineEventType.RUN_START -> jsonMapper.convertValue(eventDataMap, AssistPipelineRunStart::class.java)
-                            AssistPipelineEventType.STT_END -> jsonMapper.convertValue(eventDataMap, AssistPipelineSttEnd::class.java)
-                            AssistPipelineEventType.INTENT_START -> jsonMapper.convertValue(eventDataMap, AssistPipelineIntentStart::class.java)
-                            AssistPipelineEventType.INTENT_PROGRESS -> jsonMapper.convertValue(eventDataMap, AssistPipelineIntentProgress::class.java)
-                            AssistPipelineEventType.INTENT_END -> jsonMapper.convertValue(eventDataMap, AssistPipelineIntentEnd::class.java)
-                            AssistPipelineEventType.TTS_END -> jsonMapper.convertValue(eventDataMap, AssistPipelineTtsEnd::class.java)
-                            AssistPipelineEventType.ERROR -> jsonMapper.convertValue(eventDataMap, AssistPipelineError::class.java)
+                            AssistPipelineEventType.RUN_START -> webSocketJsonMapper.convertValue(eventDataMap, AssistPipelineRunStart::class.java)
+                            AssistPipelineEventType.STT_END -> webSocketJsonMapper.convertValue(eventDataMap, AssistPipelineSttEnd::class.java)
+                            AssistPipelineEventType.INTENT_START -> webSocketJsonMapper.convertValue(eventDataMap, AssistPipelineIntentStart::class.java)
+                            AssistPipelineEventType.INTENT_PROGRESS -> webSocketJsonMapper.convertValue(eventDataMap, AssistPipelineIntentProgress::class.java)
+                            AssistPipelineEventType.INTENT_END -> webSocketJsonMapper.convertValue(eventDataMap, AssistPipelineIntentEnd::class.java)
+                            AssistPipelineEventType.TTS_END -> webSocketJsonMapper.convertValue(eventDataMap, AssistPipelineTtsEnd::class.java)
+                            AssistPipelineEventType.ERROR -> webSocketJsonMapper.convertValue(eventDataMap, AssistPipelineError::class.java)
                             else -> {
                                 Timber.d("Unknown event type ignoring. received data = \n$response")
                                 null
@@ -468,7 +468,7 @@ internal class WebSocketCoreImpl(
                         }
                     }
 
-                    jsonMapper.convertValue(
+                    webSocketJsonMapper.convertValue(
                         response.event,
                         eventResponseClass,
                     ).data

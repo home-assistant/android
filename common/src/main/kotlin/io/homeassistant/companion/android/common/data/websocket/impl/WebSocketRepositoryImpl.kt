@@ -19,7 +19,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketCo
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER
-import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.jsonMapper
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.webSocketJsonMapper
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
@@ -400,7 +400,7 @@ class WebSocketRepositoryImpl internal constructor(
             )
         )
         return if (response?.success == true && response.result?.contains("datasets") == true) {
-            jsonMapper.convertValue(response.result["datasets"]!!)
+            webSocketJsonMapper.convertValue(response.result["datasets"]!!)
         } else {
             null
         }
@@ -448,5 +448,5 @@ class WebSocketRepositoryImpl internal constructor(
     }
 
     private inline fun <reified T> mapResponse(response: SocketResponse?): T? =
-        if (response?.result != null) jsonMapper.convertValue(response.result) else null
+        if (response?.result != null) webSocketJsonMapper.convertValue(response.result) else null
 }

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.homeassistant.companion.android.common.util.jacksonObjectMapperForHACore
 
 internal object WebSocketConstants {
-    val jsonMapper: ObjectMapper = jacksonObjectMapperForHACore()
+    val webSocketJsonMapper: ObjectMapper = jacksonObjectMapperForHACore()
 
     const val EVENT_STATE_CHANGED = "state_changed"
     const val EVENT_AREA_REGISTRY_UPDATED = "area_registry_updated"
