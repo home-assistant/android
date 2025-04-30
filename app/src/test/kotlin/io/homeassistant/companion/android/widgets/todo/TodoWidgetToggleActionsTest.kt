@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.widgets.todo
 
 import androidx.glance.GlanceId
-import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -42,7 +41,7 @@ class TodoWidgetToggleActionsTest {
     fun `Given a widgetID when not present in DAO and invoking onAction then do nothing`() = runTest {
         val action = spyk<ToggleTodoAction>()
         val glanceManager = mockk<GlanceAppWidgetManager>()
-        val parameters = mockk<ActionParameters>()
+        val parameters = actionParametersOf(TOGGLE_KEY to TodoItemState("42", "", false))
         val widgetId = 1
 
         every { action.getEntryPoints(any()) } returns entryPoints
@@ -54,7 +53,6 @@ class TodoWidgetToggleActionsTest {
         action.onAction(mockk(), FakeGlanceId(widgetId), parameters)
 
         verify(exactly = 0) {
-            parameters[TOGGLE_KEY]
             entryPoints.serverManager() wasNot called
         }
         coVerify(exactly = 1) {
@@ -81,7 +79,7 @@ class TodoWidgetToggleActionsTest {
         verify {
             entryPoints.serverManager() wasNot called
         }
-        coVerify(exactly = 1) {
+        coVerify(exactly = 0) {
             entryPoints.dao().get(widgetId)
         }
     }
