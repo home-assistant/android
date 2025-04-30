@@ -46,7 +46,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
@@ -96,18 +95,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.sink
 import org.json.JSONObject
 import timber.log.Timber
+import io.homeassistant.companion.android.common.R as commonR
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,

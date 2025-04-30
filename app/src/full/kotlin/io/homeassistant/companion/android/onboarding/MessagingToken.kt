@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.onboarding
 
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.tasks.await
-import org.unifiedpush.android.connector.keys.DefaultKeyManager
 import timber.log.Timber
 
 suspend fun getMessagingToken(): String {

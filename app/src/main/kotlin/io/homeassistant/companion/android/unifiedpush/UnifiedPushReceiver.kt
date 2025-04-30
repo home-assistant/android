@@ -6,9 +6,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.notifications.MessagingManager
 import javax.inject.Inject
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import org.unifiedpush.android.connector.FailedReason
 import org.unifiedpush.android.connector.MessagingReceiver
 import org.unifiedpush.android.connector.data.PushEndpoint
