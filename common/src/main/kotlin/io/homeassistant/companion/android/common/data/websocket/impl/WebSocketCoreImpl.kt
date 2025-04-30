@@ -13,6 +13,15 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_AREA_REGISTRY_UPDATED
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_DEVICE_REGISTRY_UPDATED
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_ENTITY_REGISTRY_UPDATED
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_STATE_CHANGED
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_RENDER_TEMPLATE
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.jsonMapper
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineError
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
@@ -131,7 +140,7 @@ internal class WebSocketCoreImpl(
                     // Preemptively send auth
                     connectionState = WebSocketState.AUTHENTICATING
                     it.send(
-                        webSocketMapper.writeValueAsString(
+                        jsonMapper.writeValueAsString(
                             mapOf(
                                 "type" to "auth",
                                 "access_token" to serverManager.authenticationRepository(serverId).retrieveAccessToken(),
@@ -159,7 +168,7 @@ internal class WebSocketCoreImpl(
                             )
                             Timber.d("Sending message ${supportedFeaturesMessage["id"]}: $supportedFeaturesMessage")
                             it.send(
-                                webSocketMapper.writeValueAsString(supportedFeaturesMessage),
+                                jsonMapper.writeValueAsString(supportedFeaturesMessage),
                             )
                         }
                     }
@@ -192,7 +201,7 @@ internal class WebSocketCoreImpl(
                                 activeMessages[requestId] = request.apply {
                                     onResponse = cont
                                 }
-                                connection?.send(webSocketMapper.writeValueAsString(outbound))
+                                connection?.send(jsonMapper.writeValueAsString(outbound))
                                 Timber.d("Message number $requestId sent")
                             }
                         }
@@ -314,11 +323,11 @@ internal class WebSocketCoreImpl(
 
     override fun onMessage(webSocket: WebSocket, text: String) {
         Timber.d("Websocket: onMessage (${if (BuildConfig.DEBUG) "text: $text" else "text"})")
-        val textTree = webSocketMapper.readTree(text)
+        val textTree = jsonMapper.readTree(text)
         val messages: List<SocketResponse> = if (textTree.isArray) {
-            textTree.elements().asSequence().toList().map { webSocketMapper.convertValue(it) }
+            textTree.elements().asSequence().toList().map { jsonMapper.convertValue(it) }
         } else {
-            listOf(webSocketMapper.readValue(text))
+            listOf(jsonMapper.readValue(text))
         }
 
         // Send messages to the queue to ensure they are handled in order and don't block the function
@@ -397,18 +406,18 @@ internal class WebSocketCoreImpl(
 
             val message: Any =
                 if (response.event?.contains("hass_confirm_id") == true) {
-                    webSocketMapper.convertValue(
+                    jsonMapper.convertValue(
                         response.event,
                         object : TypeReference<Map<String, Any>>() {},
                     )
                 } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES) {
-                    webSocketMapper.convertValue(response.event, CompressedStateChangedEvent::class.java)
+                    jsonMapper.convertValue(response.event, CompressedStateChangedEvent::class.java)
                 } else if (subscriptionType == SUBSCRIBE_TYPE_RENDER_TEMPLATE) {
-                    webSocketMapper.convertValue(response.event, TemplateUpdatedEvent::class.java)
+                    jsonMapper.convertValue(response.event, TemplateUpdatedEvent::class.java)
                 } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER) {
                     val trigger = response.event?.get("variables")?.get("trigger")
                     if (trigger != null) {
-                        webSocketMapper.convertValue(trigger, TriggerEvent::class.java)
+                        jsonMapper.convertValue(trigger, TriggerEvent::class.java)
                     } else {
                         Timber.w("Received no trigger value for trigger subscription, skipping")
                         return
@@ -418,13 +427,13 @@ internal class WebSocketCoreImpl(
                     if (eventType?.isTextual == true) {
                         val eventDataMap = response.event.get("data")
                         val eventData = when (eventType.textValue()) {
-                            AssistPipelineEventType.RUN_START -> webSocketMapper.convertValue(eventDataMap, AssistPipelineRunStart::class.java)
-                            AssistPipelineEventType.STT_END -> webSocketMapper.convertValue(eventDataMap, AssistPipelineSttEnd::class.java)
-                            AssistPipelineEventType.INTENT_START -> webSocketMapper.convertValue(eventDataMap, AssistPipelineIntentStart::class.java)
-                            AssistPipelineEventType.INTENT_PROGRESS -> webSocketMapper.convertValue(eventDataMap, AssistPipelineIntentProgress::class.java)
-                            AssistPipelineEventType.INTENT_END -> webSocketMapper.convertValue(eventDataMap, AssistPipelineIntentEnd::class.java)
-                            AssistPipelineEventType.TTS_END -> webSocketMapper.convertValue(eventDataMap, AssistPipelineTtsEnd::class.java)
-                            AssistPipelineEventType.ERROR -> webSocketMapper.convertValue(eventDataMap, AssistPipelineError::class.java)
+                            AssistPipelineEventType.RUN_START -> jsonMapper.convertValue(eventDataMap, AssistPipelineRunStart::class.java)
+                            AssistPipelineEventType.STT_END -> jsonMapper.convertValue(eventDataMap, AssistPipelineSttEnd::class.java)
+                            AssistPipelineEventType.INTENT_START -> jsonMapper.convertValue(eventDataMap, AssistPipelineIntentStart::class.java)
+                            AssistPipelineEventType.INTENT_PROGRESS -> jsonMapper.convertValue(eventDataMap, AssistPipelineIntentProgress::class.java)
+                            AssistPipelineEventType.INTENT_END -> jsonMapper.convertValue(eventDataMap, AssistPipelineIntentEnd::class.java)
+                            AssistPipelineEventType.TTS_END -> jsonMapper.convertValue(eventDataMap, AssistPipelineTtsEnd::class.java)
+                            AssistPipelineEventType.ERROR -> jsonMapper.convertValue(eventDataMap, AssistPipelineError::class.java)
                             else -> {
                                 Timber.d("Unknown event type ignoring. received data = \n$response")
                                 null
@@ -459,7 +468,7 @@ internal class WebSocketCoreImpl(
                         }
                     }
 
-                    webSocketMapper.convertValue(
+                    jsonMapper.convertValue(
                         response.event,
                         eventResponseClass,
                     ).data
