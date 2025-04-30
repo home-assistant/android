@@ -33,7 +33,13 @@ internal data class TodoItemState(val uid: String?, val name: String, val done: 
 
 internal sealed interface TodoState {
     val backgroundType: WidgetBackgroundType
+        get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            WidgetBackgroundType.DYNAMICCOLOR
+        } else {
+            WidgetBackgroundType.DAYNIGHT
+        }
     val textColor: String?
+        get() = null
 
     companion object {
         @Composable
@@ -50,20 +56,8 @@ internal sealed interface TodoState {
     }
 }
 
-internal data object LoadingTodoState : TodoState {
-    override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT
-    override val textColor: String? = null
-}
-
-internal data object EmptyTodoState : TodoState {
-    override val backgroundType: WidgetBackgroundType
-        get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            WidgetBackgroundType.DYNAMICCOLOR
-        } else {
-            WidgetBackgroundType.DAYNIGHT
-        }
-    override val textColor: String? = null
-}
+internal object LoadingTodoState : TodoState
+internal object EmptyTodoState : TodoState
 
 internal data class TodoStateWithData(
     override val backgroundType: WidgetBackgroundType,
@@ -87,7 +81,7 @@ internal data class TodoStateWithData(
     companion object {
         /**
          * Create a complete [TodoStateWithData] from the DB and from the server. Set the flag [outOfSync] to false, since the data
-         * should just come from the server.
+         * includes an updated state from the server.
          */
         fun from(todoEntity: TodoWidgetEntity, entity: Entity<*>, todos: List<TodoWidgetEntity.TodoItem>): TodoStateWithData {
             return TodoStateWithData(
@@ -103,8 +97,8 @@ internal data class TodoStateWithData(
         }
 
         /**
-         * Since we only have the DB entity it means that we are out of sync. So when using this function it will
-         * set the flag [outOfSync] to true.
+         * Create a [TodoStateWithData] with data only from the DB. Set the flag [outOfSync] to true, since the data
+         * doesn't have an updated state from the server.
          */
         fun from(todoEntity: TodoWidgetEntity): TodoStateWithData {
             return TodoStateWithData(

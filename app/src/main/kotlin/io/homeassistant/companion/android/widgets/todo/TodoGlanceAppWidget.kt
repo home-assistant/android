@@ -57,7 +57,7 @@ import io.homeassistant.companion.android.widgets.todo.TodoState.Companion.getCo
  *
  * This widget display a list from a specified `entity_id` of `todo` domain.
  * It provides functionality to add new items, refresh the list, and toggle the completion status of tasks.
- * The widget's theme can be overridden via the [TodoWidgetConfigureActivity].
+ * The widget's `todo` entity and theme can be set via the [TodoWidgetConfigureActivity].
  *
  * ### Limitations:
  * - No error messages are displayed except for the out-of-sync indicator.
@@ -211,7 +211,7 @@ private fun TitleBar(listName: String?, serverId: Int, listEntityId: String, out
         CircleIconButton(
             modifier = GlanceModifier.size(HomeAssistantGlanceTheme.dimensions.iconSize).semantics { testTag = "Refresh" },
             contentColor = GlanceTheme.colors.primary,
-            imageProvider = if (outOfSync) ImageProvider(R.drawable.ic_sync_problem) else ImageProvider(R.drawable.ic_refresh_toolbar_glance),
+            imageProvider = if (outOfSync) ImageProvider(R.drawable.ic_sync_problem) else ImageProvider(R.drawable.ic_refresh),
             contentDescription = LocalContext.current.getString(commonR.string.widget_todo_refresh),
             backgroundColor = GlanceTheme.colors.widgetBackground,
             onClick = actionRefreshTodo(),
@@ -221,7 +221,7 @@ private fun TitleBar(listName: String?, serverId: Int, listEntityId: String, out
             imageProvider = ImageProvider(R.drawable.ic_plus),
             contentDescription = LocalContext.current.getString(commonR.string.widget_todo_add),
             backgroundColor = GlanceTheme.colors.primary,
-            onClick = actionStartWebView(listEntityId, serverId),
+            onClick = actionOpenTodolist(listEntityId, serverId),
         )
     }
 }
@@ -251,7 +251,7 @@ private fun HeaderItem(name: String) {
 @Composable
 private fun ScreenPreview() {
     HomeAssistantGlanceTheme {
-        Screen(
+        ScreenForState(
             TodoStateWithData(
                 backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
                 textColor = null,
@@ -271,7 +271,7 @@ private fun ScreenPreview() {
 @Composable
 private fun ScreenPreviewEmptyItems() {
     HomeAssistantGlanceTheme {
-        Screen(
+        ScreenForState(
             TodoStateWithData(
                 backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
                 textColor = null,
@@ -291,7 +291,7 @@ private fun ScreenPreviewEmptyItems() {
 @Composable
 private fun ScreenPreviewOutOfSync() {
     HomeAssistantGlanceTheme {
-        Screen(
+        ScreenForState(
             TodoStateWithData(
                 backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
                 textColor = null,
@@ -311,7 +311,7 @@ private fun ScreenPreviewOutOfSync() {
 @Composable
 private fun ScreenPreviewEmpty() {
     HomeAssistantGlanceTheme {
-        EmptyScreen()
+        ScreenForState(EmptyTodoState)
     }
 }
 
@@ -320,6 +320,6 @@ private fun ScreenPreviewEmpty() {
 @Composable
 private fun ScreenPreviewLoading() {
     HomeAssistantGlanceTheme {
-        LoadingScreen()
+        ScreenForState(LoadingTodoState)
     }
 }

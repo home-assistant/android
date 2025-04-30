@@ -1,18 +1,15 @@
 package io.homeassistant.companion.android.widgets.todo
 
 import android.content.Context
-import android.content.Intent
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
 import androidx.glance.GlanceId
-import androidx.glance.LocalContext
 import androidx.glance.action.Action
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
-import androidx.glance.appwidget.action.actionStartActivity
 import dagger.hilt.EntryPoint
 import dagger.hilt.EntryPoints
 import dagger.hilt.InstallIn
@@ -21,6 +18,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse.TodoItem.Companion.COMPLETED_STATUS
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse.TodoItem.Companion.NEEDS_ACTION_STATUS
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
+import io.homeassistant.companion.android.util.compose.actionStartWebView
 import io.homeassistant.companion.android.webview.WebViewActivity
 import timber.log.Timber
 
@@ -44,16 +42,8 @@ internal fun actionRefreshTodo(): Action {
  * Get an Action that will open the [WebViewActivity] for the given [listEntityId]
  */
 @Composable
-internal fun actionStartWebView(listEntityId: String, serverId: Int): Action {
-    val path = "todo?entity_id=$listEntityId"
-    val intent = Intent(
-        WebViewActivity.newInstance(LocalContext.current, path, serverId)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-    )
-    intent.action = path
-    intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-    intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-    return actionStartActivity(intent)
+internal fun actionOpenTodolist(listEntityId: String, serverId: Int): Action {
+    return actionStartWebView("todo?entity_id=$listEntityId", serverId)
 }
 
 /**
@@ -118,17 +108,17 @@ class ToggleTodoAction : ActionCallback {
         val appWidgetId = glanceManager.getAppWidgetId(glanceId)
         val dao = entryPoints.dao()
 
-        val widgetEntity = dao.get(appWidgetId)
-
-        if (widgetEntity == null) {
-            Timber.w("Aborting toggle action widget entity is null for $appWidgetId")
-            return
-        }
-
         val todoItem = parameters[TOGGLE_KEY]
 
         if (todoItem == null || todoItem.uid == null) {
             Timber.w("Aborting toggle action because the todo item or uid is null ($todoItem)")
+            return
+        }
+
+        val widgetEntity = dao.get(appWidgetId)
+
+        if (widgetEntity == null) {
+            Timber.w("Aborting toggle action widget entity is null for $appWidgetId")
             return
         }
 

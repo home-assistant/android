@@ -145,12 +145,8 @@ class TodoWidgetConfigureActivity : BaseActivity() {
     }
 
     private fun onAddWidget() {
-        val intent = viewModel.prepareData()
-        if (intent == null) {
-            // TODO show the error when it makes sense
-            showAddWidgetError()
-            return
-        }
+        viewModel.prepareData()
+        // TODO show the error when it makes sense
         setResult(RESULT_OK)
         viewModel.updateWidget(this)
         finish()

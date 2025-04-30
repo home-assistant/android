@@ -48,17 +48,16 @@ data class EntitiesPerServer(val serverId: Int, val entityIds: List<String>)
  *   the `real-time` permission. To unfreeze, call `update` on the widget.
  * - Ensure that data sources are observed within the composition state (e.g., using [androidx.compose.runtime.collectAsState]) to keep
  *   widgets updated while the composition is active (less than a minute even with the `real-time` permission).
- * - Make sur to invoke [registerReceiver] to register actions to manage widget updates effectively.
+ * - Make sure to invoke [registerReceiver] to register actions to manage widget updates effectively.
  * - Even if we are watching for entity changes in the receiver the data received cannot be sent to the widget directly,
  *   if you need to send data to the widget you need to update the [DAO] and call [update].
- * - The changes are watch only after [Intent.ACTION_SCREEN_ON]. It means that on startup the widget won't watch for changes
- *   until the screen is turn on and off.
+ * - The changes are watched only after [Intent.ACTION_SCREEN_ON]. It means that on startup the widget won't watch for changes
+ *   until the screen is turned off and on again.
  *
  * ### Usage:
  * Extend this class and implement the abstract method `getWidgetEntitiesByServer` to provide the mapping of widget IDs
  * to their associated entities.
  *
- * ### Example:
  * ```kotlin
  * class MyWidgetReceiver : BaseGlanceWidgetReceiver<MyWidgetDao>() {
  *     override suspend fun getWidgetEntitiesByServer(context: Context): Map<Int, EntitiesPerServer> {
@@ -77,8 +76,8 @@ data class EntitiesPerServer(val serverId: Int, val entityIds: List<String>)
  * }
  * ```
  *
- * ### Implementation Details:
- * - **Coroutine Scope**: A shared [CoroutineScope] is used to manage asynchronous tasks for all widgets of a given class. It uses
+ * ### Implementation details:
+ * - **Coroutine scope**: A shared [CoroutineScope] is used to manage asynchronous tasks for all widgets of a given class. It uses
  *   [SupervisorJob] to ensure that one failing job does not cancel others.
  * - **Entity updates**: Subscriptions to entity updates are managed per widget. When a widget is deleted, its
  *   subscriptions are canceled, and its data is removed from the database.
@@ -123,12 +122,11 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
              * needs to be canceled here like [startWatchingForEntitiesChanges] otherwise it won't ever be canceled.
              *
              * Extract from the action documentation:
-             * <p>This action may be sent in response to a new instance of this AppWidget provider being instantiated,
+             * > This action may be sent in response to a new instance of this AppWidget provider being instantiated,
              * the requested {@link AppWidgetProviderInfo#updatePeriodMillis update interval} elapsing, or the system booting.
              */
             AppWidgetManager.ACTION_APPWIDGET_UPDATE -> {
                 widgetScope.launch {
-                    Timber.tag(widgetClassName).i("Update all widgets")
                     glanceAppWidget.updateAll(context)
                 }
             }
@@ -136,7 +134,6 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        Timber.tag(widgetClassName).d("onDeleted $appWidgetIds")
         super.onDeleted(context, appWidgetIds)
         deleteWidgetsFromDatabase(appWidgetIds)
     }
@@ -146,7 +143,6 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
      * It doesn't exported the receiver.
      */
     fun registerReceiver(context: Context) {
-        Timber.tag(widgetClassName).d("Register receiver ($this)")
         ContextCompat.registerReceiver(
             context,
             this,
@@ -160,7 +156,6 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
 
     private fun deleteWidgetsFromDatabase(appWidgetIds: IntArray) {
         widgetScope.launch {
-            Timber.tag(widgetClassName).d("onDeleted ${appWidgetIds.toList()}")
             dao.deleteAll(appWidgetIds)
             appWidgetIds.forEach(::removeSubscription)
         }
@@ -211,13 +206,11 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
     }
 
     private fun stopWatchingForEntitiesChanges() {
-        Timber.tag(widgetClassName).d("Stop watching.")
         widgetScope.cancel()
         widgetJobs.clear()
     }
 
     private fun removeSubscription(appWidgetId: Int) {
-        Timber.tag(widgetClassName).d("Removing subscription for widget = $appWidgetId")
         widgetJobs.remove(appWidgetId)?.cancel()
     }
 
@@ -240,14 +233,13 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
             deleteWidgetsFromDatabase(invalidWidgetIds.toIntArray())
         }
 
-        // strip the server and entities from the map since they are not used anymore
         val entitiesPerServerWithoutInvalid = entitiesPerServer - invalidWidgetIds
 
         return entitiesPerServerWithoutInvalid
     }
 
     /**
-     * From https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:glance/glance-appwidget/src/main/java/androidx/glance/appwidget/GlanceAppWidget.kt;l=78;drc=852af4153b5fc3f0c92b8356f00ec5d786c5e869
+     * From https://cs.android.com/androidx/platform/frameworks/support/+/a2cb47e01ac0b5f3427ef4e61719c0f1aaba4fc1:glance/glance-appwidget/src/main/java/androidx/glance/appwidget/GlanceAppWidget.kt;l=78
      *
      * Note: [update] and [updateAll] do not restart `provideGlance` if it is already running. As a
      * result, you should load initial data before calling `provideContent`, and then observe your
@@ -265,10 +257,8 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
             val glanceId = manager.getGlanceIdBy(appWidgetId)
 
             glanceAppWidget.update(context, glanceId)
-            Timber.tag(widgetClassName).i("Update for widget = $appWidgetId sent")
         } else {
             glanceAppWidget.updateAll(context)
-            Timber.tag(widgetClassName).i("Update for all widgets sent")
         }
     }
 

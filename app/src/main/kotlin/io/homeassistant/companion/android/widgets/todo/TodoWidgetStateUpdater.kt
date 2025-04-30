@@ -22,8 +22,8 @@ import kotlinx.coroutines.flow.onStart
 import timber.log.Timber
 
 /**
- * This class allow the [io.homeassistant.companion.android.widgets.todo.TodoGlanceAppWidget] to get their
- * states while in composition state by exposing a flow through [stateFlow].
+ * This class allow the [TodoGlanceAppWidget] to get their states while in composition state
+ * by exposing a flow through [stateFlow].
  */
 internal class TodoWidgetStateUpdater @Inject constructor(
     val todoWidgetDao: TodoWidgetDao,
@@ -78,14 +78,14 @@ internal class TodoWidgetStateUpdater @Inject constructor(
     /**
      * Observes and provides the state of the widget identified by the given [widgetId].
      *
-     * ### Flow Details:
+     * ### Flow details:
      * 1. **Initial state flow**: Emits the current state of the widget using the data in the database. If no configuration exists, it emits an empty state.
      * 2. **Watch for changes flow**: Listens for changes in the widget's configuration or updates from the server. When a change is detected:
      *    - It fetches the latest entity and todo items from the server.
      *    - Updates the database with the latest data.
      *    - Emits the updated state.
      *
-     * ### Error Handling:
+     * ### Error handling:
      * - If an error occurs while watching for changes, it logs the error.
      * - The flow completes gracefully when no longer needed, logging a message to indicate the end of observation.
      *

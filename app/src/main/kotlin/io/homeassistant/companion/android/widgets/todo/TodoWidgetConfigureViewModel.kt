@@ -63,9 +63,7 @@ class TodoWidgetConfigureViewModel @Inject constructor(
     }
 
     private fun loadPreviousState(widgetId: Int) = viewModelScope.launch {
-        val entity = todoWidgetDao.get(widgetId)
-
-        entity?.let {
+        todoWidgetDao.get(widgetId)?.let {
             isUpdateWidget = true
             selectedServerId = it.serverId
             selectedEntityId = it.entityId
