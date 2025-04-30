@@ -6,6 +6,9 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.notifications.MessagingManager
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import org.unifiedpush.android.connector.FailedReason
 import org.unifiedpush.android.connector.MessagingReceiver
 import org.unifiedpush.android.connector.data.PushEndpoint
@@ -33,7 +36,7 @@ class UnifiedPushReceiver : MessagingReceiver() {
 
     override fun onNewEndpoint(context: Context, endpoint: PushEndpoint, instance: String) {
         Timber.d("New Endpoint: ${endpoint.url} for $instance")
-        unifiedPushManager.updateEndpoint(endpoint.url)
+        unifiedPushManager.updateEndpoint(endpoint)
     }
 
     override fun onRegistrationFailed(context: Context, reason: FailedReason, instance: String) {
@@ -44,6 +47,6 @@ class UnifiedPushReceiver : MessagingReceiver() {
     override fun onUnregistered(context: Context, instance: String) {
         Timber.d("Unregistered: $instance")
         unifiedPushManager.saveDistributor(UnifiedPushManager.DISTRIBUTOR_DISABLED)
-        unifiedPushManager.updateEndpoint("")
+        unifiedPushManager.updateEndpoint(null)
     }
 }
