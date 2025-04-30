@@ -173,7 +173,7 @@ internal class WebSocketCoreImpl(
                             if (!result) {
                                 // Something got wrong when sending the message but we should not change the status of the
                                 // connection here. If an error occur in the WS it will be handled in the onFailure.
-                                Timber.e("Unable to send supported features message")
+                                Timber.w("Unable to send supported features message")
                             }
                         }
                     }
@@ -547,7 +547,7 @@ internal class WebSocketCoreImpl(
                             }
                         }
                 } else {
-                    // TODO in that case what will happen to the active messages?
+                    // TODO https://github.com/home-assistant/android/issues/5259 handle re-connection gracefully or terminates the flows
                     Timber.w("Unable to reconnect cannot resubscribe to active subscriptions")
                 }
             }
