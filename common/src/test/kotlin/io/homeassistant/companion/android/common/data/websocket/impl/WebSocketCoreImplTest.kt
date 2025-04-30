@@ -47,6 +47,7 @@ import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class WebSocketCoreImplTest {
+    private lateinit var mockOkHttpClient: OkHttpClient
     private lateinit var mockConnection: WebSocket
     private lateinit var webSocketCore: WebSocketCoreImpl
     private lateinit var webSocketListener: WebSocketListener
@@ -62,8 +63,11 @@ class WebSocketCoreImplTest {
         unmockkAll()
     }
 
-    private fun TestScope.setupServer(url: String = "https://io.ha", backgroundScope: CoroutineScope = this.backgroundScope) {
-        val mockOkHttpClient = mockk<OkHttpClient>(relaxed = true)
+    private fun TestScope.setupServer(
+        url: String = "https://io.ha",
+        backgroundScope: CoroutineScope = this.backgroundScope
+    ) {
+        mockOkHttpClient = mockk<OkHttpClient>(relaxed = true)
         val mockServerManager = mockk<ServerManager>(relaxed = true)
         val mockAuthenticationRepository = mockk<AuthenticationRepository>(relaxed = true)
 
@@ -172,14 +176,28 @@ connect()
         }
 
     @Test
-    fun `Given failure to connect after timeout When connect is invoked Then it returns false and connection state is AUTHENTICATING`() =
+    fun `Given failure to send auth message after socket creation When connect is invoked Then it returns false and connection state is null`() =
         runTest {
             setupServer()
+            every { mockConnection.send(any<String>()) } returns false
 
             val result = webSocketCore.connect()
 
             assertFalse(result)
-            assertSame(WebSocketState.AUTHENTICATING, webSocketCore.getConnectionState())
+            assertNull(webSocketCore.getConnectionState())
+        }
+
+    @Test
+    fun `Given failure at socket creation When connect is invoked Then it returns false and connection state is null`() =
+        runTest {
+            setupServer()
+            // Simulate a failure while creating the socket
+            every { mockOkHttpClient.newWebSocket(any(), any()) } throws IllegalStateException()
+
+            val result = webSocketCore.connect()
+
+            assertFalse(result)
+            assertNull(webSocketCore.getConnectionState())
         }
 
     @ParameterizedTest

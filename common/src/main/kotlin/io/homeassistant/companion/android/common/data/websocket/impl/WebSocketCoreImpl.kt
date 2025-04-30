@@ -145,11 +145,14 @@ internal class WebSocketCoreImpl(
                         ),
                     )
                     if (!result) {
+                        Timber.e("Unable to send auth message")
+                        connectionState = null
                         return false
                     }
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Unable to connect")
+                connectionState = null
                 return false
             }
 
