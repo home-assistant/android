@@ -337,6 +337,9 @@ google-services.json
 *.keystore
 version.txt
 
+## Kotlin daemon
+.kotlin
+
 ## Make sure our translation downloads don't make our repo dirty when building.
 strings.zip
 common/src/main/res/*/strings.xml
@@ -350,7 +353,13 @@ playStorePublishServiceCredentialsFile.json
 
 ## Missing from the generated gitignore
 .idea/androidTestResultsUserPreferences.xml
+.idea/appInsightsSettings.xml
 .idea/deploymentTargetSelector.xml
+.idea/deploymentTargetDropDown.xml
 .idea/emulatorDisplays.xml
+.idea/graphql-settings.xml
 .idea/runConfigurations.xml
 .idea/studiobot.xml
+
+## Temp results from the CI
+merged_results.sarif

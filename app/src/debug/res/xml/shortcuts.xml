@@ -1,0 +1,14 @@
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="UnusedResources, UnusedAttribute">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_android_debug_bridge"
+        android:shortcutId="dev"
+        android:shortcutShortLabel="@string/dev_playground_label">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="io.homeassistant.companion.android.developer.DevPlaygroundActivity"
+            android:targetPackage="io.homeassistant.companion.android.debug" />
+    </shortcut>
+</shortcuts>

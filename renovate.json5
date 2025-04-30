@@ -1,103 +1,128 @@
 {
-    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "configMigration": true,
-    "extends": [
-        "config:recommended",
-        "group:linters",
-        "group:monorepos",
-        "group:recommended"
+    $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+    configMigration: true,
+    extends: [
+        'config:recommended',
+        'group:linters',
+        'group:monorepos',
+        'group:recommended',
     ],
-    "lockFileMaintenance": {"enabled": true},
-    "minimumReleaseAge": "3 days",
-    "hostRules": [
-		{
-			"matchHost": "repo.maven.apache.org",
-			"concurrentRequestLimit": 1,
-			"maxRequestsPerSecond": 8
-		},
-		{
-			"matchHost": "plugins.gradle.org",
-			"concurrentRequestLimit": 1,
-			"maxRequestsPerSecond": 8
-		},
-		{
-			"matchHost": "dl.google.com",
-			"concurrentRequestLimit": 1,
-			"maxRequestsPerSecond": 8
-		},
-		{
-			"matchHost": "jitpack.io",
-			"concurrentRequestLimit": 1,
-			"maxRequestsPerSecond": 8
-		}
+    lockFileMaintenance: {
+        enabled: true,
+    },
+    minimumReleaseAge: '3 days',
+    hostRules: [
+        {
+            matchHost: 'repo.maven.apache.org',
+            concurrentRequestLimit: 1,
+            maxRequestsPerSecond: 8,
+        },
+        {
+            matchHost: 'plugins.gradle.org',
+            concurrentRequestLimit: 1,
+            maxRequestsPerSecond: 8,
+        },
+        {
+            matchHost: 'dl.google.com',
+            concurrentRequestLimit: 1,
+            maxRequestsPerSecond: 8,
+        },
+        {
+            matchHost: 'jitpack.io',
+            concurrentRequestLimit: 1,
+            maxRequestsPerSecond: 8,
+        },
     ],
-    "packageRules": [
+    packageRules: [
         {
-            "matchDatasources": ["maven"],
-            "registryUrls": ["https://repo1.maven.org/maven2/", "https://plugins.gradle.org/m2/", "https://dl.google.com/android/maven2/", "https://jitpack.io"]
+            matchDatasources: [
+                'maven',
+            ],
+            registryUrls: [
+                'https://repo1.maven.org/maven2/',
+                'https://plugins.gradle.org/m2/',
+                'https://dl.google.com/android/maven2/',
+                'https://jitpack.io',
+            ],
         },
         {
-            "groupName": "org.jetbrains.kotlin:*",
-            "matchPackageNames": [
-                "org.jetbrains.kotlin:{/,}**",
-                "org.jetbrains.kotlin.{/,}**"
-            ]
+            versionCompatibility: '^(?<version>.*-android)$',
+            versioning: 'semver',
+            matchPackageNames: [
+                '/^com.google.guava:/',
+            ],
         },
         {
-            "groupName": "org.jetbrains.kotlin-wrappers:*",
-            "matchPackageNames": ["org.jetbrains.kotlin-wrappers:{/,}**"]
+            groupName: 'org.jetbrains.kotlin:*',
+            matchPackageNames: [
+                'org.jetbrains.kotlin:{/,}**',
+                'org.jetbrains.kotlin.{/,}**',
+            ],
         },
         {
-            "groupName": "org.jetbrains.kotlinx.*",
-            "matchPackageNames": [
-                "org.jetbrains.kotlinx:{/,}**",
-                "org.jetbrains.kotlinx.{/,}**"
-            ]
+            groupName: 'org.jetbrains.kotlin-wrappers:*',
+            matchPackageNames: [
+                'org.jetbrains.kotlin-wrappers:{/,}**',
+            ],
         },
         {
-            "groupName": "org.jetbrains.kotlin.*",
-            "matchPackageNames": [
-                "/org.jetbrains.kotlin.*/",
-                "/com.google.devtools.ksp/",
-                "/androidx.compose.compiler:compiler/"
-            ]
+            groupName: 'org.jetbrains.kotlinx.*',
+            matchPackageNames: [
+                'org.jetbrains.kotlinx:{/,}**',
+                'org.jetbrains.kotlinx.{/,}**',
+            ],
         },
         {
-            "groupName": "androidx.compose.*",
-            "matchPackageNames": [
-                "!androidx.compose.compiler{/,}**",
-                "!androidx.wear.compose{/,}**",
-                "androidx.navigation:navigation-compose{/,}**",
-                "androidx.compose{/,}**",
-            ]
+            groupName: 'org.jetbrains.kotlin.*',
+            matchPackageNames: [
+                '/org.jetbrains.kotlin.*/',
+                '/com.google.devtools.ksp/',
+                '/androidx.compose.compiler:compiler/',
+            ],
         },
         {
-            "groupName": "androidx.*",
-            "matchPackageNames": [
-                "!androidx.compose{/,}**",
-                "!androidx.navigation:navigation-compose{/,}**",
-                "!androidx.wear.compose{/,}**",
-                "androidx.{/,}**"
-            ]
+            groupName: 'androidx.compose.*',
+            matchPackageNames: [
+                '!androidx.compose.compiler{/,}**',
+                '!androidx.wear.compose{/,}**',
+                'androidx.navigation:navigation-compose{/,}**',
+                'androidx.compose{/,}**',
+            ],
         },
         {
-            "groupName": "com.android.*",
-            "matchPackageNames": ["com.android:{/,}**", "com.android.{/,}**"]
+            groupName: 'androidx.*',
+            matchPackageNames: [
+                '!androidx.compose{/,}**',
+                '!androidx.navigation:navigation-compose{/,}**',
+                '!androidx.wear.compose{/,}**',
+                'androidx.{/,}**',
+            ],
         },
         {
-            "groupName": "com.google.firebase.*",
-            "matchPackageNames": ["com.google.firebase.{/,}**"]
+            groupName: 'com.android.*',
+            matchPackageNames: [
+                'com.android:{/,}**',
+                'com.android.{/,}**',
+            ],
         },
         {
-            "groupName": "com.google.android.*",
-            "matchPackageNames": [
-                "com.google.android:{/,}**",
-                "com.google.android.{/,}**"
-            ]
+            groupName: 'com.google.firebase.*',
+            matchPackageNames: [
+                'com.google.firebase.{/,}**',
+            ],
         },
         {
-            "groupName": "com.fasterxml.jackson.*",
-            "matchPackageNames": ["com.fasterxml.jackson.{/,}**"]
-        }
-    ]
+            groupName: 'com.google.android.*',
+            matchPackageNames: [
+                'com.google.android:{/,}**',
+                'com.google.android.{/,}**',
+            ],
+        },
+        {
+            groupName: 'com.fasterxml.jackson.*',
+            matchPackageNames: [
+                'com.fasterxml.jackson.{/,}**',
+            ],
+        },
+    ],
 }

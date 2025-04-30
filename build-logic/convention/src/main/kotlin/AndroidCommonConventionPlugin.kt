@@ -54,7 +54,10 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                 }
 
                 testOptions {
-                    unitTests.isReturnDefaultValues = true
+                    unitTests {
+                        isReturnDefaultValues = true
+                        isIncludeAndroidResources = true
+                    }
                 }
 
                 tasks.withType<Test> {

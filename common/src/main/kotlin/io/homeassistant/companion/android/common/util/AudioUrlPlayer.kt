@@ -3,12 +3,13 @@ package io.homeassistant.companion.android.common.util
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.AudioManager.OnAudioFocusChangeListener
+import android.media.AudioManager.STREAM_MUSIC
 import android.media.MediaPlayer
 import android.os.Build
+import androidx.annotation.VisibleForTesting
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.Dispatchers
@@ -19,77 +20,74 @@ import timber.log.Timber
 /**
  * Simple interface for playing short streaming audio (from URLs).
  */
-class AudioUrlPlayer(private val audioManager: AudioManager?) {
+class AudioUrlPlayer @VisibleForTesting constructor(private val audioManager: AudioManager?, private val mediaPlayerCreator: () -> MediaPlayer) {
 
-    private var player: MediaPlayer? = null
+    constructor(audioManager: AudioManager?) : this(audioManager, { MediaPlayer() })
 
-    private var focusRequest: AudioFocusRequestCompat? = null
+    @VisibleForTesting var player: MediaPlayer? = null
+
+    @VisibleForTesting var focusRequest: AudioFocusRequestCompat? = null
     private val focusListener = OnAudioFocusChangeListener { /* Not used */ }
 
     /**
      * Stream and play audio from the provided [url]. Any currently playing audio will be stopped.
      * This function will suspend until playback has started.
+     * If the current volume of the [STREAM_MUSIC] is 0 it doesn't play the audio and directly return false.
      * @param isAssistant whether the usage/stream should be set to Assistant on supported versions
-     * @param donePlaying callback to be invoked when playback has finished (it covers when it's not playing anything or an error happened)
      * @return `true` if the audio playback started, or `false` if not
      */
-    suspend fun playAudio(url: String, isAssistant: Boolean = true, donePlaying: (() -> Unit)?): Boolean = withContext(Dispatchers.IO) {
+    suspend fun playAudio(url: String, isAssistant: Boolean = true): Boolean = withContext(Dispatchers.IO) {
         if (player != null) {
             stop()
         }
 
-        val refDonePlaying = AtomicReference<(() -> Unit)?>(donePlaying)
-
-        fun donePlayingInvocation() {
-            refDonePlaying.getAndSet(null)?.invoke()
-        }
-
-        return@withContext suspendCoroutine { cont ->
-            player = MediaPlayer().apply {
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setContentType(
-                            if (isAssistant) AudioAttributes.CONTENT_TYPE_SPEECH else AudioAttributes.CONTENT_TYPE_MUSIC
-                        )
-                        .setUsage(
-                            if (isAssistant && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                AudioAttributes.USAGE_ASSISTANT
-                            } else {
-                                AudioAttributes.USAGE_MEDIA
-                            }
-                        )
-                        .build()
-                )
-                setOnPreparedListener {
-                    if (isActive) {
-                        requestFocus(isAssistant)
-                        it.start()
-                        cont.resume(true)
-                    } else {
+        return@withContext if (canPlayMusic()) {
+            suspendCoroutine { cont ->
+                player = mediaPlayerCreator().apply {
+                    setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setContentType(
+                                if (isAssistant) AudioAttributes.CONTENT_TYPE_SPEECH else AudioAttributes.CONTENT_TYPE_MUSIC
+                            )
+                            .setUsage(
+                                if (isAssistant && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    AudioAttributes.USAGE_ASSISTANT
+                                } else {
+                                    AudioAttributes.USAGE_MEDIA
+                                }
+                            )
+                            .build()
+                    )
+                    setOnPreparedListener {
+                        if (isActive) {
+                            requestFocus(isAssistant)
+                            it.start()
+                        } else {
+                            releasePlayer()
+                            cont.resume(false)
+                        }
+                    }
+                    setOnErrorListener { _, what, extra ->
+                        Timber.e("Media player encountered error: $what ($extra)")
                         releasePlayer()
                         cont.resume(false)
+                        return@setOnErrorListener true
+                    }
+                    setOnCompletionListener {
+                        releasePlayer()
+                        cont.resume(true)
                     }
                 }
-                setOnErrorListener { _, what, extra ->
-                    Timber.e("Media player encountered error: $what ($extra)")
-                    releasePlayer()
+                try {
+                    player?.setDataSource(url)
+                    player?.prepareAsync()
+                } catch (e: Exception) {
+                    Timber.e(e, "Media player couldn't be prepared")
                     cont.resume(false)
-                    donePlayingInvocation()
-                    return@setOnErrorListener true
-                }
-                setOnCompletionListener {
-                    releasePlayer()
-                    donePlayingInvocation()
                 }
             }
-            try {
-                player?.setDataSource(url)
-                player?.prepareAsync()
-            } catch (e: Exception) {
-                Timber.e(e, "Media player couldn't be prepared")
-                cont.resume(false)
-                donePlayingInvocation()
-            }
+        } else {
+            false
         }
     }
 
@@ -100,6 +98,15 @@ class AudioUrlPlayer(private val audioManager: AudioManager?) {
             // Player wasn't initialized, ignore
         }
         releasePlayer()
+    }
+
+    private fun canPlayMusic(): Boolean {
+        return try {
+            audioManager?.getStreamVolume(STREAM_MUSIC) != 0
+        } catch (e: RuntimeException) {
+            Timber.e(e, "Couldn't get stream volume")
+            true
+        }
     }
 
     private fun releasePlayer() {

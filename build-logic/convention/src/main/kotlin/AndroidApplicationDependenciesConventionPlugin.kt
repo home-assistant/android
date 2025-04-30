@@ -59,7 +59,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "fullImplementation"(libs.play.services.threadnetwork)
                     "fullImplementation"(platform(libs.firebase.bom))
                     "fullImplementation"(libs.firebase.messaging)
-                    "fullImplementation"(libs.sentry.android)
+                    "fullImplementation"(libs.sentry.android.core)
                     "fullImplementation"(libs.play.services.wearable)
                     "fullImplementation"(libs.wear.remote.interactions)
 
@@ -85,6 +85,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "implementation"(libs.activity.compose)
                     "implementation"(libs.navigation.compose)
                     "implementation"(libs.androidx.lifecycle.runtime.compose)
+                    "implementation"(libs.core.remoteviews)
 
                     "implementation"(libs.iconics.core)
                     "implementation"(libs.iconics.compose)
@@ -103,6 +104,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "androidTestImplementation"(platform(libs.compose.bom))
                     "androidTestImplementation"(libs.bundles.androidx.test)
                     "androidTestImplementation"(libs.bundles.androidx.compose.ui.test)
+                    "androidTestImplementation"(libs.leakcanary.android.instrumentation)
                 }
             }
         }

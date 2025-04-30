@@ -144,6 +144,22 @@
                 android:resource="@xml/entity_widget_info" />
         </receiver>
 
+        <receiver android:name=".widgets.todo.TodoWidget" android:label="@string/widget_todo_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="io.homeassistant.companion.android.widgets.template.TemplateWidget.RECEIVE_DATA"/>
+                <action android:name="io.homeassistant.companion.android.widgets.template.BaseWidgetProvider.UPDATE_VIEW"/>
+                <action android:name="io.homeassistant.companion.android.widgets.todo.TodoWidget.OPEN_TODO"/>
+                <action android:name="io.homeassistant.companion.android.widgets.todo.TodoWidget.ADD_TODO"/>
+                <action android:name="io.homeassistant.companion.android.widgets.todo.TodoWidget.TOGGLE_TODO_ITEM"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/todo_widget_info" />
+        </receiver>
+
         <receiver android:name=".widgets.mediaplayer.MediaPlayerControlsWidget" android:label="@string/widget_media_player_description"
             android:exported="false">
             <intent-filter>
@@ -201,6 +217,13 @@
             </intent-filter>
         </activity>
         <activity android:name=".widgets.entity.EntityWidgetConfigureActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".widgets.todo.TodoWidgetConfigureActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true">
             <intent-filter>

@@ -30,11 +30,11 @@ allprojects {
     }
 }
 
-tasks.register("clean").configure {
+tasks.register("clean") {
     delete("build")
 }
 
-tasks.register("alldependencies").configure {
+tasks.register("alldependencies") {
     setDependsOn(
         project.allprojects.flatMap {
             it.tasks.withType<DependencyReportTask>()
@@ -42,9 +42,20 @@ tasks.register("alldependencies").configure {
     )
 }
 
-tasks.register("versionFile").configure {
+tasks.register("versionFile") {
     group = "publishing"
+    description = "Writes the project.version to a file version.txt at the root of the project"
+
+    notCompatibleWithConfigurationCache("The version of the project depends on the timestamp of the build and cannot be cached.")
+
+    // Use a provider to avoid capturing script object references
+    outputs.file("$projectDir/version.txt")
+    // Retrieve the project version here since querying `project` at execution time is unsupported when configuration cache is enabled
+    val projectVersion = project.version.toString()
+
     doLast {
-        File(projectDir, "version.txt").writeText(project.version.toString())
+        val versionFile = outputs.files.singleFile
+        versionFile.writeText(projectVersion)
+        println("Version written to ${versionFile.absolutePath}")
     }
 }

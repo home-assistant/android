@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.homeassistant.android.application)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.screenshot)
 }
 
 android {
@@ -11,6 +12,14 @@ android {
         versionName = project.version.toString()
         // We add 1 because the app and wear versions need to have different version codes.
         versionCode = 1 + checkNotNull(versionCode) { "Did you forget to apply the convention plugin that set the version code?" }
+    }
+
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
+
+    testOptions {
+        screenshotTests {
+            imageDifferenceThreshold = 0.00025f // 0.025%
+        }
     }
 }
 
@@ -66,6 +75,7 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+    screenshotTestImplementation(libs.compose.uiTooling)
 
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.bundles.androidx.test)

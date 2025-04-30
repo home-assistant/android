@@ -2,7 +2,7 @@ name: Pull Request
 
 on: # yamllint disable-line rule:truthy
   pull_request:
-    branches: [master]
+    branches: [main]
 
 # This workflow should cancel previous builds since it means that a new commit has been made to the PR
 concurrency:
@@ -22,7 +22,36 @@ jobs:
       - name: Validate YAML
         run: yamllint --strict --format github .
 
+  lockfiles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          mock-google-services: "true"
+
+      - name: Update lockfiles
+        run: ./gradlew alldependencies --write-locks
+
+      - name: Check for missing lockfiles update
+        run: |
+          if [[ $(git status --porcelain) ]]; then
+            echo $(git status --porcelain)
+            echo -e "\n❌ Uncommitted changes detected in the repository."
+            echo -e "🔍 It seems that the dependency lockfiles are outdated. Please update them by running:"
+            echo -e "   ./gradlew alldependencies --write-locks"
+            echo -e "   Then commit the updated lockfiles to your branch."
+            error_message="Dependency changes detected, but lockfiles are not updated. Run \`./gradlew alldependencies --write-locks\` and commit the changes."
+            echo "::error file=gradle/libs.versions.toml,line=1,title=⛔ Lockfile Update Required::${error_message}"
+            exit 1;
+          else
+            echo -e "\n✔️ All dependency lockfiles are up to date. No uncommitted changes detected."
+          fi
+
   ktlint:
+    needs: [yamllint, lockfiles]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -31,41 +60,20 @@ jobs:
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       # Since `build-logic` is added with `includeBuild` we have to call ktlint explicitly on `:convention`.
       - name: Validate ktlint
-        run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck
+        run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck --continue
 
-      - name: Upload lint reports (SARIF)
-        if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }}
-        uses: github/codeql-action/upload-sarif@v3
+      - uses: ./.github/actions/upload-sarif-results
+        if: always()
         with:
-          sarif_file: "./"
           category: "KTlint"
 
-  unit_tests:
-    name: "Unit Tests"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: ./.github/actions/setup-build-env
-        with:
-          mock-google-services: "true"
-
-      - name: Run test
-        run: ./gradlew :common:testDebugUnitTest # Should be adapted once we have more than one tests
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Unit test results
-          path: |
-            **/build/test-results/**/TEST-*.xml
-
   lint:
+    needs: [yamllint, lockfiles]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -74,10 +82,11 @@ jobs:
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Validate Lint
-        run: ./gradlew lint
+        run: ./gradlew lint --continue
 
       - name: Upload lint reports (HTML)
         if: ${{ !cancelled() }}
@@ -86,14 +95,36 @@ jobs:
           name: lint-reports
           path: "**/build/reports/lint-results-*.html"
 
-      - name: Upload lint reports (SARIF)
-        if: ${{ !cancelled() && hashFiles('**/*.sarif') != '' }}
-        uses: github/codeql-action/upload-sarif@v3
+      - uses: ./.github/actions/upload-sarif-results
+        if: always()
         with:
-          sarif_file: "./"
           category: "Android Lint"
 
+  screenshot_test:
+    name: "Screenshot Tests"
+    needs: [lint, lockfiles, ktlint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          mock-google-services: "true"
+
+      - name: Validate Screenshot Previews
+        run: ./gradlew validateDebugScreenshotTest
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Screenshot test results
+          path: |
+              **/build/test-results/**/TEST-*.xml
+
   pr_build:
+    needs: [yamllint, lockfiles]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -104,7 +135,7 @@ jobs:
 
       - name: Check for modified DB schemas on branch
         run: |
-          if git diff --name-only --diff-filter=DMR origin/master... | grep "^common/schemas"; then
+          if git diff --name-only --diff-filter=DMR origin/main... | grep "^common/schemas"; then
             echo -e "\n❌ Existing database schema modified, please increase the database version instead"
             exit 1
           else
@@ -113,7 +144,11 @@ jobs:
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
+
+      - name: Check version file creation
+        run: ./gradlew versionFile
 
       - name: Build Debug APK
         run: |
@@ -134,8 +169,32 @@ jobs:
         with:
           path: ./**/*.apk
 
+  unit_tests:
+    name: "Unit Tests"
+    needs: [lint, lockfiles, ktlint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          mock-google-services: "true"
+
+      - name: Run test
+        run: ./gradlew :common:testDebugUnitTest # Should be adapted once we have more than one tests
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unit test results
+          path: |
+            **/build/test-results/**/TEST-*.xml
+
   instrumentation_test:
     name: "Instrumentation Tests"
+    needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     strategy:
       # We want the result of each device to be reported, so we can't fail-fast
@@ -157,17 +216,17 @@ jobs:
             profile: "pixel_7"
             target: "google_apis"
             gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
-          # Disabled due to Github Actions limitations https://github.com/ReactiveCircus/android-emulator-runner/pull/428
-          # - api-level: 33
-          #   arch: x86_64
-          #   profile: "automotive_1024p_landscape"
-          #   target: "android-automotive"
-          #   gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
-          # - api-level: "34-ext9" # -ext9 is not usable because of https://github.com/ReactiveCircus/android-emulator-runner/issues/429
-          #   arch: x86_64
-          #   profile: "automotive_ultrawide"
-          #   target: "android-automotive"
-          #   gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: 33
+            arch: x86_64
+            profile: "automotive_1024p_landscape"
+            target: "android-automotive"
+            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: "34"
+            system-image-api-level: "34-ext9"
+            arch: x86_64
+            profile: "automotive_1024p_landscape"
+            target: "android-automotive"
+            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           - api-level: 26
             arch: x86
             profile: "wearos_square"
@@ -191,6 +250,7 @@ jobs:
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Enable KVM group perms
@@ -222,6 +282,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           profile: ${{ matrix.configuration.profile }}
           target: ${{ matrix.configuration.target }}
+          system-image-api-level: ${{ matrix.configuration.system-image-api-level }}
           script: |
             echo "Generated AVD snapshot for caching."
 
@@ -237,6 +298,7 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           profile: ${{ matrix.configuration.profile }}
           target: ${{ matrix.configuration.target }}
+          system-image-api-level: ${{ matrix.configuration.system-image-api-level }}
           script: ./gradlew ${{ matrix.configuration.gradle_target }}
 
       - name: Upload test results
@@ -250,7 +312,7 @@ jobs:
 
   publish_test_results:
     name: "Publish Tests Results"
-    needs: [instrumentation_test, unit_tests]
+    needs: [instrumentation_test, unit_tests, screenshot_test]
     runs-on: ubuntu-latest
     permissions:
       checks: write

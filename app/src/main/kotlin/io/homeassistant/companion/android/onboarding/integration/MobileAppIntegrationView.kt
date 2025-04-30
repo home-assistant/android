@@ -26,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -40,6 +39,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.OnboardingHeaderView
 import io.homeassistant.companion.android.onboarding.OnboardingScreen
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
+import io.homeassistant.companion.android.util.compose.screenWidth
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -63,7 +63,7 @@ fun MobileAppIntegrationView(
             OnboardingHeaderView(
                 icon = if (onboardingViewModel.deviceIsWatch) {
                     CommunityMaterial.Icon3.cmd_watch
-                } else if (LocalConfiguration.current.screenWidthDp.dp >= 600.dp) {
+                } else if (screenWidth() >= 600.dp) {
                     CommunityMaterial.Icon3.cmd_tablet
                 } else {
                     CommunityMaterial.Icon.cmd_cellphone

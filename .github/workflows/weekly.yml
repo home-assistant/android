@@ -14,6 +14,8 @@ jobs:
           fetch-depth: 0
 
       - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Tag Weekly Release
         env:
@@ -28,7 +30,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'onPush.yml',
-              ref: 'master',
+              ref: 'main',
               inputs: {
                 "beta": "true",
               },

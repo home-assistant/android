@@ -23,6 +23,10 @@ interface PrefsRepository {
 
     suspend fun setControlsAuthRequired(setting: ControlsAuthRequiredSetting)
 
+    suspend fun getControlsEnableStructure(): Boolean
+
+    suspend fun setControlsEnableStructure(enabled: Boolean)
+
     suspend fun getControlsAuthEntities(): List<String>
 
     suspend fun setControlsAuthEntities(entities: List<String>)

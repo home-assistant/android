@@ -44,11 +44,13 @@ class ManageControlsSettingsFragment : Fragment() {
                         panelSetting = viewModel.panelSetting,
                         serversList = serverManager.defaultServers,
                         defaultServer = serverManager.getServer()?.id ?: 0,
+                        structureEnabled = viewModel.structureEnabled,
                         onSetPanelEnabled = viewModel::enablePanelForControls,
                         onSelectAll = { viewModel.setAuthSetting(ControlsAuthRequiredSetting.NONE) },
                         onSelectNone = { viewModel.setAuthSetting(ControlsAuthRequiredSetting.ALL) },
                         onSelectEntity = { entityId, serverId -> viewModel.toggleAuthForEntity(entityId, serverId) },
-                        onSetPanelSetting = { path, serverId -> viewModel.setPanelConfig(path, serverId) }
+                        onSetPanelSetting = { path, serverId -> viewModel.setPanelConfig(path, serverId) },
+                        onSetStructureEnabled = { enabled -> viewModel.setStructureEnable(enabled) }
                     )
                 }
             }
