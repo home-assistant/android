@@ -147,7 +147,6 @@ internal class WebSocketCoreImpl(
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Unable to connect")
-                connectionState = null
                 return false
             }
 

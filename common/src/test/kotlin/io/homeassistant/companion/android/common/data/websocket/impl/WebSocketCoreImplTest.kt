@@ -8,7 +8,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS
-import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.jsonMapper
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.webSocketJsonMapper
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -180,7 +180,7 @@ connect()
             val result = webSocketCore.connect()
 
             assertFalse(result)
-            assertNull(webSocketCore.getConnectionState())
+            assertSame(WebSocketState.AUTHENTICATING, webSocketCore.getConnectionState())
         }
 
     @ParameterizedTest
@@ -219,7 +219,7 @@ connect()
 
             coVerify {
                 mockConnection.send(
-                    jsonMapper.writeValueAsString(
+                    webSocketJsonMapper.writeValueAsString(
                         mapOf(
                             "type" to "supported_features",
                             // Should be the first message
@@ -261,7 +261,7 @@ sendMessage()
             prepareAuthenticationAnswer()
             assertTrue(webSocketCore.connect())
             val request = mapOf("type" to "test")
-            val expectedMessageSent = jsonMapper.writeValueAsString(request.plus("id" to 2))
+            val expectedMessageSent = webSocketJsonMapper.writeValueAsString(request.plus("id" to 2))
 
             mockResultSuccessForId(2)
 
@@ -281,7 +281,7 @@ sendMessage()
             prepareAuthenticationAnswer()
             assertTrue(webSocketCore.connect())
             val request = mapOf("type" to "test")
-            val expectedMessageSent = jsonMapper.writeValueAsString(request.plus("id" to 2))
+            val expectedMessageSent = webSocketJsonMapper.writeValueAsString(request.plus("id" to 2))
 
             val response = webSocketCore.sendMessage(request)
 
