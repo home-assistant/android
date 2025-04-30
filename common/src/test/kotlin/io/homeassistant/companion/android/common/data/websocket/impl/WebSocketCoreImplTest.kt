@@ -7,6 +7,8 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.jsonMapper
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -81,16 +83,15 @@ class WebSocketCoreImplTest {
         every { mockServerManager.getServer(any<Int>()) } returns testServer
         every { mockServerManager.authenticationRepository(testServerId) } returns mockAuthenticationRepository
         coEvery { mockAuthenticationRepository.retrieveAccessToken() } returns "mock_access_token"
-        // The queue is a channel if we don't use a background scope the test hangs because the channel is never close
-        // In this configuration the channel will be close when the test will end
-        webSocketCore =
-            WebSocketCoreImpl(
-                mockOkHttpClient,
-                mockServerManager,
-                testServerId,
-                this,
-                backgroundScope,
-            )
+        // The implementation use a background scope to properly handle async messages, to not block the test
+        // we are injecting a background scope to properly control it within the tests, the scope will close itself at the end of the test
+        webSocketCore = WebSocketCoreImpl(
+            mockOkHttpClient,
+            mockServerManager,
+            testServerId,
+            this,
+            backgroundScope,
+        )
         webSocketListener = webSocketCore
         every {
             mockOkHttpClient.newWebSocket(
@@ -116,7 +117,7 @@ class WebSocketCoreImplTest {
             assertSame(WebSocketState.AUTHENTICATING, webSocketCore.getConnectionState())
             webSocketListener.onMessage(
                 mockConnection,
-                """{"id":1,"type":"${if (successfulAuth) "auth_ok" else "auth_invalid"}","ha_version":"$haVersion"}""",
+                """{"type":"${if (successfulAuth) "auth_ok" else "auth_invalid"}","ha_version":"$haVersion"}""",
             )
             true
         }
@@ -179,8 +180,7 @@ connect()
             val result = webSocketCore.connect()
 
             assertFalse(result)
-            // TODO do we still want to be authenticating at this stage?
-            assertSame(WebSocketState.AUTHENTICATING, webSocketCore.getConnectionState())
+            assertNull(webSocketCore.getConnectionState())
         }
 
     @ParameterizedTest
@@ -219,7 +219,7 @@ connect()
 
             coVerify {
                 mockConnection.send(
-                    webSocketMapper.writeValueAsString(
+                    jsonMapper.writeValueAsString(
                         mapOf(
                             "type" to "supported_features",
                             // Should be the first message
@@ -261,7 +261,7 @@ sendMessage()
             prepareAuthenticationAnswer()
             assertTrue(webSocketCore.connect())
             val request = mapOf("type" to "test")
-            val expectedMessageSent = webSocketMapper.writeValueAsString(request.plus("id" to 2))
+            val expectedMessageSent = jsonMapper.writeValueAsString(request.plus("id" to 2))
 
             mockResultSuccessForId(2)
 
@@ -281,7 +281,7 @@ sendMessage()
             prepareAuthenticationAnswer()
             assertTrue(webSocketCore.connect())
             val request = mapOf("type" to "test")
-            val expectedMessageSent = webSocketMapper.writeValueAsString(request.plus("id" to 2))
+            val expectedMessageSent = jsonMapper.writeValueAsString(request.plus("id" to 2))
 
             val response = webSocketCore.sendMessage(request)
 
@@ -304,8 +304,8 @@ sendMessage()
     }
 
     @Test
-    fun `Given a not connectable connection When sendMessage is invoked Then it returns null and connection state remains null`() = runTest {
-        setupServer("not_connectable")
+    fun `Given an invalid url  When sendMessage is invoked Then it returns null and connection state remains null`() = runTest {
+        setupServer("an invalid url ")
 
         assertNull(webSocketCore.sendMessage(mapOf("type" to "test")))
         assertNull(webSocketCore.getConnectionState())
@@ -353,7 +353,7 @@ sendMessage()
             webSocketCore.sendMessage(mapOf("type" to "test"))
             advanceUntilIdle()
 
-            // We sent 1 connection then 5 messages then 1 connection then 1 message
+            // We sent 1 supported_features message then 5 messages then 1 supported_features message then 1 message
             assertTrue(request.captured.contains(""""id":8"""))
             // TODO It should be empty but currently there is a gap in the impl and the message stays
             // assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
@@ -393,8 +393,8 @@ sendBytes()
     }
 
     @Test
-    fun `Given a not connectable connection When sendBytes is invoked Then it returns null`() = runTest {
-        setupServer("not_connectable")
+    fun `Given an invalid url When sendBytes is invoked Then it returns null`() = runTest {
+        setupServer("an invalid url ")
 
         assertNull(webSocketCore.sendBytes(byteArrayOf(1, 2, 3)))
         assertNull(webSocketCore.getConnectionState())
@@ -590,7 +590,7 @@ subscribeTo
             secondaryFlow.expectNoEvents()
 
             // event are received on both flow
-            webSocketListener.onMessage(mockConnection, """{"id":2, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.kitchen"}}}""")
+            webSocketListener.onMessage(mockConnection, """{"id":2, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:28.265429+00:00", "data": {"entity_id":"light.kitchen"}}}""")
             assertEquals("light.kitchen", mainFlow.awaitItem().entityId)
             assertEquals("light.kitchen", secondaryFlow.awaitItem().entityId)
 
