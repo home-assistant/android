@@ -31,8 +31,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.unifiedpush.android.connector.UnifiedPush
 import timber.log.Timber
+import io.homeassistant.companion.android.common.R as commonR
 
 class SettingsPresenterImpl @Inject constructor(
     private val serverManager: ServerManager,

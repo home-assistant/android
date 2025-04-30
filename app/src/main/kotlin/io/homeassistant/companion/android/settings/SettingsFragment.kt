@@ -63,8 +63,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.unifiedpush.android.connector.UnifiedPush
 import timber.log.Timber
+import io.homeassistant.companion.android.common.R as commonR
 
 class SettingsFragment(
     private val presenter: SettingsPresenter,
