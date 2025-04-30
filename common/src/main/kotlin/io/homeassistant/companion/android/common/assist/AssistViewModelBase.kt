@@ -98,7 +98,7 @@ abstract class AssistViewModelBase(
                 )
             } else {
                 serverManager.integrationRepository(selectedServerId).getAssistResponse(
-                    text = text!!,
+                    text = text,
                     pipelineId = pipeline?.id,
                     conversationId = conversationId
                 )
@@ -137,7 +137,7 @@ abstract class AssistViewModelBase(
                         val data = (it.data as? AssistPipelineIntentEnd)?.intentOutput ?: return@collect
                         conversationId = data.conversationId
                         continueConversation.set(data.continueConversation)
-                        data.response.speech.plain["speech"]?.let { speech ->
+                        data.response.speech?.plain?.get("speech")?.let { speech ->
                             onEvent(AssistEvent.Message.Output(speech))
                         }
                     }
