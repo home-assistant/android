@@ -169,7 +169,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             localStorage.getString(PREF_APP_VERSION),
             server.deviceName,
             localStorage.getString(PREF_PUSH_TOKEN),
-            localStorage.getString(PREF_PUSH_URL)
+            localStorage.getString(PREF_PUSH_URL),
         )
     }
 

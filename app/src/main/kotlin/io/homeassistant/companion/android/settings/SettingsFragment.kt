@@ -495,6 +495,7 @@ class SettingsFragment(
             it.isVisible = notificationsEnabled && distributors.isNotEmpty()
             val pm = requireContext().packageManager
             it.entries = distributors.map { distributor ->
+                // Map package name to app display name.
                 try {
                     pm.getApplicationLabel(pm.getApplicationInfo(distributor, PackageManager.GET_META_DATA)).toString()
                 } catch (_: PackageManager.NameNotFoundException) {

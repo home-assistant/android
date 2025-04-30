@@ -40,6 +40,12 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         mainScope.launch {
             Timber.d("Refreshed token: $token")
+            messagingManager.fcmToken = token
+            if (messagingManager.upToken.isNotBlank()) {
+                // Updating registration while using UnifiedPush will overwrite its token, so ignore new FCM tokens.
+                Timber.d("Not trying to update registration since UnifiedPush is being used.")
+                return@launch
+            }
             if (!serverManager.isRegistered()) {
                 Timber.d("Not trying to update registration since we aren't authenticated.")
                 return@launch
