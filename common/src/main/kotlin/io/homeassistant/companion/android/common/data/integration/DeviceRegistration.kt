@@ -10,6 +10,7 @@ data class DeviceRegistration(
     var pushToken: MessagingToken? = null,
     var pushUrl: String? = null,
     var pushWebsocket: Boolean = true,
+    var pushEncrypt: Boolean = false,
 )
 
 @Qualifier

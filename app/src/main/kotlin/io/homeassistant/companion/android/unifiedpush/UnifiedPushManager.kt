@@ -5,6 +5,7 @@ import androidx.work.Constraints
 import androidx.work.NetworkType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.onboarding.getMessagingToken
@@ -21,36 +22,37 @@ import timber.log.Timber
 class UnifiedPushManager @Inject constructor(
     @ApplicationContext val context: Context,
     private val serverManager: ServerManager,
-    private val messagingManager: MessagingManager
+    private val messagingManager: MessagingManager,
+    private val prefsRepository: PrefsRepository
 ) {
     companion object {
         const val DISTRIBUTOR_DISABLED = "disabled"
-    }
 
-    private var distributors: List<String> = emptyList()
+        // Synchronize registration for when it is called from UnifiedPushWorker.
+        @Synchronized
+        fun register(context: Context) =
+            UnifiedPush.register(context)
+
+        @Synchronized
+        fun unregister(context: Context) =
+            UnifiedPush.unregister(context)
+    }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
+    private var distributors: List<String> = emptyList()
     private var retried = false
 
-    // Synchronize registration for when it is called from UnifiedPushWorker.
-    @Synchronized
-    internal fun register() {
-        UnifiedPush.register(context)
-    }
-
-    @Synchronized
-    private fun unregister() {
-        UnifiedPush.unregister(context)
-    }
 
     fun saveDistributor(distributor: String?) {
+        Timber.d("saveDistributor $distributor")
         if (distributor == null || distributor == DISTRIBUTOR_DISABLED) {
-            unregister()
+            unregister(context)
+            updateEndpoint(null)
             retried = false
         } else {
             UnifiedPush.saveDistributor(context, distributor)
-            register()
+            register(context)
         }
     }
 
@@ -64,27 +66,16 @@ class UnifiedPushManager @Inject constructor(
     fun getDistributor(): String? =
         UnifiedPush.getAckDistributor(context)
 
-    fun tryRegisterDefaultDistributor(): Boolean {
-        var result = false
-        UnifiedPush.tryUseCurrentOrDefaultDistributor(context) { success ->
-            if (success) {
-                register()
-            }
-            result = success
-        }
-        return result
-    }
-
     fun updateEndpoint(endpoint: PushEndpoint?) {
+        Timber.d("updateEndpoint ${endpoint?.url}")
         mainScope.launch {
             val url = endpoint?.url.orEmpty()
             val token = if (endpoint != null) {
-                endpoint.pubKeySet?.let { it.auth + ":" + it.pubKey }
+                    endpoint.pubKeySet?.let { it.auth + ":" + it.pubKey } ?: ""
             } else {
-                // Restore FCM token when UnifiedPush is disabled.
-                messagingManager.fcmToken.ifBlank { getMessagingToken() }
+                getMessagingToken()
             }
-            messagingManager.upToken = token.orEmpty()
+            messagingManager.setUnifiedPushEnabled(endpoint != null)
 
             if (!serverManager.isRegistered()) {
                 Timber.d("Not trying to update registration since we aren't authenticated.")
@@ -97,6 +88,7 @@ class UnifiedPushManager @Inject constructor(
                             deviceRegistration = DeviceRegistration(
                                 pushUrl = url,
                                 pushToken = token,
+                                pushEncrypt = endpoint != null && token.isNotBlank()
                             ),
                             allowReregistration = false
                         )
@@ -112,15 +104,16 @@ class UnifiedPushManager @Inject constructor(
         if (!retried) { // Only retry once to prevent infinite loop.
             retried = true
             when (reason) {
-                FailedReason.INTERNAL_ERROR -> UnifiedPushWorker.start(context)
-                FailedReason.NETWORK -> {
+                FailedReason.INTERNAL_ERROR -> UnifiedPushWorker.start(context) // Retry immediately
+                FailedReason.NETWORK -> { // Retry once network is connected
                     val constraints = Constraints.Builder()
                         .setRequiredNetworkType(NetworkType.CONNECTED)
                         .build()
                     UnifiedPushWorker.start(context, constraints)
                 }
-
-                else -> {}
+                else -> mainScope.launch {
+                    prefsRepository.setUnifiedPushEnabled(false)
+                }
             }
         } else {
             Timber.d("Already retried registering")
