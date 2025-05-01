@@ -64,7 +64,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
-import io.homeassistant.companion.android.common.R as commonR
 
 class SettingsFragment(
     private val presenter: SettingsPresenter,
@@ -318,8 +317,6 @@ class SettingsFragment(
                 }
             }
         }
-
-
         findPreference<SwitchPreference>("crash_reporting")?.let {
             it.isVisible = BuildConfig.FLAVOR == "full"
         }

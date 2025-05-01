@@ -32,7 +32,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import io.homeassistant.companion.android.common.R as commonR
 
 class SettingsPresenterImpl @Inject constructor(
     private val serverManager: ServerManager,
