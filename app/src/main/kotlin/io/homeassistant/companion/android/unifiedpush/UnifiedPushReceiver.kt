@@ -43,7 +43,6 @@ class UnifiedPushReceiver : MessagingReceiver() {
 
     override fun onUnregistered(context: Context, instance: String) {
         Timber.d("Unregistered: $instance")
-        unifiedPushManager.saveDistributor(UnifiedPushManager.DISTRIBUTOR_DISABLED)
-        unifiedPushManager.updateEndpoint(null)
+        unifiedPushManager.saveDistributor(null)
     }
 }

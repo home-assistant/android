@@ -97,6 +97,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -272,9 +274,11 @@ class MessagingManager @Inject constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    // Keep reference to push tokens so UnifiedPush and FCM don't conflict.
-    var fcmToken = ""
-    var upToken = ""
+    suspend fun isUnifiedPushEnabled(): Boolean =
+        prefsRepository.isUnifiedPushEnabled()
+
+    suspend fun setUnifiedPushEnabled(enabled: Boolean) =
+        prefsRepository.setUnifiedPushEnabled(enabled)
 
     fun handleMessage(notificationData: Map<String, Any>, source: String, serverId: Int = ServerManager.SERVER_ID_ACTIVE) {
         val flattened = mutableMapOf<String, String>()

@@ -30,19 +30,8 @@ class UnifiedPushWorker(
         }
     }
 
-    private val entryPoint = EntryPointAccessors
-        .fromApplication(applicationContext, UnifiedPushWorkerEntryPoint::class.java)
-
-    private val unifiedPushManager = entryPoint.unifiedPushManager()
-
-    @EntryPoint
-    @InstallIn(SingletonComponent::class)
-    interface UnifiedPushWorkerEntryPoint {
-        fun unifiedPushManager(): UnifiedPushManager
-    }
-
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        unifiedPushManager.register()
+        UnifiedPushManager.register(this@UnifiedPushWorker.applicationContext)
         Result.success()
     }
 }
