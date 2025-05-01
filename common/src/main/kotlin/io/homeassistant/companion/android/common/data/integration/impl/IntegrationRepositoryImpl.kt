@@ -820,15 +820,14 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
         val oldDeviceRegistration = getRegistration()
         val pushToken = deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
-        var pushUrl = deviceRegistration.pushUrl ?: oldDeviceRegistration.pushUrl
+        val pushUrl = deviceRegistration.pushUrl ?: oldDeviceRegistration.pushUrl
 
         val appData = mutableMapOf<String, Any>("push_websocket_channel" to deviceRegistration.pushWebsocket)
         if (!pushToken.isNullOrBlank()) {
-            pushUrl = pushUrl?.ifBlank { PUSH_URL } ?: PUSH_URL
-            appData["push_url"] = pushUrl
+            appData["push_url"] = pushUrl?.ifBlank { PUSH_URL } ?: PUSH_URL
             appData["push_token"] = pushToken
             // UnifiedPush notifications should be encrypted when possible.
-            appData["push_encrypt"] = deviceRegistration.pushEncrypt && pushUrl != PUSH_URL
+            appData["push_encrypt"] = deviceRegistration.pushEncrypt && (pushUrl.isNullOrBlank() || pushUrl == PUSH_URL)
         } else if (!pushUrl.isNullOrBlank()) {
             appData["push_url"] = pushUrl
             appData["push_token"] = ""

@@ -178,7 +178,6 @@ class WebsocketManager(
                     Timber.e(e, "Unable to confirm received notification")
                 }
             }
-
             messagingManager.handleMessage(it, SOURCE, serverId)
         }
     }
