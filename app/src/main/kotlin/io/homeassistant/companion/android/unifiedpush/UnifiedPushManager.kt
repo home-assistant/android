@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.unifiedpush
 
 import android.content.Context
+import android.widget.Toast
 import androidx.work.Constraints
 import androidx.work.NetworkType
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -18,6 +19,7 @@ import org.unifiedpush.android.connector.FailedReason
 import org.unifiedpush.android.connector.UnifiedPush
 import org.unifiedpush.android.connector.data.PushEndpoint
 import timber.log.Timber
+import io.homeassistant.companion.android.common.R as commonR
 
 class UnifiedPushManager @Inject constructor(
     @ApplicationContext val context: Context,
@@ -42,7 +44,6 @@ class UnifiedPushManager @Inject constructor(
 
     private var distributors: List<String> = emptyList()
     private var retried = false
-
 
     fun saveDistributor(distributor: String?) {
         Timber.d("saveDistributor $distributor")
@@ -73,8 +74,10 @@ class UnifiedPushManager @Inject constructor(
             val token = if (endpoint != null) {
                     endpoint.pubKeySet?.let { it.auth + ":" + it.pubKey } ?: ""
             } else {
+                // Revert to FCM token when disabling UnifiedPush.
                 getMessagingToken()
             }
+            val registered = messagingManager.isUnifiedPushEnabled()
             messagingManager.setUnifiedPushEnabled(endpoint != null)
 
             if (!serverManager.isRegistered()) {
@@ -96,6 +99,9 @@ class UnifiedPushManager @Inject constructor(
                         Timber.e(e, "Issue updating push url")
                     }
                 }
+            }
+            if (!registered) {
+                Toast.makeText(context, commonR.string.unifiedpush_enabled, Toast.LENGTH_SHORT).show()
             }
         }
     }
