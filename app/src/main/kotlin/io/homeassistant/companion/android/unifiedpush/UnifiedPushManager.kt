@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.work.Constraints
 import androidx.work.NetworkType
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -19,7 +20,6 @@ import org.unifiedpush.android.connector.FailedReason
 import org.unifiedpush.android.connector.UnifiedPush
 import org.unifiedpush.android.connector.data.PushEndpoint
 import timber.log.Timber
-import io.homeassistant.companion.android.common.R as commonR
 
 class UnifiedPushManager @Inject constructor(
     @ApplicationContext val context: Context,
@@ -72,7 +72,7 @@ class UnifiedPushManager @Inject constructor(
         mainScope.launch {
             val url = endpoint?.url.orEmpty()
             val token = if (endpoint != null) {
-                    endpoint.pubKeySet?.let { it.auth + ":" + it.pubKey } ?: ""
+                endpoint.pubKeySet?.let { it.auth + ":" + it.pubKey } ?: ""
             } else {
                 // Revert to FCM token when disabling UnifiedPush.
                 getMessagingToken()

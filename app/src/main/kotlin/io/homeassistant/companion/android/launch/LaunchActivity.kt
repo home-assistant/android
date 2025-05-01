@@ -209,8 +209,9 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 DeviceRegistration(
                     appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                     deviceName = deviceName,
-                    pushToken =  messagingToken,
-                    pushUrl =  messagingToken?.let { "" }, // A blank url indicates to use the build-time push url.
+                    pushToken = messagingToken,
+                    // A blank url indicates to use the build-time push url.
+                    pushUrl = messagingToken?.let { "" },
                     pushEncrypt = messagingToken == null && !UnifiedPush.getAckDistributor(this.applicationContext).isNullOrBlank()
                 )
             )

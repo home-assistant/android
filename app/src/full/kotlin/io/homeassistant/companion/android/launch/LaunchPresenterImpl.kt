@@ -34,7 +34,8 @@ class LaunchPresenterImpl @Inject constructor(
                             appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                             deviceName = null,
                             pushToken = messagingToken,
-                            pushUrl = messagingToken?.let { "" }, // A blank url indicates to use the build-time push url.
+                            // A blank url indicates to use the build-time push url.
+                            pushUrl = messagingToken?.let { "" },
                             pushEncrypt = messagingToken == null && UnifiedPush.getAckDistributor(view as Context) != null
                         )
                     )
