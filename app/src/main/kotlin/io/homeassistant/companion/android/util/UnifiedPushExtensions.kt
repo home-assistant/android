@@ -13,3 +13,11 @@ fun UnifiedPush.tryRegisterCurrentOrDefaultDistributor(context: Context): Boolea
     }
     return result
 }
+
+fun UnifiedPush.tryRegisterCurrentDistributor(context: Context): Boolean {
+    val hasDistributor = !getAckDistributor(context).isNullOrBlank()
+    if (hasDistributor) {
+        register(context)
+    }
+    return hasDistributor
+}

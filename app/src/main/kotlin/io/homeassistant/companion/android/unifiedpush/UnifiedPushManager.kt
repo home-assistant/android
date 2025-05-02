@@ -7,7 +7,6 @@ import androidx.work.NetworkType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
-import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.onboarding.getMessagingToken
@@ -25,7 +24,6 @@ class UnifiedPushManager @Inject constructor(
     @ApplicationContext val context: Context,
     private val serverManager: ServerManager,
     private val messagingManager: MessagingManager,
-    private val prefsRepository: PrefsRepository
 ) {
     companion object {
         const val DISTRIBUTOR_DISABLED = "disabled"
@@ -46,7 +44,7 @@ class UnifiedPushManager @Inject constructor(
     private var retried = false
 
     fun saveDistributor(distributor: String?) {
-        Timber.d("saveDistributor $distributor")
+        Timber.d("saveDistributor(): $distributor")
         if (distributor == null || distributor == DISTRIBUTOR_DISABLED) {
             unregister(context)
             updateEndpoint(null)
@@ -68,10 +66,11 @@ class UnifiedPushManager @Inject constructor(
         UnifiedPush.getAckDistributor(context)
 
     fun updateEndpoint(endpoint: PushEndpoint?) {
-        Timber.d("updateEndpoint ${endpoint?.url}")
+        Timber.d("updateEndpoint(): ${endpoint?.url}")
         mainScope.launch {
             val url = endpoint?.url.orEmpty()
             val token = if (endpoint != null) {
+                // Use public key as push token to allow for encryption.
                 endpoint.pubKeySet?.let { it.auth + ":" + it.pubKey } ?: ""
             } else {
                 // Revert to FCM token when disabling UnifiedPush.
@@ -84,6 +83,7 @@ class UnifiedPushManager @Inject constructor(
                 Timber.d("Not trying to update registration since we aren't authenticated.")
                 return@launch
             }
+            val encrypt = endpoint != null && token.isNotBlank()
             serverManager.defaultServers.forEach {
                 launch {
                     try {
@@ -91,7 +91,7 @@ class UnifiedPushManager @Inject constructor(
                             deviceRegistration = DeviceRegistration(
                                 pushUrl = url,
                                 pushToken = token,
-                                pushEncrypt = endpoint != null && token.isNotBlank()
+                                pushEncrypt = encrypt
                             ),
                             allowReregistration = false
                         )
@@ -110,15 +110,19 @@ class UnifiedPushManager @Inject constructor(
         if (!retried) { // Only retry once to prevent infinite loop.
             retried = true
             when (reason) {
-                FailedReason.INTERNAL_ERROR -> UnifiedPushWorker.start(context) // Retry immediately
+                FailedReason.INTERNAL_ERROR -> {
+                    Timber.d("Retrying registration.")
+                    UnifiedPushWorker.start(context) // Retry immediately
+                }
                 FailedReason.NETWORK -> { // Retry once network is connected
+                    Timber.d("Retrying registration once network is connected.")
                     val constraints = Constraints.Builder()
                         .setRequiredNetworkType(NetworkType.CONNECTED)
                         .build()
                     UnifiedPushWorker.start(context, constraints)
                 }
                 else -> mainScope.launch {
-                    prefsRepository.setUnifiedPushEnabled(false)
+                    messagingManager.setUnifiedPushEnabled(false)
                 }
             }
         } else {
