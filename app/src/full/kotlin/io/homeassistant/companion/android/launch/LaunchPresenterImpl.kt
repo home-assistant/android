@@ -7,7 +7,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.onboarding.getMessagingToken
-import io.homeassistant.companion.android.util.tryRegisterCurrentOrDefaultDistributor
+import io.homeassistant.companion.android.util.tryRegisterCurrentDistributor
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import org.unifiedpush.android.connector.UnifiedPush
@@ -24,7 +24,7 @@ class LaunchPresenterImpl @Inject constructor(
             ioScope.launch {
                 try {
                     // Don't get a new push token if using UnifiedPush.
-                    val messagingToken = if (!UnifiedPush.tryRegisterCurrentOrDefaultDistributor(view as Context)) {
+                    val messagingToken = if (!UnifiedPush.tryRegisterCurrentDistributor(view as Context)) {
                         getMessagingToken()
                     } else {
                         null

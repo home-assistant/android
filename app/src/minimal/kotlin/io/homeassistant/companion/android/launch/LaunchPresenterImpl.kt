@@ -4,7 +4,7 @@ import android.content.Context
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.util.tryRegisterCurrentOrDefaultDistributor
+import io.homeassistant.companion.android.util.tryRegisterCurrentDistributor
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import org.unifiedpush.android.connector.UnifiedPush
@@ -16,14 +16,14 @@ class LaunchPresenterImpl @Inject constructor(
 ) : LaunchPresenterBase(view, serverManager) {
     override fun resyncRegistration() {
         if (!serverManager.isRegistered()) return
-        UnifiedPush.tryRegisterCurrentOrDefaultDistributor(view as Context)
+        val hasDistributor = UnifiedPush.tryRegisterCurrentDistributor(view as Context)
         serverManager.defaultServers.forEach {
             ioScope.launch {
                 try {
                     serverManager.integrationRepository(it.id).updateRegistration(
                         DeviceRegistration(
                             appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                            pushEncrypt = UnifiedPush.getAckDistributor(view as Context) != null
+                            pushEncrypt = hasDistributor
                         )
                     )
                     serverManager.integrationRepository(it.id).getConfig() // Update cached data
