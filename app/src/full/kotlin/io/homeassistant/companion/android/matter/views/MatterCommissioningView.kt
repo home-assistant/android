@@ -25,7 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
@@ -40,7 +39,8 @@ import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.matter.MatterCommissioningViewModel.CommissioningFlowStep
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import io.homeassistant.companion.android.util.compose.STEP_SCREEN_MAX_WIDTH
+import io.homeassistant.companion.android.util.compose.STEP_SCREEN_MAX_WIDTH_DP
+import io.homeassistant.companion.android.util.compose.screenWidth
 import kotlin.math.min
 
 @Composable
@@ -55,7 +55,7 @@ fun MatterCommissioningView(
 ) {
     if (step == CommissioningFlowStep.NotStarted) return
 
-    val screenWidth = LocalConfiguration.current.screenWidthDp
+    val screenWidth = screenWidth()
     val loadingSteps = listOf(
         CommissioningFlowStep.NotStarted,
         CommissioningFlowStep.CheckingCore,
@@ -70,7 +70,7 @@ fun MatterCommissioningView(
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
-                .width(min(screenWidth, STEP_SCREEN_MAX_WIDTH).dp)
+                .width(min(screenWidth.value, STEP_SCREEN_MAX_WIDTH_DP).dp)
                 .align(Alignment.Center)
         ) {
             MatterCommissioningViewHeader()

@@ -17,14 +17,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.util.compose.STEP_SCREEN_MAX_WIDTH
+import io.homeassistant.companion.android.util.compose.STEP_SCREEN_MAX_WIDTH_DP
+import io.homeassistant.companion.android.util.compose.screenWidth
 import kotlin.math.min
 
 /**
@@ -36,11 +36,11 @@ fun OnboardingScreen(
     content: @Composable ColumnScope.() -> Unit
 ) {
     Box(Modifier.fillMaxSize()) {
-        val screenWidth = LocalConfiguration.current.screenWidthDp
+        val screenWidth = screenWidth()
         Column(
             modifier = modifier
                 .padding(all = 16.dp)
-                .width(min(screenWidth, STEP_SCREEN_MAX_WIDTH).dp)
+                .width(min(screenWidth.value, STEP_SCREEN_MAX_WIDTH_DP).dp)
                 .align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

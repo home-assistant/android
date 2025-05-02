@@ -17,7 +17,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -50,15 +49,13 @@ fun MdcAlertDialog(
     onOK: (() -> Unit)? = null,
     contentPadding: PaddingValues = PaddingValues(horizontal = 24.dp)
 ) {
-    val configuration = LocalConfiguration.current
-
     Dialog(onDismissRequest = onDismissRequest) {
         Surface(
             shape = MaterialTheme.shapes.medium,
             color = MaterialTheme.colors.surface
         ) {
             Column(
-                modifier = Modifier.heightIn(max = configuration.screenHeightDp.dp - 16.dp)
+                modifier = Modifier.heightIn(max = screenHeight() - 16.dp)
             ) {
                 Box(
                     modifier = Modifier
