@@ -16,6 +16,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
@@ -31,6 +32,7 @@ import io.homeassistant.companion.android.settings.SettingViewModel
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import io.homeassistant.companion.android.util.tryRegisterCurrentOrDefaultDistributor
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 import javax.net.ssl.SSLException
@@ -39,6 +41,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.unifiedpush.android.connector.UnifiedPush
 import retrofit2.HttpException
 import timber.log.Timber
 
@@ -53,6 +56,9 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
 
     @Inject
     lateinit var sensorDao: SensorDao
+
+    @Inject
+    lateinit var prefsRepository: PrefsRepository
 
     private val mainScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -138,8 +144,13 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         mainScope.launch {
             if (result != null) {
                 val (url, authCode, deviceName, deviceTrackingEnabled, notificationsEnabled) = result
-                val messagingToken = getMessagingToken()
-                if (messagingToken.isBlank() && BuildConfig.FLAVOR == "full") {
+                // Try UnifiedPush first, then fallback to FCM token.
+                val messagingToken = if (!UnifiedPush.tryRegisterCurrentOrDefaultDistributor(this@LaunchActivity)) {
+                    getMessagingToken()
+                } else {
+                    null
+                }
+                if (messagingToken != null && messagingToken.isBlank() && BuildConfig.FLAVOR == "full") {
                     AlertDialog.Builder(this@LaunchActivity)
                         .setTitle(commonR.string.firebase_error_title)
                         .setMessage(commonR.string.firebase_error_message)
@@ -176,7 +187,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         url: String,
         authCode: String,
         deviceName: String,
-        messagingToken: String,
+        messagingToken: String?,
         deviceTrackingEnabled: Boolean,
         notificationsEnabled: Boolean
     ) {
@@ -196,12 +207,16 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
             serverManager.integrationRepository(serverId).registerDevice(
                 DeviceRegistration(
-                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                    deviceName,
-                    messagingToken
+                    appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    deviceName = deviceName,
+                    pushToken = messagingToken,
+                    // A blank url indicates to use the build-time push url.
+                    pushUrl = messagingToken?.let { "" },
+                    pushEncrypt = messagingToken == null && !UnifiedPush.getAckDistributor(this.applicationContext).isNullOrBlank()
                 )
             )
             serverId = serverManager.convertTemporaryServer(serverId)
+            prefsRepository.setUnifiedPushEnabled(messagingToken == null)
         } catch (e: Exception) {
             // Fatal errors: if one of these calls fail, the app cannot proceed.
             // Show an error, clean up the session and require new registration.

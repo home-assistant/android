@@ -38,6 +38,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_AUTO_FAVORITES = "auto_favorites"
         private const val PREF_LOCATION_HISTORY_DISABLED = "location_history"
         private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displayed"
+        private const val PREF_UNIFIEDPUSH_ENABLED = "unifiedpush_enabled"
     }
 
     init {
@@ -259,6 +260,12 @@ class PrefsRepositoryImpl @Inject constructor(
     override suspend fun addImprovPermissionDisplayedCount() {
         localStorage.putInt(PREF_IMPROV_PERMISSION_DISPLAYED, getImprovPermissionDisplayedCount() + 1)
     }
+
+    override suspend fun isUnifiedPushEnabled(): Boolean =
+        localStorage.getBoolean(PREF_UNIFIEDPUSH_ENABLED)
+
+    override suspend fun setUnifiedPushEnabled(enabled: Boolean) =
+        localStorage.putBoolean(PREF_UNIFIEDPUSH_ENABLED, enabled)
 
     override suspend fun removeServer(serverId: Int) {
         val controlsAuthEntities = getControlsAuthEntities().filter { it.split(".")[0].toIntOrNull() != serverId }

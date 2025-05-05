@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.9.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.9.0)" variant="all" version="8.9.0">
+<issues format="6" by="lint 8.9.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.9.1)" variant="all" version="8.9.1">
 
     <issue
         id="CustomSplashScreen"
@@ -140,7 +140,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="181"
+            line="179"
             column="13"/>
     </issue>
 
@@ -151,7 +151,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="189"
+            line="187"
             column="13"/>
     </issue>
 
@@ -162,7 +162,7 @@
         errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/sensors/HealthServicesSensorManager.kt"
-            line="145"
+            line="144"
             column="16"/>
     </issue>
 
@@ -596,7 +596,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/integration/MobileAppIntegrationActivity.kt"
-            line="62"
+            line="61"
             column="31"/>
     </issue>
 
@@ -607,7 +607,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/integration/MobileAppIntegrationActivity.kt"
-            line="62"
+            line="61"
             column="31"/>
     </issue>
 
@@ -618,7 +618,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/phone/PhoneSettingsListener.kt"
-            line="198"
+            line="195"
             column="35"/>
     </issue>
 
@@ -629,7 +629,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/phone/PhoneSettingsListener.kt"
-            line="198"
+            line="195"
             column="35"/>
     </issue>
 
@@ -662,7 +662,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/manual/ManualSetupPresenterImpl.kt"
-            line="49"
+            line="46"
             column="25"/>
     </issue>
 
@@ -673,7 +673,7 @@
         errorLine2="                               ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="124"
+            line="122"
             column="32"/>
     </issue>
 
@@ -684,7 +684,7 @@
         errorLine2="                               ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="124"
+            line="122"
             column="32"/>
     </issue>
 
@@ -695,7 +695,7 @@
         errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="195"
+            line="193"
             column="63"/>
     </issue>
 
@@ -706,7 +706,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingPresenterImpl.kt"
-            line="59"
+            line="56"
             column="25"/>
     </issue>
 
@@ -717,7 +717,7 @@
         errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/phoneinstall/PhoneInstallActivity.kt"
-            line="60"
+            line="58"
             column="32"/>
     </issue>
 
@@ -728,7 +728,7 @@
         errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/phoneinstall/PhoneInstallActivity.kt"
-            line="60"
+            line="58"
             column="32"/>
     </issue>
 

@@ -52,6 +52,11 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "implementation"(libs.jackson.module.kotlin)
                     "implementation"(libs.okhttp)
 
+                    "fullImplementation"(libs.unifiedpush.connector)
+                    "minimalImplementation"(libs.unifiedpush.connector) {
+                        exclude(group = "com.google.protobuf", module = "protobuf-java")
+                    }
+
                     "implementation"(libs.bundles.coil)
 
                     "fullImplementation"(libs.play.services.location)

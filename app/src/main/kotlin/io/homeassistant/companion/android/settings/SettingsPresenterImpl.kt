@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
+import io.homeassistant.companion.android.unifiedpush.UnifiedPushManager
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.UrlUtil
 import javax.inject.Inject
@@ -50,6 +51,7 @@ class SettingsPresenterImpl @Inject constructor(
     private val prefsRepository: PrefsRepository,
     private val themesManager: ThemesManager,
     private val langsManager: LanguagesManager,
+    private val unifiedPushManager: UnifiedPushManager,
     private val changeLog: ChangeLog,
     private val settingsDao: SettingsDao,
     private val sensorDao: SensorDao
@@ -108,6 +110,7 @@ class SettingsPresenterImpl @Inject constructor(
             "languages" -> langsManager.getCurrentLang()
             "page_zoom" -> prefsRepository.getPageZoomLevel().toString()
             "screen_orientation" -> prefsRepository.getScreenOrientation()
+            "notification_unifiedpush" -> unifiedPushManager.getDistributor()
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
     }
@@ -119,6 +122,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "languages" -> langsManager.saveLang(value)
                 "page_zoom" -> prefsRepository.setPageZoomLevel(value?.toIntOrNull())
                 "screen_orientation" -> prefsRepository.saveScreenOrientation(value)
+                "notification_unifiedpush" -> unifiedPushManager.saveDistributor(value)
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
@@ -154,6 +158,9 @@ class SettingsPresenterImpl @Inject constructor(
             return@withContext null
         }
     }
+
+    override fun getUnifiedPushDistributors(): List<String> =
+        unifiedPushManager.getDistributors()
 
     override fun showChangeLog(context: Context) {
         changeLog.showChangeLog(context, true)

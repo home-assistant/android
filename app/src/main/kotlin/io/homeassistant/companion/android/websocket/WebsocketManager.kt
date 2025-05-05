@@ -178,33 +178,7 @@ class WebsocketManager(
                     Timber.e(e, "Unable to confirm received notification")
                 }
             }
-            val flattened = mutableMapOf<String, String>()
-            if (it.containsKey("data")) {
-                for ((key, value) in it["data"] as Map<*, *>) {
-                    if (key == "actions" && value is List<*>) {
-                        value.forEachIndexed { i, action ->
-                            if (action is Map<*, *>) {
-                                flattened["action_${i + 1}_key"] = action["action"].toString()
-                                flattened["action_${i + 1}_title"] = action["title"].toString()
-                                action["uri"]?.let { uri -> flattened["action_${i + 1}_uri"] = uri.toString() }
-                                action["behavior"]?.let { behavior -> flattened["action_${i + 1}_behavior"] = behavior.toString() }
-                            }
-                        }
-                    } else {
-                        flattened[key.toString()] = value.toString()
-                    }
-                }
-            }
-            // Message and title are in the root unlike all the others.
-            listOf("message", "title").forEach { key ->
-                if (it.containsKey(key)) {
-                    flattened[key] = it[key].toString()
-                }
-            }
-            serverManager.getServer(serverId)?.let { server ->
-                flattened["webhook_id"] = server.connection.webhookId.toString()
-            }
-            messagingManager.handleMessage(flattened, SOURCE)
+            messagingManager.handleMessage(it, SOURCE, serverId)
         }
     }
 

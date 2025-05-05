@@ -9,7 +9,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 abstract class LaunchPresenterBase(
-    private val view: LaunchView,
+    internal val view: LaunchView,
     internal val serverManager: ServerManager
 ) : LaunchPresenter {
 
