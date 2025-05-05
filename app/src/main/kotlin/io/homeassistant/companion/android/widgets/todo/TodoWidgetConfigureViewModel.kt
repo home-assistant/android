@@ -53,7 +53,7 @@ class TodoWidgetConfigureViewModel @Inject constructor(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), emptyList())
 
     var selectedEntityId by mutableStateOf<String?>(null)
-    var selectedBackgroundType by mutableStateOf(WidgetBackgroundType.DAYNIGHT)
+    var selectedBackgroundType by mutableStateOf(WidgetBackgroundType.DYNAMICCOLOR)
     var textColorIndex by mutableIntStateOf(0)
     var showCompletedState by mutableStateOf(true)
     var isUpdateWidget by mutableStateOf(false)
