@@ -78,6 +78,41 @@ import okio.ByteString
 import okio.ByteString.Companion.toByteString
 import timber.log.Timber
 
+private val DELAY_BEFORE_RECONNECT = 10.seconds
+
+/**
+ * Implementation of the [WebSocketCore] interface for managing WebSocket connections to a Home Assistant server.
+ *
+ * ### Implementation Details:
+ *
+ * #### Message handling:
+ * - All incoming messages are received in [onMessage], parsed, and dispatched to their appropriate handlers based on their types and IDs.
+ * - Messages are processed sequentially using the [messageQueue], ensuring that each message is handled in order without race conditions.
+ * - The [activeMessages] map is used to track requests and their corresponding IDs. If no matching ID is found or an error occurs, the message is dropped.
+ *
+ * #### Connection lifecycle:
+ * - The WebSocket connection will automatically close itself after the last subscription created with [subscribeTo] is dismissed.
+ * - Calling [sendMessage] will open the connection if it is closed. Once the connection is open, it remains open and does not close automatically.
+ * - If the connection is lost or closed, the implementation waits for [DELAY_BEFORE_RECONNECT] before attempting to reconnect.
+ *
+ * #### Reconnection and re-subscription:
+ * - On failure or when the socket is closing, if there are active subscriptions created with [subscribeTo], the implementation will automatically retry to open the connection until it succeeds.
+ * - Upon reconnection, the implementation resubscribes to all active subscriptions to ensure continuity.
+ *
+ * #### Supported features:
+ * - If the connected server version is 2022.9 or above, the implementation automatically sends a `supported_features` message after the connection is established.
+ *
+ * #### Threading:
+ * - All access to the [connection] is synchronized using the [connectedMutex] to ensure thread safety.
+ * - The [eventSubscriptionMutex] ensures that only one subscription is created for multiple invocations with the same parameters.
+ * - The implementation uses coroutines extensively for asynchronous operations, ensuring non-blocking behavior.
+ *
+ * @param okHttpClient The HTTP client used to establish the WebSocket connection.
+ * @param serverManager Manages server configurations and authentication.
+ * @param serverId The ID of the server to connect to.
+ * @param wsScope The coroutine scope used for WebSocket operations. Defaults to a scope with `Dispatchers.IO`.
+ * @param backgroundScope A dedicated scope for background tasks, primarily used for testing.
+ */
 internal class WebSocketCoreImpl(
     private val okHttpClient: OkHttpClient,
     private val serverManager: ServerManager,
@@ -87,6 +122,10 @@ internal class WebSocketCoreImpl(
     private val backgroundScope: CoroutineScope = wsScope,
 ) : WebSocketCore, WebSocketListener() {
 
+    /**
+     * Tracks active WebSocket requests by their unique IDs.
+     * We never modify the entries in the map, only add or remove.
+     */
     @VisibleForTesting
     val activeMessages = ConcurrentHashMap<Long, WebSocketRequest>()
 
@@ -408,7 +447,7 @@ internal class WebSocketCoreImpl(
     }
 
     private suspend fun handleEvent(response: SocketResponse) {
-        // TODO this probably should be in a separate class to be properly tested
+        // TODO https://github.com/home-assistant/android/issues/5271
         val subscriptionId = response.id
         activeMessages[subscriptionId]?.let { messageData ->
             val subscriptionType = messageData.message["type"]
@@ -531,7 +570,7 @@ internal class WebSocketCoreImpl(
         if (hasFlowMessages && wsScope.isActive) {
             wsScope.launch {
                 cancelPendingMessagesJob.join()
-                delay(10.seconds)
+                delay(DELAY_BEFORE_RECONNECT)
                 if (connect()) {
                     Timber.d("Resubscribing to active subscriptions...")
                     activeMessages.filterValues { it.eventFlow != null }.entries

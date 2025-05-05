@@ -28,10 +28,36 @@ import okhttp3.OkHttpClient
  * For reference check [Websocket core documentation](https://developers.home-assistant.io/docs/api/websocket/)
  */
 internal interface WebSocketCore {
+    /**
+     * Establishes a WebSocket connection and authenticates with the server.
+     *
+     * @return `true` if the connection is successful and authenticated, `false` otherwise.
+     */
     suspend fun connect(): Boolean
+
+    /**
+     * Returns the current state of the WebSocket connection.
+     *
+     * @return If the WebSocket connection is established, this method returns the current [WebSocketState], but if the connection is
+     * not established, it returns `null`.
+     */
     fun getConnectionState(): WebSocketState?
+
+    /**
+     * Sends a message over the WebSocket connection and waits for a response.
+     *
+     * @param request The message to send.
+     * @return The response from the server, or `null` if the message could not be sent.
+     */
     suspend fun sendMessage(request: Map<*, *>): SocketResponse?
     suspend fun sendMessage(request: WebSocketRequest): SocketResponse?
+
+    /**
+     * Sends binary data over the WebSocket connection.
+     *
+     * @param data The binary data to send. Maximum size of 16MiB
+     * @return `true` if the data was sent successfully, `false` otherwise.
+     */
     suspend fun sendBytes(data: ByteArray): Boolean?
 
     /**
