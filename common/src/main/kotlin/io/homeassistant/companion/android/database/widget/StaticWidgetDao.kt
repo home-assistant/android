@@ -19,7 +19,7 @@ interface StaticWidgetDao : WidgetDao {
     override suspend fun delete(id: Int)
 
     @Query("DELETE FROM static_widget WHERE id IN (:ids)")
-    suspend fun deleteAll(ids: IntArray)
+    override suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM static_widget")
     suspend fun getAll(): List<StaticWidgetEntity>

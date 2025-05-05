@@ -1,22 +1,23 @@
 package io.homeassistant.companion.android.widgets.todo
 
 import android.appwidget.AppWidgetManager
-import android.content.ComponentName
-import android.content.Intent
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
+import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
-import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,9 +29,9 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @HiltViewModel
-class TodoWidgetViewModel @Inject constructor(
+class TodoWidgetConfigureViewModel @Inject constructor(
     private val todoWidgetDao: TodoWidgetDao,
-    private val serverManager: ServerManager
+    private val serverManager: ServerManager,
 ) : ViewModel() {
     private var supportedTextColors: List<String> = emptyList()
     private var widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID
@@ -84,29 +85,57 @@ class TodoWidgetViewModel @Inject constructor(
             selectedEntityId in entities.value.map { it.entityId }
     }
 
-    fun prepareData(componentName: ComponentName): Intent? {
+    fun prepareData() {
         if (!isValidSelection()) {
+            // TODO properly react to this in the activity
             Timber.d("Widget data is invalid")
-            return null
+            return
         }
         if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
             Timber.w("Widget ID is invalid")
-            return null
+            return
         }
 
-        return Intent().apply {
-            action = BaseWidgetProvider.RECEIVE_DATA
-            component = componentName
+        val textColor = if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
+            supportedTextColors.getOrNull(textColorIndex) ?: supportedTextColors.first()
+        } else {
+            ""
+        }
 
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)
-            putExtra(TodoWidget.EXTRA_SERVER_ID, selectedServerId)
-            putExtra(TodoWidget.EXTRA_ENTITY_ID, selectedEntityId)
-            putExtra(TodoWidget.EXTRA_SHOW_COMPLETED, showCompletedState)
-            putExtra(TodoWidget.EXTRA_BACKGROUND_TYPE, selectedBackgroundType)
-            if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
-                val hexForColor = supportedTextColors.getOrNull(textColorIndex) ?: supportedTextColors.first()
-                putExtra(TodoWidget.EXTRA_TEXT_COLOR, hexForColor)
-            }
+        viewModelScope.launch {
+            val listEntityId = selectedEntityId!!
+            val integrationRepository = serverManager.integrationRepository(selectedServerId)
+            val webSocketRepository = serverManager.webSocketRepository(selectedServerId)
+            val name = integrationRepository.getEntity(listEntityId)?.friendlyName
+            val todos = webSocketRepository.getTodos(listEntityId)?.response?.get(listEntityId)?.items.orEmpty()
+            todoWidgetDao.add(
+                TodoWidgetEntity(
+                    id = widgetId,
+                    serverId = selectedServerId,
+                    entityId = selectedEntityId!!,
+                    backgroundType = selectedBackgroundType,
+                    textColor = textColor,
+                    showCompleted = showCompletedState,
+                    latestUpdateData = TodoWidgetEntity.LastUpdateData(
+                        entityName = name,
+                        todos = todos.map {
+                            TodoWidgetEntity.TodoItem(
+                                uid = it.uid,
+                                summary = it.summary,
+                                status = it.status,
+                            )
+                        },
+                    ),
+                ),
+            )
+        }
+    }
+
+    fun updateWidget(context: Context) {
+        val appContext = context.applicationContext
+        viewModelScope.launch {
+            val glanceId = GlanceAppWidgetManager(appContext).getGlanceIdBy(widgetId)
+            TodoGlanceAppWidget().update(appContext, glanceId)
         }
     }
 }
