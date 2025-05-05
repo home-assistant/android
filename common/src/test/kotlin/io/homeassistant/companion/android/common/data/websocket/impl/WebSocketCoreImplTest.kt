@@ -38,7 +38,6 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
@@ -48,6 +47,7 @@ import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class WebSocketCoreImplTest {
+    private lateinit var mockOkHttpClient: OkHttpClient
     private lateinit var mockConnection: WebSocket
     private lateinit var webSocketCore: WebSocketCoreImpl
     private lateinit var webSocketListener: WebSocketListener
@@ -63,8 +63,11 @@ class WebSocketCoreImplTest {
         unmockkAll()
     }
 
-    private fun TestScope.setupServer(url: String = "https://io.ha", backgroundScope: CoroutineScope = this.backgroundScope) {
-        val mockOkHttpClient = mockk<OkHttpClient>(relaxed = true)
+    private fun TestScope.setupServer(
+        url: String = "https://io.ha",
+        backgroundScope: CoroutineScope = this.backgroundScope
+    ) {
+        mockOkHttpClient = mockk<OkHttpClient>(relaxed = true)
         val mockServerManager = mockk<ServerManager>(relaxed = true)
         val mockAuthenticationRepository = mockk<AuthenticationRepository>(relaxed = true)
 
@@ -173,14 +176,28 @@ connect()
         }
 
     @Test
-    fun `Given failure to connect after timeout When connect is invoked Then it returns false and connection state is AUTHENTICATING`() =
+    fun `Given failure to send auth message after socket creation When connect is invoked Then it returns false and connection state is null`() =
         runTest {
             setupServer()
+            every { mockConnection.send(any<String>()) } returns false
 
             val result = webSocketCore.connect()
 
             assertFalse(result)
-            assertSame(WebSocketState.AUTHENTICATING, webSocketCore.getConnectionState())
+            assertNull(webSocketCore.getConnectionState())
+        }
+
+    @Test
+    fun `Given failure at socket creation When connect is invoked Then it returns false and connection state is null`() =
+        runTest {
+            setupServer()
+            // Simulate a failure while creating the socket
+            every { mockOkHttpClient.newWebSocket(any(), any()) } throws IllegalStateException()
+
+            val result = webSocketCore.connect()
+
+            assertFalse(result)
+            assertNull(webSocketCore.getConnectionState())
         }
 
     @ParameterizedTest
@@ -287,8 +304,7 @@ sendMessage()
 
             coVerify { mockConnection.send(expectedMessageSent) }
             assertNull(response)
-            // TODO It should be empty but currently there is a gap in the impl and the message stays
-            // assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
+            assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
         }
 
     @Test
@@ -355,8 +371,7 @@ sendMessage()
 
             // We sent 1 supported_features message then 5 messages then 1 supported_features message then 1 message
             assertTrue(request.captured.contains(""""id":8"""))
-            // TODO It should be empty but currently there is a gap in the impl and the message stays
-            // assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
+            assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
         }
 
     /*
@@ -529,7 +544,7 @@ subscribeTo
         advanceUntilIdle()
         // We keep the fake active message only
         assertEquals(1, webSocketCore.activeMessages.size)
-        assertTrue(webSocketCore.activeMessages.contains(42))
+        assertTrue(webSocketCore.activeMessages.containsKey(42))
 
         verify(exactly = 0) { mockConnection.close(any(), any()) }
     }
@@ -613,7 +628,6 @@ subscribeTo
     }
 
     @Test
-    @Disabled("Until TODO CRITICAL #3 is addressed")
     fun `Given an active subscription When disconnection occurs Then it re-sends a request to get events`() = runTest {
         // The re-subscription happens in the background scope so we need to be able to control it
         val subscriptionScope = TestScope(UnconfinedTestDispatcher())
