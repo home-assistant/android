@@ -44,14 +44,14 @@ javaVersion = "11" # https://developer.android.com/studio/write/java11-minimal-s
 junit = "5.12.2"
 kotlinx-coroutines = "1.10.2"
 kotlin = "2.1.20"
-ksp = "2.1.20-2.0.0"
+ksp = "2.1.20-2.0.1"
 ktlint = "12.2.0"
 leakcanaryAndroid = "2.14"
 lifecycle = "2.8.7"
 material = "1.12.0"
 media = "1.7.0"
 media3 = "1.6.1"
-mockk = "1.14.0"
+mockk = "1.14.2"
 navigation-compose = "2.8.9"
 okhttp = "5.0.0-alpha.14"
 paging = "3.3.6"
@@ -68,7 +68,7 @@ robolectric = "4.14.1"
 room = "2.7.1"
 runtimeLint = "1.8.0"
 screenshot = "0.0.1-alpha09"
-sentry-android = "8.10.0"
+sentry-android = "8.11.1"
 timber = "5.0.1"
 tools-desugar-jdk-libs = "2.1.5"
 turbine = "1.2.0"
@@ -173,6 +173,7 @@ improv = { module = "org.openhomefoundation.improv-wifi:sdk-android", version.re
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 junit-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine" }
 kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }

@@ -47,7 +47,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                     val prefCategory = findPreference<PreferenceCategory>("list_notifications")
                     val allNotifications = notificationDao.getAll()
 
-                    if (allNotifications.isNullOrEmpty()) {
+                    if (allNotifications.isEmpty()) {
                         menu.removeItem(R.id.search_notifications)
                         menu.removeItem(R.id.notification_filter)
                         menu.removeItem(R.id.action_delete)
@@ -117,7 +117,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         val notificationList = notificationDao.getLastItems(25)
 
         val prefCategory = findPreference<PreferenceCategory>("list_notifications")
-        if (!notificationList.isNullOrEmpty()) {
+        if (notificationList.isNotEmpty()) {
             prefCategory?.isVisible = true
             reloadNotifications(notificationList, prefCategory)
         } else {
@@ -156,30 +156,28 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         alert?.show()
     }
 
-    private fun reloadNotifications(notificationList: Array<NotificationItem>?, prefCategory: PreferenceCategory?) {
+    private fun reloadNotifications(notificationList: Array<NotificationItem>, prefCategory: PreferenceCategory?) {
         prefCategory?.removeAll()
-        if (notificationList != null) {
-            for (item in notificationList) {
-                val pref = Preference(preferenceScreen.context)
-                val cal: Calendar = GregorianCalendar()
-                cal.timeInMillis = item.received
-                pref.key = item.id.toString()
-                pref.title = "${cal.time} - ${item.source}"
-                pref.summary = HtmlCompat.fromHtml(item.message, HtmlCompat.FROM_HTML_MODE_LEGACY)
-                pref.isIconSpaceReserved = false
+        for (item in notificationList) {
+            val pref = Preference(preferenceScreen.context)
+            val cal: Calendar = GregorianCalendar()
+            cal.timeInMillis = item.received
+            pref.key = item.id.toString()
+            pref.title = "${cal.time} - ${item.source}"
+            pref.summary = HtmlCompat.fromHtml(item.message, HtmlCompat.FROM_HTML_MODE_LEGACY)
+            pref.isIconSpaceReserved = false
 
-                pref.setOnPreferenceClickListener {
-                    val args = Bundle()
-                    args.putSerializable(NotificationDetailFragment.ARG_NOTIF, item)
-                    parentFragmentManager.commit {
-                        replace(R.id.content, NotificationDetailFragment::class.java, args)
-                        addToBackStack("Notification Detail")
-                    }
-                    return@setOnPreferenceClickListener true
+            pref.setOnPreferenceClickListener {
+                val args = Bundle()
+                args.putSerializable(NotificationDetailFragment.ARG_NOTIF, item)
+                parentFragmentManager.commit {
+                    replace(R.id.content, NotificationDetailFragment::class.java, args)
+                    addToBackStack("Notification Detail")
                 }
-
-                prefCategory?.addPreference(pref)
+                return@setOnPreferenceClickListener true
             }
+
+            prefCategory?.addPreference(pref)
         }
     }
 
