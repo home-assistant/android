@@ -243,7 +243,7 @@ private fun TodoItem(todoItem: TodoItemState) {
 
 @Composable
 private fun HeaderItem(name: String) {
-    Text(text = name, style = HomeAssistantGlanceTypography.bodyLarge, modifier = GlanceModifier.padding(horizontal = 16.dp))
+    Text(text = name, style = HomeAssistantGlanceTypography.bodyLarge, modifier = GlanceModifier.padding(horizontal = 16.dp, vertical = 8.dp))
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)
