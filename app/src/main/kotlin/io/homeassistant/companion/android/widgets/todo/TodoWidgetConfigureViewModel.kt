@@ -89,15 +89,14 @@ class TodoWidgetConfigureViewModel @Inject constructor(
             selectedEntityId in entities.value.map { it.entityId }
     }
 
-    fun prepareData() {
+    fun addWidgetConfiguration() {
         if (!isValidSelection()) {
-            // TODO properly react to this in the activity
             Timber.d("Widget data is invalid")
-            return
+            throw IllegalArgumentException("Widget data is invalid")
         }
         if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
             Timber.w("Widget ID is invalid")
-            return
+            throw IllegalArgumentException("Widget ID is invalid")
         }
 
         val textColor = if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
