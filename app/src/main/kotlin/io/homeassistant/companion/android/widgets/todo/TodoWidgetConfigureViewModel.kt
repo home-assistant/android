@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -19,9 +20,11 @@ import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -46,8 +49,9 @@ class TodoWidgetConfigureViewModel @Inject constructor(
             serverManager.integrationRepository(serverId)
                 .getEntities()
                 .orEmpty()
-                .filter { entity -> entity.domain == "todo" }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500), emptyList())
+                .filter { entity -> entity.domain == TODO_DOMAIN }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), emptyList())
+
     var selectedEntityId by mutableStateOf<String?>(null)
     var selectedBackgroundType by mutableStateOf(WidgetBackgroundType.DAYNIGHT)
     var textColorIndex by mutableIntStateOf(0)
