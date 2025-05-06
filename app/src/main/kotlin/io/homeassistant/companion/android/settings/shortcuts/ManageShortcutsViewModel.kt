@@ -60,7 +60,7 @@ class ManageShortcutsViewModel @Inject constructor(
 
     var servers by mutableStateOf(serverManager.defaultServers)
         private set
-    var entities = mutableStateMapOf<Int, List<Entity<*>>>()
+    var entities = mutableStateMapOf<Int, List<Entity>>()
         private set
 
     private val currentServerId = serverManager.getServer()?.id ?: 0

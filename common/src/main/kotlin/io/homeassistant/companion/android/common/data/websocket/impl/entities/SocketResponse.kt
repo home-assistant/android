@@ -1,15 +1,16 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.databind.JsonNode
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+// TODO convert this into a sealed class
+@Serializable
 data class SocketResponse(
-    val id: Long?,
+    val id: Long? = null,
     val type: String,
-    val success: Boolean?,
-    val result: JsonNode?,
-    val event: JsonNode?,
-    val error: JsonNode?,
-    val haVersion: String?
+    val success: Boolean? = null,
+    val result: JsonElement? = null,
+    val event: JsonElement? = null,
+    val error: JsonElement? = null,
+    val haVersion: String? = null
 )

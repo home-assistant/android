@@ -67,7 +67,7 @@ class SettingsWearViewModel @Inject constructor(
     private var serverId = 0
     private var remoteServerId = 0
 
-    var entities = mutableStateMapOf<String, Entity<*>>()
+    var entities = mutableStateMapOf<String, Entity>()
         private set
     var supportedDomains = mutableStateListOf<String>()
         private set

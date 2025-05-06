@@ -1,10 +1,6 @@
 package io.homeassistant.companion.android.common.data.websocket.impl
 
 import androidx.annotation.VisibleForTesting
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.module.kotlin.contains
-import com.fasterxml.jackson.module.kotlin.convertValue
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companion.USER_AGENT
 import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companion.USER_AGENT_STRING
@@ -22,7 +18,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketCo
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_RENDER_TEMPLATE
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER
-import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.webSocketJsonMapper
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.kotlinJsonMapper
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineError
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
@@ -41,6 +37,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.So
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
+import io.homeassistant.companion.android.common.util.MapAnySerializer
 import java.io.IOException
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
@@ -69,6 +66,14 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -137,7 +142,7 @@ internal class WebSocketCoreImpl(
                     // Preemptively send auth
                     connectionState = WebSocketState.AUTHENTICATING
                     val result = it.send(
-                        webSocketJsonMapper.writeValueAsString(
+                        kotlinJsonMapper.encodeToString(
                             mapOf(
                                 "type" to "auth",
                                 "access_token" to serverManager.authenticationRepository(serverId).retrieveAccessToken(),
@@ -171,7 +176,7 @@ internal class WebSocketCoreImpl(
                             )
                             Timber.d("Sending message ${supportedFeaturesMessage["id"]}: $supportedFeaturesMessage")
                             val result = it.send(
-                                webSocketJsonMapper.writeValueAsString(supportedFeaturesMessage),
+                                kotlinJsonMapper.encodeToString(MapAnySerializer(), supportedFeaturesMessage),
                             )
                             if (!result) {
                                 // Something got wrong when sending the message but we should not change the status of the
@@ -191,7 +196,7 @@ internal class WebSocketCoreImpl(
 
     override fun getConnectionState(): WebSocketState? = connectionState
 
-    override suspend fun sendMessage(request: Map<*, *>): SocketResponse? =
+    override suspend fun sendMessage(request: Map<String, Any?>): SocketResponse? =
         sendMessage(WebSocketRequest(request))
 
     override suspend fun sendMessage(request: WebSocketRequest): SocketResponse? {
@@ -210,7 +215,7 @@ internal class WebSocketCoreImpl(
                                 activeMessages[requestId] = request.apply {
                                     onResponse = cont
                                 }
-                                val result = connection?.send(webSocketJsonMapper.writeValueAsString(outbound))
+                                val result = connection?.send(kotlinJsonMapper.encodeToString(MapAnySerializer(), outbound))
                                 if (result == false) {
                                     // Something got wrong when sending the message we won't get any answer let's stop there
                                     cont.resumeWithException(IOException("Error sending message"))
@@ -251,7 +256,7 @@ internal class WebSocketCoreImpl(
 
     override suspend fun <T : Any> subscribeTo(
         type: String,
-        data: Map<Any, Any>,
+        data: Map<String, Any?>,
         timeout: kotlin.time.Duration,
     ): Flow<T>? {
         val subscribeMessage = mapOf(
@@ -278,11 +283,11 @@ internal class WebSocketCoreImpl(
 
     override fun onMessage(webSocket: WebSocket, text: String) {
         Timber.d("Websocket: onMessage (${if (BuildConfig.DEBUG) "text: $text" else "text"})")
-        val textTree = webSocketJsonMapper.readTree(text)
-        val messages: List<SocketResponse> = if (textTree.isArray) {
-            textTree.elements().asSequence().toList().map { webSocketJsonMapper.convertValue(it) }
+        val jsonElement = kotlinJsonMapper.decodeFromString<JsonElement>(text)
+        val messages: List<SocketResponse> = if (jsonElement is JsonArray) {
+            jsonElement.jsonArray.map { kotlinJsonMapper.decodeFromJsonElement<SocketResponse>(it) }
         } else {
-            listOf(webSocketJsonMapper.readValue(text))
+            listOf(kotlinJsonMapper.decodeFromJsonElement<SocketResponse>(jsonElement))
         }
 
         // Send messages to the queue to ensure they are handled in order and don't block the function
@@ -327,7 +332,7 @@ internal class WebSocketCoreImpl(
     }
 
     private suspend fun <T> createSubscriptionFlow(
-        subscribeMessage: Map<Any, Any>,
+        subscribeMessage: Map<String, Any?>,
         timeout: kotlin.time.Duration,
     ): Flow<T>? {
         val channel = Channel<T>(capacity = Channel.BUFFERED)
@@ -412,76 +417,68 @@ internal class WebSocketCoreImpl(
         val subscriptionId = response.id
         activeMessages[subscriptionId]?.let { messageData ->
             val subscriptionType = messageData.message["type"]
-            val eventResponseType = response.event?.get("event_type")
+            val eventResponseType = (response.event as? JsonObject)?.get("event_type")
 
             val message: Any =
-                if (response.event?.contains("hass_confirm_id") == true) {
-                    webSocketJsonMapper.convertValue(
-                        response.event,
-                        object : TypeReference<Map<String, Any>>() {},
-                    )
+                if ((response.event as? JsonObject)?.contains("hass_confirm_id") == true) {
+                    kotlinJsonMapper.decodeFromJsonElement<Map<String, Any?>>(MapAnySerializer(), response.event)
                 } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES) {
-                    webSocketJsonMapper.convertValue(response.event, CompressedStateChangedEvent::class.java)
+                    // TODO check !!
+                    kotlinJsonMapper.decodeFromJsonElement<CompressedStateChangedEvent>(response.event!!)
                 } else if (subscriptionType == SUBSCRIBE_TYPE_RENDER_TEMPLATE) {
-                    webSocketJsonMapper.convertValue(response.event, TemplateUpdatedEvent::class.java)
+                    kotlinJsonMapper.decodeFromJsonElement<TemplateUpdatedEvent>(response.event!!)
                 } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER) {
-                    val trigger = response.event?.get("variables")?.get("trigger")
+                    val trigger = (response.event as? JsonObject)?.get("variables")?.jsonObject?.get("trigger")
                     if (trigger != null) {
-                        webSocketJsonMapper.convertValue(trigger, TriggerEvent::class.java)
+                        kotlinJsonMapper.decodeFromJsonElement<TriggerEvent>(trigger)
                     } else {
                         Timber.w("Received no trigger value for trigger subscription, skipping")
                         return
                     }
                 } else if (subscriptionType == SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN) {
-                    val eventType = response.event?.get("type")
-                    if (eventType?.isTextual == true) {
-                        val eventDataMap = response.event.get("data")
-                        val eventData = when (eventType.textValue()) {
-                            AssistPipelineEventType.RUN_START -> webSocketJsonMapper.convertValue(eventDataMap, AssistPipelineRunStart::class.java)
-                            AssistPipelineEventType.STT_END -> webSocketJsonMapper.convertValue(eventDataMap, AssistPipelineSttEnd::class.java)
-                            AssistPipelineEventType.INTENT_START -> webSocketJsonMapper.convertValue(eventDataMap, AssistPipelineIntentStart::class.java)
-                            AssistPipelineEventType.INTENT_PROGRESS -> webSocketJsonMapper.convertValue(eventDataMap, AssistPipelineIntentProgress::class.java)
-                            AssistPipelineEventType.INTENT_END -> webSocketJsonMapper.convertValue(eventDataMap, AssistPipelineIntentEnd::class.java)
-                            AssistPipelineEventType.TTS_END -> webSocketJsonMapper.convertValue(eventDataMap, AssistPipelineTtsEnd::class.java)
-                            AssistPipelineEventType.ERROR -> webSocketJsonMapper.convertValue(eventDataMap, AssistPipelineError::class.java)
+                    val eventType = (response.event as? JsonObject)?.get("type")
+                    if ((eventType as? JsonPrimitive)?.isString == true) {
+                        // TODO check !!
+                        val eventDataMap = response.event.jsonObject.get("data")!!
+                        val eventData = when (eventType.jsonPrimitive.content) {
+                            AssistPipelineEventType.RUN_START -> kotlinJsonMapper.decodeFromJsonElement<AssistPipelineRunStart>(eventDataMap)
+                            AssistPipelineEventType.STT_END -> kotlinJsonMapper.decodeFromJsonElement<AssistPipelineSttEnd>(eventDataMap)
+                            AssistPipelineEventType.INTENT_START -> kotlinJsonMapper.decodeFromJsonElement<AssistPipelineIntentStart>(eventDataMap)
+                            AssistPipelineEventType.INTENT_PROGRESS -> kotlinJsonMapper.decodeFromJsonElement<AssistPipelineIntentProgress>(eventDataMap)
+                            AssistPipelineEventType.INTENT_END -> kotlinJsonMapper.decodeFromJsonElement<AssistPipelineIntentEnd>(eventDataMap)
+                            AssistPipelineEventType.TTS_END -> kotlinJsonMapper.decodeFromJsonElement<AssistPipelineTtsEnd>(eventDataMap)
+                            AssistPipelineEventType.ERROR -> kotlinJsonMapper.decodeFromJsonElement<AssistPipelineError>(eventDataMap)
                             else -> {
                                 Timber.d("Unknown event type ignoring. received data = \n$response")
                                 null
                             }
                         }
-                        AssistPipelineEvent(eventType.textValue(), eventData)
+                        AssistPipelineEvent(eventType.jsonPrimitive.content, eventData)
                     } else {
                         Timber.w("Received Assist pipeline event without type, skipping")
                         return
                     }
-                } else if (eventResponseType != null && eventResponseType.isTextual) {
-                    val eventResponseClass = when (eventResponseType.textValue()) {
-                        EVENT_STATE_CHANGED ->
-                            object :
-                                TypeReference<EventResponse<StateChangedEvent>>() {}
-
-                        EVENT_AREA_REGISTRY_UPDATED ->
-                            object :
-                                TypeReference<EventResponse<AreaRegistryUpdatedEvent>>() {}
-
-                        EVENT_DEVICE_REGISTRY_UPDATED ->
-                            object :
-                                TypeReference<EventResponse<DeviceRegistryUpdatedEvent>>() {}
-
-                        EVENT_ENTITY_REGISTRY_UPDATED ->
-                            object :
-                                TypeReference<EventResponse<EntityRegistryUpdatedEvent>>() {}
-
+                } else if (eventResponseType != null && (eventResponseType as? JsonPrimitive)?.isString == true) {
+                    when (eventResponseType.jsonPrimitive.content) {
+                        EVENT_STATE_CHANGED -> {
+                            kotlinJsonMapper.decodeFromJsonElement<EventResponse<StateChangedEvent>>(response.event).data
+                        }
+                        EVENT_AREA_REGISTRY_UPDATED -> {
+                            kotlinJsonMapper.decodeFromJsonElement<EventResponse<AreaRegistryUpdatedEvent>>(response.event).data
+                        }
+                        EVENT_DEVICE_REGISTRY_UPDATED -> {
+                            kotlinJsonMapper.decodeFromJsonElement<EventResponse<DeviceRegistryUpdatedEvent>>(response.event).data
+                        }
+                        EVENT_ENTITY_REGISTRY_UPDATED -> {
+                            kotlinJsonMapper.decodeFromJsonElement<EventResponse<EntityRegistryUpdatedEvent>>(response.event).data
+                        }
                         else -> {
-                            Timber.d("Unknown event type received")
-                            object : TypeReference<EventResponse<Any>>() {}
+                            Timber.d("Unknown event type received ${response.event}")
+                            // TODO probably doesn't work
+                            // kotlinJsonMapper.decodeFromJsonElement<EventResponse<Any>>(,response.event).data
+                            return
                         }
                     }
-
-                    webSocketJsonMapper.convertValue(
-                        response.event,
-                        eventResponseClass,
-                    ).data
                 } else {
                     Timber.d("Unknown event for subscription received, skipping")
                     return

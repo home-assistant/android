@@ -21,7 +21,7 @@ interface IntegrationRepository {
 
     suspend fun updateLocation(updateLocation: UpdateLocation)
 
-    suspend fun getZones(): Array<Entity<ZoneAttributes>>
+    suspend fun getZones(): Array<Entity>
 
     suspend fun isAppLocked(): Boolean
     suspend fun setAppActive(active: Boolean)
@@ -37,10 +37,10 @@ interface IntegrationRepository {
     suspend fun getConfig(): GetConfigResponse
     suspend fun getServices(): List<Action>?
 
-    suspend fun getEntities(): List<Entity<Any>>?
-    suspend fun getEntity(entityId: String): Entity<Map<String, Any>>?
-    suspend fun getEntityUpdates(): Flow<Entity<*>>?
-    suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>?
+    suspend fun getEntities(): List<Entity>?
+    suspend fun getEntity(entityId: String): Entity?
+    suspend fun getEntityUpdates(): Flow<Entity>?
+    suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>?
 
     suspend fun callAction(domain: String, action: String, actionData: HashMap<String, Any>)
 

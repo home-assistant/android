@@ -48,7 +48,7 @@ internal class TodoWidgetStateUpdater @Inject constructor(
         }
     }
 
-    private suspend fun getAndSubscribeEntityUpdates(serverId: Int, listEntityId: String): Flow<Entity<*>?>? {
+    private suspend fun getAndSubscribeEntityUpdates(serverId: Int, listEntityId: String): Flow<Entity?>? {
         // Since we might be re-subscribing we might not have get the entity update when subscribing so we query it first
         val currentEntity = serverManager.integrationRepository(serverId).getEntity(listEntityId)
 

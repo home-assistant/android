@@ -443,7 +443,7 @@ subscribeTo
             prepareAuthenticationAnswer()
             assertTrue(webSocketCore.connect())
 
-            val expectedData: Map<Any, Any> = mapOf("testSubscription" to "test")
+            val expectedData: Map<String, Any> = mapOf("testSubscription" to "test")
             val expectedType = "testType"
 
             // Message sent by subscribeTo to request for events
@@ -478,7 +478,7 @@ subscribeTo
             prepareAuthenticationAnswer()
             assertTrue(webSocketCore.connect())
 
-            val expectedData: Map<Any, Any> = mapOf("testSubscription" to "test")
+            val expectedData: Map<String, String> = mapOf("testSubscription" to "test")
             val expectedType = "testType"
 
             // Message sent by subscribeTo to request for events

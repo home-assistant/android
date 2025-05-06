@@ -30,7 +30,7 @@ import okhttp3.OkHttpClient
 internal interface WebSocketCore {
     suspend fun connect(): Boolean
     fun getConnectionState(): WebSocketState?
-    suspend fun sendMessage(request: Map<*, *>): SocketResponse?
+    suspend fun sendMessage(request: Map<String, Any?>): SocketResponse?
     suspend fun sendMessage(request: WebSocketRequest): SocketResponse?
     suspend fun sendBytes(data: ByteArray): Boolean?
 
@@ -48,7 +48,7 @@ internal interface WebSocketCore {
      */
     suspend fun <T : Any> subscribeTo(
         type: String,
-        data: Map<Any, Any> = mapOf(),
+        data: Map<String, Any?> = mapOf(),
         timeout: kotlin.time.Duration = kotlin.time.Duration.ZERO,
     ): Flow<T>?
 

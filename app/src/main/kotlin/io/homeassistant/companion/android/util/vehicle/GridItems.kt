@@ -78,7 +78,7 @@ fun getNavigationGridItem(
     carContext: CarContext,
     screenManager: ScreenManager,
     integrationRepository: IntegrationRepository,
-    allEntities: Flow<Map<String, Entity<*>>>,
+    allEntities: Flow<Map<String, Entity>>,
     entityRegistry: List<EntityRegistryResponse>?
 ): GridItem.Builder {
     return GridItem.Builder().apply {
@@ -124,7 +124,7 @@ fun getDomainList(
     serverManager: ServerManager,
     serverId: StateFlow<Int>,
     prefsRepository: PrefsRepository,
-    allEntities: Flow<Map<String, Entity<*>>>,
+    allEntities: Flow<Map<String, Entity>>,
     entityRegistry: List<EntityRegistryResponse>?,
     lifecycleScope: LifecycleCoroutineScope
 ): ItemList.Builder {
@@ -138,10 +138,9 @@ fun getDomainList(
         val icon = Entity(
             "$domain.ha_android_placeholder",
             "",
-            mapOf<Any, Any>(),
+            mapOf<String, Any>(),
             Calendar.getInstance(),
             Calendar.getInstance(),
-            null
         ).getIcon(carContext)
 
         val entityList = allEntities.map {
@@ -206,7 +205,7 @@ fun getDomainsGridItem(
     serverManager: ServerManager,
     integrationRepository: IntegrationRepository,
     serverId: StateFlow<Int>,
-    allEntities: Flow<Map<String, Entity<*>>>,
+    allEntities: Flow<Map<String, Entity>>,
     prefsRepository: PrefsRepository,
     entityRegistry: List<EntityRegistryResponse>?
 ): GridItem.Builder {

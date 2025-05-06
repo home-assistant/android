@@ -24,7 +24,7 @@ object CoverControl : HaControl {
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity<Map<String, Any>>,
+        entity: Entity,
         info: HaControlInfo
     ): Control.StatefulBuilder {
         val position = entity.getCoverPosition()
@@ -56,7 +56,7 @@ object CoverControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
+    override fun getDeviceType(entity: Entity): Int =
         when (entity.attributes["device_class"]) {
             "awning" -> DeviceTypes.TYPE_AWNING
             "blind" -> DeviceTypes.TYPE_BLINDS
@@ -69,7 +69,7 @@ object CoverControl : HaControl {
             else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
         }
 
-    override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+    override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.domain_cover)
 
     override suspend fun performAction(

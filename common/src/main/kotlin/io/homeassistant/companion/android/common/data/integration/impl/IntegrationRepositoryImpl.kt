@@ -376,7 +376,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
+    override suspend fun getZones(): Array<Entity> {
         val getZonesRequest =
             IntegrationRequest(
                 "get_zones",
@@ -611,24 +611,24 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         localStorage.remove(PREF_ORPHANED_THREAD_BORDER_AGENT_IDS)
     }
 
-    override suspend fun getEntities(): List<Entity<Any>>? {
+    override suspend fun getEntities(): List<Entity>? {
         val response = webSocketRepository.getStates()
 
         return response?.map {
             Entity(
                 it.entityId,
                 it.state,
-                it.attributes,
+                // TODO improve since it probably doesn't work properly if the parsing is not a map but an object
+                it.attributes as Map<String, Any?>,
                 it.lastChanged,
                 it.lastUpdated,
-                it.context
             )
         }
             ?.sortedBy { it.entityId }
             ?.toList()
     }
 
-    override suspend fun getEntity(entityId: String): Entity<Map<String, Any>>? {
+    override suspend fun getEntity(entityId: String): Entity? {
         val url = server.connection.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
             Timber.e("Unable to register device due to missing URL")
@@ -645,11 +645,10 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             response.attributes,
             response.lastChanged,
             response.lastUpdated,
-            response.context
         )
     }
 
-    override suspend fun getEntityUpdates(): Flow<Entity<*>>? {
+    override suspend fun getEntityUpdates(): Flow<Entity>? {
         return webSocketRepository.getStateChanges()
             ?.filter { it.newState != null }
             ?.map {
@@ -659,12 +658,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                     it.newState.attributes,
                     it.newState.lastChanged,
                     it.newState.lastUpdated,
-                    it.newState.context
                 )
             }
     }
 
-    override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>? {
+    override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>? {
         return if (server.user.isAdmin == true) {
             webSocketRepository.getStateChanges(entityIds)
                 ?.filter { it.toState != null }
@@ -675,7 +673,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                         it.toState.attributes,
                         it.toState.lastChanged,
                         it.toState.lastUpdated,
-                        it.toState.context
                     )
                 }
         } else {
@@ -688,7 +685,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                         it.newState.attributes,
                         it.newState.lastChanged,
                         it.newState.lastUpdated,
-                        it.newState.context
                     )
                 }
         }
@@ -852,17 +848,24 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         )
     }
 
-    private fun createZonesResponse(zones: Array<EntityResponse<ZoneAttributes>>): Array<Entity<ZoneAttributes>> {
-        val retVal = ArrayList<Entity<ZoneAttributes>>()
+    private fun createZonesResponse(zones: Array<EntityResponse<ZoneAttributes>>): Array<Entity> {
+        val retVal = ArrayList<Entity>()
         zones.forEach {
             retVal.add(
                 Entity(
                     it.entityId,
                     it.state,
-                    it.attributes,
+                    mapOf(
+                        "hidden" to it.attributes.hidden,
+                        "passive" to it.attributes.passive,
+                        "latitude" to it.attributes.latitude,
+                        "longitude" to it.attributes.longitude,
+                        "radius" to it.attributes.radius,
+                        "friendly_name" to it.attributes.friendlyName,
+                        "icon" to it.attributes.icon,
+                    ),
                     it.lastChanged,
                     it.lastUpdated,
-                    it.context
                 )
             )
         }

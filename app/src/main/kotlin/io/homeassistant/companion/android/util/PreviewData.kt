@@ -15,16 +15,16 @@ val notificationItem = NotificationItem(1, 1636389288682, "testing", "{\"message
 
 val wearDeviceName = "Device Name"
 
-val attributes: Map<*, *> = mapOf(
+val attributes: Map<String, *> = mapOf(
     "friendly_name" to "Testing",
     "icon" to "mdi:cellphone"
 )
 
 private val calendar: Calendar = Calendar.getInstance()
 
-val previewEntity1 = Entity("light.test", "on", attributes, calendar, calendar, mapOf())
-val previewEntity2 = Entity("scene.testing", "on", attributes, calendar, calendar, mapOf())
-val previewEntity3 = Entity("switch.testing", "on", attributes, calendar, calendar, mapOf())
+val previewEntity1 = Entity("light.test", "on", attributes, calendar, calendar)
+val previewEntity2 = Entity("scene.testing", "on", attributes, calendar, calendar)
+val previewEntity3 = Entity("switch.testing", "on", attributes, calendar, calendar)
 
 val previewEntityList = mapOf(
     previewEntity1.entityId to previewEntity1,

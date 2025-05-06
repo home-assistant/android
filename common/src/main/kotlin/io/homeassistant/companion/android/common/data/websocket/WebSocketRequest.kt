@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.SharedFlow
  * @param onEvent Channel that can receive events for a subscription, else `null`
  */
 data class WebSocketRequest(
-    val message: Map<*, *>,
+    val message: Map<String, Any?>,
     val timeout: Duration = 30.seconds,
     val eventFlow: SharedFlow<Any>? = null,
     val onEvent: Channel<Any>? = null,

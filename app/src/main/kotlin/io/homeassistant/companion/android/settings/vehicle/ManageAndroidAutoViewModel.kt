@@ -31,9 +31,9 @@ class ManageAndroidAutoViewModel @Inject constructor(
 
     val favoritesList = mutableStateListOf<String>()
 
-    var sortedEntities by mutableStateOf<List<Entity<*>>>(emptyList())
+    var sortedEntities by mutableStateOf<List<Entity>>(emptyList())
         private set
-    val entities = mutableMapOf<Int, List<Entity<*>>>()
+    val entities = mutableMapOf<Int, List<Entity>>()
     init {
         viewModelScope.launch {
             favoritesList.addAll(prefsRepository.getAutoFavorites())
