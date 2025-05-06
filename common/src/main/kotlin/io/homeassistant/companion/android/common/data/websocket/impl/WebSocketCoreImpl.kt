@@ -29,14 +29,22 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineRunStart
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineSttEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineTtsEnd
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AuthInvalidSocketResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AuthOkSocketResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AuthRequiredSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EventResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EventSocketResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.MessageSocketResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.PongSocketResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.RawMessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.UnknownTypeSocketResponse
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import java.io.IOException
 import java.net.URL
@@ -196,10 +204,10 @@ internal class WebSocketCoreImpl(
 
     override fun getConnectionState(): WebSocketState? = connectionState
 
-    override suspend fun sendMessage(request: Map<String, Any?>): SocketResponse? =
+    override suspend fun sendMessage(request: Map<String, Any?>): RawMessageSocketResponse? =
         sendMessage(WebSocketRequest(request))
 
-    override suspend fun sendMessage(request: WebSocketRequest): SocketResponse? {
+    override suspend fun sendMessage(request: WebSocketRequest): RawMessageSocketResponse? {
         return if (connect()) {
             withTimeoutOrNull(request.timeout) {
                 var requestId: Long? = null
@@ -292,20 +300,19 @@ internal class WebSocketCoreImpl(
 
         // Send messages to the queue to ensure they are handled in order and don't block the function
         messages.forEach { message ->
-            Timber.d("Message number ${message.id} received")
+            Timber.d("Message id ${message.maybeId()} received")
             val success = messageQueue.trySend(
                 wsScope.launch(start = CoroutineStart.LAZY) {
-                    when (message.type) {
-                        "auth_required" -> Timber.d("Auth Requested")
-                        "auth_ok" -> handleAuthComplete(true, message.haVersion)
-                        "auth_invalid" -> handleAuthComplete(false, message.haVersion)
-                        "pong", "result" -> handleMessage(message)
-                        "event" -> handleEvent(message)
-                        else -> Timber.d("Unknown message type: ${message.type}")
+                    when (message) {
+                        is AuthRequiredSocketResponse -> Timber.d("Auth Requested")
+                        is AuthOkSocketResponse, is AuthInvalidSocketResponse -> handleAuthComplete(message is AuthOkSocketResponse, message.haVersion)
+                        is EventSocketResponse -> handleEvent(message)
+                        is MessageSocketResponse, is PongSocketResponse -> handleMessage(message)
+                        is UnknownTypeSocketResponse -> Timber.w("Unknown message received: $message")
                     }
                 },
             )
-            if (!success.isSuccess) Timber.w("Message number ${message.id} not being processed")
+            if (!success.isSuccess) Timber.w("Message id ${message.maybeId()} not being processed")
         }
     }
 
@@ -396,14 +403,14 @@ internal class WebSocketCoreImpl(
         }
     }
 
-    private fun handleMessage(response: SocketResponse) {
+    private fun handleMessage(response: RawMessageSocketResponse) {
         val id = response.id!!
         activeMessages[id]?.let {
             it.onResponse?.let { cont ->
                 if (!it.hasContinuationBeenInvoked.getAndSet(true) && cont.isActive) {
                     cont.resumeWith(Result.success(response))
                 } else {
-                    Timber.w("Response continuation has already been invoked for ${response.id}, ${response.event}")
+                    Timber.w("Response continuation has already been invoked for ${response.id}")
                 }
             }
             if (it.eventFlow == null) {
@@ -412,7 +419,7 @@ internal class WebSocketCoreImpl(
         } ?: { Timber.w("Response for message not in activeMessage id($id) skipping") }
     }
 
-    private suspend fun handleEvent(response: SocketResponse) {
+    private suspend fun handleEvent(response: EventSocketResponse) {
         // TODO this probably should be in a separate class to be properly tested
         val subscriptionId = response.id
         activeMessages[subscriptionId]?.let { messageData ->

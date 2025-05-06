@@ -34,7 +34,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.PongSocketResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.RawMessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
@@ -72,7 +73,7 @@ class WebSocketRepositoryImpl internal constructor(
                 "type" to "ping"
             )
         )
-        return socketResponse?.type == "pong"
+        return socketResponse is PongSocketResponse
     }
 
     override suspend fun getConfig(): GetConfigResponse? {
@@ -389,8 +390,10 @@ class WebSocketRepositoryImpl internal constructor(
                 "type" to "thread/list_datasets"
             )
         )
-        return if (response?.success == true && (response.result as? JsonObject)?.contains("datasets") == true) {
-            kotlinJsonMapper.decodeFromJsonElement(response.result["datasets"]!!)
+
+        val result = (response?.result as? JsonObject)?.get("datasets")
+        return if (response?.success == true && result != null) {
+            kotlinJsonMapper.decodeFromJsonElement(result)
         } else {
             null
         }
@@ -437,6 +440,6 @@ class WebSocketRepositoryImpl internal constructor(
         }
     }
 
-    private inline fun <reified T> mapResponse(response: SocketResponse?): T? =
-        if (response?.result != null) kotlinJsonMapper.decodeFromJsonElement(response.result) else null
+    private inline fun <reified T> mapResponse(response: RawMessageSocketResponse?): T? =
+        response?.result?.run { kotlinJsonMapper.decodeFromJsonElement(this) }
 }

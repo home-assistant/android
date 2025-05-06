@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.common.data.websocket
 
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.RawMessageSocketResponse
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -25,6 +25,6 @@ data class WebSocketRequest(
     val onEvent: Channel<Any>? = null,
 ) {
     // These variables are set when a message is sent on the websocket.
-    var onResponse: CancellableContinuation<SocketResponse>? = null
+    var onResponse: CancellableContinuation<RawMessageSocketResponse>? = null
     val hasContinuationBeenInvoked = AtomicBoolean(false)
 }

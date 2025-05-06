@@ -2,10 +2,12 @@ package io.homeassistant.companion.android.common.data.websocket.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.homeassistant.companion.android.common.BuildConfig
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import io.homeassistant.companion.android.common.util.jacksonObjectMapperForHACore
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNamingStrategy
+import kotlinx.serialization.modules.plus
 
 internal object WebSocketConstants {
     val webSocketJsonMapper: ObjectMapper = jacksonObjectMapperForHACore()
@@ -16,12 +18,7 @@ internal object WebSocketConstants {
         namingStrategy = JsonNamingStrategy.SnakeCase
         encodeDefaults = true
         prettyPrint = BuildConfig.DEBUG
-        // serializersModule = SerializersModule {
-        // polymorphicDefaultSerializer(Any::class) {
-        //    AnySerializer()
-        // }
-        // polymorphic(Any::class, AnySerializer())
-        // }
+        serializersModule = serializersModule + SocketResponse.socketResponseSerializerModuler
     }
 
     const val EVENT_STATE_CHANGED = "state_changed"

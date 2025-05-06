@@ -1,23 +1,23 @@
 package io.homeassistant.companion.android
 
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.webSocketJsonMapper
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import io.homeassistant.companion.android.common.util.AnySerializer
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNames
-import kotlinx.serialization.json.JsonNamingStrategy
 import org.junit.jupiter.api.Test
 
 private class CalendarSerializer() : KSerializer<Calendar> {
@@ -44,7 +44,7 @@ data class CompressedEntityState(
     val state: String?,
     @JsonNames("a")
     @Serializable(with = MapAnySerializer::class)
-    val attributes: Map<String, Any?>,
+    val attributes: Map<String, @Polymorphic Any?>,
     @JsonNames("lc")
     val lastChanged: Double?,
     @JsonNames("lu")
@@ -63,20 +63,15 @@ class JsonSerializationTest {
 
     @Test
     fun `Kotlinx parser`() {
-        @OptIn(ExperimentalSerializationApi::class)
-        val kotlinJsonMapper = Json {
-            ignoreUnknownKeys = true
-            namingStrategy = JsonNamingStrategy.SnakeCase
-            encodeDefaults = true
-            prettyPrint = true
-        }
-        val result = kotlinJsonMapper.decodeFromString<Entity>(data)
+        val result = WebSocketConstants.kotlinJsonMapper.decodeFromString<Entity>(data)
         System.err.println(result)
         System.err.println((result.attributes["radius"] as Number).toFloat())
         System.err.println(result.attributes["supported_color_modes"] as? List<String>)
 
-        val result2 = kotlinJsonMapper.decodeFromString<CompressedEntityState>(data2)
+        val result2 = WebSocketConstants.kotlinJsonMapper.decodeFromString<CompressedEntityState>(data2)
         System.err.println(result2)
+
+        System.err.println(WebSocketConstants.kotlinJsonMapper.decodeFromString<SocketResponse>(data3))
     }
 }
 
@@ -129,4 +124,18 @@ private val data2 = """
     "yolo": "troll"
   }
 }
+""".trimIndent()
+
+private val data3 = """
+    {
+      "id": 123,
+      "type": "result2",
+      "success": true,
+      "result": {
+        "key1": "value1",
+        "key2": 42,
+        "key3": [1, 2, 3]
+      },
+      "error": null
+    }
 """.trimIndent()

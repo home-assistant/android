@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.common.data.websocket
 
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketCoreImpl
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.RawMessageSocketResponse
 import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
 import javax.inject.Provider
@@ -30,8 +30,8 @@ import okhttp3.OkHttpClient
 internal interface WebSocketCore {
     suspend fun connect(): Boolean
     fun getConnectionState(): WebSocketState?
-    suspend fun sendMessage(request: Map<String, Any?>): SocketResponse?
-    suspend fun sendMessage(request: WebSocketRequest): SocketResponse?
+    suspend fun sendMessage(request: Map<String, Any?>): RawMessageSocketResponse?
+    suspend fun sendMessage(request: WebSocketRequest): RawMessageSocketResponse?
     suspend fun sendBytes(data: ByteArray): Boolean?
 
     /**
