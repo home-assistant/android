@@ -62,7 +62,7 @@ play-services-location = "21.3.0"
 play-services-wearable = "19.0.0"
 preference-ktx = "1.2.1"
 recyclerview = "1.4.0"
-reorderable = "0.9.6"
+reorderable = "2.4.3"
 retrofit = "2.9.0"
 robolectric = "4.14.1"
 room = "2.7.1"
@@ -203,7 +203,7 @@ play-services-location = { module = "com.google.android.gms:play-services-locati
 play-services-wearable = { module = "com.google.android.gms:play-services-wearable", version.ref = "play-services-wearable" }
 preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preference-ktx" }
 recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
-reorderable = { module = "org.burnoutcrew.composereorderable:reorderable", version.ref = "reorderable" }
+reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofit-converter-jackson = { module = "com.squareup.retrofit2:converter-jackson", version.ref = "retrofit"  }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }

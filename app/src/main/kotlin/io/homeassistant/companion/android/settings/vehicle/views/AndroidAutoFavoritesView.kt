@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -28,9 +30,8 @@ import io.homeassistant.companion.android.util.compose.SingleEntityPicker
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.burnoutcrew.reorderable.ReorderableItem
-import org.burnoutcrew.reorderable.rememberReorderableLazyListState
-import org.burnoutcrew.reorderable.reorderable
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -39,13 +40,13 @@ fun AndroidAutoFavoritesSettings(
     serversList: List<Server>,
     defaultServer: Int
 ) {
-    val reorderState = rememberReorderableLazyListState(
-        onMove = { from, to -> androidAutoViewModel.onMove(from, to) },
-        canDragOver = { draggedOver, _ -> androidAutoViewModel.canDragOver(draggedOver) },
-        onDragEnd = { _, _ -> androidAutoViewModel.saveFavorites() }
-    )
+    val lazyListState = rememberLazyListState()
+    val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
+        androidAutoViewModel.onMove(from, to)
+        androidAutoViewModel.saveFavorites()
+    }
 
-    var selectedServer by remember { mutableStateOf(defaultServer) }
+    var selectedServer by remember { mutableIntStateOf(defaultServer) }
 
     val favoriteEntities = androidAutoViewModel.favoritesList.toList()
     var validEntities by remember { mutableStateOf<List<Entity<*>>>(emptyList()) }
@@ -61,10 +62,8 @@ fun AndroidAutoFavoritesSettings(
     }
 
     LazyColumn(
-        state = reorderState.listState,
+        state = lazyListState,
         contentPadding = PaddingValues(vertical = 16.dp),
-        modifier = Modifier
-            .reorderable(reorderState)
     ) {
         item {
             Text(
@@ -106,8 +105,8 @@ fun AndroidAutoFavoritesSettings(
                     favoriteEntities[index].split("-")
                 androidAutoViewModel.sortedEntities.firstOrNull { it.entityId == favoriteEntity[1] && favoriteEntity[0].toInt() == selectedServer }?.let {
                     ReorderableItem(
-                        reorderableState = reorderState,
-                        key = favoriteEntities[index]
+                        state = reorderState,
+                        key = favoriteEntities[index],
                     ) { isDragging ->
                         FavoriteEntityRow(
                             entityName = it.friendlyName,
@@ -122,7 +121,6 @@ fun AndroidAutoFavoritesSettings(
                             checked = true,
                             draggable = true,
                             isDragging = isDragging,
-                            reorderableState = reorderState
                         )
                     }
                 }
