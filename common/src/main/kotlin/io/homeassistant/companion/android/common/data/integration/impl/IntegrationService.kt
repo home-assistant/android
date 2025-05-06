@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.data.integration.impl
 
-import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
 import io.homeassistant.companion.android.common.data.integration.impl.entities.CheckRateLimits
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.IntegrationRequest
@@ -30,7 +29,7 @@ interface IntegrationService {
     suspend fun getState(
         @Url url: HttpUrl,
         @Header("Authorization") auth: String
-    ): EntityResponse<Map<String, Any>>
+    ): EntityResponse
 
     @POST
     suspend fun callWebhook(
@@ -48,7 +47,7 @@ interface IntegrationService {
     suspend fun getZones(
         @Url url: HttpUrl,
         @Body request: IntegrationRequest
-    ): Array<EntityResponse<ZoneAttributes>>
+    ): Array<EntityResponse>
 
     @POST
     suspend fun getConfig(

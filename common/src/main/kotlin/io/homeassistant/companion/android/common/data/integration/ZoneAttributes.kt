@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data.integration
 
 import android.location.Location
 
+// TODO remove?
 data class ZoneAttributes(
     val hidden: Boolean,
     val passive: Boolean,

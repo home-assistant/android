@@ -12,7 +12,6 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationExc
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
-import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ActionRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.FireEventRequest
@@ -383,7 +382,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 null
             )
         var causeException: Exception? = null
-        var zones: Array<EntityResponse<ZoneAttributes>>? = null
+        var zones: Array<EntityResponse>? = null
         for (it in server.connection.getApiUrls()) {
             try {
                 zones = integrationService.getZones(it.toHttpUrlOrNull()!!, getZonesRequest)
@@ -618,8 +617,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             Entity(
                 it.entityId,
                 it.state,
-                // TODO improve since it probably doesn't work properly if the parsing is not a map but an object
-                it.attributes as Map<String, Any?>,
+                it.attributes,
                 it.lastChanged,
                 it.lastUpdated,
             )
@@ -848,22 +846,14 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         )
     }
 
-    private fun createZonesResponse(zones: Array<EntityResponse<ZoneAttributes>>): Array<Entity> {
+    private fun createZonesResponse(zones: Array<EntityResponse>): Array<Entity> {
         val retVal = ArrayList<Entity>()
         zones.forEach {
             retVal.add(
                 Entity(
                     it.entityId,
                     it.state,
-                    mapOf(
-                        "hidden" to it.attributes.hidden,
-                        "passive" to it.attributes.passive,
-                        "latitude" to it.attributes.latitude,
-                        "longitude" to it.attributes.longitude,
-                        "radius" to it.attributes.radius,
-                        "friendly_name" to it.attributes.friendlyName,
-                        "icon" to it.attributes.icon,
-                    ),
+                    it.attributes,
                     it.lastChanged,
                     it.lastUpdated,
                 )
