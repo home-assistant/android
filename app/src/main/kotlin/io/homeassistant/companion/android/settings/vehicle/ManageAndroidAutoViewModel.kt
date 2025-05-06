@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.vehicle
 import android.app.Application
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -18,7 +19,6 @@ import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
-import org.burnoutcrew.reorderable.ItemPosition
 import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -54,7 +54,7 @@ class ManageAndroidAutoViewModel @Inject constructor(
         }
     }
 
-    fun onMove(fromItem: ItemPosition, toItem: ItemPosition) {
+    fun onMove(fromItem: LazyListItemInfo, toItem: LazyListItemInfo) {
         favoritesList.apply {
             add(
                 favoritesList.indexOfFirst { it == toItem.key },
@@ -62,8 +62,6 @@ class ManageAndroidAutoViewModel @Inject constructor(
             )
         }
     }
-
-    fun canDragOver(position: ItemPosition) = favoritesList.any { it == position.key }
 
     fun saveFavorites() {
         viewModelScope.launch {

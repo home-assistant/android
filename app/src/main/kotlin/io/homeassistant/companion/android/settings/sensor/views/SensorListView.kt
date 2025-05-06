@@ -34,7 +34,7 @@ fun SensorListView(
     onSensorClicked: (String) -> Unit
 ) {
     LazyColumn {
-        viewModel.allSensors.forEach { (manager, currentSensors) ->
+        viewModel.allSensors.filter { it.value.isNotEmpty() }.forEach { (manager, currentSensors) ->
             stickyHeader(
                 key = manager.id()
             ) {
