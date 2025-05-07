@@ -18,6 +18,7 @@ internal object WebSocketConstants {
         namingStrategy = JsonNamingStrategy.SnakeCase
         encodeDefaults = true
         prettyPrint = BuildConfig.DEBUG
+        explicitNulls = false // Otherwise we need to set default value everywhere
         serializersModule = serializersModule + SocketResponse.socketResponseSerializerModuler
     }
 
