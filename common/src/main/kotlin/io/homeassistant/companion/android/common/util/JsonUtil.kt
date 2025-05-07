@@ -48,7 +48,7 @@ internal fun jacksonObjectMapperForHACore() = jacksonObjectMapper()
     .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
 
 class CalendarSerializer() : KSerializer<Calendar> {
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.getDefault())
 
     override val descriptor: SerialDescriptor
         get() = PrimitiveSerialDescriptor("java.util.Calendar", PrimitiveKind.STRING)
