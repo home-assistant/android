@@ -3,6 +3,7 @@
     tools:ignore="MissingDefaultResource">
     <release version="2025.5.1 - Main" versioncode="3">
         <change>Add more Health Connect sensors</change>
+        <change>New design of To-do list widget</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2025.5.1 - Wear" versioncode="2">
