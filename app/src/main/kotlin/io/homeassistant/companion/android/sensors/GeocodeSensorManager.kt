@@ -4,20 +4,23 @@ import android.Manifest
 import android.content.Context
 import android.location.Address
 import android.location.Geocoder
-import android.location.Location
 import android.os.Build
 import android.os.Build.VERSION.SDK_INT
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.instant
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
-import io.homeassistant.companion.android.location.getLocation
+import io.homeassistant.companion.android.location.getLastLocation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.ExperimentalTime
 import timber.log.Timber
 
 class GeocodeSensorManager : SensorManager {
@@ -26,6 +29,7 @@ class GeocodeSensorManager : SensorManager {
         private const val SETTING_ACCURACY = "geocode_minimum_accuracy"
         const val SETTINGS_INCLUDE_LOCATION = "geocode_include_location_updates"
         private const val DEFAULT_MINIMUM_ACCURACY = 200
+        val LOCATION_OUTDATED_THRESHOLD = 5.minutes
         val geocodedLocation = SensorManager.BasicSensor(
             "geocoded_location",
             "sensor",
@@ -65,15 +69,15 @@ class GeocodeSensorManager : SensorManager {
         updateGeocodedLocation(context)
     }
 
+    @OptIn(ExperimentalTime::class)
     private suspend fun updateGeocodedLocation(context: Context) {
         if (!isEnabled(context, geocodedLocation) || !checkPermission(context, geocodedLocation.id)) {
             return
         }
 
-        val location: Location? = getLocation(context)
-
+        val location = getLastLocation(context)
         if (location == null) {
-            Timber.e("Somehow location is null even though it was successful")
+            Timber.w("No location skipping geocoded update")
             return
         }
 
@@ -94,29 +98,10 @@ class GeocodeSensorManager : SensorManager {
             return
         }
 
-        val now = System.currentTimeMillis()
-        if (now - location.time > 300000) {
-            Timber.w("Skipping geocoded update due to old timestamp ${location.time} compared to $now")
+        if (Clock.System.now() - location.instant() > LOCATION_OUTDATED_THRESHOLD) {
+            Timber.w("Skipping geocoded update due to old timestamp ${location.instant()}")
             return
         }
-        val attributes = address?.let {
-            mapOf(
-                "administrative_area" to it.adminArea,
-                "country" to it.countryName,
-                "iso_country_code" to it.countryCode,
-                "locality" to it.locality,
-                "location" to listOf(it.latitude, it.longitude),
-                "name" to it.featureName,
-                "phone" to it.phone,
-                "premises" to it.premises,
-                "postal_code" to it.postalCode,
-                "sub_administrative_area" to it.subAdminArea,
-                "sub_locality" to it.subLocality,
-                "sub_thoroughfare" to it.subThoroughfare,
-                "thoroughfare" to it.thoroughfare,
-                "url" to it.url
-            )
-        }.orEmpty()
 
         val prettyAddress = address?.getAddressLine(0)
 
@@ -131,7 +116,26 @@ class GeocodeSensorManager : SensorManager {
             geocodedLocation,
             if (!prettyAddress.isNullOrEmpty()) prettyAddress else STATE_UNKNOWN,
             geocodedLocation.statelessIcon,
-            attributes
+            address?.toMap().orEmpty()
+        )
+    }
+
+    private fun Address.toMap(): Map<String, Any> {
+        return mapOf(
+            "administrative_area" to adminArea,
+            "country" to countryName,
+            "iso_country_code" to countryCode,
+            "locality" to locality,
+            "location" to listOf(latitude, longitude),
+            "name" to featureName,
+            "phone" to phone,
+            "premises" to premises,
+            "postal_code" to postalCode,
+            "sub_administrative_area" to subAdminArea,
+            "sub_locality" to subLocality,
+            "sub_thoroughfare" to subThoroughfare,
+            "thoroughfare" to thoroughfare,
+            "url" to url
         )
     }
 

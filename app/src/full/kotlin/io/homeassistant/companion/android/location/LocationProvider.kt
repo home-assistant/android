@@ -9,7 +9,7 @@ import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 
 @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
-suspend fun getLocation(context: Context): Location? {
+suspend fun getLastLocation(context: Context): Location? {
     return try {
         LocationServices.getFusedLocationProviderClient(context).lastLocation.await()
     } catch (e: Exception) {
