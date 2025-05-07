@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.wear
 
 import android.annotation.SuppressLint
 import android.app.Application
+import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.core.net.toUri
@@ -41,7 +42,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import org.burnoutcrew.reorderable.ItemPosition
 import timber.log.Timber
 
 @HiltViewModel
@@ -199,7 +199,7 @@ class SettingsWearViewModel @Inject constructor(
         sendHomeFavorites(favoriteEntityIds.toList())
     }
 
-    fun onMove(fromItem: ItemPosition, toItem: ItemPosition) {
+    fun onMove(fromItem: LazyListItemInfo, toItem: LazyListItemInfo) {
         favoriteEntityIds.apply {
             add(
                 favoriteEntityIds.indexOfFirst { it == toItem.key },
@@ -207,8 +207,6 @@ class SettingsWearViewModel @Inject constructor(
             )
         }
     }
-
-    fun canDragOver(position: ItemPosition) = favoriteEntityIds.any { it == position.key }
 
     fun sendHomeFavorites(favoritesList: List<String>) = viewModelScope.launch {
         val application = getApplication<HomeAssistantApplication>()
