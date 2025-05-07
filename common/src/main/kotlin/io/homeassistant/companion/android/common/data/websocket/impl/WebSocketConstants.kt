@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.common.data.websocket.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import io.homeassistant.companion.android.common.util.jacksonObjectMapperForHACore
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -17,7 +16,7 @@ internal object WebSocketConstants {
         ignoreUnknownKeys = true
         namingStrategy = JsonNamingStrategy.SnakeCase
         encodeDefaults = true
-        prettyPrint = BuildConfig.DEBUG
+        prettyPrint = false
         explicitNulls = false // Otherwise we need to set default value everywhere
         serializersModule = serializersModule + SocketResponse.socketResponseSerializerModuler
     }
