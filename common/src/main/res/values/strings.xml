@@ -1042,6 +1042,7 @@
     <string name="widget_media_show_seek">Show seek buttons</string>
     <string name="widget_media_show_skip">Show skip buttons</string>
     <string name="widget_media_show_source">Show source label</string>
+    <string name="widget_no_configuration">Oops. It looks like this widget is not configured.</string>
     <string name="widget_separator_input_hint">No separator</string>
     <string name="widget_separator_label">State and attribute separator:</string>
     <string name="widget_spinner_icon">Icon:</string>
@@ -1055,8 +1056,6 @@
     <string name="widget_todo_label">To-do list</string>
     <string name="widget_todo_empty">You have no to-do items!</string>
     <string name="widget_todo_active">Active</string>
-    <string name="widget_todo_preview_item_1">Eggs</string>
-    <string name="widget_todo_preview_item_2">Milk</string>
     <string name="widget_todo_show_completed">Show completed items</string>
     <string name="widget_todo_completed">Completed</string>
     <string name="widget_tap_action_label">Tap action:</string>

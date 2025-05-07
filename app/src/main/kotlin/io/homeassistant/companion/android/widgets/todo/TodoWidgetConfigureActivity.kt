@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.widgets.todo
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -33,8 +32,9 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.getSystemService
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R
@@ -52,6 +52,7 @@ import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewEntity2
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -60,7 +61,7 @@ class TodoWidgetConfigureActivity : BaseActivity() {
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.todo.TodoWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
-    private val viewModel: TodoWidgetViewModel by viewModels()
+    private val viewModel: TodoWidgetConfigureViewModel by viewModels()
     private val supportedTextColors: List<String>
         get() = listOf(
             application.getHexForColor(R.color.colorWidgetButtonLabelBlack),
@@ -77,6 +78,7 @@ class TodoWidgetConfigureActivity : BaseActivity() {
             AppWidgetManager.EXTRA_APPWIDGET_ID,
             AppWidgetManager.INVALID_APPWIDGET_ID,
         ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
+
         viewModel.onSetup(widgetId, supportedTextColors)
 
         setContent {
@@ -125,29 +127,28 @@ class TodoWidgetConfigureActivity : BaseActivity() {
     @SuppressLint("ObsoleteSdkInt")
     @RequiresApi(Build.VERSION_CODES.O)
     private fun requestPinWidget() {
-        getSystemService<AppWidgetManager>()?.requestPinAppWidget(
-            ComponentName(this, TodoWidget::class.java),
-            null,
-            PendingIntent.getActivity(
-                this,
-                System.currentTimeMillis().toInt(),
-                Intent(this, TodoWidgetConfigureActivity::class.java)
-                    .putExtra(PIN_WIDGET_CALLBACK, true)
-                    .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
-            ),
-        )
+        val context = this@TodoWidgetConfigureActivity
+        lifecycleScope.launch {
+            GlanceAppWidgetManager(context)
+                .requestPinGlanceAppWidget(
+                    TodoWidget::class.java,
+                    successCallback = PendingIntent.getActivity(
+                        context,
+                        System.currentTimeMillis().toInt(),
+                        Intent(context, TodoWidgetConfigureActivity::class.java)
+                            .putExtra(PIN_WIDGET_CALLBACK, true)
+                            .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                    ),
+                )
+        }
     }
 
     private fun onAddWidget() {
-        val intent = viewModel.prepareData(ComponentName(this, TodoWidget::class.java))
-        if (intent == null) {
-            showAddWidgetError()
-            return
-        }
-
-        sendBroadcast(intent)
-        setResult(RESULT_OK, intent)
+        viewModel.prepareData()
+        // TODO show the error when it makes sense
+        setResult(RESULT_OK)
+        viewModel.updateWidget(this)
         finish()
     }
 
@@ -158,7 +159,7 @@ class TodoWidgetConfigureActivity : BaseActivity() {
 
 @Composable
 private fun TodoWidgetConfigureScreen(
-    viewModel: TodoWidgetViewModel,
+    viewModel: TodoWidgetConfigureViewModel,
     onAddWidget: () -> Unit,
 ) {
     val servers by viewModel.servers.collectAsStateWithLifecycle()

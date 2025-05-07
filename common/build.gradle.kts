@@ -57,14 +57,6 @@ dependencies {
         exclude(group = "org.json", module = "json")
     }
 
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.junit.jupiter)
-    testImplementation(libs.junit.vintage.engine)
-    testImplementation(libs.mockk)
-    testImplementation(libs.robolectric)
-    testRuntimeOnly(libs.junit.platform.launcher)
-
     androidTestImplementation(libs.bundles.androidx.test)
 
     // This fix an issue: provided Metadata instance has version 2.1.0, while maximum supported version is 2.0.0. To support newer versions, update the kotlinx-metadata-jvm library

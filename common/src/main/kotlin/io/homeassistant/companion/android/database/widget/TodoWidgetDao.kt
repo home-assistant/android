@@ -15,6 +15,9 @@ interface TodoWidgetDao : WidgetDao {
     @Query("SELECT * FROM todo_widget WHERE id = :id")
     suspend fun get(id: Int): TodoWidgetEntity?
 
+    @Query("SELECT * FROM todo_widget WHERE id = :id")
+    fun getFlow(id: Int): Flow<TodoWidgetEntity?>
+
     @Query("SELECT * FROM todo_widget")
     suspend fun getAll(): List<TodoWidgetEntity>
 
@@ -25,7 +28,7 @@ interface TodoWidgetDao : WidgetDao {
     override suspend fun delete(id: Int)
 
     @Query("DELETE FROM todo_widget WHERE id IN (:ids)")
-    suspend fun deleteAll(ids: IntArray)
+    override suspend fun deleteAll(ids: IntArray)
 
     @Query("SELECT * FROM todo_widget")
     fun getAllFlow(): Flow<List<TodoWidgetEntity>>

@@ -87,6 +87,16 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
 
                 dependencies {
                     "implementation"(libs.timber)
+
+                    "testRuntimeOnly"(libs.junit.platform.launcher)
+
+                    "testImplementation"(platform(libs.junit.bom))
+                    "testImplementation"(libs.kotlinx.coroutines.test)
+                    "testImplementation"(libs.junit.jupiter)
+                    "testImplementation"(libs.junit.vintage.engine)
+                    "testImplementation"(libs.mockk)
+                    "testImplementation"(libs.robolectric)
+                    "testImplementation"(libs.turbine)
                 }
             }
 
