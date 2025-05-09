@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run InstrumentationTest wear" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="Instrumentation tests app" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -10,7 +10,8 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value=":wear:connectedDebugAndroidTest" />
+          <option value=":app:connectedFullDebugAndroidTest" />
+          <option value=":app:connectedMinimalDebugAndroidTest" />
           <option value=":common:connectedDebugAndroidTest" />
         </list>
       </option>

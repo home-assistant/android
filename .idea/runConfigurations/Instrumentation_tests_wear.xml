@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run Unit Tests" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="Instrumentation tests wear" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -10,17 +10,16 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value=":common:testDebugUnitTest" />
-          <option value=":app:testFullDebugUnitTest" />
-          <option value=":wear:testDebugUnitTest" />
+          <option value=":wear:connectedDebugAndroidTest" />
+          <option value=":common:connectedDebugAndroidTest" />
         </list>
       </option>
       <option name="vmOptions" />
     </ExternalSystemSettings>
-    <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+    <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
     <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
     <DebugAllEnabled>false</DebugAllEnabled>
-    <RunAsTest>true</RunAsTest>
+    <RunAsTest>false</RunAsTest>
     <method v="2" />
   </configuration>
 </component>
