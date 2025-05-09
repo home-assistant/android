@@ -10,6 +10,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
@@ -58,7 +59,7 @@ class TodoWidgetConfigureViewModel @Inject constructor(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), emptyList())
 
     var selectedEntityId by mutableStateOf<String?>(null)
-    var selectedBackgroundType by mutableStateOf(WidgetBackgroundType.DYNAMICCOLOR)
+    var selectedBackgroundType by mutableStateOf(if (DynamicColors.isDynamicColorAvailable()) WidgetBackgroundType.DYNAMICCOLOR else WidgetBackgroundType.DAYNIGHT)
     var textColorIndex by mutableIntStateOf(0)
     var showCompletedState by mutableStateOf(true)
     var isUpdateWidget by mutableStateOf(false)
