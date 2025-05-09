@@ -19,7 +19,7 @@ object DefaultButtonControl : HaControl {
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity<Map<String, Any>>,
+        entity: Entity,
         info: HaControlInfo
     ): Control.StatefulBuilder {
         control.setStatusText("")
@@ -31,13 +31,13 @@ object DefaultButtonControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
+    override fun getDeviceType(entity: Entity): Int =
         when (entity.domain) {
             "scene", "script" -> DeviceTypes.TYPE_ROUTINE
             else -> DeviceTypes.TYPE_UNKNOWN
         }
 
-    override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+    override fun getDomainString(context: Context, entity: Entity): String =
         when (entity.domain) {
             "button" -> context.getString(commonR.string.domain_button)
             "input_button" -> context.getString(commonR.string.domain_input_button)

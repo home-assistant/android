@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.webSocketJsonMapper
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.MessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -287,7 +288,7 @@ sendMessage()
             coVerify { mockConnection.send(expectedMessageSent) }
             assertNotNull(response)
             assertEquals(2, response.id)
-            assertEquals("result", response.type)
+            assertTrue(response is MessageSocketResponse)
             assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
         }
 
@@ -443,7 +444,7 @@ subscribeTo
             prepareAuthenticationAnswer()
             assertTrue(webSocketCore.connect())
 
-            val expectedData: Map<Any, Any> = mapOf("testSubscription" to "test")
+            val expectedData: Map<String, Any> = mapOf("testSubscription" to "test")
             val expectedType = "testType"
 
             // Message sent by subscribeTo to request for events
@@ -478,7 +479,7 @@ subscribeTo
             prepareAuthenticationAnswer()
             assertTrue(webSocketCore.connect())
 
-            val expectedData: Map<Any, Any> = mapOf("testSubscription" to "test")
+            val expectedData: Map<String, String> = mapOf("testSubscription" to "test")
             val expectedType = "testType"
 
             // Message sent by subscribeTo to request for events

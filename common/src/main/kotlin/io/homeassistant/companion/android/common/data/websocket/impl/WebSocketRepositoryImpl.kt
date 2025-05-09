@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.common.data.websocket.impl
 
-import com.fasterxml.jackson.module.kotlin.contains
-import com.fasterxml.jackson.module.kotlin.convertValue
 import io.homeassistant.companion.android.common.data.integration.ActionData
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -19,7 +17,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketCo
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER
-import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.webSocketJsonMapper
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.kotlinJsonMapper
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
@@ -36,7 +34,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.PongSocketResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.RawMessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
@@ -47,6 +46,10 @@ import io.homeassistant.companion.android.database.server.ServerUserInfo
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.intOrNull
 import okhttp3.WebSocketListener
 
 private val matterTimeout = 2.minutes
@@ -70,7 +73,7 @@ class WebSocketRepositoryImpl internal constructor(
                 "type" to "ping"
             )
         )
-        return socketResponse?.type == "pong"
+        return socketResponse is PongSocketResponse
     }
 
     override suspend fun getConfig(): GetConfigResponse? {
@@ -129,7 +132,7 @@ class WebSocketRepositoryImpl internal constructor(
         return response
     }
 
-    override suspend fun getStates(): List<EntityResponse<Any>>? {
+    override suspend fun getStates(): List<EntityResponse>? {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
                 "type" to "get_states"
@@ -248,7 +251,7 @@ class WebSocketRepositoryImpl internal constructor(
         }
         return webSocketCore.subscribeTo(
             SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-            data as Map<Any, Any>
+            data
         )
     }
 
@@ -275,7 +278,7 @@ class WebSocketRepositoryImpl internal constructor(
         }
         return webSocketCore.subscribeTo(
             SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-            data as Map<Any, Any>
+            data
         )
     }
 
@@ -355,13 +358,7 @@ class WebSocketRepositoryImpl internal constructor(
         return response?.let {
             MatterCommissionResponse(
                 success = response.success == true,
-                errorCode = if (response.error?.has("code") == true) {
-                    response.error.get("code").let {
-                        if (it.isNumber) it.asInt() else null
-                    }
-                } else {
-                    null
-                }
+                errorCode = ((response.error as? JsonObject)?.get("code") as? JsonPrimitive)?.intOrNull
             )
         }
     }
@@ -382,13 +379,7 @@ class WebSocketRepositoryImpl internal constructor(
         return response?.let {
             MatterCommissionResponse(
                 success = response.success == true,
-                errorCode = if (response.error?.has("code") == true) {
-                    response.error.get("code").let {
-                        if (it.isNumber) it.asInt() else null
-                    }
-                } else {
-                    null
-                }
+                errorCode = ((response.error as? JsonObject)?.get("code") as? JsonPrimitive)?.intOrNull
             )
         }
     }
@@ -399,8 +390,10 @@ class WebSocketRepositoryImpl internal constructor(
                 "type" to "thread/list_datasets"
             )
         )
-        return if (response?.success == true && response.result?.contains("datasets") == true) {
-            webSocketJsonMapper.convertValue(response.result["datasets"]!!)
+
+        val result = (response?.result as? JsonObject)?.get("datasets")
+        return if (response?.success == true && result != null) {
+            kotlinJsonMapper.decodeFromJsonElement(result)
         } else {
             null
         }
@@ -447,6 +440,6 @@ class WebSocketRepositoryImpl internal constructor(
         }
     }
 
-    private inline fun <reified T> mapResponse(response: SocketResponse?): T? =
-        if (response?.result != null) webSocketJsonMapper.convertValue(response.result) else null
+    private inline fun <reified T> mapResponse(response: RawMessageSocketResponse?): T? =
+        response?.result?.run { kotlinJsonMapper.decodeFromJsonElement(this) }
 }

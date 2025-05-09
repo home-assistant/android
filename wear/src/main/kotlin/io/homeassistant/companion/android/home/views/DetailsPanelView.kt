@@ -54,7 +54,7 @@ import java.text.DateFormat
 
 @Composable
 fun DetailsPanelView(
-    entity: Entity<*>,
+    entity: Entity,
     onEntityToggled: (String, String) -> Unit,
     onFanSpeedChanged: (Float) -> Unit,
     onBrightnessChanged: (Float) -> Unit,
@@ -175,7 +175,7 @@ fun DetailsPanelView(
 
 @Composable
 fun FanSpeedSlider(
-    entity: Entity<*>,
+    entity: Entity,
     onFanSpeedChanged: (Float) -> Unit,
     isToastEnabled: Boolean,
     isHapticEnabled: Boolean
@@ -229,7 +229,7 @@ fun FanSpeedSlider(
 
 @Composable
 fun BrightnessSlider(
-    entity: Entity<*>,
+    entity: Entity,
     onBrightnessChanged: (Float) -> Unit,
     isToastEnabled: Boolean,
     isHapticEnabled: Boolean

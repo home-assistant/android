@@ -27,6 +27,7 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             apply(plugin = libs.plugins.kotlin.android.getPluginId())
+            apply(plugin = libs.plugins.kotlin.serialization.getPluginId())
             apply(plugin = libs.plugins.ksp.getPluginId())
             apply(plugin = libs.plugins.hilt.getPluginId())
 
@@ -87,6 +88,7 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
 
                 dependencies {
                     "implementation"(libs.timber)
+                    "implementation"(libs.kotlinx.serialization.json)
 
                     "testRuntimeOnly"(libs.junit.platform.launcher)
 

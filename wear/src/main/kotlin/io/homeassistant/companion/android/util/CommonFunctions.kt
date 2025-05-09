@@ -37,7 +37,6 @@ fun getIcon(icon: String?, domain: String, context: Context): IIcon {
         mapOf("icon" to icon),
         Calendar.getInstance(),
         Calendar.getInstance(),
-        null
     )
     return simpleEntity.getIcon(context)
 }

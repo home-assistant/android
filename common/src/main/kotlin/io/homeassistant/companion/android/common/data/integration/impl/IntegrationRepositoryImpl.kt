@@ -12,7 +12,6 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationExc
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
-import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ActionRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.FireEventRequest
@@ -376,14 +375,14 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
+    override suspend fun getZones(): Array<Entity> {
         val getZonesRequest =
             IntegrationRequest(
                 "get_zones",
                 null
             )
         var causeException: Exception? = null
-        var zones: Array<EntityResponse<ZoneAttributes>>? = null
+        var zones: Array<EntityResponse>? = null
         for (it in server.connection.getApiUrls()) {
             try {
                 zones = integrationService.getZones(it.toHttpUrlOrNull()!!, getZonesRequest)
@@ -611,7 +610,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         localStorage.remove(PREF_ORPHANED_THREAD_BORDER_AGENT_IDS)
     }
 
-    override suspend fun getEntities(): List<Entity<Any>>? {
+    override suspend fun getEntities(): List<Entity>? {
         val response = webSocketRepository.getStates()
 
         return response?.map {
@@ -621,14 +620,13 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 it.attributes,
                 it.lastChanged,
                 it.lastUpdated,
-                it.context
             )
         }
             ?.sortedBy { it.entityId }
             ?.toList()
     }
 
-    override suspend fun getEntity(entityId: String): Entity<Map<String, Any>>? {
+    override suspend fun getEntity(entityId: String): Entity? {
         val url = server.connection.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
             Timber.e("Unable to register device due to missing URL")
@@ -645,11 +643,10 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             response.attributes,
             response.lastChanged,
             response.lastUpdated,
-            response.context
         )
     }
 
-    override suspend fun getEntityUpdates(): Flow<Entity<*>>? {
+    override suspend fun getEntityUpdates(): Flow<Entity>? {
         return webSocketRepository.getStateChanges()
             ?.filter { it.newState != null }
             ?.map {
@@ -659,12 +656,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                     it.newState.attributes,
                     it.newState.lastChanged,
                     it.newState.lastUpdated,
-                    it.newState.context
                 )
             }
     }
 
-    override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>? {
+    override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>? {
         return if (server.user.isAdmin == true) {
             webSocketRepository.getStateChanges(entityIds)
                 ?.filter { it.toState != null }
@@ -675,7 +671,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                         it.toState.attributes,
                         it.toState.lastChanged,
                         it.toState.lastUpdated,
-                        it.toState.context
                     )
                 }
         } else {
@@ -688,7 +683,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                         it.newState.attributes,
                         it.newState.lastChanged,
                         it.newState.lastUpdated,
-                        it.newState.context
                     )
                 }
         }
@@ -852,8 +846,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         )
     }
 
-    private fun createZonesResponse(zones: Array<EntityResponse<ZoneAttributes>>): Array<Entity<ZoneAttributes>> {
-        val retVal = ArrayList<Entity<ZoneAttributes>>()
+    private fun createZonesResponse(zones: Array<EntityResponse>): Array<Entity> {
+        val retVal = ArrayList<Entity>()
         zones.forEach {
             retVal.add(
                 Entity(
@@ -862,7 +856,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                     it.attributes,
                     it.lastChanged,
                     it.lastUpdated,
-                    it.context
                 )
             )
         }

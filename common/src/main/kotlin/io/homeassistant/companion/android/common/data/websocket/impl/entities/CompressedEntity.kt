@@ -1,23 +1,28 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonProperty
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.util.MapAnySerializer
 import java.util.Calendar
 import kotlin.math.round
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 
 /**
  * Represents a single event emitted in a `subscribe_entities` websocket subscription. One event can
  * contain state changes for multiple entities; properties map them as entity id -> state.
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class CompressedStateChangedEvent(
-    @JsonProperty("a")
+    @JsonNames("a")
     val added: Map<String, CompressedEntityState>?,
-    @JsonProperty("c")
+    @JsonNames("c")
     val changed: Map<String, CompressedStateDiff>?,
-    @JsonProperty("r")
-    val removed: List<String>?
+    @JsonNames("r")
+    val removed: List<String>?,
 )
 
 /**
@@ -25,10 +30,11 @@ data class CompressedStateChangedEvent(
  * It will only include properties that have been changed, values that haven't changed will not be
  * set (in Kotlin: `null`). Apply it to an existing Entity to get the new state.
  */
+@Serializable
 data class CompressedStateDiff(
-    @JsonProperty("+")
+    @JsonNames("+")
     val plus: CompressedEntityState?,
-    @JsonProperty("-")
+    @JsonNames("-")
     val minus: CompressedEntityRemoved?
 )
 
@@ -36,24 +42,23 @@ data class CompressedStateDiff(
  * A compressed version of [Entity] used for additions or changes in the entity's state in a
  * `subscribe_entities` websocket subscription.
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class CompressedEntityState(
-    @JsonProperty("s")
+    @JsonNames("s")
     val state: String?,
-    @JsonProperty("a")
-    val attributes: Map<String, Any>?,
-    @JsonProperty("lc")
+    @Serializable(with = MapAnySerializer::class)
+    @JsonNames("a")
+    val attributes: Map<String, @Polymorphic Any?>,
+    @JsonNames("lc")
     val lastChanged: Double?,
-    @JsonProperty("lu")
+    @JsonNames("lu")
     val lastUpdated: Double?,
-    @JsonProperty("c")
-    val context: Any?
 ) {
     /**
      * Convert a compressed entity state to a normal [Entity]. This function can be used for new
      * entities that are delivered in a compressed format.
      */
-    fun toEntity(entityId: String): Entity<Map<String, Any>> {
+    fun toEntity(entityId: String): Entity {
         return Entity(
             entityId = entityId,
             state = state!!,
@@ -67,12 +72,6 @@ data class CompressedEntityState(
                         round(lastChanged!! * 1000).toLong()
                     }
             },
-            context =
-            if (context is String) {
-                mapOf("id" to context, "parent_id" to null, "user_id" to null)
-            } else {
-                context as? Map<String, Any?>
-            }
         )
     }
 }
@@ -81,8 +80,8 @@ data class CompressedEntityState(
  * A compressed version of [Entity] used for removed properties from the entity's state in a
  * `subscribe_entities` websocket subscription. Only attributes are expected to be removed.
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class CompressedEntityRemoved(
-    @JsonProperty("a")
+    @JsonNames("a")
     val attributes: List<String>?
 )

@@ -37,7 +37,7 @@ import io.homeassistant.companion.android.util.previewEntity4
 
 @Composable
 fun EntityUi(
-    entity: Entity<*>,
+    entity: Entity,
     onEntityClicked: (String, String) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,

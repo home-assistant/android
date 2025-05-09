@@ -188,7 +188,7 @@ private fun TodoWidgetConfigureView(
     servers: List<Server>,
     selectedServerId: Int,
     onServerSelected: (Int) -> Unit,
-    entities: List<Entity<*>>,
+    entities: List<Entity>,
     selectedEntityId: String?,
     onEntitySelected: (String?) -> Unit,
     showCompleted: Boolean,

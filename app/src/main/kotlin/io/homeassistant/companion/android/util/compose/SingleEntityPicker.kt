@@ -40,7 +40,7 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SingleEntityPicker(
-    entities: List<Entity<*>>,
+    entities: List<Entity>,
     currentEntity: String?,
     onEntityCleared: () -> Unit,
     onEntitySelected: (String) -> Boolean,

@@ -22,7 +22,7 @@ object VacuumControl : HaControl {
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity<Map<String, Any>>,
+        entity: Entity,
         info: HaControlInfo
     ): Control.StatefulBuilder {
         entitySupportedFeatures = entity.attributes["supported_features"] as Int
@@ -38,10 +38,10 @@ object VacuumControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
+    override fun getDeviceType(entity: Entity): Int =
         DeviceTypes.TYPE_VACUUM
 
-    override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+    override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.domain_vacuum)
 
     override suspend fun performAction(

@@ -1,10 +1,25 @@
 package io.homeassistant.companion.android.common.data.websocket.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import io.homeassistant.companion.android.common.util.jacksonObjectMapperForHACore
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNamingStrategy
+import kotlinx.serialization.modules.plus
 
 internal object WebSocketConstants {
     val webSocketJsonMapper: ObjectMapper = jacksonObjectMapperForHACore()
+
+    @OptIn(ExperimentalSerializationApi::class)
+    val kotlinJsonMapper = Json {
+        ignoreUnknownKeys = true
+        namingStrategy = JsonNamingStrategy.SnakeCase
+        encodeDefaults = true
+        prettyPrint = false
+        explicitNulls = false // Otherwise we need to set default value everywhere
+        serializersModule = serializersModule + SocketResponse.socketResponseSerializerModuler
+    }
 
     const val EVENT_STATE_CHANGED = "state_changed"
     const val EVENT_AREA_REGISTRY_UPDATED = "area_registry_updated"

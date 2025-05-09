@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data.integration
 
 import android.location.Location
 
+// TODO remove?
 data class ZoneAttributes(
     val hidden: Boolean,
     val passive: Boolean,
@@ -17,10 +18,10 @@ data class ZoneAttributes(
  * This function will also consider accuracy, so if the GPS location is outside the zone but the
  * accuracy suggests that it could be in the zone, this function will still return `true`.
  */
-fun Entity<ZoneAttributes>.containsWithAccuracy(location: Location): Boolean {
+fun Entity.containsWithAccuracy(location: Location): Boolean {
     val zoneCenter = Location("").apply {
-        latitude = attributes.latitude
-        longitude = attributes.longitude
+        latitude = (attributes["latitude"] as Number).toDouble()
+        longitude = (attributes["longitude"] as Number).toDouble()
     }
-    return (location.distanceTo(zoneCenter) - attributes.radius - location.accuracy.coerceAtLeast(0f)) <= 0
+    return (location.distanceTo(zoneCenter) - (attributes["radius"] as Number).toFloat() - location.accuracy.coerceAtLeast(0f)) <= 0
 }

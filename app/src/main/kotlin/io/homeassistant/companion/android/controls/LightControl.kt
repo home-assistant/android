@@ -24,7 +24,7 @@ object LightControl : HaControl {
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity<Map<String, Any>>,
+        entity: Entity,
         info: HaControlInfo
     ): Control.StatefulBuilder {
         val position = entity.getLightBrightness()
@@ -56,10 +56,10 @@ object LightControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
+    override fun getDeviceType(entity: Entity): Int =
         DeviceTypes.TYPE_LIGHT
 
-    override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+    override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.domain_light)
 
     override suspend fun performAction(

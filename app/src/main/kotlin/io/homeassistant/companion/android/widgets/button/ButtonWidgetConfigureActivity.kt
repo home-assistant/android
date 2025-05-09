@@ -63,7 +63,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     override val dao get() = buttonWidgetDao
 
     private var actions = mutableMapOf<Int, HashMap<String, Action>>()
-    private var entities = mutableMapOf<Int, HashMap<String, Entity<Any>>>()
+    private var entities = mutableMapOf<Int, HashMap<String, Entity>>()
     private var dynamicFields = ArrayList<ActionFieldBinder>()
     private lateinit var dynamicFieldAdapter: WidgetDynamicFieldAdapter
 
@@ -380,7 +380,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
         dynamicFieldAdapter.replaceValues(
             actions[serverId].orEmpty() as HashMap<String, Action>,
-            entities[serverId].orEmpty() as HashMap<String, Entity<Any>>
+            entities[serverId].orEmpty() as HashMap<String, Entity>
         )
 
         actionTextWatcher.afterTextChanged(binding.widgetTextConfigService.text)
