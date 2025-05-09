@@ -46,10 +46,15 @@ class TodoWidgetConfigureViewModel @Inject constructor(
     val entities: StateFlow<List<Entity<*>>> = snapshotFlow { selectedServerId }
         .distinctUntilChanged()
         .mapLatest { serverId ->
-            serverManager.integrationRepository(serverId)
-                .getEntities()
-                .orEmpty()
-                .filter { entity -> entity.domain == TODO_DOMAIN }
+            if (serverManager.isRegistered()) {
+                serverManager.integrationRepository(serverId)
+                    .getEntities()
+                    .orEmpty()
+                    .filter { entity -> entity.domain == TODO_DOMAIN }
+            } else {
+                Timber.w("No server registered")
+                emptyList()
+            }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), emptyList())
 
     var selectedEntityId by mutableStateOf<String?>(null)
