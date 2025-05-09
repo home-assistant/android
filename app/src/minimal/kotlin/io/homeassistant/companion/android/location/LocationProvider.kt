@@ -35,6 +35,12 @@ suspend fun getLastLocation(context: Context): Location? {
     }
 
     val lastKnownLocation = locationManager.getLastKnownLocation(provider)
+    /**
+     * If the last known location is null or too old, get the current location.
+     *
+     * Note: In systems where no application or service actively requests location updates,
+     * the last known location may never gets updated.
+     */
     return if (lastKnownLocation == null || Clock.System.now() - lastKnownLocation.instant() > LOCATION_OUTDATED_THRESHOLD) {
         Timber.d("Last known location is null or too old, getting current location.")
         locationManager.getCurrentLocation(context)
