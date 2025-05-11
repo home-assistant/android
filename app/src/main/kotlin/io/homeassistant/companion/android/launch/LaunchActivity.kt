@@ -142,7 +142,6 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             if (result != null) {
                 val (url, authCode, deviceName, deviceTrackingEnabled, notificationsEnabled) = result
                 val messagingToken = pushManager.getToken()
-                Timber.d("onOnboardingComplete: Messaging token $messagingToken")
                 if (messagingToken.isBlank() && BuildConfig.FLAVOR == "full") {
                     AlertDialog.Builder(this@LaunchActivity)
                         .setTitle(commonR.string.firebase_error_title)

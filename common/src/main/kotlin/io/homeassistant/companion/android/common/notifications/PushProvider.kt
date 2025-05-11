@@ -17,8 +17,10 @@ import timber.log.Timber
 interface PushProvider {
     val setting: PushProviderSetting
 
+    /** @return `true` if this provider is available to the app on this device */
     fun isAvailable(context: Context): Boolean
 
+    /** @return `true` if this provider is enabled on any server */
     fun isEnabled(context: Context): Boolean {
         val settingsDao = AppDatabase.getInstance(context).settingsDao()
         return serverManager(context).defaultServers.any {
@@ -26,11 +28,13 @@ interface PushProvider {
         }
     }
 
+    /** @return `true` if this provider is enabled for the specified server */
     fun isEnabled(context: Context, serverId: Int): Boolean {
         val settingsDao = AppDatabase.getInstance(context).settingsDao()
         return settingsDao.get(serverId)?.pushProvider == setting
     }
 
+    /** @return Set of server IDs for which this provider is enabled */
     fun getEnabledServers(context: Context): Set<Int> {
         val settingsDao = AppDatabase.getInstance(context).settingsDao()
         val serverManager = serverManager(context)
@@ -45,6 +49,9 @@ interface PushProvider {
 
     fun onMessage(context: Context, notificationData: Map<String, String>)
 
+    /**
+     * Update the device registration using this push provider
+     */
     suspend fun updateRegistration(context: Context, coroutineScope: CoroutineScope) {
         coroutineScope.launch {
             val serverManager = serverManager(context)
