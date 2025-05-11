@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.rememberScaffoldState
@@ -28,9 +29,8 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
-import org.burnoutcrew.reorderable.ReorderableItem
-import org.burnoutcrew.reorderable.rememberReorderableLazyListState
-import org.burnoutcrew.reorderable.reorderable
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @Composable
 fun LoadWearFavoritesSettings(
@@ -38,13 +38,11 @@ fun LoadWearFavoritesSettings(
     onBackClicked: () -> Unit,
     events: SharedFlow<String>
 ) {
-    val reorderState = rememberReorderableLazyListState(
-        onMove = { from, to -> settingsWearViewModel.onMove(from, to) },
-        canDragOver = { draggedOver, _ -> settingsWearViewModel.canDragOver(draggedOver) },
-        onDragEnd = { _, _ ->
-            settingsWearViewModel.sendHomeFavorites(settingsWearViewModel.favoriteEntityIds.toList())
-        }
-    )
+    val lazyListState = rememberLazyListState()
+    val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
+        settingsWearViewModel.onMove(from, to)
+        settingsWearViewModel.sendHomeFavorites(settingsWearViewModel.favoriteEntityIds.toList())
+    }
 
     val favoriteEntities = settingsWearViewModel.favoriteEntityIds
     var validEntities by remember { mutableStateOf<List<Entity<*>>>(emptyList()) }
@@ -79,12 +77,10 @@ fun LoadWearFavoritesSettings(
         }
     ) { contentPadding ->
         LazyColumn(
-            state = reorderState.listState,
+            state = lazyListState,
             verticalArrangement = Arrangement.Center,
             contentPadding = PaddingValues(vertical = 16.dp),
-            modifier = Modifier
-                .padding(contentPadding)
-                .reorderable(reorderState)
+            modifier = Modifier.padding(contentPadding),
         ) {
             item {
                 Text(
@@ -110,7 +106,7 @@ fun LoadWearFavoritesSettings(
                 val favoriteEntityID = favoriteEntities[index].replace("[", "").replace("]", "")
                 settingsWearViewModel.entities[favoriteEntityID]?.let {
                     ReorderableItem(
-                        reorderableState = reorderState,
+                        state = reorderState,
                         key = favoriteEntities[index]
                     ) { isDragging ->
                         FavoriteEntityRow(
@@ -125,7 +121,6 @@ fun LoadWearFavoritesSettings(
                             checked = favoriteEntities.contains(favoriteEntities[index]),
                             draggable = true,
                             isDragging = isDragging,
-                            reorderableState = reorderState
                         )
                     }
                 }

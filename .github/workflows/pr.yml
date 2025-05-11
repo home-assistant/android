@@ -182,7 +182,8 @@ jobs:
           mock-google-services: "true"
 
       - name: Run test
-        run: ./gradlew :common:testDebugUnitTest # Should be adapted once we have more than one tests
+        # Run testFullDebugUnitTest at the app level since :automotive shares the same sourceSet than app. Minimal and Full are the same in unit tests for now
+        run: ./gradlew testDebugUnitTest :app:testFullDebugUnitTest
 
       - name: Upload test results
         if: always()

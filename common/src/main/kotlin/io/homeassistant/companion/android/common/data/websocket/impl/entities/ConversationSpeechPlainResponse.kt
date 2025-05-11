@@ -4,5 +4,5 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ConversationSpeechPlainResponse(
-    val plain: Map<String, String?>
+    val plain: Map<String, String?>?
 )

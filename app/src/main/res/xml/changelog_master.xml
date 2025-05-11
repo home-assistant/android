@@ -1,25 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2025.4.3 - Main" versioncode="3">
-        <change>Add To-do list widget</change>
-        <change>Add Device Controls setting to allow multi-server setups to split servers to pages</change>
-        <change>Add battery cycle count sensor</change>
+    <release version="2025.5.2 - Main" versioncode="3">
         <change>Add more Health Connect sensors</change>
-        <change>Add support for specifying a server in a deeplink</change>
-        <change>Assist: Add support for continued conversations and streaming responses</change>
-        <change>Show entity more info pop-up when you long press a quick settings tile</change>
+        <change>New design of To-do list widget</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2025.4.3 - Wear" versioncode="2">
-        <change>Add new Thermostat tile for temperature control</change>
-        <change>Add battery cycle count sensor</change>
-        <change>Assist: Add support for continued conversations and streaming responses</change>
+    <release version="2025.5.2 - Wear" versioncode="2">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2025.4.3 - Automotive" versioncode="1">
-        <change>Add battery cycle count sensor</change>
-        <change>Add support for specifying a server in a deeplink</change>
+    <release version="2025.5.2 - Automotive" versioncode="1">
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>

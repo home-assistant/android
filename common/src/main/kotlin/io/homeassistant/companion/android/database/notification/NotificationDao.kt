@@ -15,10 +15,10 @@ interface NotificationDao {
     fun get(id: Int): NotificationItem?
 
     @Query("SELECT * FROM notification_history ORDER BY received DESC")
-    fun getAll(): Array<NotificationItem>?
+    fun getAll(): Array<NotificationItem>
 
     @Query("SELECT * FROM notification_history ORDER BY received DESC LIMIT (:amount)")
-    fun getLastItems(amount: Int): Array<NotificationItem>?
+    fun getLastItems(amount: Int): Array<NotificationItem>
 
     @Query("DELETE FROM notification_history WHERE id = :id")
     suspend fun delete(id: Int)
