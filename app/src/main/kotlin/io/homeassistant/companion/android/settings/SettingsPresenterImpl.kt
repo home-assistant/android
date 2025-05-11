@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.server.ServerUserInfo
+import io.homeassistant.companion.android.database.settings.PushProviderSetting
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
@@ -228,7 +229,8 @@ class SettingsPresenterImpl @Inject constructor(
                 Setting(
                     serverId,
                     if (enabled) WebsocketSetting.ALWAYS else WebsocketSetting.NEVER,
-                    SensorUpdateFrequencySetting.NORMAL
+                    SensorUpdateFrequencySetting.NORMAL,
+                    PushProviderSetting.NONE
                 )
             )
         }
