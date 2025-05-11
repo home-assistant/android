@@ -18,7 +18,7 @@ class LaunchPresenterImpl @Inject constructor(
                 try {
                     serverManager.integrationRepository(it.id).updateRegistration(
                         DeviceRegistration(
-                            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
+                            appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
                         )
                     )
                     serverManager.integrationRepository(it.id).getConfig() // Update cached data
