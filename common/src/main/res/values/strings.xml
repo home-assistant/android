@@ -623,7 +623,7 @@
     <string name="sensor_description_dnd_sensor">The current state of Do Not Disturb</string>
     <string name="sensor_description_doze">Whether the device is in Doze mode</string>
     <string name="sensor_description_external_storage">Information about the total and available storage space externally</string>
-    <string name="sensor_description_geocoded_location">Calculated address based on GPS data using Google\'s Location API. The minimum accuracy setting determines if a location update is accurate enough to be updated, the default is 200 meters. A setting also exists to send a sensor update anytime the location sensors update, by default this off.</string>
+    <string name="sensor_description_geocoded_location">Calculated address based on GPS data. The minimum accuracy setting determines if a location update is accurate enough to be updated, the default is 200 meters. A setting also exists to send a sensor update anytime the location sensors update, by default this off.</string>
     <string name="sensor_description_headphone">Whether headphones are plugged into the device</string>
     <string name="sensor_description_headset_mounted">Whether the headset is currently in use</string>
     <string name="sensor_description_high_accuracy_mode">Whether high accuracy mode is active on the device</string>
