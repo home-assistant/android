@@ -145,11 +145,14 @@ class TodoWidgetConfigureActivity : BaseActivity() {
     }
 
     private fun onAddWidget() {
-        viewModel.prepareData()
-        // TODO show the error when it makes sense
-        setResult(RESULT_OK)
-        viewModel.updateWidget(this)
-        finish()
+        try {
+            viewModel.addWidgetConfiguration()
+            setResult(RESULT_OK)
+            viewModel.updateWidget(this)
+            finish()
+        } catch (_: IllegalStateException) {
+            showAddWidgetError()
+        }
     }
 
     private fun showAddWidgetError() {

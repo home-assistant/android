@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.websocket.impl
 import com.fasterxml.jackson.module.kotlin.contains
 import com.fasterxml.jackson.module.kotlin.convertValue
 import io.homeassistant.companion.android.common.data.integration.ActionData
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
@@ -87,7 +88,7 @@ class WebSocketRepositoryImpl internal constructor(
         val response = webSocketCore.sendMessage(
             mapOf(
                 "type" to "call_service",
-                "domain" to "todo",
+                "domain" to TODO_DOMAIN,
                 "service" to "get_items",
                 "target" to mapOf(
                     "entity_id" to entityId
@@ -102,7 +103,7 @@ class WebSocketRepositoryImpl internal constructor(
         val response = webSocketCore.sendMessage(
             mapOf(
                 "type" to "call_service",
-                "domain" to "todo",
+                "domain" to TODO_DOMAIN,
                 "service" to "update_item",
                 "target" to mapOf(
                     "entity_id" to entityId

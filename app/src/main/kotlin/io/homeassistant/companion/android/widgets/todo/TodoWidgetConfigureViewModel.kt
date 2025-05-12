@@ -10,8 +10,10 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -19,9 +21,11 @@ import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -43,13 +47,19 @@ class TodoWidgetConfigureViewModel @Inject constructor(
     val entities: StateFlow<List<Entity<*>>> = snapshotFlow { selectedServerId }
         .distinctUntilChanged()
         .mapLatest { serverId ->
-            serverManager.integrationRepository(serverId)
-                .getEntities()
-                .orEmpty()
-                .filter { entity -> entity.domain == "todo" }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500), emptyList())
+            if (serverManager.isRegistered()) {
+                serverManager.integrationRepository(serverId)
+                    .getEntities()
+                    .orEmpty()
+                    .filter { entity -> entity.domain == TODO_DOMAIN }
+            } else {
+                Timber.w("No server registered")
+                emptyList()
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), emptyList())
+
     var selectedEntityId by mutableStateOf<String?>(null)
-    var selectedBackgroundType by mutableStateOf(WidgetBackgroundType.DAYNIGHT)
+    var selectedBackgroundType by mutableStateOf(if (DynamicColors.isDynamicColorAvailable()) WidgetBackgroundType.DYNAMICCOLOR else WidgetBackgroundType.DAYNIGHT)
     var textColorIndex by mutableIntStateOf(0)
     var showCompletedState by mutableStateOf(true)
     var isUpdateWidget by mutableStateOf(false)
@@ -85,15 +95,14 @@ class TodoWidgetConfigureViewModel @Inject constructor(
             selectedEntityId in entities.value.map { it.entityId }
     }
 
-    fun prepareData() {
+    fun addWidgetConfiguration() {
         if (!isValidSelection()) {
-            // TODO properly react to this in the activity
             Timber.d("Widget data is invalid")
-            return
+            throw IllegalArgumentException("Widget data is invalid")
         }
         if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
             Timber.w("Widget ID is invalid")
-            return
+            throw IllegalArgumentException("Widget ID is invalid")
         }
 
         val textColor = if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
