@@ -1,3 +1,4 @@
+import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
 import com.google.gms.googleservices.GoogleServicesPlugin.GoogleServicesPluginConfig
 
 plugins {
