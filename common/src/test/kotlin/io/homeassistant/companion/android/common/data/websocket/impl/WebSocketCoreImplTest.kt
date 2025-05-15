@@ -8,8 +8,10 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS
-import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.webSocketJsonMapper
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.MessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
+import io.homeassistant.companion.android.common.util.MapAnySerializer
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
@@ -236,7 +238,8 @@ connect()
 
             coVerify {
                 mockConnection.send(
-                    webSocketJsonMapper.writeValueAsString(
+                    kotlinJsonMapper.encodeToString<Map<String, Any>>(
+                        MapAnySerializer,
                         mapOf(
                             "type" to "supported_features",
                             // Should be the first message
@@ -278,7 +281,7 @@ sendMessage()
             prepareAuthenticationAnswer()
             assertTrue(webSocketCore.connect())
             val request = mapOf("type" to "test")
-            val expectedMessageSent = webSocketJsonMapper.writeValueAsString(request.plus("id" to 2))
+            val expectedMessageSent = kotlinJsonMapper.encodeToString<Map<String, Any>>(MapAnySerializer, request.plus("id" to 2))
 
             mockResultSuccessForId(2)
 
@@ -287,7 +290,7 @@ sendMessage()
             coVerify { mockConnection.send(expectedMessageSent) }
             assertNotNull(response)
             assertEquals(2, response.id)
-            assertEquals("result", response.type)
+            assertTrue(response is MessageSocketResponse)
             assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
         }
 
@@ -298,7 +301,7 @@ sendMessage()
             prepareAuthenticationAnswer()
             assertTrue(webSocketCore.connect())
             val request = mapOf("type" to "test")
-            val expectedMessageSent = webSocketJsonMapper.writeValueAsString(request.plus("id" to 2))
+            val expectedMessageSent = kotlinJsonMapper.encodeToString<Map<String, Any>>(MapAnySerializer, request.plus("id" to 2))
 
             val response = webSocketCore.sendMessage(request)
 
@@ -443,7 +446,7 @@ subscribeTo
             prepareAuthenticationAnswer()
             assertTrue(webSocketCore.connect())
 
-            val expectedData: Map<Any, Any> = mapOf("testSubscription" to "test")
+            val expectedData: Map<String, Any> = mapOf("testSubscription" to "test")
             val expectedType = "testType"
 
             // Message sent by subscribeTo to request for events
@@ -478,7 +481,7 @@ subscribeTo
             prepareAuthenticationAnswer()
             assertTrue(webSocketCore.connect())
 
-            val expectedData: Map<Any, Any> = mapOf("testSubscription" to "test")
+            val expectedData: Map<String, String> = mapOf("testSubscription" to "test")
             val expectedType = "testType"
 
             // Message sent by subscribeTo to request for events

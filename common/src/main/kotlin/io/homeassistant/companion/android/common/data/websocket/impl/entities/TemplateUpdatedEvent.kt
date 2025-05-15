@@ -1,9 +1,12 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import io.homeassistant.companion.android.common.util.MapAnySerializer
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class TemplateUpdatedEvent(
-    val result: String?,
-    val listeners: Map<String, Any>
+    val result: String? = null,
+    @Serializable(with = MapAnySerializer::class)
+    val listeners: Map<String, @Polymorphic Any?>
 )

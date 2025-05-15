@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import io.homeassistant.companion.android.common.util.MapAnySerializer
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class GetConfigResponse(
     val latitude: Double,
     val longitude: Double,
@@ -13,11 +15,12 @@ data class GetConfigResponse(
     val components: List<String>,
     val version: String,
     // only when using webhook
-    val cloudhookUrl: String?,
+    val cloudhookUrl: String? = null,
     // only when using webhook
-    val remoteUiUrl: String?,
+    val remoteUiUrl: String? = null,
     // only on core >= 2022.6 when using webhook
-    val entities: Map<String, Map<String, Any>>?,
+    @Serializable(with = MapAnySerializer::class)
+    val entities: Map<String, Map<String, @Polymorphic Any>>? = null,
     // only on core >= 2024.7.2 when using webhook
-    val hassDeviceId: String?
+    val hassDeviceId: String? = null
 )
