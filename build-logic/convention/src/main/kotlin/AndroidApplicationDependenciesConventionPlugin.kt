@@ -38,9 +38,6 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "implementation"(libs.kotlinx.coroutines.android)
                     "fullImplementation"(libs.kotlinx.coroutines.play.services)
 
-                    "implementation"(libs.hilt.android)
-                    "ksp"(libs.hilt.android.compiler)
-
                     "implementation"(libs.appcompat)
                     "implementation"(libs.androidx.lifecycle.runtime.ktx)
                     "implementation"(libs.constraintlayout)
