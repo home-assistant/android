@@ -28,6 +28,7 @@ coreKtx = "1.16.0"
 core-splashscreen = "1.1.0-rc01"
 core-remoteviews = "1.1.0"
 cronet-embedded = "119.6045.31"
+detekt = "1.23.8"
 emojiJava = "5.1.1"
 firebase-bom = "33.13.0"
 firebaseAppdistributionGradle = "5.1.1"
@@ -89,6 +90,7 @@ zxing = "4.3.0"
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "firebaseAppdistributionGradle" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
