@@ -43,7 +43,7 @@ import java.util.Locale
 @Composable
 fun ChooseEntityView(
     entitiesByDomainOrder: SnapshotStateList<String>,
-    entitiesByDomain: SnapshotStateMap<String, SnapshotStateList<Entity<*>>>,
+    entitiesByDomain: SnapshotStateMap<String, SnapshotStateList<Entity>>,
     favoriteEntityIds: State<List<String>>,
     onNoneClicked: () -> Unit,
     onEntitySelected: (entity: SimplifiedEntity) -> Unit,
@@ -124,7 +124,7 @@ fun ChooseEntityView(
 
 @Composable
 private fun ChooseEntityChip(
-    entity: Entity<*>,
+    entity: Entity,
     onEntitySelected: (entity: SimplifiedEntity) -> Unit
 ) {
     val attributes = entity.attributes as Map<*, *>

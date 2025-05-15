@@ -4,8 +4,10 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.homeassistant.companion.android.database.widget.converters.TodoLastUpdateDataConverter
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 
 @TypeConverters(TodoLastUpdateDataConverter::class)
 @Entity(tableName = "todo_widget")
@@ -25,17 +27,20 @@ data class TodoWidgetEntity(
     @ColumnInfo(name = "latest_update_data") val latestUpdateData: LastUpdateData? = null,
 ) : WidgetEntity, ThemeableWidgetEntity {
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
+    @Serializable
+    @OptIn(ExperimentalSerializationApi::class)
     data class LastUpdateData(
-        val entityName: String?,
+        // For historical reasons the field is not using snake_case
+        @JsonNames("entityName")
+        val entityName: String? = null,
         val todos: List<TodoItem>,
     )
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
+    @Serializable
     data class TodoItem(
-        val uid: String?,
-        val summary: String?,
-        val status: String?,
+        val uid: String? = null,
+        val summary: String? = null,
+        val status: String? = null,
     )
 
     fun isSameConfiguration(other: TodoWidgetEntity): Boolean {

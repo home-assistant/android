@@ -47,14 +47,14 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     private var requestLauncherSetup = false
 
-    private var entities = mutableMapOf<Int, List<Entity<Any>>>()
-    private var selectedEntity: Entity<Any>? = null
+    private var entities = mutableMapOf<Int, List<Entity>>()
+    private var selectedEntity: Entity? = null
 
     @Inject
     lateinit var cameraWidgetDao: CameraWidgetDao
     override val dao get() = cameraWidgetDao
 
-    private var entityAdapter: SingleItemArrayAdapter<Entity<Any>>? = null
+    private var entityAdapter: SingleItemArrayAdapter<Entity>? = null
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -124,7 +124,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 }
             }
             if (entity != null) {
-                selectedEntity = entity as Entity<Any>?
+                selectedEntity = entity as Entity?
             }
         }
 
@@ -177,7 +177,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     private val entityDropDownOnItemClick =
         AdapterView.OnItemClickListener { parent, _, position, _ ->
-            selectedEntity = parent.getItemAtPosition(position) as Entity<Any>?
+            selectedEntity = parent.getItemAtPosition(position) as Entity?
         }
 
     private fun onAddWidget() {

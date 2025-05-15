@@ -270,5 +270,5 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
     /**
      * Invoked when an entity update is received. After this callback the [updateView] is invoked.
      */
-    internal open suspend fun onEntityUpdate(context: Context, appWidgetId: Int, entity: Entity<*>) {}
+    internal open suspend fun onEntityUpdate(context: Context, appWidgetId: Int, entity: Entity) {}
 }

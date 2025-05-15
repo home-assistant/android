@@ -8,13 +8,14 @@ import android.os.Build
 import android.os.Process.myPid
 import android.os.Process.myUid
 import androidx.core.content.getSystemService
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.AnySerializer
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.SensorSetting
@@ -289,9 +290,9 @@ interface SensorManager {
                 val value =
                     when {
                         valueType == "liststring" ->
-                            jacksonObjectMapper().writeValueAsString((item.value as List<*>).map { it.toString() })
+                            kotlinJsonMapper.encodeToString((item.value as List<*>).map { it.toString() })
                         valueType.startsWith("list") ->
-                            jacksonObjectMapper().writeValueAsString(item.value)
+                            kotlinJsonMapper.encodeToString(AnySerializer, item.value)
                         else ->
                             item.value.toString()
                     }

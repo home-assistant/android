@@ -39,6 +39,7 @@ import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
 import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
 import io.homeassistant.companion.android.common.data.integration.supportsLightColorTemperature
+import io.homeassistant.companion.android.common.util.formatForLocal
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getInlineSliderDefaultColors
 import io.homeassistant.companion.android.theme.wearColorScheme
@@ -50,11 +51,11 @@ import io.homeassistant.companion.android.util.previewEntity2
 import io.homeassistant.companion.android.util.previewEntity4
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
-import java.text.DateFormat
+import java.time.format.FormatStyle
 
 @Composable
 fun DetailsPanelView(
-    entity: Entity<*>,
+    entity: Entity,
     onEntityToggled: (String, String) -> Unit,
     onFanSpeedChanged: (Float) -> Unit,
     onBrightnessChanged: (Float) -> Unit,
@@ -144,7 +145,7 @@ fun DetailsPanelView(
                 )
             }
             item {
-                val lastChanged = DateFormat.getDateTimeInstance().format(entity.lastChanged.time)
+                val lastChanged = entity.lastChanged.formatForLocal(FormatStyle.MEDIUM)
                 Text(
                     stringResource(R.string.last_changed, lastChanged),
                     modifier = Modifier
@@ -153,7 +154,7 @@ fun DetailsPanelView(
                 )
             }
             item {
-                val lastUpdated = DateFormat.getDateTimeInstance().format(entity.lastUpdated.time)
+                val lastUpdated = entity.lastUpdated.formatForLocal(FormatStyle.MEDIUM)
                 Text(
                     stringResource(R.string.last_updated, lastUpdated),
                     modifier = Modifier
@@ -175,7 +176,7 @@ fun DetailsPanelView(
 
 @Composable
 fun FanSpeedSlider(
-    entity: Entity<*>,
+    entity: Entity,
     onFanSpeedChanged: (Float) -> Unit,
     isToastEnabled: Boolean,
     isHapticEnabled: Boolean
@@ -229,7 +230,7 @@ fun FanSpeedSlider(
 
 @Composable
 fun BrightnessSlider(
-    entity: Entity<*>,
+    entity: Entity,
     onBrightnessChanged: (Float) -> Unit,
     isToastEnabled: Boolean,
     isHapticEnabled: Boolean

@@ -1,9 +1,9 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import kotlinx.serialization.Serializable
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class AssistPipelineListResponse(
     val pipelines: List<AssistPipelineResponse>,
-    val preferredPipeline: String?
+    val preferredPipeline: String? = null,
 )

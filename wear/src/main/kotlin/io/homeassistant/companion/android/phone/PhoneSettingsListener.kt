@@ -3,8 +3,6 @@ package io.homeassistant.companion.android.phone
 import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.wear.tiles.TileService
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
@@ -23,6 +21,7 @@ import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.WearDataMessages
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
@@ -49,6 +48,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.serialization.encodeToString
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -74,8 +74,6 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    private val objectMapper = jacksonObjectMapper()
-
     override fun onMessageReceived(event: MessageEvent) {
         Timber.d("Message received: $event")
         if (event.path == "/requestConfig") {
@@ -98,9 +96,9 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                 dataMap.putBoolean(WearDataMessages.CONFIG_SERVER_USE_CLOUD, serverManager.getServer()?.connection?.useCloud ?: false)
                 dataMap.putString(WearDataMessages.CONFIG_SERVER_REFRESH_TOKEN, serverManager.getServer()?.session?.refreshToken ?: "")
             }
-            dataMap.putString(WearDataMessages.CONFIG_SUPPORTED_DOMAINS, objectMapper.writeValueAsString(HomePresenterImpl.supportedDomains))
-            dataMap.putString(WearDataMessages.CONFIG_FAVORITES, objectMapper.writeValueAsString(currentFavorites))
-            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILES, objectMapper.writeValueAsString(wearPrefsRepository.getAllTemplateTiles()))
+            dataMap.putString(WearDataMessages.CONFIG_SUPPORTED_DOMAINS, kotlinJsonMapper.encodeToString(HomePresenterImpl.supportedDomains))
+            dataMap.putString(WearDataMessages.CONFIG_FAVORITES, kotlinJsonMapper.encodeToString(currentFavorites))
+            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILES, kotlinJsonMapper.encodeToString(wearPrefsRepository.getAllTemplateTiles()))
             setUrgent()
             asPutDataRequest()
         }
@@ -231,7 +229,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     private fun saveFavorites(dataMap: DataMap) {
         val favoritesIds: List<String> =
-            objectMapper.readValue(dataMap.getString(WearDataMessages.CONFIG_FAVORITES, "[]"))
+            kotlinJsonMapper.decodeFromString(dataMap.getString(WearDataMessages.CONFIG_FAVORITES, "[]"))
 
         mainScope.launch {
             favoritesDao.replaceAll(favoritesIds)
@@ -243,7 +241,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     }
 
     private fun saveTemplateTiles(dataMap: DataMap) = mainScope.launch {
-        val templateTilesFromPhone: Map<Int, TemplateTileConfig> = objectMapper.readValue(
+        val templateTilesFromPhone: Map<Int, TemplateTileConfig> = kotlinJsonMapper.decodeFromString(
             dataMap.getString(
                 WearDataMessages.CONFIG_TEMPLATE_TILES,
                 "{}"
@@ -261,7 +259,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             updater.requestUpdate(ShortcutsTile::class.java)
             updater.requestUpdate(TemplateTile::class.java)
         } catch (e: Exception) {
-            Timber.w("Unable to request tiles update")
+            Timber.w(e, "Unable to request tiles update")
         }
     }
 }

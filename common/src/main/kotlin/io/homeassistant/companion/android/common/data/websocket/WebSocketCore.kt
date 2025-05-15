@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.common.data.websocket
 
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketCoreImpl
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.RawMessageSocketResponse
 import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
 import javax.inject.Provider
@@ -49,8 +49,8 @@ internal interface WebSocketCore {
      * @param request The message to send.
      * @return The response from the server, or `null` if the message could not be sent.
      */
-    suspend fun sendMessage(request: Map<*, *>): SocketResponse?
-    suspend fun sendMessage(request: WebSocketRequest): SocketResponse?
+    suspend fun sendMessage(request: Map<String, Any?>): RawMessageSocketResponse?
+    suspend fun sendMessage(request: WebSocketRequest): RawMessageSocketResponse?
 
     /**
      * Sends binary data over the WebSocket connection.
@@ -74,7 +74,7 @@ internal interface WebSocketCore {
      */
     suspend fun <T : Any> subscribeTo(
         type: String,
-        data: Map<Any, Any> = mapOf(),
+        data: Map<String, Any?> = mapOf(),
         timeout: kotlin.time.Duration = kotlin.time.Duration.ZERO,
     ): Flow<T>?
 

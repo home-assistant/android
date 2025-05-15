@@ -53,9 +53,9 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     lateinit var staticWidgetDao: StaticWidgetDao
     override val dao get() = staticWidgetDao
 
-    private var entities = mutableMapOf<Int, List<Entity<Any>>>()
+    private var entities = mutableMapOf<Int, List<Entity>>()
 
-    private var selectedEntity: Entity<Any>? = null
+    private var selectedEntity: Entity? = null
     private var appendAttributes: Boolean = false
     private var selectedAttributeIds: ArrayList<String> = ArrayList()
     private var labelFromEntity = false
@@ -70,7 +70,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     private var requestLauncherSetup = false
 
-    private var entityAdapter: SingleItemArrayAdapter<Entity<Any>>? = null
+    private var entityAdapter: SingleItemArrayAdapter<Entity>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -160,7 +160,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 binding.attributeSeparator.setText(staticWidget.attributeSeparator)
             }
             if (entity != null) {
-                selectedEntity = entity as Entity<Any>?
+                selectedEntity = entity
                 setupAttributes()
             }
 
@@ -253,7 +253,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     private val entityDropDownOnItemClick =
         AdapterView.OnItemClickListener { parent, _, position, _ ->
-            selectedEntity = parent.getItemAtPosition(position) as Entity<Any>?
+            selectedEntity = parent.getItemAtPosition(position) as Entity?
             if (binding.label.text.isNullOrBlank() || labelFromEntity) {
                 selectedEntity?.friendlyName?.takeIf { it != selectedEntity?.entityId }?.let { name ->
                     binding.label.removeTextChangedListener(labelTextChanged)

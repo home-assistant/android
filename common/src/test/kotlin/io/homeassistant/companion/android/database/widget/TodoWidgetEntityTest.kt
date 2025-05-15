@@ -1,5 +1,9 @@
 package io.homeassistant.companion.android.database.widget
 
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.database.widget.TodoWidgetEntity.LastUpdateData
+import io.homeassistant.companion.android.database.widget.TodoWidgetEntity.TodoItem
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -58,6 +62,35 @@ class TodoWidgetEntityTest {
             referenceEntity.isSameConfiguration(
                 referenceEntity.copy(showCompleted = true),
             )
+        )
+    }
+
+    @Test
+    fun `Given JSON legacy when parsing to LastUpdateData then it properly parse it`() {
+        val data = """
+            {
+            "entity_name": "hello_world",
+            "todos": [
+            {
+            "uid": "ha"
+            }
+            ]
+            }
+        """.trimIndent()
+
+        assertEquals(
+            LastUpdateData("hello_world", listOf(TodoItem(uid = "ha", null, null))),
+            kotlinJsonMapper.decodeFromString<LastUpdateData>(data)
+        )
+    }
+
+    @Test
+    fun `Given LastUpdateData when serializing to JSON then it properly serialize it`() {
+        val data = """{"entity_name":"hello_world","todos":[{"uid":"ha","summary":null,"status":null}]}""".trimIndent()
+
+        assertEquals(
+            data,
+            kotlinJsonMapper.encodeToString(LastUpdateData("hello_world", listOf(TodoItem(uid = "ha", null, null))))
         )
     }
 }

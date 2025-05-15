@@ -9,22 +9,22 @@ import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.onboarding.discovery.HomeAssistantInstance
 import java.net.URL
-import java.util.Calendar
+import java.time.LocalDateTime
 
 val notificationItem = NotificationItem(1, 1636389288682, "testing", "{\"message\":\"test\"}", "FCM", null)
 
 val wearDeviceName = "Device Name"
 
-val attributes: Map<*, *> = mapOf(
+val attributes: Map<String, *> = mapOf(
     "friendly_name" to "Testing",
     "icon" to "mdi:cellphone"
 )
 
-private val calendar: Calendar = Calendar.getInstance()
+private val localDateTime: LocalDateTime = LocalDateTime.now()
 
-val previewEntity1 = Entity("light.test", "on", attributes, calendar, calendar, mapOf())
-val previewEntity2 = Entity("scene.testing", "on", attributes, calendar, calendar, mapOf())
-val previewEntity3 = Entity("switch.testing", "on", attributes, calendar, calendar, mapOf())
+val previewEntity1 = Entity("light.test", "on", attributes, localDateTime, localDateTime)
+val previewEntity2 = Entity("scene.testing", "on", attributes, localDateTime, localDateTime)
+val previewEntity3 = Entity("switch.testing", "on", attributes, localDateTime, localDateTime)
 
 val previewEntityList = mapOf(
     previewEntity1.entityId to previewEntity1,

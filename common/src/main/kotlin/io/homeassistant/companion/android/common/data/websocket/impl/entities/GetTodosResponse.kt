@@ -1,22 +1,22 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import kotlinx.serialization.Serializable
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class GetTodosResponse(
     val response: Map<String, TodoResponse>
 ) {
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
+    @Serializable
     data class TodoResponse(
         val items: List<TodoItem>
     )
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
+    @Serializable
     data class TodoItem(
-        val uid: String?,
-        val summary: String?,
-        val status: String?
+        val uid: String? = null,
+        val summary: String? = null,
+        val status: String? = null,
     ) {
 
         companion object {

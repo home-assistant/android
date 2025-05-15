@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.data.authentication.impl
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import io.homeassistant.companion.android.common.data.LocalStorage
@@ -8,6 +7,8 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.MapAnySerializer
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import javax.inject.Named
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -65,7 +66,8 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun retrieveExternalAuthentication(forceRefresh: Boolean): String {
         ensureValidSession(forceRefresh)
-        return jacksonObjectMapper().writeValueAsString(
+        return kotlinJsonMapper.encodeToString(
+            MapAnySerializer,
             mapOf(
                 "access_token" to server.session.accessToken,
                 "expires_in" to server.session.expiresIn()

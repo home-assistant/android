@@ -147,7 +147,7 @@ abstract class TileExtensions : TileService() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     tile.subtitle = tileData.subtitle
                 }
-                val state: Entity<*>? =
+                val state: Entity? =
                     if (
                         tileData.entityId.split(".")[0] in toggleDomainsWithLock ||
                         tileData.iconName == null
@@ -324,7 +324,7 @@ abstract class TileExtensions : TileService() {
         updateActiveTileServices(highestInUse, applicationContext)
     }
 
-    private fun getTileIcon(tileIconName: String?, entity: Entity<*>?, context: Context): Bitmap? {
+    private fun getTileIcon(tileIconName: String?, entity: Entity?, context: Context): Bitmap? {
         // Create an icon pack and load all drawables.
         if (!tileIconName.isNullOrBlank()) {
             val icon = CommunityMaterial.getIconByMdiName(tileIconName) ?: return null

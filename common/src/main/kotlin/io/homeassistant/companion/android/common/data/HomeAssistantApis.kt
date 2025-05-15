@@ -6,13 +6,14 @@ import android.os.Build
 import android.webkit.CookieManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.BuildConfig
-import io.homeassistant.companion.android.common.util.jacksonObjectMapperForHACore
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-import retrofit2.converter.jackson.JacksonConverterFactory
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 class HomeAssistantApis @Inject constructor(
     private val tlsHelper: TLSHelper,
@@ -67,8 +68,8 @@ class HomeAssistantApis @Inject constructor(
     val retrofit: Retrofit = Retrofit
         .Builder()
         .addConverterFactory(
-            JacksonConverterFactory.create(
-                jacksonObjectMapperForHACore()
+            kotlinJsonMapper.asConverterFactory(
+                "application/json; charset=UTF-8".toMediaType()
             )
         )
         .client(configureOkHttpClient(OkHttpClient.Builder()).build())

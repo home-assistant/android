@@ -23,7 +23,6 @@ import androidx.wear.tiles.RequestBuilders.ResourcesRequest
 import androidx.wear.tiles.RequestBuilders.TileRequest
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
-import com.fasterxml.jackson.databind.JsonMappingException
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
@@ -39,6 +38,7 @@ import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerializationException
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -155,8 +155,8 @@ class TemplateTile : TileService() {
             }
         } catch (e: Exception) {
             Timber.e(e, "Exception while rendering template")
-            // JsonMappingException suggests that template is not a String (= error)
-            if (e.cause is JsonMappingException) {
+            // SerializationException suggests that template is not a String (= error)
+            if (e.cause is SerializationException) {
                 getString(commonR.string.template_error)
             } else {
                 getString(commonR.string.template_render_error)
