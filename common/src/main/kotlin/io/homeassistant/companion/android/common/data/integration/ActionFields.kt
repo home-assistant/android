@@ -1,11 +1,13 @@
 package io.homeassistant.companion.android.common.data.integration
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import io.homeassistant.companion.android.common.util.AnySerializer
+import kotlinx.serialization.Serializable
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class ActionFields(
-    val name: String?,
-    val description: String?,
-    val example: Any?,
-    val values: List<String>?
+    val name: String? = null,
+    val description: String? = null,
+    @Serializable(with = AnySerializer::class)
+    val example: Any? = null,
+    val values: List<String>? = null,
 )

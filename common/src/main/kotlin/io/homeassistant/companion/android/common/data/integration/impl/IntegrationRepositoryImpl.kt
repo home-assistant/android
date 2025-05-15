@@ -12,18 +12,26 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationExc
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
-import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ActionRequest
+import io.homeassistant.companion.android.common.data.integration.impl.entities.CallServiceIntegrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
+import io.homeassistant.companion.android.common.data.integration.impl.entities.FireEventIntegrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.FireEventRequest
-import io.homeassistant.companion.android.common.data.integration.impl.entities.IntegrationRequest
+import io.homeassistant.companion.android.common.data.integration.impl.entities.GetConfigIntegrationRequest
+import io.homeassistant.companion.android.common.data.integration.impl.entities.GetZonesIntegrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
+import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceIntegrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceRequest
+import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterSensorIntegrationRequest
+import io.homeassistant.companion.android.common.data.integration.impl.entities.RenderTemplateIntegrationRequest
+import io.homeassistant.companion.android.common.data.integration.impl.entities.ScanTagIntegrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.SensorRegistrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.SensorUpdateRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.Template
+import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationIntegrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
+import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateSensorStatesIntegrationRequest
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
@@ -118,11 +126,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration, allowReregistration: Boolean) {
-        val request =
-            IntegrationRequest(
-                "update_registration",
-                createUpdateRegistrationRequest(deviceRegistration)
-            )
+        val request = RegisterDeviceIntegrationRequest(createUpdateRegistrationRequest(deviceRegistration))
         var causeException: Exception? = null
         for (it in server.connection.getApiUrls()) {
             try {
@@ -213,10 +217,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             try {
                 return integrationService.getTemplate(
                     it.toHttpUrlOrNull()!!,
-                    IntegrationRequest(
-                        "render_template",
-                        mapOf("template" to Template(template, variables))
-                    )
+                    RenderTemplateIntegrationRequest(
+                        mapOf("template" to Template(template, variables)),
+                    ),
                 )["template"]
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
@@ -270,7 +273,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     override suspend fun callAction(
         domain: String,
         action: String,
-        actionData: HashMap<String, Any>
+        actionData: Map<String, Any?>,
     ) {
         var wasSuccess = false
 
@@ -287,10 +290,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 wasSuccess =
                     integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
-                        IntegrationRequest(
-                            "call_service",
-                            actionRequest
-                        )
+                        CallServiceIntegrationRequest(
+                            actionRequest,
+                        ),
                     ).isSuccessful
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
@@ -309,7 +311,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun scanTag(data: HashMap<String, Any>) {
+    override suspend fun scanTag(data: Map<String, String>) {
         var wasSuccess = false
 
         var causeException: Exception? = null
@@ -318,10 +320,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 wasSuccess =
                     integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
-                        IntegrationRequest(
-                            "scan_tag",
-                            data
-                        )
+                        ScanTagIntegrationRequest(
+                            data,
+                        ),
                     ).isSuccessful
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
@@ -354,10 +355,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 wasSuccess =
                     integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
-                        IntegrationRequest(
-                            "fire_event",
-                            fireEventRequest
-                        )
+                        FireEventIntegrationRequest(
+                            fireEventRequest,
+                        ),
                     ).isSuccessful
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
@@ -376,17 +376,12 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
-        val getZonesRequest =
-            IntegrationRequest(
-                "get_zones",
-                null
-            )
+    override suspend fun getZones(): Array<Entity> {
         var causeException: Exception? = null
-        var zones: Array<EntityResponse<ZoneAttributes>>? = null
+        var zones: Array<EntityResponse>? = null
         for (it in server.connection.getApiUrls()) {
             try {
-                zones = integrationService.getZones(it.toHttpUrlOrNull()!!, getZonesRequest)
+                zones = integrationService.getZones(it.toHttpUrlOrNull()!!, GetZonesIntegrationRequest)
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
@@ -501,17 +496,12 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun getConfig(): GetConfigResponse {
-        val getConfigRequest =
-            IntegrationRequest(
-                "get_config",
-                null
-            )
         var response: GetConfigResponse? = null
         var causeException: Exception? = null
 
         for (it in server.connection.getApiUrls()) {
             try {
-                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
+                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, GetConfigIntegrationRequest)
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
@@ -611,7 +601,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         localStorage.remove(PREF_ORPHANED_THREAD_BORDER_AGENT_IDS)
     }
 
-    override suspend fun getEntities(): List<Entity<Any>>? {
+    override suspend fun getEntities(): List<Entity>? {
         val response = webSocketRepository.getStates()
 
         return response?.map {
@@ -621,14 +611,13 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 it.attributes,
                 it.lastChanged,
                 it.lastUpdated,
-                it.context
             )
         }
             ?.sortedBy { it.entityId }
             ?.toList()
     }
 
-    override suspend fun getEntity(entityId: String): Entity<Map<String, Any>>? {
+    override suspend fun getEntity(entityId: String): Entity? {
         val url = server.connection.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
             Timber.e("Unable to register device due to missing URL")
@@ -645,11 +634,10 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             response.attributes,
             response.lastChanged,
             response.lastUpdated,
-            response.context
         )
     }
 
-    override suspend fun getEntityUpdates(): Flow<Entity<*>>? {
+    override suspend fun getEntityUpdates(): Flow<Entity>? {
         return webSocketRepository.getStateChanges()
             ?.filter { it.newState != null }
             ?.map {
@@ -659,12 +647,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                     it.newState.attributes,
                     it.newState.lastChanged,
                     it.newState.lastUpdated,
-                    it.newState.context
                 )
             }
     }
 
-    override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>? {
+    override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>? {
         return if (server.user.isAdmin == true) {
             webSocketRepository.getStateChanges(entityIds)
                 ?.filter { it.toState != null }
@@ -675,7 +662,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                         it.toState.attributes,
                         it.toState.lastChanged,
                         it.toState.lastUpdated,
-                        it.toState.context
                     )
                 }
         } else {
@@ -688,7 +674,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                         it.newState.attributes,
                         it.newState.lastChanged,
                         it.newState.lastUpdated,
-                        it.newState.context
                     )
                 }
         }
@@ -729,28 +714,29 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 } else {
                     null
                 }
+
                 "blood_glucose_concentration" -> if (canRegisterDeviceClassBloodGlucose) sensorRegistration.deviceClass else null
                 else -> sensorRegistration.deviceClass
             },
             sensorRegistration.unitOfMeasurement,
             if (canRegisterCategoryStateClass) sensorRegistration.stateClass else null,
             if (canRegisterCategoryStateClass) sensorRegistration.entityCategory else null,
-            if (canRegisterEntityDisabledState) sensorRegistration.disabled else null
+            if (canRegisterEntityDisabledState) sensorRegistration.disabled else null,
+            canRegisterNullProperties
         )
-        val integrationRequest = IntegrationRequest(
-            "register_sensor",
-            if (canRegisterNullProperties) registrationData else registrationData.toLegacy()
-        )
+
+        val integrationRequest = RegisterSensorIntegrationRequest(registrationData)
 
         var causeException: Exception? = null
         for (it in server.connection.getApiUrls()) {
             try {
-                integrationService.callWebhook(it.toHttpUrlOrNull()!!, integrationRequest).let {
-                    // If we created sensor or it already exists
-                    if (it.isSuccessful || it.code() == 409) {
-                        return
+                integrationService.callWebhook(it.toHttpUrlOrNull()!!, integrationRequest)
+                    .let {
+                        // If we created sensor or it already exists
+                        if (it.isSuccessful || it.code() == 409) {
+                            return
+                        }
                     }
-                }
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
@@ -764,8 +750,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean {
-        val integrationRequest = IntegrationRequest(
-            "update_sensor_states",
+        val integrationRequest = UpdateSensorStatesIntegrationRequest(
             sensors.map {
                 SensorUpdateRequest(
                     it.uniqueId,
@@ -782,7 +767,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             try {
                 integrationService.updateSensors(it.toHttpUrlOrNull()!!, integrationRequest).let {
                     it.forEach { (_, response) ->
-                        if (response["success"] == false) {
+                        if (response.success == false) {
                             return false
                         }
                     }
@@ -837,9 +822,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         )
     }
 
-    private fun createUpdateLocation(updateLocation: UpdateLocation): IntegrationRequest {
-        return IntegrationRequest(
-            "update_location",
+    private fun createUpdateLocation(updateLocation: UpdateLocation): UpdateLocationIntegrationRequest {
+        return UpdateLocationIntegrationRequest(
             UpdateLocationRequest(
                 updateLocation.gps,
                 updateLocation.gpsAccuracy,
@@ -852,8 +836,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         )
     }
 
-    private fun createZonesResponse(zones: Array<EntityResponse<ZoneAttributes>>): Array<Entity<ZoneAttributes>> {
-        val retVal = ArrayList<Entity<ZoneAttributes>>()
+    private fun createZonesResponse(zones: Array<EntityResponse>): Array<Entity> {
+        val retVal = ArrayList<Entity>()
         zones.forEach {
             retVal.add(
                 Entity(
@@ -862,7 +846,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                     it.attributes,
                     it.lastChanged,
                     it.lastUpdated,
-                    it.context
                 )
             )
         }
