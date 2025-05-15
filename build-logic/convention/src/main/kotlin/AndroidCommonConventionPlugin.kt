@@ -97,6 +97,8 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     "testImplementation"(libs.mockk)
                     "testImplementation"(libs.robolectric)
                     "testImplementation"(libs.turbine)
+
+                    "testImplementation"(project(":testing-unit"))
                 }
             }
 

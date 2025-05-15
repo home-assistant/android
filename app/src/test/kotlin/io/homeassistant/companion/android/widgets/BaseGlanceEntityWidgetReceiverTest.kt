@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.WidgetDao
+import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.mockk.Called
 import io.mockk.coEvery
 import io.mockk.coJustRun
@@ -31,8 +32,10 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
+import timber.log.Timber
 
 private data class FakeGlanceId(val id: Int) : GlanceId
 
@@ -63,6 +66,12 @@ class BaseGlanceEntityWidgetReceiverTest {
 
     private fun serverRegistered() {
         every { mockedServerManager.isRegistered() } returns true
+    }
+
+    @BeforeEach
+    fun setUp() {
+        Timber.plant(ConsoleLogTree)
+        ConsoleLogTree.verbose = true
     }
 
     @Test
