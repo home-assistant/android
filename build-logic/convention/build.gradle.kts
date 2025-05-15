@@ -1,15 +1,19 @@
+
+import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 plugins {
     `kotlin-dsl`
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.detekt)
 }
 
 group = "io.homeassistant.companion.android.buildlogic"
 
 allprojects {
     apply(plugin = rootProject.libs.plugins.ktlint.get().pluginId)
+    apply(plugin = rootProject.libs.plugins.detekt.get().pluginId)
 
     ktlint {
         android.set(true)
@@ -22,6 +26,18 @@ allprojects {
         // https://github.com/radoslaw-panuszewski/typesafe-conventions-gradle-plugin/issues/34
         filter {
             exclude { it.file.path.contains("build${File.separator}generated-sources") }
+        }
+    }
+
+    detekt {
+        config.setFrom(file("../../config/detekt/detekt.yml"))
+        buildUponDefaultConfig = true
+    }
+
+    tasks.withType<Detekt>().configureEach {
+        reports {
+            html.required.set(true)
+            sarif.required.set(true)
         }
     }
 }
