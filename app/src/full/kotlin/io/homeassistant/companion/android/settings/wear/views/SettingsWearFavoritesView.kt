@@ -45,7 +45,7 @@ fun LoadWearFavoritesSettings(
     }
 
     val favoriteEntities = settingsWearViewModel.favoriteEntityIds
-    var validEntities by remember { mutableStateOf<List<Entity<*>>>(emptyList()) }
+    var validEntities by remember { mutableStateOf<List<Entity>>(emptyList()) }
     LaunchedEffect(favoriteEntities.size) {
         validEntities = withContext(Dispatchers.IO) {
             settingsWearViewModel.entities

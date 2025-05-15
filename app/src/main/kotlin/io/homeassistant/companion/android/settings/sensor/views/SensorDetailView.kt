@@ -64,13 +64,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
@@ -92,7 +91,6 @@ fun SensorDetailView(
 ) {
     val context = LocalContext.current
     var sensorUpdateTypeInfo by remember { mutableStateOf(false) }
-    val jsonMapper by lazy { jacksonObjectMapper() }
 
     var sensorEnabled by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -191,11 +189,11 @@ fun SensorDetailView(
                         }
                         items(sensor.attributes, key = { "${it.sensorId}-${it.name}" }) { attribute ->
                             val summary = when (attribute.valueType) {
-                                "listboolean" -> jsonMapper.readValue<List<Boolean>>(attribute.value).toString()
-                                "listfloat" -> jsonMapper.readValue<List<Number>>(attribute.value).toString()
-                                "listlong" -> jsonMapper.readValue<List<Long>>(attribute.value).toString()
-                                "listint" -> jsonMapper.readValue<List<Int>>(attribute.value).toString()
-                                "liststring" -> jsonMapper.readValue<List<String>>(attribute.value).toString()
+                                "listboolean" -> kotlinJsonMapper.decodeFromString<List<Boolean>>(attribute.value).toString()
+                                "listfloat" -> kotlinJsonMapper.decodeFromString<List<Number>>(attribute.value).toString()
+                                "listlong" -> kotlinJsonMapper.decodeFromString<List<Long>>(attribute.value).toString()
+                                "listint" -> kotlinJsonMapper.decodeFromString<List<Int>>(attribute.value).toString()
+                                "liststring" -> kotlinJsonMapper.decodeFromString<List<String>>(attribute.value).toString()
                                 else -> attribute.value
                             }
                             SensorDetailRow(

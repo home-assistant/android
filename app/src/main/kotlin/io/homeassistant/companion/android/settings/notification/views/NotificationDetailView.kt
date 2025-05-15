@@ -16,13 +16,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.text.HtmlCompat
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.util.notificationItem
 import java.util.Calendar
 import java.util.GregorianCalendar
+import kotlinx.serialization.json.Json
 
 @Composable
 fun LoadNotification(notification: NotificationItem) {
@@ -57,11 +56,14 @@ fun LoadNotification(notification: NotificationItem) {
 
         NotificationDetailViewHeader(stringId = commonR.string.notification_data)
         val notifData =
+            // Try to pretty print the JSON
             try {
-                val mapper = ObjectMapper()
-                mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true)
-                val jsonObject = mapper.readValue(notification.data, Object::class.java)
-                mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject)
+                val mapper = Json {
+                    isLenient = true // allow unquoted field names
+                    prettyPrint = true
+                }
+                val jsonElement = mapper.parseToJsonElement(notification.data)
+                mapper.encodeToString(jsonElement)
             } catch (e: Exception) {
                 notification.data
             }

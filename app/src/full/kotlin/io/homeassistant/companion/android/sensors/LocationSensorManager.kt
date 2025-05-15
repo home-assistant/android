@@ -30,7 +30,6 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
-import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
 import io.homeassistant.companion.android.common.data.integration.containsWithAccuracy
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
@@ -155,7 +154,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         private var lastLocationReceived = mutableMapOf<Int, Long>()
         private var lastUpdateLocation = mutableMapOf<Int, String?>()
 
-        private var zones = mutableMapOf<Int, Array<Entity<ZoneAttributes>>>()
+        private var zones = mutableMapOf<Int, Array<Entity>>()
         private var zonesLastReceived = mutableMapOf<Int, Long>()
 
         private var geofenceRegistered = mutableSetOf<Int>()
@@ -841,8 +840,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         if (updateLocationAs == SEND_LOCATION_AS_ZONE_ONLY) {
             val zones = getZones(serverId)
             val locationZone = zones
-                .filter { !it.attributes.passive && it.containsWithAccuracy(location) }
-                .minByOrNull { it.attributes.radius }
+                .filter { !(it.attributes["passive"] as Boolean) && it.containsWithAccuracy(location) }
+                .minByOrNull { (it.attributes["radius"] as Number).toFloat() }
             updateLocation = UpdateLocation(
                 gps = null,
                 gpsAccuracy = null,
@@ -855,7 +854,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             updateLocationString = updateLocation.locationName!!
         } else {
             updateLocation = UpdateLocation(
-                gps = arrayOf(location.latitude, location.longitude),
+                gps = listOf(location.latitude, location.longitude),
                 gpsAccuracy = accuracy,
                 locationName = null,
                 speed = location.speed.toInt(),
@@ -863,7 +862,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 course = location.bearing.toInt(),
                 verticalAccuracy = if (Build.VERSION.SDK_INT >= 26) location.verticalAccuracyMeters.toInt() else 0
             )
-            updateLocationString = updateLocation.gps.contentToString()
+            updateLocationString = updateLocation.gps.toString()
         }
 
         val now = System.currentTimeMillis()
@@ -957,7 +956,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         return locationRequest
     }
 
-    private suspend fun getZones(serverId: Int, forceRefresh: Boolean = false): Array<Entity<ZoneAttributes>> {
+    private suspend fun getZones(serverId: Int, forceRefresh: Boolean = false): Array<Entity> {
         if (
             forceRefresh || zones[serverId].isNullOrEmpty() ||
             (zonesLastReceived[serverId] ?: 0) < (System.currentTimeMillis() - TimeUnit.HOURS.toMillis(4))
@@ -1007,7 +1006,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     private fun addGeofenceToBuilder(
         geofencingRequestBuilder: GeofencingRequest.Builder,
         serverId: Int,
-        zone: Entity<ZoneAttributes>,
+        zone: Entity,
         triggerRange: Int = 0
     ) {
         val postRequestId = if (triggerRange > 0) "_expanded" else ""
@@ -1016,9 +1015,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 Geofence.Builder()
                     .setRequestId("${serverId}_" + zone.entityId + postRequestId)
                     .setCircularRegion(
-                        zone.attributes.latitude,
-                        zone.attributes.longitude,
-                        zone.attributes.radius + triggerRange
+                        (zone.attributes["latitude"] as Number).toDouble(),
+                        (zone.attributes["longitude"] as Number).toDouble(),
+                        (zone.attributes["radius"] as Number).toFloat() + triggerRange
                     )
                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)

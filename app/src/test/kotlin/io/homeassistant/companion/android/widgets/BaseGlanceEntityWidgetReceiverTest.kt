@@ -47,12 +47,12 @@ class BaseGlanceEntityWidgetReceiverTest {
     private fun TestScope.getReceiver(
         widgetEntitiesByServer: Map<Int, EntitiesPerServer> = emptyMap<Int, EntitiesPerServer>(),
         coroutineScopeProvider: () -> CoroutineScope = { this },
-        onEntityUpdateCallback: suspend (Context, Int, Entity<*>) -> Unit = { _, _, _ -> },
+        onEntityUpdateCallback: suspend (Context, Int, Entity) -> Unit = { _, _, _ -> },
     ): BaseGlanceEntityWidgetReceiver<WidgetDao> {
         return object : BaseGlanceEntityWidgetReceiver<WidgetDao>(widgetScopeProvider = coroutineScopeProvider, glanceManagerProvider = { glanceManager }) {
             override suspend fun getWidgetEntitiesByServer(context: Context): Map<Int, EntitiesPerServer> = widgetEntitiesByServer
             override val glanceAppWidget: GlanceAppWidget = mockedWidget
-            override suspend fun onEntityUpdate(context: Context, appWidgetId: Int, entity: Entity<*>) {
+            override suspend fun onEntityUpdate(context: Context, appWidgetId: Int, entity: Entity) {
                 onEntityUpdateCallback(context, appWidgetId, entity)
             }
         }.apply {
@@ -121,7 +121,7 @@ class BaseGlanceEntityWidgetReceiverTest {
     fun `Given valid intent with ACTION_SCREEN_ON when onReceive is called with registered servers and multiple entities then it watch for changes and updates widgets`() = runTest {
         val context: Context = mockk()
         val intent = mockIntent(Intent.ACTION_SCREEN_ON)
-        var entityReceived: Entity<*>? = null
+        var entityReceived: Entity? = null
         val receiver = getReceiver(
             mapOf(
                 1 to EntitiesPerServer(42, listOf("entity1")),
@@ -133,8 +133,8 @@ class BaseGlanceEntityWidgetReceiverTest {
         )
         val glanceIds = listOf<GlanceId>(FakeGlanceId(1), FakeGlanceId(2))
         val integrationRepository = mockk<IntegrationRepository>()
-        var widget1EntityProducer: ProducerScope<Entity<*>>? = null
-        var widget2EntityProducer: ProducerScope<Entity<*>>? = null
+        var widget1EntityProducer: ProducerScope<Entity>? = null
+        var widget2EntityProducer: ProducerScope<Entity>? = null
 
         serverRegistered()
         coEvery { glanceManager.getGlanceIds(mockedWidget.javaClass) } returns glanceIds
@@ -157,12 +157,12 @@ class BaseGlanceEntityWidgetReceiverTest {
         advanceUntilIdle()
         assertNull(entityReceived)
 
-        val dummyUpdateWidget1: Entity<*> = mockk()
+        val dummyUpdateWidget1: Entity = mockk()
         widget1EntityProducer!!.send(dummyUpdateWidget1)
         advanceUntilIdle()
         assertEquals(dummyUpdateWidget1, entityReceived)
 
-        val dummyUpdateWidget2: Entity<*> = mockk()
+        val dummyUpdateWidget2: Entity = mockk()
         widget2EntityProducer!!.send(dummyUpdateWidget2)
         advanceUntilIdle()
         assertEquals(dummyUpdateWidget2, entityReceived)
@@ -209,7 +209,7 @@ class BaseGlanceEntityWidgetReceiverTest {
         val glanceIds = listOf<GlanceId>(FakeGlanceId(1))
         val integrationRepository = mockk<IntegrationRepository>()
 
-        var producer: ProducerScope<Entity<*>>? = null
+        var producer: ProducerScope<Entity>? = null
 
         serverRegistered()
         coEvery { glanceManager.getGlanceIds(mockedWidget.javaClass) } returns glanceIds
