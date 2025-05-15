@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.launch
 
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.notifications.PushManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -10,7 +11,8 @@ import kotlinx.coroutines.launch
 
 abstract class LaunchPresenterBase(
     private val view: LaunchView,
-    internal val serverManager: ServerManager
+    internal val serverManager: ServerManager,
+    internal val pushManager: PushManager
 ) : LaunchPresenter {
 
     internal val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())

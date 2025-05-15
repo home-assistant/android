@@ -3,8 +3,6 @@ package io.homeassistant.companion.android.notifications
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
-import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,22 +12,16 @@ import timber.log.Timber
 
 @AndroidEntryPoint
 class FirebaseCloudMessagingService : FirebaseMessagingService() {
-    companion object {
-        private const val SOURCE = "FCM"
-    }
 
     @Inject
-    lateinit var serverManager: ServerManager
-
-    @Inject
-    lateinit var messagingManager: MessagingManager
+    lateinit var pushProvider: FirebaseCloudMessagingProvider
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         Timber.d("From: ${remoteMessage.from}")
 
-        messagingManager.handleMessage(remoteMessage.data, SOURCE)
+        pushProvider.onMessage(this, remoteMessage.data)
     }
 
     /**
@@ -39,23 +31,8 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
      */
     override fun onNewToken(token: String) {
         mainScope.launch {
-            Timber.d("Refreshed token: $token")
-            if (!serverManager.isRegistered()) {
-                Timber.d("Not trying to update registration since we aren't authenticated.")
-                return@launch
-            }
-            serverManager.defaultServers.forEach {
-                launch {
-                    try {
-                        serverManager.integrationRepository(it.id).updateRegistration(
-                            deviceRegistration = DeviceRegistration(pushToken = token),
-                            allowReregistration = false
-                        )
-                    } catch (e: Exception) {
-                        Timber.e(e, "Issue updating token")
-                    }
-                }
-            }
+            pushProvider.setToken(token)
+            pushProvider.updateRegistration(this@FirebaseCloudMessagingService, mainScope)
         }
     }
 }

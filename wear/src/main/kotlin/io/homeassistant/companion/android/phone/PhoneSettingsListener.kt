@@ -178,10 +178,10 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
             serverManager.integrationRepository(serverId).registerDevice(
                 DeviceRegistration(
-                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                    deviceName,
-                    getMessagingToken(),
-                    false
+                    appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    deviceName = deviceName,
+                    pushToken = getMessagingToken(),
+                    pushWebsocket = false
                 )
             )
             serverManager.convertTemporaryServer(serverId)

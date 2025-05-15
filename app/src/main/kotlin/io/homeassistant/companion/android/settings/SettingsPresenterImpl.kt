@@ -22,12 +22,13 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.server.ServerUserInfo
+import io.homeassistant.companion.android.database.settings.PushProviderSetting
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
+import io.homeassistant.companion.android.notifications.PushManager
 import io.homeassistant.companion.android.onboarding.OnboardApp
-import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
@@ -50,6 +51,7 @@ class SettingsPresenterImpl @Inject constructor(
     private val prefsRepository: PrefsRepository,
     private val themesManager: ThemesManager,
     private val langsManager: LanguagesManager,
+    private val pushManager: PushManager,
     private val changeLog: ChangeLog,
     private val settingsDao: SettingsDao,
     private val sensorDao: SensorDao
@@ -162,7 +164,7 @@ class SettingsPresenterImpl @Inject constructor(
     override suspend fun addServer(result: OnboardApp.Output?) {
         if (result != null) {
             val (url, authCode, deviceName, deviceTrackingEnabled, notificationsEnabled) = result
-            val messagingToken = getMessagingToken()
+            val messagingToken = pushManager.getToken()
             var serverId: Int? = null
             try {
                 val formattedUrl = UrlUtil.formattedUrlString(url)
@@ -179,9 +181,9 @@ class SettingsPresenterImpl @Inject constructor(
                 serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
                 serverManager.integrationRepository(serverId).registerDevice(
                     DeviceRegistration(
-                        "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                        deviceName,
-                        messagingToken
+                        appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                        deviceName = deviceName,
+                        pushToken = messagingToken
                     )
                 )
                 serverManager.getServer()?.id?.let {
@@ -228,7 +230,8 @@ class SettingsPresenterImpl @Inject constructor(
                 Setting(
                     serverId,
                     if (enabled) WebsocketSetting.ALWAYS else WebsocketSetting.NEVER,
-                    SensorUpdateFrequencySetting.NORMAL
+                    SensorUpdateFrequencySetting.NORMAL,
+                    PushProviderSetting.NONE
                 )
             )
         }
