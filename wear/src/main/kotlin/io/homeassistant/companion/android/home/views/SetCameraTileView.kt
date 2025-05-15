@@ -27,7 +27,7 @@ import io.homeassistant.companion.android.views.ThemeLazyColumn
 @Composable
 fun SetCameraTileView(
     tile: CameraTile?,
-    entities: List<Entity<*>>?,
+    entities: List<Entity>?,
     onSelectEntity: () -> Unit,
     onSelectRefreshInterval: () -> Unit
 ) {

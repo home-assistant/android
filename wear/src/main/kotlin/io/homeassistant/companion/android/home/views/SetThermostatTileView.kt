@@ -29,7 +29,7 @@ import io.homeassistant.companion.android.views.ThemeLazyColumn
 @Composable
 fun SetThermostatTileView(
     tile: ThermostatTile?,
-    entities: List<Entity<*>>?,
+    entities: List<Entity>?,
     onSelectEntity: () -> Unit,
     onSelectRefreshInterval: () -> Unit,
     onNameEnabled: (Int, Boolean) -> Unit
