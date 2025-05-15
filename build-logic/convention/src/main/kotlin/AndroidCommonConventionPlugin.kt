@@ -88,6 +88,9 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                 dependencies {
                     "implementation"(libs.timber)
 
+                    "ksp"(libs.hilt.android.compiler)
+                    "implementation"(libs.hilt.android)
+
                     "testRuntimeOnly"(libs.junit.platform.launcher)
 
                     "testImplementation"(platform(libs.junit.bom))
