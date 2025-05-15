@@ -3,11 +3,10 @@ package io.homeassistant.companion.android.database.server
 import androidx.room.ColumnInfo
 import androidx.room.Ignore
 import androidx.room.TypeConverter
-import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import java.net.URL
+import kotlinx.serialization.SerializationException
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
 
@@ -134,8 +133,8 @@ class InternalSsidTypeConverter {
             emptyList()
         } else {
             try {
-                jacksonObjectMapper().readValue(value)
-            } catch (e: JsonProcessingException) {
+                kotlinJsonMapper.decodeFromString(value)
+            } catch (_: SerializationException) {
                 emptyList()
             }
         }
@@ -147,8 +146,8 @@ class InternalSsidTypeConverter {
             "[]"
         } else {
             try {
-                jacksonObjectMapper().writeValueAsString(value)
-            } catch (e: JsonProcessingException) {
+                kotlinJsonMapper.encodeToString(value)
+            } catch (_: SerializationException) {
                 ""
             }
         }
