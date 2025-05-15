@@ -46,7 +46,6 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
 
-    implementation(libs.jackson.module.kotlin)
     implementation(libs.okhttp)
 
     implementation(libs.iconics.core)
