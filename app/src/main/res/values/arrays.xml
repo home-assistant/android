@@ -5,15 +5,25 @@
         <item>@string/themes_option_label_light</item>
         <item>@string/themes_option_label_dark</item>
     </string-array>
+    <!--
+    The strings used as array value should not be translated to avoid this kind of issue
+    https://github.com/home-assistant/android/issues/5292
+    -->
+    <string name="themes_option_array_value_dark">dark</string>
+    <string name="themes_option_array_value_light">light</string>
+    <string name="themes_option_array_value_system">system</string>
     <string-array name="pref_theme_option_values">
-        <item>@string/themes_option_value_system</item>
-        <item>@string/themes_option_value_light</item>
-        <item>@string/themes_option_value_dark</item>
+        <item>@string/themes_option_array_value_system</item>
+        <item>@string/themes_option_array_value_light</item>
+        <item>@string/themes_option_array_value_dark</item>
     </string-array>
+    <string name="screen_orientation_option_array_value_system">system</string>
+    <string name="screen_orientation_option_array_value_portrait">portrait</string>
+    <string name="screen_orientation_option_array_value_landscape">landscape</string>
     <string-array name="pref_screen_orientation_option_values">
-        <item>@string/screen_orientation_option_value_system</item>
-        <item>@string/screen_orientation_option_value_landscape</item>
-        <item>@string/screen_orientation_option_value_portrait</item>
+        <item>@string/screen_orientation_option_array_value_system</item>
+        <item>@string/screen_orientation_option_array_value_landscape</item>
+        <item>@string/screen_orientation_option_array_value_portrait</item>
     </string-array>
     <string-array name="pref_screen_orientation_option_labels">
         <item>@string/screen_orientation_option_label_system</item>

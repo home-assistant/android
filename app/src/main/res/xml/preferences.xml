@@ -44,7 +44,7 @@
             android:summary="@string/fullscreen_def"/>
         <ListPreference
             android:key="screen_orientation"
-            android:defaultValue="@string/screen_orientation_option_value_system"
+            android:defaultValue="@string/screen_orientation_option_array_value_system"
             android:entries="@array/pref_screen_orientation_option_labels"
             android:entryValues="@array/pref_screen_orientation_option_values"
             android:icon="@drawable/ic_screen_orientation"
@@ -88,7 +88,7 @@
             android:summary="@string/lang_summary_settings" />
         <ListPreference
             android:key="themes"
-            android:defaultValue="@string/themes_option_value_light"
+            android:defaultValue="@string/themes_option_array_value_light"
             android:entries="@array/pref_theme_option_labels"
             android:entryValues="@array/pref_theme_option_values"
             android:icon="@drawable/ic_color_lens_24dp"
