@@ -93,6 +93,9 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     "implementation"(libs.timber)
                     "implementation"(libs.kotlinx.serialization.json)
 
+                    "ksp"(libs.hilt.android.compiler)
+                    "implementation"(libs.hilt.android)
+
                     "testRuntimeOnly"(libs.junit.platform.launcher)
 
                     "testImplementation"(platform(libs.junit.bom))
@@ -102,6 +105,8 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     "testImplementation"(libs.mockk)
                     "testImplementation"(libs.robolectric)
                     "testImplementation"(libs.turbine)
+
+                    "testImplementation"(project(":testing-unit"))
                 }
             }
 

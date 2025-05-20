@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.common.data.websocket.impl
 
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
-import io.homeassistant.companion.android.common.ConsoleLogTree
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
@@ -16,6 +15,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
+import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
