@@ -28,14 +28,14 @@ interface AssistPipelineEventData
 data class AssistPipelineRunStart(
     val pipeline: String,
     val language: String,
-    // TODO why not just using an object with the only field we use `stt_binary_handler_id`
+    // TODO replace the map https://github.com/home-assistant/android/issues/5341
     @Serializable(with = MapAnySerializer::class)
     val runnerData: Map<String, @Polymorphic Any?>
 ) : AssistPipelineEventData
 
 @Serializable
 data class AssistPipelineSttEnd(
-    // TODO why not just using an object with the only field we use `text`
+    // TODO Replace the map https://github.com/home-assistant/android/issues/5341
     @Serializable(with = MapAnySerializer::class)
     val sttOutput: Map<String, @Polymorphic Any?>
 ) : AssistPipelineEventData

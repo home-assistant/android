@@ -4,7 +4,29 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * This interface is used to not have <T> in retrofit interface that cause issues for the converter.
+ * Marker interface for all integration requests sent via Retrofit.
+ *
+ * This interface enables polymorphic serialization using Kotlinx serialization,
+ * allowing each request type to be distinguished by a unique `type` field (set via [SerialName]).
+ *
+ * ## Why not use generics here?
+ * Generics are intentionally avoided in this interface because Retrofit does not support
+ * variable type parameters or wildcards in request body types. For example, using a generic
+ * request like [IntegrationRequestWithData] in a Retrofit interface:
+ *
+ * ```kotlin
+ * @POST
+ * suspend fun <T> callWebhook(
+ *     @Url url: HttpUrl,
+ *     @Body request: IntegrationRequestWithData<T>
+ * ): Response<ResponseBody>
+ * ```
+ *
+ * will result in a runtime error:
+ * > Parameter type must not include a type variable or wildcard: `IntegrationRequestWithData<T>`
+ *
+ * By using a sealed interface without generics, we ensure compatibility with Retrofit and
+ * allow each request type to define its own data payload.
  */
 @Serializable
 sealed interface IntegrationRequest

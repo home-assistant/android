@@ -51,8 +51,10 @@ data class SensorUpdateRequest(
 )
 
 /**
- * Since our global serializer is printing the null value we need to use the internal serializer
- * to avoid this behavior for the `data` field.
+ * The global serializer will encode null values by default. For this request, that behavior
+ * is unwanted as the class may be used for delta updates and only set some values, and
+ * not all HA versions support null values. This serializer is used to avoid
+ * some null values being encoded.
  */
 private object SensorRegistrationRequestSerializer : KSerializer<SensorRegistrationRequest> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor(SensorRegistrationRequest::class.jvmName) {
