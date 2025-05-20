@@ -1664,6 +1664,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             LifecycleHandler.isAppInBackground()
         ) {
             if (serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true) {
+                /**
+                 * Clearing history and replace the current page with the default page from the frontend.
+                 * This way the user have a clear history stack.
+                 */
+                webView.clearHistory()
                 sendExternalBusMessage(
                     NavigateTo("/", true)
                 )
