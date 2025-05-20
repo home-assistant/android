@@ -971,7 +971,7 @@
         errorLine1="        return if (SDK_INT >= Build.VERSION_CODES.Q) {"
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/GeocodeSensorManager.kt"
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/sensors/GeocodeSensorManager.kt"
             line="52"
             column="20"/>
     </issue>
