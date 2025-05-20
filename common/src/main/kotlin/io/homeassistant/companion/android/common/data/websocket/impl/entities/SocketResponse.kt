@@ -14,8 +14,8 @@ internal sealed interface SocketResponse {
 
     companion object {
         /**
-         * This module needs to be given to the Json builder to be able to deserialize unknown types
-         * without this if we receive a message with an unknown type we will get a runtime exception.
+         * This module needs to be given to the Json builder to be able to deserialize unknown types.
+         * Without this module, a runtime exception will be thrown for received messages with an unknown type.
          */
         internal val socketResponseSerializerModuler = SerializersModule {
             polymorphicDefaultDeserializer(SocketResponse::class) {

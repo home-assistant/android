@@ -32,8 +32,9 @@ data class RegisterDeviceRequest(
 )
 
 /**
- * Since our global serializer is printing the null value we need to use the internal serializer
- * to avoid this behavior.
+ * The global serializer will encode null values by default. For this request, that behavior
+ * is unwanted as the class may be used for delta updates and only set some values, so
+ * this serializer is used to avoid null values being encoded.
  */
 private object RegisterDeviceRequestSerializer : KSerializer<RegisterDeviceRequest> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor(RegisterDeviceRequest::class.jvmName) {

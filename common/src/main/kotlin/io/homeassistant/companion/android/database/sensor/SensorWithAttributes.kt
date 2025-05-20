@@ -20,7 +20,6 @@ data class SensorWithAttributes(
                         else -> kotlinJsonMapper.decodeFromString<List<String>>(it.value)
                     }
                 }
-
                 "boolean" -> it.value.toBoolean()
                 "float" -> it.value.toFloat()
                 "long" -> it.value.toLong()

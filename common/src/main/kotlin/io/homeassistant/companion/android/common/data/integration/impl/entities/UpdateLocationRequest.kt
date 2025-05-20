@@ -28,8 +28,9 @@ data class UpdateLocationRequest(
 )
 
 /**
- * Since our global serializer is printing the null value we need to use the internal serializer
- * to avoid this behavior.
+ * The global serializer will encode null values by default. For this request, that behavior
+ * is unwanted as not all location updates contain all data and the server requires non-null
+ * values, so this serializer is used to avoid null values being encoded.
  */
 private object UpdateLocationRequestSerializer : KSerializer<UpdateLocationRequest> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor(UpdateLocationRequest::class.jvmName) {

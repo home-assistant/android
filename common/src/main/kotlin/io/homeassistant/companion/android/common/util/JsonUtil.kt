@@ -154,14 +154,14 @@ abstract class UnknownJsonContentDeserializer<T : UnknownJsonContent> : Deserial
 
 /**
  * Serializer capable of serializing [Map<String, Any?>], the default implementation of
- * Kotlinx JSON serialization doesn't support serializing [Any]. We need to explicitly provides a
- * serialize to overcome this limitation.
+ * Kotlinx JSON serialization doesn't support serializing [Any]. We need to explicitly provide a
+ * serializer to overcome this limitation.
  *
- * This should be avoid when possible to enforce better type checking at build time.
+ * This should be avoided when possible to enforce better type checking at build time.
  *
  * Limitations
  * - Map keys must be strings otherwise it throws
- * - It doesn't supports objects
+ * - Objects are not supported
  */
 object MapAnySerializer : KSerializer<Map<String, Any?>> {
     @OptIn(ExperimentalSerializationApi::class)
@@ -182,7 +182,9 @@ object MapAnySerializer : KSerializer<Map<String, Any?>> {
 }
 
 /**
- * Same behavior and limitations as [MapAnySerializer]
+ * Serializer capable of serializing [Any?].
+ * 
+ * For more information on the behavior and limitations, see [MapAnySerializer].
  */
 object AnySerializer : KSerializer<Any?> {
     override val descriptor: SerialDescriptor = JsonElement.serializer().descriptor
