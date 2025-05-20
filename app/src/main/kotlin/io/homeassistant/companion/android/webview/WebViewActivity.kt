@@ -1665,7 +1665,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         ) {
             if (serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true) {
                 sendExternalBusMessage(
-                    NavigateTo("/config", true)
+                    NavigateTo("/", true)
                 )
             } else {
                 // Pattern matches urls which are NOT allowed to show the first view after app is started
