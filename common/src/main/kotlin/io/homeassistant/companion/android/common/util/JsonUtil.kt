@@ -183,7 +183,7 @@ object MapAnySerializer : KSerializer<Map<String, Any?>> {
 
 /**
  * Serializer capable of serializing [Any?].
- * 
+ *
  * For more information on the behavior and limitations, see [MapAnySerializer].
  */
 object AnySerializer : KSerializer<Any?> {
