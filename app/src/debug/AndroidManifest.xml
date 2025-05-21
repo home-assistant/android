@@ -8,7 +8,8 @@
                 android:resource="@xml/shortcuts" />
         </activity>
 
-        <activity android:name=".developer.DevPlaygroundActivity"/>
+        <activity android:name=".developer.DevPlaygroundActivity"
+            android:exported="true" />
 
         <activity android:name=".developer.DemoExoPlayerActivity"
             android:supportsPictureInPicture="true"
