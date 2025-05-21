@@ -1,5 +1,93 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.9.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.9.1)" variant="all" version="8.9.1">
+<issues format="6" by="lint 8.10.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.10.0)" variant="all" version="8.10.0">
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="            actReg.removeActivityUpdates(pendingIntent)"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
+            line="228"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="                actReg.requestActivityUpdates(TimeUnit.MINUTES.toMillis(if (fastUpdate) 1 else 2), pendingIntent)"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
+            line="233"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="                        ActivityRecognition.getClient(context).requestSleepSegmentUpdates("
+        errorLine2="                        ^">
+        <location
+            file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
+            line="251"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="                        ActivityRecognition.getClient(context).requestSleepSegmentUpdates("
+        errorLine2="                        ^">
+        <location
+            file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
+            line="259"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="                        ActivityRecognition.getClient(context).requestSleepSegmentUpdates("
+        errorLine2="                        ^">
+        <location
+            file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
+            line="267"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="        NotificationManagerCompat.from(context)"
+        errorLine2="        ^">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/util/DataUriDownloadManager.kt"
+            line="68"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="                notificationManager.notify(notificationId, notificationBuilder.build())"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
+            line="108"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="                notify(tag, messageId, notificationBuilder.build())"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
+            line="995"
+            column="17"/>
+    </issue>
 
     <issue
         id="SuspiciousImport"
@@ -338,7 +426,7 @@
         errorLine2="             ~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="304"
+            line="299"
             column="14"/>
     </issue>
 
@@ -349,7 +437,7 @@
         errorLine2="                                  ~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="311"
+            line="306"
             column="35"/>
     </issue>
 
@@ -388,14 +476,14 @@
 
     <issue
         id="PrivateResource"
-        message="Overriding `@layout/exo_player_control_view` which is marked as private in androidx.media3:media3-ui:1.6.1. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name.">
+        message="Overriding `@layout/exo_player_control_view` which is marked as private in androidx.media3:media3-ui:1.7.1. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name.">
         <location
             file="src/main/res/layout/exo_player_control_view.xml"/>
     </issue>
 
     <issue
         id="PrivateResource"
-        message="The resource `@color/exo_black_opacity_60` is marked as private in androidx.media3:media3-ui:1.6.1"
+        message="The resource `@color/exo_black_opacity_60` is marked as private in androidx.media3:media3-ui:1.7.1"
         errorLine1="        android:background=&quot;@color/exo_black_opacity_60&quot;/>"
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -406,7 +494,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_height` is marked as private in androidx.media3:media3-ui:1.6.1"
+        message="The resource `@dimen/exo_styled_bottom_bar_height` is marked as private in androidx.media3:media3-ui:1.7.1"
         errorLine1="        android:layout_height=&quot;@dimen/exo_styled_bottom_bar_height&quot;"
         errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -417,7 +505,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_margin_top` is marked as private in androidx.media3:media3-ui:1.6.1"
+        message="The resource `@dimen/exo_styled_bottom_bar_margin_top` is marked as private in androidx.media3:media3-ui:1.7.1"
         errorLine1="        android:layout_marginTop=&quot;@dimen/exo_styled_bottom_bar_margin_top&quot;"
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -428,7 +516,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@color/exo_bottom_bar_background` is marked as private in androidx.media3:media3-ui:1.6.1"
+        message="The resource `@color/exo_bottom_bar_background` is marked as private in androidx.media3:media3-ui:1.7.1"
         errorLine1="        android:background=&quot;@color/exo_bottom_bar_background&quot;"
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -439,7 +527,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.6.1"
+        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
         errorLine1="            android:paddingStart=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -450,7 +538,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.6.1"
+        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
         errorLine1="            android:paddingEnd=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -461,7 +549,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.6.1"
+        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
         errorLine1="            android:paddingLeft=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
         errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -472,7 +560,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.6.1"
+        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
         errorLine1="            android:paddingRight=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -483,7 +571,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_progress_layout_height` is marked as private in androidx.media3:media3-ui:1.6.1"
+        message="The resource `@dimen/exo_styled_progress_layout_height` is marked as private in androidx.media3:media3-ui:1.7.1"
         errorLine1="        android:layout_height=&quot;@dimen/exo_styled_progress_layout_height&quot;"
         errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -494,7 +582,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_progress_margin_bottom` is marked as private in androidx.media3:media3-ui:1.6.1"
+        message="The resource `@dimen/exo_styled_progress_margin_bottom` is marked as private in androidx.media3:media3-ui:1.7.1"
         errorLine1="        android:layout_marginBottom=&quot;@dimen/exo_styled_progress_margin_bottom&quot;/>"
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -505,7 +593,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_minimal_controls_margin_bottom` is marked as private in androidx.media3:media3-ui:1.6.1"
+        message="The resource `@dimen/exo_styled_minimal_controls_margin_bottom` is marked as private in androidx.media3:media3-ui:1.7.1"
         errorLine1="        android:layout_marginBottom=&quot;@dimen/exo_styled_minimal_controls_margin_bottom&quot;"
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -516,7 +604,7 @@
 
     <issue
         id="PrivateResource"
-        message="The resource `@dimen/exo_styled_controls_padding` is marked as private in androidx.media3:media3-ui:1.6.1"
+        message="The resource `@dimen/exo_styled_controls_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
         errorLine1="        android:padding=&quot;@dimen/exo_styled_controls_padding&quot;"
         errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -543,7 +631,7 @@
         errorLine2="              ^">
         <location
             file="src/main/res/values/arrays.xml"
-            line="24"
+            line="34"
             column="15"/>
     </issue>
 
@@ -554,7 +642,7 @@
         errorLine2="              ^">
         <location
             file="src/main/res/values/arrays.xml"
-            line="34"
+            line="44"
             column="15"/>
     </issue>
 
@@ -598,7 +686,7 @@
         errorLine2="         ~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="273"
+            line="268"
             column="10"/>
     </issue>
 
@@ -609,7 +697,7 @@
         errorLine2="         ~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="282"
+            line="277"
             column="10"/>
     </issue>
 
@@ -620,7 +708,7 @@
         errorLine2="         ~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="918"
+            line="913"
             column="10"/>
     </issue>
 
@@ -820,17 +908,6 @@
             file="src/main/res/layout/activity_onboarding.xml"
             line="2"
             column="1"/>
-    </issue>
-
-    <issue
-        id="AutoboxingStateCreation"
-        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
-        errorLine1="    var selectedServer by remember { mutableStateOf(defaultServer) }"
-        errorLine2="                                     ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/vehicle/views/AndroidAutoFavoritesView.kt"
-            line="48"
-            column="38"/>
     </issue>
 
     <issue

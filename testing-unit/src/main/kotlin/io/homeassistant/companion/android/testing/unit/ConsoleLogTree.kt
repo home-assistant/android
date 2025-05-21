@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.common
+package io.homeassistant.companion.android.testing.unit
 
 import timber.log.Timber
 
