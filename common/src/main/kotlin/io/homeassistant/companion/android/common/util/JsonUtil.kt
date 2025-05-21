@@ -153,15 +153,25 @@ abstract class UnknownJsonContentDeserializer<T : UnknownJsonContent> : Deserial
 }
 
 /**
- * Serializer capable of serializing [Map<String, Any?>], the default implementation of
- * Kotlinx JSON serialization doesn't support serializing [Any]. We need to explicitly provide a
- * serializer to overcome this limitation.
+ * Serializer capable of serializing [Map<String, Any?>].
  *
- * This should be avoided when possible to enforce better type checking at build time.
+ * The default Kotlinx JSON serialization doesn't support serializing [Any] directly.
+ * This custom serializer is provided to overcome that limitation.
  *
- * Limitations
- * - Map keys must be strings otherwise it throws
- * - Objects are not supported
+ * It is generally recommended to avoid this approach when possible to enforce
+ * better type checking at build time and leverage more specific serializers.
+ *
+ * Limitations that will throw:
+ * - [kotlinx.serialization.SerializationException] Map keys must be strings. Non-string keys will cause an error.
+ * - [IllegalArgumentException] Arbitrary class instances as values are not supported. Values must be
+ *   serializable primitive types (String, Int, Boolean, Double, null),
+ *   lists of these types, or nested maps adhering to these rules.
+ *
+ * Example of supported data:
+ * `mapOf("name" to "Alice", "age" to 30, "isActive" to true, "scores" to listOf(10, 20))`
+ *
+ * Example of data that would cause issues:
+ * `mapOf("details" to MyCustomObject())`
  */
 object MapAnySerializer : KSerializer<Map<String, Any?>> {
     @OptIn(ExperimentalSerializationApi::class)
