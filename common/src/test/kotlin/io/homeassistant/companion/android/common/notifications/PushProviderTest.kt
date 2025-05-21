@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.common.notifications
 
 import android.content.Context
-import io.homeassistant.companion.android.common.ConsoleLogTree
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.server.Server
@@ -13,6 +12,7 @@ import io.homeassistant.companion.android.database.settings.SensorUpdateFrequenc
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
+import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
