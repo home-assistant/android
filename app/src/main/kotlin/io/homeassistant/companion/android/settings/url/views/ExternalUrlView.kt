@@ -4,8 +4,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Switch
 import androidx.compose.material.SwitchDefaults
@@ -21,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.util.bottomPaddingValues
 
 @Composable
 fun ExternalUrlView(
@@ -33,7 +36,9 @@ fun ExternalUrlView(
     val focusRequester = remember { FocusRequester() }
 
     Column(
-        modifier = Modifier.padding(vertical = 16.dp)
+        modifier = Modifier
+            .padding(WindowInsets.navigationBars.bottomPaddingValues())
+            .padding(vertical = 16.dp)
     ) {
         if (canUseCloud) {
             ExternalUrlCloudView(

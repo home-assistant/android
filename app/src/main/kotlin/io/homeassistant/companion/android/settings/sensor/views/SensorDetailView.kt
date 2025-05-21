@@ -13,10 +13,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -77,6 +79,7 @@ import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.HealthConnectSensorManager
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
+import io.homeassistant.companion.android.util.bottomPaddingValues
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.compose.TransparentChip
 import kotlinx.coroutines.flow.launchIn
@@ -144,7 +147,10 @@ fun SensorDetailView(
                 )
             }
         }
-        LazyColumn(modifier = Modifier.padding(contentPadding)) {
+        LazyColumn(
+            modifier = Modifier.padding(contentPadding),
+            contentPadding = WindowInsets.navigationBars.bottomPaddingValues()
+        ) {
             if (viewModel.sensorManager != null && viewModel.basicSensor != null) {
                 item {
                     SensorDetailTopPanel(
