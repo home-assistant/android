@@ -39,10 +39,10 @@ data class ServerConnectionInfo(
 
     fun isRegistered(): Boolean = getApiUrls().isNotEmpty()
 
-    fun getApiUrls(): Array<URL> {
+    fun getApiUrls(): List<URL> {
         // If we don't have a webhook id we don't have any urls.
         if (webhookId.isNullOrBlank()) {
-            return arrayOf()
+            return emptyList()
         }
 
         val retVal = mutableListOf<URL?>()
@@ -72,7 +72,7 @@ data class ServerConnectionInfo(
             )
         }
 
-        return retVal.filterNotNull().toTypedArray()
+        return retVal.filterNotNull()
     }
 
     fun getUrl(isInternal: Boolean? = null, force: Boolean = false): URL? {

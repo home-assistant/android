@@ -21,7 +21,7 @@ interface IntegrationRepository {
 
     suspend fun updateLocation(updateLocation: UpdateLocation)
 
-    suspend fun getZones(): Array<Entity>
+    suspend fun getZones(): List<Entity>
 
     suspend fun isAppLocked(): Boolean
     suspend fun setAppActive(active: Boolean)
@@ -49,7 +49,7 @@ interface IntegrationRepository {
     suspend fun fireEvent(eventType: String, eventData: Map<String, Any>)
 
     suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>)
-    suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean
+    suspend fun updateSensors(sensors: List<SensorRegistration<Any>>): Boolean
 
     suspend fun isTrusted(): Boolean
 

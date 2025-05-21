@@ -48,7 +48,7 @@ interface IntegrationService {
     suspend fun getZones(
         @Url url: HttpUrl,
         @Body request: IntegrationRequest
-    ): Array<EntityResponse>
+    ): List<EntityResponse>
 
     @POST
     suspend fun getConfig(

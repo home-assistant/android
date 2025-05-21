@@ -154,7 +154,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         private var lastLocationReceived = mutableMapOf<Int, Long>()
         private var lastUpdateLocation = mutableMapOf<Int, String?>()
 
-        private var zones = mutableMapOf<Int, Array<Entity>>()
+        private var zones = mutableMapOf<Int, List<Entity>>()
         private var zonesLastReceived = mutableMapOf<Int, Long>()
 
         private var geofenceRegistered = mutableSetOf<Int>()
@@ -956,7 +956,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         return locationRequest
     }
 
-    private suspend fun getZones(serverId: Int, forceRefresh: Boolean = false): Array<Entity> {
+    private suspend fun getZones(serverId: Int, forceRefresh: Boolean = false): List<Entity> {
         if (
             forceRefresh || zones[serverId].isNullOrEmpty() ||
             (zonesLastReceived[serverId] ?: 0) < (System.currentTimeMillis() - TimeUnit.HOURS.toMillis(4))
@@ -966,10 +966,10 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 zonesLastReceived[serverId] = System.currentTimeMillis()
             } catch (e: Exception) {
                 Timber.e(e, "Error receiving zones from Home Assistant")
-                if (forceRefresh) zones[serverId] = emptyArray()
+                if (forceRefresh) zones[serverId] = emptyList()
             }
         }
-        return zones[serverId] ?: emptyArray()
+        return zones[serverId] ?: emptyList()
     }
 
     private suspend fun createGeofencingRequest(): GeofencingRequest? {

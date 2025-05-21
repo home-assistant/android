@@ -376,9 +376,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun getZones(): Array<Entity> {
+    override suspend fun getZones(): List<Entity> {
         var causeException: Exception? = null
-        var zones: Array<EntityResponse>? = null
+        var zones: List<EntityResponse>? = null
         for (it in server.connection.getApiUrls()) {
             try {
                 zones = integrationService.getZones(it.toHttpUrlOrNull()!!, GetZonesIntegrationRequest)
@@ -749,7 +749,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean {
+    override suspend fun updateSensors(sensors: List<SensorRegistration<Any>>): Boolean {
         val integrationRequest = UpdateSensorStatesIntegrationRequest(
             sensors.map {
                 SensorUpdateRequest(
@@ -836,20 +836,15 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         )
     }
 
-    private fun createZonesResponse(zones: Array<EntityResponse>): Array<Entity> {
-        val retVal = ArrayList<Entity>()
-        zones.forEach {
-            retVal.add(
-                Entity(
-                    it.entityId,
-                    it.state,
-                    it.attributes,
-                    it.lastChanged,
-                    it.lastUpdated,
-                )
+    private fun createZonesResponse(zones: List<EntityResponse>): List<Entity> {
+        return zones.map {
+            Entity(
+                it.entityId,
+                it.state,
+                it.attributes,
+                it.lastChanged,
+                it.lastUpdated,
             )
         }
-
-        return retVal.toTypedArray()
     }
 }
