@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.developer
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -18,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.glance.LocalContext
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
@@ -38,7 +38,7 @@ class DevPlaygroundActivity : AppCompatActivity() {
 
         setContent {
             HomeAssistantAppTheme {
-                DevPlayGroundScreen()
+                DevPlayGroundScreen(this)
             }
         }
     }
@@ -47,8 +47,7 @@ class DevPlaygroundActivity : AppCompatActivity() {
 private class DummyException : Throwable()
 
 @Composable
-private fun DevPlayGroundScreen() {
-    val context = LocalContext.current
+private fun DevPlayGroundScreen(context: Context? = null) {
     Column(
         modifier = Modifier
             .padding(WindowInsets.systemBars.asPaddingValues())
@@ -61,12 +60,12 @@ private fun DevPlayGroundScreen() {
             Text("Crash the app")
         }
         Button(modifier = Modifier.padding(top = 16.dp), onClick = {
-            context.startActivity(Intent(context, DemoExoPlayerActivity::class.java))
+            context?.run { startActivity(Intent(context, DemoExoPlayerActivity::class.java)) }
         }) {
             Text("Demo ExoPlayer")
         }
         Button(modifier = Modifier.padding(top = 16.dp), onClick = {
-            context.startActivity(SettingsActivity.newInstance(context))
+            context?.run { startActivity(SettingsActivity.newInstance(context)) }
         }) {
             Text("Start Settings")
         }
