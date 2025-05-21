@@ -10,7 +10,9 @@ import android.text.style.UnderlineSpan
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.DropdownMenu
@@ -44,6 +46,7 @@ import androidx.core.text.HtmlCompat.fromHtml
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.util.bottomPaddingValues
 import io.homeassistant.companion.android.util.intervalToString
 
 @Composable
@@ -64,7 +67,12 @@ fun SettingsWearTemplateTile(
             )
         }
     ) { padding ->
-        Column(Modifier.padding(padding).padding(all = 16.dp)) {
+        Column(
+            Modifier
+                .padding(WindowInsets.navigationBars.bottomPaddingValues())
+                .padding(padding)
+                .padding(all = 16.dp),
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
                     asset = CommunityMaterial.Icon3.cmd_timer_cog,
