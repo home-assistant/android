@@ -6,7 +6,7 @@ import io.homeassistant.companion.android.database.settings.PushProviderSetting
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 
-class FirebaseCloudMessagingProvider @Inject constructor() : PushProvider {
+class FirebasePushProvider @Inject constructor() : PushProvider {
 
     // Firebase Cloud Messaging depends on Google Play Services,
     // and as a result FCM is not supported with the minimal flavor

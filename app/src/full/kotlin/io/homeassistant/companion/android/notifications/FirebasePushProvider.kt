@@ -10,7 +10,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 
-class FirebaseCloudMessagingProvider @Inject constructor(
+class FirebasePushProvider @Inject constructor(
     private val messagingManager: MessagingManager
 ) : PushProvider {
 

@@ -49,8 +49,8 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    fun updatePushProviderSetting(id: Int, setting: PushProviderSetting) {
-        settingsDao.get(id)?.let {
+    fun updatePushProviderSetting(serverId: Int, setting: PushProviderSetting) {
+        settingsDao.get(serverId)?.let {
             it.pushProvider = setting
             settingsDao.update(it)
         }

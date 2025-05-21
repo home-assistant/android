@@ -14,7 +14,7 @@ import timber.log.Timber
 class FirebaseCloudMessagingService : FirebaseMessagingService() {
 
     @Inject
-    lateinit var pushProvider: FirebaseCloudMessagingProvider
+    lateinit var pushProvider: FirebasePushProvider
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 

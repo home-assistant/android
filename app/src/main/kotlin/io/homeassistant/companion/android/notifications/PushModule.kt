@@ -4,8 +4,8 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dagger.multibindings.ClassKey
 import dagger.multibindings.IntoMap
-import dagger.multibindings.StringKey
 import io.homeassistant.companion.android.common.notifications.PushProvider
 import javax.inject.Singleton
 
@@ -15,6 +15,6 @@ abstract class PushModule {
     @Binds
     @Singleton
     @IntoMap
-    @StringKey(FirebaseCloudMessagingProvider.SOURCE)
-    abstract fun bindFirebasePushProvider(firebaseCloudMessagingProvider: FirebaseCloudMessagingProvider): PushProvider
+    @ClassKey(FirebasePushProvider::class)
+    abstract fun bindFirebasePushProvider(firebasePushProvider: FirebasePushProvider): PushProvider
 }

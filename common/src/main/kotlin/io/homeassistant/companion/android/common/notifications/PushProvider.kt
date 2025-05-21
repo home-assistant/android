@@ -55,8 +55,8 @@ interface PushProvider {
     suspend fun updateRegistration(context: Context, coroutineScope: CoroutineScope) {
         coroutineScope.launch {
             val serverManager = serverManager(context)
-            if (serverManager.isRegistered()) {
-                Timber.d("Not trying to update registration since we aren't authenticated.")
+            if (!serverManager.isRegistered()) {
+                Timber.d("No server registered skipping update registration.")
                 return@launch
             }
             getEnabledServers(context).forEach {

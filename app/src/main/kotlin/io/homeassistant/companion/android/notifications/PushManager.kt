@@ -4,18 +4,17 @@ import io.homeassistant.companion.android.common.notifications.PushProvider
 import javax.inject.Inject
 
 class PushManager @Inject constructor(
-    val providers: Map<String, @JvmSuppressWildcards PushProvider>
+    val providers: Map<Class<*>, @JvmSuppressWildcards PushProvider>
 ) {
 
-    companion object {
-        private const val FCM_SOURCE = FirebaseCloudMessagingProvider.SOURCE
-    }
-
     val defaultProvider: PushProvider get() {
-        return providers[FCM_SOURCE]!!
+        return providers[FirebasePushProvider::class.java]!!
     }
 
+    /**
+     * Get the push url for the default push provider.
+     */
     suspend fun getToken(): String {
-        return providers[FCM_SOURCE]!!.getToken()
+        return defaultProvider.getToken()
     }
 }
