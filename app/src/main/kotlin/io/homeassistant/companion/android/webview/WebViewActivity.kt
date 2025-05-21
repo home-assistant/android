@@ -1663,20 +1663,17 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         if (presenter.isAlwaysShowFirstViewOnAppStartEnabled() &&
             LifecycleHandler.isAppInBackground()
         ) {
-            /**
-             * Pattern matches urls which are NOT allowed to show the first view after app is started
-             * This is
-             * /config/ as these are the settings of HA but NOT /config/dashboard. This is just the overview of the HA settings
-             * /hassio/ as these are the addons section of HA settings.
-             */
+            // Clearing history and replace the current page with the default page from the frontend.
+            // This way the user have a clear history stack.
+            webView.clearHistory()
+
+            // Pattern matches urls which are NOT allowed to show the first view after app is started
+            // This is
+            // /config/* as these are the settings of HA but NOT /config/dashboard. This is just the overview of the HA settings
+            // /hassio/* as these are the addons section of HA settings.
             if (webView.url?.matches(".*://.*/(config/(?!\\bdashboard\\b)|hassio)/*.*".toRegex()) == false) {
                 Timber.d("Show first view of default dashboard.")
                 if (serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true) {
-                    /**
-                     * Clearing history and replace the current page with the default page from the frontend.
-                     * This way the user have a clear history stack.
-                     */
-                    webView.clearHistory()
                     sendExternalBusMessage(
                         NavigateTo("/", true),
                     )
