@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.util.applyInsets
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
 import io.homeassistant.companion.android.themes.ThemesManager
@@ -154,9 +155,19 @@ class AuthenticationFragment : Fragment() {
                                     Timber.e("onReceivedSslError: $error")
                                     showError(requireContext().getString(commonR.string.error_ssl), error, null)
                                 }
+
+                                override fun onPageFinished(view: WebView?, url: String?) {
+                                    super.onPageFinished(view, url)
+                                    view?.requestApplyInsets()
+                                }
                             }
                             authUrl = buildAuthUrl(viewModel.manualUrl.value)
                             loadUrl(authUrl!!)
+
+                            // We don't know yet if the server supports handling Insets
+                            // but since it doesn't seem to be broken when it is not handled
+                            // we simply assume that it does handle Insets.
+                            applyInsets(rootView, true)
                         }
                     })
                 }

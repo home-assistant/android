@@ -4,6 +4,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.core.app.NotificationManagerCompat
 import androidx.fragment.app.commit
@@ -26,6 +27,7 @@ class OnboardingActivity : BaseActivity() {
     private val viewModel by viewModels<OnboardingViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_onboarding)
 
