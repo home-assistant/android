@@ -32,7 +32,7 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         mainScope.launch {
             pushProvider.setToken(token)
-            pushProvider.updateRegistration(this@FirebaseCloudMessagingService, mainScope)
+            pushProvider.updateRegistration(this@FirebaseCloudMessagingService)
         }
     }
 }

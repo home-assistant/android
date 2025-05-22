@@ -1,22 +1,26 @@
 package io.homeassistant.companion.android.launch
 
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.authentication.SessionState
+import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.notifications.PushManager
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
-abstract class LaunchPresenterBase(
+class LaunchPresenterImpl @Inject constructor(
     private val view: LaunchView,
-    internal val serverManager: ServerManager,
-    internal val pushManager: PushManager
+    private val serverManager: ServerManager,
+    private val pushManager: PushManager
 ) : LaunchPresenter {
 
-    internal val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-    internal val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
     override fun onViewReady() {
         mainScope.launch {
@@ -54,5 +58,21 @@ abstract class LaunchPresenterBase(
     }
 
     // TODO: This should probably go in settings?
-    internal abstract fun resyncRegistration()
+    private fun resyncRegistration() {
+        if (!serverManager.isRegistered()) return
+        serverManager.defaultServers.forEach {
+            ioScope.launch {
+                try {
+                    serverManager.integrationRepository(it.id).updateRegistration(
+                        DeviceRegistration(
+                            appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                            pushToken = pushManager.getToken()
+                        )
+                    )
+                } catch (e: Exception) {
+                    Timber.e(e, "Issue updating Registration")
+                }
+            }
+        }
+    }
 }

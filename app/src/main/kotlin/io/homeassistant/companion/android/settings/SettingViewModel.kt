@@ -18,11 +18,11 @@ class SettingViewModel @Inject constructor(
     private val settingsDao: SettingsDao,
     application: Application
 ) : AndroidViewModel(application) {
-    fun getSetting(id: Int): Setting {
-        var setting = settingsDao.get(id)
+    fun getSetting(serverId: Int): Setting {
+        var setting = settingsDao.get(serverId)
         if (setting == null) {
             setting = Setting(
-                id,
+                serverId,
                 if (BuildConfig.FLAVOR == "full") WebsocketSetting.NEVER else WebsocketSetting.ALWAYS,
                 SensorUpdateFrequencySetting.NORMAL,
                 if (BuildConfig.FLAVOR == "full") PushProviderSetting.FCM else PushProviderSetting.NONE
@@ -32,18 +32,18 @@ class SettingViewModel @Inject constructor(
         return setting
     }
 
-    fun getSettingFlow(id: Int): Flow<Setting> = settingsDao.getFlow(id)
+    fun getSettingFlow(serverId: Int): Flow<Setting> = settingsDao.getFlow(serverId)
 
-    fun updateWebsocketSetting(id: Int, setting: WebsocketSetting) {
-        settingsDao.get(id)?.let {
+    fun updateWebsocketSetting(serverId: Int, setting: WebsocketSetting) {
+        settingsDao.get(serverId)?.let {
             it.websocketSetting = setting
             settingsDao.update(it)
         }
         WebsocketManager.start(getApplication())
     }
 
-    fun updateSensorSetting(id: Int, setting: SensorUpdateFrequencySetting) {
-        settingsDao.get(id)?.let {
+    fun updateSensorSetting(serverId: Int, setting: SensorUpdateFrequencySetting) {
+        settingsDao.get(serverId)?.let {
             it.sensorUpdateFrequency = setting
             settingsDao.update(it)
         }

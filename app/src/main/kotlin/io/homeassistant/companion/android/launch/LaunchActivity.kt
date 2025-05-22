@@ -141,7 +141,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         mainScope.launch {
             if (result != null) {
                 val (url, authCode, deviceName, deviceTrackingEnabled, notificationsEnabled) = result
-                val messagingToken = pushManager.getToken()
+                val messagingToken = pushManager.getToken().orEmpty()
                 if (messagingToken.isBlank() && BuildConfig.FLAVOR == "full") {
                     AlertDialog.Builder(this@LaunchActivity)
                         .setTitle(commonR.string.firebase_error_title)

@@ -17,4 +17,7 @@ abstract class PushModule {
     @IntoMap
     @ClassKey(FirebasePushProvider::class)
     abstract fun bindFirebasePushProvider(firebasePushProvider: FirebasePushProvider): PushProvider
+
+    @Binds
+    abstract fun pushManager(pushManagerImpl: PushManagerImpl): PushManager
 }

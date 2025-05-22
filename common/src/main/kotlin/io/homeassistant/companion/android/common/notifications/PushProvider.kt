@@ -10,12 +10,18 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.PushProviderSetting
+import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 interface PushProvider {
     val setting: PushProviderSetting
+
+    val mainScope: CoroutineScope
+        get() = CoroutineScope(Dispatchers.Main + Job())
 
     /** @return `true` if this provider is available to the app on this device */
     fun isAvailable(context: Context): Boolean
@@ -52,8 +58,8 @@ interface PushProvider {
     /**
      * Update the device registration using this push provider
      */
-    suspend fun updateRegistration(context: Context, coroutineScope: CoroutineScope) {
-        coroutineScope.launch {
+    suspend fun updateRegistration(context: Context) {
+        mainScope.launch {
             val serverManager = serverManager(context)
             if (!serverManager.isRegistered()) {
                 Timber.d("No server registered skipping update registration.")
@@ -88,4 +94,9 @@ interface PushProvider {
             PushProviderEntryPoint::class.java
         )
             .serverManager()
+}
+
+fun PushProvider.id(): String {
+    val simpleName = this::class.simpleName ?: this::class.java.name
+    return simpleName.lowercase(Locale.US).replace(" ", "_")
 }

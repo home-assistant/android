@@ -1,20 +1,15 @@
 package io.homeassistant.companion.android.notifications
 
+import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.notifications.PushProvider
-import javax.inject.Inject
 
-class PushManager @Inject constructor(
+interface PushManager {
+    fun getProvider(clazz: Class<*>): PushProvider?
+
+    fun getProvider(id: String): PushProvider?
+
+    suspend fun getToken(): String?
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     val providers: Map<Class<*>, @JvmSuppressWildcards PushProvider>
-) {
-
-    val defaultProvider: PushProvider get() {
-        return providers[FirebasePushProvider::class.java]!!
-    }
-
-    /**
-     * Get the push url for the default push provider.
-     */
-    suspend fun getToken(): String {
-        return defaultProvider.getToken()
-    }
 }
