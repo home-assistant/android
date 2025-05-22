@@ -55,11 +55,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.getSystemService
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
-import androidx.core.graphics.Insets
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -86,6 +83,7 @@ import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.applyInsets
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
@@ -111,7 +109,6 @@ import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import java.util.concurrent.Executors
 import javax.inject.Inject
 import javax.inject.Named
-import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -243,8 +240,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var downloadFileContentDisposition = ""
     private var downloadFileMimetype = ""
     private val javascriptInterface = "externalApp"
-    private var rootInsets: Insets = Insets.NONE
-    private var bottomInsetsApplied = false
+    private var serverHandleInsets = false
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -255,26 +251,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             // Allow showing this on the lock screen when using device controls panel
             setShowWhenLocked(intent.extras?.getBoolean(EXTRA_SHOW_WHEN_LOCKED) ?: false)
         }
-        enableEdgeToEdge()
+
         super.onCreate(savedInstanceState)
-
-        binding = ActivityWebviewBinding.inflate(layoutInflater)
-
-        bottomInsetsApplied = serverManager.getServer()?.version?.isAtLeast(2026, 1) == true
-
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, windowInsets ->
-            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
-            val bottomInset = if (bottomInsetsApplied) 0 else insets.bottom
-
-            v.updatePadding(
-                top = insets.top,
-                bottom = bottomInset
-            )
-
-            rootInsets = Insets.of(insets.left, 0, insets.right, insets.bottom - bottomInset)
-
-            WindowInsetsCompat.CONSUMED
+        serverHandleInsets = serverManager.getServer()?.version?.isAtLeast(2025, 6) == true
+        if (serverHandleInsets) {
+            // On API 36 and above this is always enabled
+            enableEdgeToEdge()
         }
+        binding = ActivityWebviewBinding.inflate(layoutInflater)
 
         setContentView(binding.root)
 
@@ -308,6 +292,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         decor = window.decorView as FrameLayout
 
         webView = binding.webview
+
+        webView.applyInsets(binding.root, serverHandleInsets)
 
         val onBackPressed = object : OnBackPressedCallback(webView.canGoBack()) {
             override fun handleOnBackPressed() {
@@ -377,19 +363,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         webView.clearHistory()
                         clearHistory = false
                     }
-
-                    val density = resources.displayMetrics.density
-                    val safeInsetTop = (rootInsets.top / density).roundToInt()
-                    val safeInsetLeft = (rootInsets.left / density).roundToInt()
-                    val safeInsetRight = (rootInsets.right / density).roundToInt()
-                    val safeInsetBottom = (rootInsets.bottom / density).roundToInt()
-                    val safeAreaJs = """
-                        document.documentElement.style.setProperty('--android-safe-area-inset-top', '${safeInsetTop}px');
-                        document.documentElement.style.setProperty('--android-safe-area-inset-bottom', '${safeInsetBottom}px');
-                        document.documentElement.style.setProperty('--android-safe-area-inset-left', '${safeInsetLeft}px');
-                        document.documentElement.style.setProperty('--android-safe-area-inset-right', '${safeInsetRight}px');
-                    """.trimIndent()
-                    evaluateJavascript(safeAreaJs, null)
+                    view?.requestApplyInsets()
 
                     setWebViewZoom()
                     if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
@@ -903,9 +877,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         val trimmedColorString = webViewColors.substring(1, webViewColors.length - 1).trim()
                         val colors = trimmedColorString.split(htmlArraySpacer)
 
-                        for (color in colors) {
-                            Timber.d("Color from webview is \"$trimmedColorString\"")
-                        }
+                        Timber.d("Color from webview is \"$trimmedColorString\"")
 
                         statusBarColor = presenter.parseWebViewColor(colors[0].trim())
                         navigationBarColor = presenter.parseWebViewColor(colors[1].trim())
@@ -1297,22 +1269,22 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         // windowInsetsController sets the foreground colors.
 
         // Set background colors
-        if (statusBarColor != 0) {
+        if (statusBarColor != 0 && !serverHandleInsets) {
             window.statusBarColor = statusBarColor
         } else {
-            Timber.e("Cannot set status bar color. Skipping coloring...")
+            Timber.e("Skipping coloring status bar...")
         }
-        if (navigationBarColor != 0 && !bottomInsetsApplied) {
+        if (navigationBarColor != 0 && !serverHandleInsets) {
             window.navigationBarColor = navigationBarColor
         } else {
-            Timber.e("Cannot set navigation bar color. Skipping coloring...")
+            Timber.e("Skipping coloring navigation bar...")
         }
 
         // Set foreground colors
-        if (statusBarColor != 0) {
+        if (statusBarColor != 0 && !serverHandleInsets) {
             windowInsetsController.isAppearanceLightStatusBars = !isColorDark(statusBarColor)
         }
-        if (navigationBarColor != 0 && !bottomInsetsApplied) {
+        if (navigationBarColor != 0 && !serverHandleInsets) {
             windowInsetsController.isAppearanceLightNavigationBars = !isColorDark(navigationBarColor)
         }
     }
