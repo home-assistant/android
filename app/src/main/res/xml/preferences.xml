@@ -37,6 +37,11 @@
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/other_settings">
+        <Preference
+            android:key="set_launcher_app"
+            android:title="@string/default_launcher_prompt"
+            android:summary="@string/default_launcher_prompt_def"
+            android:icon="@drawable/ic_home_variant_outline" />
         <SwitchPreference
             android:key="fullscreen"
             android:icon="@drawable/ic_fullscreen"

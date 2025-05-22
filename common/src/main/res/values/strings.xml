@@ -1384,4 +1384,6 @@
     <string name="thermostat_tile">Thermostat tile</string>
     <string name="climate_heating">Heating</string>
     <string name="climate_cooling">Cooling</string>
+    <string name="default_launcher_prompt">Change launcher app</string>
+    <string name="default_launcher_prompt_def">Open settings to choose a default launcher app. Currently set to %s</string>
 </resources>
