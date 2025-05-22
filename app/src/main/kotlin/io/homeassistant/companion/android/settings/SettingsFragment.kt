@@ -58,6 +58,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
+private const val UNKNOWN_LAUNCHER_LABEL = "unknown app"
+
 class SettingsFragment(
     private val presenter: SettingsPresenter,
     private val langProvider: LanguagesProvider
@@ -357,6 +359,16 @@ class SettingsFragment(
                 return@setOnPreferenceClickListener true
             }
         }
+
+        findPreference<Preference>("set_launcher_app")?.let {
+            it.summary = getString(commonR.string.default_launcher_prompt_def, getDefaultLauncherInfo())
+            it.setOnPreferenceClickListener {
+                val intent = Intent(Settings.ACTION_HOME_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+                true
+            }
+        }
     }
 
     private fun removeSystemFromThemesIfNeeded() {
@@ -553,6 +565,20 @@ class SettingsFragment(
 
     override fun getPackageManager(): PackageManager? = context?.packageManager
 
+    private fun getDefaultLauncherInfo(): String {
+        val intent = Intent(Intent.ACTION_MAIN)
+            .addCategory(Intent.CATEGORY_HOME)
+
+        getPackageManager()?.let { packageManager ->
+            packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)?.let {
+                val packageName = it.activityInfo.packageName
+                return packageManager.getApplicationLabel(packageManager.getApplicationInfo(packageName, 0)).toString()
+            }
+        }
+
+        return UNKNOWN_LAUNCHER_LABEL
+    }
+
     override fun onPause() {
         super.onPause()
         snackbar?.dismiss()
@@ -562,6 +588,7 @@ class SettingsFragment(
         super.onResume()
         activity?.title = getString(commonR.string.companion_app)
         context?.let { presenter.updateSuggestions(it) }
+        findPreference<Preference>("set_launcher_app")?.summary = getString(commonR.string.default_launcher_prompt_def, getDefaultLauncherInfo())
     }
 
     override fun onDestroy() {
