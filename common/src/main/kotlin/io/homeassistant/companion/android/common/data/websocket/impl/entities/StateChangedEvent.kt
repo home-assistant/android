@@ -1,11 +1,11 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.homeassistant.companion.android.common.data.integration.Entity
+import kotlinx.serialization.Serializable
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class StateChangedEvent(
     val entityId: String,
-    val oldState: Entity<*>?,
-    val newState: Entity<*>?
+    val oldState: Entity? = null,
+    val newState: Entity? = null,
 )

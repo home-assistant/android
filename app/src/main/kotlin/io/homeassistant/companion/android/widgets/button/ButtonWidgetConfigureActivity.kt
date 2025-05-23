@@ -26,8 +26,6 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -35,6 +33,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.util.MapAnySerializer
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
@@ -63,7 +63,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     override val dao get() = buttonWidgetDao
 
     private var actions = mutableMapOf<Int, HashMap<String, Action>>()
-    private var entities = mutableMapOf<Int, HashMap<String, Entity<Any>>>()
+    private var entities = mutableMapOf<Int, HashMap<String, Entity>>()
     private var dynamicFields = ArrayList<ActionFieldBinder>()
     private lateinit var dynamicFieldAdapter: WidgetDynamicFieldAdapter
 
@@ -146,7 +146,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                             return@let
                         }
 
-                        val dbMap: HashMap<String, Any?> = jacksonObjectMapper().readValue(buttonWidget.serviceData)
+                        val dbMap: Map<String, Any?> = kotlinJsonMapper.decodeFromString(MapAnySerializer, buttonWidget.serviceData)
                         for (item in dbMap) {
                             val value = item.value.toString().replace("[", "").replace("]", "") + if (item.key == "entity_id") ", " else ""
                             existingActionData[item.key] = value.ifEmpty { null }
@@ -380,7 +380,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
         dynamicFieldAdapter.replaceValues(
             actions[serverId].orEmpty() as HashMap<String, Action>,
-            entities[serverId].orEmpty() as HashMap<String, Entity<Any>>
+            entities[serverId].orEmpty() as HashMap<String, Entity>
         )
 
         actionTextWatcher.afterTextChanged(binding.widgetTextConfigService.text)
@@ -459,7 +459,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             intent.putExtra(
                 ButtonWidget.EXTRA_ACTION_DATA,
-                jacksonObjectMapper().writeValueAsString(actionDataMap)
+                kotlinJsonMapper.encodeToString(MapAnySerializer, actionDataMap)
             )
 
             intent.putExtra(

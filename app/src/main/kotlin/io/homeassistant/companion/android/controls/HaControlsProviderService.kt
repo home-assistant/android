@@ -16,7 +16,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ar
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.util.RegistriesDataHandler
-import java.util.Calendar
+import java.time.LocalDateTime
 import java.util.concurrent.Flow
 import java.util.function.Consumer
 import javax.inject.Inject
@@ -95,7 +95,7 @@ class HaControlsProviderService : ControlsProviderService() {
                     return@launch
                 }
 
-                val entities = mutableMapOf<Int, List<Entity<Any>>?>()
+                val entities = mutableMapOf<Int, List<Entity>?>()
                 val areaForEntity = mutableMapOf<Int, Map<String, AreaRegistryResponse?>>()
 
                 val splitServersIntoMultipleStructures = splitMultiServersIntoStructures()
@@ -130,7 +130,7 @@ class HaControlsProviderService : ControlsProviderService() {
                 }.awaitAll()
 
                 try {
-                    val allEntities = mutableListOf<Pair<Int, Entity<Any>>>()
+                    val allEntities = mutableListOf<Pair<Int, Entity>>()
                     entities.forEach { serverEntities ->
                         serverEntities.value?.forEach { allEntities += Pair(serverEntities.key, it) }
                     }
@@ -155,7 +155,7 @@ class HaControlsProviderService : ControlsProviderService() {
                                 ) // No auth for preview, no base url to prevent downloading images
                                 domainToHaControl[entity.domain]?.createControl(
                                     applicationContext,
-                                    entity as Entity<Map<String, Any>>,
+                                    entity,
                                     info
                                 )
                             } catch (e: Exception) {
@@ -299,7 +299,7 @@ class HaControlsProviderService : ControlsProviderService() {
                 it
             }
         }
-        val entities = mutableMapOf<String, Entity<Map<String, Any>>>()
+        val entities = mutableMapOf<String, Entity>()
         val baseUrl = serverManager.getServer(serverId)?.connection?.getUrl()?.toString()?.removeSuffix("/") ?: ""
 
         areaRegistry[serverId] = getAreaRegistry.await()
@@ -313,7 +313,7 @@ class HaControlsProviderService : ControlsProviderService() {
 
                 serverManager.webSocketRepository(serverId).getCompressedStateAndChanges(entityIds)
                     ?.collect { event ->
-                        val toSend = mutableMapOf<String, Entity<Map<String, Any>>>()
+                        val toSend = mutableMapOf<String, Entity>()
                         event.added?.forEach {
                             val entity = it.value.toEntity(it.key)
                             entities.remove("ha_failed.$it")
@@ -407,7 +407,7 @@ class HaControlsProviderService : ControlsProviderService() {
                 serverManager.integrationRepository(serverId).getEntityUpdates(entityIds)?.collect {
                     val control = domainToHaControl[it.domain]?.createControl(
                         applicationContext,
-                        it as Entity<Map<String, Any>>,
+                        it,
                         HaControlInfo(
                             systemId = controlIds[entityIds.indexOf(it.entityId)],
                             entityId = it.entityId,
@@ -450,7 +450,7 @@ class HaControlsProviderService : ControlsProviderService() {
     private suspend fun sendEntitiesToSubscriber(
         subscriber: Flow.Subscriber<in Control>,
         controlIds: List<String>,
-        entities: Map<String, Entity<Map<String, Any>>>,
+        entities: Map<String, Entity>,
         serverId: Int,
         serverName: String?,
         coroutineScope: CoroutineScope,
@@ -500,14 +500,13 @@ class HaControlsProviderService : ControlsProviderService() {
     private fun getFailedEntity(
         entityId: String,
         exception: Exception
-    ): Entity<Map<String, Any>> {
+    ): Entity {
         return Entity(
             entityId = entityId,
             state = if (exception is HttpException && exception.code() == 404) "notfound" else "exception",
             attributes = mapOf<String, String>(),
-            lastChanged = Calendar.getInstance(),
-            lastUpdated = Calendar.getInstance(),
-            context = null
+            lastChanged = LocalDateTime.now(),
+            lastUpdated = LocalDateTime.now(),
         )
     }
 

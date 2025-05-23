@@ -43,7 +43,6 @@ dependencies {
     implementation(libs.wear.remote.interactions)
     implementation(libs.wear.phone.interactions)
 
-    implementation(libs.jackson.module.kotlin)
     implementation(libs.okhttp)
 
     implementation(libs.iconics.core)

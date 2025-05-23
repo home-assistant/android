@@ -18,8 +18,6 @@ import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.toColorInt
 import androidx.core.os.BundleCompat
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.IconicsSize
@@ -30,6 +28,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.MapAnySerializer
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -295,8 +295,10 @@ class ButtonWidget : AppWidgetProvider() {
                 // If everything loaded correctly, package the action data and attempt the call
                 try {
                     // Convert JSON to HashMap
-                    val actionDataMap: HashMap<String, Any> =
-                        jacksonObjectMapper().readValue(actionDataJson)
+                    val actionDataMap = kotlinJsonMapper.decodeFromString<Map<String, Any?>>(
+                        MapAnySerializer,
+                        actionDataJson
+                    ).toMutableMap()
 
                     if (actionDataMap["entity_id"] != null) {
                         val entityIdWithoutBrackets = Pattern.compile("\\[(.*?)\\]")

@@ -80,7 +80,7 @@ class MainViewModel @Inject constructor(
     }
 
     // entities
-    var entities = mutableStateMapOf<String, Entity<*>>()
+    var entities = mutableStateMapOf<String, Entity>()
         private set
 
     private val _supportedEntities = MutableStateFlow(emptyList<String>())
@@ -95,19 +95,19 @@ class MainViewModel @Inject constructor(
     val shortcutEntitiesMap = mutableStateMapOf<Int?, SnapshotStateList<SimplifiedEntity>>()
 
     val cameraTiles = cameraTileDao.getAllFlow().collectAsState()
-    var cameraEntitiesMap = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
+    var cameraEntitiesMap = mutableStateMapOf<String, SnapshotStateList<Entity>>()
         private set
 
     val thermostatTiles = thermostatTileDao.getAllFlow().collectAsState()
-    var climateEntitiesMap = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
+    var climateEntitiesMap = mutableStateMapOf<String, SnapshotStateList<Entity>>()
         private set
 
     var areas = mutableListOf<AreaRegistryResponse>()
         private set
 
-    var entitiesByArea = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
+    var entitiesByArea = mutableStateMapOf<String, SnapshotStateList<Entity>>()
         private set
-    var entitiesByDomain = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
+    var entitiesByDomain = mutableStateMapOf<String, SnapshotStateList<Entity>>()
         private set
     var entitiesByAreaOrder = mutableStateListOf<String>()
         private set
@@ -115,9 +115,9 @@ class MainViewModel @Inject constructor(
         private set
 
     // Content of EntityListView
-    var entityLists = mutableStateMapOf<String, List<Entity<*>>>()
+    var entityLists = mutableStateMapOf<String, List<Entity>>()
     var entityListsOrder = mutableStateListOf<String>()
-    var entityListFilter: (Entity<*>) -> Boolean = { true }
+    var entityListFilter: (Entity) -> Boolean = { true }
 
     // settings
     var loadingState = mutableStateOf(LoadingState.LOADING)
@@ -213,7 +213,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun updateEntityStates(entity: Entity<*>) {
+    private fun updateEntityStates(entity: Entity) {
         if (supportedDomains().contains(entity.domain)) {
             entities[entity.entityId] = entity
             // add to cache if part of favorites
@@ -247,9 +247,9 @@ class MainViewModel @Inject constructor(
 
             // Special lists: camera entities and climate entities
             val cameraEntities = it.filter { entity -> entity.domain == "camera" }
-            cameraEntitiesMap["camera"] = mutableStateListOf<Entity<*>>().apply { addAll(cameraEntities) }
+            cameraEntitiesMap["camera"] = mutableStateListOf<Entity>().apply { addAll(cameraEntities) }
             val climateEntities = it.filter { entity -> entity.domain == "climate" }
-            climateEntitiesMap["climate"] = mutableStateListOf<Entity<*>>().apply { addAll(climateEntities) }
+            climateEntitiesMap["climate"] = mutableStateListOf<Entity>().apply { addAll(climateEntities) }
         }
         if (!isFavoritesOnly) {
             updateEntityDomains()
@@ -316,11 +316,10 @@ class MainViewModel @Inject constructor(
 
         // Create a list with all areas + their entities
         areasList.forEach { area ->
-            val entitiesInArea = mutableStateListOf<Entity<*>>()
+            val entitiesInArea = mutableStateListOf<Entity>()
             entitiesInArea.addAll(
                 entitiesList
                     .filter { getAreaForEntity(it.entityId)?.areaId == area.areaId }
-                    .map { it as Entity<Map<String, Any>> }
                     .sortedBy { (it.attributes["friendly_name"] ?: it.entityId) as String }
             )
             entitiesByArea[area.areaId]?.let {
@@ -341,7 +340,7 @@ class MainViewModel @Inject constructor(
 
         // Create a list with all discovered domains + their entities
         domainsList.forEach { domain ->
-            val entitiesInDomain = mutableStateListOf<Entity<*>>()
+            val entitiesInDomain = mutableStateListOf<Entity>()
             entitiesInDomain.addAll(entitiesList.filter { it.domain == domain })
             entitiesByDomain[domain]?.let {
                 it.clear()
