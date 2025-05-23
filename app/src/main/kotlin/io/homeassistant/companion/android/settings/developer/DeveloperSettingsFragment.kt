@@ -19,7 +19,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.developer.location.LocationTrackingFragment
 import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
-import io.homeassistant.companion.android.util.applyBottomSystemBarsInsets
+import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
 import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -98,7 +98,7 @@ class DeveloperSettingsFragment : DeveloperSettingsView, PreferenceFragmentCompa
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        applyBottomSystemBarsInsets()
+        applyBottomSafeDrawingInsets()
     }
 
     private fun startThreadDebug(serverId: Int) {

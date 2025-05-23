@@ -25,7 +25,7 @@ import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
 import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
-import io.homeassistant.companion.android.util.applySystemBarsInsets
+import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
@@ -57,7 +57,7 @@ class SettingsActivity : BaseActivity() {
         setContentView(R.layout.activity_settings)
 
         // Delegate bottom insets to the fragments
-        findViewById<View>(R.id.root).applySystemBarsInsets(applyBottom = false, consumeInsets = false)
+        findViewById<View>(R.id.root).applySafeDrawingInsets(applyBottom = false, consumeInsets = false)
 
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)

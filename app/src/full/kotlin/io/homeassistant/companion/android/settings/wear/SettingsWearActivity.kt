@@ -24,7 +24,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.databinding.ActivitySettingsWearBinding
 import io.homeassistant.companion.android.settings.HelpMenuProvider
 import io.homeassistant.companion.android.settings.wear.views.SettingsWearMainView
-import io.homeassistant.companion.android.util.applySystemBarsInsets
+import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -50,7 +50,7 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
 
         binding = ActivitySettingsWearBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        binding.root.applySystemBarsInsets()
+        binding.root.applySafeDrawingInsets()
 
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)

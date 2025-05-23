@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.runtime.Composable
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsCompat.Type.displayCutout
+import androidx.core.view.WindowInsetsCompat.Type.ime
+import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.updatePadding
 import androidx.preference.PreferenceFragmentCompat
 
@@ -17,8 +20,8 @@ fun WindowInsets.bottomPaddingValues(): PaddingValues {
     return only(WindowInsetsSides.Bottom).asPaddingValues()
 }
 
-fun PreferenceFragmentCompat.applyBottomSystemBarsInsets(consumeInsets: Boolean = true) {
-    listView.applySystemBarsInsets(
+fun PreferenceFragmentCompat.applyBottomSafeDrawingInsets(consumeInsets: Boolean = true) {
+    listView.applySafeDrawingInsets(
         applyLeft = false,
         applyTop = false,
         applyRight = false,
@@ -27,8 +30,8 @@ fun PreferenceFragmentCompat.applyBottomSystemBarsInsets(consumeInsets: Boolean 
     )
 }
 
-fun View.applyBottomSystemBarsInsets(consumeInsets: Boolean = true) {
-    applySystemBarsInsets(
+fun View.applyBottomSafeDrawingInsets(consumeInsets: Boolean = true) {
+    applySafeDrawingInsets(
         applyLeft = false,
         applyTop = false,
         applyRight = false,
@@ -37,7 +40,7 @@ fun View.applyBottomSystemBarsInsets(consumeInsets: Boolean = true) {
     )
 }
 
-fun View.applySystemBarsInsets(
+fun View.applySafeDrawingInsets(
     applyLeft: Boolean = true,
     applyTop: Boolean = true,
     applyRight: Boolean = true,
@@ -45,7 +48,9 @@ fun View.applySystemBarsInsets(
     consumeInsets: Boolean = true,
 ) {
     ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
-        val insetsSystemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+        val insetsSystemBars = windowInsets.getInsets(
+            ime() + systemBars() + displayCutout(),
+        )
 
         view.updatePadding(
             left = if (applyLeft) insetsSystemBars.left else paddingLeft,
