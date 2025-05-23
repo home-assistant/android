@@ -2,11 +2,15 @@ package io.homeassistant.companion.android.settings.wear.views
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.IconButton
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -107,6 +111,7 @@ fun SettingsWearTopAppBar(
     val context = LocalContext.current
     TopAppBar(
         title = title,
+        modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),
         navigationIcon = {
             IconButton(onClick = onBackClicked) {
                 Image(
