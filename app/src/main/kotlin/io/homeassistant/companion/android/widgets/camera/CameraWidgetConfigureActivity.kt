@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.widgets.camera
 
 import android.R
-import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
@@ -25,6 +24,7 @@ import io.homeassistant.companion.android.databinding.WidgetCameraConfigureBindi
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
+import io.homeassistant.companion.android.widgets.getPinCallbackPendingIntent
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -72,12 +72,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     getSystemService<AppWidgetManager>()?.requestPinAppWidget(
                         ComponentName(this, CameraWidget::class.java),
                         null,
-                        PendingIntent.getActivity(
-                            this,
-                            System.currentTimeMillis().toInt(),
-                            Intent(this, CameraWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-                        )
+                        getPinCallbackPendingIntent(PIN_WIDGET_CALLBACK),
                     )
                 } else {
                     showAddWidgetError()

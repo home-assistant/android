@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.widgets.button
 
 import android.annotation.SuppressLint
-import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
@@ -48,6 +47,7 @@ import io.homeassistant.companion.android.widgets.common.ActionFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
+import io.homeassistant.companion.android.widgets.getPinCallbackPendingIntent
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -314,12 +314,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     getSystemService<AppWidgetManager>()?.requestPinAppWidget(
                         ComponentName(this, ButtonWidget::class.java),
                         null,
-                        PendingIntent.getActivity(
-                            this,
-                            System.currentTimeMillis().toInt(),
-                            Intent(this, ButtonWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-                        )
+                        getPinCallbackPendingIntent(PIN_WIDGET_CALLBACK),
                     )
                 } else {
                     showAddWidgetError()
