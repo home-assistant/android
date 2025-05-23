@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.databinding.WidgetCameraConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import javax.inject.Inject
@@ -65,6 +66,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         binding = WidgetCameraConfigureBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.root.applySafeDrawingInsets()
 
         binding.addButton.setOnClickListener {
             if (requestLauncherSetup) {

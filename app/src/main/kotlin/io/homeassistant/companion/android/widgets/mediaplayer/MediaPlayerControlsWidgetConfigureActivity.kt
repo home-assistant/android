@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWid
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
@@ -66,6 +67,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
 
         binding = WidgetMediaControlsConfigureBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.root.applySafeDrawingInsets()
 
         binding.addButton.setOnClickListener {
             if (requestLauncherSetup) {
