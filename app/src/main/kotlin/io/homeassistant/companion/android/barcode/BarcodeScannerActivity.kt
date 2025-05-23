@@ -6,7 +6,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import androidx.activity.SystemBarStyle
 import androidx.activity.addCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,7 +15,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -24,7 +22,6 @@ import com.google.zxing.BarcodeFormat
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.barcode.view.BarcodeScannerView
-import io.homeassistant.companion.android.barcode.view.barcodeScannerOverlayColor
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import java.util.Locale
@@ -65,8 +62,7 @@ class BarcodeScannerActivity : BaseActivity() {
     private var requestSilently by mutableStateOf(true)
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val overlaySystemBarStyle = SystemBarStyle.dark(barcodeScannerOverlayColor.toArgb())
-        enableEdgeToEdge(overlaySystemBarStyle, overlaySystemBarStyle)
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         val messageId = intent.getIntExtra(EXTRA_MESSAGE_ID, -1)

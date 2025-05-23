@@ -63,4 +63,4 @@ fun BarcodeScannerOverlay(
     }
 }
 
-val barcodeScannerOverlayColor = Color(0xAA000000)
+private val barcodeScannerOverlayColor = Color(0xAA000000)
