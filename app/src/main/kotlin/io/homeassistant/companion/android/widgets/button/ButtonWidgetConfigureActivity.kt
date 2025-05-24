@@ -39,6 +39,7 @@ import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.util.icondialog.IconDialogFragment
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
@@ -202,6 +203,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         binding = WidgetButtonConfigureBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.root.applySafeDrawingInsets()
 
         // Find the widget id from the intent.
         val intent = intent
