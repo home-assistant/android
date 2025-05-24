@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.widgets.template
 
-import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
@@ -27,6 +26,7 @@ import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewMode
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
+import io.homeassistant.companion.android.widgets.getPinCallbackPendingIntent
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -135,12 +135,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     getSystemService<AppWidgetManager>()?.requestPinAppWidget(
                         ComponentName(this, TemplateWidget::class.java),
                         null,
-                        PendingIntent.getActivity(
-                            this,
-                            System.currentTimeMillis().toInt(),
-                            Intent(this, TemplateWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-                        )
+                        getPinCallbackPendingIntent(PIN_WIDGET_CALLBACK),
                     )
                 } else {
                     showAddWidgetError() // this shouldn't be possible
