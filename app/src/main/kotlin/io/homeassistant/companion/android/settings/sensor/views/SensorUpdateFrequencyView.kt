@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.settings.sensor.views
 import android.os.Build
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_WORKER
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
+import io.homeassistant.companion.android.util.bottomPaddingValues
 import io.homeassistant.companion.android.util.compose.InfoNotification
 import io.homeassistant.companion.android.util.compose.RadioButtonRow
 
@@ -25,7 +28,11 @@ fun SensorUpdateFrequencyView(
 ) {
     val scrollState = rememberScrollState()
     Box(modifier = Modifier.verticalScroll(scrollState)) {
-        Column(modifier = Modifier.padding(all = 16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(WindowInsets.navigationBars.bottomPaddingValues())
+                .padding(all = 16.dp)
+        ) {
             Text(
                 text = stringResource(R.string.sensor_update_frequency_description),
                 modifier = Modifier.padding(bottom = 16.dp)

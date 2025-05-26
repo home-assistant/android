@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.util.LogcatReader
+import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
 import io.homeassistant.companion.android.util.getLatestFatalCrash
 import java.io.File
 import java.util.Calendar
@@ -103,6 +104,8 @@ class LogFragment : Fragment() {
             })
 
         refreshLog()
+
+        requireView().findViewById<View>(R.id.logTextView).applyBottomSafeDrawingInsets()
     }
 
     private fun refreshLog() = lifecycleScope.launch(Dispatchers.Main) {

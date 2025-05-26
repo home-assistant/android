@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.concurrent.futures.await
 import androidx.core.net.toUri
@@ -23,6 +24,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.databinding.ActivitySettingsWearBinding
 import io.homeassistant.companion.android.settings.HelpMenuProvider
 import io.homeassistant.companion.android.settings.wear.views.SettingsWearMainView
+import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -44,8 +46,11 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        enableEdgeToEdge()
+
         binding = ActivitySettingsWearBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.root.applySafeDrawingInsets()
 
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)

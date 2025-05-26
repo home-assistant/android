@@ -4,8 +4,10 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,6 +28,7 @@ import io.homeassistant.companion.android.common.sensors.id
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.settings.sensor.SensorSettingsViewModel
 import io.homeassistant.companion.android.settings.views.SettingsRow
+import io.homeassistant.companion.android.util.bottomPaddingValues
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -33,7 +36,9 @@ fun SensorListView(
     viewModel: SensorSettingsViewModel,
     onSensorClicked: (String) -> Unit
 ) {
-    LazyColumn {
+    LazyColumn(
+        contentPadding = WindowInsets.navigationBars.bottomPaddingValues()
+    ) {
         viewModel.allSensors.filter { it.value.isNotEmpty() }.forEach { (manager, currentSensors) ->
             stickyHeader(
                 key = manager.id()

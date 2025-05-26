@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
+import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
 import java.util.Calendar
 import java.util.GregorianCalendar
 import javax.inject.Inject
@@ -104,6 +105,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
             viewLifecycleOwner,
             Lifecycle.State.RESUMED
         )
+        applyBottomSafeDrawingInsets()
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
