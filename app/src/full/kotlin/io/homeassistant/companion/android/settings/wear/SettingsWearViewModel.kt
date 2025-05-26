@@ -272,7 +272,7 @@ class SettingsWearViewModel @Inject constructor(
 
     fun sendTemplateTileInfo() {
         val putDataRequest = PutDataMapRequest.create("/updateTemplateTiles").run {
-            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILES, kotlinJsonMapper.encodeToString(templateTiles))
+            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILES, kotlinJsonMapper.encodeToString(templateTiles.toMap()))
             setUrgent()
             asPutDataRequest()
         }
