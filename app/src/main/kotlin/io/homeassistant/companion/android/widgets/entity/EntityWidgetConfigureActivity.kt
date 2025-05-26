@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.widgets.entity
 
-import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
@@ -37,6 +36,7 @@ import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
+import io.homeassistant.companion.android.widgets.getPinCallbackPendingIntent
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -91,12 +91,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     getSystemService<AppWidgetManager>()?.requestPinAppWidget(
                         ComponentName(this, EntityWidget::class.java),
                         null,
-                        PendingIntent.getActivity(
-                            this,
-                            System.currentTimeMillis().toInt(),
-                            Intent(this, EntityWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-                        )
+                        getPinCallbackPendingIntent(PIN_WIDGET_CALLBACK),
                     )
                 } else {
                     showAddWidgetError()

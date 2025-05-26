@@ -1,12 +1,18 @@
 package io.homeassistant.companion.android.widgets
 
+import android.app.Activity
+import android.app.ActivityOptions
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
+import android.content.Intent
+import android.os.Build
 import android.view.View
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -71,4 +77,37 @@ abstract class BaseWidgetConfigureActivity : BaseActivity() {
     protected fun showAddWidgetError() {
         Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG).show()
     }
+}
+
+/**
+ * Creates a [PendingIntent] used as a successful callback when a user sets up a widget as pinned.
+ * This intent will be sent to the Activity that was used to handle the callback.
+ *
+ * It complies with the start background activities requirements from
+ * https://developer.android.com/guide/components/activities/background-starts#creator-pendingintent
+ *
+ * @param callbackKeyName The name of the extra to be put in the intent, indicating the callback key.
+ * @return A PendingIntent to use as a callback in successCallback of [androidx.glance.appwidget.GlanceAppWidgetManager.requestPinGlanceAppWidget]
+ * and [android.appwidget.AppWidgetManager.requestPinAppWidget].
+ */
+@RequiresApi(Build.VERSION_CODES.O)
+fun Activity.getPinCallbackPendingIntent(
+    callbackKeyName: String
+): PendingIntent {
+    val options = ActivityOptions.makeBasic()
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+        options.pendingIntentCreatorBackgroundActivityStartMode = ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOW_ALWAYS
+    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        options.pendingIntentCreatorBackgroundActivityStartMode = ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
+    }
+
+    return PendingIntent.getActivity(
+        this,
+        System.currentTimeMillis().toInt(),
+        Intent(this, this::class.java)
+            .putExtra(callbackKeyName, true)
+            .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+        options.toBundle(),
+    )
 }

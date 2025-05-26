@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.widgets.todo
 
 import android.annotation.SuppressLint
-import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.os.Build
@@ -52,6 +51,7 @@ import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewEntity2
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
+import io.homeassistant.companion.android.widgets.getPinCallbackPendingIntent
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -132,14 +132,7 @@ class TodoWidgetConfigureActivity : BaseActivity() {
             GlanceAppWidgetManager(context)
                 .requestPinGlanceAppWidget(
                     TodoWidget::class.java,
-                    successCallback = PendingIntent.getActivity(
-                        context,
-                        System.currentTimeMillis().toInt(),
-                        Intent(context, TodoWidgetConfigureActivity::class.java)
-                            .putExtra(PIN_WIDGET_CALLBACK, true)
-                            .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
-                    ),
+                    successCallback = getPinCallbackPendingIntent(PIN_WIDGET_CALLBACK),
                 )
         }
     }

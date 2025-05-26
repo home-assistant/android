@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.widgets.mediaplayer
 
-import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
@@ -25,6 +24,7 @@ import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewMode
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
+import io.homeassistant.companion.android.widgets.getPinCallbackPendingIntent
 import java.util.LinkedList
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -79,12 +79,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
                     getSystemService<AppWidgetManager>()?.requestPinAppWidget(
                         ComponentName(this, MediaPlayerControlsWidget::class.java),
                         null,
-                        PendingIntent.getActivity(
-                            this,
-                            System.currentTimeMillis().toInt(),
-                            Intent(this, MediaPlayerControlsWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-                        )
+                        getPinCallbackPendingIntent(PIN_WIDGET_CALLBACK),
                     )
                 } else {
                     showAddWidgetError()
