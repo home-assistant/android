@@ -71,7 +71,7 @@ private fun DevPlayGroundScreen(context: Context? = null) {
             Text("Start Settings")
         }
         Button(modifier = Modifier.padding(top = 16.dp), onClick = {
-            context?.run { startActivity(BarcodeScannerActivity.newInstance(this, 0, "Title", "Subtitle", null)) }
+            context?.run { startActivity(BarcodeScannerActivity.newInstance(this, 0, "Title", "Subtitle", "Action")) }
         }) {
             Text("Start barcode")
         }
