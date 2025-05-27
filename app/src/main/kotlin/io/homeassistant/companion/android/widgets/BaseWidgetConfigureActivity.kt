@@ -1,12 +1,14 @@
 package io.homeassistant.companion.android.widgets
 
 import android.appwidget.AppWidgetManager
+import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -26,6 +28,11 @@ abstract class BaseWidgetConfigureActivity : BaseActivity() {
     abstract val serverSelectList: Spinner
 
     var selectedServerId: Int? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
+        super.onCreate(savedInstanceState)
+    }
 
     protected fun setupServerSelect(widgetServerId: Int?) {
         val servers = serverManager.defaultServers
