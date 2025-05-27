@@ -86,6 +86,7 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                 }
 
                 dependencies {
+                    "lintChecks"(project(":lint"))
                     "implementation"(libs.timber)
 
                     "ksp"(libs.hilt.android.compiler)
