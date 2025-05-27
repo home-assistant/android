@@ -295,7 +295,7 @@ class MissingSerializableAnnotationIssueTest {
     }
 
     @Test
-    fun `Given the usage of any when invoking kotlinJsonMapper encoreToString with a MapAnySerializer then`() {
+    fun `Given the usage of any when invoking kotlinJsonMapper encoreToString with a MapAnySerializer then hint to avoid AnySerializer is logged`() {
         lint().issues(*issuesToUse)
             .allowMissingSdk()
             .files(
@@ -320,10 +320,10 @@ class MissingSerializableAnnotationIssueTest {
             )
             .run()
             .expect(
-                """src/io/homeassistant/Home.kt:9: Information: Prefer polymorphic serializer over AnySerializer. [AvoidAnySerializer]
+                """src/io/homeassistant/Home.kt:9: Hint: Prefer polymorphic serializer over AnySerializer. [AvoidAnySerializer]
     val value = kotlinJsonMapper.encodeToString(MapAnySerializer, value = mapOf<String, List<Home>>( "hello" to Home()))
                                                 ~~~~~~~~~~~~~~~~
-0 errors, 0 warnings""",
+0 errors, 0 warnings, 1 hint""",
             )
     }
 }
