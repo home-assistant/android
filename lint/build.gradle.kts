@@ -26,6 +26,11 @@ dependencies {
     testImplementation(libs.lint.checks)
 }
 
+dependencyLocking {
+    // Unlocks configuration since it doesn't work with the lint configuration and doesn't generate the lockfile for the lint targets
+    unlockAllConfigurations()
+}
+
 tasks.jar {
     manifest.attributes(
         mapOf("Lint-Registry-v2" to "io.homeassistant.lint.LintRegistry")
