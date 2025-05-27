@@ -15,13 +15,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -59,6 +54,8 @@ import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewEntity2
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
+import io.homeassistant.companion.android.util.safeTopWindowInsets
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -215,7 +212,7 @@ private fun TodoWidgetConfigureView(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.widget_todo_label)) },
-                windowInsets = WindowInsets.statusBars,
+                windowInsets = safeTopWindowInsets(),
                 backgroundColor = colorResource(R.color.colorBackground),
                 contentColor = colorResource(R.color.colorOnBackground),
             )
@@ -223,7 +220,7 @@ private fun TodoWidgetConfigureView(
     ) { padding ->
         Column(
             modifier = Modifier
-                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
+                .windowInsetsPadding(safeBottomWindowInsets())
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(all = 16.dp),
