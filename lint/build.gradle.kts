@@ -25,3 +25,9 @@ dependencies {
     testImplementation(libs.lint.tests)
     testImplementation(libs.lint.checks)
 }
+
+tasks.jar {
+    manifest.attributes(
+        mapOf("Lint-Registry-v2" to "io.homeassistant.lint.LintRegistry")
+    )
+}
