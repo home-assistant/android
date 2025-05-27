@@ -220,9 +220,9 @@ private fun TodoWidgetConfigureView(
     ) { padding ->
         Column(
             modifier = Modifier
+                .verticalScroll(rememberScrollState())
                 .windowInsetsPadding(safeBottomWindowInsets())
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
                 .padding(all = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
