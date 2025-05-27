@@ -15,6 +15,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -71,6 +72,9 @@ class BarcodeScannerActivity : BaseActivity() {
         val subtitle = if (intent.hasExtra(EXTRA_SUBTITLE)) intent.getStringExtra(EXTRA_SUBTITLE) else null
         if (title == null || subtitle == null) finish() // Invalid state
         val action = if (intent.hasExtra(EXTRA_ACTION)) intent.getStringExtra(EXTRA_ACTION) else null
+
+        // Enforce status bar to be always light so we can see it above the blur of the screen
+        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
 
         setContent {
             HomeAssistantAppTheme {

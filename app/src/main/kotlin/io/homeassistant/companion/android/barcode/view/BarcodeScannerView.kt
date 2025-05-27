@@ -6,14 +6,12 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
@@ -57,6 +55,7 @@ import io.homeassistant.companion.android.util.compose.darkColorBackground
 import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import io.homeassistant.companion.android.util.compose.screenWidth
 import io.homeassistant.companion.android.util.getActivity
+import io.homeassistant.companion.android.util.safeTopWindowInsets
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
@@ -153,7 +152,7 @@ fun BarcodeScannerView(
                             }
                         },
                         backgroundColor = Color.Transparent,
-                        windowInsets = WindowInsets.statusBars,
+                        windowInsets = safeTopWindowInsets(),
                         elevation = 0.dp
                     )
                 },
