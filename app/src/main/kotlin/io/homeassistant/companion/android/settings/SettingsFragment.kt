@@ -58,7 +58,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
-private const val UNKNOWN_LAUNCHER_LABEL = "unknown app"
 
 class SettingsFragment(
     private val presenter: SettingsPresenter,
@@ -576,7 +575,7 @@ class SettingsFragment(
             }
         }
 
-        return UNKNOWN_LAUNCHER_LABEL
+        return getString(commonR.string.unknown_launcher_label)
     }
 
     override fun onPause() {
