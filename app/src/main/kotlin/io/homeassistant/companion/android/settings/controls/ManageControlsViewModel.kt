@@ -44,7 +44,7 @@ class ManageControlsViewModel @Inject constructor(
     var entitiesLoaded by mutableStateOf(false)
         private set
 
-    val entitiesList = mutableStateMapOf<Int, List<Entity<*>>>()
+    val entitiesList = mutableStateMapOf<Int, List<Entity>>()
 
     var panelSetting by mutableStateOf<Pair<String?, Int>?>(null)
         private set

@@ -74,11 +74,11 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun getEntities(): List<Entity<*>>? {
+    override suspend fun getEntities(): List<Entity>? {
         return serverManager.integrationRepository().getEntities()
     }
 
-    override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity<*>>? {
+    override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>? {
         return serverManager.integrationRepository().getEntityUpdates(entityIds)
     }
 
