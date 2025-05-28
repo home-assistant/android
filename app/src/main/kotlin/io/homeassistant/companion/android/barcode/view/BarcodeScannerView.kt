@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.barcode.view
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.ButtonDefaults
@@ -55,7 +55,9 @@ import io.homeassistant.companion.android.util.compose.darkColorBackground
 import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import io.homeassistant.companion.android.util.compose.screenWidth
 import io.homeassistant.companion.android.util.getActivity
+import io.homeassistant.companion.android.util.safeTopWindowInsets
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun BarcodeScannerView(
     title: String,
@@ -112,7 +114,6 @@ fun BarcodeScannerView(
 
         BoxWithConstraints(
             modifier = Modifier
-                .safeDrawingPadding()
                 .fillMaxSize()
         ) {
             val screenHeight = safeScreenHeight()
@@ -151,6 +152,7 @@ fun BarcodeScannerView(
                             }
                         },
                         backgroundColor = Color.Transparent,
+                        windowInsets = safeTopWindowInsets(),
                         elevation = 0.dp
                     )
                 },
