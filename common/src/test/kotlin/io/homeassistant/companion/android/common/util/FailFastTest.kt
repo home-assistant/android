@@ -9,7 +9,7 @@ class FailFastTest {
     fun `Given a throw when invoking failOnCatch then properly propagate the error with custom stacktrace`() {
         var exceptionCaught: Exception? = null
         FailFast.setHandler(object : FailFastHandler {
-            override fun handleException(exception: Exception) {
+            override fun handleException(exception: Exception, additionalMessage: String?) {
                 exceptionCaught = exception
             }
         })
