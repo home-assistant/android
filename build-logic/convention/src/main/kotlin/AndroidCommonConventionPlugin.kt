@@ -88,8 +88,10 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                 }
 
                 dependencies {
-                    "coreLibraryDesugaring"(libs.tools.desugar.jdk)
+                    "lintChecks"(project(":lint"))
 
+                    "coreLibraryDesugaring"(libs.tools.desugar.jdk)
+                    
                     "implementation"(libs.timber)
                     "implementation"(libs.kotlinx.serialization.json)
 

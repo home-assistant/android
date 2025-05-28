@@ -1,5 +1,5 @@
 
-include(":common", ":app", ":wear", ":automotive", ":testing-unit")
+include(":common", ":app", ":wear", ":automotive", ":testing-unit", ":lint")
 
 rootProject.name = "home-assistant-android"
 
@@ -24,8 +24,16 @@ plugins {
 }
 
 reckon {
+    val isCiBuild = providers.environmentVariable("CI").isPresent
+
     setDefaultInferredScope("patch")
-    stages("beta", "final")
+    if (!isCiBuild) {
+        // Use a snapshot version scheme with Reckon when not running in CI, which allows caching to
+        // improve performance. Background: https://github.com/home-assistant/android/issues/5220.
+        snapshots()
+    } else {
+        stages("beta", "final")
+    }
     setScopeCalc { java.util.Optional.of(org.ajoberstar.reckon.core.Scope.PATCH) }
     setStageCalc(calcStageFromProp())
     setTagWriter { it.toString() }

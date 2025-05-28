@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.runtime.Composable
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -18,6 +19,26 @@ import androidx.preference.PreferenceFragmentCompat
 @Composable
 fun WindowInsets.bottomPaddingValues(): PaddingValues {
     return only(WindowInsetsSides.Bottom).asPaddingValues()
+}
+
+@Composable
+fun safeBottomWindowInsets(): WindowInsets {
+    return WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)
+}
+
+@Composable
+fun safeBottomPaddingValues(): PaddingValues {
+    return safeBottomWindowInsets().asPaddingValues()
+}
+
+@Composable
+fun safeTopWindowInsets(): WindowInsets {
+    return WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
+}
+
+@Composable
+fun safeTopPaddingValues(): PaddingValues {
+    return safeTopWindowInsets().asPaddingValues()
 }
 
 fun PreferenceFragmentCompat.applyBottomSafeDrawingInsets(consumeInsets: Boolean = true) {
