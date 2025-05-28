@@ -91,7 +91,7 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     "lintChecks"(project(":lint"))
 
                     "coreLibraryDesugaring"(libs.tools.desugar.jdk)
-                    
+
                     "implementation"(libs.timber)
                     "implementation"(libs.kotlinx.serialization.json)
 
@@ -123,6 +123,7 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                         }
                     }
                 }
+
                 is LibraryExtension -> extensions.configure<LibraryExtension> { configure() }
             }
         }
