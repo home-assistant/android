@@ -38,7 +38,7 @@ class ServerManagerImpl @Inject constructor(
     private val sensorDao: SensorDao,
     private val settingsDao: SettingsDao,
     private val wifiHelper: WifiHelper,
-    @Named("session") private val localStorage: LocalStorage,
+    @Named("session") private val localStorage: LocalStorage
 ) : ServerManager {
 
     private val ioScope = CoroutineScope(Dispatchers.IO + Job())

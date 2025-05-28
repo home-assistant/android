@@ -152,7 +152,7 @@ class HighAccuracyLocationService : Service() {
         FailFast.failOnCatch {
             // Sometimes the service cannot be started as foreground due to the app being in a state where
             // this is not allowed. We didn't identified yet how to avoid starting the service in this state.
-            // To avoid a crash, we catch it with FailEarly, which will only crash in debug builds.
+            // To avoid a crash, we catch it with FailFast, which will only crash in debug builds.
             LAUNCHER.onServiceCreated(this, notificationId, notification, type)
         }
 
