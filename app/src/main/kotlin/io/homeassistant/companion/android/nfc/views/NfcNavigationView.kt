@@ -29,6 +29,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.nfc.NfcViewModel
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
+import io.homeassistant.companion.android.util.safeTopWindowInsets
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -103,7 +104,8 @@ fun LoadNfcView(
                     }
                 },
                 backgroundColor = colorResource(commonR.color.colorBackground),
-                contentColor = colorResource(commonR.color.colorOnBackground)
+                contentColor = colorResource(commonR.color.colorOnBackground),
+                windowInsets = safeTopWindowInsets()
             )
         }
     ) { contentPadding ->
