@@ -11,10 +11,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -61,7 +59,7 @@ import io.homeassistant.companion.android.database.location.LocationHistoryItemR
 import io.homeassistant.companion.android.database.location.LocationHistoryItemTrigger
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.settings.views.EmptyState
-import io.homeassistant.companion.android.util.bottomPaddingValues
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import java.text.DateFormat
 import java.util.TimeZone
 import kotlinx.coroutines.flow.Flow
@@ -76,7 +74,7 @@ fun LocationTrackingView(
     val historyState = history.collectAsLazyPagingItems()
 
     LazyColumn(
-        contentPadding = WindowInsets.navigationBars.bottomPaddingValues()
+        contentPadding = safeBottomPaddingValues()
     ) {
         item("history.use") {
             Box(Modifier.padding(all = 16.dp)) {

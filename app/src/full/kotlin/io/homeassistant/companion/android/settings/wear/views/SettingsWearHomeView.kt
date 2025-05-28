@@ -2,8 +2,6 @@ package io.homeassistant.companion.android.settings.wear.views
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.IconButton
 import androidx.compose.material.TopAppBar
@@ -25,6 +23,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import io.homeassistant.companion.android.util.safeTopWindowInsets
 
 const val WEAR_DOCS_LINK = "https://companion.home-assistant.io/docs/wear-os/"
 
@@ -111,7 +110,7 @@ fun SettingsWearTopAppBar(
     val context = LocalContext.current
     TopAppBar(
         title = title,
-        modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars),
+        modifier = Modifier.windowInsetsPadding(safeTopWindowInsets()),
         navigationIcon = {
             IconButton(onClick = onBackClicked) {
                 Image(

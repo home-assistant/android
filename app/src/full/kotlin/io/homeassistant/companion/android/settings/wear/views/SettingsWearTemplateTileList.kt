@@ -2,9 +2,7 @@ package io.homeassistant.companion.android.settings.wear.views
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -22,7 +20,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.settings.views.SettingsRow
-import io.homeassistant.companion.android.util.bottomPaddingValues
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @Composable
 fun SettingsWearTemplateTileList(
@@ -42,7 +40,7 @@ fun SettingsWearTemplateTileList(
         Column(
             Modifier
                 .verticalScroll(rememberScrollState())
-                .padding(WindowInsets.navigationBars.bottomPaddingValues())
+                .padding(safeBottomPaddingValues())
                 .padding(padding)
         ) {
             if (templateTiles.entries.isEmpty()) {
