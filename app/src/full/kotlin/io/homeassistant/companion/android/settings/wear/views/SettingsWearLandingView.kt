@@ -2,10 +2,8 @@ package io.homeassistant.companion.android.settings.wear.views
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -28,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.settings.views.SettingsRow
-import io.homeassistant.companion.android.util.bottomPaddingValues
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import io.homeassistant.companion.android.util.wearDeviceName
 import kotlinx.coroutines.flow.Flow
@@ -74,7 +72,7 @@ fun SettingWearLandingView(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .fillMaxWidth()
-                .padding(WindowInsets.navigationBars.bottomPaddingValues())
+                .padding(safeBottomPaddingValues())
                 .padding(padding)
         ) {
             Row(

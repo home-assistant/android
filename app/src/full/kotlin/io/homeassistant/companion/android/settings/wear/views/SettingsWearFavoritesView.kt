@@ -2,9 +2,6 @@ package io.homeassistant.companion.android.settings.wear.views
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,6 +26,8 @@ import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import io.homeassistant.companion.android.util.compose.FavoriteEntityRow
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
+import io.homeassistant.companion.android.util.plus
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharedFlow
@@ -91,7 +90,7 @@ fun LoadWearFavoritesSettings(
         LazyColumn(
             state = lazyListState,
             verticalArrangement = Arrangement.Center,
-            contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
+            contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(),
             modifier = Modifier.padding(contentPadding),
         ) {
             item {

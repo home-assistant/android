@@ -8,12 +8,9 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -66,6 +63,8 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.compose.HaAlertWarning
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.getEntityDomainString
+import io.homeassistant.companion.android.util.plus
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @Composable
 fun ManageControlsView(
@@ -91,10 +90,7 @@ fun ManageControlsView(
     var panelPath by remember(panelSetting?.first) { mutableStateOf(panelSetting?.first ?: "") }
 
     LazyColumn(
-        contentPadding = PaddingValues(
-            top = 16.dp,
-            bottom = 16.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-        )
+        contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues()
     ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             item {

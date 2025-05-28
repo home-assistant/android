@@ -4,9 +4,7 @@ import android.os.Build
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -41,9 +39,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
-import io.homeassistant.companion.android.util.bottomPaddingValues
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -82,7 +80,7 @@ fun ManageTilesView(
         ) {
             Column(
                 modifier = Modifier
-                    .padding(WindowInsets.navigationBars.bottomPaddingValues())
+                    .padding(safeBottomPaddingValues())
                     .padding(all = 16.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
