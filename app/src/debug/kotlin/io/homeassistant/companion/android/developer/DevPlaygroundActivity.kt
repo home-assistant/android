@@ -7,8 +7,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -50,7 +53,7 @@ private class DummyException : Throwable()
 private fun DevPlayGroundScreen(context: Context? = null) {
     Column(
         modifier = Modifier
-            // .padding(WindowInsets.systemBars.asPaddingValues())
+            .padding(WindowInsets.systemBars.asPaddingValues())
             .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
