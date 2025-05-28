@@ -21,6 +21,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.CHANNEL_HIGH_ACCURACY
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.ForegroundServiceLauncher
 import kotlin.math.abs
@@ -148,7 +149,12 @@ class HighAccuracyLocationService : Service() {
         notification = notificationBuilder.build()
 
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) FOREGROUND_SERVICE_TYPE_LOCATION else 0
-        LAUNCHER.onServiceCreated(this, notificationId, notification, type)
+        FailFast.failOnCatch {
+            // Sometimes the service cannot be started as foreground due to the app being in a state where
+            // this is not allowed. We didn't identified yet how to avoid starting the service in this state.
+            // To avoid a crash, we catch it with FailEarly, which will only crash in debug builds.
+            LAUNCHER.onServiceCreated(this, notificationId, notification, type)
+        }
 
         Timber.d("High accuracy location service created -> onCreate")
     }

@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager.Comp
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepositoryFactory
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerDao
@@ -37,7 +38,7 @@ class ServerManagerImpl @Inject constructor(
     private val sensorDao: SensorDao,
     private val settingsDao: SettingsDao,
     private val wifiHelper: WifiHelper,
-    @Named("session") private val localStorage: LocalStorage
+    @Named("session") private val localStorage: LocalStorage,
 ) : ServerManager {
 
     private val ioScope = CoroutineScope(Dispatchers.IO + Job())
@@ -89,7 +90,12 @@ class ServerManagerImpl @Inject constructor(
         mutableServers.values.any {
             it.type == ServerType.DEFAULT &&
                 it.connection.isRegistered() &&
-                authenticationRepository(it.id).getSessionState() == SessionState.CONNECTED
+                FailFast.failOnCatch(
+                    message = {
+                        """Fail to get authenticationRepository for ${it.id} current authenticationRepos ids: ${authenticationRepos.keys} """
+                    },
+                    fallback = false,
+                ) { authenticationRepository(it.id).getSessionState() == SessionState.CONNECTED }
         }
 
     override suspend fun addServer(server: Server): Int {
