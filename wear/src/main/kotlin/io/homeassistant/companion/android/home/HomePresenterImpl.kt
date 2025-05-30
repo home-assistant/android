@@ -184,10 +184,10 @@ class HomePresenterImpl @Inject constructor(
                 try {
                     serverManager.integrationRepository(it.id).updateRegistration(
                         DeviceRegistration(
-                            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                            null,
-                            getMessagingToken(),
-                            false
+                            appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                            deviceName = null,
+                            pushToken = getMessagingToken(),
+                            pushWebsocket = false
                         )
                     )
                     serverManager.webSocketRepository(it.id).getCurrentUser() // Update cached data
