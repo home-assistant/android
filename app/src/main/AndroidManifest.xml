@@ -305,13 +305,19 @@
                     android:scheme="homeassistant"
                     android:host="navigate" />
             </intent-filter>
+        </activity>
 
+        <activity-alias
+            android:name=".launch.LauncherAlias"
+            android:targetActivity=".launch.LaunchActivity"
+            android:enabled="false"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-        </activity>
+        </activity-alias>
 
         <activity android:name=".launch.link.LinkActivity"
             android:exported="true"
