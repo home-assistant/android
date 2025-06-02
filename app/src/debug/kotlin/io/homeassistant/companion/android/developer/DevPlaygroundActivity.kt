@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.homeassistant.companion.android.barcode.BarcodeScannerActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
@@ -68,6 +69,11 @@ private fun DevPlayGroundScreen(context: Context? = null) {
             context?.run { startActivity(SettingsActivity.newInstance(context)) }
         }) {
             Text("Start Settings")
+        }
+        Button(modifier = Modifier.padding(top = 16.dp), onClick = {
+            context?.run { startActivity(BarcodeScannerActivity.newInstance(this, 0, "Title", "Subtitle", "Action")) }
+        }) {
+            Text("Start barcode")
         }
     }
 }
