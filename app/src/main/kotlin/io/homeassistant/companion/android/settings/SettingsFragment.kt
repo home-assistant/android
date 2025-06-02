@@ -60,7 +60,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
-
 class SettingsFragment(
     private val presenter: SettingsPresenter,
     private val langProvider: LanguagesProvider,
@@ -361,7 +360,15 @@ class SettingsFragment(
             }
         }
 
+        findPreference<SwitchPreference>("enable_ha_launcher")?.let { switchPreference ->
+            switchPreference.setOnPreferenceClickListener {
+                findPreference<Preference>("set_launcher_app")?.isVisible = switchPreference.isChecked
+                true
+            }
+        }
+
         findPreference<Preference>("set_launcher_app")?.let {
+            it.isVisible = findPreference<SwitchPreference>("enable_ha_launcher")?.isChecked ?: false
             it.summary = getString(commonR.string.default_launcher_prompt_def, getDefaultLauncherInfo())
             it.setOnPreferenceClickListener {
                 val intent = Intent(Settings.ACTION_HOME_SETTINGS)
