@@ -28,7 +28,7 @@ fun SensorUpdateFrequencyView(
     Box(modifier = Modifier.verticalScroll(scrollState)) {
         Column(
             modifier = Modifier
-                .padding(safeBottomPaddingValues())
+                .padding(safeBottomPaddingValues(applyHorizontal = false))
                 .padding(all = 16.dp)
         ) {
             Text(

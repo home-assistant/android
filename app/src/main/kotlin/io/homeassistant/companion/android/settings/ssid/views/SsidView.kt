@@ -83,7 +83,7 @@ fun SsidView(
     onSetPrioritize: (Boolean) -> Unit
 ) {
     LazyColumn(
-        contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(),
+        contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
     ) {
         item("intro") {
             Column {

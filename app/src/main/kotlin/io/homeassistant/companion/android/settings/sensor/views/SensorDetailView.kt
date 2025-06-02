@@ -135,7 +135,7 @@ fun SensorDetailView(
         snackbarHost = {
             SnackbarHost(
                 hostState = scaffoldState.snackbarHostState,
-                modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets()),
+                modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets(applyHorizontal = false)),
             )
         },
     ) { contentPadding ->
@@ -158,7 +158,7 @@ fun SensorDetailView(
         }
         LazyColumn(
             modifier = Modifier.padding(contentPadding),
-            contentPadding = safeBottomPaddingValues()
+            contentPadding = safeBottomPaddingValues(applyHorizontal = false)
         ) {
             if (viewModel.sensorManager != null && viewModel.basicSensor != null) {
                 item {

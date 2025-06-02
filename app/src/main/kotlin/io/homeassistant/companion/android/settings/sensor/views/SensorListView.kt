@@ -35,7 +35,7 @@ fun SensorListView(
     onSensorClicked: (String) -> Unit
 ) {
     LazyColumn(
-        contentPadding = safeBottomPaddingValues()
+        contentPadding = safeBottomPaddingValues(applyHorizontal = false)
     ) {
         viewModel.allSensors.filter { it.value.isNotEmpty() }.forEach { (manager, currentSensors) ->
             stickyHeader(

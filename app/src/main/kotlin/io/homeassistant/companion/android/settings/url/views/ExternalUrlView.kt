@@ -35,7 +35,7 @@ fun ExternalUrlView(
 
     Column(
         modifier = Modifier
-            .padding(safeBottomPaddingValues())
+            .padding(safeBottomPaddingValues(applyHorizontal = false))
             .padding(vertical = 16.dp)
     ) {
         if (canUseCloud) {

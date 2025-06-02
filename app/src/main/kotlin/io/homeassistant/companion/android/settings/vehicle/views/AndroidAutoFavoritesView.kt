@@ -65,7 +65,7 @@ fun AndroidAutoFavoritesSettings(
 
     LazyColumn(
         state = lazyListState,
-        contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(),
+        contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
     ) {
         item {
             Text(

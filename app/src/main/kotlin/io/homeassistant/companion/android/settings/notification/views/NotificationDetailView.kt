@@ -33,7 +33,7 @@ fun LoadNotification(notification: NotificationItem) {
     Column(
         modifier = Modifier
             .verticalScroll(scrollState)
-            .padding(safeBottomPaddingValues()),
+            .padding(safeBottomPaddingValues(applyHorizontal = false)),
     ) {
         NotificationDetailViewHeader(stringId = commonR.string.notification_received_at)
         val cal: Calendar = GregorianCalendar()

@@ -52,7 +52,7 @@ fun ManageShortcutsView(
     showIconDialog: (tag: String) -> Unit
 ) {
     LazyColumn(
-        contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues()
+        contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(applyHorizontal = false)
     ) {
         item {
             Text(

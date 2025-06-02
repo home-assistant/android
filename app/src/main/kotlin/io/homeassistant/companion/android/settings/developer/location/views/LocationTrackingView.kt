@@ -74,7 +74,7 @@ fun LocationTrackingView(
     val historyState = history.collectAsLazyPagingItems()
 
     LazyColumn(
-        contentPadding = safeBottomPaddingValues()
+        contentPadding = safeBottomPaddingValues(applyHorizontal = false)
     ) {
         item("history.use") {
             Box(Modifier.padding(all = 16.dp)) {

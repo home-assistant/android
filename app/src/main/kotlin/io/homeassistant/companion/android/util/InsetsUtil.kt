@@ -38,18 +38,22 @@ fun WindowInsets.bottomPaddingValues(): PaddingValues {
 }
 
 @Composable
-fun safeBottomWindowInsets(): WindowInsets {
-    return WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)
+fun safeBottomWindowInsets(applyHorizontal: Boolean = true): WindowInsets {
+    return WindowInsets.safeDrawing.only(
+        if (applyHorizontal) WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal else WindowInsetsSides.Bottom,
+    )
 }
 
 @Composable
-fun safeBottomPaddingValues(): PaddingValues {
-    return safeBottomWindowInsets().asPaddingValues()
+fun safeBottomPaddingValues(applyHorizontal: Boolean = true): PaddingValues {
+    return safeBottomWindowInsets(applyHorizontal).asPaddingValues()
 }
 
 @Composable
-fun safeTopWindowInsets(): WindowInsets {
-    return WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
+fun safeTopWindowInsets(applyHorizontal: Boolean = true): WindowInsets {
+    return WindowInsets.safeDrawing.only(
+        if (applyHorizontal) WindowInsetsSides.Top + WindowInsetsSides.Horizontal else WindowInsetsSides.Top,
+    )
 }
 
 @Composable

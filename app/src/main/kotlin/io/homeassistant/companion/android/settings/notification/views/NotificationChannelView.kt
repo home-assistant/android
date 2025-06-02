@@ -48,13 +48,13 @@ fun NotificationChannelView(
         snackbarHost = {
             SnackbarHost(
                 hostState = scaffoldState.snackbarHostState,
-                modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets()),
+                modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets(applyHorizontal = false)),
             )
         },
     ) { contentPadding ->
         LazyColumn(
             modifier = Modifier.padding(contentPadding),
-            contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(),
+            contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
         ) {
             item {
                 Text(

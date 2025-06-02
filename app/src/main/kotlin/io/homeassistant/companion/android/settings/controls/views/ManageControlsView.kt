@@ -90,7 +90,7 @@ fun ManageControlsView(
     var panelPath by remember(panelSetting?.first) { mutableStateOf(panelSetting?.first ?: "") }
 
     LazyColumn(
-        contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues()
+        contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false)
     ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             item {

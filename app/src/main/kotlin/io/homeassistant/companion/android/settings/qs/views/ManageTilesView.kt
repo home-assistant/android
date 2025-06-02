@@ -69,7 +69,7 @@ fun ManageTilesView(
         snackbarHost = {
             SnackbarHost(
                 hostState = scaffoldState.snackbarHostState,
-                modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets()),
+                modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets(applyHorizontal = false)),
             )
         },
     ) { contentPadding ->
@@ -80,7 +80,7 @@ fun ManageTilesView(
         ) {
             Column(
                 modifier = Modifier
-                    .padding(safeBottomPaddingValues())
+                    .padding(safeBottomPaddingValues(applyHorizontal = false))
                     .padding(all = 16.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

@@ -74,7 +74,7 @@ fun ManageWidgetsView(
     Scaffold(floatingActionButton = {
         if (viewModel.supportsAddingWidgets) {
             ExtendedFloatingActionButton(
-                modifier = Modifier.padding(safeBottomPaddingValues()),
+                modifier = Modifier.padding(safeBottomPaddingValues(applyHorizontal = false)),
                 backgroundColor = MaterialTheme.colors.primary,
                 contentColor = MaterialTheme.colors.onPrimary,
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
@@ -110,7 +110,7 @@ fun ManageWidgetsView(
             )
         }
         LazyColumn(
-            contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(),
+            contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
             modifier = Modifier
                 .padding(contentPadding)
                 .fillMaxWidth()
