@@ -37,11 +37,6 @@
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/other_settings">
-        <Preference
-            android:key="set_launcher_app"
-            android:title="@string/default_launcher_prompt"
-            android:summary="@string/default_launcher_prompt_def"
-            android:icon="@drawable/ic_home_variant_outline" />
         <SwitchPreference
             android:key="fullscreen"
             android:icon="@drawable/ic_fullscreen"
@@ -189,6 +184,20 @@
             android:icon="@drawable/ic_widget"
             android:title="@string/manage_widgets"
             android:summary="@string/manage_widgets_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/launcher">
+        <SwitchPreference
+            android:key="enable_ha_launcher"
+            android:icon="@drawable/ic_android_debug_bridge"
+            app:isPreferenceVisible="true"
+            android:title="@string/launcher_option_title"
+            android:summary="@string/launcher_option_summary" />
+        <Preference
+            android:key="set_launcher_app"
+            android:title="@string/default_launcher_prompt"
+            android:summary="@string/default_launcher_prompt_def"
+            android:icon="@drawable/ic_home_variant_outline" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/need_help">
