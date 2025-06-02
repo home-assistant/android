@@ -204,14 +204,7 @@ private object DecodeFromStringStringVisitor {
                 return null
             }
         }
-        // TODO handle the case where the typeArguement is deduced from the receiver variable
         return node.returnType
-//        val typeArguments = node.typeArguments
-//        if (typeArguments.size != 1) {
-//            Logger.warn("Could not resolved type argument call of $DECODE_FROM_STRING_METHOD_NAME, check $ISSUE_CLASS_NAME code.")
-//            return null
-//        }
-//        return typeArguments.first()
     }
 
     private fun shouldSkipTypeArgumentCheck(context: JavaContext, node: UCallExpression): Boolean {
