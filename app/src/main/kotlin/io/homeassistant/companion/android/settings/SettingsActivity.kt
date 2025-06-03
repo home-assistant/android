@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.enableEdgeToEdge
 import androidx.biometric.BiometricManager
 import androidx.fragment.app.commit
 import dagger.hilt.EntryPoint
@@ -51,7 +50,6 @@ class SettingsActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val entryPoint = EntryPointAccessors.fromActivity(this, SettingsFragmentFactoryEntryPoint::class.java)
         supportFragmentManager.fragmentFactory = entryPoint.getSettingsFragmentFactory()
-        enableEdgeToEdge()
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)

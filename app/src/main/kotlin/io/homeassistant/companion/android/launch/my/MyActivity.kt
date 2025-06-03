@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.databinding.ActivityMyBinding
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
+import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 
@@ -44,6 +45,8 @@ class MyActivity : BaseActivity() {
 
         val binding = ActivityMyBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        // TODO check how the insets are applied for the webView in the WebView PR
+        binding.root.applySafeDrawingInsets()
 
         if (intent?.action == Intent.ACTION_VIEW && intent.data != null) {
             if (
