@@ -3,9 +3,11 @@ package io.homeassistant.companion.android.nfc.views
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Scaffold
+import androidx.compose.material.SnackbarHost
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
@@ -26,6 +28,8 @@ import androidx.navigation.compose.rememberNavController
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.nfc.NfcViewModel
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
+import io.homeassistant.companion.android.util.safeTopWindowInsets
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -64,6 +68,12 @@ fun LoadNfcView(
 
     Scaffold(
         scaffoldState = scaffoldState,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = scaffoldState.snackbarHostState,
+                modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets()),
+            )
+        },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(commonR.string.nfc_title_settings)) },
@@ -94,7 +104,8 @@ fun LoadNfcView(
                     }
                 },
                 backgroundColor = colorResource(commonR.color.colorBackground),
-                contentColor = colorResource(commonR.color.colorOnBackground)
+                contentColor = colorResource(commonR.color.colorOnBackground),
+                windowInsets = safeTopWindowInsets()
             )
         }
     ) { contentPadding ->

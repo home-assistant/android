@@ -7,10 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -41,8 +38,9 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.database.widget.WidgetEntity
 import io.homeassistant.companion.android.settings.views.EmptyState
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
-import io.homeassistant.companion.android.util.bottomPaddingValues
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
+import io.homeassistant.companion.android.util.plus
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
@@ -76,7 +74,7 @@ fun ManageWidgetsView(
     Scaffold(floatingActionButton = {
         if (viewModel.supportsAddingWidgets) {
             ExtendedFloatingActionButton(
-                modifier = Modifier.padding(WindowInsets.navigationBars.bottomPaddingValues()),
+                modifier = Modifier.padding(safeBottomPaddingValues(applyHorizontal = false)),
                 backgroundColor = MaterialTheme.colors.primary,
                 contentColor = MaterialTheme.colors.onPrimary,
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
@@ -112,12 +110,7 @@ fun ManageWidgetsView(
             )
         }
         LazyColumn(
-            contentPadding = PaddingValues(
-                top = 16.dp,
-                start = 16.dp,
-                end = 16.dp,
-                bottom = 16.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
-            ),
+            contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
             modifier = Modifier
                 .padding(contentPadding)
                 .fillMaxWidth()

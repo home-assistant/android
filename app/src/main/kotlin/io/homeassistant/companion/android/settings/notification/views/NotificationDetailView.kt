@@ -3,8 +3,6 @@ package io.homeassistant.companion.android.settings.notification.views
 import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -20,8 +18,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.text.HtmlCompat
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.notification.NotificationItem
-import io.homeassistant.companion.android.util.bottomPaddingValues
 import io.homeassistant.companion.android.util.notificationItem
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import java.util.Calendar
 import java.util.GregorianCalendar
 import kotlinx.serialization.json.Json
@@ -34,7 +32,7 @@ fun LoadNotification(notification: NotificationItem) {
     Column(
         modifier = Modifier
             .verticalScroll(scrollState)
-            .padding(WindowInsets.navigationBars.bottomPaddingValues()),
+            .padding(safeBottomPaddingValues(applyHorizontal = false)),
     ) {
         NotificationDetailViewHeader(stringId = commonR.string.notification_received_at)
         val cal: Calendar = GregorianCalendar()
