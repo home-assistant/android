@@ -1,9 +1,13 @@
 package io.homeassistant.companion.android.common.data.integration.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonProperty
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
 data class CheckRateLimits(
     val target: String,
-    @JsonProperty("rateLimits")
+    @JsonNames("rateLimits")
     val rateLimits: RateLimitResponse
 )

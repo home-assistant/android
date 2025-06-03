@@ -53,10 +53,10 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
     override val serverSelectList: Spinner
         get() = binding.serverSelectList
 
-    private var entities = mutableMapOf<Int, List<Entity<Any>>>()
-    private var selectedEntities: LinkedList<Entity<*>?> = LinkedList()
+    private var entities = mutableMapOf<Int, List<Entity>>()
+    private var selectedEntities: LinkedList<Entity?> = LinkedList()
 
-    private var entityAdapter: SingleItemArrayAdapter<Entity<Any>>? = null
+    private var entityAdapter: SingleItemArrayAdapter<Entity>? = null
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

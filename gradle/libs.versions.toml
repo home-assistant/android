@@ -40,11 +40,11 @@ healthServicesClient = "1.1.0-alpha05"
 hilt = "2.56.2"
 iconics = "5.4.0"
 improv = "0.1.1"
-jackson-module-kotlin = "2.13.5" # WARNING: https://github.com/home-assistant/android/issues/3518
 javaVersion = "11" # https://developer.android.com/studio/write/java11-minimal-support-table
 junit = "5.13.0"
-kotlinx-coroutines = "1.10.2"
 kotlin = "2.1.21"
+kotlinx-coroutines = "1.10.2"
+kotlinx-serialization = "1.8.1"
 ksp = "2.1.21-2.0.1"
 ktlint = "12.2.0"
 leakcanaryAndroid = "2.14"
@@ -64,7 +64,7 @@ play-services-wearable = "19.0.0"
 preference-ktx = "1.2.1"
 recyclerview = "1.4.0"
 reorderable = "2.4.3"
-retrofit = "2.9.0"
+retrofit-bom = "2.11.0"
 robolectric = "4.14.1"
 room = "2.7.1"
 runtimeLint = "1.8.2"
@@ -96,6 +96,7 @@ google-services = { id = "com.google.gms.google-services", version.ref = "google
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
@@ -172,7 +173,6 @@ hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt"
 iconics-compose = { module = "com.mikepenz:iconics-compose", version.ref = "iconics" }
 iconics-core = { module = "com.mikepenz:iconics-core", version.ref = "iconics" }
 improv = { module = "org.openhomefoundation.improv-wifi:sdk-android", version.ref = "improv" }
-jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params" }
@@ -184,6 +184,7 @@ kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-cor
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
@@ -209,8 +210,9 @@ play-services-wearable = { module = "com.google.android.gms:play-services-wearab
 preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preference-ktx" }
 recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
-retrofit-converter-jackson = { module = "com.squareup.retrofit2:converter-jackson", version.ref = "retrofit"  }
+retrofit-bom = { module = "com.squareup.retrofit2:retrofit-bom", version.ref = "retrofit-bom" }
+retrofit = { module = "com.squareup.retrofit2:retrofit" }
+retrofit-converter-kotlinx-serialization = { module = "com.squareup.retrofit2:converter-kotlinx-serialization" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 sentry-android-core = { module = "io.sentry:sentry-android-core", version.ref = "sentry-android" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }

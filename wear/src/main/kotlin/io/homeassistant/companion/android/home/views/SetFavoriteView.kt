@@ -63,7 +63,7 @@ fun SetFavoritesView(
 
 @Composable
 private fun FavoriteToggleChip(
-    entity: Entity<*>,
+    entity: Entity,
     favoriteEntityIds: List<String>,
     onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit
 ) {

@@ -1,23 +1,29 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonProperty
 import io.homeassistant.companion.android.common.data.integration.Entity
-import java.util.Calendar
+import io.homeassistant.companion.android.common.util.MapAnySerializer
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import kotlin.math.round
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 
 /**
  * Represents a single event emitted in a `subscribe_entities` websocket subscription. One event can
  * contain state changes for multiple entities; properties map them as entity id -> state.
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class CompressedStateChangedEvent(
-    @JsonProperty("a")
-    val added: Map<String, CompressedEntityState>?,
-    @JsonProperty("c")
-    val changed: Map<String, CompressedStateDiff>?,
-    @JsonProperty("r")
-    val removed: List<String>?
+    @JsonNames("a")
+    val added: Map<String, CompressedEntityState>? = null,
+    @JsonNames("c")
+    val changed: Map<String, CompressedStateDiff>? = null,
+    @JsonNames("r")
+    val removed: List<String>? = null,
 )
 
 /**
@@ -25,54 +31,49 @@ data class CompressedStateChangedEvent(
  * It will only include properties that have been changed, values that haven't changed will not be
  * set (in Kotlin: `null`). Apply it to an existing Entity to get the new state.
  */
+@Serializable
 data class CompressedStateDiff(
-    @JsonProperty("+")
-    val plus: CompressedEntityState?,
-    @JsonProperty("-")
-    val minus: CompressedEntityRemoved?
+    @JsonNames("+")
+    val plus: CompressedEntityState? = null,
+    @JsonNames("-")
+    val minus: CompressedEntityRemoved? = null,
 )
 
 /**
  * A compressed version of [Entity] used for additions or changes in the entity's state in a
  * `subscribe_entities` websocket subscription.
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class CompressedEntityState(
-    @JsonProperty("s")
-    val state: String?,
-    @JsonProperty("a")
-    val attributes: Map<String, Any>?,
-    @JsonProperty("lc")
-    val lastChanged: Double?,
-    @JsonProperty("lu")
-    val lastUpdated: Double?,
-    @JsonProperty("c")
-    val context: Any?
+    @JsonNames("s")
+    val state: String? = null,
+    @Serializable(with = MapAnySerializer::class)
+    @JsonNames("a")
+    val attributes: Map<String, @Polymorphic Any?>,
+    @JsonNames("lc")
+    val lastChanged: Double? = null,
+    @JsonNames("lu")
+    val lastUpdated: Double? = null,
 ) {
     /**
      * Convert a compressed entity state to a normal [Entity]. This function can be used for new
      * entities that are delivered in a compressed format.
      */
-    fun toEntity(entityId: String): Entity<Map<String, Any>> {
+    fun toEntity(entityId: String): Entity {
         return Entity(
             entityId = entityId,
             state = state!!,
-            attributes = attributes ?: mapOf(),
-            lastChanged = Calendar.getInstance().apply { timeInMillis = round(lastChanged!! * 1000).toLong() },
-            lastUpdated = Calendar.getInstance().apply {
-                timeInMillis =
-                    if (lastUpdated != null) {
-                        round(lastUpdated * 1000).toLong()
-                    } else {
-                        round(lastChanged!! * 1000).toLong()
-                    }
-            },
-            context =
-            if (context is String) {
-                mapOf("id" to context, "parent_id" to null, "user_id" to null)
-            } else {
-                context as? Map<String, Any?>
-            }
+            attributes = attributes,
+            lastChanged = LocalDateTime.ofEpochSecond(round(lastChanged!!).toLong(), 0, ZoneOffset.UTC),
+            lastUpdated = LocalDateTime.ofEpochSecond(
+                if (lastUpdated != null) {
+                    round(lastUpdated * 1000).toLong()
+                } else {
+                    round(lastChanged * 1000).toLong()
+                },
+                0,
+                ZoneOffset.UTC,
+            ),
         )
     }
 }
@@ -81,8 +82,8 @@ data class CompressedEntityState(
  * A compressed version of [Entity] used for removed properties from the entity's state in a
  * `subscribe_entities` websocket subscription. Only attributes are expected to be removed.
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class CompressedEntityRemoved(
-    @JsonProperty("a")
-    val attributes: List<String>?
+    @JsonNames("a")
+    val attributes: List<String>? = null,
 )

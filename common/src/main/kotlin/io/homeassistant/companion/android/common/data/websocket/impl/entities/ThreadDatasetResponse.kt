@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import kotlinx.serialization.Serializable
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class ThreadDatasetResponse(
     val datasetId: String,
     val extendedPanId: String,
@@ -10,6 +10,6 @@ data class ThreadDatasetResponse(
     val panId: String,
     val preferred: Boolean,
     // only on core >= 2023.9, may still be null
-    val preferredBorderAgentId: String?,
+    val preferredBorderAgentId: String? = null,
     val source: String
 )

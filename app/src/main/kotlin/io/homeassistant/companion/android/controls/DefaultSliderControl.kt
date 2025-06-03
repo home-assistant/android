@@ -18,7 +18,7 @@ object DefaultSliderControl : HaControl {
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity<Map<String, Any>>,
+        entity: Entity,
         info: HaControlInfo
     ): Control.StatefulBuilder {
         control.setStatusText("")
@@ -35,10 +35,10 @@ object DefaultSliderControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
+    override fun getDeviceType(entity: Entity): Int =
         DeviceTypes.TYPE_UNKNOWN
 
-    override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+    override fun getDomainString(context: Context, entity: Entity): String =
         if (entity.domain == "input_number") {
             context.getString(commonR.string.domain_input_number)
         } else {

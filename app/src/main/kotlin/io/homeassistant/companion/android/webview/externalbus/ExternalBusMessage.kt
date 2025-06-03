@@ -1,10 +1,9 @@
 package io.homeassistant.companion.android.webview.externalbus
 
 import android.webkit.ValueCallback
-import kotlinx.serialization.Serializable
 
 open class ExternalBusMessage(
-    val id: Any,
+    val id: Any?,
     val type: String,
     val command: String? = null,
     val success: Boolean? = null,
@@ -14,7 +13,6 @@ open class ExternalBusMessage(
     val callback: ValueCallback<String>? = null,
 )
 
-@Serializable
 class NavigateTo(path: String, replace: Boolean = false) : ExternalBusMessage(
     id = -1,
     type = "command",
