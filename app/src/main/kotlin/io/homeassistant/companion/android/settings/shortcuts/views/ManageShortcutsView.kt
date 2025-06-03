@@ -7,10 +7,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -45,6 +42,8 @@ import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSett
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsViewModel
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
+import io.homeassistant.companion.android.util.plus
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
@@ -53,12 +52,7 @@ fun ManageShortcutsView(
     showIconDialog: (tag: String) -> Unit
 ) {
     LazyColumn(
-        contentPadding = PaddingValues(
-            top = 16.dp,
-            start = 16.dp,
-            end = 16.dp,
-            bottom = 16.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
-        )
+        contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(applyHorizontal = false)
     ) {
         item {
             Text(

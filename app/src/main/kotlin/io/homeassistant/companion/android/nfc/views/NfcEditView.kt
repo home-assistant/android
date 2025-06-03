@@ -28,6 +28,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.util.plus
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @SuppressLint("HardwareIds")
 @Composable
@@ -38,7 +40,9 @@ fun NfcEditView(
     onFireEventClicked: () -> Unit
 ) {
     val context = LocalContext.current
-    LazyColumn(contentPadding = PaddingValues(all = 16.dp)) {
+    LazyColumn(
+        contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues()
+    ) {
         item {
             Text(
                 text = stringResource(commonR.string.nfc_tag_identifier),

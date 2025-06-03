@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
@@ -20,6 +21,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarDuration
+import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarResult
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
@@ -55,6 +57,7 @@ import io.homeassistant.companion.android.util.compose.darkColorBackground
 import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import io.homeassistant.companion.android.util.compose.screenWidth
 import io.homeassistant.companion.android.util.getActivity
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import io.homeassistant.companion.android.util.safeTopWindowInsets
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
@@ -139,6 +142,12 @@ fun BarcodeScannerView(
             BarcodeScannerOverlay(modifier = Modifier.fillMaxSize(), cutout = cutoutSize)
             Scaffold(
                 scaffoldState = scaffoldState,
+                snackbarHost = {
+                    SnackbarHost(
+                        hostState = scaffoldState.snackbarHostState,
+                        modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets()),
+                    )
+                },
                 topBar = {
                     TopAppBar(
                         title = {},

@@ -13,15 +13,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
@@ -36,6 +35,7 @@ import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Scaffold
+import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarResult
 import androidx.compose.material.Surface
 import androidx.compose.material.Switch
@@ -79,9 +79,10 @@ import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.HealthConnectSensorManager
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
-import io.homeassistant.companion.android.util.bottomPaddingValues
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.compose.TransparentChip
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -129,7 +130,15 @@ fun SensorDetailView(
         }.launchIn(this)
     }
 
-    Scaffold(scaffoldState = scaffoldState) { contentPadding ->
+    Scaffold(
+        scaffoldState = scaffoldState,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = scaffoldState.snackbarHostState,
+                modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets(applyHorizontal = false)),
+            )
+        },
+    ) { contentPadding ->
         if (sensorUpdateTypeInfo && viewModel.basicSensor != null) {
             SensorDetailUpdateInfoDialog(
                 basicSensor = viewModel.basicSensor,
@@ -149,7 +158,7 @@ fun SensorDetailView(
         }
         LazyColumn(
             modifier = Modifier.padding(contentPadding),
-            contentPadding = WindowInsets.navigationBars.bottomPaddingValues()
+            contentPadding = safeBottomPaddingValues(applyHorizontal = false)
         ) {
             if (viewModel.sensorManager != null && viewModel.basicSensor != null) {
                 item {
