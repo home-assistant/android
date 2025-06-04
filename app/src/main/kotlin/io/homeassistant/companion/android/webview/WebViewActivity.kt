@@ -253,14 +253,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
 
         super.onCreate(savedInstanceState)
-        serverHandleInsets = serverManager.getServer()?.version?.isAtLeast(2025, 6) == true
-        if (serverHandleInsets) {
-            // On API 36 and above this is always enabled
-            enableEdgeToEdge()
-        }
-        binding = ActivityWebviewBinding.inflate(layoutInflater)
-
-        setContentView(binding.root)
 
         if (intent.extras?.containsKey(EXTRA_SERVER) == true) {
             intent.extras?.getInt(EXTRA_SERVER)?.let {
@@ -268,6 +260,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 intent.removeExtra(EXTRA_SERVER)
             }
         }
+
+        serverHandleInsets = serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6) == true
+        enableEdgeToEdge()
+        binding = ActivityWebviewBinding.inflate(layoutInflater)
+
+        setContentView(binding.root)
 
         windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
 
@@ -293,7 +291,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         webView = binding.webview
 
-        webView.applyInsets(binding.root, serverHandleInsets)
+        webView.applyInsets(
+            binding.root,
+            serverHandleInsets,
+            binding.statusBarBackground,
+            binding.navigationBarBackground,
+        )
 
         val onBackPressed = object : OnBackPressedCallback(webView.canGoBack()) {
             override fun handleOnBackPressed() {
@@ -1271,11 +1274,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         // Set background colors
         if (statusBarColor != 0 && !serverHandleInsets) {
             window.statusBarColor = statusBarColor
+            binding.statusBarBackground.setBackgroundColor(statusBarColor)
         } else {
             Timber.e("Skipping coloring status bar...")
         }
         if (navigationBarColor != 0 && !serverHandleInsets) {
             window.navigationBarColor = navigationBarColor
+            binding.navigationBarBackground.setBackgroundColor(navigationBarColor)
         } else {
             Timber.e("Skipping coloring navigation bar...")
         }
