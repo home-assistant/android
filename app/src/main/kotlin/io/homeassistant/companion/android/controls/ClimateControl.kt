@@ -39,7 +39,7 @@ object ClimateControl : HaControl {
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity<Map<String, Any>>,
+        entity: Entity,
         info: HaControlInfo
     ): Control.StatefulBuilder {
         val minValue = (entity.attributes["min_temp"] as? Number)?.toFloat() ?: 0f
@@ -101,14 +101,14 @@ object ClimateControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
+    override fun getDeviceType(entity: Entity): Int =
         if (entityShouldBePresentedAsThermostat(entity)) {
             DeviceTypes.TYPE_THERMOSTAT
         } else {
             DeviceTypes.TYPE_AC_HEATER
         }
 
-    override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+    override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.domain_climate)
 
     override suspend fun performAction(
@@ -170,7 +170,7 @@ object ClimateControl : HaControl {
         }
     }
 
-    private fun entityShouldBePresentedAsThermostat(entity: Entity<Map<String, Any>>): Boolean =
+    private fun entityShouldBePresentedAsThermostat(entity: Entity): Boolean =
         (entity.attributes["hvac_modes"] as? List<String>).let { modes ->
             temperatureControlModes.containsKey(entity.state) &&
                 modes?.isNotEmpty() == true &&

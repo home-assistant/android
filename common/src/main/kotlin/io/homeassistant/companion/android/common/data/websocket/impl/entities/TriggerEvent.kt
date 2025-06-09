@@ -1,12 +1,12 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.homeassistant.companion.android.common.data.integration.Entity
+import kotlinx.serialization.Serializable
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class TriggerEvent(
     val platform: String,
-    val entityId: String?,
-    val fromState: Entity<*>?,
-    val toState: Entity<*>?
+    val entityId: String? = null,
+    val fromState: Entity? = null,
+    val toState: Entity? = null,
 )

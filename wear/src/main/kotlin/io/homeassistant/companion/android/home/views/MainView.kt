@@ -53,7 +53,7 @@ fun MainView(
     onEntityLongClicked: (String) -> Unit,
     onRetryLoadEntitiesClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
-    onNavigationClicked: (entityLists: Map<String, List<Entity<*>>>, listOrder: List<String>, filter: (Entity<*>) -> Boolean) -> Unit,
+    onNavigationClicked: (entityLists: Map<String, List<Entity>>, listOrder: List<String>, filter: (Entity) -> Boolean) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean
 ) {
@@ -235,7 +235,7 @@ fun MainView(
                             }
                         }
 
-                        val domainEntitiesFilter: (entity: Entity<*>) -> Boolean =
+                        val domainEntitiesFilter: (entity: Entity) -> Boolean =
                             {
                                 mainViewModel.getAreaForEntity(it.entityId) == null &&
                                     mainViewModel.getCategoryForEntity(it.entityId) == null &&

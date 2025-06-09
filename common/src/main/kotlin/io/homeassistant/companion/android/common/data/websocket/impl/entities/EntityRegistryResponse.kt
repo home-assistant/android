@@ -1,24 +1,24 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import kotlinx.serialization.Serializable
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class EntityRegistryResponse(
-    val areaId: String?,
-    val deviceId: String?,
-    val entityCategory: String?,
+    val areaId: String? = null,
+    val deviceId: String? = null,
+    val entityCategory: String? = null,
     val entityId: String,
-    val hiddenBy: String?,
-    val options: EntityRegistryOptions?
+    val hiddenBy: String? = null,
+    val options: EntityRegistryOptions? = null,
 )
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class EntityRegistryOptions(
-    val sensor: EntityRegistrySensorOptions?
+    val sensor: EntityRegistrySensorOptions? = null,
 )
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class EntityRegistrySensorOptions(
-    val displayPrecision: Int?,
-    val suggestedDisplayPrecision: Int?
+    val displayPrecision: Int? = null,
+    val suggestedDisplayPrecision: Int? = null,
 )

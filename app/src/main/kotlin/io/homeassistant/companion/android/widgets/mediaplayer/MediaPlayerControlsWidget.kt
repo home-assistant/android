@@ -104,7 +104,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
-    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
+    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity?): RemoteViews {
         val updateMediaIntent = Intent(context, MediaPlayerControlsWidget::class.java).apply {
             action = UPDATE_MEDIA_IMAGE
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -403,13 +403,13 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     override suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>> =
         mediaPlayCtrlWidgetDao.getAll().associate { it.id to (it.serverId to it.entityId.split(",")) }
 
-    private suspend fun getEntity(context: Context, serverId: Int, entityIds: List<String>, suggestedEntity: Entity<Map<String, Any>>?): Entity<Map<String, Any>>? {
-        val entity: Entity<Map<String, Any>>?
+    private suspend fun getEntity(context: Context, serverId: Int, entityIds: List<String>, suggestedEntity: Entity?): Entity? {
+        val entity: Entity?
         try {
             entity = if (suggestedEntity != null && entityIds.contains(suggestedEntity.entityId)) {
                 suggestedEntity
             } else {
-                val entities: LinkedList<Entity<Map<String, Any>>?> = LinkedList()
+                val entities: LinkedList<Entity?> = LinkedList()
                 entityIds.forEach {
                     val e = serverManager.integrationRepository(serverId).getEntity(it)
                     if (e?.state == "playing") return e
@@ -500,7 +500,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
-    override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
+    override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity) {
         mediaPlayCtrlWidgetDao.get(appWidgetId)?.let {
             widgetScope?.launch {
                 val views = getWidgetRemoteViews(context, appWidgetId, getEntity(context, it.serverId, it.entityId.split(","), null))

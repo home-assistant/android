@@ -43,9 +43,9 @@ class ComplicationConfigViewModel @Inject constructor(
 
     val app = getApplication<HomeAssistantApplication>()
 
-    var entities = mutableStateMapOf<String, Entity<*>>()
+    var entities = mutableStateMapOf<String, Entity>()
         private set
-    var entitiesByDomain = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
+    var entitiesByDomain = mutableStateMapOf<String, SnapshotStateList<Entity>>()
         private set
     var entitiesByDomainOrder = mutableStateListOf<String>()
         private set
@@ -119,7 +119,7 @@ class ComplicationConfigViewModel @Inject constructor(
 
         // Create a list with all discovered domains + their entities
         domainsList.forEach { domain ->
-            val entitiesInDomain = mutableStateListOf<Entity<*>>()
+            val entitiesInDomain = mutableStateListOf<Entity>()
             entitiesInDomain.addAll(entitiesList.filter { it.domain == domain })
             entitiesByDomain[domain]?.let {
                 it.clear()

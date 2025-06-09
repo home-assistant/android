@@ -17,7 +17,7 @@ import timber.log.Timber
 
 class WidgetDynamicFieldAdapter(
     private var actions: HashMap<String, Action>,
-    private var entities: HashMap<String, Entity<Any>>,
+    private var entities: HashMap<String, Entity>,
     private val actionFieldList: ArrayList<ActionFieldBinder>
 ) : RecyclerView.Adapter<WidgetDynamicFieldAdapter.ViewHolder>() {
 
@@ -164,7 +164,7 @@ class WidgetDynamicFieldAdapter(
         }
     }
 
-    fun replaceValues(actions: HashMap<String, Action>, entities: HashMap<String, Entity<Any>>) {
+    fun replaceValues(actions: HashMap<String, Action>, entities: HashMap<String, Entity>) {
         this.actions = actions
         this.entities = entities
     }

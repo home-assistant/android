@@ -339,7 +339,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         var success = true
         if (enabledRegistrations.isNotEmpty()) {
             success = try {
-                val serverSuccess = serverManager.integrationRepository(server.id).updateSensors(enabledRegistrations.toTypedArray())
+                val serverSuccess = serverManager.integrationRepository(server.id).updateSensors(enabledRegistrations)
                 enabledRegistrations.forEach {
                     sensorDao.updateLastSentStateAndIcon(it.uniqueId, it.serverId, it.state.toString(), it.icon)
                 }
@@ -408,7 +408,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         }.forEach { fullSensor ->
             ioScope.launch {
                 try {
-                    serverManager.integrationRepository(fullSensor.sensor.serverId).updateSensors(arrayOf(fullSensor.toSensorRegistration(basicSensor)))
+                    serverManager.integrationRepository(fullSensor.sensor.serverId).updateSensors(listOf(fullSensor.toSensorRegistration(basicSensor)))
                     sensorDao.updateLastSentStateAndIcon(
                         basicSensor.id,
                         fullSensor.sensor.serverId,

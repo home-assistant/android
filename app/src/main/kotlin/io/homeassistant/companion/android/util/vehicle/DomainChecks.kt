@@ -33,22 +33,22 @@ val NOT_ACTIONABLE_DOMAINS = listOf(
     "sensor"
 )
 
-fun isVehicleDomain(entity: Entity<*>): Boolean {
+fun isVehicleDomain(entity: Entity): Boolean {
     return entity.domain in SUPPORTED_DOMAINS ||
         entity.domain in NOT_ACTIONABLE_DOMAINS ||
         canNavigate(entity)
 }
 
-fun canNavigate(entity: Entity<*>): Boolean {
+fun canNavigate(entity: Entity): Boolean {
     return (
         entity.domain in MAP_DOMAINS &&
-            ((entity.attributes as? Map<*, *>)?.get("latitude") as? Double != null) &&
-            ((entity.attributes as? Map<*, *>)?.get("longitude") as? Double != null)
+            ((entity.attributes["latitude"] as? Number)?.toDouble() != null) &&
+            ((entity.attributes["longitude"] as? Number)?.toDouble() != null)
         )
 }
 
-fun alarmHasNoCode(entity: Entity<*>): Boolean {
+fun alarmHasNoCode(entity: Entity): Boolean {
     return entity.domain == "alarm_control_panel" &&
-        (entity.attributes as? Map<*, *>)?.get("code_format") as? String == null &&
+        entity.attributes["code_format"] as? String == null &&
         entity.supportsAlarmControlPanelArmAway()
 }

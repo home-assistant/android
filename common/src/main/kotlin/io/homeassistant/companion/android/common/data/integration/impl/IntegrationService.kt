@@ -1,12 +1,12 @@
 package io.homeassistant.companion.android.common.data.integration.impl
 
-import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
 import io.homeassistant.companion.android.common.data.integration.impl.entities.CheckRateLimits
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.IntegrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceResponse
+import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateSensorResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import okhttp3.HttpUrl
 import okhttp3.ResponseBody
@@ -30,7 +30,7 @@ interface IntegrationService {
     suspend fun getState(
         @Url url: HttpUrl,
         @Header("Authorization") auth: String
-    ): EntityResponse<Map<String, Any>>
+    ): EntityResponse
 
     @POST
     suspend fun callWebhook(
@@ -48,7 +48,7 @@ interface IntegrationService {
     suspend fun getZones(
         @Url url: HttpUrl,
         @Body request: IntegrationRequest
-    ): Array<EntityResponse<ZoneAttributes>>
+    ): List<EntityResponse>
 
     @POST
     suspend fun getConfig(
@@ -66,5 +66,5 @@ interface IntegrationService {
     suspend fun updateSensors(
         @Url url: HttpUrl,
         @Body request: IntegrationRequest
-    ): Map<String, Map<String, Any>>
+    ): Map<String, UpdateSensorResponse>
 }

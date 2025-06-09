@@ -25,9 +25,9 @@ import io.homeassistant.companion.android.views.rememberExpandedStates
 
 @Composable
 fun EntityViewList(
-    entityLists: Map<String, List<Entity<*>>>,
+    entityLists: Map<String, List<Entity>>,
     entityListsOrder: List<String>,
-    entityListFilter: (Entity<*>) -> Boolean,
+    entityListFilter: (Entity) -> Boolean,
     onEntityClicked: (String, String) -> Unit,
     onEntityLongClicked: (String) -> Unit,
     isHapticEnabled: Boolean,

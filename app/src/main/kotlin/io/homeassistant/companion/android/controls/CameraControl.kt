@@ -28,7 +28,7 @@ object CameraControl : HaControl {
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity<Map<String, Any>>,
+        entity: Entity,
         info: HaControlInfo
     ): Control.StatefulBuilder {
         val image = if (info.baseUrl != null && (entity.attributes["entity_picture"] as? String)?.isNotBlank() == true) {
@@ -52,10 +52,10 @@ object CameraControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
+    override fun getDeviceType(entity: Entity): Int =
         DeviceTypes.TYPE_CAMERA
 
-    override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+    override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.domain_camera)
 
     override suspend fun performAction(

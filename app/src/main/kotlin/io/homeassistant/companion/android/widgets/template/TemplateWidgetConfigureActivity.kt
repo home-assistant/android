@@ -17,7 +17,6 @@ import androidx.core.text.HtmlCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
-import com.fasterxml.jackson.databind.JsonMappingException
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
@@ -32,6 +31,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerializationException
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -225,9 +225,9 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     enabled = true
                 } catch (e: Exception) {
                     Timber.e(e, "Exception while rendering template")
-                    // JsonMappingException suggests that template is not a String (= error)
+                    // SerializationException suggests that template is not a String (= error)
                     templateText = getString(
-                        if (e.cause is JsonMappingException) {
+                        if (e.cause is SerializationException) {
                             commonR.string.template_error
                         } else {
                             commonR.string.template_render_error

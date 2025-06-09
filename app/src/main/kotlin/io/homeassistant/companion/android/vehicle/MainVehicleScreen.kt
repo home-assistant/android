@@ -44,13 +44,13 @@ class MainVehicleScreen(
     carContext: CarContext,
     val serverManager: ServerManager,
     private val serverId: StateFlow<Int>,
-    private val allEntities: Flow<Map<String, Entity<*>>>,
+    private val allEntities: Flow<Map<String, Entity>>,
     private val prefsRepository: PrefsRepository,
     private val onChangeServer: (Int) -> Unit,
     private val onRefresh: () -> Unit
 ) : BaseVehicleScreen(carContext) {
 
-    private var favoritesEntities: List<Entity<*>> = listOf()
+    private var favoritesEntities: List<Entity> = listOf()
     private var entityRegistry: List<EntityRegistryResponse>? = null
     private var favoritesList = emptyList<String>()
     private var isLoggedIn: Boolean? = null
@@ -211,7 +211,7 @@ class MainVehicleScreen(
         }.build()
     }
 
-    private fun getFavoritesList(entities: Map<String, Entity<*>>): List<Entity<*>> {
+    private fun getFavoritesList(entities: Map<String, Entity>): List<Entity> {
         return entities.values.filter { entity -> favoritesList.contains("${serverId.value}-${entity.entityId}") }
             .sortedBy { entity -> favoritesList.indexOf("${serverId.value}-${entity.entityId}") }
     }

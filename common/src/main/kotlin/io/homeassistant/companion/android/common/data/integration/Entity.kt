@@ -10,21 +10,29 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
+import io.homeassistant.companion.android.common.util.LocalDateTimeSerializer
+import io.homeassistant.companion.android.common.util.MapAnySerializer
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.Calendar
 import java.util.Locale
 import kotlin.math.round
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
 import timber.log.Timber
 
-data class Entity<T>(
+@Serializable
+data class Entity(
     val entityId: String,
     val state: String,
-    val attributes: T,
-    val lastChanged: Calendar,
-    val lastUpdated: Calendar,
-    val context: Map<String, Any?>?
+    @Serializable(with = MapAnySerializer::class)
+    val attributes: Map<String, @Polymorphic Any?>,
+    @Serializable(with = LocalDateTimeSerializer::class)
+    val lastChanged: LocalDateTime,
+    @Serializable(with = LocalDateTimeSerializer::class)
+    val lastUpdated: LocalDateTime,
 )
 
 data class EntityPosition(
@@ -88,7 +96,7 @@ object EntityExt {
     )
 }
 
-val <T> Entity<T>.domain: String
+val Entity.domain: String
     get() = this.entityId.split(".")[0]
 
 /**
@@ -96,28 +104,20 @@ val <T> Entity<T>.domain: String
  * Based on home-assistant-js-websocket entities `processEvent` function:
  * https://github.com/home-assistant/home-assistant-js-websocket/blob/449fa43668f5316eb31609cd36088c5e82c818e2/lib/entities.ts#L47
  */
-fun Entity<Map<String, Any>>.applyCompressedStateDiff(diff: CompressedStateDiff): Entity<Map<String, Any>> {
-    var (_, newState, newAttributes, newLastChanged, newLastUpdated, newContext) = this
+fun Entity.applyCompressedStateDiff(diff: CompressedStateDiff): Entity {
+    var (_, newState, newAttributes, newLastChanged, newLastUpdated) = this
     diff.plus?.let { plus ->
         plus.state?.let {
             newState = it
         }
-        plus.context?.let {
-            newContext = if (it is String) {
-                newContext?.toMutableMap()?.apply { set("id", it) }
-            } else {
-                newContext?.plus(it as Map<String, Any?>)
-            }
-        }
         plus.lastChanged?.let {
-            val calendar = Calendar.getInstance().apply { timeInMillis = round(it * 1000).toLong() }
-            newLastChanged = calendar
-            newLastUpdated = calendar
+            val dateTime = LocalDateTime.ofEpochSecond(round(it).toLong(), 0, ZoneOffset.UTC)
+            newLastChanged = dateTime
+            newLastUpdated = dateTime
         } ?: plus.lastUpdated?.let {
-            newLastUpdated =
-                Calendar.getInstance().apply { timeInMillis = round(it * 1000).toLong() }
+            newLastUpdated = LocalDateTime.ofEpochSecond(round(it).toLong(), 0, ZoneOffset.UTC)
         }
-        plus.attributes?.let {
+        plus.attributes.let {
             newAttributes = newAttributes.plus(it)
         }
     }
@@ -130,16 +130,15 @@ fun Entity<Map<String, Any>>.applyCompressedStateDiff(diff: CompressedStateDiff)
         attributes = newAttributes,
         lastChanged = newLastChanged,
         lastUpdated = newLastUpdated,
-        context = newContext
     )
 }
 
-fun <T> Entity<T>.getCoverPosition(): EntityPosition? {
+fun Entity.getCoverPosition(): EntityPosition? {
     // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-cover.ts#L33
     return try {
         if (
             domain != "cover" ||
-            (attributes as Map<*, *>)["current_position"] == null
+            attributes["current_position"] == null
         ) {
             return null
         }
@@ -159,34 +158,36 @@ fun <T> Entity<T>.getCoverPosition(): EntityPosition? {
     }
 }
 
-fun <T> Entity<T>.supportsAlarmControlPanelArmAway(): Boolean {
+fun Entity.supportsAlarmControlPanelArmAway(): Boolean {
     return try {
         if (domain != "alarm_control_panel") return false
-        ((attributes as Map<*, *>)["supported_features"] as Int) and EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY == EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY
+        (attributes ["supported_features"] as Number).toInt() and
+            EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY == EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsArmedAway")
         false
     }
 }
 
-fun <T> Entity<T>.supportsFanSetSpeed(): Boolean {
+fun Entity.supportsFanSetSpeed(): Boolean {
     return try {
         if (domain != "fan") return false
-        ((attributes as Map<*, *>)["supported_features"] as Int) and EntityExt.FAN_SUPPORT_SET_SPEED == EntityExt.FAN_SUPPORT_SET_SPEED
+        (attributes["supported_features"] as Number).toInt() and
+            EntityExt.FAN_SUPPORT_SET_SPEED == EntityExt.FAN_SUPPORT_SET_SPEED
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsFanSetSpeed")
         false
     }
 }
 
-fun <T> Entity<T>.getFanSpeed(): EntityPosition? {
+fun Entity.getFanSpeed(): EntityPosition? {
     // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-fan.js#L48
     return try {
         if (!supportsFanSetSpeed()) return null
 
         val minValue = 0f
         val maxValue = 100f
-        val currentValue = ((attributes as Map<*, *>)["percentage"] as? Number)?.toFloat() ?: 0f
+        val currentValue = (attributes["percentage"] as? Number)?.toFloat() ?: 0f
 
         EntityPosition(
             value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
@@ -199,7 +200,7 @@ fun <T> Entity<T>.getFanSpeed(): EntityPosition? {
     }
 }
 
-fun <T> Entity<T>.getFanSteps(): Int? {
+fun Entity.getFanSteps(): Int? {
     return try {
         if (!supportsFanSetSpeed()) return null
 
@@ -211,7 +212,7 @@ fun <T> Entity<T>.getFanSteps(): Int? {
         }
 
         return calculateNumStep(
-            ((attributes as Map<*, *>)["percentage_step"] as? Double)?.toDouble() ?: 1.0
+            (attributes["percentage_step"] as? Number)?.toDouble() ?: 1.0
         ) - 1
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getFanSteps")
@@ -219,17 +220,17 @@ fun <T> Entity<T>.getFanSteps(): Int? {
     }
 }
 
-fun <T> Entity<T>.supportsLightBrightness(): Boolean {
+fun Entity.supportsLightBrightness(): Boolean {
     return try {
         if (domain != "light") return false
 
         // On HA Core 2021.5 and later brightness detection has changed
         // to simplify things in the app lets use both methods for now
         val supportedColorModes =
-            (attributes as Map<*, *>)["supported_color_modes"] as? List<String>
+            attributes["supported_color_modes"] as? List<String>
         val supportsBrightness =
             if (supportedColorModes == null) false else (supportedColorModes - EntityExt.LIGHT_MODE_NO_BRIGHTNESS_SUPPORT.toSet()).isNotEmpty()
-        val supportedFeatures = attributes["supported_features"] as Int
+        val supportedFeatures = (attributes["supported_features"] as Number).toInt()
         supportsBrightness || (supportedFeatures and EntityExt.LIGHT_SUPPORT_BRIGHTNESS_DEPR == EntityExt.LIGHT_SUPPORT_BRIGHTNESS_DEPR)
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsLightBrightness")
@@ -237,7 +238,7 @@ fun <T> Entity<T>.supportsLightBrightness(): Boolean {
     }
 }
 
-fun <T> Entity<T>.getLightBrightness(): EntityPosition? {
+fun Entity.getLightBrightness(): EntityPosition? {
     // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-light.ts#L90
     return try {
         if (!supportsLightBrightness()) return null
@@ -247,7 +248,7 @@ fun <T> Entity<T>.getLightBrightness(): EntityPosition? {
                 val minValue = 0f
                 val maxValue = 100f
                 val currentValue =
-                    ((attributes as Map<*, *>)["brightness"] as? Number)?.toFloat()?.div(255f)
+                    (attributes["brightness"] as? Number)?.toFloat()?.div(255f)
                         ?.times(100)
                         ?: 0f
 
@@ -265,15 +266,15 @@ fun <T> Entity<T>.getLightBrightness(): EntityPosition? {
     }
 }
 
-fun <T> Entity<T>.supportsLightColorTemperature(): Boolean {
+fun Entity.supportsLightColorTemperature(): Boolean {
     return try {
         if (domain != "light") return false
 
         val supportedColorModes =
-            (attributes as Map<*, *>)["supported_color_modes"] as? List<String>
+            attributes["supported_color_modes"] as? List<String>
         val supportsColorTemp =
-            supportedColorModes?.contains(EntityExt.LIGHT_MODE_COLOR_TEMP) ?: false
-        val supportedFeatures = attributes["supported_features"] as Int
+            supportedColorModes?.contains(EntityExt.LIGHT_MODE_COLOR_TEMP) == true
+        val supportedFeatures = (attributes["supported_features"] as Number).toInt()
         supportsColorTemp || (supportedFeatures and EntityExt.LIGHT_SUPPORT_COLOR_TEMP_DEPR == EntityExt.LIGHT_SUPPORT_COLOR_TEMP_DEPR)
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsLightColorTemperature")
@@ -281,14 +282,14 @@ fun <T> Entity<T>.supportsLightColorTemperature(): Boolean {
     }
 }
 
-fun <T> Entity<T>.getLightColor(): Int? {
+fun Entity.getLightColor(): Int? {
     // https://github.com/home-assistant/frontend/blob/dev/src/panels/lovelace/cards/hui-light-card.ts#L243
     return try {
         if (domain != "light") return null
 
         when {
-            state != "off" && (attributes as Map<*, *>)["rgb_color"] != null -> {
-                val (r, g, b) = (attributes["rgb_color"] as List<Int>)
+            state != "off" && attributes["rgb_color"] != null -> {
+                val (r, g, b) = (attributes["rgb_color"] as List<Number>).map { it.toInt() }
                 Color.rgb(r, g, b)
             }
             else -> null
@@ -299,17 +300,18 @@ fun <T> Entity<T>.getLightColor(): Int? {
     }
 }
 
-fun <T> Entity<T>.supportsVolumeSet(): Boolean {
+fun Entity.supportsVolumeSet(): Boolean {
     return try {
         if (domain != "media_player") return false
-        ((attributes as Map<*, *>)["supported_features"] as Int) and EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET == EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET
+        (attributes["supported_features"] as Number).toInt() and
+            EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET == EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsVolumeSet")
         false
     }
 }
 
-fun <T> Entity<T>.getVolumeLevel(): EntityPosition? {
+fun Entity.getVolumeLevel(): EntityPosition? {
     return try {
         if (!supportsVolumeSet()) return null
 
@@ -318,7 +320,7 @@ fun <T> Entity<T>.getVolumeLevel(): EntityPosition? {
 
         // Convert to percentage to match frontend behavior:
         // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-media_player.ts#L137
-        val currentValue = ((attributes as Map<*, *>)["volume_level"] as? Number)?.toFloat()?.times(100) ?: 0f
+        val currentValue = (attributes["volume_level"] as? Number)?.toFloat()?.times(100) ?: 0f
 
         EntityPosition(
             value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
@@ -331,11 +333,11 @@ fun <T> Entity<T>.getVolumeLevel(): EntityPosition? {
     }
 }
 
-fun <T> Entity<T>.getVolumeStep(): Float {
+fun Entity.getVolumeStep(): Float {
     return try {
         if (!supportsVolumeSet()) return 0.1f
 
-        val volumeStep = ((attributes as Map<*, *>)["volume_step"] as? Number)?.toFloat() ?: 0.1f
+        val volumeStep = (attributes["volume_step"] as? Number)?.toFloat() ?: 0.1f
         volumeStep.coerceAtLeast(0.01f)
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getVolumeStep")
@@ -343,8 +345,8 @@ fun <T> Entity<T>.getVolumeStep(): Float {
     }
 }
 
-fun <T> Entity<T>.getIcon(context: Context): IIcon {
-    val attributes = this.attributes as Map<String, Any?>
+fun Entity.getIcon(context: Context): IIcon {
+    val attributes = this.attributes
     val icon = attributes["icon"] as? String
     return if (icon?.startsWith("mdi") == true) {
         val mdiIcon = icon.split(":")[1]
@@ -376,7 +378,7 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon {
             } else {
                 CommunityMaterial.Icon3.cmd_robot
             }
-            "binary_sensor" -> binarySensorIcon(compareState, this as Entity<Map<String, Any?>>)
+            "binary_sensor" -> binarySensorIcon(compareState, this)
             "button" -> when (attributes["device_class"]) {
                 "restart" -> CommunityMaterial.Icon3.cmd_restart
                 "update" -> CommunityMaterial.Icon3.cmd_package_up
@@ -391,7 +393,7 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon {
             "climate" -> CommunityMaterial.Icon3.cmd_thermostat
             "configurator" -> CommunityMaterial.Icon.cmd_cog
             "conversation" -> CommunityMaterial.Icon3.cmd_microphone_message
-            "cover" -> coverIcon(compareState, this as Entity<Map<String, Any?>>)
+            "cover" -> coverIcon(compareState, this)
             "counter" -> CommunityMaterial.Icon.cmd_counter
             "fan" -> if (compareState == "off") {
                 CommunityMaterial.Icon2.cmd_fan_off
@@ -521,7 +523,7 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon {
             "schedule" -> CommunityMaterial.Icon.cmd_calendar_clock
             "script" -> CommunityMaterial.Icon3.cmd_script_text_outline // Different from frontend: outline version
             "select" -> CommunityMaterial.Icon2.cmd_format_list_bulleted
-            "sensor" -> sensorIcon(compareState, this as Entity<Map<String, Any?>>)
+            "sensor" -> sensorIcon(compareState, this)
             "siren" -> CommunityMaterial.Icon.cmd_bullhorn
             "simple_alarm" -> CommunityMaterial.Icon.cmd_bell
             "sun" -> if (compareState == "above_horizon") {
@@ -572,7 +574,7 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon {
     }
 }
 
-private fun binarySensorIcon(state: String?, entity: Entity<Map<String, Any?>>): IIcon {
+private fun binarySensorIcon(state: String?, entity: Entity): IIcon {
     val isOff = state == "off"
 
     return when (entity.attributes["device_class"]) {
@@ -602,7 +604,7 @@ private fun binarySensorIcon(state: String?, entity: Entity<Map<String, Any?>>):
     }
 }
 
-private fun coverIcon(state: String?, entity: Entity<Map<String, Any?>>): IIcon {
+private fun coverIcon(state: String?, entity: Entity): IIcon {
     val open = state !== "closed"
 
     return when (entity.attributes["device_class"]) {
@@ -646,7 +648,7 @@ private fun coverIcon(state: String?, entity: Entity<Map<String, Any?>>): IIcon 
     }
 }
 
-private fun sensorIcon(state: String?, entity: Entity<Map<String, Any?>>): IIcon {
+private fun sensorIcon(state: String?, entity: Entity): IIcon {
     var icon: IIcon? = null
 
     if (entity.attributes["device_class"] != null) {
@@ -730,7 +732,7 @@ private fun sensorIcon(state: String?, entity: Entity<Map<String, Any?>>): IIcon
     return icon ?: CommunityMaterial.Icon.cmd_eye
 }
 
-suspend fun <T> Entity<T>.onPressed(
+suspend fun Entity.onPressed(
     integrationRepository: IntegrationRepository
 ) {
     val action = when (domain) {
@@ -788,11 +790,11 @@ suspend fun onEntityPressedWithoutState(
     )
 }
 
-val <T> Entity<T>.friendlyName: String
-    get() = (attributes as? Map<*, *>)?.get("friendly_name")?.toString() ?: entityId
+val Entity.friendlyName: String
+    get() = attributes["friendly_name"]?.toString() ?: entityId
 
-fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions? = null, appendUnitOfMeasurement: Boolean = false): String {
-    val attributes = this.attributes as Map<String, Any?>
+fun Entity.friendlyState(context: Context, options: EntityRegistryOptions? = null, appendUnitOfMeasurement: Boolean = false): String {
+    val attributes = this.attributes
 
     var friendlyState = when (domain) {
         "binary_sensor" -> {
@@ -917,7 +919,7 @@ fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions
     }
 
     if (appendUnitOfMeasurement) {
-        val unit = (attributes as? Map<*, *>)?.get("unit_of_measurement")?.toString()
+        val unit = attributes["unit_of_measurement"]?.toString()
 
         if (unit?.isNotBlank() == true) {
             return "$friendlyState $unit"
@@ -927,9 +929,9 @@ fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions
     return friendlyState
 }
 
-fun <T> Entity<T>.canSupportPrecision() = domain == "sensor" && state.toDoubleOrNull() != null
+fun Entity.canSupportPrecision() = domain == "sensor" && state.toDoubleOrNull() != null
 
-fun <T> Entity<T>.isExecuting() = when (state) {
+fun Entity.isExecuting() = when (state) {
     "arming" -> true
     "buffering" -> true
     "closing" -> true
@@ -941,7 +943,7 @@ fun <T> Entity<T>.isExecuting() = when (state) {
     else -> false
 }
 
-fun <T> Entity<T>.isActive() = when {
+fun Entity.isActive() = when {
     // https://github.com/home-assistant/frontend/blob/dev/src/common/entity/state_active.ts
     (domain in listOf("button", "input_button", "event", "scene")) -> state != "unavailable"
     (state == "unavailable" || state == "unknown") -> false

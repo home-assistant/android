@@ -40,11 +40,12 @@ dependencies {
 
     api(libs.androidx.work.runtime.ktx)
 
+    // TODO should not expose retrofit outside of common
+    api(platform(libs.retrofit.bom))
     api(libs.retrofit)
-    implementation(libs.retrofit.converter.jackson)
+    implementation(libs.retrofit.converter.kotlinx.serialization)
     implementation(libs.okhttp)
     implementation(libs.logging.interceptor)
-    implementation(libs.jackson.module.kotlin)
     implementation(libs.android.beacon.library)
 
     implementation(libs.iconics.core)

@@ -27,6 +27,7 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             apply(plugin = libs.plugins.kotlin.android.getPluginId())
+            apply(plugin = libs.plugins.kotlin.serialization.getPluginId())
             apply(plugin = libs.plugins.ksp.getPluginId())
             apply(plugin = libs.plugins.hilt.getPluginId())
 
@@ -45,6 +46,7 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                 compileOptions {
                     sourceCompatibility(libs.versions.javaVersion.get())
                     targetCompatibility(libs.versions.javaVersion.get())
+                    isCoreLibraryDesugaringEnabled = true
                 }
 
                 tasks.withType<KotlinCompile>().configureEach {
@@ -87,7 +89,11 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
 
                 dependencies {
                     "lintChecks"(project(":lint"))
+
+                    "coreLibraryDesugaring"(libs.tools.desugar.jdk)
+
                     "implementation"(libs.timber)
+                    "implementation"(libs.kotlinx.serialization.json)
 
                     "ksp"(libs.hilt.android.compiler)
                     "implementation"(libs.hilt.android)
@@ -117,6 +123,7 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                         }
                     }
                 }
+
                 is LibraryExtension -> extensions.configure<LibraryExtension> { configure() }
             }
         }

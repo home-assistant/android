@@ -147,7 +147,7 @@ Watch for update
         val getTodosResponse = fakeTodosResponse(entityId, items = listOf(getTodoResponse))
 
         var daoFlowEmitter: ProducerScope<TodoWidgetEntity?>? = null
-        var entityUpdatesEmitter: ProducerScope<Entity<*>>? = null
+        var entityUpdatesEmitter: ProducerScope<Entity>? = null
 
         mockInitialStateForEmpty()
 

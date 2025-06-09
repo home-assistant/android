@@ -72,7 +72,7 @@ fun ManageControlsView(
     authSetting: ControlsAuthRequiredSetting,
     authRequiredList: List<String>,
     entitiesLoaded: Boolean,
-    entitiesList: Map<Int, List<Entity<*>>>,
+    entitiesList: Map<Int, List<Entity>>,
     panelSetting: Pair<String?, Int>?,
     serversList: List<Server>,
     structureEnabled: Boolean,
