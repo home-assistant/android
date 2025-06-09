@@ -212,6 +212,7 @@ reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reo
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofit-converter-jackson = { module = "com.squareup.retrofit2:converter-jackson", version.ref = "retrofit"  }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "screenshot"}
 sentry-android-core = { module = "io.sentry:sentry-android-core", version.ref = "sentry-android" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 tools-desugar-jdk = { module = "com.android.tools:desugar_jdk_libs", version.ref = "tools-desugar-jdk-libs" }

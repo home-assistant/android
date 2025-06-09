@@ -73,6 +73,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     screenshotTestImplementation(libs.compose.uiTooling)
+    screenshotTestImplementation(libs.screenshot.validation.api)
 
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.bundles.androidx.test)
