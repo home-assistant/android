@@ -14,7 +14,7 @@ data class SensorWithAttributes(
                 "listboolean", "listfloat", "listlong", "listint", "liststring" -> {
                     when (it.valueType) {
                         "listboolean" -> kotlinJsonMapper.decodeFromString<List<Boolean>>(it.value)
-                        "listfloat" -> kotlinJsonMapper.decodeFromString<List<Number>>(it.value)
+                        "listfloat" -> kotlinJsonMapper.decodeFromString<List<Float>>(it.value)
                         "listlong" -> kotlinJsonMapper.decodeFromString<List<Long>>(it.value)
                         "listint" -> kotlinJsonMapper.decodeFromString<List<Int>>(it.value)
                         else -> kotlinJsonMapper.decodeFromString<List<String>>(it.value)
