@@ -4,11 +4,9 @@ import kotlin.system.exitProcess
 import timber.log.Timber
 
 private const val HEADER = """
-        ████████████████████████████████████████████████████████████████
-        ██                                                            ██
-        ██           !!! CRITICAL FAILURE: FAIL-FAST !!!              ██
-        ██                                                            ██
-        ████████████████████████████████████████████████████████████████
+        ██████████████████████
+        !!! CRITICAL FAILURE: FAIL-FAST !!!
+        ██████████████████████
 """
 
 private const val SEPARATOR = """----------------------------------------------------------------"""
@@ -30,8 +28,8 @@ object CrashFailFastHandler : FailFastHandler {
                     """.trimIndent(),
                 )
                 appendLine(SEPARATOR)
+                appendLine()
                 additionalMessage?.let {
-                    appendLine()
                     appendLine(it)
                     appendLine(SEPARATOR)
                     appendLine()
@@ -51,12 +49,12 @@ object LogOnlyFailFastHandler : FailFastHandler {
                 appendLine()
                 appendLine(
                     """
-            The exception is ignored to avoid a crash but it should be handled
-            if you see this please open an issue on github https://github.com/home-assistant/android/issues/new/choose
+            The error has been ignored to avoid a crash, but it should be handled.
+            Please create a bug report at https://github.com/home-assistant/android/issues/new.
                     """.trimIndent(),
                 )
+                appendLine()
                 additionalMessage?.let {
-                    appendLine()
                     appendLine(it)
                     appendLine(SEPARATOR)
                     appendLine()

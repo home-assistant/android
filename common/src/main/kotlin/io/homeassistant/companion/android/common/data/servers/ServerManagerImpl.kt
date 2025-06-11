@@ -92,7 +92,7 @@ class ServerManagerImpl @Inject constructor(
                 it.connection.isRegistered() &&
                 FailFast.failOnCatch(
                     message = {
-                        """Fail to get authenticationRepository for ${it.id} current authenticationRepos ids: ${authenticationRepos.keys} """
+                        """Failed to get authenticationRepository for ${it.id}. Current repository ids: ${authenticationRepos.keys}."""
                     },
                     fallback = false,
                 ) { authenticationRepository(it.id).getSessionState() == SessionState.CONNECTED }

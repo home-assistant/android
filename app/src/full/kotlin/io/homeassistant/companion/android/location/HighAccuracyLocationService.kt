@@ -151,8 +151,7 @@ class HighAccuracyLocationService : Service() {
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) FOREGROUND_SERVICE_TYPE_LOCATION else 0
         FailFast.failOnCatch {
             // Sometimes the service cannot be started as foreground due to the app being in a state where
-            // this is not allowed. We didn't identified yet how to avoid starting the service in this state.
-            // To avoid a crash, we catch it with FailFast, which will only crash in debug builds.
+            // this is not allowed. We haven't identified how to avoid starting the service in this state yet.
             LAUNCHER.onServiceCreated(this, notificationId, notification, type)
         }
 
