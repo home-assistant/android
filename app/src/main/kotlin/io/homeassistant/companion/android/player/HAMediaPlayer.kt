@@ -1,0 +1,370 @@
+package io.homeassistant.companion.android.player
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.os.Build
+import androidx.annotation.OptIn
+import androidx.annotation.VisibleForTesting
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeMute
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.FullscreenExit
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.cronet.CronetDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.ui.compose.PlayerSurface
+import androidx.media3.ui.compose.modifiers.resizeWithContentScale
+import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
+import androidx.media3.ui.compose.state.rememberPresentationState
+import io.homeassistant.companion.android.common.R
+import java.util.concurrent.Executors
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
+import kotlinx.coroutines.delay
+import org.chromium.net.CronetEngine
+
+// Useful links
+// https://github.com/androidx/media/blob/52387bb97511bb88242321e4689aa5952d45784f/demos/compose/src/main/java/androidx/media3/demo/compose/MainActivity.kt
+// https://developer.android.com/media/media3/ui/compose
+
+// Interval between updates of the current progress of the player
+private val TIME_TRACKING_UPDATE_DELAY = 1.seconds
+
+// Delay before auto-hiding controls
+private val AUTO_HIDE_DELAY = 2.seconds
+
+/**
+ * Displays a media player using ExoPlayer and Compose UI.
+ *
+ * @param url The media URL to play.
+ * @param modifier Modifier for the player container.
+ * @param fullscreenModifier Modifier to apply when in fullscreen mode.
+ * @param autoHideControl Whether to auto-hide controls after a delay.
+ * @param contentScale How the video content should be scaled.
+ */
+@Composable
+fun HAMediaPlayer(
+    url: String,
+    modifier: Modifier = Modifier,
+    fullscreenModifier: Modifier = Modifier,
+    autoHideControl: Boolean = true,
+    contentScale: ContentScale = ContentScale.Inside,
+) {
+    val context = LocalContext.current
+    var player by remember { mutableStateOf<Player?>(null) }
+
+    fun releasePlayer() {
+        player?.release()
+        player = null
+    }
+
+    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+        // Initialize/release in onStart()/onStop() only because in a multi-window environment multiple
+        // apps can be visible at the same time. The apps that are out-of-focus are paused, but video
+        // playback should continue.
+        LifecycleStartEffect(Unit) {
+            player = initializePlayer(context)
+            onStopOrDispose {
+                releasePlayer()
+            }
+        }
+    } else {
+        // Call to onStop() is not guaranteed, hence we release the Player in onPause() instead
+        LifecycleResumeEffect(Unit) {
+            player = initializePlayer(context)
+            onPauseOrDispose {
+                releasePlayer()
+            }
+        }
+    }
+
+    player?.let { player ->
+        DisposableEffect(player, url) {
+            player.setMediaItem(MediaItem.fromUri(url))
+            player.playWhenReady = true
+            player.prepare()
+            onDispose {
+                releasePlayer()
+            }
+        }
+        HAMediaPlayerUI(
+            player = player,
+            autoHideControl = autoHideControl,
+            contentScale = contentScale,
+            modifier = modifier,
+            fullscreenModifier = fullscreenModifier,
+        )
+    }
+}
+
+@Composable
+@OptIn(UnstableApi::class)
+@VisibleForTesting
+fun HAMediaPlayerUI(
+    player: Player,
+    autoHideControl: Boolean,
+    contentScale: ContentScale,
+    modifier: Modifier = Modifier,
+    fullscreenModifier: Modifier = Modifier,
+) {
+    var showControls by remember { mutableStateOf(true) }
+    var isFullscreen by remember { mutableStateOf(false) }
+    val bufferingState = rememberBufferingState(player)
+    val presentationState = rememberPresentationState(player)
+    val scaledModifier =
+        Modifier.resizeWithContentScale(contentScale, presentationState.videoSizeDp)
+
+    if (autoHideControl) {
+        LaunchedEffect(showControls) {
+            if (showControls) {
+                delay(AUTO_HIDE_DELAY)
+                showControls = false
+            }
+        }
+    }
+
+    // TODO we could move the Box outside and make BoxScope.Content instead and emit a fullScreenOnClick callback to let the caller handle the fullscreen button
+    Box(modifier = (if (isFullscreen) fullscreenModifier else modifier).fillMaxSize()) {
+        PlayerSurface(
+            player = player,
+            modifier = scaledModifier
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    // Prevent ripple on tap
+                    indication = null,
+                ) { showControls = !showControls },
+        )
+
+        if (bufferingState.isBuffering) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(64.dp),
+            )
+        }
+
+        Controls(
+            player = player,
+            isBuffering = bufferingState.isBuffering,
+            showControls = showControls,
+            isFullScreen = isFullscreen,
+            onClickFullscreen = {
+                isFullscreen = !isFullscreen
+            },
+        )
+    }
+}
+
+@Composable
+private fun BoxScope.Controls(
+    player: Player,
+    isBuffering: Boolean,
+    showControls: Boolean,
+    isFullScreen: Boolean,
+    onClickFullscreen: () -> Unit,
+) {
+    val animatedAlpha by animateFloatAsState(
+        targetValue = if (showControls) 1.0f else 0f,
+        label = "ControlsAlpha",
+    )
+    val modifier = Modifier.graphicsLayer {
+        alpha = animatedAlpha
+    }
+
+    if (!isBuffering) {
+        PlayPauseButton(player, showControls, modifier = modifier.align(Alignment.Center))
+    }
+    BottomControls(
+        player = player,
+        showControls = showControls,
+        isFullScreen = isFullScreen,
+        onClickFullscreen = onClickFullscreen,
+        modifier = modifier.align(Alignment.BottomCenter),
+    )
+}
+
+@Composable
+private fun BottomControls(
+    player: Player,
+    showControls: Boolean,
+    isFullScreen: Boolean,
+    onClickFullscreen: () -> Unit,
+    modifier: Modifier,
+) {
+    Row(
+        modifier = modifier
+            .height(60.dp)
+            .fillMaxWidth()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color(0x30000000), Color(0xB0000000)),
+                ),
+            ),
+    ) {
+        TimeText(player)
+        Spacer(modifier = Modifier.weight(1f))
+        MuteButton(player, showControls)
+        FullscreenButton(isFullScreen, onClickFullscreen)
+    }
+}
+
+@Composable
+private fun RowScope.FullscreenButton(isFullScreen: Boolean, onClickFullscreen: () -> Unit) {
+    IconButton(
+        onClick = onClickFullscreen,
+        modifier = Modifier
+            .align(Alignment.CenterVertically)
+            .size(64.dp),
+    ) {
+        Icon(
+            if (isFullScreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
+            contentDescription = stringResource(R.string.fullscreen),
+            tint = Color.White,
+        )
+    }
+}
+
+@OptIn(UnstableApi::class)
+@Composable
+private fun RowScope.MuteButton(player: Player, showControls: Boolean) {
+    val muteState = rememberMuteUnmuteButtonState(player)
+    if (muteState.isEnabled) {
+        IconButton(
+            modifier = Modifier
+                .align(Alignment.CenterVertically)
+                .size(64.dp),
+            onClick = muteState::onClick,
+            enabled = showControls,
+        ) {
+            val icon =
+                if (muteState.showMute) Icons.AutoMirrored.Filled.VolumeMute else Icons.AutoMirrored.Filled.VolumeUp
+            Icon(
+                icon,
+                contentDescription = stringResource(R.string.mute_unmute),
+                modifier = Modifier,
+                tint = Color.White,
+            )
+        }
+    }
+}
+
+@Composable
+@SuppressLint("DefaultLocale")
+private fun RowScope.TimeText(player: Player) {
+    var currentPosition by remember { mutableStateOf(player.currentPositionDuration()) }
+
+    LaunchedEffect(player) {
+        while (true) {
+            currentPosition = player.currentPositionDuration()
+            delay(TIME_TRACKING_UPDATE_DELAY)
+        }
+    }
+
+    Text(
+        currentPosition.toComponents { hours, minutes, seconds, _ ->
+            if (hours > 0L) {
+                String.format("%02d:%02d:%02d", hours, minutes, seconds)
+            } else {
+                String.format("%02d:%02d", minutes, seconds)
+            }
+        },
+        modifier = Modifier
+            .padding(start = 8.dp)
+            .align(Alignment.CenterVertically),
+        color = Color.White,
+    )
+}
+
+@Composable
+@OptIn(UnstableApi::class)
+private fun PlayPauseButton(player: Player, showControls: Boolean, modifier: Modifier) {
+    val state = rememberPlayPauseButtonState(player)
+    val icon = if (state.showPlay) Icons.Default.PlayArrow else Icons.Default.Pause
+    val contentDescription = if (state.showPlay) stringResource(R.string.play) else stringResource(R.string.pause)
+    IconButton(
+        onClick = state::onClick,
+        modifier = modifier,
+        enabled = state.isEnabled && showControls,
+    ) {
+        Icon(
+            icon,
+            contentDescription = contentDescription,
+            modifier = modifier.size(64.dp),
+            tint = Color.White,
+        )
+    }
+}
+
+@OptIn(UnstableApi::class)
+private fun initializePlayer(context: Context): ExoPlayer {
+    return ExoPlayer.Builder(context).setMediaSourceFactory(
+        DefaultMediaSourceFactory(
+            CronetDataSource.Factory(
+                CronetEngine.Builder(context).enableQuic(true).build(),
+                Executors.newSingleThreadExecutor(),
+            ),
+        ).setLiveMaxSpeed(8.0f),
+    ).setLoadControl(
+        DefaultLoadControl.Builder().setBufferDurationsMs(
+            0,
+            30000,
+            0,
+            0,
+        ).build(),
+    ).build()
+}
+
+private fun Player.currentPositionDuration(): Duration =
+    currentPosition.toDuration(DurationUnit.MILLISECONDS)
+
+@Preview(showSystemUi = true)
+@Composable
+private fun PreviewPlayer() {
+    HAMediaPlayerUI(FakePlayer(), false, ContentScale.Fit)
+}
