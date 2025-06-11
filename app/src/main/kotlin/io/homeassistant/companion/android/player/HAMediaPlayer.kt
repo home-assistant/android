@@ -56,11 +56,13 @@ import androidx.media3.datasource.cronet.CronetDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.session.MediaSession
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberPresentationState
 import io.homeassistant.companion.android.common.R
+import java.util.UUID
 import java.util.concurrent.Executors
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -125,6 +127,11 @@ fun HAMediaPlayer(
     }
 
     player?.let { player ->
+        // Allow the PiP to have control of the player
+        MediaSession.Builder(context, player)
+            .setId(UUID.randomUUID().toString())
+            .build()
+
         DisposableEffect(player, url) {
             player.setMediaItem(MediaItem.fromUri(url))
             player.playWhenReady = true
