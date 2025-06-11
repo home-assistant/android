@@ -29,10 +29,10 @@ private const val DESERIALIZER_PARAM_NAME = "deserializer"
 private val WELL_KNOWN_SERIALIZABLE_TYPES = listOf<String>(
     "java.lang.Boolean",
     "java.lang.Integer",
-    "java.lang.Long",
-    "java.lang.Number",
+    "java.lang.Float",
     "java.util.HashMap",
     "java.util.List",
+    "java.lang.Long",
     "java.util.Map",
     "java.lang.String",
 )
