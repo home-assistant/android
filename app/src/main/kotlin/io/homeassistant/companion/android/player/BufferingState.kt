@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.player
 
+import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -15,8 +16,9 @@ import androidx.media3.common.util.UnstableApi
  * coroutine to listen to [Player's][Player] changes. If the [Player] instance changes between
  * compositions, produce and remember a new value.
  */
-@UnstableApi
+
 @Composable
+@OptIn(UnstableApi::class)
 fun rememberBufferingState(player: Player): BufferingState {
     val bufferingState = remember(player) { BufferingState(player) }
     LaunchedEffect(player) { bufferingState.observe() }
@@ -27,6 +29,7 @@ private fun isBuffering(player: Player): Boolean {
     return player.playbackState == Player.STATE_BUFFERING
 }
 
+@OptIn(UnstableApi::class)
 class BufferingState(private val player: Player) {
     var isBuffering by mutableStateOf(isBuffering(player))
         private set
