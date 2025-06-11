@@ -205,7 +205,7 @@ fun SensorDetailView(
                         items(sensor.attributes, key = { "${it.sensorId}-${it.name}" }) { attribute ->
                             val summary = when (attribute.valueType) {
                                 "listboolean" -> kotlinJsonMapper.decodeFromString<List<Boolean>>(attribute.value).toString()
-                                "listfloat" -> kotlinJsonMapper.decodeFromString<List<Number>>(attribute.value).toString()
+                                "listfloat" -> kotlinJsonMapper.decodeFromString<List<Float>>(attribute.value).toString()
                                 "listlong" -> kotlinJsonMapper.decodeFromString<List<Long>>(attribute.value).toString()
                                 "listint" -> kotlinJsonMapper.decodeFromString<List<Int>>(attribute.value).toString()
                                 "liststring" -> kotlinJsonMapper.decodeFromString<List<String>>(attribute.value).toString()
