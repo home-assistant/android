@@ -34,7 +34,7 @@ interface WebSocketRepository {
     suspend fun sendPing(): Boolean
     suspend fun getCurrentUser(): CurrentUserResponse?
     suspend fun getConfig(): GetConfigResponse?
-    suspend fun getStates(): List<EntityResponse<Any>>?
+    suspend fun getStates(): List<EntityResponse>?
     suspend fun getAreaRegistry(): List<AreaRegistryResponse>?
     suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>?
     suspend fun getEntityRegistry(): List<EntityRegistryResponse>?

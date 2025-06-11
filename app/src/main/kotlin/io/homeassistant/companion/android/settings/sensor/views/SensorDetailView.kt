@@ -13,15 +13,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
@@ -36,6 +35,7 @@ import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Scaffold
+import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarResult
 import androidx.compose.material.Surface
 import androidx.compose.material.Switch
@@ -66,22 +66,22 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.HealthConnectSensorManager
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
-import io.homeassistant.companion.android.util.bottomPaddingValues
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.compose.TransparentChip
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -95,7 +95,6 @@ fun SensorDetailView(
 ) {
     val context = LocalContext.current
     var sensorUpdateTypeInfo by remember { mutableStateOf(false) }
-    val jsonMapper by lazy { jacksonObjectMapper() }
 
     var sensorEnabled by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -129,7 +128,15 @@ fun SensorDetailView(
         }.launchIn(this)
     }
 
-    Scaffold(scaffoldState = scaffoldState) { contentPadding ->
+    Scaffold(
+        scaffoldState = scaffoldState,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = scaffoldState.snackbarHostState,
+                modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets(applyHorizontal = false)),
+            )
+        },
+    ) { contentPadding ->
         if (sensorUpdateTypeInfo && viewModel.basicSensor != null) {
             SensorDetailUpdateInfoDialog(
                 basicSensor = viewModel.basicSensor,
@@ -149,7 +156,7 @@ fun SensorDetailView(
         }
         LazyColumn(
             modifier = Modifier.padding(contentPadding),
-            contentPadding = WindowInsets.navigationBars.bottomPaddingValues()
+            contentPadding = safeBottomPaddingValues(applyHorizontal = false)
         ) {
             if (viewModel.sensorManager != null && viewModel.basicSensor != null) {
                 item {
@@ -197,11 +204,11 @@ fun SensorDetailView(
                         }
                         items(sensor.attributes, key = { "${it.sensorId}-${it.name}" }) { attribute ->
                             val summary = when (attribute.valueType) {
-                                "listboolean" -> jsonMapper.readValue<List<Boolean>>(attribute.value).toString()
-                                "listfloat" -> jsonMapper.readValue<List<Number>>(attribute.value).toString()
-                                "listlong" -> jsonMapper.readValue<List<Long>>(attribute.value).toString()
-                                "listint" -> jsonMapper.readValue<List<Int>>(attribute.value).toString()
-                                "liststring" -> jsonMapper.readValue<List<String>>(attribute.value).toString()
+                                "listboolean" -> kotlinJsonMapper.decodeFromString<List<Boolean>>(attribute.value).toString()
+                                "listfloat" -> kotlinJsonMapper.decodeFromString<List<Number>>(attribute.value).toString()
+                                "listlong" -> kotlinJsonMapper.decodeFromString<List<Long>>(attribute.value).toString()
+                                "listint" -> kotlinJsonMapper.decodeFromString<List<Int>>(attribute.value).toString()
+                                "liststring" -> kotlinJsonMapper.decodeFromString<List<String>>(attribute.value).toString()
                                 else -> attribute.value
                             }
                             SensorDetailRow(

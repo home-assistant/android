@@ -46,7 +46,7 @@ class HaCarAppService : CarAppService() {
     lateinit var prefsRepository: PrefsRepository
 
     private val serverId = MutableStateFlow(0)
-    private val allEntities = MutableStateFlow<Map<String, Entity<*>>>(emptyMap())
+    private val allEntities = MutableStateFlow<Map<String, Entity>>(emptyMap())
     private var allEntitiesJob: Job? = null
 
     override fun createHostValidator(): HostValidator {
@@ -133,7 +133,7 @@ class HaCarAppService : CarAppService() {
         allEntitiesJob?.cancel()
         allEntitiesJob = scope.launch {
             serverId.value = id
-            val entities: MutableMap<String, Entity<*>>? =
+            val entities: MutableMap<String, Entity>? =
                 if (serverManager.getServer(id) != null) {
                     serverManager.integrationRepository(id).getEntities()
                         ?.associate { it.entityId to it }

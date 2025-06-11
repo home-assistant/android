@@ -27,7 +27,7 @@ interface HaControl {
     @SuppressLint("ResourceType")
     fun createControl(
         context: Context,
-        entity: Entity<Map<String, Any>>,
+        entity: Entity,
         info: HaControlInfo
     ): Control {
         val controlPath = "entityId:${info.entityId}"
@@ -99,13 +99,13 @@ interface HaControl {
     fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity<Map<String, Any>>,
+        entity: Entity,
         info: HaControlInfo
     ): Control.StatefulBuilder
 
-    fun getDeviceType(entity: Entity<Map<String, Any>>): Int
+    fun getDeviceType(entity: Entity): Int
 
-    fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String
+    fun getDomainString(context: Context, entity: Entity): String
 
     suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean
 }

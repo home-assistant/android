@@ -19,7 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.barcode.BarcodeScannerActivity
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
@@ -32,7 +32,6 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
  * This activity is not meant to be used in production that's why it is only accessible through the debug build type.
  * To avoid any mistakes this activity is only accessible from a shortcut
  */
-@AndroidEntryPoint
 class DevPlaygroundActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,6 +70,11 @@ private fun DevPlayGroundScreen(context: Context? = null) {
             context?.run { startActivity(SettingsActivity.newInstance(context)) }
         }) {
             Text("Start Settings")
+        }
+        Button(modifier = Modifier.padding(top = 16.dp), onClick = {
+            context?.run { startActivity(BarcodeScannerActivity.newInstance(this, 0, "Title", "Subtitle", "Action")) }
+        }) {
+            Text("Start barcode")
         }
         Button(modifier = Modifier.padding(top = 16.dp), onClick = {
             FailFast.failWhen(true) {

@@ -28,10 +28,10 @@ import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.util.CHANNEL_DATABASE
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.location.LocationHistoryDao
@@ -701,7 +701,7 @@ abstract class AppDatabase : RoomDatabase() {
                     integrationSecret?.let { put("secret", it) } ?: run { putNull("secret") }
                     urlCloudhook?.let { put("cloudhook_url", it) } ?: run { putNull("cloudhook_url") }
                     put("use_cloud", urlUseCloud)
-                    put("internal_ssids", jacksonObjectMapper().writeValueAsString(urlInternalSsids))
+                    put("internal_ssids", kotlinJsonMapper.encodeToString(urlInternalSsids))
                     put("prioritize_internal", urlPrioritizeInternal)
                     authAccessToken?.let { put("access_token", it) } ?: run { putNull("access_token") }
                     authRefreshToken?.let { put("refresh_token", it) } ?: run { putNull("refresh_token") }

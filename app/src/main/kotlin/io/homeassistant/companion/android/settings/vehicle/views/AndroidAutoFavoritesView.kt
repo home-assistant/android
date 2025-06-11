@@ -3,10 +3,7 @@ package io.homeassistant.companion.android.settings.vehicle.views
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -30,6 +27,8 @@ import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoView
 import io.homeassistant.companion.android.util.compose.FavoriteEntityRow
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
+import io.homeassistant.companion.android.util.plus
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -52,7 +51,7 @@ fun AndroidAutoFavoritesSettings(
     var selectedServer by remember { mutableIntStateOf(defaultServer) }
 
     val favoriteEntities = androidAutoViewModel.favoritesList.toList()
-    var validEntities by remember { mutableStateOf<List<Entity<*>>>(emptyList()) }
+    var validEntities by remember { mutableStateOf<List<Entity>>(emptyList()) }
     LaunchedEffect(favoriteEntities.size, androidAutoViewModel.sortedEntities.size, selectedServer) {
         validEntities = withContext(Dispatchers.IO) {
             androidAutoViewModel.sortedEntities
@@ -66,7 +65,7 @@ fun AndroidAutoFavoritesSettings(
 
     LazyColumn(
         state = lazyListState,
-        contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
+        contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
     ) {
         item {
             Text(

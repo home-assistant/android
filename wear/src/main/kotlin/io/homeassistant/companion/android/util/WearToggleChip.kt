@@ -35,7 +35,7 @@ object WearToggleChip {
      * @param entity The entity state on which the background for the active state should be based
      */
     @Composable
-    fun entityToggleChipBackgroundColors(entity: Entity<*>, checked: Boolean): ToggleChipColors {
+    fun entityToggleChipBackgroundColors(entity: Entity, checked: Boolean): ToggleChipColors {
         // For a toggleable entity, a custom background should only be used if it has:
         // a. a position (eg. fan speed, light brightness)
         // b. a custom color (eg. light color)

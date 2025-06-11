@@ -22,7 +22,7 @@ object DefaultSwitchControl : HaControl {
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity<Map<String, Any>>,
+        entity: Entity,
         info: HaControlInfo
     ): Control.StatefulBuilder {
         control.setControlTemplate(
@@ -37,7 +37,7 @@ object DefaultSwitchControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
+    override fun getDeviceType(entity: Entity): Int =
         when (entity.domain) {
             "humidifier" -> DeviceTypes.TYPE_HUMIDIFIER
             "remote" -> DeviceTypes.TYPE_REMOTE_CONTROL
@@ -46,7 +46,7 @@ object DefaultSwitchControl : HaControl {
             else -> DeviceTypes.TYPE_GENERIC_ON_OFF
         }
 
-    override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+    override fun getDomainString(context: Context, entity: Entity): String =
         when (entity.domain) {
             "automation" -> context.getString(commonR.string.domain_automation)
             "humidifier" -> context.getString(commonR.string.domain_humidifier)

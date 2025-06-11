@@ -215,7 +215,8 @@ class ThreadManagerImpl @Inject constructor(
             val threadBorderAgent = ThreadBorderAgent.newBuilder(idAsBytes).build()
             val threadNetworkCredentials = ThreadNetworkCredentials.fromActiveOperationalDataset(tlv)
             suspendCoroutine { cont ->
-                ThreadNetwork.getClient(context).addCredentials(threadBorderAgent, threadNetworkCredentials)
+                ThreadNetwork.getNetworkClient(context)
+                    .addCredentials(threadBorderAgent, threadNetworkCredentials)
                     .addOnSuccessListener { cont.resume(Unit) }
                     .addOnFailureListener { cont.resumeWithException(it) }
             }
@@ -224,7 +225,7 @@ class ThreadManagerImpl @Inject constructor(
 
     override suspend fun getPreferredDatasetFromDevice(context: Context): IntentSender? = suspendCoroutine { cont ->
         if (appSupportsThread()) {
-            ThreadNetwork.getClient(context)
+            ThreadNetwork.getNetworkClient(context)
                 .preferredCredentials
                 .addOnSuccessListener { cont.resume(it.intentSender) }
                 .addOnFailureListener { cont.resumeWithException(it) }
@@ -245,7 +246,7 @@ class ThreadManagerImpl @Inject constructor(
 
     private suspend fun appAddedIsPreferredCredentials(context: Context): Boolean {
         val appCredentials = suspendCoroutine { cont ->
-            ThreadNetwork.getClient(context)
+            ThreadNetwork.getNetworkClient(context)
                 .allCredentials
                 .addOnSuccessListener { cont.resume(it) }
                 .addOnFailureListener { cont.resume(null) }
@@ -265,7 +266,7 @@ class ThreadManagerImpl @Inject constructor(
     }
 
     private suspend fun isPreferredCredentials(context: Context, credentials: ThreadNetworkCredentials): Boolean = suspendCoroutine { cont ->
-        ThreadNetwork.getClient(context)
+        ThreadNetwork.getNetworkClient(context)
             .isPreferredCredentials(credentials)
             .addOnSuccessListener { cont.resume(it == IsPreferredCredentialsResult.PREFERRED_CREDENTIALS_MATCHED) }
             .addOnFailureListener { cont.resumeWithException(it) }
@@ -288,7 +289,7 @@ class ThreadManagerImpl @Inject constructor(
         if (serverManager.defaultServers.all { it.version?.isAtLeast(2023, 9) == true }) {
             try {
                 deleteThreadCredential(context, BORDER_AGENT_ID)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Expected, it may not exist
             }
         }
@@ -310,7 +311,7 @@ class ThreadManagerImpl @Inject constructor(
     private suspend fun deleteThreadCredential(context: Context, borderAgentId: String) = suspendCoroutine { cont ->
         val idAsBytes = borderAgentId.let { if (it.length == 16) it.toByteArray() else it.hexToByteArray() }
         val threadBorderAgent = ThreadBorderAgent.newBuilder(idAsBytes).build()
-        ThreadNetwork.getClient(context)
+        ThreadNetwork.getNetworkClient(context)
             .removeCredentials(threadBorderAgent)
             .addOnSuccessListener { cont.resume(true) }
             .addOnFailureListener { cont.resumeWithException(it) }

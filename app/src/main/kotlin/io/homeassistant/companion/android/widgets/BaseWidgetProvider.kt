@@ -177,10 +177,10 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     abstract fun getWidgetProvider(context: Context): ComponentName
-    abstract suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>? = null): RemoteViews
+    abstract suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity? = null): RemoteViews
 
     // A map of widget IDs to [server ID, list of entity IDs]
     abstract suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>>
     abstract fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int)
-    abstract suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>)
+    abstract suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity)
 }

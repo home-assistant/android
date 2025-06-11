@@ -58,13 +58,13 @@ class EntityGridVehicleScreen(
     val title: String,
     private val entityRegistry: List<EntityRegistryResponse>?,
     private val domains: MutableSet<String>,
-    private val entitiesFlow: Flow<List<Entity<*>>>,
-    private val allEntities: Flow<Map<String, Entity<*>>>,
+    private val entitiesFlow: Flow<List<Entity>>,
+    private val allEntities: Flow<Map<String, Entity>>,
     private val onChangeServer: (Int) -> Unit
 ) : Screen(carContext) {
 
     private var loading = true
-    var entities: List<Entity<*>> = listOf()
+    var entities: List<Entity> = listOf()
     private val isFavorites = title == carContext.getString(R.string.favorites)
     private val shouldSwitchServers = serverManager.defaultServers.size > 1
 
@@ -81,7 +81,7 @@ class EntityGridVehicleScreen(
         }
     }
 
-    fun getEntityGridItems(entities: List<Entity<*>>): ItemList.Builder {
+    fun getEntityGridItems(entities: List<Entity>): ItemList.Builder {
         val listBuilder = if (entities.isNotEmpty()) {
             createEntityGrid(entities)
         } else {
@@ -150,7 +150,7 @@ class EntityGridVehicleScreen(
         }.build()
     }
 
-    private fun createEntityGrid(entities: List<Entity<*>>): ItemList.Builder {
+    private fun createEntityGrid(entities: List<Entity>): ItemList.Builder {
         val listBuilder = ItemList.Builder()
         val manager = carContext.getCarService(ConstraintManager::class.java)
         val gridLimit = manager.getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID)

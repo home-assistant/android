@@ -2,13 +2,12 @@ package io.homeassistant.companion.android.settings.wear.views
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Scaffold
+import androidx.compose.material.SnackbarHost
 import androidx.compose.material.Text
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
@@ -27,6 +26,9 @@ import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import io.homeassistant.companion.android.util.compose.FavoriteEntityRow
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
+import io.homeassistant.companion.android.util.plus
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.launchIn
@@ -48,7 +50,7 @@ fun LoadWearFavoritesSettings(
     }
 
     val favoriteEntities = settingsWearViewModel.favoriteEntityIds
-    var validEntities by remember { mutableStateOf<List<Entity<*>>>(emptyList()) }
+    var validEntities by remember { mutableStateOf<List<Entity>>(emptyList()) }
     LaunchedEffect(favoriteEntities.size) {
         validEntities = withContext(Dispatchers.IO) {
             settingsWearViewModel.entities
@@ -71,6 +73,12 @@ fun LoadWearFavoritesSettings(
 
     Scaffold(
         scaffoldState = scaffoldState,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = scaffoldState.snackbarHostState,
+                modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets()),
+            )
+        },
         topBar = {
             SettingsWearTopAppBar(
                 title = { Text(stringResource(commonR.string.wear_favorite_entities)) },
@@ -82,7 +90,7 @@ fun LoadWearFavoritesSettings(
         LazyColumn(
             state = lazyListState,
             verticalArrangement = Arrangement.Center,
-            contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()),
+            contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(),
             modifier = Modifier.padding(contentPadding),
         ) {
             item {

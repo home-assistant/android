@@ -3,8 +3,6 @@ package io.homeassistant.companion.android.settings.notification.views
 import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -18,14 +16,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.text.HtmlCompat
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.notification.NotificationItem
-import io.homeassistant.companion.android.util.bottomPaddingValues
 import io.homeassistant.companion.android.util.notificationItem
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import java.util.Calendar
 import java.util.GregorianCalendar
+import kotlinx.serialization.json.Json
 
 @Composable
 fun LoadNotification(notification: NotificationItem) {
@@ -35,7 +32,7 @@ fun LoadNotification(notification: NotificationItem) {
     Column(
         modifier = Modifier
             .verticalScroll(scrollState)
-            .padding(WindowInsets.navigationBars.bottomPaddingValues()),
+            .padding(safeBottomPaddingValues(applyHorizontal = false)),
     ) {
         NotificationDetailViewHeader(stringId = commonR.string.notification_received_at)
         val cal: Calendar = GregorianCalendar()
@@ -64,11 +61,14 @@ fun LoadNotification(notification: NotificationItem) {
 
         NotificationDetailViewHeader(stringId = commonR.string.notification_data)
         val notifData =
+            // Try to pretty print the JSON
             try {
-                val mapper = ObjectMapper()
-                mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true)
-                val jsonObject = mapper.readValue(notification.data, Object::class.java)
-                mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject)
+                val mapper = Json {
+                    isLenient = true // allow unquoted field names
+                    prettyPrint = true
+                }
+                val jsonElement = mapper.parseToJsonElement(notification.data)
+                mapper.encodeToString(jsonElement)
             } catch (e: Exception) {
                 notification.data
             }

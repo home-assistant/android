@@ -53,10 +53,6 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                     compose = true
                 }
 
-                compileOptions {
-                    isCoreLibraryDesugaringEnabled = true
-                }
-
                 signingConfigs {
                     create("release") {
                         storeFile = file(System.getenv("KEYSTORE_PATH") ?: "release_keystore.keystore")
