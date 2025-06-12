@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.player
+package io.homeassistant.companion.android.util.compose.media.player
 
 import android.os.Looper
 import android.view.Surface

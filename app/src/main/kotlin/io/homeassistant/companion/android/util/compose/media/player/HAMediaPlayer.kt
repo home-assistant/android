@@ -1,6 +1,5 @@
-package io.homeassistant.companion.android.player
+package io.homeassistant.companion.android.util.compose.media.player
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import androidx.annotation.OptIn
@@ -9,8 +8,9 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -24,7 +24,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeMute
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.FullscreenExit
@@ -56,13 +56,12 @@ import androidx.media3.datasource.cronet.CronetDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.session.MediaSession
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberPresentationState
 import io.homeassistant.companion.android.common.R
-import java.util.UUID
+import java.util.Locale
 import java.util.concurrent.Executors
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -80,6 +79,14 @@ private val TIME_TRACKING_UPDATE_DELAY = 1.seconds
 
 // Delay before auto-hiding controls
 private val AUTO_HIDE_DELAY = 2.seconds
+
+private val CenterButtonSize = 48.dp
+private val BottomControlsHeight = 60.dp
+private val BottomControlButtonSize = 24.dp
+private val StartPaddingTime = (BottomControlsHeight - BottomControlButtonSize) / 2
+
+private val ControlBackgroundColorStart = Color(0x30000000)
+private val ControlBackgroundColorEnd = Color(0xB0000000)
 
 /**
  * Displays a media player using ExoPlayer and Compose UI.
@@ -127,11 +134,6 @@ fun HAMediaPlayer(
     }
 
     player?.let { player ->
-        // Allow the PiP to have control of the player
-        MediaSession.Builder(context, player)
-            .setId(UUID.randomUUID().toString())
-            .build()
-
         DisposableEffect(player, url) {
             player.setMediaItem(MediaItem.fromUri(url))
             player.playWhenReady = true
@@ -162,7 +164,6 @@ fun HAMediaPlayerUI(
 ) {
     var showControls by remember { mutableStateOf(true) }
     var isFullscreen by remember { mutableStateOf(false) }
-    val bufferingState = rememberBufferingState(player)
     val presentationState = rememberPresentationState(player)
     val scaledModifier =
         Modifier.resizeWithContentScale(contentScale, presentationState.videoSizeDp)
@@ -176,46 +177,36 @@ fun HAMediaPlayerUI(
         }
     }
 
-    // TODO we could move the Box outside and make BoxScope.Content instead and emit a fullScreenOnClick callback to let the caller handle the fullscreen button
-    Box(modifier = (if (isFullscreen) fullscreenModifier else modifier).fillMaxSize()) {
+    BoxWithConstraints(modifier = (if (isFullscreen) fullscreenModifier else modifier).fillMaxSize()) {
         PlayerSurface(
             player = player,
-            modifier = scaledModifier
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    // Prevent ripple on tap
-                    indication = null,
-                ) { showControls = !showControls },
+            modifier = scaledModifier,
         )
-
-        if (bufferingState.isBuffering) {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(64.dp),
-            )
-        }
 
         Controls(
             player = player,
-            isBuffering = bufferingState.isBuffering,
             showControls = showControls,
             isFullScreen = isFullscreen,
             onClickFullscreen = {
                 isFullscreen = !isFullscreen
+            },
+            onShowControlClick = {
+                showControls = !showControls
             },
         )
     }
 }
 
 @Composable
-private fun BoxScope.Controls(
+private fun BoxWithConstraintsScope.Controls(
     player: Player,
-    isBuffering: Boolean,
     showControls: Boolean,
     isFullScreen: Boolean,
     onClickFullscreen: () -> Unit,
+    onShowControlClick: () -> Unit,
 ) {
+    val bufferingState = rememberBufferingState(player)
+
     val animatedAlpha by animateFloatAsState(
         targetValue = if (showControls) 1.0f else 0f,
         label = "ControlsAlpha",
@@ -224,39 +215,75 @@ private fun BoxScope.Controls(
         alpha = animatedAlpha
     }
 
-    if (!isBuffering) {
-        PlayPauseButton(player, showControls, modifier = modifier.align(Alignment.Center))
+    ShowControlsButton(onShowControlClick)
+
+    val centerModifier = modifier
+        .size(CenterButtonSize)
+        .align(Alignment.Center)
+    if (!bufferingState.isBuffering) {
+        PlayPauseButton(
+            player,
+            modifier = centerModifier,
+        )
+    } else {
+        CircularProgressIndicator(
+            modifier = centerModifier,
+        )
     }
-    BottomControls(
-        player = player,
-        showControls = showControls,
-        isFullScreen = isFullScreen,
-        onClickFullscreen = onClickFullscreen,
-        modifier = modifier.align(Alignment.BottomCenter),
+
+    val isBottomControlOverlapping = maxHeight / 2 < CenterButtonSize / 2 + BottomControlsHeight
+
+    if (!isBottomControlOverlapping) {
+        BottomControls(
+            player = player,
+            isFullScreen = isFullScreen,
+            onClickFullscreen = onClickFullscreen,
+            modifier = modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth(),
+        )
+    }
+
+    if (!showControls) {
+        // Draw over all the control to capture the click instead of the buttons that are transparent
+        ShowControlsButton(onShowControlClick)
+    }
+}
+
+@Composable
+private fun BoxScope.ShowControlsButton(action: () -> Unit) {
+    Spacer(
+        modifier = Modifier
+            .fillMaxSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                // Prevent ripple on tap
+                indication = null,
+                onClick = action,
+            ),
     )
 }
 
 @Composable
 private fun BottomControls(
     player: Player,
-    showControls: Boolean,
     isFullScreen: Boolean,
     onClickFullscreen: () -> Unit,
     modifier: Modifier,
 ) {
     Row(
         modifier = modifier
-            .height(60.dp)
+            .height(BottomControlsHeight)
             .fillMaxWidth()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color(0x30000000), Color(0xB0000000)),
+                    colors = listOf(ControlBackgroundColorStart, ControlBackgroundColorEnd),
                 ),
             ),
     ) {
         TimeText(player)
         Spacer(modifier = Modifier.weight(1f))
-        MuteButton(player, showControls)
+        MuteButton(player)
         FullscreenButton(isFullScreen, onClickFullscreen)
     }
 }
@@ -267,34 +294,34 @@ private fun RowScope.FullscreenButton(isFullScreen: Boolean, onClickFullscreen: 
         onClick = onClickFullscreen,
         modifier = Modifier
             .align(Alignment.CenterVertically)
-            .size(64.dp),
+            .size(BottomControlsHeight),
     ) {
         Icon(
             if (isFullScreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
             contentDescription = stringResource(R.string.fullscreen),
             tint = Color.White,
+            modifier = Modifier.size(BottomControlButtonSize),
         )
     }
 }
 
 @OptIn(UnstableApi::class)
 @Composable
-private fun RowScope.MuteButton(player: Player, showControls: Boolean) {
+private fun RowScope.MuteButton(player: Player) {
     val muteState = rememberMuteUnmuteButtonState(player)
     if (muteState.isEnabled) {
         IconButton(
             modifier = Modifier
                 .align(Alignment.CenterVertically)
-                .size(64.dp),
+                .size(BottomControlsHeight),
             onClick = muteState::onClick,
-            enabled = showControls,
         ) {
             val icon =
-                if (muteState.showMute) Icons.AutoMirrored.Filled.VolumeMute else Icons.AutoMirrored.Filled.VolumeUp
+                if (muteState.showMute) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp
             Icon(
                 icon,
                 contentDescription = stringResource(R.string.mute_unmute),
-                modifier = Modifier,
+                modifier = Modifier.size(BottomControlButtonSize),
                 tint = Color.White,
             )
         }
@@ -302,7 +329,6 @@ private fun RowScope.MuteButton(player: Player, showControls: Boolean) {
 }
 
 @Composable
-@SuppressLint("DefaultLocale")
 private fun RowScope.TimeText(player: Player) {
     var currentPosition by remember { mutableStateOf(player.currentPositionDuration()) }
 
@@ -316,13 +342,13 @@ private fun RowScope.TimeText(player: Player) {
     Text(
         currentPosition.toComponents { hours, minutes, seconds, _ ->
             if (hours > 0L) {
-                String.format("%02d:%02d:%02d", hours, minutes, seconds)
+                String.format(Locale.US, "%02d:%02d:%02d", hours, minutes, seconds)
             } else {
-                String.format("%02d:%02d", minutes, seconds)
+                String.format(Locale.US, "%02d:%02d", minutes, seconds)
             }
         },
         modifier = Modifier
-            .padding(start = 8.dp)
+            .padding(start = StartPaddingTime)
             .align(Alignment.CenterVertically),
         color = Color.White,
     )
@@ -330,19 +356,20 @@ private fun RowScope.TimeText(player: Player) {
 
 @Composable
 @OptIn(UnstableApi::class)
-private fun PlayPauseButton(player: Player, showControls: Boolean, modifier: Modifier) {
+private fun PlayPauseButton(player: Player, modifier: Modifier) {
     val state = rememberPlayPauseButtonState(player)
     val icon = if (state.showPlay) Icons.Default.PlayArrow else Icons.Default.Pause
-    val contentDescription = if (state.showPlay) stringResource(R.string.play) else stringResource(R.string.pause)
+    val contentDescription =
+        if (state.showPlay) stringResource(R.string.play) else stringResource(R.string.pause)
     IconButton(
         onClick = state::onClick,
         modifier = modifier,
-        enabled = state.isEnabled && showControls,
+        enabled = state.isEnabled,
     ) {
         Icon(
             icon,
             contentDescription = contentDescription,
-            modifier = modifier.size(64.dp),
+            modifier = Modifier.size(CenterButtonSize),
             tint = Color.White,
         )
     }
