@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,12 +30,6 @@ import androidx.media3.common.Player
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.initializePlayer
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
-import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.delay
-import timber.log.Timber
-
-// Delay before auto-hiding controls
-private val AUTO_HIDE_DELAY = 2.seconds
 
 /**
  * Very basic demo of the ExoPlayer usage and the PlayerView.
@@ -87,15 +80,6 @@ private fun HAMediaPlayer(
 ) {
     val context = LocalContext.current
     var player by remember { mutableStateOf<Player?>(null) }
-    var showControls by remember { mutableStateOf(true) }
-
-    LaunchedEffect(showControls) {
-        if (showControls) {
-            delay(AUTO_HIDE_DELAY)
-            showControls = false
-            Timber.e("Hiding controls")
-        }
-    }
 
     fun releasePlayer() {
         player?.release()
@@ -133,13 +117,9 @@ private fun HAMediaPlayer(
         }
         HAMediaPlayer(
             player = player,
-            showControls = showControls,
             contentScale = contentScale,
             modifier = modifier,
             fullscreenModifier = fullscreenModifier,
-            onPlayerClicked = {
-                showControls = !showControls
-            }
         )
     }
 }

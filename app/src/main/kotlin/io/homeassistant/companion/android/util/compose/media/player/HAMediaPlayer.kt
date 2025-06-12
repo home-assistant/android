@@ -55,10 +55,14 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import kotlinx.coroutines.delay
+import timber.log.Timber
 
 // Useful links
 // https://github.com/androidx/media/blob/52387bb97511bb88242321e4689aa5952d45784f/demos/compose/src/main/java/androidx/media3/demo/compose/MainActivity.kt
 // https://developer.android.com/media/media3/ui/compose
+
+// Delay before auto-hiding controls
+private val AUTO_HIDE_DELAY = 2.seconds
 
 // Interval between updates of the current progress of the player
 private val TIME_TRACKING_UPDATE_DELAY = 1.seconds
@@ -70,6 +74,42 @@ private val StartPaddingTime = (BottomControlsHeight - BottomControlButtonSize) 
 
 private val ControlBackgroundColorStart = Color(0x30000000)
 private val ControlBackgroundColorEnd = Color(0xB0000000)
+
+/**
+ * A Composable function that displays a video player.
+ *
+ * This composable handles the rendering of the video surface and optionally displays playback controls.
+ * It allows for customization of content scaling and provides a callback for interactions
+ * with the player area itself.
+ *
+ * It automatically hides the controls after a delay of 2s and let the user control if they are displayed or not.
+ *
+ * @param player The Player instance to be used for playback.
+ * @param contentScale The `ContentScale` to apply to the video content (e.g., Fit, Crop).
+ * @param modifier The `Modifier` to be applied to the main player container.
+ * @param fullscreenModifier The `Modifier` to be applied to the player container when it is in fullscreen mode.
+ */
+@Composable
+fun HAMediaPlayer(
+    player: Player,
+    contentScale: ContentScale,
+    modifier: Modifier = Modifier,
+    fullscreenModifier: Modifier = Modifier,
+) {
+    var showControls by remember { mutableStateOf(true) }
+
+    LaunchedEffect(showControls) {
+        if (showControls) {
+            delay(AUTO_HIDE_DELAY)
+            showControls = false
+            Timber.e("Hiding controls")
+        }
+    }
+
+    HAMediaPlayer(player, showControls, contentScale, modifier, fullscreenModifier, onPlayerClicked = {
+        showControls = !showControls
+    })
+}
 
 /**
  * A Composable function that displays a video player.
