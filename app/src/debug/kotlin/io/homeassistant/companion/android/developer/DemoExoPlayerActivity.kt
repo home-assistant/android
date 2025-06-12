@@ -10,13 +10,33 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import io.homeassistant.companion.android.util.compose.initializePlayer
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
+import timber.log.Timber
+
+// Delay before auto-hiding controls
+private val AUTO_HIDE_DELAY = 2.seconds
 
 /**
  * Very basic demo of the ExoPlayer usage and the PlayerView.
@@ -54,6 +74,72 @@ class DemoExoPlayerActivity : AppCompatActivity() {
             PictureInPictureParams.Builder()
                 .setAspectRatio(Rational(16, 9))
                 .build(),
+        )
+    }
+}
+
+@Composable
+private fun HAMediaPlayer(
+    url: String,
+    modifier: Modifier = Modifier,
+    fullscreenModifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.Inside,
+) {
+    val context = LocalContext.current
+    var player by remember { mutableStateOf<Player?>(null) }
+    var showControls by remember { mutableStateOf(true) }
+
+    LaunchedEffect(showControls) {
+        if (showControls) {
+            delay(AUTO_HIDE_DELAY)
+            showControls = false
+            Timber.e("Hiding controls")
+        }
+    }
+
+    fun releasePlayer() {
+        player?.release()
+        player = null
+    }
+
+    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+        // Initialize/release in onStart()/onStop() only because in a multi-window environment multiple
+        // apps can be visible at the same time. The apps that are out-of-focus are paused, but video
+        // playback should continue.
+        LifecycleStartEffect(Unit) {
+            player = initializePlayer(context)
+            onStopOrDispose {
+                releasePlayer()
+            }
+        }
+    } else {
+        // Call to onStop() is not guaranteed, hence we release the Player in onPause() instead
+        LifecycleResumeEffect(Unit) {
+            player = initializePlayer(context)
+            onPauseOrDispose {
+                releasePlayer()
+            }
+        }
+    }
+
+    player?.let { player ->
+        DisposableEffect(player, url) {
+            player.setMediaItem(MediaItem.fromUri(url))
+            player.playWhenReady = true
+            player.prepare()
+            onDispose {
+                releasePlayer()
+            }
+        }
+        HAMediaPlayer(
+            player = player,
+            showControls = showControls,
+            contentScale = contentScale,
+            modifier = modifier,
+            fullscreenModifier = fullscreenModifier,
+            onPlayerClicked = {
+                showControls = !showControls
+            }
         )
     }
 }

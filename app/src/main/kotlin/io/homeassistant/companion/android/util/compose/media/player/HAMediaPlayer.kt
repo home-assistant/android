@@ -1,9 +1,6 @@
 package io.homeassistant.companion.android.util.compose.media.player
 
-import android.content.Context
-import android.os.Build
 import androidx.annotation.OptIn
-import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,7 +28,6 @@ import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,32 +39,22 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LifecycleResumeEffect
-import androidx.lifecycle.compose.LifecycleStartEffect
-import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.cronet.CronetDataSource
-import androidx.media3.exoplayer.DefaultLoadControl
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberPresentationState
 import io.homeassistant.companion.android.common.R
 import java.util.Locale
-import java.util.concurrent.Executors
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import kotlinx.coroutines.delay
-import org.chromium.net.CronetEngine
 
 // Useful links
 // https://github.com/androidx/media/blob/52387bb97511bb88242321e4689aa5952d45784f/demos/compose/src/main/java/androidx/media3/demo/compose/MainActivity.kt
@@ -76,9 +62,6 @@ import org.chromium.net.CronetEngine
 
 // Interval between updates of the current progress of the player
 private val TIME_TRACKING_UPDATE_DELAY = 1.seconds
-
-// Delay before auto-hiding controls
-private val AUTO_HIDE_DELAY = 2.seconds
 
 private val CenterButtonSize = 48.dp
 private val BottomControlsHeight = 60.dp
@@ -89,93 +72,33 @@ private val ControlBackgroundColorStart = Color(0x30000000)
 private val ControlBackgroundColorEnd = Color(0xB0000000)
 
 /**
- * Displays a media player using ExoPlayer and Compose UI.
+ * A Composable function that displays a video player.
  *
- * @param url The media URL to play.
- * @param modifier Modifier for the player container.
- * @param fullscreenModifier Modifier to apply when in fullscreen mode.
- * @param autoHideControl Whether to auto-hide controls after a delay.
- * @param contentScale How the video content should be scaled.
+ * This composable handles the rendering of the video surface and optionally displays playback controls.
+ * It allows for customization of content scaling and provides a callback for interactions
+ * with the player area itself.
+ *
+ * @param player The Player instance to be used for playback.
+ * @param showControls Whether to display the playback controls (e.g., play/pause, mute/unmute, fullscreen, time).
+ * @param contentScale The `ContentScale` to apply to the video content (e.g., Fit, Crop).
+ * @param modifier The `Modifier` to be applied to the main player container.
+ * @param fullscreenModifier The `Modifier` to be applied to the player container when it is in fullscreen mode.
+ * @param onPlayerClicked Callback invoked when the player's surface (outside of controls) is clicked.
  */
 @Composable
-fun HAMediaPlayer(
-    url: String,
-    modifier: Modifier = Modifier,
-    fullscreenModifier: Modifier = Modifier,
-    autoHideControl: Boolean = true,
-    contentScale: ContentScale = ContentScale.Inside,
-) {
-    val context = LocalContext.current
-    var player by remember { mutableStateOf<Player?>(null) }
-
-    fun releasePlayer() {
-        player?.release()
-        player = null
-    }
-
-    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
-        // Initialize/release in onStart()/onStop() only because in a multi-window environment multiple
-        // apps can be visible at the same time. The apps that are out-of-focus are paused, but video
-        // playback should continue.
-        LifecycleStartEffect(Unit) {
-            player = initializePlayer(context)
-            onStopOrDispose {
-                releasePlayer()
-            }
-        }
-    } else {
-        // Call to onStop() is not guaranteed, hence we release the Player in onPause() instead
-        LifecycleResumeEffect(Unit) {
-            player = initializePlayer(context)
-            onPauseOrDispose {
-                releasePlayer()
-            }
-        }
-    }
-
-    player?.let { player ->
-        DisposableEffect(player, url) {
-            player.setMediaItem(MediaItem.fromUri(url))
-            player.playWhenReady = true
-            player.prepare()
-            onDispose {
-                releasePlayer()
-            }
-        }
-        HAMediaPlayerUI(
-            player = player,
-            autoHideControl = autoHideControl,
-            contentScale = contentScale,
-            modifier = modifier,
-            fullscreenModifier = fullscreenModifier,
-        )
-    }
-}
-
-@Composable
 @OptIn(UnstableApi::class)
-@VisibleForTesting
-fun HAMediaPlayerUI(
+fun HAMediaPlayer(
     player: Player,
-    autoHideControl: Boolean,
+    showControls: Boolean,
     contentScale: ContentScale,
     modifier: Modifier = Modifier,
     fullscreenModifier: Modifier = Modifier,
+    onPlayerClicked: () -> Unit = {},
 ) {
-    var showControls by remember { mutableStateOf(true) }
     var isFullscreen by remember { mutableStateOf(false) }
     val presentationState = rememberPresentationState(player)
     val scaledModifier =
         Modifier.resizeWithContentScale(contentScale, presentationState.videoSizeDp)
-
-    if (autoHideControl) {
-        LaunchedEffect(showControls) {
-            if (showControls) {
-                delay(AUTO_HIDE_DELAY)
-                showControls = false
-            }
-        }
-    }
 
     BoxWithConstraints(modifier = (if (isFullscreen) fullscreenModifier else modifier).fillMaxSize()) {
         PlayerSurface(
@@ -190,9 +113,7 @@ fun HAMediaPlayerUI(
             onClickFullscreen = {
                 isFullscreen = !isFullscreen
             },
-            onShowControlClick = {
-                showControls = !showControls
-            },
+            onPlayerClicked = onPlayerClicked,
         )
     }
 }
@@ -203,7 +124,7 @@ private fun BoxWithConstraintsScope.Controls(
     showControls: Boolean,
     isFullScreen: Boolean,
     onClickFullscreen: () -> Unit,
-    onShowControlClick: () -> Unit,
+    onPlayerClicked: () -> Unit,
 ) {
     val bufferingState = rememberBufferingState(player)
 
@@ -215,7 +136,7 @@ private fun BoxWithConstraintsScope.Controls(
         alpha = animatedAlpha
     }
 
-    ShowControlsButton(onShowControlClick)
+    ShowControlsButton(onPlayerClicked)
 
     val centerModifier = modifier
         .size(CenterButtonSize)
@@ -246,7 +167,7 @@ private fun BoxWithConstraintsScope.Controls(
 
     if (!showControls) {
         // Draw over all the control to capture the click instead of the buttons that are transparent
-        ShowControlsButton(onShowControlClick)
+        ShowControlsButton(onPlayerClicked)
     }
 }
 
@@ -375,30 +296,11 @@ private fun PlayPauseButton(player: Player, modifier: Modifier) {
     }
 }
 
-@OptIn(UnstableApi::class)
-private fun initializePlayer(context: Context): ExoPlayer {
-    return ExoPlayer.Builder(context).setMediaSourceFactory(
-        DefaultMediaSourceFactory(
-            CronetDataSource.Factory(
-                CronetEngine.Builder(context).enableQuic(true).build(),
-                Executors.newSingleThreadExecutor(),
-            ),
-        ).setLiveMaxSpeed(8.0f),
-    ).setLoadControl(
-        DefaultLoadControl.Builder().setBufferDurationsMs(
-            0,
-            30000,
-            0,
-            0,
-        ).build(),
-    ).build()
-}
-
 private fun Player.currentPositionDuration(): Duration =
     currentPosition.toDuration(DurationUnit.MILLISECONDS)
 
 @Preview(showSystemUi = true)
 @Composable
 private fun PreviewPlayer() {
-    HAMediaPlayerUI(FakePlayer(), false, ContentScale.Fit)
+    HAMediaPlayer(FakePlayer(), true, ContentScale.Fit)
 }
