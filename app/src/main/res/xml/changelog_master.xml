@@ -3,6 +3,7 @@
     tools:ignore="MissingDefaultResource">
     <release version="2025.6.3 - Main" versioncode="3">
         <change>The app now uses all available space on the screen (edge-to-edge support)</change>
+        <change>Viewing more info for entities from device controls, notifications, shortcuts and tiles is now more responsive</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2025.6.3 - Wear" versioncode="2">
