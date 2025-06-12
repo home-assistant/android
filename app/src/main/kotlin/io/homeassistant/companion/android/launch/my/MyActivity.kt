@@ -59,7 +59,7 @@ class MyActivity : BaseActivity() {
 
             setContent {
                 HomeAssistantAppTheme {
-                    HAWebView(onCreated = {
+                    HAWebView(configure = {
                         if (BuildConfig.DEBUG) {
                             setWebContentsDebuggingEnabled(true)
                         }

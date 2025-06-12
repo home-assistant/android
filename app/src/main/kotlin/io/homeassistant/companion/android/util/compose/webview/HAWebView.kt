@@ -9,13 +9,14 @@ import androidx.compose.ui.viewinterop.AndroidView
 fun HAWebView(
     // layoutParams: FrameLayout.LayoutParams,
     modifier: Modifier = Modifier,
-    onCreated: WebView.() -> Unit = {},
+    configure: WebView.() -> Unit = {},
     onRelease: (WebView) -> Unit = {},
+    factory: () -> WebView? = { null },
 ) {
     AndroidView(
         factory = { context ->
-            WebView(context).apply {
-                onCreated(this)
+            (factory() ?: WebView(context)).apply {
+                configure(this)
 
                 // this.layoutParams = layoutParams
 

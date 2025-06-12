@@ -42,14 +42,21 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.widget.FrameLayout
-import android.widget.ImageButton
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.core.app.ActivityCompat
 import androidx.core.content.getSystemService
 import androidx.core.content.res.ResourcesCompat
@@ -66,11 +73,12 @@ import androidx.media3.datasource.cronet.CronetDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.PlayerView
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import dagger.hilt.android.AndroidEntryPoint
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
@@ -84,7 +92,6 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
-import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
@@ -100,6 +107,9 @@ import io.homeassistant.companion.android.util.DataUriDownloadManager
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
+import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
@@ -203,13 +213,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     @Named("keyChainRepository")
     lateinit var keyChainRepository: KeyChainRepository
 
-    private lateinit var binding: ActivityWebviewBinding
+    // private lateinit var binding: ActivityWebviewBinding
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
     private lateinit var decor: FrameLayout
-    private lateinit var myCustomView: View
+
+    // private lateinit var myCustomView: View
     private lateinit var authenticator: Authenticator
-    private lateinit var exoPlayerView: PlayerView
+
+    // private lateinit var exoPlayerView: PlayerView
     private lateinit var windowInsetsController: WindowInsetsControllerCompat
 
     private var mFilePathCallback: ValueCallback<Array<Uri>>? = null
@@ -221,7 +233,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var videoHeight = 0
     private var firstAuthTime: Long = 0
     private var resourceURL: String = ""
-    private var appLocked = true
+    private var appLocked = mutableStateOf(true)
     private var unlockingApp = false
     private var exoPlayer: ExoPlayer? = null
     private var isExoFullScreen = false
@@ -240,6 +252,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var downloadFileMimetype = ""
     private val javascriptInterface = "externalApp"
 
+    @kotlin.OptIn(ExperimentalHazeMaterialsApi::class)
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         if (
@@ -251,9 +264,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
 
         super.onCreate(savedInstanceState)
-
-        binding = ActivityWebviewBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
         if (intent.extras?.containsKey(EXTRA_SERVER) == true) {
             intent.extras?.getInt(EXTRA_SERVER)?.let {
@@ -268,351 +278,52 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val colorLaunchScreenBackground = ResourcesCompat.getColor(resources, commonR.color.colorLaunchScreenBackground, theme)
         setStatusBarAndNavigationBarColor(colorLaunchScreenBackground, colorLaunchScreenBackground)
 
-        binding.blurView.setupWith(binding.root)
-            .setBlurRadius(8f)
-
-        exoPlayerView = binding.exoplayerView
-        exoPlayerView.visibility = View.GONE
-        exoPlayerView.setBackgroundColor(Color.BLACK)
-        exoPlayerView.alpha = 1f
-        exoPlayerView.controllerShowTimeoutMs = 2000
-
-        appLocked = presenter.isAppLocked()
-        binding.blurView.setBlurEnabled(appLocked)
-
-        authenticator = Authenticator(this, this, ::authenticationResult)
-
-        decor = window.decorView as FrameLayout
-
-        webView = binding.webview
+        webView = WebView(this)
 
         val onBackPressed = object : OnBackPressedCallback(webView.canGoBack()) {
             override fun handleOnBackPressed() {
                 if (webView.canGoBack()) webView.goBack()
             }
         }
+
+        webView.setupWebViewForHA(onBackPressed)
+
         onBackPressedDispatcher.addCallback(this, onBackPressed)
 
-        webView.apply {
-            setOnTouchListener(object : OnSwipeListener(this@WebViewActivity) {
-                override fun onSwipe(
-                    e1: MotionEvent,
-                    e2: MotionEvent,
-                    velocity: Float,
-                    direction: SwipeDirection,
-                    pointerCount: Int
-                ): Boolean {
-                    if (pointerCount == 3 && velocity >= 75) {
-                        when (direction) {
-                            SwipeDirection.LEFT -> presenter.nextServer()
-                            SwipeDirection.RIGHT -> presenter.previousServer()
-                            SwipeDirection.UP -> {
-                                val serverChooser = ServerChooserFragment()
-                                supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this@WebViewActivity) { _, bundle ->
-                                    if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
-                                        presenter.switchActiveServer(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
-                                    }
-                                    supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
-                                }
-                                serverChooser.show(supportFragmentManager, ServerChooserFragment.TAG)
-                            }
-                            SwipeDirection.DOWN -> {
-                                dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
-                            }
-                        }
-                    }
-                    return appLocked
-                }
+        appLocked.value = presenter.isAppLocked()
 
-                override fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean {
-                    return appLocked
-                }
-            })
+        setContent {
+            HomeAssistantAppTheme {
+                val player by remember { mutableStateOf(exoPlayer) }
+                val currentAppLocked by remember { appLocked }
 
-            settings.minimumFontSize = 5
-            settings.javaScriptEnabled = true
-            settings.domStorageEnabled = true
-            settings.displayZoomControls = false
-            settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
-            settings.userAgentString = settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
-            webViewClient = object : TLSWebViewClient(keyChainRepository) {
-                @Deprecated("Deprecated in Java for SDK >= 23")
-                override fun onReceivedError(
-                    view: WebView?,
-                    errorCode: Int,
-                    description: String?,
-                    failingUrl: String?
-                ) {
-                    Timber.e("onReceivedError: errorCode: $errorCode url:$failingUrl")
-                    if (failingUrl == loadedUrl) {
-                        showError()
-                    }
-                }
-
-                override fun onPageFinished(view: WebView?, url: String?) {
-                    if (clearHistory) {
-                        webView.clearHistory()
-                        clearHistory = false
-                    }
-                    setWebViewZoom()
-                    if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
-                        ioScope.launch {
-                            val owner = "onPageFinished:$moreInfoEntity"
-                            if (moreInfoMutex.tryLock(owner)) {
-                                delay(2000L)
-                                Timber.d("More info entity: $moreInfoEntity")
-                                webView.evaluateJavascript(
-                                    "document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$moreInfoEntity\" }}))"
-                                ) {
-                                    moreInfoMutex.unlock(owner)
-                                    moreInfoEntity = ""
-                                }
-                            }
-                        }
-                    }
-                }
-
-                override fun onReceivedHttpError(
-                    view: WebView?,
-                    request: WebResourceRequest?,
-                    errorResponse: WebResourceResponse?
-                ) {
-                    Timber.e("onReceivedHttpError: ${errorResponse?.statusCode} : ${errorResponse?.reasonPhrase} for: ${request?.url}")
-                    if (request?.url.toString() == loadedUrl) {
-                        showError()
-                    }
-                }
-
-                override fun onReceivedHttpAuthRequest(
-                    view: WebView,
-                    handler: HttpAuthHandler,
-                    host: String,
-                    realm: String
-                ) {
-                    var authError = false
-                    if (System.currentTimeMillis() <= (firstAuthTime + 500)) {
-                        authError = true
-                    }
-                    authenticationDialog(handler, host, realm, authError)
-                }
-
-                override fun onReceivedSslError(
-                    view: WebView?,
-                    handler: SslErrorHandler?,
-                    error: SslError?
-                ) {
-                    Timber.e("onReceivedSslError: $error")
-                    showError(
-                        ErrorType.SSL,
-                        error,
-                        null
-                    )
-                }
-
-                override fun onRenderProcessGone(
-                    view: WebView?,
-                    handler: RenderProcessGoneDetail?
-                ): Boolean {
-                    Timber.e("onRenderProcessGone: webView crashed")
-                    view?.let {
-                        reload()
-                        webViewAddJavascriptInterface()
-                    }
-
-                    return true
-                }
-
-                override fun onLoadResource(
-                    view: WebView?,
-                    url: String?
-                ) {
-                    resourceURL = url!!
-                }
-
-                override fun shouldOverrideUrlLoading(
-                    view: WebView?,
-                    request: WebResourceRequest?
-                ): Boolean {
-                    request?.url?.let {
-                        try {
-                            if (it.toString().startsWith(APP_PREFIX)) {
-                                Timber.d("Launching the app")
-                                val intent = packageManager.getLaunchIntentForPackage(
-                                    it.toString().substringAfter(APP_PREFIX)
-                                )
-                                if (intent != null) {
-                                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                    startActivity(intent)
-                                } else {
-                                    Timber.w("No intent to launch app found, opening app store")
-                                    val marketIntent = Intent(Intent.ACTION_VIEW)
-                                    marketIntent.data = Uri.parse(
-                                        MARKET_PREFIX + it.toString().substringAfter(APP_PREFIX)
-                                    )
-                                    startActivity(marketIntent)
-                                }
-                                return true
-                            } else if (it.toString().startsWith(INTENT_PREFIX)) {
-                                Timber.d("Launching the intent")
-                                val intent =
-                                    Intent.parseUri(it.toString(), Intent.URI_INTENT_SCHEME)
-                                val intentPackage = intent.`package`?.let { it1 ->
-                                    packageManager.getLaunchIntentForPackage(
-                                        it1
-                                    )
-                                }
-                                if (intentPackage == null && !intent.`package`.isNullOrEmpty()) {
-                                    Timber.w("No app found for intent prefix, opening app store")
-                                    val marketIntent = Intent(Intent.ACTION_VIEW)
-                                    marketIntent.data =
-                                        Uri.parse(MARKET_PREFIX + intent.`package`.toString())
-                                    startActivity(marketIntent)
-                                } else {
-                                    startActivity(intent)
-                                }
-                                return true
-                            } else if (!webView.url.toString().contains(it.toString())) {
-                                Timber.d("Launching browser")
-                                val browserIntent = Intent(Intent.ACTION_VIEW, it)
-                                startActivity(browserIntent)
-                                return true
-                            } else {
-                                // Do nothing.
-                            }
-                        } catch (e: Exception) {
-                            Timber.e(e, "Unable to override the URL")
-                        }
-                    }
-                    return false
-                }
-
-                override fun doUpdateVisitedHistory(
-                    view: WebView?,
-                    url: String?,
-                    isReload: Boolean
-                ) {
-                    super.doUpdateVisitedHistory(view, url, isReload)
-                    onBackPressed.isEnabled = canGoBack()
-                    presenter.stopScanningForImprov(false)
-                }
-            }
-
-            setDownloadListener { url, _, contentDisposition, mimetype, _ ->
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
-                    ActivityCompat.checkSelfPermission(
-                        context,
-                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    ) == PackageManager.PERMISSION_GRANTED
-                ) {
-                    downloadFile(url, contentDisposition, mimetype)
-                } else {
-                    downloadFileUrl = url
-                    downloadFileContentDisposition = contentDisposition
-                    downloadFileMimetype = mimetype
-                    requestStoragePermission.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                }
-            }
-
-            webChromeClient = object : WebChromeClient() {
-                override fun onJsConfirm(
-                    view: WebView,
-                    url: String,
-                    message: String,
-                    result: JsResult
-                ): Boolean {
-                    AlertDialog
-                        .Builder(this@WebViewActivity)
-                        .setTitle(commonR.string.app_name)
-                        .setMessage(message)
-                        .setPositiveButton(android.R.string.ok) { _, _ -> result.confirm() }
-                        .setNegativeButton(android.R.string.cancel) { _, _ -> result.cancel() }
-                        .setOnDismissListener { result.cancel() }
-                        .create()
-                        .show()
-                    return true
-                }
-
-                override fun onPermissionRequest(request: PermissionRequest?) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        val alreadyGranted = ArrayList<String>()
-                        val toBeGranted = ArrayList<String>()
-                        request?.resources?.forEach {
-                            if (it == PermissionRequest.RESOURCE_VIDEO_CAPTURE) {
-                                if (ActivityCompat.checkSelfPermission(
-                                        context,
-                                        android.Manifest.permission.CAMERA
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    alreadyGranted.add(it)
-                                } else {
-                                    toBeGranted.add(android.Manifest.permission.CAMERA)
-                                }
-                            } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
-                                if (ActivityCompat.checkSelfPermission(
-                                        context,
-                                        android.Manifest.permission.RECORD_AUDIO
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    alreadyGranted.add(it)
-                                } else {
-                                    toBeGranted.add(android.Manifest.permission.RECORD_AUDIO)
-                                }
-                            }
-                        }
-                        if (alreadyGranted.size > 0) {
-                            request?.grant(alreadyGranted.toTypedArray())
-                        }
-                        if (toBeGranted.size > 0) {
-                            requestPermissions.launch(
-                                toBeGranted.toTypedArray()
-                            )
-                        }
-                    } else {
-                        // If we are before M we already have permission, just grant it.
-                        request?.grant(request.resources)
-                    }
-                }
-
-                override fun onShowFileChooser(
-                    view: WebView,
-                    uploadMsg: ValueCallback<Array<Uri>>,
-                    fileChooserParams: FileChooserParams
-                ): Boolean {
-                    mFilePathCallback = uploadMsg
-                    showWebFileChooser.launch(fileChooserParams)
-                    return true
-                }
-
-                override fun onShowCustomView(view: View, callback: CustomViewCallback) {
-                    myCustomView = view
-                    binding.content.addView(
-                        view,
-                        FrameLayout.LayoutParams(
-                            FrameLayout.LayoutParams.WRAP_CONTENT,
-                            FrameLayout.LayoutParams.WRAP_CONTENT
+                Box {
+                    player?.let {
+                        // TODO handle size and the fact that maybe the player is not enough to decide if we display the UI or not
+                        HAMediaPlayer(
+                            player = it,
+                            contentScale = ContentScale.FillBounds,
+                            modifier = Modifier,
+                            fullscreenModifier = Modifier.fillMaxSize(),
                         )
-                    )
-                    hideSystemUI()
-                    isVideoFullScreen = true
-                }
-
-                override fun onHideCustomView() {
-                    binding.content.removeView(myCustomView)
-                    if (!presenter.isFullScreen()) {
-                        showSystemUI()
                     }
-                    isVideoFullScreen = false
-                    super.onHideCustomView()
+                    HAWebView(
+                        factory = { webView },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .then(if (currentAppLocked) Modifier.hazeEffect(style = HazeMaterials.regular()) else Modifier)
+                    )
                 }
             }
-
-            webViewAddJavascriptInterface()
         }
+
+        authenticator = Authenticator(this, this, ::authenticationResult)
+
+        decor = window.decorView as FrameLayout
 
         // Set WebView background color to transparent, so that the theme of the android activity has control over it.
         // This enables the ability to have the launch screen behind the WebView until the web frontend gets rendered
-        binding.webview.setBackgroundColor(Color.TRANSPARENT)
+        webView.setBackgroundColor(Color.TRANSPARENT)
 
         themesManager.setThemeForWebView(this, webView.settings)
 
@@ -686,6 +397,325 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
             }
         }
+    }
+
+    private fun WebView.setupWebViewForHA(onBackPressed: OnBackPressedCallback) {
+        setOnTouchListener(object : OnSwipeListener(this@WebViewActivity) {
+            override fun onSwipe(
+                e1: MotionEvent,
+                e2: MotionEvent,
+                velocity: Float,
+                direction: SwipeDirection,
+                pointerCount: Int
+            ): Boolean {
+                if (pointerCount == 3 && velocity >= 75) {
+                    when (direction) {
+                        SwipeDirection.LEFT -> presenter.nextServer()
+                        SwipeDirection.RIGHT -> presenter.previousServer()
+                        SwipeDirection.UP -> {
+                            val serverChooser = ServerChooserFragment()
+                            supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this@WebViewActivity) { _, bundle ->
+                                if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
+                                    presenter.switchActiveServer(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
+                                }
+                                supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
+                            }
+                            serverChooser.show(supportFragmentManager, ServerChooserFragment.TAG)
+                        }
+                        SwipeDirection.DOWN -> {
+                            dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
+                        }
+                    }
+                }
+                return appLocked.value
+            }
+
+            override fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean {
+                return appLocked.value
+            }
+        })
+
+        settings.minimumFontSize = 5
+        settings.javaScriptEnabled = true
+        settings.domStorageEnabled = true
+        settings.displayZoomControls = false
+        settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
+        settings.userAgentString = settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
+        webViewClient = object : TLSWebViewClient(keyChainRepository) {
+            @Deprecated("Deprecated in Java for SDK >= 23")
+            override fun onReceivedError(
+                view: WebView?,
+                errorCode: Int,
+                description: String?,
+                failingUrl: String?
+            ) {
+                Timber.e("onReceivedError: errorCode: $errorCode url:$failingUrl")
+                if (failingUrl == loadedUrl) {
+                    showError()
+                }
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                if (clearHistory) {
+                    webView.clearHistory()
+                    clearHistory = false
+                }
+                setWebViewZoom()
+                if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
+                    ioScope.launch {
+                        val owner = "onPageFinished:$moreInfoEntity"
+                        if (moreInfoMutex.tryLock(owner)) {
+                            delay(2000L)
+                            Timber.d("More info entity: $moreInfoEntity")
+                            webView.evaluateJavascript(
+                                "document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$moreInfoEntity\" }}))"
+                            ) {
+                                moreInfoMutex.unlock(owner)
+                                moreInfoEntity = ""
+                            }
+                        }
+                    }
+                }
+            }
+
+            override fun onReceivedHttpError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                errorResponse: WebResourceResponse?
+            ) {
+                Timber.e("onReceivedHttpError: ${errorResponse?.statusCode} : ${errorResponse?.reasonPhrase} for: ${request?.url}")
+                if (request?.url.toString() == loadedUrl) {
+                    showError()
+                }
+            }
+
+            override fun onReceivedHttpAuthRequest(
+                view: WebView,
+                handler: HttpAuthHandler,
+                host: String,
+                realm: String
+            ) {
+                var authError = false
+                if (System.currentTimeMillis() <= (firstAuthTime + 500)) {
+                    authError = true
+                }
+                authenticationDialog(handler, host, realm, authError)
+            }
+
+            override fun onReceivedSslError(
+                view: WebView?,
+                handler: SslErrorHandler?,
+                error: SslError?
+            ) {
+                Timber.e("onReceivedSslError: $error")
+                showError(
+                    ErrorType.SSL,
+                    error,
+                    null
+                )
+            }
+
+            override fun onRenderProcessGone(
+                view: WebView?,
+                handler: RenderProcessGoneDetail?
+            ): Boolean {
+                Timber.e("onRenderProcessGone: webView crashed")
+                view?.let {
+                    reload()
+                    webViewAddJavascriptInterface()
+                }
+
+                return true
+            }
+
+            override fun onLoadResource(
+                view: WebView?,
+                url: String?
+            ) {
+                resourceURL = url!!
+            }
+
+            override fun shouldOverrideUrlLoading(
+                view: WebView?,
+                request: WebResourceRequest?
+            ): Boolean {
+                request?.url?.let {
+                    try {
+                        if (it.toString().startsWith(APP_PREFIX)) {
+                            Timber.d("Launching the app")
+                            val intent = packageManager.getLaunchIntentForPackage(
+                                it.toString().substringAfter(APP_PREFIX)
+                            )
+                            if (intent != null) {
+                                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                startActivity(intent)
+                            } else {
+                                Timber.w("No intent to launch app found, opening app store")
+                                val marketIntent = Intent(Intent.ACTION_VIEW)
+                                marketIntent.data = Uri.parse(
+                                    MARKET_PREFIX + it.toString().substringAfter(APP_PREFIX)
+                                )
+                                startActivity(marketIntent)
+                            }
+                            return true
+                        } else if (it.toString().startsWith(INTENT_PREFIX)) {
+                            Timber.d("Launching the intent")
+                            val intent =
+                                Intent.parseUri(it.toString(), Intent.URI_INTENT_SCHEME)
+                            val intentPackage = intent.`package`?.let { it1 ->
+                                packageManager.getLaunchIntentForPackage(
+                                    it1
+                                )
+                            }
+                            if (intentPackage == null && !intent.`package`.isNullOrEmpty()) {
+                                Timber.w("No app found for intent prefix, opening app store")
+                                val marketIntent = Intent(Intent.ACTION_VIEW)
+                                marketIntent.data =
+                                    Uri.parse(MARKET_PREFIX + intent.`package`.toString())
+                                startActivity(marketIntent)
+                            } else {
+                                startActivity(intent)
+                            }
+                            return true
+                        } else if (!webView.url.toString().contains(it.toString())) {
+                            Timber.d("Launching browser")
+                            val browserIntent = Intent(Intent.ACTION_VIEW, it)
+                            startActivity(browserIntent)
+                            return true
+                        } else {
+                            // Do nothing.
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e, "Unable to override the URL")
+                    }
+                }
+                return false
+            }
+
+            override fun doUpdateVisitedHistory(
+                view: WebView?,
+                url: String?,
+                isReload: Boolean
+            ) {
+                super.doUpdateVisitedHistory(view, url, isReload)
+                onBackPressed.isEnabled = canGoBack()
+                presenter.stopScanningForImprov(false)
+            }
+        }
+
+        setDownloadListener { url, _, contentDisposition, mimetype, _ ->
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
+                ActivityCompat.checkSelfPermission(
+                    context,
+                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                downloadFile(url, contentDisposition, mimetype)
+            } else {
+                downloadFileUrl = url
+                downloadFileContentDisposition = contentDisposition
+                downloadFileMimetype = mimetype
+                requestStoragePermission.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+        }
+
+        webChromeClient = object : WebChromeClient() {
+            override fun onJsConfirm(
+                view: WebView,
+                url: String,
+                message: String,
+                result: JsResult
+            ): Boolean {
+                AlertDialog
+                    .Builder(this@WebViewActivity)
+                    .setTitle(commonR.string.app_name)
+                    .setMessage(message)
+                    .setPositiveButton(android.R.string.ok) { _, _ -> result.confirm() }
+                    .setNegativeButton(android.R.string.cancel) { _, _ -> result.cancel() }
+                    .setOnDismissListener { result.cancel() }
+                    .create()
+                    .show()
+                return true
+            }
+
+            override fun onPermissionRequest(request: PermissionRequest?) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    val alreadyGranted = ArrayList<String>()
+                    val toBeGranted = ArrayList<String>()
+                    request?.resources?.forEach {
+                        if (it == PermissionRequest.RESOURCE_VIDEO_CAPTURE) {
+                            if (ActivityCompat.checkSelfPermission(
+                                    context,
+                                    android.Manifest.permission.CAMERA
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                alreadyGranted.add(it)
+                            } else {
+                                toBeGranted.add(android.Manifest.permission.CAMERA)
+                            }
+                        } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
+                            if (ActivityCompat.checkSelfPermission(
+                                    context,
+                                    android.Manifest.permission.RECORD_AUDIO
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                alreadyGranted.add(it)
+                            } else {
+                                toBeGranted.add(android.Manifest.permission.RECORD_AUDIO)
+                            }
+                        }
+                    }
+                    if (alreadyGranted.size > 0) {
+                        request?.grant(alreadyGranted.toTypedArray())
+                    }
+                    if (toBeGranted.size > 0) {
+                        requestPermissions.launch(
+                            toBeGranted.toTypedArray()
+                        )
+                    }
+                } else {
+                    // If we are before M we already have permission, just grant it.
+                    request?.grant(request.resources)
+                }
+            }
+
+            override fun onShowFileChooser(
+                view: WebView,
+                uploadMsg: ValueCallback<Array<Uri>>,
+                fileChooserParams: FileChooserParams
+            ): Boolean {
+                mFilePathCallback = uploadMsg
+                showWebFileChooser.launch(fileChooserParams)
+                return true
+            }
+
+            override fun onShowCustomView(view: View, callback: CustomViewCallback) {
+                // TODO handle fullscreen properly ???
+//                            myCustomView = view
+//                            binding.content.addView(
+//                                view,
+//                                FrameLayout.LayoutParams(
+//                                    FrameLayout.LayoutParams.WRAP_CONTENT,
+//                                    FrameLayout.LayoutParams.WRAP_CONTENT
+//                                )
+//                            )
+                hideSystemUI()
+                isVideoFullScreen = true
+            }
+
+            override fun onHideCustomView() {
+                // TODO fullscreen support
+                // binding.content.removeView(myCustomView)
+                if (!presenter.isFullScreen()) {
+                    showSystemUI()
+                }
+                isVideoFullScreen = false
+                super.onHideCustomView()
+            }
+        }
+
+        webViewAddJavascriptInterface()
     }
 
     private fun webViewAddJavascriptInterface() {
@@ -893,8 +923,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         presenter.updateActiveServer()
 
-        appLocked = presenter.isAppLocked()
-        binding.blurView.setBlurEnabled(appLocked)
+        appLocked.value = presenter.isAppLocked()
 
         setWebViewZoom()
 
@@ -970,7 +999,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val uri = Uri.parse(payload.getString("url"))
         exoMute = payload.optBoolean("muted")
         runOnUiThread {
-            exoPlayer = ExoPlayer.Builder(applicationContext).setMediaSourceFactory(
+            val tempPlayer = ExoPlayer.Builder(applicationContext).setMediaSourceFactory(
                 DefaultMediaSourceFactory(
                     CronetDataSource.Factory(
                         CronetEngine.Builder(applicationContext).enableQuic(true).build(),
@@ -985,9 +1014,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     0
                 ).build()
             ).build()
-            exoPlayer?.setMediaItem(MediaItem.fromUri(uri))
-            exoPlayer?.playWhenReady = true
-            exoPlayer?.addListener(object : Player.Listener {
+            tempPlayer.setMediaItem(MediaItem.fromUri(uri))
+            tempPlayer.playWhenReady = true
+            tempPlayer.addListener(object : Player.Listener {
                 override fun onVideoSizeChanged(videoSize: VideoSize) {
                     super.onVideoSizeChanged(videoSize)
                     if (videoSize.height == 0 || videoSize.width == 0) return
@@ -998,16 +1027,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     }
                 }
             })
-            exoPlayer?.prepare()
+            tempPlayer.prepare()
+            // TODO handle mute
             exoMute = !exoMute // Invert because exoToggleMute() will invert again
-            exoToggleMute()
-            exoPlayerView.setFullscreenButtonClickListener { isFullScreen ->
-                isExoFullScreen = isFullScreen
-                exoResizeLayout()
-            }
-            exoPlayerView.player = exoPlayer
-            exoPlayerView.visibility = View.VISIBLE
-            findViewById<ImageButton>(R.id.exo_ha_mute)?.setOnClickListener { exoToggleMute() }
+            exoToggleMute(tempPlayer)
+            exoPlayer = tempPlayer
         }
         sendExternalBusMessage(
             ExternalBusMessage(
@@ -1023,14 +1047,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     fun exoStopHls() {
         runOnUiThread {
-            exoPlayerView.visibility = View.GONE
-            exoPlayerView.player = null
             exoPlayer?.release()
             exoPlayer = null
         }
     }
 
     fun exoResizeHls(json: JSONObject) {
+        // TODO handle this to put the view at the right place
         val rect = json.getJSONObject("payload")
         val displayMetrics = applicationContext.resources.displayMetrics
         exoLeft = (rect.getInt("left") * displayMetrics.density).toInt()
@@ -1048,44 +1071,42 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
-    private fun exoToggleMute() {
+    private fun exoToggleMute(player: Player) {
         exoMute = !exoMute
         if (exoMute) {
-            exoPlayer?.volume = 0f
-            findViewById<ImageButton>(R.id.exo_ha_mute)?.setImageResource(R.drawable.ic_baseline_volume_off_24)
+            player.volume = 0f
         } else {
-            exoPlayer?.volume = 1f
-            findViewById<ImageButton>(R.id.exo_ha_mute)?.setImageResource(R.drawable.ic_baseline_volume_up_24)
+            player.volume = 1f
         }
     }
 
     fun exoResizeLayout() {
-        val exoLayoutParams = exoPlayerView.layoutParams as FrameLayout.LayoutParams
-        if (isExoFullScreen) {
-            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                exoPlayerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
-            } else {
-                exoPlayerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH
-            }
-            exoLayoutParams.setMargins(0, 0, 0, 0)
-            exoPlayerView.layoutParams.height = FrameLayout.LayoutParams.MATCH_PARENT
-            exoPlayerView.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
-            hideSystemUI()
-        } else {
-            exoPlayerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
-            exoPlayerView.layoutParams.height = FrameLayout.LayoutParams.WRAP_CONTENT
-            exoPlayerView.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
-            val screenWidth: Int = resources.displayMetrics.widthPixels
-            val screenHeight: Int = resources.displayMetrics.heightPixels
-            exoLayoutParams.setMargins(
-                exoLeft,
-                exoTop,
-                maxOf(screenWidth - exoRight, 0),
-                maxOf(screenHeight - exoBottom, 0)
-            )
-            showSystemUI()
-        }
-        exoPlayerView.requestLayout()
+//        val exoLayoutParams = exoPlayerView.layoutParams as FrameLayout.LayoutParams
+//        if (isExoFullScreen) {
+//            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+//                exoPlayerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
+//            } else {
+//                exoPlayerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH
+//            }
+//            exoLayoutParams.setMargins(0, 0, 0, 0)
+//            exoPlayerView.layoutParams.height = FrameLayout.LayoutParams.MATCH_PARENT
+//            exoPlayerView.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
+//            hideSystemUI()
+//        } else {
+//            exoPlayerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
+//            exoPlayerView.layoutParams.height = FrameLayout.LayoutParams.WRAP_CONTENT
+//            exoPlayerView.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
+//            val screenWidth: Int = resources.displayMetrics.widthPixels
+//            val screenHeight: Int = resources.displayMetrics.heightPixels
+//            exoLayoutParams.setMargins(
+//                exoLeft,
+//                exoTop,
+//                maxOf(screenWidth - exoRight, 0),
+//                maxOf(screenHeight - exoBottom, 0)
+//            )
+//            showSystemUI()
+//        }
+//        exoPlayerView.requestLayout()
     }
 
     fun processHaptic(hapticType: String) {
@@ -1140,9 +1161,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         when (result) {
             Authenticator.SUCCESS -> {
                 Timber.d("Authentication successful, unlocking app")
-                appLocked = false
+                appLocked.value = false
                 presenter.setAppActive(true)
-                binding.blurView.setBlurEnabled(false)
             }
             Authenticator.CANCELED -> {
                 Timber.d("Authentication canceled by user, closing activity")
@@ -1176,15 +1196,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     override fun unlockAppIfNeeded() {
-        appLocked = presenter.isAppLocked()
-        if (appLocked) {
-            binding.blurView.setBlurEnabled(true)
+        appLocked.value = presenter.isAppLocked()
+        if (appLocked.value) {
             if (!unlockingApp) {
                 authenticator.authenticate(getString(commonR.string.biometric_title))
             }
             unlockingApp = true
-        } else {
-            binding.blurView.setBlurEnabled(false)
         }
     }
 
@@ -1203,14 +1220,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         newConfig: Configuration
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-        if (exoPlayerView.visibility != View.VISIBLE && ::binding.isInitialized) {
-            binding.exoviewGroup.layoutParams.height = if (isInPictureInPictureMode) {
-                FrameLayout.LayoutParams.MATCH_PARENT
-            } else {
-                videoHeight
-            }
-            decor.requestLayout()
-        }
+//        if (exoPlayerView.visibility != View.VISIBLE && ::binding.isInitialized) {
+//            binding.exoviewGroup.layoutParams.height = if (isInPictureInPictureMode) {
+//                FrameLayout.LayoutParams.MATCH_PARENT
+//            } else {
+//                videoHeight
+//            }
+//            decor.requestLayout()
+//        }
     }
 
     override fun onUserLeaveHint() {
