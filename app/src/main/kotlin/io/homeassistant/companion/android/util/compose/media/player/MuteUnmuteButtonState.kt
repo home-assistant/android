@@ -1,4 +1,6 @@
-package io.homeassistant.companion.android.player
+package io.homeassistant.companion.android.util.compose.media.player
+
+import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -8,16 +10,12 @@ import androidx.compose.runtime.setValue
 import androidx.media3.common.Player
 import androidx.media3.common.listen
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.common.util.Util.shouldShowPlayButton
-
-// TODO update docs
 
 /**
  * Remembers the value of [MuteUnmuteButtonState] created based on the passed [Player] and launch a
  * coroutine to listen to [Player's][Player] changes. If the [Player] instance changes between
  * compositions, produce and remember a new value.
  */
-@UnstableApi
 @Composable
 fun rememberMuteUnmuteButtonState(player: Player): MuteUnmuteButtonState {
     val muteUnmuteButtonState = remember(player) { MuteUnmuteButtonState(player) }
@@ -35,13 +33,12 @@ private fun shouldShowMuteUnmuteButton(player: Player): Boolean {
 
 /**
  * State that converts the necessary information from the [Player] to correctly deal with a UI
- * component representing a PlayPause button.
+ * component representing a MuteUnmute button.
  *
- * @property[isEnabled] determined by `isCommandAvailable(Player.COMMAND_PLAY_PAUSE)` and having
- *   something in the [Timeline][androidx.media3.common.Timeline] to play
- * @property[showMute] determined by [shouldShowPlayButton]
+ * @property[isEnabled] determined by `isCommandAvailable(Player.COMMAND_SET_VOLUME)`
+ * @property[showMute] determined by [Player.getVolume] equals 0
  */
-@UnstableApi
+@OptIn(UnstableApi::class)
 class MuteUnmuteButtonState(private val player: Player) {
     var isEnabled by mutableStateOf(shouldEnableMuteUnmuteButton(player))
         private set
@@ -50,15 +47,11 @@ class MuteUnmuteButtonState(private val player: Player) {
         private set
 
     /**
-     * Handles the interaction with the PlayPause button according to the current state of the
+     * Handles the interaction with the MuteUnmute button according to the current state of the
      * [Player].
      *
-     * The [Player] update that follows can take a form of [Player.play], [Player.pause],
-     * [Player.prepare] or [Player.seekToDefaultPosition].
+     * If the volume is set to 0 then it will set it to 1 (unmute) otherwise it will set to 0 (mute).
      *
-     * @see [androidx.media3.common.util.Util.handlePlayButtonAction]
-     * @see [androidx.media3.common.util.Util.handlePauseButtonAction]
-     * @see [shouldShowPlayButton]
      */
     fun onClick() {
         player.volume = if (player.volume == 0.0f) 1.0f else 0.0f
@@ -78,7 +71,7 @@ class MuteUnmuteButtonState(private val player: Player) {
                 events.containsAny(
                     Player.EVENT_DEVICE_VOLUME_CHANGED,
                     Player.EVENT_VOLUME_CHANGED,
-                    Player.EVENT_AVAILABLE_COMMANDS_CHANGED
+                    Player.EVENT_AVAILABLE_COMMANDS_CHANGED,
                 )
             ) {
                 showMute = shouldShowMuteUnmuteButton(this)

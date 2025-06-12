@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.player
+package io.homeassistant.companion.android.util.compose.media.player
 
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
@@ -16,9 +16,7 @@ import androidx.media3.common.util.UnstableApi
  * coroutine to listen to [Player's][Player] changes. If the [Player] instance changes between
  * compositions, produce and remember a new value.
  */
-
 @Composable
-@OptIn(UnstableApi::class)
 fun rememberBufferingState(player: Player): BufferingState {
     val bufferingState = remember(player) { BufferingState(player) }
     LaunchedEffect(player) { bufferingState.observe() }
@@ -29,17 +27,27 @@ private fun isBuffering(player: Player): Boolean {
     return player.playbackState == Player.STATE_BUFFERING
 }
 
+/**
+ * State that converts the necessary information from the [Player] to correctly deal with a UI
+ * component representing the buffering.
+ *
+ * @property[isBuffering] determined by [Player.getPlaybackState] equals to [Player.STATE_BUFFERING]
+ */
 @OptIn(UnstableApi::class)
 class BufferingState(private val player: Player) {
     var isBuffering by mutableStateOf(isBuffering(player))
         private set
 
+    /**
+     * Subscribes to updates from [Player.Events] and listens to
+     * * [Player.EVENT_PLAYBACK_STATE_CHANGED] in order to
+     *   determine whether the player is buffering.
+     */
     suspend fun observe(): Nothing =
         player.listen { events ->
             if (
                 events.containsAny(
                     Player.EVENT_PLAYBACK_STATE_CHANGED,
-                    Player.EVENT_AVAILABLE_COMMANDS_CHANGED
                 )
             ) {
                 isBuffering = isBuffering(this)

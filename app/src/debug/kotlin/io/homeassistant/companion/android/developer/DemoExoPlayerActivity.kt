@@ -15,13 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.player.HAMediaPlayer
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
 
 /**
  * Very basic demo of the ExoPlayer usage and the PlayerView.
- * It is useful to validate the look of the Player since we override the default layout in [R.layout.exo_player_layout].
+ * It is useful to validate the look of the Player.
  *
  * It supports PIP mode.
  */
