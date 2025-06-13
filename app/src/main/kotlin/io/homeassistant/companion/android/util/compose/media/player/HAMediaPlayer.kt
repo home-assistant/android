@@ -55,7 +55,6 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import kotlinx.coroutines.delay
-import timber.log.Timber
 
 // Useful links
 // https://github.com/androidx/media/blob/52387bb97511bb88242321e4689aa5952d45784f/demos/compose/src/main/java/androidx/media3/demo/compose/MainActivity.kt
@@ -102,7 +101,6 @@ fun HAMediaPlayer(
         if (showControls) {
             delay(AUTO_HIDE_DELAY)
             showControls = false
-            Timber.e("Hiding controls")
         }
     }
 
@@ -260,8 +258,8 @@ private fun RowScope.FullscreenButton(isFullScreen: Boolean, onClickFullscreen: 
         Icon(
             if (isFullScreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
             contentDescription = stringResource(R.string.fullscreen),
-            tint = Color.White,
             modifier = Modifier.size(BottomControlButtonSize),
+            tint = Color.White,
         )
     }
 }
@@ -272,15 +270,13 @@ private fun RowScope.MuteButton(player: Player) {
     val muteState = rememberMuteUnmuteButtonState(player)
     if (muteState.isEnabled) {
         IconButton(
+            onClick = muteState::onClick,
             modifier = Modifier
                 .align(Alignment.CenterVertically)
                 .size(BottomControlsHeight),
-            onClick = muteState::onClick,
         ) {
-            val icon =
-                if (muteState.showMute) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp
             Icon(
-                icon,
+                if (muteState.showMute) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
                 contentDescription = stringResource(R.string.mute_unmute),
                 modifier = Modifier.size(BottomControlButtonSize),
                 tint = Color.White,
@@ -303,9 +299,9 @@ private fun RowScope.TimeText(player: Player) {
     Text(
         currentPosition.toComponents { hours, minutes, seconds, _ ->
             if (hours > 0L) {
-                String.format(Locale.US, "%02d:%02d:%02d", hours, minutes, seconds)
+                String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, seconds)
             } else {
-                String.format(Locale.US, "%02d:%02d", minutes, seconds)
+                String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
             }
         },
         modifier = Modifier

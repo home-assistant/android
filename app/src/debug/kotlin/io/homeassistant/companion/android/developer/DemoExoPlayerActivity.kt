@@ -47,7 +47,7 @@ class DemoExoPlayerActivity : AppCompatActivity() {
                 Box(modifier = Modifier.fillMaxSize()) {
                     HAMediaPlayer(
                         "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
-                        modifier = Modifier.size(256.dp, 128.dp).align(Alignment.Center),
+                        modifier = Modifier.size(width = 428.dp, height = 192.dp).align(Alignment.Center),
                     )
                 }
             }

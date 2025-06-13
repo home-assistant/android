@@ -51,7 +51,6 @@ class MuteUnmuteButtonState(private val player: Player) {
      * [Player].
      *
      * If the volume is set to 0 then it will set it to 1 (unmute) otherwise it will set to 0 (mute).
-     *
      */
     fun onClick() {
         player.volume = if (player.volume == 0.0f) 1.0f else 0.0f
