@@ -467,6 +467,8 @@
     <string name="message_no_connected_nodes">No connected Wear devices, please make sure Bluetooth is on and your watch is paired.</string>
     <string name="missing_command_permission">Please open the Home Assistant app and send the command again to grant the proper permissions. You will be taken to a page to either grant the Home Assistant app the permission, or you will need to select Permissions from the details page and then grant the missing permission. For command_bluetooth the name of the permission is Nearby devices. If you are attempting to use command_activity to make a phone call you will also need to grant Phone permissions.</string>
     <string name="mute_unmute">Mute/Unmute</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
     <string name="areas">Areas</string>
     <string name="more_entities">More entities</string>
     <string name="need_help">Need help?</string>
