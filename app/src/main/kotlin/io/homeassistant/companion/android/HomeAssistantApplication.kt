@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.util.initCrashSaving
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
+import io.homeassistant.companion.android.widgets.grid.GridWidget
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidget
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
 import io.homeassistant.companion.android.widgets.todo.TodoWidget
@@ -304,6 +305,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
             val mediaPlayerWidget = MediaPlayerControlsWidget()
             val templateWidget = TemplateWidget()
             TodoWidget().registerReceiver(this)
+            GridWidget().registerReceiver(this)
 
             val screenIntentFilter = IntentFilter()
             screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)
