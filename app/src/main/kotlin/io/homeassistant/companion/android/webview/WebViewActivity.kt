@@ -1157,14 +1157,22 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus && !isFinishing) {
             unlockAppIfNeeded()
-            val path = intent.getStringExtra(EXTRA_PATH)
-            presenter.onViewReady(path)
+            var path = intent.getStringExtra(EXTRA_PATH)
             if (path?.startsWith("entityId:") == true) {
                 // Get the entity ID from a string formatted "entityId:domain.entity"
                 // https://github.com/home-assistant/core/blob/dev/homeassistant/core.py#L159
                 val pattern = "(?<=^entityId:)((?!.+__)(?!_)[\\da-z_]+(?<!_)\\.(?!_)[\\da-z_]+(?<!_)$)".toRegex()
-                moreInfoEntity = pattern.find(path)?.value ?: ""
+                val entity = pattern.find(path)?.value ?: ""
+                if (
+                    entity.isNotBlank() &&
+                    serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true
+                ) {
+                    path = "/?more-info-entity-id=$entity"
+                } else {
+                    moreInfoEntity = entity
+                }
             }
+            presenter.onViewReady(path)
             intent.removeExtra(EXTRA_PATH)
 
             if (presenter.isFullScreen() || isVideoFullScreen) {
