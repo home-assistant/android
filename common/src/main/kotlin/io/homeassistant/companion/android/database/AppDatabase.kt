@@ -49,6 +49,7 @@ import io.homeassistant.companion.android.database.sensor.SensorSettingTypeConve
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerDao
 import io.homeassistant.companion.android.database.settings.LocalNotificationSettingConverter
+import io.homeassistant.companion.android.database.settings.LocalPushProviderSettingConverter
 import io.homeassistant.companion.android.database.settings.LocalSensorSettingConverter
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
@@ -103,7 +104,7 @@ import timber.log.Timber
         Server::class,
         Setting::class
     ],
-    version = 50,
+    version = 51,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -130,11 +131,13 @@ import timber.log.Timber
         AutoMigration(from = 47, to = 48),
         AutoMigration(from = 48, to = 49),
         AutoMigration(from = 49, to = 50),
+        AutoMigration(from = 50, to = 51),
     ]
 )
 @TypeConverters(
     LocalNotificationSettingConverter::class,
     LocalSensorSettingConverter::class,
+    LocalPushProviderSettingConverter::class,
     EntriesTypeConverter::class,
     SensorSettingTypeConverter::class,
     WidgetBackgroundTypeConverter::class,
