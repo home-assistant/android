@@ -199,7 +199,9 @@ material = { module = "com.google.android.material:material", version.ref = "mat
 media3-datasource-cronet = { module = "androidx.media3:media3-datasource-cronet", version.ref = "media3" }
 media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
 media3-exoplayer-hls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "media3" }
+media3-session = { module = "androidx.media3:media3-session", version.ref = "media3" }
 media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" }
+media3-ui-compose = { module = "androidx.media3:media3-ui-compose", version.ref = "media3" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "paging" }
 paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
@@ -239,6 +241,6 @@ androidx-compose-ui-test = ["compose-ui-test", "compose-ui-testManifest"]
 androidx-glance = ["androidx-glance-appwidget", "androidx-glance-appwidget-preview", "androidx-glance-material", "androidx-glance-preview"]
 androidx-glance-testing = ["androidx-glance-testing", "androidx-glance-appwidget-testing"]
 coil = ["coil-views", "coil-oktthp", "coil-svg"]
-media3 = ["media3-exoplayer", "media3-exoplayer-hls", "media3-ui"]
+media3 = ["media3-exoplayer", "media3-exoplayer-hls", "media3-ui", "media3-ui-compose", "media3-session"]
 paging = ["paging-runtime", "paging-compose"]
 wear-tiles = ["wear-tiles", "wear-protolayout-main", "wear-protolayout-expression", "wear-protolayout-material"]
