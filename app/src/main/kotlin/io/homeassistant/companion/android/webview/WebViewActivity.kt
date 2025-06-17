@@ -45,6 +45,7 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
@@ -82,6 +83,7 @@ import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.applyInsets
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
@@ -239,6 +241,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var downloadFileContentDisposition = ""
     private var downloadFileMimetype = ""
     private val javascriptInterface = "externalApp"
+    private var serverHandleInsets = false
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -251,8 +254,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
 
         super.onCreate(savedInstanceState)
-
+        serverHandleInsets = serverManager.getServer()?.version?.isAtLeast(2025, 6) == true
+        if (serverHandleInsets) {
+            // On API 36 and above this is always enabled
+            enableEdgeToEdge()
+        }
         binding = ActivityWebviewBinding.inflate(layoutInflater)
+
         setContentView(binding.root)
 
         if (intent.extras?.containsKey(EXTRA_SERVER) == true) {
@@ -285,6 +293,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         decor = window.decorView as FrameLayout
 
         webView = binding.webview
+
+        webView.applyInsets(binding.root, serverHandleInsets)
 
         val onBackPressed = object : OnBackPressedCallback(webView.canGoBack()) {
             override fun handleOnBackPressed() {
@@ -354,6 +364,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         webView.clearHistory()
                         clearHistory = false
                     }
+                    view?.requestApplyInsets()
+
                     setWebViewZoom()
                     if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
                         ioScope.launch {
@@ -866,9 +878,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         val trimmedColorString = webViewColors.substring(1, webViewColors.length - 1).trim()
                         val colors = trimmedColorString.split(htmlArraySpacer)
 
-                        for (color in colors) {
-                            Timber.d("Color from webview is \"$trimmedColorString\"")
-                        }
+                        Timber.d("Color from webview is \"$trimmedColorString\"")
 
                         statusBarColor = presenter.parseWebViewColor(colors[0].trim())
                         navigationBarColor = presenter.parseWebViewColor(colors[1].trim())
@@ -1268,22 +1278,22 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         // windowInsetsController sets the foreground colors.
 
         // Set background colors
-        if (statusBarColor != 0) {
+        if (statusBarColor != 0 && !serverHandleInsets) {
             window.statusBarColor = statusBarColor
         } else {
-            Timber.e("Cannot set status bar color. Skipping coloring...")
+            Timber.e("Skipping coloring status bar...")
         }
-        if (navigationBarColor != 0) {
+        if (navigationBarColor != 0 && !serverHandleInsets) {
             window.navigationBarColor = navigationBarColor
         } else {
-            Timber.e("Cannot set navigation bar color. Skipping coloring...")
+            Timber.e("Skipping coloring navigation bar...")
         }
 
         // Set foreground colors
-        if (statusBarColor != 0) {
+        if (statusBarColor != 0 && !serverHandleInsets) {
             windowInsetsController.isAppearanceLightStatusBars = !isColorDark(statusBarColor)
         }
-        if (navigationBarColor != 0) {
+        if (navigationBarColor != 0 && !serverHandleInsets) {
             windowInsetsController.isAppearanceLightNavigationBars = !isColorDark(navigationBarColor)
         }
     }

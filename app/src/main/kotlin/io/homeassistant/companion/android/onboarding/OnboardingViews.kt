@@ -5,12 +5,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -39,6 +42,7 @@ fun OnboardingScreen(
         val screenWidth = screenWidth()
         Column(
             modifier = modifier
+                .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(all = 16.dp)
                 .width(min(screenWidth.value, STEP_SCREEN_MAX_WIDTH_DP).dp)
                 .align(Alignment.Center),
