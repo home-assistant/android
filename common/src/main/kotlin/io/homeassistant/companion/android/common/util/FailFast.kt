@@ -49,6 +49,19 @@ object FailFast {
     }
 
     /**
+     * Triggers the configured [FailFastHandler] with a custom message.
+     *
+     * This method allows to manually trigger the [FailFastHandler] by providing a specific
+     * message. A [FailFastException] is created with the provided `message` and passed to the
+     * [FailFastHandler], along with an optional `additionalMessage`.
+     *
+     * @param message A lambda function that returns the message for the [FailFastException].
+     */
+    fun fail(message: () -> String) {
+        handler.handleException(FailFastException(message()))
+    }
+
+    /**
      * Checks a condition and triggers the configured [FailFastHandler] if the condition is true.
      *
      * This method is used to assert conditions that should not occur during normal execution.
@@ -61,7 +74,7 @@ object FailFast {
      */
     fun failWhen(condition: Boolean, message: () -> String) {
         if (condition) {
-            handler.handleException(FailFastException(message()))
+            fail(message)
         }
     }
 
