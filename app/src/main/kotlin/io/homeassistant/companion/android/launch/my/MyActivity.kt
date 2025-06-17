@@ -7,13 +7,16 @@ import android.net.Uri
 import android.os.Bundle
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
+import android.webkit.WebView.setWebContentsDebuggingEnabled
 import android.webkit.WebViewClient
+import androidx.activity.compose.setContent
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.databinding.ActivityMyBinding
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 
@@ -42,9 +45,6 @@ class MyActivity : BaseActivity() {
             return
         }
 
-        val binding = ActivityMyBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
         if (intent?.action == Intent.ACTION_VIEW && intent.data != null) {
             if (
                 intent.data?.scheme != "https" ||
@@ -57,27 +57,27 @@ class MyActivity : BaseActivity() {
             }
             val newUri = intent.data!!.buildUpon().appendQueryParameter("mobile", "1").build()
 
-            if (BuildConfig.DEBUG) {
-                WebView.setWebContentsDebuggingEnabled(true)
-            }
-
-            binding.webview.apply {
-                settings.javaScriptEnabled = true
-                webViewClient = object : WebViewClient() {
-                    override fun shouldOverrideUrlLoading(
-                        view: WebView?,
-                        request: WebResourceRequest?
-                    ): Boolean {
-                        val url = request?.url.toString()
-                        if (url.startsWith("homeassistant://navigate/")) {
-                            navigateTo(url.removePrefix("homeassistant://navigate/"))
-                            return true
+            setContent {
+                HomeAssistantAppTheme {
+                    HAWebView(configure = {
+                        if (BuildConfig.DEBUG) {
+                            setWebContentsDebuggingEnabled(true)
                         }
-                        return false
-                    }
+                        settings.javaScriptEnabled = true
+                        webViewClient = object : WebViewClient() {
+                            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                                val url = request?.url.toString()
+                                if (url.startsWith("homeassistant://navigate/")) {
+                                    navigateTo(url.removePrefix("homeassistant://navigate/"))
+                                    return true
+                                }
+                                return false
+                            }
+                        }
+                        loadUrl(newUri.toString())
+                    })
                 }
             }
-            binding.webview.loadUrl(newUri.toString())
         }
     }
 
