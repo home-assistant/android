@@ -85,7 +85,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 }
             }
         }
-        presenter.onViewReady()
+        presenter.onViewReady(intent.getStringExtra(TO_SERVER))
     }
 
     override fun displayWebview() {
@@ -136,8 +136,8 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         overridePendingTransition(0, 0) // Disable activity start/stop animation
     }
 
-    override fun displayOnBoarding(sessionConnected: Boolean) {
-        registerActivityResult.launch(OnboardApp.Input())
+    override fun displayOnBoarding(sessionConnected: Boolean, gotoServer: String?) {
+        registerActivityResult.launch(OnboardApp.Input(url = gotoServer))
     }
 
     override fun onDestroy() {
