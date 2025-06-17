@@ -28,6 +28,8 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "implementation"(project(":common"))
 
                     "implementation"(libs.blurView)
+                    "implementation"(libs.haze)
+                    "implementation"(libs.haze.materials)
                     "fullImplementation"(libs.androidx.health.connect.client)
 
                     "implementation"(libs.kotlin.stdlib)
