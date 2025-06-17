@@ -40,12 +40,13 @@ dependencies {
 
     api(libs.androidx.work.runtime.ktx)
 
-    // TODO should not expose retrofit outside of common
+    // TODO should not expose retrofit outside of common https://github.com/home-assistant/android/issues/5421
     api(platform(libs.retrofit.bom))
     api(libs.retrofit)
     implementation(libs.retrofit.converter.kotlinx.serialization)
-    implementation(libs.okhttp)
-    implementation(libs.logging.interceptor)
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp.android)
+    implementation(libs.okhttp.logging.interceptor)
     implementation(libs.android.beacon.library)
 
     implementation(libs.iconics.core)
