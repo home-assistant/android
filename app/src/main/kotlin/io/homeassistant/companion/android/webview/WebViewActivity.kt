@@ -46,6 +46,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,6 +66,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
@@ -1009,6 +1011,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
+    @OptIn(UnstableApi::class)
     fun exoResizeHls(json: JSONObject) {
         val payload = json.getJSONObject("payload")
         // Payload is https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect

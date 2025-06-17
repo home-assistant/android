@@ -79,7 +79,12 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     baseline = file("lint-baseline.xml")
                     // We already have renovate for this
                     checkDependencies = false
-                    disable += listOf("GradleDependency", "AndroidGradlePluginVersion")
+                    disable += listOf(
+                        "GradleDependency",
+                        "AndroidGradlePluginVersion",
+                        // Until we fully migrate to Material3 this lint issue is too verbose https://github.com/home-assistant/android/issues/5420
+                        "UsingMaterialAndMaterial3Libraries",
+                        )
                     // Since we use baseline we should not have full path in the files
                     absolutePaths = false
 
