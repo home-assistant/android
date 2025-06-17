@@ -43,7 +43,8 @@ dependencies {
     implementation(libs.wear.remote.interactions)
     implementation(libs.wear.phone.interactions)
 
-    implementation(libs.okhttp)
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp.android)
 
     implementation(libs.iconics.core)
     implementation(libs.appcompat)
