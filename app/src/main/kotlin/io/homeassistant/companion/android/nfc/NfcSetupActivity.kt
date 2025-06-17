@@ -8,7 +8,6 @@ import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -61,8 +60,6 @@ class NfcSetupActivity : BaseActivity() {
             simpleWrite = true
             viewModel.writeNewTagSimple(it)
         }
-
-        enableEdgeToEdge()
 
         setContent {
             HomeAssistantAppTheme {
