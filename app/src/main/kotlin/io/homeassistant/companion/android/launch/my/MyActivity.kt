@@ -12,10 +12,16 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.databinding.ActivityMyBinding
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
+import timber.log.Timber
+
+private const val NAVIGATION_URL_PREFIX = "homeassistant://navigate/"
+private const val MOBILE_PARAM = "mobile"
 
 @AndroidEntryPoint
 class MyActivity : BaseActivity() {
@@ -33,52 +39,86 @@ class MyActivity : BaseActivity() {
     @Inject
     lateinit var serverManager: ServerManager
 
-    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        handleDeepLink()
+    }
 
+    private fun handleDeepLink() {
+        intent?.takeIf { it.action == Intent.ACTION_VIEW }?.data?.let { data ->
+            val path = data.path.orEmpty()
+
+            FailFast.failWhen(data.scheme != "https" || data.host != "my.home-assistant.io") {
+                "Invalid deep link double check the host or the scheme: $data"
+            }
+
+            when {
+                path.startsWith("/redirect/") -> handleNavigateDeepLink(data)
+                path.startsWith("/invite") -> handleInviteDeepLink(data)
+                else -> {
+                    FailFast.fail { "Unknown or invalid deep link: $data" }
+                    finish()
+                }
+            }
+        }
+    }
+
+    private fun handleNavigateDeepLink(data: Uri) {
         if (!serverManager.isRegistered()) {
+            Timber.w("No server registered, cannot handle deep link")
             finish()
             return
         }
 
+        if (data.getQueryParameter(MOBILE_PARAM) == "1") {
+            Timber.i("No idea why we do this?????")
+            finish()
+            return
+        }
+
+        val uri = data.buildUpon().appendQueryParameter(MOBILE_PARAM, "1").build()
+
         val binding = ActivityMyBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.webview.configureWebView(uri.toString())
+    }
 
-        if (intent?.action == Intent.ACTION_VIEW && intent.data != null) {
-            if (
-                intent.data?.scheme != "https" ||
-                intent.data?.host != "my.home-assistant.io" ||
-                intent.data?.path?.startsWith("/redirect/") != true ||
-                intent.data?.getQueryParameter("mobile")?.equals("1") == true
-            ) {
-                finish()
-                return
-            }
-            val newUri = intent.data!!.buildUpon().appendQueryParameter("mobile", "1").build()
+    /**
+     * We are expecting a deep link like this:
+     * https://my.home-assistant.io/invite?url=http://homeassistant.local:8123
+     *
+     * This function will extract the URL and start the launch activity with it.
+     */
+    private fun handleInviteDeepLink(data: Uri) {
+        val serverURL = data.fragment.orEmpty()
+        // For instance: url=http://homeassistant.local:8123
 
-            if (BuildConfig.DEBUG) {
-                WebView.setWebContentsDebuggingEnabled(true)
-            }
-
-            binding.webview.apply {
-                settings.javaScriptEnabled = true
-                webViewClient = object : WebViewClient() {
-                    override fun shouldOverrideUrlLoading(
-                        view: WebView?,
-                        request: WebResourceRequest?
-                    ): Boolean {
-                        val url = request?.url.toString()
-                        if (url.startsWith("homeassistant://navigate/")) {
-                            navigateTo(url.removePrefix("homeassistant://navigate/"))
-                            return true
-                        }
-                        return false
-                    }
-                }
-            }
-            binding.webview.loadUrl(newUri.toString())
+        if (serverURL.isEmpty() || !serverURL.startsWith("url=")) {
+            Timber.w("Deep link does not contains a valid URL to a server ($data)")
+            finish()
+            return
         }
+        startActivity(LaunchActivity.newInstanceToSpecificServer(this, serverURL.removePrefix("url=")))
+        finish()
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun WebView.configureWebView(url: String) {
+        if (BuildConfig.DEBUG) {
+            WebView.setWebContentsDebuggingEnabled(true)
+        }
+        settings.javaScriptEnabled = true
+        webViewClient = object : WebViewClient() {
+            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                val requestUrl = request?.url?.toString()
+                if (requestUrl != null && requestUrl.startsWith(NAVIGATION_URL_PREFIX)) {
+                    navigateTo(requestUrl.removePrefix(NAVIGATION_URL_PREFIX))
+                    return true
+                }
+                return false
+            }
+        }
+        loadUrl(url)
     }
 
     private fun navigateTo(path: String) {

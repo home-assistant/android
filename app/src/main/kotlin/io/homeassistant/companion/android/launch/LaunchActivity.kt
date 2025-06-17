@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.launch
 
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -42,8 +43,18 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import timber.log.Timber
 
+private const val TO_SERVER = "go_to_server"
+
 @AndroidEntryPoint
 class LaunchActivity : AppCompatActivity(), LaunchView {
+
+    companion object {
+        fun newInstanceToSpecificServer(context: Context, serverUrl: String): Intent {
+            return Intent(context, LaunchActivity::class.java).apply {
+                putExtra(TO_SERVER, serverUrl)
+            }
+        }
+    }
 
     @Inject
     lateinit var presenter: LaunchPresenter
