@@ -26,6 +26,11 @@ android {
         }
     }
 
+    lint {
+        // Until we fully migrate to Material3 this lint issue is too verbose https://github.com/home-assistant/android/issues/5420
+        disable += listOf("UsingMaterialAndMaterial3Libraries")
+    }
+
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
 
     firebaseAppDistribution {
