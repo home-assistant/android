@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
 import android.net.Uri
@@ -42,14 +41,18 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.widget.FrameLayout
-import android.widget.ImageButton
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.OptIn
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.getSystemService
 import androidx.core.content.res.ResourcesCompat
@@ -62,12 +65,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
-import androidx.media3.datasource.cronet.CronetDataSource
-import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.PlayerView
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import dagger.hilt.android.AndroidEntryPoint
@@ -84,7 +82,6 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
-import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
@@ -100,12 +97,12 @@ import io.homeassistant.companion.android.util.DataUriDownloadManager
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
+import io.homeassistant.companion.android.util.compose.initializePlayer
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import io.homeassistant.companion.android.webview.externalbus.NavigateTo
-import java.util.concurrent.Executors
 import javax.inject.Inject
 import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
@@ -117,11 +114,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.chromium.net.CronetEngine
 import org.json.JSONObject
 import timber.log.Timber
 
-@OptIn(androidx.media3.common.util.UnstableApi::class)
 @AndroidEntryPoint
 class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webview.WebView {
 
@@ -203,13 +198,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     @Named("keyChainRepository")
     lateinit var keyChainRepository: KeyChainRepository
 
-    private lateinit var binding: ActivityWebviewBinding
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
     private lateinit var decor: FrameLayout
-    private lateinit var myCustomView: View
+    private var customViewFromWebView = mutableStateOf<View?>(null)
     private lateinit var authenticator: Authenticator
-    private lateinit var exoPlayerView: PlayerView
+
     private lateinit var windowInsetsController: WindowInsetsControllerCompat
 
     private var mFilePathCallback: ValueCallback<Array<Uri>>? = null
@@ -221,15 +215,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var videoHeight = 0
     private var firstAuthTime: Long = 0
     private var resourceURL: String = ""
-    private var appLocked = true
+    private var appLocked = mutableStateOf(true)
     private var unlockingApp = false
-    private var exoPlayer: ExoPlayer? = null
+    private var exoPlayer = mutableStateOf<ExoPlayer?>(null)
     private var isExoFullScreen = false
-    private var exoTop = 0 // These margins are from the DOM and scaled to screen
-    private var exoLeft = 0
-    private var exoRight = 0
-    private var exoBottom = 0
-    private var exoMute = true
+    private var playerSize = mutableStateOf<DpSize?>(null)
+    private var playerTop = mutableStateOf<Dp>(0.dp)
+    private var playerLeft = mutableStateOf<Dp>(0.dp)
     private var failedConnection = "external"
     private var clearHistory = false
     private var moreInfoEntity = ""
@@ -252,9 +244,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         super.onCreate(savedInstanceState)
 
-        binding = ActivityWebviewBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
         if (intent.extras?.containsKey(EXTRA_SERVER) == true) {
             intent.extras?.getInt(EXTRA_SERVER)?.let {
                 presenter.setActiveServer(it)
@@ -268,29 +257,42 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val colorLaunchScreenBackground = ResourcesCompat.getColor(resources, commonR.color.colorLaunchScreenBackground, theme)
         setStatusBarAndNavigationBarColor(colorLaunchScreenBackground, colorLaunchScreenBackground)
 
-        binding.blurView.setupWith(binding.root)
-            .setBlurRadius(8f)
+        webView = WebView(this)
 
-        exoPlayerView = binding.exoplayerView
-        exoPlayerView.visibility = View.GONE
-        exoPlayerView.setBackgroundColor(Color.BLACK)
-        exoPlayerView.alpha = 1f
-        exoPlayerView.controllerShowTimeoutMs = 2000
+        appLocked.value = presenter.isAppLocked()
 
-        appLocked = presenter.isAppLocked()
-        binding.blurView.setBlurEnabled(appLocked)
+        setContent {
+            val player by remember { exoPlayer }
+            val playerSize by remember { playerSize }
+            val playerTop by remember { playerTop }
+            val playerLeft by remember { playerLeft }
+            val currentAppLocked by remember { appLocked }
+            val customViewFromWebView by remember { customViewFromWebView }
+
+            WebViewContentScreen(
+                webView,
+                player,
+                playerSize,
+                playerTop,
+                playerLeft,
+                currentAppLocked,
+                customViewFromWebView,
+            ) { isFullScreen ->
+                isExoFullScreen = isFullScreen
+                if (isFullScreen) hideSystemUI() else showSystemUI()
+            }
+        }
 
         authenticator = Authenticator(this, this, ::authenticationResult)
 
         decor = window.decorView as FrameLayout
-
-        webView = binding.webview
 
         val onBackPressed = object : OnBackPressedCallback(webView.canGoBack()) {
             override fun handleOnBackPressed() {
                 if (webView.canGoBack()) webView.goBack()
             }
         }
+
         onBackPressedDispatcher.addCallback(this, onBackPressed)
 
         webView.apply {
@@ -321,11 +323,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                             }
                         }
                     }
-                    return appLocked
+                    return appLocked.value
                 }
 
                 override fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean {
-                    return appLocked
+                    return appLocked.value
                 }
             })
 
@@ -585,20 +587,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
 
                 override fun onShowCustomView(view: View, callback: CustomViewCallback) {
-                    myCustomView = view
-                    binding.content.addView(
-                        view,
-                        FrameLayout.LayoutParams(
-                            FrameLayout.LayoutParams.WRAP_CONTENT,
-                            FrameLayout.LayoutParams.WRAP_CONTENT
-                        )
-                    )
+                    customViewFromWebView.value = view
                     hideSystemUI()
                     isVideoFullScreen = true
                 }
 
                 override fun onHideCustomView() {
-                    binding.content.removeView(myCustomView)
+                    customViewFromWebView.value = null
                     if (!presenter.isFullScreen()) {
                         showSystemUI()
                     }
@@ -612,7 +607,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         // Set WebView background color to transparent, so that the theme of the android activity has control over it.
         // This enables the ability to have the launch screen behind the WebView until the web frontend gets rendered
-        binding.webview.setBackgroundColor(Color.TRANSPARENT)
+        webView.setBackgroundColor(Color.TRANSPARENT)
 
         themesManager.setThemeForWebView(this, webView.settings)
 
@@ -893,8 +888,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         presenter.updateActiveServer()
 
-        appLocked = presenter.isAppLocked()
-        binding.blurView.setBlurEnabled(appLocked)
+        appLocked.value = presenter.isAppLocked()
 
         setWebViewZoom()
 
@@ -968,46 +962,26 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     fun exoPlayHls(json: JSONObject) {
         val payload = json.getJSONObject("payload")
         val uri = Uri.parse(payload.getString("url"))
-        exoMute = payload.optBoolean("muted")
+        val isMuted = payload.optBoolean("muted")
         runOnUiThread {
-            exoPlayer = ExoPlayer.Builder(applicationContext).setMediaSourceFactory(
-                DefaultMediaSourceFactory(
-                    CronetDataSource.Factory(
-                        CronetEngine.Builder(applicationContext).enableQuic(true).build(),
-                        Executors.newSingleThreadExecutor()
-                    )
-                ).setLiveMaxSpeed(8.0f)
-            ).setLoadControl(
-                DefaultLoadControl.Builder().setBufferDurationsMs(
-                    0,
-                    30000,
-                    0,
-                    0
-                ).build()
-            ).build()
-            exoPlayer?.setMediaItem(MediaItem.fromUri(uri))
-            exoPlayer?.playWhenReady = true
-            exoPlayer?.addListener(object : Player.Listener {
-                override fun onVideoSizeChanged(videoSize: VideoSize) {
-                    super.onVideoSizeChanged(videoSize)
-                    if (videoSize.height == 0 || videoSize.width == 0) return
-                    exoBottom =
-                        exoTop + ((exoRight - exoLeft) * videoSize.height / videoSize.width)
-                    runOnUiThread {
-                        exoResizeLayout()
+            exoPlayer.value = initializePlayer(this).apply {
+                setMediaItem(MediaItem.fromUri(uri))
+                playWhenReady = true
+                addListener(object : Player.Listener {
+                    override fun onVideoSizeChanged(videoSize: VideoSize) {
+                        super.onVideoSizeChanged(videoSize)
+                        if (videoSize.height == 0 || videoSize.width == 0) return
+                        playerSize.value?.let {
+                            // If height is already set, it means the frontend has imposed a constraint; avoid overriding.
+                            if (it.height == 0.dp) {
+                                playerSize.value = DpSize(it.width, it.width * videoSize.height / videoSize.width)
+                            }
+                        }
                     }
-                }
-            })
-            exoPlayer?.prepare()
-            exoMute = !exoMute // Invert because exoToggleMute() will invert again
-            exoToggleMute()
-            exoPlayerView.setFullscreenButtonClickListener { isFullScreen ->
-                isExoFullScreen = isFullScreen
-                exoResizeLayout()
+                })
+                prepare()
+                volume = if (isMuted) 0f else 1f
             }
-            exoPlayerView.player = exoPlayer
-            exoPlayerView.visibility = View.VISIBLE
-            findViewById<ImageButton>(R.id.exo_ha_mute)?.setOnClickListener { exoToggleMute() }
         }
         sendExternalBusMessage(
             ExternalBusMessage(
@@ -1023,69 +997,43 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     fun exoStopHls() {
         runOnUiThread {
-            exoPlayerView.visibility = View.GONE
-            exoPlayerView.player = null
-            exoPlayer?.release()
-            exoPlayer = null
+            // We might be in fullscreen mode, so we display back the system UI just in case
+            // same for the fullscreen status of ExoPlayer
+            isExoFullScreen = false
+            showSystemUI()
+            exoPlayer.value?.release()
+            exoPlayer.value = null
+            playerSize.value = null
+            playerTop.value = 0.dp
+            playerLeft.value = 0.dp
         }
     }
 
     fun exoResizeHls(json: JSONObject) {
-        val rect = json.getJSONObject("payload")
-        val displayMetrics = applicationContext.resources.displayMetrics
-        exoLeft = (rect.getInt("left") * displayMetrics.density).toInt()
-        exoTop = (rect.getInt("top") * displayMetrics.density).toInt()
-        exoRight = (rect.getInt("right") * displayMetrics.density).toInt()
-        exoBottom = if ((exoPlayer == null) || (exoPlayer!!.videoFormat == null)) {
-            // only set exoBottom if we can't calculate it from the video
-            (rect.getInt("bottom") * displayMetrics.density).toInt()
-        } else {
-            exoTop + (exoRight - exoLeft) * exoPlayer!!.videoFormat!!.height /
-                exoPlayer!!.videoFormat!!.width
-        }
-        runOnUiThread {
-            exoResizeLayout()
-        }
-    }
+        val payload = json.getJSONObject("payload")
+        // Payload is https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect
+        // The values are already scaled to the screen.
+        // We only need to store the top left corner for the offset and the player size
 
-    private fun exoToggleMute() {
-        exoMute = !exoMute
-        if (exoMute) {
-            exoPlayer?.volume = 0f
-            findViewById<ImageButton>(R.id.exo_ha_mute)?.setImageResource(R.drawable.ic_baseline_volume_off_24)
-        } else {
-            exoPlayer?.volume = 1f
-            findViewById<ImageButton>(R.id.exo_ha_mute)?.setImageResource(R.drawable.ic_baseline_volume_up_24)
-        }
-    }
-
-    fun exoResizeLayout() {
-        val exoLayoutParams = exoPlayerView.layoutParams as FrameLayout.LayoutParams
-        if (isExoFullScreen) {
-            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                exoPlayerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
+        val left = payload.getInt("left")
+        val top = payload.getInt("top")
+        val right = payload.getInt("right")
+        // if the bottom value is not 0 we should take it it is a constraint from the frontend, otherwise we try to compute the
+        // height based on the video's aspect ratio if available.
+        val bottom = payload.getInt("bottom").takeIf { it > 0 } ?: exoPlayer.value?.videoFormat?.let { videoFormat ->
+            if (videoFormat.width > 0) {
+                // Calculate height of the video based on aspect ratio
+                val width = right - left
+                val videoHeight = width * videoFormat.height / videoFormat.width
+                (top + videoHeight)
             } else {
-                exoPlayerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH
+                payload.getInt("bottom")
             }
-            exoLayoutParams.setMargins(0, 0, 0, 0)
-            exoPlayerView.layoutParams.height = FrameLayout.LayoutParams.MATCH_PARENT
-            exoPlayerView.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
-            hideSystemUI()
-        } else {
-            exoPlayerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
-            exoPlayerView.layoutParams.height = FrameLayout.LayoutParams.WRAP_CONTENT
-            exoPlayerView.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
-            val screenWidth: Int = resources.displayMetrics.widthPixels
-            val screenHeight: Int = resources.displayMetrics.heightPixels
-            exoLayoutParams.setMargins(
-                exoLeft,
-                exoTop,
-                maxOf(screenWidth - exoRight, 0),
-                maxOf(screenHeight - exoBottom, 0)
-            )
-            showSystemUI()
-        }
-        exoPlayerView.requestLayout()
+        } ?: payload.getInt("bottom")
+
+        playerTop.value = top.dp
+        playerLeft.value = left.dp
+        playerSize.value = DpSize((right - left).dp, (bottom - top).dp)
     }
 
     fun processHaptic(hapticType: String) {
@@ -1140,9 +1088,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         when (result) {
             Authenticator.SUCCESS -> {
                 Timber.d("Authentication successful, unlocking app")
-                appLocked = false
+                appLocked.value = false
                 presenter.setAppActive(true)
-                binding.blurView.setBlurEnabled(false)
             }
             Authenticator.CANCELED -> {
                 Timber.d("Authentication canceled by user, closing activity")
@@ -1184,15 +1131,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     override fun unlockAppIfNeeded() {
-        appLocked = presenter.isAppLocked()
-        if (appLocked) {
-            binding.blurView.setBlurEnabled(true)
+        appLocked.value = presenter.isAppLocked()
+        if (appLocked.value) {
             if (!unlockingApp) {
                 authenticator.authenticate(getString(commonR.string.biometric_title))
             }
             unlockingApp = true
-        } else {
-            binding.blurView.setBlurEnabled(false)
         }
     }
 
@@ -1203,22 +1147,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     private fun showSystemUI() {
         windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    override fun onPictureInPictureModeChanged(
-        isInPictureInPictureMode: Boolean,
-        newConfig: Configuration
-    ) {
-        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-        if (exoPlayerView.visibility != View.VISIBLE && ::binding.isInitialized) {
-            binding.exoviewGroup.layoutParams.height = if (isInPictureInPictureMode) {
-                FrameLayout.LayoutParams.MATCH_PARENT
-            } else {
-                videoHeight
-            }
-            decor.requestLayout()
-        }
     }
 
     override fun onUserLeaveHint() {
