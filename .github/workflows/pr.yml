@@ -113,7 +113,7 @@ jobs:
           mock-google-services: "true"
 
       - name: Validate Screenshot Previews
-        run: ./gradlew validateDebugScreenshotTest
+        run: ./gradlew validateDebugScreenshotTest validateFullDebugScreenshotTest
 
       - name: Upload test results
         if: always()
