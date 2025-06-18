@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.launch
 
 interface LaunchPresenter {
 
-    fun onViewReady(goToServer: String? = null)
+    fun onViewReady(serverUrlToOnboard: String? = null)
 
     fun setSessionExpireMillis(value: Long)
 

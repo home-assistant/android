@@ -98,7 +98,7 @@ class MyActivity : BaseActivity() {
             finish()
             return
         }
-        startActivity(LaunchActivity.newInstanceToSpecificServer(this, serverURL.removePrefix("url=")))
+        startActivity(LaunchActivity.newInstanceToOnboardServer(this, serverURL.removePrefix("url=")))
         finish()
     }
 

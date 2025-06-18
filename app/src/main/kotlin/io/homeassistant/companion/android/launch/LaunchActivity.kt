@@ -43,15 +43,15 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import timber.log.Timber
 
-private const val TO_SERVER = "go_to_server"
+private const val EXTRA_SERVER_URL_TO_ONBOARD = "extra_server_url_to_onboard"
 
 @AndroidEntryPoint
 class LaunchActivity : AppCompatActivity(), LaunchView {
 
     companion object {
-        fun newInstanceToSpecificServer(context: Context, serverUrl: String): Intent {
+        fun newInstance(context: Context, serverUrlToOnboard: String): Intent {
             return Intent(context, LaunchActivity::class.java).apply {
-                putExtra(TO_SERVER, serverUrl)
+                putExtra(EXTRA_SERVER_URL_TO_ONBOARD, serverUrlToOnboard)
             }
         }
     }
@@ -85,7 +85,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 }
             }
         }
-        presenter.onViewReady(intent.getStringExtra(TO_SERVER))
+        presenter.onViewReady(intent.getStringExtra(EXTRA_SERVER_URL_TO_ONBOARD))
     }
 
     override fun displayWebview() {
@@ -136,8 +136,8 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         overridePendingTransition(0, 0) // Disable activity start/stop animation
     }
 
-    override fun displayOnBoarding(sessionConnected: Boolean, gotoServer: String?) {
-        registerActivityResult.launch(OnboardApp.Input(url = gotoServer))
+    override fun displayOnBoarding(sessionConnected: Boolean, serverUrlToOnboard: String?) {
+        registerActivityResult.launch(OnboardApp.Input(url = serverUrlToOnboard))
     }
 
     override fun onDestroy() {

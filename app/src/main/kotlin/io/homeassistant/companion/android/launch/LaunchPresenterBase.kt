@@ -16,7 +16,7 @@ abstract class LaunchPresenterBase(
     internal val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     internal val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
-    override fun onViewReady(goToServer: String?) {
+    override fun onViewReady(serverUrlToOnboard: String?) {
         mainScope.launch {
             // Remove any invalid servers (incomplete, partly migrated from another device)
             serverManager.defaultServers
@@ -24,8 +24,8 @@ abstract class LaunchPresenterBase(
                 .forEach { serverManager.removeServer(it.id) }
 
             try {
-                if (goToServer != null) {
-                    view.displayOnBoarding(false, goToServer)
+                if (serverUrlToOnboard != null) {
+                    view.displayOnBoarding(false, serverUrlToOnboard)
                 } else if (
                     serverManager.isRegistered() &&
                     serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
