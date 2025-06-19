@@ -5,14 +5,17 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
@@ -50,15 +53,7 @@ class MyActivity : BaseActivity() {
         // We display the Icon of the app since this screen might be displayed when the user has to choose a server
         // before proceeding with the link.
         setContent {
-            HomeAssistantAppTheme {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Image(
-                        imageVector = ImageVector.vectorResource(R.drawable.app_icon_launch),
-                        contentDescription = null,
-                        modifier = Modifier.size(112.dp).align(Alignment.Center),
-                    )
-                }
-            }
+            MyActivityScreen()
         }
 
         val dataUri = intent?.takeIf { it.action == Intent.ACTION_VIEW }?.data
@@ -109,4 +104,24 @@ class MyActivity : BaseActivity() {
             isCancelable = false
         }.show(supportFragmentManager, ServerChooserFragment.TAG)
     }
+}
+
+@Composable
+@VisibleForTesting
+fun MyActivityScreen() {
+    HomeAssistantAppTheme {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.app_icon_launch),
+                contentDescription = null,
+                modifier = Modifier.size(112.dp).align(Alignment.Center),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun MyActivityScreenPreview() {
+    MyActivityScreen()
 }
