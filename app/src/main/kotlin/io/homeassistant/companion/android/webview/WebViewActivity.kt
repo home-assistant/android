@@ -1273,23 +1273,28 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         // Set background colors
         if (statusBarColor != 0 && !serverHandleInsets) {
-            window.statusBarColor = statusBarColor
             binding.statusBarBackground.setBackgroundColor(statusBarColor)
         } else {
             Timber.e("Skipping coloring status bar...")
         }
-        if (navigationBarColor != 0 && !serverHandleInsets) {
-            window.navigationBarColor = navigationBarColor
-            binding.navigationBarBackground.setBackgroundColor(navigationBarColor)
+
+        if (navigationBarColor != 0) {
+            // Below Android Q windowInsetsController.isAppearanceLightNavigationBars does not set navigation background color
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                window.navigationBarColor = ColorUtils.setAlphaComponent(navigationBarColor, 128)
+            }
+            if (!serverHandleInsets) {
+                binding.navigationBarBackground.setBackgroundColor(navigationBarColor)
+            }
         } else {
             Timber.e("Skipping coloring navigation bar...")
         }
 
         // Set foreground colors
-        if (statusBarColor != 0 && !serverHandleInsets) {
+        if (statusBarColor != 0) {
             windowInsetsController.isAppearanceLightStatusBars = !isColorDark(statusBarColor)
         }
-        if (navigationBarColor != 0 && !serverHandleInsets) {
+        if (navigationBarColor != 0) {
             windowInsetsController.isAppearanceLightNavigationBars = !isColorDark(navigationBarColor)
         }
     }

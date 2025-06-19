@@ -37,10 +37,10 @@ fun WebView.applyInsets(
             val safeInsetBottom = pxToDp(safeInsets.bottom.toFloat(), displayMetrics)
             val safeInsetLeft = pxToDp(safeInsets.left.toFloat(), displayMetrics)
             val safeAreaJs = """
-                        document.documentElement.style.setProperty('--android-safe-area-inset-top', '${safeInsetTop}px');
-                        document.documentElement.style.setProperty('--android-safe-area-inset-bottom', '${safeInsetBottom}px');
-                        document.documentElement.style.setProperty('--android-safe-area-inset-left', '${safeInsetLeft}px');
-                        document.documentElement.style.setProperty('--android-safe-area-inset-right', '${safeInsetRight}px');
+                        document.documentElement.style.setProperty('--app-safe-area-inset-top', '${safeInsetTop}px');
+                        document.documentElement.style.setProperty('--app-safe-area-inset-bottom', '${safeInsetBottom}px');
+                        document.documentElement.style.setProperty('--app-safe-area-inset-left', '${safeInsetLeft}px');
+                        document.documentElement.style.setProperty('--app-safe-area-inset-right', '${safeInsetRight}px');
             """.trimIndent()
             evaluateJavascript(safeAreaJs, null)
         }
