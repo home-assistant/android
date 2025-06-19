@@ -8,8 +8,8 @@ import io.homeassistant.companion.android.common.util.FailFast.setHandler
  * Implement this interface to define a custom handler if you want to do something different than [DefaultFailFastHandler].
  * Don't forget to register the handler in [FailFast.setHandler].
  */
-interface FailFastHandler {
-    fun handleException(exception: Exception, additionalMessage: String? = null)
+fun interface FailFastHandler {
+    fun handleException(exception: Exception, additionalMessage: String?)
 }
 
 private class FailFastException : Exception {
@@ -58,7 +58,7 @@ object FailFast {
      * @param message A lambda function that returns the message for the [FailFastException].
      */
     fun fail(message: () -> String) {
-        handler.handleException(FailFastException(message()))
+        handler.handleException(FailFastException(message()), null)
     }
 
     /**
