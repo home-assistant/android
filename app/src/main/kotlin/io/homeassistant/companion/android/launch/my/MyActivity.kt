@@ -1,27 +1,29 @@
 package io.homeassistant.companion.android.launch.my
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.unit.dp
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.databinding.ActivityMyBinding
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
-import timber.log.Timber
-
-private const val NAVIGATION_URL_PREFIX = "homeassistant://navigate/"
-private const val MOBILE_PARAM = "mobile"
 
 @AndroidEntryPoint
 class MyActivity : BaseActivity() {
@@ -39,107 +41,72 @@ class MyActivity : BaseActivity() {
     @Inject
     lateinit var serverManager: ServerManager
 
+    @Inject
+    lateinit var linkHandler: MyLinkHandler
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        handleDeepLink()
-    }
 
-    private fun handleDeepLink() {
-        intent?.takeIf { it.action == Intent.ACTION_VIEW }?.data?.let { data ->
-            val path = data.path.orEmpty()
-
-            FailFast.failWhen(data.scheme != "https" || data.host != "my.home-assistant.io") {
-                "Invalid deep link double check the host or the scheme: $data"
+        // We display the Icon of the app since this screen might be displayed when the user has to choose a server
+        // before proceeding with the link.
+        setContent {
+            HomeAssistantAppTheme {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Image(
+                        imageVector = ImageVector.vectorResource(R.drawable.app_icon_launch),
+                        contentDescription = null,
+                        modifier = Modifier.size(112.dp).align(Alignment.Center),
+                    )
+                }
             }
+        }
 
-            when {
-                path.startsWith("/redirect/") -> handleNavigateDeepLink(data)
-                path.startsWith("/invite") -> handleInviteDeepLink(data)
-                else -> {
-                    FailFast.fail { "Unknown or invalid deep link: $data" }
+        val dataUri = intent?.takeIf { it.action == Intent.ACTION_VIEW }?.data
+
+        if (dataUri == null) {
+            FailFast.fail { "Missing data in caller Intent" }
+        } else {
+            when (val destination = linkHandler.handleMyLink(dataUri)) {
+                LinkDestination.NoDestination -> finish()
+                is LinkDestination.Onboarding -> {
+                    startActivity(LaunchActivity.newInstance(this, destination.serverUrl))
                     finish()
                 }
-            }
-        }
-    }
 
-    private fun handleNavigateDeepLink(data: Uri) {
-        if (!serverManager.isRegistered()) {
-            Timber.w("No server registered, cannot handle deep link")
-            finish()
-            return
-        }
-
-        if (data.getQueryParameter(MOBILE_PARAM) == "1") {
-            Timber.i("No idea why we do this?????")
-            finish()
-            return
-        }
-
-        val uri = data.buildUpon().appendQueryParameter(MOBILE_PARAM, "1").build()
-
-        val binding = ActivityMyBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        binding.webview.configureWebView(uri.toString())
-    }
-
-    /**
-     * We are expecting a deep link like this:
-     * https://my.home-assistant.io/invite?url=http://homeassistant.local:8123
-     *
-     * This function will extract the URL and start the launch activity with it.
-     */
-    private fun handleInviteDeepLink(data: Uri) {
-        val serverURL = data.fragment.orEmpty()
-        // For instance: url=http://homeassistant.local:8123
-
-        if (serverURL.isEmpty() || !serverURL.startsWith("url=")) {
-            Timber.w("Deep link does not contains a valid URL to a server ($data)")
-            finish()
-            return
-        }
-        startActivity(LaunchActivity.newInstance(this, serverURL.removePrefix("url=")))
-        finish()
-    }
-
-    @SuppressLint("SetJavaScriptEnabled")
-    private fun WebView.configureWebView(url: String) {
-        if (BuildConfig.DEBUG) {
-            WebView.setWebContentsDebuggingEnabled(true)
-        }
-        settings.javaScriptEnabled = true
-        webViewClient = object : WebViewClient() {
-            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                val requestUrl = request?.url?.toString()
-                if (requestUrl != null && requestUrl.startsWith(NAVIGATION_URL_PREFIX)) {
-                    navigateTo(requestUrl.removePrefix(NAVIGATION_URL_PREFIX))
-                    return true
+                is LinkDestination.Webview -> {
+                    navigateTo(destination.path)
                 }
-                return false
             }
         }
-        loadUrl(url)
     }
 
     private fun navigateTo(path: String) {
         if (serverManager.defaultServers.size > 1) {
-            supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
-                if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
-                    startActivity(
-                        WebViewActivity.newInstance(
-                            context = this,
-                            path = path,
-                            serverId = bundle.getInt(ServerChooserFragment.RESULT_SERVER)
-                        )
-                    )
-                    finish()
-                }
-                supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
-            }
-            ServerChooserFragment().show(supportFragmentManager, ServerChooserFragment.TAG)
+            openServerChooser(path)
         } else {
             startActivity(WebViewActivity.newInstance(context = this, path = path))
             finish()
         }
+    }
+
+    private fun openServerChooser(path: String) {
+        supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
+            if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
+                startActivity(
+                    WebViewActivity.newInstance(
+                        context = this,
+                        path = path,
+                        serverId = bundle.getInt(ServerChooserFragment.RESULT_SERVER),
+                    ),
+                )
+                finish()
+            }
+            supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
+        }
+        ServerChooserFragment().apply {
+            // To avoid being stuck on an empty screen by mistake we make the dialog not cancelable.
+            // The counterpart is that it forces the user to select a server.
+            isCancelable = false
+        }.show(supportFragmentManager, ServerChooserFragment.TAG)
     }
 }

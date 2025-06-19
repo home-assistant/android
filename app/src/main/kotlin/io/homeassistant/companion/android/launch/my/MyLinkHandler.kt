@@ -1,0 +1,129 @@
+package io.homeassistant.companion.android.launch.my
+
+import android.net.Uri
+import androidx.core.net.toUri
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.FailFast
+import javax.inject.Inject
+import timber.log.Timber
+
+// We expect `redirect` to be followed by another part
+private const val REDIRECT_URL_PATH = "/redirect/"
+private const val INVITE_URL_PATH = "/invite"
+
+private const val MY_BASE_DOMAIN = "my.home-assistant.io"
+private const val BASE_REDIRECT_URL = "https://$MY_BASE_DOMAIN$REDIRECT_URL_PATH"
+
+private const val INTERNAL_MY_REDIRECT_PREFIX = "_my_redirect/"
+
+private const val MOBILE_PARAM = "mobile"
+private const val MOBILE_VALUE = "1"
+
+/**
+ * Sealed class that represents the destination of a link.
+ * Each destination contains the relevant data to open the destination based on the data present in the link.
+ */
+sealed interface LinkDestination {
+    /**
+     * Open a server onboarding flow with the given [serverUrl].
+     */
+    data class Onboarding(val serverUrl: String) : LinkDestination
+
+    /**
+     * Open a WebView with the given [url].
+     */
+    data class Webview(val path: String) : LinkDestination
+
+    /**
+     * Nowhere to go from this link.
+     */
+    object NoDestination : LinkDestination
+}
+
+/**
+ * Handles universal links from my.home-assistant.io
+ */
+interface MyLinkHandler {
+    /**
+     * Processes the given [uri] from `my.home-assistant.io` and determines the
+     * intended navigation destination within the application.
+     *
+     * @param uri The universal link to handle.
+     * @return A [LinkDestination] indicating where the link should navigate to,
+     *         or [LinkDestination.NoDestination] if the link is unhandled or invalid.
+     */
+    fun handleMyLink(uri: Uri): LinkDestination
+}
+
+class MyLinkHandlerImpl @Inject constructor(private val serverManager: ServerManager) : MyLinkHandler {
+
+    override fun handleMyLink(uri: Uri): LinkDestination {
+        val path = uri.path.orEmpty()
+
+        if (uri.scheme != "https" || uri.host != MY_BASE_DOMAIN) {
+            FailFast.fail {
+                "Invalid deep link double check the host or the scheme: $uri"
+            }
+            return LinkDestination.NoDestination
+        }
+
+        return when {
+            path.startsWith(REDIRECT_URL_PATH) -> handleNavigateDeepLink(uri)
+            path.startsWith(INVITE_URL_PATH) -> handleInviteUniversalLink(uri)
+            else -> {
+                FailFast.fail { "Unknown or invalid deep link: $uri" }
+                LinkDestination.NoDestination
+            }
+        }
+    }
+
+    /**
+     * Attempts to extract the target Home Assistant instance URL from the fragment part of the provided URI.
+     *
+     * The expected invitation link format is:
+     * `https://my.home-assistant.io/invite#url=http://homeassistant.local:8123?pre-auth=%3A%2F%2Fsupertoken&whatever=ahdfsuy78dsudsdkgj`
+     *
+     * The target URL is embedded in the fragment for security reasons,
+     * preventing it from being sent to `my.home-assistant.io`. This function extracts the
+     * `url` parameter from the fragment.
+     *
+     * @param uri The URI to process containing the invitation link.
+     * @return [LinkDestination.Onboarding] if a valid target URL is successfully extracted from the `uri`'s fragment,
+     *         otherwise [LinkDestination.NoDestination].
+     */
+    private fun handleInviteUniversalLink(uri: Uri): LinkDestination {
+        // Extract the server URL from the fragment #url=http://homeassistant.local:8123 and make it queryParam in a fake URI
+        val serverURL = "https://?${uri.encodedFragment.orEmpty()}".toUri().takeIf {
+            // If for some reason the fragment contains an opaque URI getQueryParameter will throw
+            !it.isOpaque
+        }?.getQueryParameter("url")
+
+        return if (serverURL == null) {
+            FailFast.fail { "Deep link does not contains a valid URL to a server ($uri)" }
+            LinkDestination.NoDestination
+        } else {
+            LinkDestination.Onboarding(serverURL)
+        }
+    }
+
+    private fun handleNavigateDeepLink(uri: Uri): LinkDestination {
+        if (!serverManager.isRegistered()) {
+            Timber.w("No server registered, cannot handle deep link")
+            return LinkDestination.NoDestination
+        }
+
+        if (uri.getQueryParameter(MOBILE_PARAM) == MOBILE_VALUE) {
+            FailFast.fail { "$MOBILE_PARAM flag already present and set to 1, the deep link is already handled" }
+            return LinkDestination.NoDestination
+        }
+
+        val path = uri.buildUpon()
+            // We strip last / to handle old links created before https://github.com/home-assistant/frontend/pull/25841
+            .path(uri.path?.removeSuffix("/"))
+            .appendQueryParameter(MOBILE_PARAM, MOBILE_VALUE)
+            .build().toString()
+            .replaceFirst(BASE_REDIRECT_URL, INTERNAL_MY_REDIRECT_PREFIX)
+
+        return LinkDestination.Webview(path)
+    }
+}
