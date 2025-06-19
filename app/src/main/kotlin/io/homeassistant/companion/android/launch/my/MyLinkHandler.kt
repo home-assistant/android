@@ -81,7 +81,7 @@ class MyLinkHandlerImpl @Inject constructor(private val serverManager: ServerMan
      * Attempts to extract the target Home Assistant instance URL from the fragment part of the provided URI.
      *
      * The expected invitation link format is:
-     * `https://my.home-assistant.io/invite#url=http://homeassistant.local:8123?pre-auth=%3A%2F%2Fsupertoken&whatever=ahdfsuy78dsudsdkgj`
+     * `https://my.home-assistant.io/invite#url=http://homeassistant.local:8123`
      *
      * The target URL is embedded in the fragment for security reasons,
      * preventing it from being sent to `my.home-assistant.io`. This function extracts the
