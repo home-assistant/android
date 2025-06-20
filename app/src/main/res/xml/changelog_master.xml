@@ -12,6 +12,8 @@
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2025.6.4 - Automotive" versioncode="1">
+        <change>Support invitation links from my.home-assistant.io</change>
+        <change>Redirect links from my.home-assistant.io directly open the app without confirmation</change>
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
