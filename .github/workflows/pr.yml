@@ -124,7 +124,7 @@ jobs:
               **/build/test-results/**/TEST-*.xml
 
       - name: Upload test results
-        if: fail()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: Screenshot test failure HTML report
