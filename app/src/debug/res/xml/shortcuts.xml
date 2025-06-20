@@ -3,7 +3,8 @@
     tools:ignore="UnusedResources, UnusedAttribute">
     <shortcut
         android:enabled="true"
-        android:icon="@drawable/ic_android_debug_bridge"
+        android:icon="@mipmap/ic_launcher_dev_playground"
+        android:roundIcon="@mipmap/ic_launcher_dev_playground_round"
         android:shortcutId="dev"
         android:shortcutShortLabel="@string/dev_playground_label">
         <intent
