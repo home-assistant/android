@@ -1,19 +1,30 @@
 package io.homeassistant.companion.android.launch.my
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import androidx.activity.compose.setContent
+import androidx.annotation.VisibleForTesting
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.databinding.ActivityMyBinding
+import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 
@@ -33,73 +44,84 @@ class MyActivity : BaseActivity() {
     @Inject
     lateinit var serverManager: ServerManager
 
-    @SuppressLint("SetJavaScriptEnabled")
+    @Inject
+    lateinit var linkHandler: MyLinkHandler
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (!serverManager.isRegistered()) {
-            finish()
-            return
+        // We display the Icon of the app since this screen might be displayed when the user has to choose a server
+        // before proceeding with the link.
+        setContent {
+            MyActivityScreen()
         }
 
-        val binding = ActivityMyBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        val dataUri = intent?.takeIf { it.action == Intent.ACTION_VIEW }?.data
 
-        if (intent?.action == Intent.ACTION_VIEW && intent.data != null) {
-            if (
-                intent.data?.scheme != "https" ||
-                intent.data?.host != "my.home-assistant.io" ||
-                intent.data?.path?.startsWith("/redirect/") != true ||
-                intent.data?.getQueryParameter("mobile")?.equals("1") == true
-            ) {
-                finish()
-                return
-            }
-            val newUri = intent.data!!.buildUpon().appendQueryParameter("mobile", "1").build()
+        if (dataUri == null) {
+            FailFast.fail { "Missing data in caller Intent" }
+        } else {
+            when (val destination = linkHandler.handleMyLink(dataUri)) {
+                LinkDestination.NoDestination -> finish()
+                is LinkDestination.Onboarding -> {
+                    startActivity(LaunchActivity.newInstance(this, destination.serverUrl))
+                    finish()
+                }
 
-            if (BuildConfig.DEBUG) {
-                WebView.setWebContentsDebuggingEnabled(true)
-            }
-
-            binding.webview.apply {
-                settings.javaScriptEnabled = true
-                webViewClient = object : WebViewClient() {
-                    override fun shouldOverrideUrlLoading(
-                        view: WebView?,
-                        request: WebResourceRequest?
-                    ): Boolean {
-                        val url = request?.url.toString()
-                        if (url.startsWith("homeassistant://navigate/")) {
-                            navigateTo(url.removePrefix("homeassistant://navigate/"))
-                            return true
-                        }
-                        return false
-                    }
+                is LinkDestination.Webview -> {
+                    navigateTo(destination.path)
                 }
             }
-            binding.webview.loadUrl(newUri.toString())
         }
     }
 
     private fun navigateTo(path: String) {
         if (serverManager.defaultServers.size > 1) {
-            supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
-                if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
-                    startActivity(
-                        WebViewActivity.newInstance(
-                            context = this,
-                            path = path,
-                            serverId = bundle.getInt(ServerChooserFragment.RESULT_SERVER)
-                        )
-                    )
-                    finish()
-                }
-                supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
-            }
-            ServerChooserFragment().show(supportFragmentManager, ServerChooserFragment.TAG)
+            openServerChooser(path)
         } else {
             startActivity(WebViewActivity.newInstance(context = this, path = path))
             finish()
         }
     }
+
+    private fun openServerChooser(path: String) {
+        supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
+            if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
+                startActivity(
+                    WebViewActivity.newInstance(
+                        context = this,
+                        path = path,
+                        serverId = bundle.getInt(ServerChooserFragment.RESULT_SERVER),
+                    ),
+                )
+                finish()
+            }
+            supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
+        }
+        ServerChooserFragment().apply {
+            // To avoid being stuck on an empty screen by mistake we make the dialog not cancelable.
+            // The counterpart is that it forces the user to select a server.
+            isCancelable = false
+        }.show(supportFragmentManager, ServerChooserFragment.TAG)
+    }
+}
+
+@Composable
+@VisibleForTesting
+fun MyActivityScreen() {
+    HomeAssistantAppTheme {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.app_icon_launch),
+                contentDescription = null,
+                modifier = Modifier.size(112.dp).align(Alignment.Center),
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun MyActivityScreenPreview() {
+    MyActivityScreen()
 }

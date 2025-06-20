@@ -28,6 +28,10 @@ android {
 
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
 
+    screenshotTests {
+        imageDifferenceThreshold = 0.00025f // 0.025%
+    }
+
     firebaseAppDistribution {
         serviceCredentialsFile = "firebaseAppDistributionServiceCredentialsFile.json"
         releaseNotesFile = "./app/build/outputs/changelogBeta"

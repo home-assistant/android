@@ -308,7 +308,8 @@
         </activity>
 
         <activity android:name=".launch.my.MyActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTask">
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -318,6 +319,17 @@
                     android:scheme="https"
                     android:host="my.home-assistant.io"
                     android:pathPrefix="/redirect/"/>
+            </intent-filter>
+
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="https"
+                    android:host="my.home-assistant.io"
+                    android:pathPrefix="/invite/"/>
             </intent-filter>
         </activity>
 
