@@ -343,6 +343,7 @@
     <string name="improv_permission_location">Precise location</string>
     <string name="improv_wifi_title">Connect to Wi-Fi</string>
     <string name="improv_wifi_ssid">Network name</string>
+    <string name="join_our_server">Join our smart home</string>
     <string name="keep_screen_on_def">Do not lock screen when dashboard is active</string>
     <string name="keep_screen_on">Keep screen on</string>
     <string name="page_zoom_default">%1$d%% (default)</string>
@@ -801,6 +802,7 @@
     <string name="share_failed">Sharing with Home Assistant failed!</string>
     <string name="share_logs_sens_message">Please note: by sharing the log, you could share sensitive data like location data or your Home Assistant URL.\n\nDo you want to continue?</string>
     <string name="share_logs">Share logs</string>
+    <string name="share_server">Share server</string>
     <string name="share_success">Shared with Home Assistant</string>
     <string name="shopping_list">Shopping list</string>
     <string name="shortcut_icon">Select an icon for this shortcut</string>
