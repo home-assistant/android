@@ -56,7 +56,6 @@ class ManageShortcutsViewModel @Inject constructor(
 
     val app = application
 
-    // private var shortcutManager = application.applicationContext.getSystemService<ShortcutManager>()!!
     val canPinShortcuts = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && ShortcutManagerCompat.isRequestPinShortcutSupported(app)
     var pinnedShortcuts = ShortcutManagerCompat.getShortcuts(app, ShortcutManagerCompat.FLAG_MATCH_PINNED)
         .filter { !it.id.startsWith(AssistShortcutActivity.SHORTCUT_PREFIX) }
