@@ -4,6 +4,7 @@
     <shortcut
         android:enabled="true"
         android:icon="@mipmap/ic_launcher_dev_playground"
+        android:roundIcon="@mipmap/ic_launcher_dev_playground_round"
         android:shortcutId="dev"
         android:shortcutShortLabel="@string/dev_playground_label">
         <intent
