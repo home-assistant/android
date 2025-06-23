@@ -179,4 +179,8 @@ class ServerSettingsPresenterImpl @Inject constructor(
             Unit
         }
     }
+
+    override fun serverURL(): String? {
+        return serverManager.getServer(serverId)?.connection?.getUrl()?.toString()
+    }
 }
