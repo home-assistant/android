@@ -64,7 +64,7 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
             DEEP_LINK_SCHEME -> handleDeepLink(uri)
             else -> {
                 FailFast.fail {
-                    "Invalid deep link scheme: $uri"
+                    "Invalid link scheme: $uri"
                 }
                 LinkDestination.NoDestination
             }
