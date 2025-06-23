@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.launch.my
+package io.homeassistant.companion.android.launch.link
 
 import android.content.Context
 import android.content.Intent
@@ -29,13 +29,13 @@ import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MyActivity : BaseActivity() {
+class LinkActivity : BaseActivity() {
 
     companion object {
         private const val EXTRA_URI = "EXTRA_URI"
 
         fun newInstance(context: Context, uri: Uri): Intent {
-            return Intent(context, MyActivity::class.java).apply {
+            return Intent(context, LinkActivity::class.java).apply {
                 putExtra(EXTRA_URI, uri.toString())
             }
         }
@@ -45,7 +45,7 @@ class MyActivity : BaseActivity() {
     lateinit var serverManager: ServerManager
 
     @Inject
-    lateinit var linkHandler: MyLinkHandler
+    lateinit var linkHandler: LinkHandler
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,7 +53,7 @@ class MyActivity : BaseActivity() {
         // We display the Icon of the app since this screen might be displayed when the user has to choose a server
         // before proceeding with the link.
         setContent {
-            MyActivityScreen()
+            LinkActivityScreen()
         }
 
         val dataUri = intent?.takeIf { it.action == Intent.ACTION_VIEW }?.data
@@ -61,7 +61,7 @@ class MyActivity : BaseActivity() {
         if (dataUri == null) {
             FailFast.fail { "Missing data in caller Intent" }
         } else {
-            when (val destination = linkHandler.handleMyLink(dataUri)) {
+            when (val destination = linkHandler.handleLink(dataUri)) {
                 LinkDestination.NoDestination -> finish()
                 is LinkDestination.Onboarding -> {
                     startActivity(LaunchActivity.newInstance(this, destination.serverUrl))
@@ -108,7 +108,7 @@ class MyActivity : BaseActivity() {
 
 @Composable
 @VisibleForTesting
-fun MyActivityScreen() {
+fun LinkActivityScreen() {
     HomeAssistantAppTheme {
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
@@ -122,6 +122,6 @@ fun MyActivityScreen() {
 
 @Preview
 @Composable
-private fun MyActivityScreenPreview() {
-    MyActivityScreen()
+private fun LinkActivityScreenPreview() {
+    LinkActivityScreen()
 }

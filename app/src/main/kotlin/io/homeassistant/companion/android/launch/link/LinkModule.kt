@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.launch.my
+package io.homeassistant.companion.android.launch.link
 
 import dagger.Binds
 import dagger.Module
@@ -7,8 +7,8 @@ import dagger.hilt.android.components.ActivityComponent
 
 @Module
 @InstallIn(ActivityComponent::class)
-interface MyModule {
+interface LinkModule {
 
     @Binds
-    fun myLinkHandler(impl: MyLinkHandlerImpl): MyLinkHandler
+    fun linkHandler(impl: LinkHandlerImpl): LinkHandler
 }
