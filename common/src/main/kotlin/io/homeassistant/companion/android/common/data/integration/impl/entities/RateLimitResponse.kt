@@ -1,7 +1,11 @@
 package io.homeassistant.companion.android.common.data.integration.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonProperty
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
 data class RateLimitResponse(
     val attempts: Int,
     val successful: Int,
@@ -9,6 +13,6 @@ data class RateLimitResponse(
     val total: Int,
     val maximum: Int,
     val remaining: Int,
-    @JsonProperty("resetsAt")
+    @JsonNames("resetsAt")
     val resetsAt: String
 )

@@ -59,7 +59,7 @@ class EntityWidget : BaseWidgetProvider() {
     override fun getWidgetProvider(context: Context): ComponentName =
         ComponentName(context, EntityWidget::class.java)
 
-    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
+    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity?): RemoteViews {
         val widget = staticWidgetDao.get(appWidgetId)
 
         val intent = Intent(context, EntityWidget::class.java).apply {
@@ -149,13 +149,13 @@ class EntityWidget : BaseWidgetProvider() {
         context: Context,
         serverId: Int,
         entityId: String?,
-        suggestedEntity: Entity<Map<String, Any>>?,
+        suggestedEntity: Entity?,
         attributeIds: String?,
         stateSeparator: String,
         attributeSeparator: String,
         appWidgetId: Int
     ): ResolvedText {
-        var entity: Entity<Map<String, Any>>? = null
+        var entity: Entity? = null
         var entityCaughtException = false
         try {
             entity = if (suggestedEntity != null && suggestedEntity.entityId == entityId) {
@@ -246,9 +246,9 @@ class EntityWidget : BaseWidgetProvider() {
         }
     }
 
-    override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>) {
+    override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity) {
         widgetScope?.launch {
-            val views = getWidgetRemoteViews(context, appWidgetId, entity as Entity<Map<String, Any>>)
+            val views = getWidgetRemoteViews(context, appWidgetId, entity as Entity)
             AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
         }
     }

@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.google.services)
     alias(libs.plugins.homeassistant.android.dependencies)
     alias(libs.plugins.kotlin.parcelize)
+    alias(libs.plugins.screenshot)
 }
 
 android {
@@ -25,6 +26,12 @@ android {
         }
     }
 
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
+
+    screenshotTests {
+        imageDifferenceThreshold = 0.00025f // 0.025%
+    }
+
     firebaseAppDistribution {
         serviceCredentialsFile = "firebaseAppDistributionServiceCredentialsFile.json"
         releaseNotesFile = "./app/build/outputs/changelogBeta"
@@ -35,6 +42,8 @@ android {
 dependencies {
     // Most of the dependencies are coming from the convention plugin to avoid duplication with `:automotive` module.
     "fullImplementation"(libs.car.projected)
+
+    screenshotTestImplementation(libs.compose.uiTooling)
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.

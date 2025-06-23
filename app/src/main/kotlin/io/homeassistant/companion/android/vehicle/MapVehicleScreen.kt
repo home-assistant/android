@@ -38,11 +38,11 @@ import timber.log.Timber
 class MapVehicleScreen(
     carContext: CarContext,
     val integrationRepository: IntegrationRepository,
-    private val entitiesFlow: Flow<List<Entity<*>>>
+    private val entitiesFlow: Flow<List<Entity>>
 ) : Screen(carContext) {
 
     private var loading = true
-    var entities: Set<Entity<*>> = setOf()
+    var entities: Set<Entity> = setOf()
 
     init {
         lifecycleScope.launch {

@@ -44,7 +44,7 @@ class TodoWidgetConfigureViewModel @Inject constructor(
         private set
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val entities: StateFlow<List<Entity<*>>> = snapshotFlow { selectedServerId }
+    val entities: StateFlow<List<Entity>> = snapshotFlow { selectedServerId }
         .distinctUntilChanged()
         .mapLatest { serverId ->
             if (serverManager.isRegistered()) {

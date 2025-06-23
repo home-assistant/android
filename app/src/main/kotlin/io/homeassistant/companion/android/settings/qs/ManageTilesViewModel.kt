@@ -143,7 +143,7 @@ class ManageTilesViewModel @Inject constructor(
 
     var servers by mutableStateOf(serverManager.defaultServers)
         private set
-    var sortedEntities by mutableStateOf<List<Entity<*>>>(emptyList())
+    var sortedEntities by mutableStateOf<List<Entity>>(emptyList())
         private set
     var selectedServerId by mutableStateOf(ServerManager.SERVER_ID_ACTIVE)
         private set
@@ -161,7 +161,7 @@ class ManageTilesViewModel @Inject constructor(
     private var selectedTileId = 0
     private var selectedTileAdded = false
 
-    private val entities = mutableMapOf<Int, List<Entity<*>>>()
+    private val entities = mutableMapOf<Int, List<Entity>>()
 
     private val _tileInfoSnackbar = MutableSharedFlow<Int>(replay = 1)
     var tileInfoSnackbar = _tileInfoSnackbar.asSharedFlow()

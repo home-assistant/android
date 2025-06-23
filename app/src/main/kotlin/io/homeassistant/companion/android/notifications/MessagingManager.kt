@@ -41,8 +41,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.content.getSystemService
 import androidx.core.text.isDigitsOnly
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
@@ -66,6 +64,7 @@ import io.homeassistant.companion.android.common.notifications.parseVibrationPat
 import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
 import io.homeassistant.companion.android.database.notification.NotificationDao
@@ -280,7 +279,7 @@ class MessagingManager @Inject constructor(
         if (source.startsWith(SOURCE_REPLY)) {
             notificationId = source.substringAfter(SOURCE_REPLY).toLong()
             notificationDao.get(notificationId.toInt())?.let {
-                val dbData: Map<String, String> = jacksonObjectMapper().readValue(it.data)
+                val dbData: Map<String, String> = kotlinJsonMapper.decodeFromString(it.data)
 
                 now = it.received // Allow for updating the existing notification without a tag
                 jsonData = jsonData + dbData // Add the notificationData, this contains the reply text

@@ -113,7 +113,7 @@ jobs:
           mock-google-services: "true"
 
       - name: Validate Screenshot Previews
-        run: ./gradlew validateDebugScreenshotTest
+        run: ./gradlew validateDebugScreenshotTest validateFullDebugScreenshotTest
 
       - name: Upload test results
         if: always()
@@ -122,6 +122,14 @@ jobs:
           name: Screenshot test results
           path: |
               **/build/test-results/**/TEST-*.xml
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Screenshot test failure HTML report
+          path: |
+              **/build/reports/screenshotTest/**
 
   pr_build:
     needs: [yamllint, lockfiles]

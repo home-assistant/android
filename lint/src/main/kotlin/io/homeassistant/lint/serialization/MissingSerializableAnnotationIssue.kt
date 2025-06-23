@@ -11,6 +11,7 @@ import com.android.tools.lint.detector.api.Severity
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiWildcardType
+import io.homeassistant.lint.serialization.MissingSerializableAnnotationIssue.RECOMMENDATION
 import io.homeassistant.lint.utils.Logger
 import kotlin.reflect.jvm.jvmName
 import org.jetbrains.uast.UCallExpression
@@ -19,13 +20,19 @@ import org.jetbrains.uast.UExpression
 
 private const val KOTLINX_JSON_CLASS = "kotlinx.serialization.json.Json"
 private const val KOTLINX_SERIALIZABLE_ANNOTATION = "kotlinx.serialization.Serializable"
-private const val METHOD_NAME = "encodeToString" // TODO handle decodeFromString as well
+private const val ENCODE_TO_STRING_METHOD_NAME = "encodeToString"
+private const val DECODE_FROM_STRING_METHOD_NAME = "decodeFromString"
 private const val VALUE_PARAM_NAME = "value"
+private const val STRING_PARAM_NAME = "string"
 private const val SERIALIZER_PARAM_NAME = "serializer"
+private const val DESERIALIZER_PARAM_NAME = "deserializer"
 private val WELL_KNOWN_SERIALIZABLE_TYPES = listOf<String>(
+    "java.lang.Boolean",
     "java.lang.Integer",
+    "java.lang.Float",
     "java.util.HashMap",
     "java.util.List",
+    "java.lang.Long",
     "java.util.Map",
     "java.lang.String",
 )
@@ -78,91 +85,42 @@ object MissingSerializableAnnotationIssue {
         override fun createUastHandler(context: JavaContext): UElementHandler? {
             return object : UElementHandler() {
                 override fun visitCallExpression(node: UCallExpression) {
-                    if (
-                        node.methodIdentifier?.name == METHOD_NAME &&
-                        node.receiver?.getExpressionType()?.canonicalText == KOTLINX_JSON_CLASS
-                    ) {
-                        val argument = getValueArgumentToCheck(node) ?: return
+                    if (node.receiver?.getExpressionType()?.canonicalText == KOTLINX_JSON_CLASS) {
+                        val argument = when (node.methodIdentifier?.name) {
+                            ENCODE_TO_STRING_METHOD_NAME -> {
+                                val argument = EncodeToStringVisitor.getValueArgumentToCheck(context, node) ?: return
 
-                        val argumentType = argument.getExpressionType()
+                                val argumentType = argument.getExpressionType()
 
-                        if (argumentType == null) {
-                            Logger.warn("Missing argument type in $METHOD_NAME call, check $ISSUE_CLASS_NAME code.")
-                            return
-                        }
-
-                        collectAllTypes(argumentType)
-                            .map(context.evaluator::getTypeClass)
-                            .filter {
-                                it != null && it.qualifiedName !in WELL_KNOWN_SERIALIZABLE_TYPES
-                            }
-                            .forEach { psiClass ->
-                                if (psiClass?.hasAnnotation(KOTLINX_SERIALIZABLE_ANNOTATION) == false) {
-                                    context.report(
-                                        ISSUE,
-                                        node,
-                                        context.getLocation(node),
-                                        "The class `${psiClass.qualifiedName}` is missing the `@Serializable` annotation.",
-                                    )
+                                if (argumentType == null) {
+                                    Logger.warn("Missing argument type in $ENCODE_TO_STRING_METHOD_NAME call, check $ISSUE_CLASS_NAME code.")
+                                    return
                                 }
+                                argumentType
                             }
-                    }
-                }
-
-                private fun getValueArgumentToCheck(node: UCallExpression): UExpression? {
-                    return if (node.valueArgumentCount == 1) {
-                        node.valueArguments.first()
-                    } else {
-                        handleMultipleArgs(node)
-                    }
-                }
-
-                private fun handleMultipleArgs(node: UCallExpression): UExpression? {
-                    val resolvedMethod = node.resolve()
-
-                    if (resolvedMethod == null) {
-                        Logger.warn("Could not resolved method call, check $ISSUE_CLASS_NAME code.")
-                        return null
-                    }
-
-                    val parameters = resolvedMethod.parameterList.parameters
-
-                    // We cannot assume the indexes of the param since they can change
-                    var valueIndexParam: Int? = null
-                    var serializerIndexParam: Int? = null
-
-                    parameters.forEachIndexed { index, value ->
-                        when (value.name) {
-                            VALUE_PARAM_NAME -> valueIndexParam = index
-                            SERIALIZER_PARAM_NAME -> serializerIndexParam = index
-                            else -> Logger.warn("$ISSUE_CLASS_NAME is outdated please open an issue or update the lint rule.")
+                            DECODE_FROM_STRING_METHOD_NAME -> DecodeFromStringStringVisitor.getTypeArgumentToCheck(context, node) ?: return
+                            else -> return
                         }
+                        inspectType(node, argument)
                     }
+                }
 
-                    if (valueIndexParam == null || serializerIndexParam == null) {
-                        Logger.warn("Missing parameter in $METHOD_NAME call, check $ISSUE_CLASS_NAME code.")
-                        return null
-                    }
-
-                    val serializerArg = node.getArgumentForParameter(serializerIndexParam)
-                    val serializerClass = context.evaluator.getTypeClass(serializerArg?.getExpressionType())
-                    if (serializerClass?.qualifiedName in ANY_SERIALIZER_TYPES) {
-                        context.report(
-                            RECOMMENDATION,
-                            node,
-                            context.getLocation(serializerArg),
-                            "Prefer polymorphic serializer over AnySerializer.",
-                        )
-                        // We ignore the rule if we find a *AnySerializer
-                        return null
-                    }
-
-                    val argument = node.getArgumentForParameter(valueIndexParam)
-                    if (argument == null) {
-                        Logger.warn("Fail to get argument value in $METHOD_NAME call, check $ISSUE_CLASS_NAME code.")
-                        return null
-                    }
-                    return argument
+                private fun inspectType(node: UCallExpression, type: PsiType) {
+                    collectAllTypes(type)
+                        .map(context.evaluator::getTypeClass)
+                        .filter {
+                            it != null && it.qualifiedName !in WELL_KNOWN_SERIALIZABLE_TYPES
+                        }
+                        .forEach { psiClass ->
+                            if (psiClass?.hasAnnotation(KOTLINX_SERIALIZABLE_ANNOTATION) == false) {
+                                context.report(
+                                    ISSUE,
+                                    node,
+                                    context.getLocation(node),
+                                    "The class `${psiClass.qualifiedName}` is missing the `@Serializable` annotation.",
+                                )
+                            }
+                        }
                 }
 
                 private fun collectAllTypes(rootType: PsiType): List<PsiType> {
@@ -186,4 +144,109 @@ object MissingSerializableAnnotationIssue {
             }
         }
     }
+}
+
+private object EncodeToStringVisitor {
+    fun getValueArgumentToCheck(context: JavaContext, node: UCallExpression): UExpression? {
+        return if (node.valueArgumentCount == 1) {
+            node.valueArguments.first()
+        } else {
+            getValueArgumentFromMultipleArgument(context, node)
+        }
+    }
+
+    private fun getValueArgumentFromMultipleArgument(context: JavaContext, node: UCallExpression): UExpression? {
+        val resolvedMethod = node.resolve()
+
+        if (resolvedMethod == null) {
+            Logger.warn("Could not resolved method call $ENCODE_TO_STRING_METHOD_NAME, check $ISSUE_CLASS_NAME code.")
+            return null
+        }
+
+        val parameters = resolvedMethod.parameterList.parameters
+
+        // We cannot assume the indexes of the param since they can change
+        var valueIndexParam: Int? = null
+        var serializerIndexParam: Int? = null
+
+        parameters.forEachIndexed { index, value ->
+            when (value.name) {
+                VALUE_PARAM_NAME -> valueIndexParam = index
+                SERIALIZER_PARAM_NAME -> serializerIndexParam = index
+                else -> Logger.warn("$ISSUE_CLASS_NAME is outdated for $ENCODE_TO_STRING_METHOD_NAME please open an issue or update the lint rule.")
+            }
+        }
+
+        if (valueIndexParam == null || serializerIndexParam == null) {
+            Logger.warn("Missing parameter in $ENCODE_TO_STRING_METHOD_NAME call, check $ISSUE_CLASS_NAME code.")
+            return null
+        }
+
+        if (isUsingAnySerializer(context, node, serializerIndexParam)) {
+            // We ignore the rule if we find a *AnySerializer
+            return null
+        }
+
+        val argument = node.getArgumentForParameter(valueIndexParam)
+        if (argument == null) {
+            Logger.warn("Fail to get argument value in $ENCODE_TO_STRING_METHOD_NAME call, check $ISSUE_CLASS_NAME code.")
+            return null
+        }
+        return argument
+    }
+}
+
+private object DecodeFromStringStringVisitor {
+    fun getTypeArgumentToCheck(context: JavaContext, node: UCallExpression): PsiType? {
+        if (node.valueArgumentCount != 1) {
+            if (shouldSkipTypeArgumentCheck(context, node)) {
+                // We ignore the rule if we find a *AnySerializer
+                return null
+            }
+        }
+        return node.returnType
+    }
+
+    private fun shouldSkipTypeArgumentCheck(context: JavaContext, node: UCallExpression): Boolean {
+        val resolvedMethod = node.resolve()
+
+        if (resolvedMethod == null) {
+            Logger.warn("Could not resolved method call $DECODE_FROM_STRING_METHOD_NAME, check $ISSUE_CLASS_NAME code.")
+            return false
+        }
+
+        val parameters = resolvedMethod.parameterList.parameters
+
+        var deserializerIndexParam: Int? = null
+
+        parameters.forEachIndexed { index, value ->
+            when (value.name) {
+                STRING_PARAM_NAME -> {} // no-op
+                DESERIALIZER_PARAM_NAME -> deserializerIndexParam = index
+                else -> Logger.warn("$ISSUE_CLASS_NAME is outdated for $DECODE_FROM_STRING_METHOD_NAME please open an issue or update the lint rule.")
+            }
+        }
+
+        if (deserializerIndexParam == null) {
+            Logger.warn("Missing deserializer parameter in $DECODE_FROM_STRING_METHOD_NAME call, check $ISSUE_CLASS_NAME code.")
+            return false
+        }
+
+        return isUsingAnySerializer(context, node, deserializerIndexParam)
+    }
+}
+
+private fun isUsingAnySerializer(context: JavaContext, node: UCallExpression, serializerIndexParam: Int): Boolean {
+    val serializerArg = node.getArgumentForParameter(serializerIndexParam)
+    val serializerClass = context.evaluator.getTypeClass(serializerArg?.getExpressionType())
+    if (serializerClass?.qualifiedName in ANY_SERIALIZER_TYPES) {
+        context.report(
+            RECOMMENDATION,
+            node,
+            context.getLocation(serializerArg),
+            "Prefer polymorphic serializer over AnySerializer.",
+        )
+        return true
+    }
+    return false
 }

@@ -1,28 +1,9 @@
 package io.homeassistant.companion.android.common.data.prefs.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import org.json.JSONObject
+import kotlinx.serialization.Serializable
 
-const val FIELD_TEMPLATE = "template"
-const val FIELD_REFRESH_INTERVAL = "refresh_interval"
-
+@Serializable
 data class TemplateTileConfig(
-    @JsonProperty(value = FIELD_TEMPLATE)
     val template: String,
-    @JsonProperty(value = FIELD_REFRESH_INTERVAL)
     val refreshInterval: Int
-) {
-    constructor(jsonObject: JSONObject) : this(
-        jsonObject.getString(FIELD_TEMPLATE),
-        jsonObject.getInt(FIELD_REFRESH_INTERVAL)
-    )
-
-    fun toJSONObject(): JSONObject {
-        return JSONObject(
-            mapOf(
-                FIELD_TEMPLATE to template,
-                FIELD_REFRESH_INTERVAL to refreshInterval
-            )
-        )
-    }
-}
+)
