@@ -332,50 +332,6 @@
     </issue>
 
     <issue
-        id="AppLinkUrlError"
-        message="`http(s)` scheme is missing, but is required for Android App Links"
-        errorLine1="            &lt;intent-filter android:autoVerify=&quot;true&quot;>"
-        errorLine2="             ~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="271"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="AppLinkUrlError"
-        message="Android App Links&apos; `host` attributes must be valid web domains"
-        errorLine1="                    android:host=&quot;navigate&quot; />"
-        errorLine2="                                  ~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="278"
-            column="35"/>
-    </issue>
-
-    <issue
-        id="AppLinkUrlError"
-        message="`http(s)` scheme is missing, but is required for Android App Links"
-        errorLine1="            &lt;intent-filter android:autoVerify=&quot;true&quot;>"
-        errorLine2="             ~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="307"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="AppLinkUrlError"
-        message="Android App Links&apos; `host` attributes must be valid web domains"
-        errorLine1="                    android:host=&quot;invite&quot; />"
-        errorLine2="                                  ~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="314"
-            column="35"/>
-    </issue>
-
-    <issue
         id="BatteryLife"
         message="Use of `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` violates the Play Store Content Policy regarding acceptable use cases, as described in https://developer.android.com/training/monitoring-device-state/doze-standby.html"
         errorLine1="                                        Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,"
