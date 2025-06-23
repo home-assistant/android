@@ -7,14 +7,21 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.InputType
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.commit
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
+import androidx.preference.Preference.OnPreferenceChangeListener
 import androidx.preference.Preference.OnPreferenceClickListener
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -30,10 +37,13 @@ import io.homeassistant.companion.android.settings.url.ExternalUrlFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
 import io.homeassistant.companion.android.webview.WebViewActivity
+import java.net.URLEncoder
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
+
+private const val BASE_INVITE_URL = "https://my.home-assistant.io/invite/#"
 
 @AndroidEntryPoint
 class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
@@ -52,6 +62,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
     private var serverDeleteDialog: AlertDialog? = null
     private var serverDeleteHandler = Handler(Looper.getMainLooper())
 
+    @Deprecated("Deprecated in Java")
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         arguments?.let {
             serverId = it.getInt(EXTRA_SERVER, serverId)
@@ -62,7 +73,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
 
         setPreferencesFromResource(R.xml.preferences_server, rootKey)
 
-        val onChangeUrlValidator = Preference.OnPreferenceChangeListener { _, newValue ->
+        val onChangeUrlValidator = OnPreferenceChangeListener { _, newValue ->
             val isValid = newValue.toString().isBlank() || newValue.toString().toHttpUrlOrNull() != null
             if (!isValid) {
                 AlertDialog.Builder(requireActivity())
@@ -202,6 +213,37 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         applyBottomSafeDrawingInsets()
+
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(
+            object : MenuProvider {
+                override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                    menuInflater.inflate(R.menu.menu_fragment_share, menu)
+                }
+
+                override fun onPrepareMenu(menu: Menu) {
+                    super.onPrepareMenu(menu)
+                    menu.findItem(R.id.share_server).isVisible = presenter.serverURL() != null
+                }
+
+                override fun onMenuItemSelected(menuItem: MenuItem): Boolean = when (menuItem.itemId) {
+                    R.id.share_server -> {
+                        menuItem.isChecked = true
+                        val sendIntent: Intent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_SUBJECT, getString(commonR.string.join_our_server))
+                            putExtra(Intent.EXTRA_TEXT, "$BASE_INVITE_URL${URLEncoder.encode(presenter.serverURL(), Charsets.UTF_8.toString())}")
+                            type = "text/plain"
+                        }
+                        startActivity(Intent.createChooser(sendIntent, null))
+                        true
+                    }
+                    else -> false
+                }
+            },
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED
+        )
     }
 
     override fun updateServerName(name: String) {
