@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.launch
 
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -42,8 +43,18 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import timber.log.Timber
 
+private const val EXTRA_SERVER_URL_TO_ONBOARD = "extra_server_url_to_onboard"
+
 @AndroidEntryPoint
 class LaunchActivity : AppCompatActivity(), LaunchView {
+
+    companion object {
+        fun newInstance(context: Context, serverUrlToOnboard: String): Intent {
+            return Intent(context, LaunchActivity::class.java).apply {
+                putExtra(EXTRA_SERVER_URL_TO_ONBOARD, serverUrlToOnboard)
+            }
+        }
+    }
 
     @Inject
     lateinit var presenter: LaunchPresenter
@@ -74,7 +85,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 }
             }
         }
-        presenter.onViewReady()
+        presenter.onViewReady(intent.getStringExtra(EXTRA_SERVER_URL_TO_ONBOARD))
     }
 
     override fun displayWebview() {
@@ -125,8 +136,8 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         overridePendingTransition(0, 0) // Disable activity start/stop animation
     }
 
-    override fun displayOnBoarding(sessionConnected: Boolean) {
-        registerActivityResult.launch(OnboardApp.Input())
+    override fun displayOnBoarding(sessionConnected: Boolean, serverUrlToOnboard: String?) {
+        registerActivityResult.launch(OnboardApp.Input(url = serverUrlToOnboard))
     }
 
     override fun onDestroy() {

@@ -46,7 +46,8 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "implementation"(libs.material)
                     "implementation"(libs.fragment.ktx)
 
-                    "implementation"(libs.okhttp)
+                    "implementation"(platform(libs.okhttp.bom))
+                    "implementation"(libs.okhttp.android)
 
                     "implementation"(libs.bundles.coil)
 

@@ -55,7 +55,7 @@ media = "1.7.0"
 media3 = "1.7.1"
 mockk = "1.14.2"
 navigation-compose = "2.9.0"
-okhttp = "5.0.0-alpha.14"
+okhttp = "5.0.0-alpha.16"
 paging = "3.3.6"
 coil = "3.2.0"
 play-services-threadnetwork = "16.3.0"
@@ -66,11 +66,11 @@ preference-ktx = "1.2.1"
 recyclerview = "1.4.0"
 reorderable = "2.5.1"
 retrofit-bom = "3.0.0"
-robolectric = "4.14.1"
-room = "2.7.1"
+robolectric = "4.15"
+room = "2.7.2"
 runtimeLint = "1.8.2"
 screenshot = "0.0.1-alpha09"
-sentry-android = "8.13.3"
+sentry-android = "8.14.0"
 timber = "5.0.1"
 tools-desugar-jdk-libs = "2.1.5"
 turbine = "1.2.1"
@@ -85,7 +85,7 @@ wearPhoneInteractions = "1.1.0"
 wearInput = "1.2.0-alpha02"
 webkit = "1.14.0"
 wear-remote-interactions = "1.1.0"
-workRuntimeKtx = "2.10.1"
+workRuntimeKtx = "2.10.2"
 zxing = "4.3.0"
 
 [plugins]
@@ -195,9 +195,10 @@ leakcanary-android-instrumentation = { module = "com.squareup.leakcanary:leakcan
 lint-api = { group = "com.android.tools.lint", name = "lint-api", version.ref = "androidTools" }
 lint-checks = { group = "com.android.tools.lint", name = "lint-checks", version.ref = "androidTools" }
 lint-tests = { group = "com.android.tools.lint", name = "lint-tests", version.ref = "androidTools" }
-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation-compose" }
-okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+okhttp-android = { module = "com.squareup.okhttp3:okhttp-android" }
+okhttp-bom = { module = "com.squareup.okhttp3:okhttp-bom", version.ref = "okhttp" }
+okhttp-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 media3-datasource-cronet = { module = "androidx.media3:media3-datasource-cronet", version.ref = "media3" }
 media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
