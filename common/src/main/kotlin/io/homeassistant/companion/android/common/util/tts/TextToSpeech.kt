@@ -50,7 +50,7 @@ data class Utterance(
     val id: String,
     val text: String,
     val streamVolumeAdjustment: StreamVolumeAdjustment,
-    val audioAttributes: AudioAttributes
+    val audioAttributes: AudioAttributes,
 )
 
 /**
@@ -86,7 +86,7 @@ sealed class StreamVolumeAdjustment {
      */
     class Maximize(
         private val audioManager: AudioManager,
-        private val streamId: Int
+        private val streamId: Int,
     ) : StreamVolumeAdjustment() {
         private val maxVolume: Int = audioManager.getStreamMaxVolume(streamId)
         private var resetVolume: Int? = null

@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 data class EventResponse<T>(
     val eventType: String,
     val timeFired: String,
-    val data: T
+    val data: T,
 )

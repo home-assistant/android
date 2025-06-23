@@ -21,7 +21,7 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 @Composable
 fun IconDialogContent(
     iconFilter: IconFilter = DefaultIconFilter(),
-    onSelect: (IIcon) -> Unit
+    onSelect: (IIcon) -> Unit,
 ) {
     var searchQuery by remember { mutableStateOf("") }
     Column {
@@ -30,7 +30,7 @@ fun IconDialogContent(
             typeface = CommunityMaterial,
             searchQuery = searchQuery,
             iconFilter = iconFilter,
-            onClick = onSelect
+            onClick = onSelect,
         )
     }
 }
@@ -39,14 +39,14 @@ fun IconDialogContent(
 fun IconDialog(
     iconFilter: IconFilter = DefaultIconFilter(),
     onSelect: (IIcon) -> Unit,
-    onDismissRequest: () -> Unit
+    onDismissRequest: () -> Unit,
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
         Surface(
             modifier = Modifier
                 .width(480.dp)
                 .height(500.dp),
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.medium,
         ) {
             IconDialogContent(iconFilter = iconFilter, onSelect = onSelect)
         }
@@ -61,7 +61,7 @@ private fun IconDialogPreview() {
             modifier = Modifier
                 .width(480.dp)
                 .height(500.dp),
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.medium,
         ) {
             IconDialogContent(onSelect = {})
         }

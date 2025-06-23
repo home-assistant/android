@@ -12,7 +12,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 
 class ThemesManager @Inject constructor(
-    private val themesUseCase: PrefsRepository
+    private val themesUseCase: PrefsRepository,
 ) {
 
     suspend fun getCurrentTheme(): String {
@@ -59,7 +59,7 @@ class ThemesManager @Inject constructor(
             // those users. Issue: https://github.com/home-assistant/android/issues/2985
             WebSettingsCompat.setForceDarkStrategy(
                 webSettings,
-                WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY
+                WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY,
             )
             when (theme) {
                 "dark" -> {

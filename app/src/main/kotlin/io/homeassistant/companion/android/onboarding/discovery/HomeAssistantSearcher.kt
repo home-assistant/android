@@ -17,7 +17,7 @@ class HomeAssistantSearcher constructor(
     private val wifiManager: WifiManager?,
     private val onStart: () -> Unit,
     private val onInstanceFound: (instance: HomeAssistantInstance) -> Unit,
-    private val onError: () -> Unit
+    private val onError: () -> Unit,
 ) : NsdManager.DiscoveryListener, DefaultLifecycleObserver {
 
     companion object {
@@ -104,7 +104,7 @@ class HomeAssistantSearcher constructor(
                                 val instance = HomeAssistantInstance(
                                     it.serviceName,
                                     URL(baseUrl.commonToUtf8String()),
-                                    version
+                                    version,
                                 )
                                 onInstanceFound(instance)
                             } catch (e: MalformedURLException) {
@@ -114,7 +114,7 @@ class HomeAssistantSearcher constructor(
                     }
                     lock.unlock()
                 }
-            }
+            },
         )
     }
 

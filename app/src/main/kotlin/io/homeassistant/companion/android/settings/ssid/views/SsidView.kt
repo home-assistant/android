@@ -80,7 +80,7 @@ fun SsidView(
     onRequestPermission: () -> Unit,
     onSetEthernet: (Boolean) -> Unit,
     onSetVpn: (Boolean) -> Unit,
-    onSetPrioritize: (Boolean) -> Unit
+    onSetPrioritize: (Boolean) -> Unit,
 ) {
     LazyColumn(
         contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
@@ -91,13 +91,13 @@ fun SsidView(
                     text = stringResource(commonR.string.manage_ssids_introduction),
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
-                        .padding(bottom = 16.dp)
+                        .padding(bottom = 16.dp),
                 )
                 SsidSubheader(
                     title = stringResource(commonR.string.manage_ssids_wifi),
                     icon = Icons.Default.Wifi,
                     checked = null,
-                    onClicked = null
+                    onClicked = null,
                 )
                 if (canReadWifi) {
                     SsidInput(onAddWifiSsid)
@@ -106,7 +106,7 @@ fun SsidView(
                         HaAlertWarning(
                             message = stringResource(commonR.string.manage_ssids_permission),
                             action = stringResource(commonR.string.allow),
-                            onActionClicked = onRequestPermission
+                            onActionClicked = onRequestPermission,
                         )
                     }
                 }
@@ -121,16 +121,16 @@ fun SsidView(
             item("ssid.suggestion") {
                 Chip(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    onClick = { onAddWifiSsid(activeSsid) }
+                    onClick = { onAddWifiSsid(activeSsid) },
                 ) {
                     Icon(
                         imageVector = Icons.Default.Wifi,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     )
                     Text(
                         text = stringResource(commonR.string.add_ssid_name_suggestion, activeSsid),
-                        modifier = Modifier.padding(start = 8.dp)
+                        modifier = Modifier.padding(start = 8.dp),
                     )
                 }
             }
@@ -139,7 +139,7 @@ fun SsidView(
             items = wifiSsids,
             key = { index: Int, item: String ->
                 if (wifiSsids.count { it == item } == 1) "ssid.item.$item" else "ssid.index.$index"
-            }
+            },
         ) { _, it ->
             val connected = remember(it, activeSsid, activeBssid, usingWifi) {
                 usingWifi &&
@@ -153,12 +153,12 @@ fun SsidView(
                     .heightIn(min = 48.dp)
                     .padding(horizontal = 16.dp)
                     .animateItem(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (connected) {
                     Image(
                         asset = CommunityMaterial.Icon3.cmd_wifi_check,
-                        colorFilter = ColorFilter.tint(colorResource(commonR.color.colorAccent))
+                        colorFilter = ColorFilter.tint(colorResource(commonR.color.colorAccent)),
                     )
                     Spacer(Modifier.width(16.dp))
                 }
@@ -177,7 +177,7 @@ fun SsidView(
                     },
                     modifier = Modifier
                         .padding(end = 16.dp)
-                        .weight(1f)
+                        .weight(1f),
                 )
                 Icon(
                     imageVector = Icons.Default.Clear,
@@ -186,7 +186,7 @@ fun SsidView(
                     modifier = Modifier
                         .clickable { onRemoveWifiSsid(it) }
                         .size(48.dp)
-                        .padding(all = 12.dp)
+                        .padding(all = 12.dp),
                 )
             }
         }
@@ -198,7 +198,7 @@ fun SsidView(
                     title = stringResource(commonR.string.manage_ssids_ethernet),
                     icon = Icons.Default.SettingsEthernet,
                     checked = ethernet,
-                    onClicked = { onSetEthernet(it) }
+                    onClicked = { onSetEthernet(it) },
                 )
             }
         }
@@ -208,7 +208,7 @@ fun SsidView(
                 title = stringResource(commonR.string.manage_ssids_vpn),
                 icon = Icons.Default.VpnKey,
                 checked = vpn,
-                onClicked = { onSetVpn(it) }
+                onClicked = { onSetVpn(it) },
             )
         }
 
@@ -218,12 +218,12 @@ fun SsidView(
                     Modifier
                         .padding(horizontal = 16.dp)
                         .padding(top = 32.dp)
-                        .animateItem()
+                        .animateItem(),
                 ) {
                     HaAlertInfo(
                         message = stringResource(commonR.string.manage_ssids_warning),
                         action = null,
-                        onActionClicked = null
+                        onActionClicked = null,
                     )
                 }
             }
@@ -235,7 +235,7 @@ fun SsidView(
                 Divider(modifier = Modifier.padding(horizontal = 16.dp))
                 SsidPrioritizeInternal(
                     prioritize = prioritizeInternal,
-                    onChanged = onSetPrioritize
+                    onChanged = onSetPrioritize,
                 )
             }
         }
@@ -248,40 +248,40 @@ fun SsidSubheader(
     icon: ImageVector,
     checked: Boolean?,
     onClicked: ((Boolean) -> Unit)?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val modifier = if (onClicked != null) {
         modifier.then(
             Modifier
                 .clickable { checked?.let { onClicked(!it) } ?: onClicked(true) }
                 .heightIn(min = 56.dp)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 16.dp),
         )
     } else {
         modifier.then(
             Modifier
                 .heightIn(min = 56.dp)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 16.dp),
         )
     }
     Row(
         modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null
+            contentDescription = null,
         )
         Text(
             text = title,
             modifier = Modifier.padding(start = 16.dp).weight(1f),
-            style = MaterialTheme.typography.subtitle1
+            style = MaterialTheme.typography.subtitle1,
         )
         if (onClicked != null) {
             Switch(
                 checked = checked == true,
                 onCheckedChange = null,
-                colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb))
+                colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb)),
             )
         }
     }
@@ -289,7 +289,7 @@ fun SsidSubheader(
 
 @Composable
 fun SsidInput(
-    onSubmit: (String) -> Boolean
+    onSubmit: (String) -> Boolean,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     Row(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -310,20 +310,20 @@ fun SsidInput(
                     keyboardController?.hide()
                     ssidError = !onSubmit(ssidInput)
                     if (!ssidError) ssidInput = ""
-                }
+                },
             ),
             isError = ssidError,
             trailingIcon = if (ssidError) {
                 {
                     Icon(
                         imageVector = Icons.Default.Error,
-                        contentDescription = stringResource(commonR.string.manage_ssids_input_exists)
+                        contentDescription = stringResource(commonR.string.manage_ssids_input_exists),
                     )
                 }
             } else {
                 null
             },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
         Button(
             modifier = Modifier
@@ -333,7 +333,7 @@ fun SsidInput(
                 keyboardController?.hide()
                 ssidError = !onSubmit(ssidInput)
                 if (!ssidError) ssidInput = ""
-            }
+            },
         ) {
             Text(stringResource(commonR.string.add_ssid))
         }
@@ -343,7 +343,7 @@ fun SsidInput(
 @Composable
 fun SsidPrioritizeInternal(
     prioritize: Boolean,
-    onChanged: (Boolean) -> Unit
+    onChanged: (Boolean) -> Unit,
 ) {
     var prioritizeDropdown by remember { mutableStateOf(false) }
     Box {
@@ -351,11 +351,11 @@ fun SsidPrioritizeInternal(
             modifier = Modifier
                 .clickable { prioritizeDropdown = true }
                 .fillMaxWidth()
-                .padding(all = 16.dp)
+                .padding(all = 16.dp),
         ) {
             Text(
                 text = stringResource(commonR.string.prioritize_internal_title),
-                style = MaterialTheme.typography.body1
+                style = MaterialTheme.typography.body1,
             )
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                 Text(
@@ -364,9 +364,9 @@ fun SsidPrioritizeInternal(
                             commonR.string.prioritize_internal_on
                         } else {
                             commonR.string.prioritize_internal_off
-                        }
+                        },
                     ),
-                    style = MaterialTheme.typography.body2
+                    style = MaterialTheme.typography.body2,
                 )
             }
         }
@@ -374,7 +374,7 @@ fun SsidPrioritizeInternal(
             DropdownMenu(
                 expanded = true,
                 onDismissRequest = { prioritizeDropdown = false },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 DropdownMenuItem(onClick = {
                     onChanged(false)
@@ -410,7 +410,7 @@ private fun PreviewSsidViewEmpty() {
         onRequestPermission = {},
         onSetEthernet = {},
         onSetVpn = {},
-        onSetPrioritize = {}
+        onSetPrioritize = {},
     )
 }
 
@@ -431,6 +431,6 @@ private fun PreviewSsidViewItems() {
         onRequestPermission = {},
         onSetEthernet = {},
         onSetVpn = {},
-        onSetPrioritize = {}
+        onSetPrioritize = {},
     )
 }

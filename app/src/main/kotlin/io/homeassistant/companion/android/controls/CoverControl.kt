@@ -25,7 +25,7 @@ object CoverControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity,
-        info: HaControlInfo
+        info: HaControlInfo,
     ): Control.StatefulBuilder {
         val position = entity.getCoverPosition()
         control.setControlTemplate(
@@ -40,18 +40,18 @@ object CoverControl : HaControl {
                         position?.max ?: 100f,
                         position?.value ?: 0f,
                         1f,
-                        "%.0f%%"
-                    )
+                        "%.0f%%",
+                    ),
                 )
             } else {
                 ToggleTemplate(
                     entity.entityId,
                     ControlButton(
                         entity.isActive(),
-                        "Description"
-                    )
+                        "Description",
+                    ),
                 )
-            }
+            },
         )
         return control
     }
@@ -74,7 +74,7 @@ object CoverControl : HaControl {
 
     override suspend fun performAction(
         integrationRepository: IntegrationRepository,
-        action: ControlAction
+        action: ControlAction,
     ): Boolean {
         return when (action) {
             is BooleanAction -> {
@@ -82,8 +82,8 @@ object CoverControl : HaControl {
                     action.templateId.split(".")[0],
                     if ((action as? BooleanAction)?.newState == true) "open_cover" else "close_cover",
                     hashMapOf(
-                        "entity_id" to action.templateId
-                    )
+                        "entity_id" to action.templateId,
+                    ),
                 )
                 true
             }
@@ -94,8 +94,8 @@ object CoverControl : HaControl {
                     "set_cover_position",
                     hashMapOf(
                         "entity_id" to action.templateId,
-                        "position" to convertPosition.toInt()
-                    )
+                        "position" to convertPosition.toInt(),
+                    ),
                 )
                 true
             }

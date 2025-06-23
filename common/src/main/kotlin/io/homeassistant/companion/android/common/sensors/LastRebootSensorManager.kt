@@ -30,7 +30,7 @@ class LastRebootSensorManager : SensorManager {
             commonR.string.sensor_description_last_reboot,
             "mdi:restart",
             deviceClass = "timestamp",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
     }
 
@@ -49,7 +49,7 @@ class LastRebootSensorManager : SensorManager {
     }
 
     override suspend fun requestSensorUpdate(
-        context: Context
+        context: Context,
     ) {
         updateLastReboot(context)
     }
@@ -95,8 +95,8 @@ class LastRebootSensorManager : SensorManager {
             lastRebootSensor.statelessIcon,
             mapOf(
                 LOCAL_TIME to local,
-                TIME_MILLISECONDS to timeInMillis
-            )
+                TIME_MILLISECONDS to timeInMillis,
+            ),
         )
     }
 }

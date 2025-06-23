@@ -60,7 +60,7 @@ class EntityGridVehicleScreen(
     private val domains: MutableSet<String>,
     private val entitiesFlow: Flow<List<Entity>>,
     private val allEntities: Flow<Map<String, Entity>>,
-    private val onChangeServer: (Int) -> Unit
+    private val onChangeServer: (Int) -> Unit,
 ) : Screen(carContext) {
 
     private var loading = true
@@ -94,7 +94,7 @@ class EntityGridVehicleScreen(
                 prefsRepository,
                 allEntities,
                 entityRegistry,
-                lifecycleScope
+                lifecycleScope,
             )
         }
         if (isFavorites) {
@@ -104,8 +104,8 @@ class EntityGridVehicleScreen(
                     screenManager,
                     integrationRepository,
                     allEntities,
-                    entityRegistry
-                ).build()
+                    entityRegistry,
+                ).build(),
             )
             if (domains.isNotEmpty()) {
                 listBuilder.addItem(
@@ -117,8 +117,8 @@ class EntityGridVehicleScreen(
                         serverId,
                         allEntities,
                         prefsRepository,
-                        entityRegistry
-                    ).build()
+                        entityRegistry,
+                    ).build(),
                 )
             }
             if (shouldSwitchServers) {
@@ -127,8 +127,8 @@ class EntityGridVehicleScreen(
                         carContext,
                         screenManager,
                         serverManager,
-                        serverId
-                    ) { onChangeServer(it) }.build()
+                        serverId,
+                    ) { onChangeServer(it) }.build(),
                 )
             }
         }
@@ -183,7 +183,7 @@ class EntityGridVehicleScreen(
                                         if (lat != null && lon != null) {
                                             val intent = Intent(
                                                 CarContext.ACTION_NAVIGATE,
-                                                Uri.parse("geo:$lat,$lon")
+                                                Uri.parse("geo:$lat,$lon"),
                                             )
                                             carContext.startCarApp(intent)
                                         }
@@ -208,19 +208,19 @@ class EntityGridVehicleScreen(
                         CarIcon.Builder(
                             IconicsDrawable(carContext, icon).apply {
                                 sizeDp = 64
-                            }.toAndroidIconCompat()
+                            }.toAndroidIconCompat(),
                         )
                             .setTint(
                                 if (entity.isActive() && entity.domain in EntityExt.STATE_COLORED_DOMAINS) {
                                     CarColor.createCustom(
                                         carContext.getColor(R.color.colorYellow),
-                                        carContext.getColor(R.color.colorYellow)
+                                        carContext.getColor(R.color.colorYellow),
                                     )
                                 } else {
                                     CarColor.DEFAULT
-                                }
+                                },
                             )
-                            .build()
+                            .build(),
                     )
             }
             listBuilder.addItem(gridItem.build())

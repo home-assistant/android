@@ -28,7 +28,7 @@ object MediaPlayerControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity,
-        info: HaControlInfo
+        info: HaControlInfo,
     ): Control.StatefulBuilder {
         if (entity.supportsVolumeSet()) {
             val volumeLevel = entity.getVolumeLevel()
@@ -43,9 +43,9 @@ object MediaPlayerControl : HaControl {
                         volumeLevel?.max ?: 100f,
                         volumeLevel?.value ?: 0f,
                         entity.getVolumeStep(),
-                        "%.0f%%"
-                    )
-                )
+                        "%.0f%%",
+                    ),
+                ),
             )
         } else {
             control.setControlTemplate(
@@ -53,9 +53,9 @@ object MediaPlayerControl : HaControl {
                     entity.entityId,
                     ControlButton(
                         entity.isActive(),
-                        ""
-                    )
-                )
+                        "",
+                    ),
+                ),
             )
         }
         return control
@@ -69,14 +69,14 @@ object MediaPlayerControl : HaControl {
 
     override suspend fun performAction(
         integrationRepository: IntegrationRepository,
-        action: ControlAction
+        action: ControlAction,
     ): Boolean {
         when (action) {
             is BooleanAction -> {
                 integrationRepository.callAction(
                     action.templateId.split(".")[0],
                     "media_play_pause",
-                    hashMapOf("entity_id" to action.templateId)
+                    hashMapOf("entity_id" to action.templateId),
                 )
             }
             is FloatAction -> {
@@ -88,8 +88,8 @@ object MediaPlayerControl : HaControl {
                     "volume_set",
                     hashMapOf(
                         "entity_id" to action.templateId,
-                        "volume_level" to BigDecimal(volumeLevel.toDouble()).setScale(2, RoundingMode.HALF_UP)
-                    )
+                        "volume_level" to BigDecimal(volumeLevel.toDouble()).setScale(2, RoundingMode.HALF_UP),
+                    ),
                 )
             }
         }

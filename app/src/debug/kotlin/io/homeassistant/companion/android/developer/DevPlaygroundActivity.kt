@@ -54,7 +54,7 @@ private fun DevPlayGroundScreen(context: Context? = null) {
         modifier = Modifier
             .padding(WindowInsets.systemBars.asPaddingValues())
             .fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Button(modifier = Modifier.padding(top = 16.dp), onClick = {
             throw DummyException()

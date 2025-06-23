@@ -32,27 +32,27 @@ import io.homeassistant.companion.android.util.safeBottomWindowInsets
 fun ModalBottomSheet(
     title: String?,
     showHandle: Boolean = true,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val sheetCornerRadius = dimensionResource(R.dimen.bottom_sheet_corner_radius)
     Surface(
-        shape = RoundedCornerShape(topStart = sheetCornerRadius, topEnd = sheetCornerRadius)
+        shape = RoundedCornerShape(topStart = sheetCornerRadius, topEnd = sheetCornerRadius),
     ) {
         Column(
-            modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets())
+            modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets()),
         ) {
             if (showHandle) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 22.dp),
-                    horizontalArrangement = Arrangement.Center
+                    horizontalArrangement = Arrangement.Center,
                 ) {
                     Box(
                         modifier = Modifier
                             .size(width = 24.dp, height = 4.dp)
                             .clip(RoundedCornerShape(2.dp))
-                            .background(colorResource(commonR.color.colorBottomSheetHandle))
+                            .background(colorResource(commonR.color.colorBottomSheetHandle)),
                     )
                 }
             }
@@ -63,7 +63,7 @@ fun ModalBottomSheet(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 22.dp),
                     style = MaterialTheme.typography.h6,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
             }
             content()

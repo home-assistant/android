@@ -71,7 +71,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
 
     private val registerActivityResult = registerForActivityResult(
         OnboardApp(),
-        this::onOnboardingComplete
+        this::onOnboardingComplete,
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,7 +80,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             Box(modifier = Modifier.fillMaxSize()) {
                 HomeAssistantAppTheme {
                     CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
                     )
                 }
             }
@@ -94,7 +94,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) && BuildConfig.FLAVOR == "full") {
             val carIntent = Intent(
                 this,
-                Class.forName("androidx.car.app.activity.CarAppActivity")
+                Class.forName("androidx.car.app.activity.CarAppActivity"),
             ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(carIntent)
         } else if (presenter.hasMultipleServers() && intent.data?.path?.isNotBlank() == true) {
@@ -162,7 +162,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                                     deviceName,
                                     messagingToken,
                                     deviceTrackingEnabled,
-                                    notificationsEnabled
+                                    notificationsEnabled,
                                 )
                             }
                         }
@@ -174,7 +174,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                         deviceName,
                         messagingToken,
                         deviceTrackingEnabled,
-                        notificationsEnabled
+                        notificationsEnabled,
                     )
                 }
             } else {
@@ -189,7 +189,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         deviceName: String,
         messagingToken: String,
         deviceTrackingEnabled: Boolean,
-        notificationsEnabled: Boolean
+        notificationsEnabled: Boolean,
     ) {
         var serverId: Int? = null
         try {
@@ -198,10 +198,10 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 _name = "",
                 type = ServerType.TEMPORARY,
                 connection = ServerConnectionInfo(
-                    externalUrl = formattedUrl
+                    externalUrl = formattedUrl,
                 ),
                 session = ServerSessionInfo(),
-                user = ServerUserInfo()
+                user = ServerUserInfo(),
             )
             serverId = serverManager.addServer(server)
             serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
@@ -209,8 +209,8 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 DeviceRegistration(
                     "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                     deviceName,
-                    messagingToken
-                )
+                    messagingToken,
+                ),
             )
             serverId = serverManager.convertTemporaryServer(serverId)
         } catch (e: Exception) {
@@ -237,7 +237,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                         e is SSLHandshakeException -> commonR.string.webview_error_FAILED_SSL_HANDSHAKE
                         e is SSLException -> commonR.string.webview_error_SSL_INVALID
                         else -> commonR.string.webview_error
-                    }
+                    },
                 )
                 .setCancelable(false)
                 .setPositiveButton(commonR.string.ok) { dialog, _ ->
@@ -259,10 +259,10 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             sensorIds = listOf(
                 LocationSensorManager.backgroundLocation.id,
                 LocationSensorManager.zoneLocation.id,
-                LocationSensorManager.singleAccurateLocation.id
+                LocationSensorManager.singleAccurateLocation.id,
             ),
             serverId = serverId,
-            enabled = enabled
+            enabled = enabled,
         )
     }
 
@@ -273,7 +273,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             settingViewModel.getSetting(serverId) // Required to create initial value
             settingViewModel.updateWebsocketSetting(
                 serverId,
-                if (enabled) WebsocketSetting.ALWAYS else WebsocketSetting.NEVER
+                if (enabled) WebsocketSetting.ALWAYS else WebsocketSetting.NEVER,
             )
         }
     }

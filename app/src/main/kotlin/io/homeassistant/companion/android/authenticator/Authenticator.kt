@@ -35,12 +35,12 @@ class Authenticator(context: Context, fragmentActivity: FragmentActivity, callba
                 callback(ERROR)
             }
             override fun onAuthenticationSucceeded(
-                result: BiometricPrompt.AuthenticationResult
+                result: BiometricPrompt.AuthenticationResult,
             ) {
                 super.onAuthenticationSucceeded(result)
                 callback(SUCCESS)
             }
-        }
+        },
     )
 
     fun authenticate(title: String) {

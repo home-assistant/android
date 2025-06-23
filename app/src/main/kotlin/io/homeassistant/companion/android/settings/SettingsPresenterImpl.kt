@@ -52,7 +52,7 @@ class SettingsPresenterImpl @Inject constructor(
     private val langsManager: LanguagesManager,
     private val changeLog: ChangeLog,
     private val settingsDao: SettingsDao,
-    private val sensorDao: SensorDao
+    private val sensorDao: SensorDao,
 ) : SettingsPresenter, PreferenceDataStore() {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -61,7 +61,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     private val voiceCommandAppComponent = ComponentName(
         BuildConfig.APPLICATION_ID,
-        "io.homeassistant.companion.android.assist.VoiceCommandIntentActivity"
+        "io.homeassistant.companion.android.assist.VoiceCommandIntentActivity",
     )
 
     private var suggestionFlow = MutableStateFlow<SettingsHomeSuggestion?>(null)
@@ -95,7 +95,7 @@ class SettingsPresenterImpl @Inject constructor(
                     view.getPackageManager()?.setComponentEnabledSetting(
                         voiceCommandAppComponent,
                         if (value) PackageManager.COMPONENT_ENABLED_STATE_DEFAULT else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                        PackageManager.DONT_KILL_APP
+                        PackageManager.DONT_KILL_APP,
                     )
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
@@ -170,10 +170,10 @@ class SettingsPresenterImpl @Inject constructor(
                     _name = "",
                     type = ServerType.TEMPORARY,
                     connection = ServerConnectionInfo(
-                        externalUrl = formattedUrl
+                        externalUrl = formattedUrl,
                     ),
                     session = ServerSessionInfo(),
-                    user = ServerUserInfo()
+                    user = ServerUserInfo(),
                 )
                 serverId = serverManager.addServer(server)
                 serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
@@ -181,8 +181,8 @@ class SettingsPresenterImpl @Inject constructor(
                     DeviceRegistration(
                         "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                         deviceName,
-                        messagingToken
-                    )
+                        messagingToken,
+                    ),
                 )
                 serverManager.getServer()?.id?.let {
                     serverManager.activateServer(it) // Prevent unexpected active server changes
@@ -213,10 +213,10 @@ class SettingsPresenterImpl @Inject constructor(
             sensorIds = listOf(
                 LocationSensorManager.backgroundLocation.id,
                 LocationSensorManager.zoneLocation.id,
-                LocationSensorManager.singleAccurateLocation.id
+                LocationSensorManager.singleAccurateLocation.id,
             ),
             serverId = serverId,
-            enabled = enabled
+            enabled = enabled,
         )
     }
 
@@ -228,8 +228,8 @@ class SettingsPresenterImpl @Inject constructor(
                 Setting(
                     serverId,
                     if (enabled) WebsocketSetting.ALWAYS else WebsocketSetting.NEVER,
-                    SensorUpdateFrequencySetting.NORMAL
-                )
+                    SensorUpdateFrequencySetting.NORMAL,
+                ),
             )
         }
     }
@@ -273,7 +273,7 @@ class SettingsPresenterImpl @Inject constructor(
                 SettingsPresenter.SUGGESTION_ASSISTANT_APP,
                 commonR.string.suggestion_assist_title,
                 commonR.string.suggestion_assist_summary,
-                R.drawable.ic_comment_processing_outline
+                R.drawable.ic_comment_processing_outline,
             )
         }
 
@@ -283,7 +283,7 @@ class SettingsPresenterImpl @Inject constructor(
                 SettingsPresenter.SUGGESTION_NOTIFICATION_PERMISSION,
                 commonR.string.suggestion_notifications_title,
                 commonR.string.suggestion_notifications_summary,
-                commonR.drawable.ic_notifications
+                commonR.drawable.ic_notifications,
             )
         }
 

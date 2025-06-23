@@ -9,7 +9,7 @@ import javax.inject.Inject
 @Suppress("DEPRECATION")
 class WifiHelperImpl @Inject constructor(
     private val connectivityManager: ConnectivityManager,
-    private val wifiManager: WifiManager?
+    private val wifiManager: WifiManager?,
 ) : WifiHelper {
     override fun hasWifi(): Boolean =
         wifiManager != null

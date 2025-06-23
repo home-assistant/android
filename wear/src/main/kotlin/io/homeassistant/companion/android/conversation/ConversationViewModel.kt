@@ -27,7 +27,7 @@ class ConversationViewModel @Inject constructor(
     private val audioRecorder: AudioRecorder,
     audioUrlPlayer: AudioUrlPlayer,
     private val wearPrefsRepository: WearPrefsRepository,
-    application: Application
+    application: Application,
 ) : AssistViewModelBase(serverManager, audioRecorder, audioUrlPlayer, application) {
 
     private var useAssistPipeline = false
@@ -59,7 +59,7 @@ class ConversationViewModel @Inject constructor(
         if (!serverManager.isRegistered()) {
             _conversation.clear()
             _conversation.add(
-                AssistMessage(app.getString(commonR.string.not_registered), isInput = false)
+                AssistMessage(app.getString(commonR.string.not_registered), isInput = false),
             )
             return false
         }
@@ -74,7 +74,7 @@ class ConversationViewModel @Inject constructor(
         if (supported == null) { // Couldn't get config
             _conversation.clear()
             _conversation.add(
-                AssistMessage(app.getString(commonR.string.assist_connnect), isInput = false)
+                AssistMessage(app.getString(commonR.string.assist_connnect), isInput = false),
             )
         } else if (!supported) { // Core too old or missing component
             val usingPipelines = serverManager.getServer()?.version?.isAtLeast(2023, 5) == true
@@ -86,8 +86,8 @@ class ConversationViewModel @Inject constructor(
                     } else {
                         app.getString(commonR.string.no_assist_support, "2023.1", app.getString(commonR.string.no_assist_support_conversation))
                     },
-                    isInput = false
-                )
+                    isInput = false,
+                ),
             )
         } else {
             if (serverManager.getServer()?.version?.isAtLeast(2023, 5) == true) {
@@ -101,7 +101,7 @@ class ConversationViewModel @Inject constructor(
                     serverManager.integrationRepository().getLastUsedPipelineId()
                 } else {
                     null
-                }
+                },
             )
         }
 
@@ -197,7 +197,7 @@ class ConversationViewModel @Inject constructor(
             inputMode = AssistInputMode.BLOCKED
             _conversation.clear()
             _conversation.add(
-                AssistMessage(app.getString(commonR.string.assist_error), isInput = false)
+                AssistMessage(app.getString(commonR.string.assist_error), isInput = false),
             )
         }
 
@@ -253,7 +253,7 @@ class ConversationViewModel @Inject constructor(
 
         runAssistPipelineInternal(
             text,
-            currentPipeline
+            currentPipeline,
         ) { event ->
             when (event) {
                 is AssistEvent.Message -> {
@@ -263,7 +263,7 @@ class ConversationViewModel @Inject constructor(
                         _conversation[index] = message.copy(
                             message = event.message.trim(),
                             isInput = isInput,
-                            isError = isError
+                            isError = isError,
                         )
                         if (isInput) {
                             _conversation.add(haMessage)

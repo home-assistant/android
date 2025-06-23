@@ -50,9 +50,9 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
                         serverManager.integrationRepository(it.id).updateRegistration(
                             deviceRegistration = DeviceRegistration(
                                 pushToken = token,
-                                pushWebsocket = false
+                                pushWebsocket = false,
                             ),
-                            allowReregistration = false
+                            allowReregistration = false,
                         )
                     } catch (e: Exception) {
                         Timber.e(e, "Issue updating token")

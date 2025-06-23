@@ -24,7 +24,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
             commonR.string.sensor_description_steps_sensor,
             "mdi:walk",
             unitOfMeasurement = "steps",
-            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
         )
     }
 
@@ -56,7 +56,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
     }
 
     override suspend fun requestSensorUpdate(
-        context: Context
+        context: Context,
     ) {
         latestContext = context
         updateStepsSensor()
@@ -81,7 +81,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
                 mySensorManager.registerListener(
                     this,
                     stepsSensors,
-                    SENSOR_DELAY_NORMAL
+                    SENSOR_DELAY_NORMAL,
                 )
                 Timber.d("Steps sensor listener registered")
                 isListenerRegistered = true
@@ -101,7 +101,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
                 stepsSensor,
                 event.values[0].roundToInt().toString(),
                 stepsSensor.statelessIcon,
-                mapOf()
+                mapOf(),
             )
         }
         mySensorManager.unregisterListener(this)

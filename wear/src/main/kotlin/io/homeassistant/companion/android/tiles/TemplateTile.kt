@@ -77,9 +77,9 @@ class TemplateTile : TileService() {
                             this@TemplateTile,
                             requestParams,
                             commonR.string.template,
-                            commonR.string.template_tile_log_in
+                            commonR.string.template_tile_log_in,
                         )
-                    }
+                    },
                 ).build()
         }
 
@@ -93,8 +93,8 @@ class TemplateTile : TileService() {
                         .setAndroidResourceByResId(
                             ResourceBuilders.AndroidImageResourceByResId.Builder()
                                 .setResourceId(R.drawable.ic_refresh)
-                                .build()
-                        ).build()
+                                .build(),
+                        ).build(),
                 )
                 .build()
         }
@@ -176,11 +176,11 @@ class TemplateTile : TileService() {
                 LayoutElementBuilders.Text.Builder()
                     .setText(getString(commonR.string.template_tile_empty))
                     .setMaxLines(10)
-                    .build()
+                    .build(),
             )
         } else {
             addContent(
-                parseHtml(renderedText)
+                parseHtml(renderedText),
             )
         }
         addContent(getRefreshButton())
@@ -203,17 +203,17 @@ class TemplateTile : TileService() {
                             is AbsoluteSizeSpan -> setSize(
                                 DimensionBuilders.SpProp.Builder()
                                     .setValue(span.size / applicationContext.resources.displayMetrics.scaledDensity)
-                                    .build()
+                                    .build(),
                             )
                             is ForegroundColorSpan -> setColor(
-                                ColorBuilders.ColorProp.Builder(span.foregroundColor).build()
+                                ColorBuilders.ColorProp.Builder(span.foregroundColor).build(),
                             )
                             is RelativeSizeSpan -> {
                                 val defaultSize = 16 // https://developer.android.com/training/wearables/design/typography
                                 setSize(
                                     DimensionBuilders.SpProp.Builder()
                                         .setValue(span.sizeChange * defaultSize)
-                                        .build()
+                                        .build(),
                                 )
                             }
                             is StyleSpan -> when (span.style) {
@@ -230,7 +230,7 @@ class TemplateTile : TileService() {
                     LayoutElementBuilders.SpanText.Builder()
                         .setText(renderedSpanned.substring(start, end))
                         .setFontStyle(fontStyle)
-                        .build()
+                        .build(),
                 )
 
                 start = end

@@ -97,8 +97,8 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                             this,
                             System.currentTimeMillis().toInt(),
                             Intent(this, EntityWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-                        )
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                        ),
                     )
                 } else {
                     showAddWidgetError()
@@ -114,11 +114,11 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         if (extras != null) {
             appWidgetId = extras.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.INVALID_APPWIDGET_ID,
             )
             requestLauncherSetup = extras.getBoolean(
                 ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
-                false
+                false,
             )
         }
 
@@ -317,7 +317,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             intent.putExtra(
                 EntityWidget.EXTRA_SERVER_ID,
-                selectedServerId!!
+                selectedServerId!!,
             )
 
             val entity = if (selectedEntity == null) {
@@ -331,22 +331,22 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             }
             intent.putExtra(
                 EntityWidget.EXTRA_ENTITY_ID,
-                entity
+                entity,
             )
 
             intent.putExtra(
                 EntityWidget.EXTRA_LABEL,
-                binding.label.text.toString()
+                binding.label.text.toString(),
             )
 
             intent.putExtra(
                 EntityWidget.EXTRA_TEXT_SIZE,
-                binding.textSize.text.toString()
+                binding.textSize.text.toString(),
             )
 
             intent.putExtra(
                 EntityWidget.EXTRA_STATE_SEPARATOR,
-                binding.stateSeparator.text.toString()
+                binding.stateSeparator.text.toString(),
             )
 
             if (appendAttributes) {
@@ -357,12 +357,12 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 }
                 intent.putExtra(
                     EntityWidget.EXTRA_ATTRIBUTE_IDS,
-                    attributes
+                    attributes,
                 )
 
                 intent.putExtra(
                     EntityWidget.EXTRA_ATTRIBUTE_SEPARATOR,
-                    binding.attributeSeparator.text.toString()
+                    binding.attributeSeparator.text.toString(),
                 )
             }
 
@@ -371,7 +371,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 when (binding.tapActionList.selectedItemPosition) {
                     0 -> WidgetTapAction.TOGGLE
                     else -> WidgetTapAction.REFRESH
-                }
+                },
             )
 
             intent.putExtra(
@@ -380,7 +380,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
                     getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
                     else -> WidgetBackgroundType.DAYNIGHT
-                }
+                },
             )
 
             intent.putExtra(
@@ -389,7 +389,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
                 } else {
                     null
-                }
+                },
             )
 
             context.sendBroadcast(intent)
@@ -397,7 +397,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             // Make sure we pass back the original appWidgetId
             setResult(
                 RESULT_OK,
-                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId),
             )
             finish()
         } catch (e: Exception) {
@@ -411,7 +411,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         if (intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.INVALID_APPWIDGET_ID,
             )
             onAddWidget()
         }

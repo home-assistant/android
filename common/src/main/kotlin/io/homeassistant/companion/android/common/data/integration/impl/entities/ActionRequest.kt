@@ -9,5 +9,5 @@ data class ActionRequest(
     val domain: String,
     val service: String,
     @Serializable(with = MapAnySerializer::class)
-    val serviceData: Map<String, @Polymorphic Any?>
+    val serviceData: Map<String, @Polymorphic Any?>,
 )

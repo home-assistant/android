@@ -31,7 +31,7 @@ fun SettingsRow(
     secondaryText: String,
     mdiIcon: IIcon?,
     enabled: Boolean,
-    onClicked: () -> Unit
+    onClicked: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -39,7 +39,7 @@ fun SettingsRow(
             .heightIn(min = 72.dp)
             .padding(all = 16.dp)
             .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         if (mdiIcon != null) {
             Image(
@@ -52,24 +52,24 @@ fun SettingsRow(
                         MaterialTheme.colors.primary
                     } else {
                         contentColorFor(backgroundColor = MaterialTheme.colors.background)
-                    }
-                )
+                    },
+                ),
             )
         } else {
             Spacer(modifier = Modifier.width(24.dp))
         }
         Spacer(modifier = Modifier.width(32.dp))
         Column(
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             Text(
                 text = primaryText,
-                style = MaterialTheme.typography.body1
+                style = MaterialTheme.typography.body1,
             )
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                 Text(
                     text = secondaryText,
-                    style = MaterialTheme.typography.body2
+                    style = MaterialTheme.typography.body2,
                 )
             }
         }

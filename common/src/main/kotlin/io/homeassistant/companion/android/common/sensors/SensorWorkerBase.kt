@@ -21,7 +21,7 @@ import timber.log.Timber
 
 abstract class SensorWorkerBase(
     val appContext: Context,
-    workerParams: WorkerParameters
+    workerParams: WorkerParameters,
 ) : CoroutineWorker(appContext, workerParams) {
 
     protected abstract val serverManager: ServerManager
@@ -57,7 +57,7 @@ abstract class SensorWorkerBase(
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
                 } else {
                     0
-                }
+                },
             )
             try {
                 setForeground(foregroundInfo)
@@ -95,7 +95,7 @@ abstract class SensorWorkerBase(
             val notificationChannel = NotificationChannel(
                 CHANNEL_SENSOR_WORKER,
                 appContext.getString(commonR.string.sensor_updates),
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_LOW,
             )
             notificationManager.createNotificationChannel(notificationChannel)
         }

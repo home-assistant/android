@@ -35,7 +35,7 @@ class AssistShortcutActivity : BaseActivity() {
                     supported = viewModel.supported,
                     pipelines = viewModel.pipelines,
                     onSetServer = viewModel::setServer,
-                    onSubmit = this::setShortcutAndFinish
+                    onSubmit = this::setShortcutAndFinish,
                 )
             }
         }
@@ -47,7 +47,7 @@ class AssistShortcutActivity : BaseActivity() {
             serverId = serverId,
             pipelineId = pipelineId,
             startListening = startListening,
-            fromFrontend = false
+            fromFrontend = false,
         ).apply {
             action = Intent.ACTION_VIEW
         }

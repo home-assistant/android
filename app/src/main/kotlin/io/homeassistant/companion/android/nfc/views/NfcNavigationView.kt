@@ -37,7 +37,7 @@ import kotlinx.coroutines.flow.onEach
 fun LoadNfcView(
     viewModel: NfcViewModel,
     startDestination: String,
-    pressedUpAtRoot: () -> Unit
+    pressedUpAtRoot: () -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -87,7 +87,7 @@ fun LoadNfcView(
                     }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = stringResource(commonR.string.navigate_up)
+                            contentDescription = stringResource(commonR.string.navigate_up),
                         )
                     }
                 },
@@ -99,26 +99,26 @@ fun LoadNfcView(
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
                             contentDescription = stringResource(commonR.string.get_help),
-                            tint = colorResource(commonR.color.colorOnBackground)
+                            tint = colorResource(commonR.color.colorOnBackground),
                         )
                     }
                 },
                 backgroundColor = colorResource(commonR.color.colorBackground),
                 contentColor = colorResource(commonR.color.colorOnBackground),
-                windowInsets = safeTopWindowInsets()
+                windowInsets = safeTopWindowInsets(),
             )
-        }
+        },
     ) { contentPadding ->
         NavHost(
             navController = navController,
             startDestination = startDestination,
-            modifier = Modifier.padding(contentPadding)
+            modifier = Modifier.padding(contentPadding),
         ) {
             composable(NfcSetupActivity.NAV_WELCOME) {
                 NfcWelcomeView(
                     isNfcEnabled = viewModel.isNfcEnabled,
                     onReadClicked = { viewModel.navigator.navigateTo(NfcSetupActivity.NAV_READ) },
-                    onWriteClicked = { viewModel.writeNewTag() }
+                    onWriteClicked = { viewModel.writeNewTag() },
                 )
             }
             composable(NfcSetupActivity.NAV_READ) {
@@ -132,7 +132,7 @@ fun LoadNfcView(
                         { viewModel.setTagIdentifier(it) }
                     } else {
                         null
-                    }
+                    },
                 )
             }
             composable(NfcSetupActivity.NAV_EDIT) {
@@ -140,7 +140,7 @@ fun LoadNfcView(
                     identifier = viewModel.nfcTagIdentifier,
                     showDeviceSample = viewModel.usesAndroidDeviceId,
                     onDuplicateClicked = { viewModel.duplicateNfcTag() },
-                    onFireEventClicked = { viewModel.fireNfcTagEvent() }
+                    onFireEventClicked = { viewModel.fireNfcTagEvent() },
                 )
             }
         }

@@ -13,5 +13,5 @@ data class Favorites(
     @ColumnInfo(name = "id")
     val id: String,
     @ColumnInfo(name = "position")
-    val position: Int
+    val position: Int,
 )

@@ -22,7 +22,7 @@ class IconDialogFragment(callback: (IIcon) -> Unit) : DialogFragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return ComposeView(requireContext()).also {
             it.clipToPadding = true
@@ -35,7 +35,7 @@ class IconDialogFragment(callback: (IIcon) -> Unit) : DialogFragment() {
         (view as ComposeView).setContent {
             HomeAssistantAppTheme {
                 IconDialogContent(
-                    onSelect = onSelect
+                    onSelect = onSelect,
                 )
             }
         }
@@ -46,11 +46,11 @@ class IconDialogFragment(callback: (IIcon) -> Unit) : DialogFragment() {
         val params = dialog?.window?.attributes ?: return
         params.width = min(
             (resources.displayMetrics.widthPixels * 0.9).toInt(),
-            TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 480f, resources.displayMetrics).toInt()
+            TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 480f, resources.displayMetrics).toInt(),
         )
         params.height = min(
             (resources.displayMetrics.heightPixels * 0.9).toInt(),
-            TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 500f, resources.displayMetrics).toInt()
+            TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 500f, resources.displayMetrics).toInt(),
         )
         dialog?.window?.attributes = params
     }

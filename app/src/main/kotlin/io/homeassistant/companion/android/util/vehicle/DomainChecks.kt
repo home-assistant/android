@@ -16,7 +16,7 @@ val SUPPORTED_DOMAINS_WITH_STRING = mapOf(
     "lock" to R.string.locks,
     "scene" to R.string.scenes,
     "script" to R.string.scripts,
-    "switch" to R.string.switches
+    "switch" to R.string.switches,
 )
 val SUPPORTED_DOMAINS = SUPPORTED_DOMAINS_WITH_STRING.keys
 
@@ -24,13 +24,13 @@ val MAP_DOMAINS = listOf(
     "device_tracker",
     "person",
     "sensor",
-    "zone"
+    "zone",
 )
 
 val NOT_ACTIONABLE_DOMAINS = listOf(
     "alarm_control_panel",
     "binary_sensor",
-    "sensor"
+    "sensor",
 )
 
 fun isVehicleDomain(entity: Entity): Boolean {

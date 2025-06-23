@@ -7,5 +7,5 @@ data class CurrentUserResponse(
     val id: String,
     val name: String,
     val isOwner: Boolean,
-    val isAdmin: Boolean
+    val isAdmin: Boolean,
 )

@@ -14,7 +14,7 @@ class WetModeSensorManager : SensorManager {
             commonR.string.sensor_description_wet_mode,
             "mdi:water-off",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
         )
     }
 
@@ -29,7 +29,7 @@ class WetModeSensorManager : SensorManager {
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(
-            wetModeSensor
+            wetModeSensor,
         )
     }
 
@@ -39,7 +39,7 @@ class WetModeSensorManager : SensorManager {
 
     override suspend fun requestSensorUpdate(
         context: Context,
-        intent: Intent?
+        intent: Intent?,
     ) {
         if (intent?.action == "com.google.android.clockwork.actions.WET_MODE_STARTED") {
             wetModeEnabled = true
@@ -64,7 +64,7 @@ class WetModeSensorManager : SensorManager {
             wetModeSensor,
             wetModeEnabled,
             if (wetModeEnabled) "mdi:water" else wetModeSensor.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 }

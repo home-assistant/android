@@ -26,7 +26,7 @@ class AssistViewModel @Inject constructor(
     val serverManager: ServerManager,
     private val audioRecorder: AudioRecorder,
     audioUrlPlayer: AudioUrlPlayer,
-    application: Application
+    application: Application,
 ) : AssistViewModelBase(serverManager, audioRecorder, audioUrlPlayer, application) {
 
     private var filteredServerId: Int? = null
@@ -63,7 +63,7 @@ class AssistViewModel @Inject constructor(
                 inputMode = AssistInputMode.BLOCKED
                 _conversation.clear()
                 _conversation.add(
-                    AssistMessage(app.getString(commonR.string.not_registered), isInput = false)
+                    AssistMessage(app.getString(commonR.string.not_registered), isInput = false),
                 )
                 return@launch
             }
@@ -84,7 +84,7 @@ class AssistViewModel @Inject constructor(
                 inputMode = AssistInputMode.BLOCKED
                 _conversation.clear()
                 _conversation.add(
-                    AssistMessage(app.getString(commonR.string.assist_connnect), isInput = false)
+                    AssistMessage(app.getString(commonR.string.assist_connnect), isInput = false),
                 )
             } else if (!supported) { // Core too old or doesn't include assist pipeline
                 inputMode = AssistInputMode.BLOCKED
@@ -92,8 +92,8 @@ class AssistViewModel @Inject constructor(
                 _conversation.add(
                     AssistMessage(
                         app.getString(commonR.string.no_assist_support, "2023.5", app.getString(commonR.string.no_assist_support_assist_pipeline)),
-                        isInput = false
-                    )
+                        isInput = false,
+                    ),
                 )
             } else {
                 setPipeline(
@@ -102,7 +102,7 @@ class AssistViewModel @Inject constructor(
                         pipelineId == PIPELINE_PREFERRED -> null
                         pipelineId?.isNotBlank() == true -> pipelineId
                         else -> null
-                    }
+                    },
                 )
             }
 
@@ -159,9 +159,9 @@ class AssistViewModel @Inject constructor(
                             serverId = serverId,
                             serverName = server?.friendlyName ?: "",
                             id = it.id,
-                            name = it.name
+                            name = it.name,
                         )
-                    }
+                    },
                 )
             }
         }
@@ -187,7 +187,7 @@ class AssistViewModel @Inject constructor(
                 serverId = selectedServerId,
                 serverName = serverManager.getServer(selectedServerId)?.friendlyName ?: "",
                 id = it.id,
-                name = it.name
+                name = it.name,
             )
             serverManager.integrationRepository(selectedServerId).setLastUsedPipeline(it.id, it.sttEngine != null)
 
@@ -212,7 +212,7 @@ class AssistViewModel @Inject constructor(
                 inputMode = AssistInputMode.BLOCKED
                 _conversation.clear()
                 _conversation.add(
-                    AssistMessage(app.getString(commonR.string.assist_error), isInput = false)
+                    AssistMessage(app.getString(commonR.string.assist_error), isInput = false),
                 )
             }
         }
@@ -286,7 +286,7 @@ class AssistViewModel @Inject constructor(
 
         runAssistPipelineInternal(
             text,
-            selectedPipeline
+            selectedPipeline,
         ) { event ->
             when (event) {
                 is AssistEvent.Message -> {
@@ -296,7 +296,7 @@ class AssistViewModel @Inject constructor(
                         _conversation[index] = message.copy(
                             message = event.message.trim(),
                             isInput = isInput,
-                            isError = isError
+                            isError = isError,
                         )
                         if (isInput) {
                             _conversation.add(haMessage)

@@ -79,8 +79,8 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             entity.friendlyState(
                 this,
                 entityOptions,
-                appendUnitOfMeasurement = settings.showUnit
-            )
+                appendUnitOfMeasurement = settings.showUnit,
+            ),
         ).build()
 
         val contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description)).build()
@@ -91,7 +91,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             ComplicationType.SHORT_TEXT -> {
                 ShortTextComplicationData.Builder(
                     text = text,
-                    contentDescription = contentDescription
+                    contentDescription = contentDescription,
                 )
                     .setTitle(title)
                     .setTapAction(tapAction)
@@ -101,7 +101,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             ComplicationType.LONG_TEXT -> {
                 LongTextComplicationData.Builder(
                     text = text,
-                    contentDescription = contentDescription
+                    contentDescription = contentDescription,
                 )
                     .setTitle(title)
                     .setTapAction(tapAction)
@@ -119,14 +119,14 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
         val monochromaticImage = MonochromaticImage.Builder(
             Icon.createWithResource(
                 this,
-                io.homeassistant.companion.android.R.drawable.ic_lightbulb
-            )
+                io.homeassistant.companion.android.R.drawable.ic_lightbulb,
+            ),
         ).build()
         return when (type) {
             ComplicationType.SHORT_TEXT -> {
                 ShortTextComplicationData.Builder(
                     text = text,
-                    contentDescription = contentDescription
+                    contentDescription = contentDescription,
                 )
                     .setTitle(title)
                     .setMonochromaticImage(monochromaticImage)
@@ -135,7 +135,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             ComplicationType.LONG_TEXT -> {
                 LongTextComplicationData.Builder(
                     text = text,
-                    contentDescription = contentDescription
+                    contentDescription = contentDescription,
                 )
                     .setTitle(title)
                     .setMonochromaticImage(monochromaticImage)
@@ -156,14 +156,14 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
     private fun getErrorComplication(
         request: ComplicationRequest,
         @StringRes textRes: Int,
-        setTapAction: Boolean = false
+        setTapAction: Boolean = false,
     ): ComplicationData {
         val text = PlainComplicationText.Builder(
             if (setTapAction) {
                 "+"
             } else {
                 getText(textRes)
-            }
+            },
         ).build()
         val contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description)).build()
         val tapAction = if (setTapAction) {
@@ -174,12 +174,12 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
         return if (request.complicationType == ComplicationType.SHORT_TEXT) {
             ShortTextComplicationData.Builder(
                 text = text,
-                contentDescription = contentDescription
+                contentDescription = contentDescription,
             ).setTapAction(tapAction).build()
         } else {
             LongTextComplicationData.Builder(
                 text = text,
-                contentDescription = contentDescription
+                contentDescription = contentDescription,
             ).setTapAction(tapAction).build()
         }
     }

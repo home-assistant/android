@@ -26,35 +26,35 @@ fun ImprovPermissionView(
     needsBluetooth: Boolean,
     needsLocation: Boolean,
     onContinue: () -> Unit,
-    onSkip: () -> Unit
+    onSkip: () -> Unit,
 ) {
     ModalBottomSheet(title = null) {
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp)
+                .padding(bottom = 16.dp),
         ) {
             OnboardingHeaderView(
                 icon = CommunityMaterial.Icon3.cmd_radar,
-                title = stringResource(commonR.string.improv_permission_title)
+                title = stringResource(commonR.string.improv_permission_title),
             )
             Text(
                 text = stringResource(commonR.string.improv_permission_text),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .padding(bottom = 16.dp)
-                    .align(Alignment.CenterHorizontally)
+                    .align(Alignment.CenterHorizontally),
             )
             if (needsBluetooth) {
                 OnboardingPermissionBullet(
                     icon = CommunityMaterial.Icon.cmd_bluetooth,
-                    text = stringResource(commonR.string.improv_permission_bluetooth)
+                    text = stringResource(commonR.string.improv_permission_bluetooth),
                 )
             }
             if (needsLocation) {
                 OnboardingPermissionBullet(
                     icon = CommunityMaterial.Icon3.cmd_map_marker,
-                    text = stringResource(commonR.string.improv_permission_location)
+                    text = stringResource(commonR.string.improv_permission_location),
                 )
             }
             Spacer(Modifier.height(96.dp))
@@ -78,6 +78,6 @@ fun ImprovPermissionViewPreview() {
         needsBluetooth = true,
         needsLocation = true,
         onContinue = {},
-        onSkip = {}
+        onSkip = {},
     )
 }

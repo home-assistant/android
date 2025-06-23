@@ -28,18 +28,18 @@ fun NfcReadView() {
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(all = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             imageVector = Icons.Filled.Nfc,
-            contentDescription = null
+            contentDescription = null,
         )
         Text(
             text = stringResource(commonR.string.nfc_read_tag_instructions),
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth(0.75f)
-                .padding(top = 16.dp)
+                .padding(top = 16.dp),
         )
     }
 }

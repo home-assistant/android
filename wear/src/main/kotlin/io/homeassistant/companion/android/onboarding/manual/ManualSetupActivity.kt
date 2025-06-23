@@ -54,7 +54,7 @@ class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
         val confirmation = Intent(this, ConfirmationActivity::class.java).apply {
             putExtra(
                 ConfirmationActivity.EXTRA_ANIMATION_TYPE,
-                ConfirmationActivity.OPEN_ON_PHONE_ANIMATION
+                ConfirmationActivity.OPEN_ON_PHONE_ANIMATION,
             )
             putExtra(ConfirmationActivity.EXTRA_ANIMATION_DURATION_MILLIS, 2000)
             putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(commonR.string.continue_on_phone))
@@ -69,7 +69,7 @@ class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
         val intent = Intent(this, ConfirmationActivity::class.java).apply {
             putExtra(
                 ConfirmationActivity.EXTRA_ANIMATION_TYPE,
-                ConfirmationActivity.FAILURE_ANIMATION
+                ConfirmationActivity.FAILURE_ANIMATION,
             )
             putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(message))
         }

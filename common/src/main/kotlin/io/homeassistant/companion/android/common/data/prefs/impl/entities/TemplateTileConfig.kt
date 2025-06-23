@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class TemplateTileConfig(
     val template: String,
-    val refreshInterval: Int
+    val refreshInterval: Int,
 )

@@ -20,13 +20,13 @@ object DefaultButtonControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity,
-        info: HaControlInfo
+        info: HaControlInfo,
     ): Control.StatefulBuilder {
         control.setStatusText("")
         control.setControlTemplate(
             StatelessTemplate(
-                entity.entityId
-            )
+                entity.entityId,
+            ),
         )
         return control
     }
@@ -48,7 +48,7 @@ object DefaultButtonControl : HaControl {
 
     override suspend fun performAction(
         integrationRepository: IntegrationRepository,
-        action: ControlAction
+        action: ControlAction,
     ): Boolean {
         integrationRepository.callAction(
             action.templateId.split(".")[0],
@@ -56,7 +56,7 @@ object DefaultButtonControl : HaControl {
                 "button", "input_button" -> "press"
                 else -> "turn_on"
             },
-            hashMapOf("entity_id" to action.templateId)
+            hashMapOf("entity_id" to action.templateId),
         )
         return true
     }

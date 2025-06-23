@@ -38,7 +38,7 @@ import timber.log.Timber
 class MapVehicleScreen(
     carContext: CarContext,
     val integrationRepository: IntegrationRepository,
-    private val entitiesFlow: Flow<List<Entity>>
+    private val entitiesFlow: Flow<List<Entity>>,
 ) : Screen(carContext) {
 
     private var loading = true
@@ -98,19 +98,19 @@ class MapVehicleScreen(
                                 IconicsDrawable(carContext, icon)
                                     .apply {
                                         sizeDp = 64
-                                    }.toAndroidIconCompat()
+                                    }.toAndroidIconCompat(),
                             )
                                 .setTint(
                                     if (pair.first.isActive() && pair.first.domain in EntityExt.STATE_COLORED_DOMAINS) {
                                         CarColor.createCustom(
                                             carContext.getColor(R.color.colorYellow),
-                                            carContext.getColor(R.color.colorYellow)
+                                            carContext.getColor(R.color.colorYellow),
                                         )
                                     } else {
                                         CarColor.DEFAULT
-                                    }
+                                    },
                                 )
-                                .build()
+                                .build(),
                         )
                         .setOnClickListener {
                             Timber.i("${pair.first.entityId} clicked")
@@ -119,8 +119,8 @@ class MapVehicleScreen(
                                     integrationRepository.fireEvent(
                                         "android.navigation_started",
                                         mapOf(
-                                            "entity_id" to pair.first.entityId
-                                        )
+                                            "entity_id" to pair.first.entityId,
+                                        ),
                                     )
                                 } catch (e: Exception) {
                                     Timber.e(e, "Unable to send navigation started event")
@@ -128,11 +128,11 @@ class MapVehicleScreen(
                             }
                             val intent = Intent(
                                 CarContext.ACTION_NAVIGATE,
-                                Uri.parse("geo:${pair.second[0]},${pair.second[1]}")
+                                Uri.parse("geo:${pair.second[0]},${pair.second[1]}"),
                             )
                             carContext.startCarApp(intent)
                         }
-                        .build()
+                        .build(),
                 )
             }
 

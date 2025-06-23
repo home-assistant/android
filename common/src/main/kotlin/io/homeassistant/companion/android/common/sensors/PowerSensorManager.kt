@@ -19,7 +19,7 @@ class PowerSensorManager : SensorManager {
             "mdi:cellphone",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#interactive-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val doze = SensorManager.BasicSensor(
             "is_idle",
@@ -29,7 +29,7 @@ class PowerSensorManager : SensorManager {
             "mdi:sleep",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#doze-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val powerSave = SensorManager.BasicSensor(
             "power_save",
@@ -39,7 +39,7 @@ class PowerSensorManager : SensorManager {
             "mdi:battery-plus",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#power-save-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
     }
 
@@ -59,7 +59,7 @@ class PowerSensorManager : SensorManager {
     }
 
     override suspend fun requestSensorUpdate(
-        context: Context
+        context: Context,
     ) {
         val powerManager = context.getSystemService<PowerManager>()!!
         updateInteractive(context, powerManager)
@@ -82,7 +82,7 @@ class PowerSensorManager : SensorManager {
             interactiveDevice,
             interactiveState,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -102,9 +102,9 @@ class PowerSensorManager : SensorManager {
             icon,
             mapOf(
                 "ignoring_battery_optimizations" to powerManager.isIgnoringBatteryOptimizations(
-                    PACKAGE_NAME
-                )
-            )
+                    PACKAGE_NAME,
+                ),
+            ),
         )
     }
 
@@ -120,7 +120,7 @@ class PowerSensorManager : SensorManager {
             powerSave,
             powerSaveState,
             powerSave.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 }

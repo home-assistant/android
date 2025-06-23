@@ -19,7 +19,7 @@ class MobileDataManager : SensorManager {
             commonR.string.basic_sensor_name_mobile_data,
             commonR.string.sensor_description_mobile_data,
             "mdi:signal",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         val mobileDataRoaming = SensorManager.BasicSensor(
             "mobile_data_roaming",
@@ -27,7 +27,7 @@ class MobileDataManager : SensorManager {
             commonR.string.basic_sensor_name_mobile_data_roaming,
             commonR.string.sensor_description_mobile_data_roaming,
             "mdi:toggle-switch",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
     }
 
@@ -55,7 +55,7 @@ class MobileDataManager : SensorManager {
     }
 
     override suspend fun requestSensorUpdate(
-        context: Context
+        context: Context,
     ) {
         checkState(context, mobileDataState, "mobile_data", mobileDataState.statelessIcon)
         checkState(context, mobileDataRoaming, Settings.Global.DATA_ROAMING, mobileDataRoaming.statelessIcon)
@@ -65,7 +65,7 @@ class MobileDataManager : SensorManager {
         context: Context,
         sensor: SensorManager.BasicSensor,
         settingKey: String,
-        icon: String
+        icon: String,
     ) {
         if (!isEnabled(context, sensor)) {
             return
@@ -87,7 +87,7 @@ class MobileDataManager : SensorManager {
             sensor,
             enabled,
             if (enabled) icon else "$icon-off",
-            mapOf()
+            mapOf(),
         )
     }
 }

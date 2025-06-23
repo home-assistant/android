@@ -62,7 +62,7 @@ import timber.log.Timber
 
 class SettingsFragment(
     private val presenter: SettingsPresenter,
-    private val langProvider: LanguagesProvider
+    private val langProvider: LanguagesProvider,
 ) : SettingsView, PreferenceFragmentCompat() {
 
     private val requestBackgroundAccessResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -137,8 +137,8 @@ class SettingsFragment(
                     OnboardApp.Input(
                         // Empty url skips the 'Welcome' screen
                         url = "",
-                        discoveryOptions = OnboardApp.DiscoveryOptions.HIDE_EXISTING
-                    )
+                        discoveryOptions = OnboardApp.DiscoveryOptions.HIDE_EXISTING,
+                    ),
                 )
                 return@setOnPreferenceClickListener true
             }
@@ -399,7 +399,7 @@ class SettingsFragment(
             startActivity(
                 Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                }
+                },
             )
         }
     }
@@ -495,7 +495,7 @@ class SettingsFragment(
                     R.id.content,
                     ServerSettingsFragment::class.java,
                     Bundle().apply { putInt(ServerSettingsFragment.EXTRA_SERVER, serverAuth!!) },
-                    ServerSettingsFragment.TAG
+                    ServerSettingsFragment.TAG,
                 )
                 addToBackStack(getString(commonR.string.server_settings))
             }
@@ -515,8 +515,8 @@ class SettingsFragment(
             requestBackgroundAccessResult.launch(
                 Intent(
                     Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                    Uri.parse("package:${activity?.packageName}")
-                )
+                    Uri.parse("package:${activity?.packageName}"),
+                ),
             )
         }
     }
@@ -526,7 +526,7 @@ class SettingsFragment(
             requestNotificationPermissionResult.launch(
                 Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
                     putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().packageName)
-                }
+                },
             )
         }
     }
@@ -543,7 +543,7 @@ class SettingsFragment(
             snackbar = Snackbar.make(
                 it,
                 if (success) commonR.string.server_add_success else commonR.string.server_add_failed,
-                5_000
+                5_000,
             ).apply {
                 if (success && serverId != null) {
                     setAction(commonR.string.activate) {

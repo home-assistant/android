@@ -16,7 +16,7 @@ class DynamicColorSensorManager : SensorManager {
             commonR.string.sensor_name_accent_color_sensor,
             commonR.string.sensor_description_accent_color_sensor,
             "mdi:palette",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
     }
 
@@ -49,7 +49,7 @@ class DynamicColorSensorManager : SensorManager {
 
         val dynamicColorContext = DynamicColors.wrapContextIfAvailable(context)
         val attrsToResolve = intArrayOf(
-            android.R.attr.colorAccent
+            android.R.attr.colorAccent,
         )
         val test = dynamicColorContext.obtainStyledAttributes(attrsToResolve)
         val accent = test.getColor(0, 0)
@@ -62,8 +62,8 @@ class DynamicColorSensorManager : SensorManager {
             accentHex,
             accentColorSensor.statelessIcon,
             mapOf(
-                "rgb_color" to listOf(accent.red, accent.green, accent.blue)
-            )
+                "rgb_color" to listOf(accent.red, accent.green, accent.blue),
+            ),
         )
     }
 }

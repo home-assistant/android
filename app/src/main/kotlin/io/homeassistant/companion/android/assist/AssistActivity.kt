@@ -43,7 +43,7 @@ class AssistActivity : BaseActivity() {
             serverId: Int = -1,
             pipelineId: String? = null,
             startListening: Boolean = true,
-            fromFrontend: Boolean = true
+            fromFrontend: Boolean = true,
         ): Intent {
             return Intent(context, AssistActivity::class.java).apply {
                 putExtra(EXTRA_SERVER, serverId)
@@ -56,12 +56,12 @@ class AssistActivity : BaseActivity() {
 
     private val requestPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
-        { viewModel.onPermissionResult(it) }
+        { viewModel.onPermissionResult(it) },
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(
-            navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT)
+            navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
         updateShowWhenLocked()
@@ -92,7 +92,7 @@ class AssistActivity : BaseActivity() {
                     true
                 } else {
                     null
-                }
+                },
             )
         }
 
@@ -113,10 +113,10 @@ class AssistActivity : BaseActivity() {
                             startActivity(
                                 WebViewActivity.newInstance(
                                     this,
-                                    "config/voice-assistants/assistants"
+                                    "config/voice-assistants/assistants",
                                 ).apply {
                                     flags += Intent.FLAG_ACTIVITY_NEW_TASK // Delivers data in onNewIntent
-                                }
+                                },
                             )
                             finish()
                         }
@@ -126,7 +126,7 @@ class AssistActivity : BaseActivity() {
                     onChangeInput = viewModel::onChangeInput,
                     onTextInput = viewModel::onTextInput,
                     onMicrophoneInput = viewModel::onMicrophoneInput,
-                    onHide = { finish() }
+                    onHide = { finish() },
                 )
             }
         }

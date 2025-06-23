@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NotificationChannelView(
-    notificationViewModel: NotificationViewModel
+    notificationViewModel: NotificationViewModel,
 ) {
     val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
@@ -59,7 +59,7 @@ fun NotificationChannelView(
             item {
                 Text(
                     text = stringResource(id = R.string.notification_channels_description),
-                    modifier = Modifier.padding(bottom = 20.dp)
+                    modifier = Modifier.padding(bottom = 20.dp),
                 )
                 Divider()
             }
@@ -71,20 +71,20 @@ fun NotificationChannelView(
                         .padding(10.dp)
                         .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
-                        text = channel.name.toString().take(30)
+                        text = channel.name.toString().take(30),
                     )
                     Row(
-                        modifier = Modifier.padding(start = 12.dp)
+                        modifier = Modifier.padding(start = 12.dp),
                     ) {
                         Icon(
                             Icons.Filled.Edit,
                             stringResource(id = R.string.edit_channel),
                             modifier = Modifier
                                 .clickable { notificationViewModel.editChannelDetails(channel.id) }
-                                .padding(12.dp)
+                                .padding(12.dp),
                         )
                         if (channel.id !in appCreatedChannels) {
                             Icon(
@@ -98,7 +98,7 @@ fun NotificationChannelView(
                                             scaffoldState.snackbarHostState
                                                 .showSnackbar(
                                                     context.getString(R.string.notification_channel_deleted, channel.name),
-                                                    context.getString(R.string.undo)
+                                                    context.getString(R.string.undo),
                                                 )
                                                 .let {
                                                     if (it == SnackbarResult.ActionPerformed) {
@@ -108,7 +108,7 @@ fun NotificationChannelView(
                                                 }
                                         }
                                     }
-                                    .padding(12.dp)
+                                    .padding(12.dp),
                             )
                         }
                     }

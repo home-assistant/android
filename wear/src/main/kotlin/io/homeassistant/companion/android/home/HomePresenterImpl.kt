@@ -29,7 +29,7 @@ import timber.log.Timber
 
 class HomePresenterImpl @Inject constructor(
     private val serverManager: ServerManager,
-    private val wearPrefsRepository: WearPrefsRepository
+    private val wearPrefsRepository: WearPrefsRepository,
 ) : HomePresenter {
 
     companion object {
@@ -43,7 +43,7 @@ class HomePresenterImpl @Inject constructor(
             "lock" to commonR.string.locks,
             "switch" to commonR.string.switches,
             "script" to commonR.string.scripts,
-            "scene" to commonR.string.scenes
+            "scene" to commonR.string.scenes,
         )
         val supportedDomains = domainsWithNames.keys.toList()
     }
@@ -101,7 +101,7 @@ class HomePresenterImpl @Inject constructor(
             serverManager.integrationRepository().callAction(
                 domain,
                 serviceName,
-                hashMapOf("entity_id" to entityId)
+                hashMapOf("entity_id" to entityId),
             )
         } catch (e: Exception) {
             Timber.e(e, "Exception when toggling entity")
@@ -115,8 +115,8 @@ class HomePresenterImpl @Inject constructor(
                 "set_percentage",
                 hashMapOf(
                     "entity_id" to entityId,
-                    "percentage" to speed.toInt()
-                )
+                    "percentage" to speed.toInt(),
+                ),
             )
         } catch (e: Exception) {
             Timber.e(e, "Exception when setting fan speed")
@@ -130,8 +130,8 @@ class HomePresenterImpl @Inject constructor(
                 "turn_on",
                 hashMapOf(
                     "entity_id" to entityId,
-                    "brightness" to brightness.toInt()
-                )
+                    "brightness" to brightness.toInt(),
+                ),
             )
         } catch (e: Exception) {
             Timber.e(e, "Exception when setting light brightness")
@@ -146,8 +146,8 @@ class HomePresenterImpl @Inject constructor(
                 "turn_on",
                 hashMapOf(
                     "entity_id" to entityId,
-                    colorTempKey to colorTemp.toInt()
-                )
+                    colorTempKey to colorTemp.toInt(),
+                ),
             )
         } catch (e: Exception) {
             Timber.e(e, "Exception when setting light color temp")
@@ -187,8 +187,8 @@ class HomePresenterImpl @Inject constructor(
                             "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                             null,
                             getMessagingToken(),
-                            false
-                        )
+                            false,
+                        ),
                     )
                     serverManager.webSocketRepository(it.id).getCurrentUser() // Update cached data
                 } catch (e: Exception) {

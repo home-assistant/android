@@ -34,7 +34,7 @@ object DisabledLocationHandler {
             lm.isLocationEnabled
         } else {
             lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || lm.isProviderEnabled(
-                LocationManager.GPS_PROVIDER
+                LocationManager.GPS_PROVIDER,
             )
         }
     }
@@ -68,7 +68,7 @@ object DisabledLocationHandler {
         }
 
         val intent = Intent(
-            Settings.ACTION_LOCATION_SOURCE_SETTINGS
+            Settings.ACTION_LOCATION_SOURCE_SETTINGS,
         )
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
@@ -94,7 +94,7 @@ object DisabledLocationHandler {
                     context,
                     0,
                     intent,
-                    PendingIntent.FLAG_IMMUTABLE
+                    PendingIntent.FLAG_IMMUTABLE,
                 )
 
                 val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_LOCATION_DISABLED)
@@ -105,7 +105,7 @@ object DisabledLocationHandler {
                     .setContentText(context.applicationContext.getString(commonR.string.location_disabled_notification_short_message))
                     .setStyle(
                         NotificationCompat.BigTextStyle()
-                            .bigText(context.applicationContext.getString(commonR.string.location_disabled_notification_message, parameters))
+                            .bigText(context.applicationContext.getString(commonR.string.location_disabled_notification_message, parameters)),
                     )
                     .setContentIntent(pendingIntent)
 
@@ -117,8 +117,8 @@ object DisabledLocationHandler {
                 .setMessage(
                     context.applicationContext.getString(
                         commonR.string.location_disabled_dialog_message,
-                        context.applicationContext.getString(commonR.string.location_disabled_notification_message, parameters)
-                    )
+                        context.applicationContext.getString(commonR.string.location_disabled_notification_message, parameters),
+                    ),
                 )
                 .setPositiveButton(positionTextId) { _, _ ->
                     context.applicationContext.startActivity(intent)

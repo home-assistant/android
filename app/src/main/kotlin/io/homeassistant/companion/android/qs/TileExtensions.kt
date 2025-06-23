@@ -206,7 +206,7 @@ abstract class TileExtensions : TileService() {
     private suspend fun tileClicked(
         tileId: String,
         tile: Tile,
-        isUnlock: Boolean
+        isUnlock: Boolean,
     ) {
         Timber.d("Click detected for tile ID: $tileId")
         val context = applicationContext
@@ -244,7 +244,7 @@ abstract class TileExtensions : TileService() {
                 try {
                     onEntityPressedWithoutState(
                         tileData.entityId,
-                        serverManager.integrationRepository(tileData.serverId)
+                        serverManager.integrationRepository(tileData.serverId),
                     )
                     Timber.d("Service call sent for tile ID: $tileId")
                 } catch (e: Exception) {
@@ -270,8 +270,8 @@ abstract class TileExtensions : TileService() {
                         tileId.hashCode(),
                         tileSettingIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT,
-                        false
-                    )
+                        false,
+                    ),
                 )
             }
         }
@@ -292,7 +292,7 @@ abstract class TileExtensions : TileService() {
             Toast.makeText(
                 applicationContext,
                 commonR.string.action_failure,
-                Toast.LENGTH_SHORT
+                Toast.LENGTH_SHORT,
             )
                 .show()
         }
@@ -313,8 +313,8 @@ abstract class TileExtensions : TileService() {
                         label = "",
                         subtitle = null,
                         shouldVibrate = false,
-                        authRequired = false
-                    )
+                        authRequired = false,
+                    ),
                 )
             } // else if it doesn't exist and is removed we don't have to save anything
         }
@@ -351,7 +351,7 @@ abstract class TileExtensions : TileService() {
         if (!this::tileDao.isInitialized) {
             tileDao = EntryPointAccessors.fromApplication(
                 this@TileExtensions.applicationContext,
-                TileExtensionsEntryPoint::class.java
+                TileExtensionsEntryPoint::class.java,
             ).tileDao()
         }
     }

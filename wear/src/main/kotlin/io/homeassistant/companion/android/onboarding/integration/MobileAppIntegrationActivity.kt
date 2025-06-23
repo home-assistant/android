@@ -72,7 +72,7 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
         val intent = Intent(this, ConfirmationActivity::class.java).apply {
             putExtra(
                 ConfirmationActivity.EXTRA_ANIMATION_TYPE,
-                ConfirmationActivity.FAILURE_ANIMATION
+                ConfirmationActivity.FAILURE_ANIMATION,
             )
             putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(commonR.string.failed_registration))
         }

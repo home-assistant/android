@@ -43,13 +43,13 @@ private const val SCREEN_CHOOSE_ENTITY = "choose_entity"
 @Composable
 fun LoadConfigView(
     complicationConfigViewModel: ComplicationConfigViewModel,
-    onAcceptClicked: () -> Unit
+    onAcceptClicked: () -> Unit,
 ) {
     WearAppTheme {
         val swipeDismissableNavController = rememberSwipeDismissableNavController()
         SwipeDismissableNavHost(
             navController = swipeDismissableNavController,
-            startDestination = SCREEN_MAIN
+            startDestination = SCREEN_MAIN,
         ) {
             composable(SCREEN_MAIN) {
                 MainConfigView(
@@ -62,7 +62,7 @@ fun LoadConfigView(
                     },
                     onShowTitleClicked = complicationConfigViewModel::setShowTitle,
                     onShowUnitClicked = complicationConfigViewModel::setShowUnit,
-                    onAcceptClicked = onAcceptClicked
+                    onAcceptClicked = onAcceptClicked,
                 )
             }
             composable(SCREEN_CHOOSE_ENTITY) {
@@ -75,7 +75,7 @@ fun LoadConfigView(
                         complicationConfigViewModel.setEntity(entity)
                         swipeDismissableNavController.navigateUp()
                     },
-                    allowNone = false
+                    allowNone = false,
                 )
             }
         }
@@ -91,7 +91,7 @@ fun MainConfigView(
     onChooseEntityClicked: () -> Unit,
     onShowTitleClicked: (Boolean) -> Unit,
     onShowUnitClicked: (Boolean) -> Unit,
-    onAcceptClicked: () -> Unit
+    onAcceptClicked: () -> Unit,
 ) {
     ThemeLazyColumn {
         item {
@@ -103,14 +103,14 @@ fun MainConfigView(
                 val iconBitmap = getIcon(
                     entity?.icon,
                     entity?.domain ?: "light",
-                    LocalContext.current
+                    LocalContext.current,
                 )
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     icon = {
                         Image(
                             asset = iconBitmap,
-                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
                     colors = getFilledTonalButtonColors(),
@@ -121,11 +121,11 @@ fun MainConfigView(
                                 entity?.friendlyName ?: ""
                             } else {
                                 stringResource(R.string.loading)
-                            }
+                            },
                         )
                     },
                     enabled = loaded,
-                    onClick = onChooseEntityClicked
+                    onClick = onChooseEntityClicked,
                 )
             }
             item {
@@ -136,7 +136,7 @@ fun MainConfigView(
                     label = { Text(stringResource(R.string.show_entity_title)) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = loaded && entity != null,
-                    colors = getSwitchButtonColors()
+                    colors = getSwitchButtonColors(),
                 )
             }
             item {
@@ -147,7 +147,7 @@ fun MainConfigView(
                     label = { Text(stringResource(R.string.show_unit_title)) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = loaded && entity != null,
-                    colors = getSwitchButtonColors()
+                    colors = getSwitchButtonColors(),
                 )
             }
 
@@ -155,12 +155,12 @@ fun MainConfigView(
                 FilledIconButton(
                     modifier = Modifier.padding(top = 8.dp).touchTargetAwareSize(IconButtonDefaults.SmallButtonSize),
                     onClick = { onAcceptClicked() },
-                    enabled = loaded && entity != null
+                    enabled = loaded && entity != null,
                 ) {
                     Icon(
                         Icons.Filled.Check,
                         contentDescription = stringResource(id = R.string.save),
-                        modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize))
+                        modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize)),
                     )
                 }
             }
@@ -183,6 +183,6 @@ fun PreviewMainConfigView() {
         onChooseEntityClicked = {},
         onShowTitleClicked = {},
         onShowUnitClicked = {},
-        onAcceptClicked = {}
+        onAcceptClicked = {},
     )
 }

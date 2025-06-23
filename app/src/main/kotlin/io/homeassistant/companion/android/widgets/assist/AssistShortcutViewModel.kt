@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class AssistShortcutViewModel @Inject constructor(
     val serverManager: ServerManager,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
 
     var serverId by mutableStateOf(ServerManager.SERVER_ID_ACTIVE)

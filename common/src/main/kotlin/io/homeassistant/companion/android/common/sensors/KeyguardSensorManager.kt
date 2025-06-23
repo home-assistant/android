@@ -15,7 +15,7 @@ class KeyguardSensorManager : SensorManager {
             commonR.string.basic_sensor_name_device_locked,
             commonR.string.sensor_description_device_locked,
             "mdi:cellphone-lock",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         val deviceSecure = SensorManager.BasicSensor(
             "device_secure",
@@ -23,7 +23,7 @@ class KeyguardSensorManager : SensorManager {
             commonR.string.basic_sensor_name_device_secure,
             commonR.string.sensor_description_device_secure,
             "mdi:cellphone-key",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         val keyguardLocked = SensorManager.BasicSensor(
             "keyguard_locked",
@@ -31,7 +31,7 @@ class KeyguardSensorManager : SensorManager {
             commonR.string.basic_sensor_name_keyguard_locked,
             commonR.string.sensor_description_keyguard_locked,
             "mdi:cellphone-lock",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         val keyguardSecure = SensorManager.BasicSensor(
             "keyguard_secure",
@@ -39,7 +39,7 @@ class KeyguardSensorManager : SensorManager {
             commonR.string.basic_sensor_name_keyguard_secure,
             commonR.string.sensor_description_keyguard_secure,
             "mdi:cellphone-key",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
     }
 
@@ -62,7 +62,7 @@ class KeyguardSensorManager : SensorManager {
     }
 
     override suspend fun requestSensorUpdate(
-        context: Context
+        context: Context,
     ) {
         val km = context.getSystemService<KeyguardManager>()!!
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
@@ -90,7 +90,7 @@ class KeyguardSensorManager : SensorManager {
             deviceLocked,
             isLocked,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -108,7 +108,7 @@ class KeyguardSensorManager : SensorManager {
             deviceSecure,
             isSecure,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -125,7 +125,7 @@ class KeyguardSensorManager : SensorManager {
             keyguardLocked,
             isLocked,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -142,7 +142,7 @@ class KeyguardSensorManager : SensorManager {
             keyguardSecure,
             isSecure,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
 }

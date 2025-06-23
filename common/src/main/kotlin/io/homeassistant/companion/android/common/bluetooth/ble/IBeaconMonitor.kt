@@ -15,7 +15,7 @@ data class IBeacon(
     override val minor: String,
     val distance: Double,
     val rssi: Double,
-    var skippedUpdated: Int
+    var skippedUpdated: Int,
 ) : IBeaconNameFormat
 
 class IBeaconMonitor {

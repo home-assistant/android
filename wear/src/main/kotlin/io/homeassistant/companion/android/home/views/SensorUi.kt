@@ -34,7 +34,7 @@ fun SensorUi(
     sensor: Sensor?,
     manager: SensorManager,
     basicSensor: SensorManager.BasicSensor,
-    onSensorClicked: (String, Boolean) -> Unit
+    onSensorClicked: (String, Boolean) -> Unit,
 ) {
     var perm by remember { mutableStateOf(false) }
     val backgroundRequest =
@@ -44,7 +44,7 @@ fun SensorUi(
         }
 
     val permissionLaunch = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
+        ActivityResultContracts.RequestMultiplePermissions(),
     ) { isGranted ->
         var allGranted = true
         isGranted.forEach {
@@ -96,7 +96,7 @@ fun SensorUi(
                             .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                             .minus(Manifest.permission.BODY_SENSORS_BACKGROUND)
                             .toTypedArray()
-                    }
+                    },
                 )
             }
         },
@@ -106,7 +106,7 @@ fun SensorUi(
             Text(
                 text = stringResource(basicSensor.name),
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         },
         secondaryLabel = {
@@ -116,7 +116,7 @@ fun SensorUi(
                 }
             }
         },
-        colors = getSwitchButtonColors()
+        colors = getSwitchButtonColors(),
     )
 }
 
@@ -134,10 +134,10 @@ private fun PreviewSensorUI() {
                         0,
                         true,
                         state = "80",
-                        unitOfMeasurement = "%"
+                        unitOfMeasurement = "%",
                     ),
                     manager = batterySensorManager,
-                    basicSensor = batterySensors.first { it.id == "battery_level" }
+                    basicSensor = batterySensors.first { it.id == "battery_level" },
                 ) { _, _ -> }
             }
 
@@ -147,10 +147,10 @@ private fun PreviewSensorUI() {
                         "is_charging",
                         0,
                         true,
-                        state = "true"
+                        state = "true",
                     ),
                     manager = batterySensorManager,
-                    basicSensor = batterySensors.first { it.id == "is_charging" }
+                    basicSensor = batterySensors.first { it.id == "is_charging" },
                 ) { _, _ -> }
             }
 
@@ -158,7 +158,7 @@ private fun PreviewSensorUI() {
                 SensorUi(
                     sensor = null,
                     manager = batterySensorManager,
-                    basicSensor = batterySensors.first { it.id == "battery_power" }
+                    basicSensor = batterySensors.first { it.id == "battery_power" },
                 ) { _, _ -> }
             }
         }

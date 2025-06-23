@@ -24,7 +24,7 @@ class SettingsWearMainView : AppCompatActivity() {
 
     private val registerActivityResult = registerForActivityResult(
         OnboardApp(),
-        this::onOnboardingComplete
+        this::onOnboardingComplete,
     )
 
     companion object {
@@ -51,7 +51,7 @@ class SettingsWearMainView : AppCompatActivity() {
             LoadSettingsHomeView(
                 settingsWearViewModel,
                 currentNodes.firstOrNull()?.displayName ?: "unknown",
-                this::loginWearOs
+                this::loginWearOs,
             ) { onBackPressedDispatcher.onBackPressed() }
         }
 
@@ -77,8 +77,8 @@ class SettingsWearMainView : AppCompatActivity() {
                 notificationsPossible = false,
                 isWatch = true,
                 discoveryOptions = OnboardApp.DiscoveryOptions.ADD_EXISTING_EXTERNAL,
-                mayRequireTlsClientCertificate = (application as HomeAssistantApplication).keyChainRepository.getPrivateKey() != null
-            )
+                mayRequireTlsClientCertificate = (application as HomeAssistantApplication).keyChainRepository.getPrivateKey() != null,
+            ),
         )
     }
 

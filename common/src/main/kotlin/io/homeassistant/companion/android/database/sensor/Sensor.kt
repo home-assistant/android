@@ -38,5 +38,5 @@ data class Sensor(
     @ColumnInfo(name = "core_registration")
     var coreRegistration: String? = null,
     @ColumnInfo(name = "app_registration")
-    var appRegistration: String? = null
+    var appRegistration: String? = null,
 )

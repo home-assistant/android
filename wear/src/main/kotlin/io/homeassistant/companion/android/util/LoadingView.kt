@@ -9,7 +9,7 @@ import io.homeassistant.companion.android.databinding.ViewLoadingBinding
 
 class LoadingView @JvmOverloads constructor(
     context: Context,
-    attrs: AttributeSet? = null
+    attrs: AttributeSet? = null,
 ) : LinearLayout(context, attrs) {
 
     init {

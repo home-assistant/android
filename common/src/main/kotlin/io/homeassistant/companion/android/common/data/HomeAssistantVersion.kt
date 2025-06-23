@@ -5,7 +5,7 @@ import java.util.regex.Pattern
 data class HomeAssistantVersion(
     val year: Int,
     val month: Int,
-    val release: Int
+    val release: Int,
 ) {
 
     companion object {

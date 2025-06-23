@@ -83,7 +83,7 @@ object TransmitterManager {
                                 haTransmitter.state = "Transmitting"
                             }
                         }
-                    }
+                    },
                 )
             }
         } else {

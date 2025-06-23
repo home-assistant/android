@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class DeviceRegistryResponse(
     val areaId: String? = null,
-    val id: String
+    val id: String,
 )

@@ -23,7 +23,7 @@ class OpenTileSettingsActivity : AppCompatActivity() {
                 "ConfigCameraTile" ->
                     HomeActivity.getCameraTileSettingsIntent(
                         context = this,
-                        tileId = it
+                        tileId = it,
                     )
                 "ConfigShortcutsTile" -> {
                     lifecycleScope.launch {
@@ -31,7 +31,7 @@ class OpenTileSettingsActivity : AppCompatActivity() {
                     }
                     HomeActivity.getShortcutsTileSettingsIntent(
                         context = this,
-                        tileId = it
+                        tileId = it,
                     )
                 }
                 "ConfigTemplateTile" -> {
@@ -40,7 +40,7 @@ class OpenTileSettingsActivity : AppCompatActivity() {
                     }
                     HomeActivity.getTemplateTileSettingsIntent(
                         context = this,
-                        tileId = it
+                        tileId = it,
                     )
                 }
                 else -> null

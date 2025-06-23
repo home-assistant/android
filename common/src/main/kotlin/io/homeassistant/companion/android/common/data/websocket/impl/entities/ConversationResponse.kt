@@ -7,5 +7,5 @@ data class ConversationResponse(
     val response: ConversationSpeechResponse,
     val conversationId: String? = null,
     // Default value is set for backward compatibility.
-    val continueConversation: Boolean = false
+    val continueConversation: Boolean = false,
 )

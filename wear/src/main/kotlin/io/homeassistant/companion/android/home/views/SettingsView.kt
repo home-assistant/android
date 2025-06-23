@@ -34,14 +34,14 @@ fun SecondarySettingsChip(
     label: String,
     secondaryLabel: String? = null,
     enabled: Boolean = true,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Button(
         modifier = Modifier.fillMaxWidth(),
         icon = {
             Image(
                 asset = icon,
-                colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
+                colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
             )
         },
         colors = getFilledTonalButtonColors(),
@@ -50,7 +50,7 @@ fun SecondarySettingsChip(
             { Text(text = secondaryLabel) }
         },
         enabled = enabled,
-        onClick = onClick
+        onClick = onClick,
     )
 }
 
@@ -75,7 +75,7 @@ fun SettingsView(
     onClickTemplateTiles: () -> Unit,
     onClickThermostatTiles: () -> Unit,
     onAssistantAppAllowed: (Boolean) -> Unit,
-    onClickNotifications: () -> Unit
+    onClickNotifications: () -> Unit,
 ) {
     WearAppTheme {
         ThemeLazyColumn {
@@ -87,7 +87,7 @@ fun SettingsView(
                     icon = CommunityMaterial.Icon3.cmd_star,
                     label = stringResource(commonR.string.favorite),
                     enabled = loadingState == MainViewModel.LoadingState.READY,
-                    onClick = onClickSetFavorites
+                    onClick = onClickSetFavorites,
                 )
             }
             item {
@@ -95,7 +95,7 @@ fun SettingsView(
                     icon = CommunityMaterial.Icon.cmd_delete,
                     label = stringResource(commonR.string.clear_favorites),
                     enabled = favorites.isNotEmpty(),
-                    onClick = onClearFavorites
+                    onClick = onClearFavorites,
                 )
             }
             item {
@@ -108,15 +108,15 @@ fun SettingsView(
                     icon = {
                         Image(
                             asset = CommunityMaterial.Icon2.cmd_home_heart,
-                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
-                    colors = getSwitchButtonColors()
+                    colors = getSwitchButtonColors(),
                 )
             }
             item {
                 ListHeader(
-                    id = commonR.string.feedback
+                    id = commonR.string.feedback,
                 )
             }
             item {
@@ -137,10 +137,10 @@ fun SettingsView(
                             } else {
                                 CommunityMaterial.Icon3.cmd_watch_vibrate_off
                             },
-                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
-                    colors = getSwitchButtonColors()
+                    colors = getSwitchButtonColors(),
                 )
             }
             item {
@@ -157,61 +157,61 @@ fun SettingsView(
                             } else {
                                 CommunityMaterial.Icon3.cmd_message_off
                             },
-                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
-                    colors = getSwitchButtonColors()
+                    colors = getSwitchButtonColors(),
                 )
             }
 
             item {
                 ListHeader(
-                    id = commonR.string.tiles
+                    id = commonR.string.tiles,
                 )
             }
             item {
                 SecondarySettingsChip(
                     icon = CommunityMaterial.Icon3.cmd_video_box,
                     label = stringResource(commonR.string.camera_tiles),
-                    onClick = onClickCameraTile
+                    onClick = onClickCameraTile,
                 )
             }
             item {
                 SecondarySettingsChip(
                     icon = CommunityMaterial.Icon3.cmd_star_circle_outline,
                     label = stringResource(commonR.string.shortcut_tiles),
-                    onClick = onClickSetShortcuts
+                    onClick = onClickSetShortcuts,
                 )
             }
             item {
                 SecondarySettingsChip(
                     icon = CommunityMaterial.Icon3.cmd_text_box,
                     label = stringResource(commonR.string.template_tiles),
-                    onClick = onClickTemplateTiles
+                    onClick = onClickTemplateTiles,
                 )
             }
             item {
                 SecondarySettingsChip(
                     icon = CommunityMaterial.Icon3.cmd_thermostat,
                     label = stringResource(commonR.string.thermostat_tiles),
-                    onClick = onClickThermostatTiles
+                    onClick = onClickThermostatTiles,
                 )
             }
             item {
                 ListHeader(
-                    id = commonR.string.sensors
+                    id = commonR.string.sensors,
                 )
             }
             item {
                 SecondarySettingsChip(
                     icon = CommunityMaterial.Icon2.cmd_leak,
                     label = stringResource(id = commonR.string.sensor_title),
-                    onClick = onClickSensors
+                    onClick = onClickSensors,
                 )
             }
             item {
                 ListHeader(
-                    id = commonR.string.assist
+                    id = commonR.string.assist,
                 )
             }
             item {
@@ -223,29 +223,29 @@ fun SettingsView(
                     icon = {
                         Image(
                             asset = CommunityMaterial.Icon.cmd_comment_processing_outline,
-                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
-                    colors = getSwitchButtonColors()
+                    colors = getSwitchButtonColors(),
                 )
             }
             if (!areNotificationsAllowed) {
                 item {
                     ListHeader(
-                        id = commonR.string.notifications
+                        id = commonR.string.notifications,
                     )
                 }
                 item {
                     SecondarySettingsChip(
                         icon = CommunityMaterial.Icon.cmd_bell_ring,
                         label = stringResource(commonR.string.suggestion_notifications_title),
-                        onClick = onClickNotifications
+                        onClick = onClickNotifications,
                     )
                 }
             }
             item {
                 ListHeader(
-                    id = commonR.string.account
+                    id = commonR.string.account,
                 )
             }
             item {
@@ -256,8 +256,8 @@ fun SettingsView(
                     onClick = onClickLogout,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Red,
-                        contentColor = Color.Black
-                    )
+                        contentColor = Color.Black,
+                    ),
                 )
             }
             item {
@@ -265,7 +265,7 @@ fun SettingsView(
             }
             item {
                 Text(
-                    text = BuildConfig.VERSION_NAME
+                    text = BuildConfig.VERSION_NAME,
                 )
             }
         }
@@ -295,6 +295,6 @@ private fun PreviewSettingsView() {
         onClickTemplateTiles = {},
         onClickThermostatTiles = {},
         onAssistantAppAllowed = {},
-        onClickNotifications = {}
+        onClickNotifications = {},
     )
 }

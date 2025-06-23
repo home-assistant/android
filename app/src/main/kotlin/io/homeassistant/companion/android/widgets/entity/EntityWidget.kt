@@ -91,11 +91,11 @@ class EntityWidget : BaseWidgetProvider() {
                 // Content
                 setViewVisibility(
                     R.id.widgetTextLayout,
-                    View.VISIBLE
+                    View.VISIBLE,
                 )
                 setViewVisibility(
                     R.id.widgetProgressBar,
-                    View.INVISIBLE
+                    View.INVISIBLE,
                 )
                 val resolvedText = resolveTextToShow(
                     context,
@@ -105,24 +105,24 @@ class EntityWidget : BaseWidgetProvider() {
                     attributeIds,
                     stateSeparator,
                     attributeSeparator,
-                    appWidgetId
+                    appWidgetId,
                 )
                 setTextViewTextSize(
                     R.id.widgetText,
                     TypedValue.COMPLEX_UNIT_SP,
-                    textSize
+                    textSize,
                 )
                 setTextViewText(
                     R.id.widgetText,
-                    resolvedText.text
+                    resolvedText.text,
                 )
                 setTextViewText(
                     R.id.widgetLabel,
-                    label ?: entityId
+                    label ?: entityId,
                 )
                 setViewVisibility(
                     R.id.widgetStaticError,
-                    if (resolvedText.exception) View.VISIBLE else View.GONE
+                    if (resolvedText.exception) View.VISIBLE else View.GONE,
                 )
                 setOnClickPendingIntent(
                     R.id.widgetTextLayout,
@@ -130,8 +130,8 @@ class EntityWidget : BaseWidgetProvider() {
                         context,
                         appWidgetId,
                         intent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                    )
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                    ),
                 )
             } else {
                 setTextViewText(R.id.widgetText, "")
@@ -153,7 +153,7 @@ class EntityWidget : BaseWidgetProvider() {
         attributeIds: String?,
         stateSeparator: String,
         attributeSeparator: String,
-        appWidgetId: Int
+        appWidgetId: Int,
     ): ResolvedText {
         var entity: Entity? = null
         var entityCaughtException = false
@@ -178,7 +178,7 @@ class EntityWidget : BaseWidgetProvider() {
         if (attributeIds == null) {
             staticWidgetDao.updateWidgetLastUpdate(
                 appWidgetId,
-                entity?.friendlyState(context, entityOptions) ?: staticWidgetDao.get(appWidgetId)?.lastUpdate ?: ""
+                entity?.friendlyState(context, entityOptions) ?: staticWidgetDao.get(appWidgetId)?.lastUpdate ?: "",
             )
             return ResolvedText(staticWidgetDao.get(appWidgetId)?.lastUpdate, entityCaughtException)
         }
@@ -223,7 +223,7 @@ class EntityWidget : BaseWidgetProvider() {
             Timber.d(
                 "Saving entity state config data:" + System.lineSeparator() +
                     "entity id: " + entitySelection + System.lineSeparator() +
-                    "attribute: " + (attributeSelection ?: "N/A")
+                    "attribute: " + (attributeSelection ?: "N/A"),
             )
             staticWidgetDao.add(
                 StaticWidgetEntity(
@@ -238,8 +238,8 @@ class EntityWidget : BaseWidgetProvider() {
                     tapActionSelection,
                     staticWidgetDao.get(appWidgetId)?.lastUpdate ?: "",
                     backgroundTypeSelection,
-                    textColorSelection
-                )
+                    textColorSelection,
+                ),
             )
 
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
@@ -267,7 +267,7 @@ class EntityWidget : BaseWidgetProvider() {
                 try {
                     onEntityPressedWithoutState(
                         it.entityId,
-                        serverManager.integrationRepository(it.serverId)
+                        serverManager.integrationRepository(it.serverId),
                     )
                     success = true
                 } catch (e: Exception) {

@@ -4,5 +4,5 @@ data class DeviceRegistration(
     val appVersion: String? = null,
     val deviceName: String? = null,
     var pushToken: String? = null,
-    var pushWebsocket: Boolean = true
+    var pushWebsocket: Boolean = true,
 )

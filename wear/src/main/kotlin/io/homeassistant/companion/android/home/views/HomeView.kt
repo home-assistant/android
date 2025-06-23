@@ -66,7 +66,7 @@ const val DEEPLINK_PREFIX_SET_TEMPLATE_TILE = "ha_wear://$SCREEN_SET_TILE_TEMPLA
 
 @Composable
 fun LoadHomePage(
-    mainViewModel: MainViewModel
+    mainViewModel: MainViewModel,
 ) {
     val context = LocalContext.current
 
@@ -74,7 +74,7 @@ fun LoadHomePage(
         val swipeDismissableNavController = rememberSwipeDismissableNavController()
         SwipeDismissableNavHost(
             navController = swipeDismissableNavController,
-            startDestination = SCREEN_LANDING
+            startDestination = SCREEN_LANDING,
         ) {
             composable(SCREEN_LANDING) {
                 MainView(
@@ -95,7 +95,7 @@ fun LoadHomePage(
                         swipeDismissableNavController.navigate(SCREEN_ENTITY_LIST)
                     },
                     isHapticEnabled = mainViewModel.isHapticEnabled.value,
-                    isToastEnabled = mainViewModel.isToastEnabled.value
+                    isToastEnabled = mainViewModel.isToastEnabled.value,
                 )
             }
             composable("$SCREEN_ENTITY_DETAIL/{entityId}") {
@@ -109,24 +109,24 @@ fun LoadHomePage(
                         onFanSpeedChanged = { speed ->
                             mainViewModel.setFanSpeed(
                                 entity.entityId,
-                                speed
+                                speed,
                             )
                         },
                         onBrightnessChanged = { brightness ->
                             mainViewModel.setBrightness(
                                 entity.entityId,
-                                brightness
+                                brightness,
                             )
                         },
                         onColorTempChanged = { colorTemp, isKelvin ->
                             mainViewModel.setColorTemp(
                                 entity.entityId,
                                 colorTemp,
-                                isKelvin
+                                isKelvin,
                             )
                         },
                         isToastEnabled = mainViewModel.isToastEnabled.value,
-                        isHapticEnabled = mainViewModel.isHapticEnabled.value
+                        isHapticEnabled = mainViewModel.isHapticEnabled.value,
                     )
                 }
             }
@@ -142,7 +142,7 @@ fun LoadHomePage(
                         swipeDismissableNavController.navigate("$SCREEN_ENTITY_DETAIL/$entityId")
                     },
                     isHapticEnabled = mainViewModel.isHapticEnabled.value,
-                    isToastEnabled = mainViewModel.isToastEnabled.value
+                    isToastEnabled = mainViewModel.isToastEnabled.value,
                 )
             }
             composable(SCREEN_SETTINGS) {
@@ -154,19 +154,19 @@ fun LoadHomePage(
                     favorites = mainViewModel.favoriteEntityIds.value,
                     onClickSetFavorites = {
                         swipeDismissableNavController.navigate(
-                            SCREEN_SET_FAVORITES
+                            SCREEN_SET_FAVORITES,
                         )
                     },
                     onClearFavorites = { mainViewModel.clearFavorites() },
                     onClickSetShortcuts = {
                         mainViewModel.loadShortcutTileEntities()
                         swipeDismissableNavController.navigate(
-                            "$ROUTE_SHORTCUTS_TILE/$SCREEN_SELECT_SHORTCUTS_TILE"
+                            "$ROUTE_SHORTCUTS_TILE/$SCREEN_SELECT_SHORTCUTS_TILE",
                         )
                     },
                     onClickSensors = {
                         swipeDismissableNavController.navigate(
-                            SCREEN_MANAGE_SENSORS
+                            SCREEN_MANAGE_SENSORS,
                         )
                     },
                     onClickLogout = { mainViewModel.logout() },
@@ -193,15 +193,15 @@ fun LoadHomePage(
                         notificationLaunch.launch(
                             Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
                                 putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                            }
+                            },
                         )
-                    }
+                    },
                 )
             }
             composable(SCREEN_SET_FAVORITES) {
                 SetFavoritesView(
                     mainViewModel,
-                    mainViewModel.favoriteEntityIds.value
+                    mainViewModel.favoriteEntityIds.value,
                 ) { entityId, isSelected ->
                     if (isSelected) {
                         mainViewModel.addFavoriteEntity(entityId)
@@ -215,7 +215,7 @@ fun LoadHomePage(
                     tiles = mainViewModel.cameraTiles.value,
                     onSelectTile = { tileId ->
                         swipeDismissableNavController.navigate("$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE")
-                    }
+                    },
                 )
             }
             composable(
@@ -223,11 +223,11 @@ fun LoadHomePage(
                 arguments = listOf(
                     navArgument(name = ARG_SCREEN_CAMERA_TILE_ID) {
                         type = NavType.IntType
-                    }
+                    },
                 ),
                 deepLinks = listOf(
-                    navDeepLink { uriPattern = "$DEEPLINK_PREFIX_SET_CAMERA_TILE/{$ARG_SCREEN_CAMERA_TILE_ID}" }
-                )
+                    navDeepLink { uriPattern = "$DEEPLINK_PREFIX_SET_CAMERA_TILE/{$ARG_SCREEN_CAMERA_TILE_ID}" },
+                ),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
                 SetCameraTileView(
@@ -238,7 +238,7 @@ fun LoadHomePage(
                     },
                     onSelectRefreshInterval = {
                         swipeDismissableNavController.navigate("$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL")
-                    }
+                    },
                 )
             }
             composable(
@@ -246,8 +246,8 @@ fun LoadHomePage(
                 arguments = listOf(
                     navArgument(name = ARG_SCREEN_CAMERA_TILE_ID) {
                         type = NavType.IntType
-                    }
-                )
+                    },
+                ),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
                 val cameraDomains = remember { mutableStateListOf("camera") }
@@ -264,7 +264,7 @@ fun LoadHomePage(
                         }
                         swipeDismissableNavController.navigateUp()
                     },
-                    allowNone = false
+                    allowNone = false,
                 )
             }
             composable(
@@ -272,8 +272,8 @@ fun LoadHomePage(
                 arguments = listOf(
                     navArgument(name = ARG_SCREEN_CAMERA_TILE_ID) {
                         type = NavType.IntType
-                    }
-                )
+                    },
+                ),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
                 RefreshIntervalPickerView(
@@ -281,7 +281,7 @@ fun LoadHomePage(
                         mainViewModel.cameraTiles.value
                             .firstOrNull { it.id == tileId }?.refreshInterval
                             ?: CameraTile.DEFAULT_REFRESH_INTERVAL
-                        ).toInt()
+                        ).toInt(),
                 ) { interval ->
                     tileId?.let {
                         mainViewModel.setCameraTileRefreshInterval(it, interval.toLong())
@@ -294,7 +294,7 @@ fun LoadHomePage(
                     tiles = mainViewModel.thermostatTiles.value,
                     onSelectTile = { tileId ->
                         swipeDismissableNavController.navigate("$ROUTE_THERMOSTAT_TILE/$tileId/$SCREEN_SET_THERMOSTAT_TILE")
-                    }
+                    },
                 )
             }
             composable(
@@ -302,11 +302,11 @@ fun LoadHomePage(
                 arguments = listOf(
                     navArgument(name = ARG_SCREEN_THERMOSTAT_TILE_ID) {
                         type = NavType.IntType
-                    }
+                    },
                 ),
                 deepLinks = listOf(
-                    navDeepLink { uriPattern = "$DEEPLINK_PREFIX_SET_THERMOSTAT_TILE/{$ARG_SCREEN_THERMOSTAT_TILE_ID}" }
-                )
+                    navDeepLink { uriPattern = "$DEEPLINK_PREFIX_SET_THERMOSTAT_TILE/{$ARG_SCREEN_THERMOSTAT_TILE_ID}" },
+                ),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_THERMOSTAT_TILE_ID)
                 SetThermostatTileView(
@@ -320,7 +320,7 @@ fun LoadHomePage(
                     },
                     onNameEnabled = { tileIdToggle, showName ->
                         mainViewModel.setThermostatTileShowName(tileIdToggle, showName)
-                    }
+                    },
                 )
             }
             composable(
@@ -328,8 +328,8 @@ fun LoadHomePage(
                 arguments = listOf(
                     navArgument(name = ARG_SCREEN_THERMOSTAT_TILE_ID) {
                         type = NavType.IntType
-                    }
-                )
+                    },
+                ),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_THERMOSTAT_TILE_ID)
                 val climateDomains = remember { mutableStateListOf("climate") }
@@ -346,7 +346,7 @@ fun LoadHomePage(
                         }
                         swipeDismissableNavController.navigateUp()
                     },
-                    allowNone = false
+                    allowNone = false,
                 )
             }
             composable(
@@ -354,8 +354,8 @@ fun LoadHomePage(
                 arguments = listOf(
                     navArgument(name = ARG_SCREEN_THERMOSTAT_TILE_ID) {
                         type = NavType.IntType
-                    }
-                )
+                    },
+                ),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_THERMOSTAT_TILE_ID)
                 RefreshIntervalPickerView(
@@ -363,7 +363,7 @@ fun LoadHomePage(
                         mainViewModel.thermostatTiles.value
                             .firstOrNull { it.id == tileId }?.refreshInterval
                             ?: ThermostatTile.DEFAULT_REFRESH_INTERVAL
-                        ).toInt()
+                        ).toInt(),
                 ) { interval ->
                     tileId?.let {
                         mainViewModel.setThermostatTileRefreshInterval(it, interval.toLong())
@@ -381,7 +381,7 @@ fun LoadHomePage(
                     onShowShortcutTextEnabled = {
                         mainViewModel.setShowShortcutTextEnabled(it)
                         ShortcutsTile.requestUpdate(context)
-                    }
+                    },
                 )
             }
             composable(
@@ -389,18 +389,18 @@ fun LoadHomePage(
                 arguments = listOf(
                     navArgument(name = ARG_SCREEN_SHORTCUTS_TILE_ID) {
                         type = NavType.StringType
-                    }
+                    },
                 ),
                 deepLinks = listOf(
-                    navDeepLink { uriPattern = "$DEEPLINK_PREFIX_SET_SHORTCUT_TILE/{$ARG_SCREEN_SHORTCUTS_TILE_ID}" }
-                )
+                    navDeepLink { uriPattern = "$DEEPLINK_PREFIX_SET_SHORTCUT_TILE/{$ARG_SCREEN_SHORTCUTS_TILE_ID}" },
+                ),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_SHORTCUTS_TILE_ID)!!.toIntOrNull()
                 SetShortcutsTileView(
                     shortcutEntities = mainViewModel.shortcutEntitiesMap[tileId] ?: emptyList(),
                     onShortcutEntitySelectionChange = { entityIndex ->
                         swipeDismissableNavController.navigate("$ROUTE_SHORTCUTS_TILE/$tileId/$SCREEN_SHORTCUTS_TILE_CHOOSE_ENTITY/$entityIndex")
-                    }
+                    },
                 )
             }
             composable(
@@ -411,8 +411,8 @@ fun LoadHomePage(
                     },
                     navArgument(name = ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX) {
                         type = NavType.IntType
-                    }
-                )
+                    },
+                ),
             ) { backStackEntry ->
                 val entityIndex = backStackEntry.arguments!!.getInt(ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX)
                 val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_SHORTCUTS_TILE_ID)!!.toIntOrNull()
@@ -429,7 +429,7 @@ fun LoadHomePage(
                         mainViewModel.setTileShortcut(tileId, entityIndex, entity)
                         ShortcutsTile.requestUpdate(context)
                         swipeDismissableNavController.navigateUp()
-                    }
+                    },
                 )
             }
             composable("$ROUTE_TEMPLATE_TILE/$SCREEN_SELECT_TEMPLATE_TILE") {
@@ -437,7 +437,7 @@ fun LoadHomePage(
                     templateTiles = mainViewModel.templateTiles,
                     onSelectTemplateTile = { tileId ->
                         swipeDismissableNavController.navigate("$ROUTE_TEMPLATE_TILE/$tileId/$SCREEN_SET_TILE_TEMPLATE")
-                    }
+                    },
                 )
             }
             composable(
@@ -445,20 +445,20 @@ fun LoadHomePage(
                 arguments = listOf(
                     navArgument(name = ARG_SCREEN_TEMPLATE_TILE_ID) {
                         type = NavType.StringType
-                    }
+                    },
                 ),
                 deepLinks = listOf(
-                    navDeepLink { uriPattern = "$DEEPLINK_PREFIX_SET_TEMPLATE_TILE/{$ARG_SCREEN_TEMPLATE_TILE_ID}" }
-                )
+                    navDeepLink { uriPattern = "$DEEPLINK_PREFIX_SET_TEMPLATE_TILE/{$ARG_SCREEN_TEMPLATE_TILE_ID}" },
+                ),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_TEMPLATE_TILE_ID)!!.toIntOrNull()
 
                 TemplateTileSettingsView(
                     templateContent = mainViewModel.templateTiles[tileId]?.template ?: "",
-                    refreshInterval = mainViewModel.templateTiles[tileId]?.refreshInterval ?: 0
+                    refreshInterval = mainViewModel.templateTiles[tileId]?.refreshInterval ?: 0,
                 ) {
                     swipeDismissableNavController.navigate(
-                        "$ROUTE_TEMPLATE_TILE/$tileId/$SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL"
+                        "$ROUTE_TEMPLATE_TILE/$tileId/$SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL",
                     )
                 }
             }
@@ -467,12 +467,12 @@ fun LoadHomePage(
                 arguments = listOf(
                     navArgument(name = ARG_SCREEN_TEMPLATE_TILE_ID) {
                         type = NavType.StringType
-                    }
-                )
+                    },
+                ),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_TEMPLATE_TILE_ID)!!.toInt()
                 RefreshIntervalPickerView(
-                    currentInterval = mainViewModel.templateTiles[tileId]?.refreshInterval ?: 0
+                    currentInterval = mainViewModel.templateTiles[tileId]?.refreshInterval ?: 0,
                 ) {
                     mainViewModel.setTemplateTileRefreshInterval(tileId, it)
                     TileService.getUpdater(context).requestUpdate(TemplateTile::class.java)
@@ -489,11 +489,11 @@ fun LoadHomePage(
                 arguments = listOf(
                     navArgument(name = ARG_SCREEN_SENSOR_MANAGER_ID) {
                         type = NavType.StringType
-                    }
+                    },
                 ),
                 deepLinks = listOf(
-                    navDeepLink { uriPattern = "$DEEPLINK_SENSOR_MANAGER/{$ARG_SCREEN_SENSOR_MANAGER_ID}" }
-                )
+                    navDeepLink { uriPattern = "$DEEPLINK_SENSOR_MANAGER/{$ARG_SCREEN_SENSOR_MANAGER_ID}" },
+                ),
             ) { backStackEntry ->
                 val sensorManagerId =
                     backStackEntry.arguments?.getString(ARG_SCREEN_SENSOR_MANAGER_ID)
@@ -504,7 +504,7 @@ fun LoadHomePage(
                 SensorManagerUi(
                     allSensors = mainViewModel.sensors.value,
                     allAvailSensors = mainViewModel.availableSensors,
-                    sensorManager = sensorManager
+                    sensorManager = sensorManager,
                 ) { sensorId, isEnabled ->
                     mainViewModel.enableDisableSensor(sensorManager, sensorId, isEnabled)
                 }

@@ -19,7 +19,7 @@ object DefaultSliderControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity,
-        info: HaControlInfo
+        info: HaControlInfo,
     ): Control.StatefulBuilder {
         control.setStatusText("")
         control.setControlTemplate(
@@ -29,8 +29,8 @@ object DefaultSliderControl : HaControl {
                 (entity.attributes["max"] as? Number)?.toFloat() ?: 1f,
                 entity.state.toFloatOrNull() ?: 0f,
                 (entity.attributes["step"] as? Number)?.toFloat() ?: 1f,
-                null
-            )
+                null,
+            ),
         )
         return control
     }
@@ -47,15 +47,15 @@ object DefaultSliderControl : HaControl {
 
     override suspend fun performAction(
         integrationRepository: IntegrationRepository,
-        action: ControlAction
+        action: ControlAction,
     ): Boolean {
         integrationRepository.callAction(
             action.templateId.split(".")[0],
             "set_value",
             hashMapOf(
                 "entity_id" to action.templateId,
-                "value" to (action as? FloatAction)?.newValue.toString()
-            )
+                "value" to (action as? FloatAction)?.newValue.toString(),
+            ),
         )
         return true
     }

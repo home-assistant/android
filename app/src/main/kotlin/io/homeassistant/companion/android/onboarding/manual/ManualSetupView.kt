@@ -33,14 +33,14 @@ fun ManualSetupView(
     manualUrl: MutableState<String>,
     onManualUrlUpdated: (String) -> Unit,
     manualContinueEnabled: Boolean,
-    connectedClicked: () -> Unit
+    connectedClicked: () -> Unit,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
 
     OnboardingScreen(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
         OnboardingHeaderView(
             icon = CommunityMaterial.Icon3.cmd_web,
-            title = stringResource(id = commonR.string.manual_title)
+            title = stringResource(id = commonR.string.manual_title),
         )
 
         Text(
@@ -48,7 +48,7 @@ fun ManualSetupView(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-                .padding(bottom = 16.dp)
+                .padding(bottom = 16.dp),
         )
 
         TextField(
@@ -62,8 +62,8 @@ fun ManualSetupView(
                 onDone = {
                     keyboardController?.hide()
                     connectedClicked()
-                }
-            )
+                },
+            ),
         )
 
         Button(
@@ -71,7 +71,7 @@ fun ManualSetupView(
             onClick = connectedClicked,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-                .padding(16.dp)
+                .padding(16.dp),
         ) {
             Text(stringResource(commonR.string.connect))
         }
@@ -88,6 +88,6 @@ fun ManualSetupViewPreview() {
         },
         onManualUrlUpdated = {},
         manualContinueEnabled = true,
-        connectedClicked = {}
+        connectedClicked = {},
     )
 }
