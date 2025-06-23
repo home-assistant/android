@@ -57,7 +57,7 @@ class WebsocketSettingFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
@@ -74,11 +74,11 @@ class WebsocketSettingFragment : Fragment() {
                                 requestBackgroundAccessResult.launch(
                                     Intent(
                                         Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                                        Uri.parse("package:${activity?.packageName}")
-                                    )
+                                        Uri.parse("package:${activity?.packageName}"),
+                                    ),
                                 )
                             }
-                        }
+                        },
                     )
                 }
             }

@@ -16,7 +16,7 @@ class TheaterModeSensorManager : SensorManager {
             commonR.string.sensor_description_theater_mode,
             "mdi:movie-open",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.WORKER
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER,
         )
     }
 
@@ -55,7 +55,7 @@ class TheaterModeSensorManager : SensorManager {
             theaterMode,
             state,
             if (!state) "mdi:movie-open-off" else theaterMode.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 }

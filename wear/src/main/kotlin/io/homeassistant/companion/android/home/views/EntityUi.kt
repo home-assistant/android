@@ -41,7 +41,7 @@ fun EntityUi(
     onEntityClicked: (String, String) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
-    onEntityLongPressed: (String) -> Unit
+    onEntityLongPressed: (String) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -59,12 +59,12 @@ fun EntityUi(
                         isHapticEnabled,
                         context,
                         friendlyName,
-                        haptic
+                        haptic,
                     )
                 },
                 onLongPress = {
                     onEntityLongPressed(entity.entityId)
-                }
+                },
             )
         }
 
@@ -82,25 +82,25 @@ fun EntityUi(
             appIcon = {
                 Image(
                     asset = iconBitmap,
-                    colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
+                    colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                 )
             },
             label = {
                 CompositionLocalProvider(
                     LocalTextStyle provides MaterialTheme.typography.labelMedium,
-                    LocalContentColor provides colors.contentColor(enabled = isEnabled, checked = isChecked).value
+                    LocalContentColor provides colors.contentColor(enabled = isEnabled, checked = isChecked).value,
                 ) {
                     Text(
                         text = friendlyName,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = nameModifier
+                        modifier = nameModifier,
                     )
                 }
             },
             enabled = isEnabled,
             toggleControl = { Switch(checked = isChecked) },
-            colors = colors
+            colors = colors,
         )
     } else {
         Button(
@@ -108,7 +108,7 @@ fun EntityUi(
             icon = {
                 Image(
                     asset = iconBitmap,
-                    colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
+                    colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                 )
             },
             label = {
@@ -116,7 +116,7 @@ fun EntityUi(
                     text = friendlyName,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = nameModifier
+                    modifier = nameModifier,
                 )
             },
             enabled = entity.state != STATE_UNAVAILABLE,
@@ -124,7 +124,7 @@ fun EntityUi(
                 onEntityClicked(entity.entityId, entity.state)
                 onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, friendlyName, haptic)
             },
-            colors = getFilledTonalButtonColors()
+            colors = getFilledTonalButtonColors(),
         )
     }
 }
@@ -138,21 +138,21 @@ private fun PreviewEntityUI() {
             onEntityClicked = { _, _ -> },
             isHapticEnabled = true,
             isToastEnabled = false,
-            onEntityLongPressed = { }
+            onEntityLongPressed = { },
         )
         EntityUi(
             entity = previewEntity3,
             onEntityClicked = { _, _ -> },
             isHapticEnabled = false,
             isToastEnabled = true,
-            onEntityLongPressed = { }
+            onEntityLongPressed = { },
         )
         EntityUi(
             entity = previewEntity4,
             onEntityClicked = { _, _ -> },
             isHapticEnabled = false,
             isToastEnabled = true,
-            onEntityLongPressed = { }
+            onEntityLongPressed = { },
         )
     }
 }

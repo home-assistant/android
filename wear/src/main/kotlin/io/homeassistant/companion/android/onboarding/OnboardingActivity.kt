@@ -122,7 +122,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
                         data = Uri.parse(url)
                     },
                     // A Wear device only has one companion device so this is not needed
-                    null
+                    null,
                 ).await()
                 showContinueOnPhone()
             } catch (e: Exception) {
@@ -153,7 +153,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
         val confirmation = Intent(this, ConfirmationActivity::class.java).apply {
             putExtra(
                 ConfirmationActivity.EXTRA_ANIMATION_TYPE,
-                ConfirmationActivity.OPEN_ON_PHONE_ANIMATION
+                ConfirmationActivity.OPEN_ON_PHONE_ANIMATION,
             )
             putExtra(ConfirmationActivity.EXTRA_ANIMATION_DURATION_MILLIS, 2000)
             putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(commonR.string.continue_on_phone))
@@ -208,8 +208,8 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
         val capabilityInfo: CapabilityInfo = Tasks.await(
             capabilityClient.getCapability(
                 "request_home_assistant_instance",
-                CapabilityClient.FILTER_REACHABLE
-            )
+                CapabilityClient.FILTER_REACHABLE,
+            ),
         )
 
         if (capabilityInfo.nodes.size == 0) {
@@ -220,7 +220,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
             Wearable.getMessageClient(this).sendMessage(
                 node.id,
                 "/request_home_assistant_instance",
-                ByteArray(0)
+                ByteArray(0),
             ).apply {
                 addOnSuccessListener { Timber.d("requestInstances: request home assistant instances from $node.id: ${node.displayName}") }
                 addOnFailureListener { Timber.w("requestInstances: failed to request home assistant instances from $node.id: ${node.displayName}") }
@@ -235,8 +235,8 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
         val capabilityInfo: CapabilityInfo = Tasks.await(
             capabilityClient.getCapability(
                 "sign_in_to_home_assistant_instance",
-                CapabilityClient.FILTER_REACHABLE
-            )
+                CapabilityClient.FILTER_REACHABLE,
+            ),
         )
 
         Timber.d("requestPhoneSignIn: found ${capabilityInfo.nodes.size} nodes")

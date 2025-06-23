@@ -51,7 +51,7 @@ class WearPrefsRepositoryImplTest {
                 1 to TemplateTileConfig("template", 10),
                 2 to TemplateTileConfig("template2", 20),
             ),
-            result
+            result,
         )
     }
 }

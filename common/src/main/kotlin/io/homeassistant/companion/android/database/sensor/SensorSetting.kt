@@ -12,7 +12,7 @@ enum class SensorSettingType(val string: String, val listType: Boolean = false) 
     LIST_APPS("list-apps", listType = true),
     LIST_BLUETOOTH("list-bluetooth", listType = true),
     LIST_ZONES("list-zones", listType = true),
-    LIST_BEACONS("list-beacons", listType = true)
+    LIST_BEACONS("list-beacons", listType = true),
 }
 
 @Entity(tableName = "sensor_settings", primaryKeys = ["sensor_id", "name"])
@@ -29,7 +29,7 @@ data class SensorSetting(
     @ColumnInfo(name = "enabled")
     val enabled: Boolean = true,
     @ColumnInfo(name = "entries")
-    val entries: List<String> = arrayListOf()
+    val entries: List<String> = arrayListOf(),
 )
 
 class EntriesTypeConverter {

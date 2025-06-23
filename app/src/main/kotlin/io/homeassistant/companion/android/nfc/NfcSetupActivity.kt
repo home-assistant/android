@@ -69,7 +69,7 @@ class NfcSetupActivity : BaseActivity() {
                 LoadNfcView(
                     viewModel = viewModel,
                     startDestination = if (simpleWrite) NAV_WRITE else NAV_WELCOME,
-                    pressedUpAtRoot = { finish() }
+                    pressedUpAtRoot = { finish() },
                 )
             }
         }
@@ -89,7 +89,7 @@ class NfcSetupActivity : BaseActivity() {
             this,
             nfcStateChangedReceiver,
             IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED),
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
     }
 

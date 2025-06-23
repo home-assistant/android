@@ -172,8 +172,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 result = emptyMap<String, String>(),
                 callback = {
                     Timber.d("NFC Write Complete $it")
-                }
-            )
+                },
+            ),
         )
     }
     private val showWebFileChooser = registerForActivityResult(ShowWebFileChooser()) { result ->
@@ -300,7 +300,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     e2: MotionEvent,
                     velocity: Float,
                     direction: SwipeDirection,
-                    pointerCount: Int
+                    pointerCount: Int,
                 ): Boolean {
                     if (pointerCount == 3 && velocity >= 75) {
                         when (direction) {
@@ -341,7 +341,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     view: WebView?,
                     errorCode: Int,
                     description: String?,
-                    failingUrl: String?
+                    failingUrl: String?,
                 ) {
                     Timber.e("onReceivedError: errorCode: $errorCode url:$failingUrl")
                     if (failingUrl == loadedUrl) {
@@ -362,7 +362,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 delay(2000L)
                                 Timber.d("More info entity: $moreInfoEntity")
                                 webView.evaluateJavascript(
-                                    "document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$moreInfoEntity\" }}))"
+                                    "document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$moreInfoEntity\" }}))",
                                 ) {
                                     moreInfoMutex.unlock(owner)
                                     moreInfoEntity = ""
@@ -375,7 +375,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 override fun onReceivedHttpError(
                     view: WebView?,
                     request: WebResourceRequest?,
-                    errorResponse: WebResourceResponse?
+                    errorResponse: WebResourceResponse?,
                 ) {
                     Timber.e("onReceivedHttpError: ${errorResponse?.statusCode} : ${errorResponse?.reasonPhrase} for: ${request?.url}")
                     if (request?.url.toString() == loadedUrl) {
@@ -387,7 +387,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     view: WebView,
                     handler: HttpAuthHandler,
                     host: String,
-                    realm: String
+                    realm: String,
                 ) {
                     var authError = false
                     if (System.currentTimeMillis() <= (firstAuthTime + 500)) {
@@ -399,19 +399,19 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 override fun onReceivedSslError(
                     view: WebView?,
                     handler: SslErrorHandler?,
-                    error: SslError?
+                    error: SslError?,
                 ) {
                     Timber.e("onReceivedSslError: $error")
                     showError(
                         ErrorType.SSL,
                         error,
-                        null
+                        null,
                     )
                 }
 
                 override fun onRenderProcessGone(
                     view: WebView?,
-                    handler: RenderProcessGoneDetail?
+                    handler: RenderProcessGoneDetail?,
                 ): Boolean {
                     Timber.e("onRenderProcessGone: webView crashed")
                     view?.let {
@@ -424,21 +424,21 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
                 override fun onLoadResource(
                     view: WebView?,
-                    url: String?
+                    url: String?,
                 ) {
                     resourceURL = url!!
                 }
 
                 override fun shouldOverrideUrlLoading(
                     view: WebView?,
-                    request: WebResourceRequest?
+                    request: WebResourceRequest?,
                 ): Boolean {
                     request?.url?.let {
                         try {
                             if (it.toString().startsWith(APP_PREFIX)) {
                                 Timber.d("Launching the app")
                                 val intent = packageManager.getLaunchIntentForPackage(
-                                    it.toString().substringAfter(APP_PREFIX)
+                                    it.toString().substringAfter(APP_PREFIX),
                                 )
                                 if (intent != null) {
                                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -447,7 +447,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     Timber.w("No intent to launch app found, opening app store")
                                     val marketIntent = Intent(Intent.ACTION_VIEW)
                                     marketIntent.data = Uri.parse(
-                                        MARKET_PREFIX + it.toString().substringAfter(APP_PREFIX)
+                                        MARKET_PREFIX + it.toString().substringAfter(APP_PREFIX),
                                     )
                                     startActivity(marketIntent)
                                 }
@@ -458,7 +458,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     Intent.parseUri(it.toString(), Intent.URI_INTENT_SCHEME)
                                 val intentPackage = intent.`package`?.let { it1 ->
                                     packageManager.getLaunchIntentForPackage(
-                                        it1
+                                        it1,
                                     )
                                 }
                                 if (intentPackage == null && !intent.`package`.isNullOrEmpty()) {
@@ -489,7 +489,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 override fun doUpdateVisitedHistory(
                     view: WebView?,
                     url: String?,
-                    isReload: Boolean
+                    isReload: Boolean,
                 ) {
                     super.doUpdateVisitedHistory(view, url, isReload)
                     onBackPressed.isEnabled = canGoBack()
@@ -502,7 +502,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
                     ActivityCompat.checkSelfPermission(
                         context,
-                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     ) == PackageManager.PERMISSION_GRANTED
                 ) {
                     downloadFile(url, contentDisposition, mimetype)
@@ -519,7 +519,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     view: WebView,
                     url: String,
                     message: String,
-                    result: JsResult
+                    result: JsResult,
                 ): Boolean {
                     AlertDialog
                         .Builder(this@WebViewActivity)
@@ -541,7 +541,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                             if (it == PermissionRequest.RESOURCE_VIDEO_CAPTURE) {
                                 if (ActivityCompat.checkSelfPermission(
                                         context,
-                                        android.Manifest.permission.CAMERA
+                                        android.Manifest.permission.CAMERA,
                                     ) == PackageManager.PERMISSION_GRANTED
                                 ) {
                                     alreadyGranted.add(it)
@@ -551,7 +551,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                             } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
                                 if (ActivityCompat.checkSelfPermission(
                                         context,
-                                        android.Manifest.permission.RECORD_AUDIO
+                                        android.Manifest.permission.RECORD_AUDIO,
                                     ) == PackageManager.PERMISSION_GRANTED
                                 ) {
                                     alreadyGranted.add(it)
@@ -565,7 +565,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         }
                         if (toBeGranted.size > 0) {
                             requestPermissions.launch(
-                                toBeGranted.toTypedArray()
+                                toBeGranted.toTypedArray(),
                             )
                         }
                     } else {
@@ -577,7 +577,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 override fun onShowFileChooser(
                     view: WebView,
                     uploadMsg: ValueCallback<Array<Uri>>,
-                    fileChooserParams: FileChooserParams
+                    fileChooserParams: FileChooserParams,
                 ): Boolean {
                     mFilePathCallback = uploadMsg
                     showWebFileChooser.launch(fileChooserParams)
@@ -590,8 +590,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         view,
                         FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.WRAP_CONTENT,
-                            FrameLayout.LayoutParams.WRAP_CONTENT
-                        )
+                            FrameLayout.LayoutParams.WRAP_CONTENT,
+                        ),
                     )
                     hideSystemUI()
                     isVideoFullScreen = true
@@ -646,7 +646,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     when (it) {
                         MatterThreadStep.THREAD_EXPORT_TO_SERVER_MATTER,
                         MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY,
-                        MatterThreadStep.MATTER_IN_PROGRESS -> {
+                        MatterThreadStep.MATTER_IN_PROGRESS,
+                        -> {
                             presenter.getMatterThreadIntent()?.let { intentSender ->
                                 commissionMatterDevice.launch(IntentSenderRequest.Builder(intentSender).build())
                             }
@@ -709,7 +710,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                             presenter.onGetExternalAuth(
                                 this@WebViewActivity,
                                 it.getString("callback"),
-                                it.has("force") && it.getBoolean("force")
+                                it.has("force") && it.getBoolean("force"),
                             )
                         }
                     }
@@ -762,13 +763,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                                     "canImportThreadCredentials" to canExportThread,
                                                     "hasAssist" to true,
                                                     "hasBarCodeScanner" to hasBarCodeScanner,
-                                                    "canSetupImprov" to true
-                                                )
+                                                    "canSetupImprov" to true,
+                                                ),
                                             ),
                                             callback = {
                                                 Timber.d("Callback $it")
-                                            }
-                                        )
+                                            },
+                                        ),
                                     )
 
                                     // TODO This feature is deprecated and should be removed after 2022.6
@@ -781,7 +782,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                             "{" +
                                             "window.externalApp.onHomeAssistantSetTheme();" +
                                             "});",
-                                        null
+                                        null,
                                     )
                                 }
                                 "assist/show" -> {
@@ -791,20 +792,20 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                             this@WebViewActivity,
                                             serverId = presenter.getActiveServer(),
                                             pipelineId = if (payload?.has("pipeline_id") == true) payload.getString("pipeline_id") else null,
-                                            startListening = if (payload?.has("start_listening") == true) payload.getBoolean("start_listening") else true
-                                        )
+                                            startListening = if (payload?.has("start_listening") == true) payload.getBoolean("start_listening") else true,
+                                        ),
                                     )
                                 }
                                 "config_screen/show" ->
                                     startActivity(
-                                        SettingsActivity.newInstance(this@WebViewActivity)
+                                        SettingsActivity.newInstance(this@WebViewActivity),
                                     )
                                 "tag/write" ->
                                     writeNfcTag.launch(
                                         WriteNfcTag.Input(
                                             tagId = json.getJSONObject("payload").getString("tag"),
-                                            messageId = JSONObject(message).getInt("id")
-                                        )
+                                            messageId = JSONObject(message).getInt("id"),
+                                        ),
                                     )
                                 "matter/commission" -> presenter.startCommissioningMatterDevice(this@WebViewActivity)
                                 "thread/import_credentials" -> {
@@ -824,8 +825,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                             messageId = json.getInt("id"),
                                             title = payload.getString("title"),
                                             subtitle = payload.getString("description"),
-                                            action = if (payload.has("alternative_option_label")) payload.getString("alternative_option_label").ifBlank { null } else null
-                                        )
+                                            action = if (payload.has("alternative_option_label")) payload.getString("alternative_option_label").ifBlank { null } else null,
+                                        ),
                                     )
                                 }
                                 "improv/scan" -> scanForImprov()
@@ -844,7 +845,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         }
                     }
                 },
-                javascriptInterface
+                javascriptInterface,
             )
         }
     }
@@ -855,7 +856,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             "[" +
                 "document.getElementsByTagName('html')[0].computedStyleMap().get('--app-header-background-color')[0]," +
                 "document.getElementsByTagName('html')[0].computedStyleMap().get('--primary-background-color')[0]" +
-                "].join('" + htmlArraySpacer + "')"
+                "].join('" + htmlArraySpacer + "')",
         ) { webViewColors ->
             GlobalScope.launch {
                 withContext(Dispatchers.Main) {
@@ -974,16 +975,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 DefaultMediaSourceFactory(
                     CronetDataSource.Factory(
                         CronetEngine.Builder(applicationContext).enableQuic(true).build(),
-                        Executors.newSingleThreadExecutor()
-                    )
-                ).setLiveMaxSpeed(8.0f)
+                        Executors.newSingleThreadExecutor(),
+                    ),
+                ).setLiveMaxSpeed(8.0f),
             ).setLoadControl(
                 DefaultLoadControl.Builder().setBufferDurationsMs(
                     0,
                     30000,
                     0,
-                    0
-                ).build()
+                    0,
+                ).build(),
             ).build()
             exoPlayer?.setMediaItem(MediaItem.fromUri(uri))
             exoPlayer?.playWhenReady = true
@@ -1016,8 +1017,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 success = true,
                 callback = {
                     Timber.d("Callback $it")
-                }
-            )
+                },
+            ),
         )
     }
 
@@ -1081,7 +1082,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 exoLeft,
                 exoTop,
                 maxOf(screenWidth - exoRight, 0),
-                maxOf(screenHeight - exoBottom, 0)
+                maxOf(screenHeight - exoBottom, 0),
             )
             showSystemUI()
         }
@@ -1208,7 +1209,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onPictureInPictureModeChanged(
         isInPictureInPictureMode: Boolean,
-        newConfig: Configuration
+        newConfig: Configuration,
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         if (exoPlayerView.visibility != View.VISIBLE && ::binding.isInitialized) {
@@ -1232,8 +1233,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 mPictureInPictureParamsBuilder.setAspectRatio(
                     Rational(
                         bounds.width(),
-                        bounds.height()
-                    )
+                        bounds.height(),
+                    ),
                 )
                 mPictureInPictureParamsBuilder.setSourceRectHint(bounds)
                 enterPictureInPictureMode(mPictureInPictureParamsBuilder.build())
@@ -1306,7 +1307,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun showError(
         errorType: ErrorType,
         error: SslError?,
-        description: String?
+        description: String?,
     ) {
         if (isShowingError || !isStarted || isRelaunching) {
             return
@@ -1318,8 +1319,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             .setTitle(
                 getString(
                     commonR.string.error_connection_failed_to,
-                    serverName ?: getString(commonR.string.app_name)
-                )
+                    serverName ?: getString(commonR.string.app_name),
+                ),
             )
             .setOnDismissListener {
                 isShowingError = false
@@ -1424,7 +1425,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     commonR.string.refresh_internal
                 } else {
                     commonR.string.refresh_external
-                }
+                },
             ) { _, _ ->
                 val url = serverManager.getServer(presenter.getActiveServer())?.let {
                     val base = it.connection.getUrl(buttonRefreshesInternal) ?: return@let null
@@ -1456,7 +1457,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         handler: HttpAuthHandler,
         host: String,
         realm: String,
-        authError: Boolean
+        authError: Boolean,
     ) {
         val httpAuth = authenticationDao.get((resourceURL + realm))
 
@@ -1509,16 +1510,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     Authentication(
                                         (resourceURL + realm),
                                         username.text.toString(),
-                                        password.text.toString()
-                                    )
+                                        password.text.toString(),
+                                    ),
                                 )
                             } else {
                                 authenticationDao.insert(
                                     Authentication(
                                         (resourceURL + realm),
                                         username.text.toString(),
-                                        password.text.toString()
-                                    )
+                                        password.text.toString(),
+                                    ),
                                 )
                             }
                         }
@@ -1556,14 +1557,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     showError(errorType = ErrorType.TIMEOUT_EXTERNAL_BUS)
                 }
             },
-            CONNECTION_DELAY
+            CONNECTION_DELAY,
         )
     }
 
     override fun sendExternalBusMessage(message: ExternalBusMessage) {
         val map = mutableMapOf(
             "id" to message.id,
-            "type" to message.type
+            "type" to message.type,
         )
         message.command?.let { map["command"] = it }
         message.success?.let { map["success"] = it }
@@ -1589,7 +1590,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                     .setDestinationInExternalPublicDir(
                         Environment.DIRECTORY_DOWNLOADS,
-                        URLUtil.guessFileName(url, contentDisposition, mimetype)
+                        URLUtil.guessFileName(url, contentDisposition, mimetype),
                     )
                 val server = serverManager.getServer(presenter.getActiveServer())
                 if (url.startsWith(server?.connection?.getUrl(true).toString()) ||
@@ -1663,7 +1664,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     viewport['content'] = original_elements;
                 }           
             }
-            """
+            """,
         ) {}
     }
 

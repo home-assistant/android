@@ -38,7 +38,7 @@ data class Entity(
 data class EntityPosition(
     val value: Float,
     val min: Float,
-    val max: Float
+    val max: Float,
 )
 
 object EntityExt {
@@ -55,12 +55,12 @@ object EntityExt {
     val DOMAINS_PRESS = listOf("button", "input_button")
     val DOMAINS_TOGGLE = listOf(
         "automation", "cover", "fan", "humidifier", "input_boolean", "light", "lock",
-        "media_player", "remote", "siren", "switch"
+        "media_player", "remote", "siren", "switch",
     )
 
     val APP_PRESS_ACTION_DOMAINS = DOMAINS_PRESS + DOMAINS_TOGGLE + listOf(
         "scene",
-        "script"
+        "script",
     )
 
     val STATE_COLORED_DOMAINS = listOf(
@@ -92,7 +92,7 @@ object EntityExt {
         "timer",
         "update",
         "vacuum",
-        "water_heater"
+        "water_heater",
     )
 }
 
@@ -150,7 +150,7 @@ fun Entity.getCoverPosition(): EntityPosition? {
         EntityPosition(
             value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
             min = minValue,
-            max = maxValue
+            max = maxValue,
         )
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getCoverPosition")
@@ -192,7 +192,7 @@ fun Entity.getFanSpeed(): EntityPosition? {
         EntityPosition(
             value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
             min = minValue,
-            max = maxValue
+            max = maxValue,
         )
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getFanSpeed")
@@ -212,7 +212,7 @@ fun Entity.getFanSteps(): Int? {
         }
 
         return calculateNumStep(
-            (attributes["percentage_step"] as? Number)?.toDouble() ?: 1.0
+            (attributes["percentage_step"] as? Number)?.toDouble() ?: 1.0,
         ) - 1
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getFanSteps")
@@ -255,7 +255,7 @@ fun Entity.getLightBrightness(): EntityPosition? {
                 EntityPosition(
                     value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
                     min = minValue,
-                    max = maxValue
+                    max = maxValue,
                 )
             }
             else -> null
@@ -325,7 +325,7 @@ fun Entity.getVolumeLevel(): EntityPosition? {
         EntityPosition(
             value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
             min = minValue,
-            max = maxValue
+            max = maxValue,
         )
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getVolumeLevel")
@@ -489,7 +489,8 @@ fun Entity.getIcon(context: Context): IIcon {
                 "monetary" -> CommunityMaterial.Icon.cmd_cash
                 "nitrogen_dioxide", "nitrogen_monoxide", "nitrogen_oxide", "ozone",
                 "pm1", "pm10", "pm25", "sulfur_dioxide", "volatile_organic_compounds",
-                "volatile_organic_compounds_parts" -> CommunityMaterial.Icon3.cmd_molecule
+                "volatile_organic_compounds_parts",
+                -> CommunityMaterial.Icon3.cmd_molecule
                 "ph" -> CommunityMaterial.Icon3.cmd_ph
                 "power_factor" -> CommunityMaterial.Icon.cmd_angle_acute
                 "precipitation" -> CommunityMaterial.Icon3.cmd_weather_rainy
@@ -704,7 +705,8 @@ private fun sensorIcon(state: String?, entity: Entity): IIcon {
             "pm10",
             "pm25",
             "sulphur_dioxide",
-            "volatile_organic_compounds" -> CommunityMaterial.Icon3.cmd_molecule
+            "volatile_organic_compounds",
+            -> CommunityMaterial.Icon3.cmd_molecule
             "power_factor" -> CommunityMaterial.Icon.cmd_angle_acute
             "precipitation" -> CommunityMaterial.Icon3.cmd_weather_rainy
             "precipitation_intensity" -> CommunityMaterial.Icon3.cmd_weather_pouring
@@ -733,7 +735,7 @@ private fun sensorIcon(state: String?, entity: Entity): IIcon {
 }
 
 suspend fun Entity.onPressed(
-    integrationRepository: IntegrationRepository
+    integrationRepository: IntegrationRepository,
 ) {
     val action = when (domain) {
         "lock" -> {
@@ -746,7 +748,8 @@ suspend fun Entity.onPressed(
         "fan",
         "input_boolean",
         "script",
-        "switch" -> {
+        "switch",
+        -> {
             if (state == "on") "turn_off" else "turn_on"
         }
         "scene" -> "turn_on"
@@ -756,7 +759,7 @@ suspend fun Entity.onPressed(
     integrationRepository.callAction(
         domain = this.domain,
         action = action,
-        actionData = hashMapOf("entity_id" to entityId)
+        actionData = hashMapOf("entity_id" to entityId),
     )
 }
 
@@ -767,7 +770,7 @@ suspend fun Entity.onPressed(
  */
 suspend fun onEntityPressedWithoutState(
     entityId: String,
-    integrationRepository: IntegrationRepository
+    integrationRepository: IntegrationRepository,
 ) {
     val domain = entityId.split(".")[0]
     val action = when (domain) {
@@ -786,7 +789,7 @@ suspend fun onEntityPressedWithoutState(
     integrationRepository.callAction(
         domain = domain,
         action = action,
-        actionData = hashMapOf("entity_id" to entityId)
+        actionData = hashMapOf("entity_id" to entityId),
     )
 }
 
@@ -898,7 +901,7 @@ fun Entity.friendlyState(context: Context, options: EntityRegistryOptions? = nul
                 stateInMillis,
                 System.currentTimeMillis(),
                 0,
-                DateUtils.FORMAT_ABBREV_ALL
+                DateUtils.FORMAT_ABBREV_ALL,
             ).toString()
         } catch (e: DateTimeParseException) { /* Not a timestamp */ }
     }

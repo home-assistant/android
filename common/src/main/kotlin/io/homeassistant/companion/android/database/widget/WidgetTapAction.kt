@@ -5,7 +5,7 @@ import androidx.room.TypeConverter
 enum class WidgetTapAction {
     REFRESH,
     OPEN,
-    TOGGLE
+    TOGGLE,
 }
 
 class WidgetTapActionConverter {

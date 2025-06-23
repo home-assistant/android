@@ -9,7 +9,7 @@ import kotlin.math.min
 
 data class TileSlot(
     val id: String,
-    val name: String
+    val name: String,
 )
 
 /**
@@ -38,7 +38,7 @@ fun updateActiveTileServices(highestInUse: Int, context: Context) {
             } else {
                 PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
             },
-            PackageManager.DONT_KILL_APP
+            PackageManager.DONT_KILL_APP,
         )
     }
 }

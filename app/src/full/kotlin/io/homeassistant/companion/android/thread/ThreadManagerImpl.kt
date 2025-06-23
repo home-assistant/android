@@ -25,7 +25,7 @@ import timber.log.Timber
 
 class ThreadManagerImpl @Inject constructor(
     private val serverManager: ServerManager,
-    private val packageManager: PackageManager
+    private val packageManager: PackageManager,
 ) : ThreadManager {
     companion object {
         // ID is a placeholder used in previous app versions / for older Home Assistant versions
@@ -50,7 +50,7 @@ class ThreadManagerImpl @Inject constructor(
         context: Context,
         serverId: Int,
         exportOnly: Boolean,
-        scope: CoroutineScope
+        scope: CoroutineScope,
     ): ThreadManager.SyncResult {
         if (!appSupportsThread()) return ThreadManager.SyncResult.AppUnsupported
         if (!coreSupportsThread(serverId)) return ThreadManager.SyncResult.ServerUnsupported
@@ -63,7 +63,7 @@ class ThreadManagerImpl @Inject constructor(
     }
 
     private suspend fun exportSyncPreferredDataset(
-        context: Context
+        context: Context,
     ): ThreadManager.SyncResult {
         val getDeviceDataset = try {
             getPreferredDatasetFromDevice(context)
@@ -93,7 +93,7 @@ class ThreadManagerImpl @Inject constructor(
     private suspend fun fullSyncPreferredDataset(
         context: Context,
         serverId: Int,
-        scope: CoroutineScope
+        scope: CoroutineScope,
     ): ThreadManager.SyncResult {
         deleteOrphanedThreadCredentials(context, serverId)
 
@@ -152,7 +152,7 @@ class ThreadManagerImpl @Inject constructor(
                                             listOf(coreThreadDataset.preferredBorderAgentId!!)
                                         } else {
                                             emptyList()
-                                        }
+                                        },
                                     )
                                 }
                                 Timber.d("Thread update device completed: deleted ${localIds.size} datasets, updated 1")
@@ -184,7 +184,7 @@ class ThreadManagerImpl @Inject constructor(
                     matches = coreIsDevicePreferred,
                     fromApp = appIsDevicePreferred,
                     updated = updated,
-                    exportIntent = if (exportFromDevice) deviceThreadIntent else null
+                    exportIntent = if (exportFromDevice) deviceThreadIntent else null,
                 )
             } catch (e: Exception) {
                 Timber.e(e, "Thread device/core preferred comparison failed")
@@ -203,7 +203,7 @@ class ThreadManagerImpl @Inject constructor(
         context: Context,
         datasetId: String,
         preferredBorderAgentId: String?,
-        serverId: Int
+        serverId: Int,
     ) {
         val tlv = serverManager.webSocketRepository(serverId).getThreadDatasetTlv(datasetId)?.tlvAsByteArray
         if (tlv != null) {

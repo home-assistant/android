@@ -40,7 +40,7 @@ class HealthServicesSensorManager : SensorManager {
             "mdi:account",
             deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         private val dailyFloors = SensorManager.BasicSensor(
             "daily_floors",
@@ -51,7 +51,7 @@ class HealthServicesSensorManager : SensorManager {
             unitOfMeasurement = "floors",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            updateType = SensorManager.BasicSensor.UpdateType.WORKER
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER,
         )
         private val dailyDistance = SensorManager.BasicSensor(
             "daily_distance",
@@ -63,7 +63,7 @@ class HealthServicesSensorManager : SensorManager {
             unitOfMeasurement = "m",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            updateType = SensorManager.BasicSensor.UpdateType.WORKER
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER,
         )
         private val dailyCalories = SensorManager.BasicSensor(
             "daily_calories",
@@ -75,7 +75,7 @@ class HealthServicesSensorManager : SensorManager {
             unitOfMeasurement = "cal",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            updateType = SensorManager.BasicSensor.UpdateType.WORKER
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER,
         )
         private val dailySteps = SensorManager.BasicSensor(
             "daily_steps",
@@ -86,7 +86,7 @@ class HealthServicesSensorManager : SensorManager {
             unitOfMeasurement = "steps",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            updateType = SensorManager.BasicSensor.UpdateType.WORKER
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER,
         )
     }
 
@@ -211,9 +211,9 @@ class HealthServicesSensorManager : SensorManager {
                     mapOf(
                         "time" to info.stateChangeTime,
                         "exercise_type" to info.exerciseInfo?.exerciseType?.name,
-                        "options" to listOf("asleep", "passive", "exercise")
+                        "options" to listOf("asleep", "passive", "exercise"),
                     ),
-                    forceUpdate = forceUpdate
+                    forceUpdate = forceUpdate,
                 )
                 val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
                 val sensorData = sensorDao.get(userActivityState.id)
@@ -241,7 +241,7 @@ class HealthServicesSensorManager : SensorManager {
                             if (dataPoint is IntervalDataPoint) {
                                 val endTime = dataPoint.getEndInstant(bootInstant)
                                 Timber.d(
-                                    "Data for ${dataType.name} index: $indexPoint with value: ${dataPoint.value} end time: ${endTime.toEpochMilli()}"
+                                    "Data for ${dataType.name} index: $indexPoint with value: ${dataPoint.value} end time: ${endTime.toEpochMilli()}",
                                 )
                             }
                         }
@@ -277,7 +277,7 @@ class HealthServicesSensorManager : SensorManager {
         if (!callBackRegistered) {
             passiveMonitoringClient?.setPassiveListenerCallback(
                 passiveListenerConfig!!,
-                passiveListenerCallback
+                passiveListenerCallback,
             )
         }
 
@@ -340,7 +340,7 @@ class HealthServicesSensorManager : SensorManager {
 
     private fun processDataPoint(
         dataPoints: List<IntervalDataPoint<*>>,
-        basicSensor: SensorManager.BasicSensor
+        basicSensor: SensorManager.BasicSensor,
     ) {
         var latest = 0
         var lastIndex = 0
@@ -361,7 +361,7 @@ class HealthServicesSensorManager : SensorManager {
                 basicSensor,
                 dataPoints[lastIndex].value,
                 basicSensor.statelessIcon,
-                mapOf()
+                mapOf(),
             )
         }
     }

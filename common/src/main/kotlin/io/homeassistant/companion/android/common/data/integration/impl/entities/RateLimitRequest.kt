@@ -4,5 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class RateLimitRequest(
-    val pushToken: String
+    val pushToken: String,
 )

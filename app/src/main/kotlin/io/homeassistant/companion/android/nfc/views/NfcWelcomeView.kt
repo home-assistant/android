@@ -23,7 +23,7 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
 fun NfcWelcomeView(
     isNfcEnabled: Boolean,
     onReadClicked: () -> Unit,
-    onWriteClicked: () -> Unit
+    onWriteClicked: () -> Unit,
 ) {
     LazyColumn(
         contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(),
@@ -38,7 +38,7 @@ fun NfcWelcomeView(
                         .padding(end = 8.dp)
                         .weight(1f),
                     enabled = isNfcEnabled,
-                    onClick = onReadClicked
+                    onClick = onReadClicked,
                 ) {
                     Text(stringResource(commonR.string.nfc_btn_read_tag))
                 }
@@ -47,7 +47,7 @@ fun NfcWelcomeView(
                         .padding(start = 8.dp)
                         .weight(1f),
                     enabled = isNfcEnabled,
-                    onClick = onWriteClicked
+                    onClick = onWriteClicked,
                 ) {
                     Text(stringResource(commonR.string.nfc_btn_write_tag))
                 }
@@ -58,7 +58,7 @@ fun NfcWelcomeView(
             item {
                 Text(
                     text = stringResource(commonR.string.nfc_welcome_turnon),
-                    modifier = Modifier.padding(top = 48.dp)
+                    modifier = Modifier.padding(top = 48.dp),
                 )
             }
             item {
@@ -67,7 +67,7 @@ fun NfcWelcomeView(
                     contentPadding = PaddingValues(horizontal = 0.dp),
                     onClick = {
                         context.startActivity(Intent(Settings.ACTION_NFC_SETTINGS))
-                    }
+                    },
                 ) {
                     Text(stringResource(commonR.string.settings))
                 }

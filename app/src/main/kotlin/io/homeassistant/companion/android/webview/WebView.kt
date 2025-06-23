@@ -13,7 +13,7 @@ interface WebView {
         TIMEOUT_GENERAL,
 
         /** Timeout due to no 'connection-status: connected' event on the external bus */
-        TIMEOUT_EXTERNAL_BUS
+        TIMEOUT_EXTERNAL_BUS,
     }
 
     fun loadUrl(url: String, keepHistory: Boolean, openInApp: Boolean)

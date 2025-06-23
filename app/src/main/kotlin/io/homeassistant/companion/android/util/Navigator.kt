@@ -18,6 +18,6 @@ class Navigator {
     data class NavigatorItem(
         val id: String,
         val popBackstackTo: String? = null,
-        val popBackstackInclusive: Boolean = false
+        val popBackstackInclusive: Boolean = false,
     )
 }

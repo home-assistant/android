@@ -114,7 +114,7 @@ class MessagingManager @Inject constructor(
     private val settingsDao: SettingsDao,
     private val textToSpeechClient: TextToSpeechClient,
     private val flashlightHelper: FlashlightHelper,
-    private val permissionRequestMediator: PermissionRequestMediator
+    private val permissionRequestMediator: PermissionRequestMediator,
 ) {
     companion object {
         const val APP_PREFIX = "app://"
@@ -231,7 +231,7 @@ class MessagingManager @Inject constructor(
             COMMAND_AUTO_SCREEN_BRIGHTNESS,
             COMMAND_SCREEN_BRIGHTNESS_LEVEL,
             COMMAND_SCREEN_OFF_TIMEOUT,
-            COMMAND_FLASHLIGHT
+            COMMAND_FLASHLIGHT,
         )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
@@ -242,7 +242,7 @@ class MessagingManager @Inject constructor(
             NotificationData.RING_STREAM,
             NotificationData.CALL_STREAM,
             NotificationData.SYSTEM_STREAM,
-            NotificationData.DTMF_STREAM
+            NotificationData.DTMF_STREAM,
         )
         val FORCE_COMMANDS = listOf(FORCE_OFF, FORCE_ON)
         val MEDIA_COMMANDS = listOf(
@@ -253,7 +253,7 @@ class MessagingManager @Inject constructor(
             MEDIA_PLAY_PAUSE,
             MEDIA_PREVIOUS,
             MEDIA_REWIND,
-            MEDIA_STOP
+            MEDIA_STOP,
         )
 
         // Video Values
@@ -342,13 +342,13 @@ class MessagingManager @Inject constructor(
                                     handleDeviceCommands(jsonData)
                                 } else {
                                     Timber.d(
-                                        "Posting notification to device as it does not support DND commands"
+                                        "Posting notification to device as it does not support DND commands",
                                     )
                                     sendNotification(jsonData)
                                 }
                             } else {
                                 Timber.d(
-                                    "Invalid DND command received, posting notification to device"
+                                    "Invalid DND command received, posting notification to device",
                                 )
                                 sendNotification(jsonData)
                             }
@@ -358,7 +358,7 @@ class MessagingManager @Inject constructor(
                                 handleDeviceCommands(jsonData)
                             } else {
                                 Timber.d(
-                                    "Invalid ringer mode command received, posting notification to device"
+                                    "Invalid ringer mode command received, posting notification to device",
                                 )
                                 sendNotification(jsonData)
                             }
@@ -369,7 +369,7 @@ class MessagingManager @Inject constructor(
                             } else {
                                 Timber.d(
 
-                                    "Invalid broadcast command received, posting notification to device"
+                                    "Invalid broadcast command received, posting notification to device",
                                 )
                                 sendNotification(jsonData)
                             }
@@ -382,7 +382,7 @@ class MessagingManager @Inject constructor(
                             } else {
                                 Timber.d(
 
-                                    "Invalid volume command received, posting notification to device"
+                                    "Invalid volume command received, posting notification to device",
                                 )
                                 sendNotification(jsonData)
                             }
@@ -397,7 +397,7 @@ class MessagingManager @Inject constructor(
                             } else {
                                 Timber.d(
 
-                                    "Invalid bluetooth command received, posting notification to device"
+                                    "Invalid bluetooth command received, posting notification to device",
                                 )
                                 sendNotification(jsonData)
                             }
@@ -424,7 +424,7 @@ class MessagingManager @Inject constructor(
                             } else {
                                 Timber.d(
 
-                                    "Invalid high accuracy mode command received, posting notification to device"
+                                    "Invalid high accuracy mode command received, posting notification to device",
                                 )
                                 sendNotification(jsonData)
                             }
@@ -435,7 +435,7 @@ class MessagingManager @Inject constructor(
                             } else {
                                 Timber.d(
 
-                                    "Invalid activity command received, posting notification to device"
+                                    "Invalid activity command received, posting notification to device",
                                 )
                                 sendNotification(jsonData)
                             }
@@ -459,7 +459,7 @@ class MessagingManager @Inject constructor(
                             } else {
                                 Timber.d(
 
-                                    "Invalid app lock command received, posting notification to device"
+                                    "Invalid app lock command received, posting notification to device",
                                 )
                                 sendNotification(jsonData)
                             }
@@ -477,14 +477,14 @@ class MessagingManager @Inject constructor(
                                 } else {
                                     Timber.d(
 
-                                        "Posting notification to device as it does not support media commands"
+                                        "Posting notification to device as it does not support media commands",
                                     )
                                     sendNotification(jsonData)
                                 }
                             } else {
                                 Timber.d(
 
-                                    "Invalid media command received, posting notification to device"
+                                    "Invalid media command received, posting notification to device",
                                 )
                                 sendNotification(jsonData)
                             }
@@ -496,7 +496,7 @@ class MessagingManager @Inject constructor(
                             } else {
                                 Timber.d(
 
-                                    "Missing package name for app to launch, posting notification to device"
+                                    "Missing package name for app to launch, posting notification to device",
                                 )
                                 sendNotification(jsonData)
                             }
@@ -508,14 +508,14 @@ class MessagingManager @Inject constructor(
                                 jsonData[PERSISTENT].isNullOrEmpty() -> {
                                     Timber.d(
 
-                                        "Missing persistent modifier, posting notification to device"
+                                        "Missing persistent modifier, posting notification to device",
                                     )
                                     sendNotification(jsonData)
                                 }
                                 jsonData[PERSISTENT]!!.uppercase() !in validPersistentTypes -> {
                                     Timber.d(
 
-                                        "Persistent modifier is not one of $validPersistentTypes"
+                                        "Persistent modifier is not one of $validPersistentTypes",
                                     )
                                     sendNotification(jsonData)
                                 }
@@ -587,14 +587,14 @@ class MessagingManager @Inject constructor(
                     } else {
                         when (command) {
                             DND_ALARMS_ONLY -> notificationManager?.setInterruptionFilter(
-                                NotificationManager.INTERRUPTION_FILTER_ALARMS
+                                NotificationManager.INTERRUPTION_FILTER_ALARMS,
                             )
                             DND_ALL -> notificationManager?.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
                             DND_NONE -> notificationManager?.setInterruptionFilter(
-                                NotificationManager.INTERRUPTION_FILTER_NONE
+                                NotificationManager.INTERRUPTION_FILTER_NONE,
                             )
                             DND_PRIORITY_ONLY -> notificationManager?.setInterruptionFilter(
-                                NotificationManager.INTERRUPTION_FILTER_PRIORITY
+                                NotificationManager.INTERRUPTION_FILTER_PRIORITY,
                             )
                             else -> Timber.d("Skipping invalid command")
                         }
@@ -636,7 +636,7 @@ class MessagingManager @Inject constructor(
                         Toast.makeText(
                             context,
                             commonR.string.broadcast_intent_error,
-                            Toast.LENGTH_LONG
+                            Toast.LENGTH_LONG,
                         ).show()
                     }
                 }
@@ -652,14 +652,14 @@ class MessagingManager @Inject constructor(
                         processStreamVolume(
                             audioManager!!,
                             data[NotificationData.MEDIA_STREAM].toString(),
-                            command!!.toInt()
+                            command!!.toInt(),
                         )
                     }
                 } else {
                     processStreamVolume(
                         audioManager!!,
                         data[NotificationData.MEDIA_STREAM].toString(),
-                        command!!.toInt()
+                        command!!.toInt(),
                     )
                 }
             }
@@ -704,7 +704,7 @@ class MessagingManager @Inject constructor(
                             Toast.makeText(
                                 context,
                                 context.getString(commonR.string.missing_phone_permission),
-                                Toast.LENGTH_LONG
+                                Toast.LENGTH_LONG,
                             ).show()
                         }
                         navigateAppDetails()
@@ -735,7 +735,7 @@ class MessagingManager @Inject constructor(
                 if (!command.isNullOrEmpty()) {
                     mainScope.launch {
                         prefsRepository.setKeepScreenOnEnabled(
-                            command == COMMAND_KEEP_SCREEN_ON
+                            command == COMMAND_KEEP_SCREEN_ON,
                         )
                     }
                 }
@@ -745,7 +745,7 @@ class MessagingManager @Inject constructor(
                     PowerManager.FULL_WAKE_LOCK or
                         PowerManager.ACQUIRE_CAUSES_WAKEUP or
                         PowerManager.ON_AFTER_RELEASE,
-                    "HomeAssistant::NotificationScreenOnWakeLock"
+                    "HomeAssistant::NotificationScreenOnWakeLock",
                 )
                 wakeLock?.acquire(1 * 30 * 1000L) // 30 seconds
                 wakeLock?.release()
@@ -827,67 +827,67 @@ class MessagingManager @Inject constructor(
                     "int" -> intent.putExtra(name, value.toInt())
                     "int[]" -> intent.putExtra(
                         name,
-                        value.split(";").map { it.toInt() }.toIntArray()
+                        value.split(";").map { it.toInt() }.toIntArray(),
                     )
                     "ArrayList<Integer>" -> intent.putIntegerArrayListExtra(
                         name,
-                        value.split(";").map { it.toInt() }.toCollection(ArrayList())
+                        value.split(";").map { it.toInt() }.toCollection(ArrayList()),
                     )
                     "double" -> intent.putExtra(name, value.toDouble())
                     "double[]" -> intent.putExtra(
                         name,
-                        value.split(";").map { it.toDouble() }.toDoubleArray()
+                        value.split(";").map { it.toDouble() }.toDoubleArray(),
                     )
                     "float" -> intent.putExtra(name, value.toFloat())
                     "float[]" -> intent.putExtra(
                         name,
-                        value.split(";").map { it.toFloat() }.toFloatArray()
+                        value.split(";").map { it.toFloat() }.toFloatArray(),
                     )
                     "long" -> intent.putExtra(name, value.toLong())
                     "long[]" -> intent.putExtra(
                         name,
-                        value.split(";").map { it.toLong() }.toLongArray()
+                        value.split(";").map { it.toLong() }.toLongArray(),
                     )
                     "short" -> intent.putExtra(name, value.toShort())
                     "short[]" -> intent.putExtra(
                         name,
-                        value.split(";").map { it.toShort() }.toShortArray()
+                        value.split(";").map { it.toShort() }.toShortArray(),
                     )
                     "byte" -> intent.putExtra(name, value.toByte())
                     "byte[]" -> intent.putExtra(
                         name,
-                        value.split(";").map { it.toByte() }.toByteArray()
+                        value.split(";").map { it.toByte() }.toByteArray(),
                     )
                     "boolean" -> intent.putExtra(name, value.toBoolean())
                     "boolean[]" -> intent.putExtra(
                         name,
-                        value.split(";").map { it.toBoolean() }.toBooleanArray()
+                        value.split(";").map { it.toBoolean() }.toBooleanArray(),
                     )
                     "char" -> intent.putExtra(name, value[0])
                     "char[]" -> intent.putExtra(
                         name,
-                        value.split(";").map { it[0] }.toCharArray()
+                        value.split(";").map { it[0] }.toCharArray(),
                     )
                     "String" -> intent.putExtra(name, value)
                     "String.urlencoded", "urlencoded" -> intent.putExtra(
                         name,
-                        URLDecoder.decode(value, "UTF-8")
+                        URLDecoder.decode(value, "UTF-8"),
                     )
                     "String[]" -> intent.putExtra(
                         name,
-                        value.split(";").toTypedArray()
+                        value.split(";").toTypedArray(),
                     )
                     "ArrayList<String>" -> intent.putStringArrayListExtra(
                         name,
-                        value.split(";").toCollection(ArrayList())
+                        value.split(";").toCollection(ArrayList()),
                     )
                     "String[].urlencoded" -> intent.putExtra(
                         name,
-                        value.split(";").map { URLDecoder.decode(value, "UTF-8") }.toTypedArray()
+                        value.split(";").map { URLDecoder.decode(value, "UTF-8") }.toTypedArray(),
                     )
                     "ArrayList<String>.urlencoded" -> intent.putStringArrayListExtra(
                         name,
-                        value.split(";").map { URLDecoder.decode(value, "UTF-8") }.toCollection(ArrayList())
+                        value.split(";").map { URLDecoder.decode(value, "UTF-8") }.toCollection(ArrayList()),
                     )
                     else -> {
                         intent.putExtra(name, value)
@@ -1002,7 +1002,7 @@ class MessagingManager @Inject constructor(
             } else if (previousGroup.isNotBlank()) {
                 Timber.d(
 
-                    "Remove group notification with tag \"$previousGroup\" and id \"$previousGroupId\""
+                    "Remove group notification with tag \"$previousGroup\" and id \"$previousGroupId\"",
                 )
                 cancelGroupIfNeeded(previousGroup, previousGroupId)
             }
@@ -1011,7 +1011,7 @@ class MessagingManager @Inject constructor(
 
     private fun handleChronometer(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         try { // Without this, a non-numeric when value will crash the app
             var notificationWhen = data[WHEN]?.toLongOrNull()?.times(1000) ?: data[WHEN]?.toFloatOrNull()?.times(1000)?.toLong() ?: 0
@@ -1039,7 +1039,7 @@ class MessagingManager @Inject constructor(
 
     private fun handleProgress(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         try { // Without this, a non-numeric when value will crash the app
             val progress = data[PROGRESS]?.toIntOrNull() ?: -1
@@ -1057,7 +1057,7 @@ class MessagingManager @Inject constructor(
     private fun handleCarUiVisible(
         context: Context,
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ): Boolean {
         if (data[CAR_UI]?.toBoolean() == true && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val carIntent = Intent(Intent.ACTION_VIEW).apply {
@@ -1070,10 +1070,10 @@ class MessagingManager @Inject constructor(
                             context,
                             carIntent.hashCode(),
                             carIntent,
-                            PendingIntent.FLAG_IMMUTABLE
-                        )
+                            PendingIntent.FLAG_IMMUTABLE,
+                        ),
                     )
-                    .build()
+                    .build(),
             )
             return true
         }
@@ -1082,7 +1082,7 @@ class MessagingManager @Inject constructor(
 
     private fun handleContentIntent(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         val actionUri = data["clickAction"] ?: "/"
         if (actionUri != NO_ACTION) {
@@ -1093,7 +1093,7 @@ class MessagingManager @Inject constructor(
     private fun handlePersistent(
         builder: NotificationCompat.Builder,
         tag: String?,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         // Only set ongoing (persistent) property if tag was supplied.
         // Without a tag the user could not clear the notification
@@ -1105,20 +1105,20 @@ class MessagingManager @Inject constructor(
 
     private fun handleSound(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         if (data[NotificationData.CHANNEL] == NotificationData.ALARM_STREAM) {
             builder.setCategory(Notification.CATEGORY_ALARM)
             builder.setSound(
                 RingtoneManager.getActualDefaultRingtoneUri(
                     context,
-                    RingtoneManager.TYPE_ALARM
+                    RingtoneManager.TYPE_ALARM,
                 )
                     ?: RingtoneManager.getActualDefaultRingtoneUri(
                         context,
-                        RingtoneManager.TYPE_RINGTONE
+                        RingtoneManager.TYPE_RINGTONE,
                     ),
-                AudioManager.STREAM_ALARM
+                AudioManager.STREAM_ALARM,
             )
         } else {
             builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
@@ -1130,7 +1130,7 @@ class MessagingManager @Inject constructor(
 
     private fun handleLegacyLedColor(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         val ledColor = data[NotificationData.LED_COLOR]
         if (!ledColor.isNullOrBlank()) {
@@ -1140,7 +1140,7 @@ class MessagingManager @Inject constructor(
 
     private fun handleLegacyVibrationPattern(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         val vibrationPattern = data[NotificationData.VIBRATION_PATTERN]
         if (!vibrationPattern.isNullOrBlank()) {
@@ -1153,7 +1153,7 @@ class MessagingManager @Inject constructor(
 
     private fun handleLegacyPriority(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         // Use importance property for legacy priority support
 
@@ -1178,7 +1178,7 @@ class MessagingManager @Inject constructor(
 
     private fun handleTimeout(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         val timeout = data[TIMEOUT]?.toLongOrNull()?.times(1000) ?: -1
         if (timeout >= 0) builder.setTimeoutAfter(timeout)
@@ -1187,7 +1187,7 @@ class MessagingManager @Inject constructor(
     private fun handleGroup(
         builder: NotificationCompat.Builder,
         group: String?,
-        alertOnce: Boolean?
+        alertOnce: Boolean?,
     ) {
         if (!group.isNullOrBlank()) {
             builder.setGroup(group)
@@ -1199,7 +1199,7 @@ class MessagingManager @Inject constructor(
 
     private fun handleSticky(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         val sticky = data["sticky"]?.toBoolean() ?: false
         builder.setAutoCancel(!sticky)
@@ -1207,7 +1207,7 @@ class MessagingManager @Inject constructor(
 
     private fun handleSubject(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         val subject = data[SUBJECT]
         if (!subject.isNullOrBlank()) {
@@ -1217,7 +1217,7 @@ class MessagingManager @Inject constructor(
 
     private fun handleServer(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         data[NotificationData.WEBHOOK_ID]?.let { webhookId ->
             if (serverManager.defaultServers.size > 1) {
@@ -1230,7 +1230,7 @@ class MessagingManager @Inject constructor(
 
     private suspend fun handleLargeIcon(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         val iconUrl = data[ICON_URL]
         if (!iconUrl.isNullOrBlank()) {
@@ -1246,7 +1246,7 @@ class MessagingManager @Inject constructor(
 
     private suspend fun handleImage(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         val imageUrl = data[IMAGE_URL]
         if (!imageUrl.isNullOrBlank()) {
@@ -1267,7 +1267,7 @@ class MessagingManager @Inject constructor(
                                 style.bigPicture(bitmap)
                             }
                         }
-                            .bigLargeIcon(null as Bitmap?)
+                            .bigLargeIcon(null as Bitmap?),
                     )
             }
         }
@@ -1275,7 +1275,7 @@ class MessagingManager @Inject constructor(
 
     private suspend fun getImageBitmap(serverId: Int, url: URL?, requiresAuth: Boolean = false): Bitmap? =
         withContext(
-            Dispatchers.IO
+            Dispatchers.IO,
         ) {
             if (url == null) {
                 return@withContext null
@@ -1302,7 +1302,7 @@ class MessagingManager @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     private suspend fun saveTempAnimatedImage(serverId: Int, url: URL?, requiresAuth: Boolean = false): Uri? =
         withContext(
-            Dispatchers.IO
+            Dispatchers.IO,
         ) {
             if (url == null || url.path.endsWith("gif").not()) {
                 return@withContext null
@@ -1337,7 +1337,7 @@ class MessagingManager @Inject constructor(
 
     private suspend fun handleVideo(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         val videoUrl = data[VIDEO_URL]
         if (!videoUrl.isNullOrBlank()) {
@@ -1354,9 +1354,9 @@ class MessagingManager @Inject constructor(
                                 RemoteViews(context.packageName, R.layout.view_single_frame).apply {
                                     setImageViewBitmap(
                                         R.id.frame,
-                                        frame
+                                        frame,
                                     )
-                                }
+                                },
                             )
                         }
 
@@ -1378,7 +1378,7 @@ class MessagingManager @Inject constructor(
 
     private suspend fun getVideoFrames(serverId: Int, url: URL?, requiresAuth: Boolean = false): List<Bitmap>? =
         withContext(
-            Dispatchers.IO
+            Dispatchers.IO,
         ) {
             url ?: return@withContext null
             val videoFile = File(context.applicationContext.cacheDir.absolutePath + "/notifications/video-${System.currentTimeMillis()}")
@@ -1455,7 +1455,7 @@ class MessagingManager @Inject constructor(
 
     private fun handleVisibility(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         val visibility = data[VISIBILITY]
         if (!visibility.isNullOrBlank()) {
@@ -1464,7 +1464,7 @@ class MessagingManager @Inject constructor(
                     "public" -> NotificationCompat.VISIBILITY_PUBLIC
                     "secret" -> NotificationCompat.VISIBILITY_SECRET
                     else -> NotificationCompat.VISIBILITY_PRIVATE
-                }
+                },
             )
         }
     }
@@ -1474,7 +1474,7 @@ class MessagingManager @Inject constructor(
         tag: String?,
         messageId: Int,
         databaseId: Long?,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         for (i in 1..3) {
             if (data.containsKey("action_${i}_key")) {
@@ -1483,7 +1483,7 @@ class MessagingManager @Inject constructor(
                     data["action_${i}_title"].toString(),
                     data["action_${i}_uri"],
                     data["action_${i}_behavior"],
-                    data
+                    data,
                 )
                 val eventIntent = Intent(context, NotificationActionReceiver::class.java).apply {
                     action = NotificationActionReceiver.FIRE_EVENT
@@ -1493,11 +1493,11 @@ class MessagingManager @Inject constructor(
                     }
                     putExtra(
                         NotificationActionReceiver.EXTRA_NOTIFICATION_ACTION,
-                        notificationAction
+                        notificationAction,
                     )
                     putExtra(
                         NotificationActionReceiver.EXTRA_NOTIFICATION_DB,
-                        databaseId
+                        databaseId,
                     )
                 }
 
@@ -1507,7 +1507,7 @@ class MessagingManager @Inject constructor(
                             builder.addAction(
                                 commonR.drawable.ic_globe,
                                 notificationAction.title,
-                                createOpenUriPendingIntent(notificationAction.uri, data)
+                                createOpenUriPendingIntent(notificationAction.uri, data),
                             )
                         }
                     }
@@ -1520,12 +1520,12 @@ class MessagingManager @Inject constructor(
                             context,
                             messageId,
                             eventIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
                         )
                         val action: NotificationCompat.Action = NotificationCompat.Action.Builder(
                             R.drawable.ic_baseline_reply_24,
                             notificationAction.title,
-                            replyPendingIntent
+                            replyPendingIntent,
                         )
                             .addRemoteInput(remoteInput)
                             .build()
@@ -1536,12 +1536,12 @@ class MessagingManager @Inject constructor(
                             context,
                             (notificationAction.title.hashCode() + System.currentTimeMillis()).toInt(),
                             eventIntent,
-                            PendingIntent.FLAG_IMMUTABLE
+                            PendingIntent.FLAG_IMMUTABLE,
                         )
                         builder.addAction(
                             commonR.drawable.ic_stat_ic_notification,
                             notificationAction.title,
-                            actionPendingIntent
+                            actionPendingIntent,
                         )
                     }
                 }
@@ -1551,7 +1551,7 @@ class MessagingManager @Inject constructor(
 
     private fun createOpenUriPendingIntent(
         uri: String,
-        data: Map<String, String>
+        data: Map<String, String>,
     ): PendingIntent {
         val serverId = data[THIS_SERVER_ID]!!.toInt()
         val needsPackage = uri.startsWith(APP_PREFIX) || uri.startsWith(INTENT_PREFIX)
@@ -1585,7 +1585,7 @@ class MessagingManager @Inject constructor(
                             uri.removePrefix(DEEP_LINK_PREFIX)
                         } else {
                             uri
-                        }
+                        },
                     )
                 }
             }
@@ -1610,7 +1610,7 @@ class MessagingManager @Inject constructor(
             if (needsPackage) {
                 val intentPackage = intent.`package`?.let {
                     context.packageManager.getLaunchIntentForPackage(
-                        it
+                        it,
                     )
                 }
                 if (intentPackage == null && (!intent.`package`.isNullOrEmpty() || uri.startsWith(APP_PREFIX))) {
@@ -1623,13 +1623,13 @@ class MessagingManager @Inject constructor(
             } else {
                 intent
             },
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE,
         )
     }
 
     private fun handleReplyHistory(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             val replies = data.entries
@@ -1655,7 +1655,7 @@ class MessagingManager @Inject constructor(
     private fun requestSystemAlertPermission() {
         val intent = Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:${context.packageName}")
+            Uri.parse("package:${context.packageName}"),
         )
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
@@ -1671,7 +1671,7 @@ class MessagingManager @Inject constructor(
     private fun navigateAppDetails() {
         val intent = Intent(
             Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            Uri.parse("package:${context.packageName}")
+            Uri.parse("package:${context.packageName}"),
         )
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
@@ -1713,8 +1713,8 @@ class MessagingManager @Inject constructor(
         val mediaList = mediaSessionManager.getActiveSessions(
             ComponentName(
                 context,
-                NotificationSensorManager::class.java
-            )
+                NotificationSensorManager::class.java,
+            ),
         )
         var hasCorrectPackage = false
         if (mediaList.size > 0) {
@@ -1726,14 +1726,14 @@ class MessagingManager @Inject constructor(
                     val success = mediaSessionController.dispatchMediaButtonEvent(
                         KeyEvent(
                             KeyEvent.ACTION_DOWN,
-                            getKeyEvent(title!!)
-                        )
+                            getKeyEvent(title!!),
+                        ),
                     )
                     if (!success) {
                         mainScope.launch {
                             Timber.d(
 
-                                "Posting notification as the command was not sent to the session"
+                                "Posting notification as the command was not sent to the session",
                             )
                             sendNotification(data)
                         }
@@ -1744,7 +1744,7 @@ class MessagingManager @Inject constructor(
                 mainScope.launch {
                     Timber.d(
 
-                        "Posting notification as the package is not found in the list of media sessions"
+                        "Posting notification as the package is not found in the list of media sessions",
                     )
                     sendNotification(data)
                 }
@@ -1789,7 +1789,7 @@ class MessagingManager @Inject constructor(
         audioManager.setStreamVolume(
             stream,
             volumeLevel,
-            AudioManager.FLAG_SHOW_UI
+            AudioManager.FLAG_SHOW_UI,
         )
     }
 
@@ -1821,7 +1821,7 @@ class MessagingManager @Inject constructor(
                 mainScope.launch {
                     Timber.d(
 
-                        "Posting notification as we do not have enough data to start the activity"
+                        "Posting notification as we do not have enough data to start the activity",
                     )
                     sendNotification(data)
                 }
@@ -1832,7 +1832,7 @@ class MessagingManager @Inject constructor(
                 Toast.makeText(
                     context,
                     commonR.string.activity_intent_error,
-                    Toast.LENGTH_LONG
+                    Toast.LENGTH_LONG,
                 ).show()
             }
         }
@@ -1840,7 +1840,7 @@ class MessagingManager @Inject constructor(
 
     private fun openWebview(
         title: String?,
-        data: Map<String, String>
+        data: Map<String, String>,
     ) {
         try {
             val serverId = data[THIS_SERVER_ID]!!.toInt()
@@ -1868,7 +1868,7 @@ class MessagingManager @Inject constructor(
                 val marketIntent = Intent(Intent.ACTION_VIEW)
                 marketIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 marketIntent.data = Uri.parse(
-                    MARKET_PREFIX + data[PACKAGE_NAME]
+                    MARKET_PREFIX + data[PACKAGE_NAME],
                 )
                 context.startActivity(marketIntent)
             }
@@ -1952,7 +1952,7 @@ class MessagingManager @Inject constructor(
                     }
                 }
                 else -> command!!.toInt()
-            }
+            },
         )
         return success
     }
@@ -1967,7 +1967,7 @@ class MessagingManager @Inject constructor(
                     if (item.importance != ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
                         val data = mutableMapOf(
                             NotificationData.MESSAGE to context.getString(commonR.string.missing_command_permission),
-                            THIS_SERVER_ID to serverId
+                            THIS_SERVER_ID to serverId,
                         )
                         runBlocking {
                             sendNotification(data)
@@ -1988,7 +1988,7 @@ class MessagingManager @Inject constructor(
                                     Toast.makeText(
                                         context,
                                         context.getString(commonR.string.missing_bluetooth_permission),
-                                        Toast.LENGTH_LONG
+                                        Toast.LENGTH_LONG,
                                     ).show()
                                 }
                                 navigateAppDetails()

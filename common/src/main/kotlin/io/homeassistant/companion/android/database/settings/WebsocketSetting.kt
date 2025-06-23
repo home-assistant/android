@@ -6,7 +6,7 @@ enum class WebsocketSetting {
     NEVER,
     SCREEN_ON,
     ALWAYS,
-    HOME_WIFI
+    HOME_WIFI,
 }
 
 class LocalNotificationSettingConverter {

@@ -10,7 +10,7 @@ import androidx.lifecycle.LifecycleOwner
 import timber.log.Timber
 
 abstract class BaseVehicleScreen(
-    carContext: CarContext
+    carContext: CarContext,
 ) : Screen(carContext) {
     private var car: Car? = null
     private var carRestrictionManager: CarUxRestrictionsManager? = null

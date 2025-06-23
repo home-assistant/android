@@ -79,7 +79,7 @@ class ButtonWidget : AppWidgetProvider() {
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray
+        appWidgetIds: IntArray,
     ) {
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
@@ -141,7 +141,7 @@ class ButtonWidget : AppWidgetProvider() {
         Timber.d(
             "Broadcast received: " + System.lineSeparator() +
                 "Broadcast action: " + action + System.lineSeparator() +
-                "AppWidgetId: " + appWidgetId
+                "AppWidgetId: " + appWidgetId,
         )
 
         super.onReceive(context, intent)
@@ -232,12 +232,12 @@ class ButtonWidget : AppWidgetProvider() {
                     context,
                     appWidgetId,
                     intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                ),
             )
             setTextViewText(
                 R.id.widgetLabel,
-                widget?.label ?: ""
+                widget?.label ?: "",
             )
         }
     }
@@ -286,7 +286,7 @@ class ButtonWidget : AppWidgetProvider() {
                 "Action Call Data loaded:" + System.lineSeparator() +
                     "domain: " + domain + System.lineSeparator() +
                     "action: " + action + System.lineSeparator() +
-                    "action_data: " + actionDataJson
+                    "action_data: " + actionDataJson,
             )
 
             if (domain == null || action == null || actionDataJson == null) {
@@ -297,7 +297,7 @@ class ButtonWidget : AppWidgetProvider() {
                     // Convert JSON to HashMap
                     val actionDataMap = kotlinJsonMapper.decodeFromString<Map<String, Any?>>(
                         MapAnySerializer,
-                        actionDataJson
+                        actionDataJson,
                     ).toMutableMap()
 
                     if (actionDataMap["entity_id"] != null) {
@@ -347,7 +347,7 @@ class ButtonWidget : AppWidgetProvider() {
                     setWidgetBackground(views, widget)
                     appWidgetManager.updateAppWidget(appWidgetId, views)
                 },
-                1000
+                1000,
             )
         }
     }
@@ -378,7 +378,7 @@ class ButtonWidget : AppWidgetProvider() {
                     "action: " + action + System.lineSeparator() +
                     "action_data: " + actionData + System.lineSeparator() +
                     "require_authentication: " + requireAuthentication + System.lineSeparator() +
-                    "label: " + label
+                    "label: " + label,
             )
 
             val widget = ButtonWidgetEntity(appWidgetId, serverId, icon, domain, action, actionData, label, backgroundType, textColor, requireAuthentication)

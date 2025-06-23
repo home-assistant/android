@@ -44,7 +44,7 @@ abstract class BaseWidgetConfigureActivity : BaseActivity() {
                 servers.indexOfFirst { it.id == widgetServerId }
             } else {
                 servers.indexOfFirst { it.id == activeServerId }
-            }
+            },
         )
 
         if (

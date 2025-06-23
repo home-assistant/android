@@ -49,7 +49,7 @@ fun loggedOutTimeline(
     context: Context,
     requestParams: RequestBuilders.TileRequest,
     @StringRes title: Int,
-    @StringRes text: Int
+    @StringRes text: Int,
 ): Timeline = primaryLayoutTimeline(
     context = context,
     requestParams = requestParams,
@@ -61,8 +61,8 @@ fun loggedOutTimeline(
             ActionBuilders.AndroidActivity.Builder()
                 .setClassName(SplashActivity::class.java.name)
                 .setPackageName(context.packageName)
-                .build()
-        ).build()
+                .build(),
+        ).build(),
 )
 
 /**
@@ -74,7 +74,7 @@ fun primaryLayoutTimeline(
     @StringRes title: Int?,
     @StringRes text: Int,
     @StringRes actionText: Int,
-    action: ActionBuilders.Action
+    action: ActionBuilders.Action,
 ): Timeline {
     val theme = Colors(
         ContextCompat.getColor(context, commonR.color.colorPrimary),
@@ -82,7 +82,7 @@ fun primaryLayoutTimeline(
         // Surface
         ContextCompat.getColor(context, R.color.colorOverlay),
         // On surface
-        ContextCompat.getColor(context, android.R.color.white)
+        ContextCompat.getColor(context, android.R.color.white),
     )
     val chipColors = ChipColors.primaryChipColors(theme)
     val chipAction = ModifiersBuilders.Clickable.Builder()
@@ -95,7 +95,7 @@ fun primaryLayoutTimeline(
             Text.Builder(context, context.getString(title))
                 .setTypography(Typography.TYPOGRAPHY_CAPTION1)
                 .setColor(argb(theme.primary))
-                .build()
+                .build(),
         )
     }
     builder.setContent(
@@ -103,17 +103,17 @@ fun primaryLayoutTimeline(
             .setTypography(Typography.TYPOGRAPHY_BODY1)
             .setMaxLines(if (title != null) 3 else 4) // It is highly recommended that main content has [if] 1 label is present: content with max 3 lines
             .setColor(argb(theme.onSurface))
-            .build()
+            .build(),
     )
     builder.setPrimaryChipContent(
         CompactChip.Builder(
             context,
             context.getString(actionText),
             chipAction,
-            requestParams.deviceConfiguration
+            requestParams.deviceConfiguration,
         )
             .setChipColors(chipColors)
-            .build()
+            .build(),
     )
     return Timeline.fromLayoutElement(builder.build())
 }
@@ -127,7 +127,7 @@ fun primaryLayoutTimeline(
 fun getRefreshButton(): LayoutElementBuilders.Arc =
     LayoutElementBuilders.Arc.Builder()
         .setAnchorAngle(
-            DimensionBuilders.DegreesProp.Builder(180f).build()
+            DimensionBuilders.DegreesProp.Builder(180f).build(),
         )
         .addContent(
             LayoutElementBuilders.ArcAdapter.Builder()
@@ -137,10 +137,10 @@ fun getRefreshButton(): LayoutElementBuilders.Arc =
                         .setWidth(DimensionBuilders.dp(24f))
                         .setHeight(DimensionBuilders.dp(24f))
                         .setModifiers(getRefreshModifiers())
-                        .build()
+                        .build(),
                 )
                 .setRotateContents(false)
-                .build()
+                .build(),
         )
         .build()
 
@@ -150,10 +150,10 @@ fun getRefreshModifiers(): ModifiersBuilders.Modifiers {
         .setClickable(
             ModifiersBuilders.Clickable.Builder()
                 .setOnClick(
-                    ActionBuilders.LoadAction.Builder().build()
+                    ActionBuilders.LoadAction.Builder().build(),
                 )
                 .setId(MODIFIER_CLICK_REFRESH)
-                .build()
+                .build(),
         )
         .build()
 }

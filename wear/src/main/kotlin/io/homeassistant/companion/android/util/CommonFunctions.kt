@@ -26,7 +26,7 @@ fun stringForDomain(domain: String, context: Context): String? =
             "sun" to commonR.string.sun,
             "update" to commonR.string.update,
             "weather" to commonR.string.weather,
-            "zone" to commonR.string.zone
+            "zone" to commonR.string.zone,
         )
         )[domain]?.let { context.getString(it) }
 

@@ -25,21 +25,21 @@ import io.homeassistant.companion.android.common.R
 fun InfoNotification(
     infoString: Int,
     channelId: String,
-    buttonString: Int
+    buttonString: Int,
 ) {
     val context = LocalContext.current
     Icon(
         Icons.Outlined.Info,
         contentDescription = stringResource(id = R.string.info),
-        modifier = Modifier.padding(top = 40.dp)
+        modifier = Modifier.padding(top = 40.dp),
     )
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(top = 20.dp)
+        modifier = Modifier.padding(top = 20.dp),
     ) {
         Text(
             text = stringResource(id = infoString),
-            fontSize = 15.sp
+            fontSize = 15.sp,
         )
     }
     Row(verticalAlignment = Alignment.CenterVertically) {

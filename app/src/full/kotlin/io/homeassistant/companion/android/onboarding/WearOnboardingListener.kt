@@ -45,7 +45,7 @@ class WearOnboardingListener : WearableListenerService() {
                 Wearable.getDataClient(this@WearOnboardingListener).putDataItem(putDataReq)
                     .addOnCompleteListener {
                         Timber.d(
-                            "sendHomeAssistantInstance: ${if (it.isSuccessful) "success" else "failed"}"
+                            "sendHomeAssistantInstance: ${if (it.isSuccessful) "success" else "failed"}",
                         )
                     }
             } catch (e: Exception) {

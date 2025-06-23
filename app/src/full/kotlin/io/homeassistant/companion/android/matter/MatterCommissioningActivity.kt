@@ -53,7 +53,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
                     onSelectServer = viewModel::checkSupport,
                     onConfirmCommissioning = { startCommissioning() },
                     onClose = { finish() },
-                    onContinue = { continueToApp(false) }
+                    onContinue = { continueToApp(false) },
                 )
             }
         }
@@ -71,7 +71,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
                         "room name: ${data.roomName}\n" +
                         "product id: ${data.productId}\n" +
                         "vendor id: ${data.vendorId}\n" +
-                        "window expires: ${data.commissioningWindowExpirationMillis}"
+                        "window expires: ${data.commissioningWindowExpirationMillis}",
                 )
 
                 deviceName = data.deviceName

@@ -29,7 +29,7 @@ interface MatterManager {
     fun startNewCommissioningFlow(
         context: Context,
         onSuccess: (IntentSender) -> Unit,
-        onFailure: (Exception) -> Unit
+        onFailure: (Exception) -> Unit,
     )
 
     /**

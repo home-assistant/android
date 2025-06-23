@@ -34,7 +34,7 @@ open class BaseActivity : AppCompatActivity() {
                     ActivityCompat.requestPermissions(
                         this@BaseActivity,
                         arrayOf(permissionToRequest),
-                        permissionToRequest.hashCode().absoluteValue
+                        permissionToRequest.hashCode().absoluteValue,
                     )
                 }
             }
@@ -72,12 +72,12 @@ open class BaseActivity : AppCompatActivity() {
         startActivity(
             Intent(
                 this,
-                Class.forName("androidx.car.app.activity.CarAppActivity")
-            ).putExtra("TRANSITION_LAUNCH", true).addFlags(FLAG_ACTIVITY_NEW_TASK)
+                Class.forName("androidx.car.app.activity.CarAppActivity"),
+            ).putExtra("TRANSITION_LAUNCH", true).addFlags(FLAG_ACTIVITY_NEW_TASK),
         )
         overridePendingTransition(
             androidx.appcompat.R.anim.abc_slide_in_bottom,
-            androidx.appcompat.R.anim.abc_slide_in_bottom
+            androidx.appcompat.R.anim.abc_slide_in_bottom,
         )
     }
 }

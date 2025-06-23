@@ -29,7 +29,7 @@ class ManageWidgetsViewModel @Inject constructor(
     todoWidgetDao: TodoWidgetDao,
     mediaPlayerControlsWidgetDao: MediaPlayerControlsWidgetDao,
     templateWidgetDao: TemplateWidgetDao,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
     companion object {
         const val CONFIGURE_REQUEST_LAUNCHER =

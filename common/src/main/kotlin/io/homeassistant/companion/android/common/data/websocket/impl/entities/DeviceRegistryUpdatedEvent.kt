@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class DeviceRegistryUpdatedEvent(
     val action: String,
-    val deviceId: String
+    val deviceId: String,
 )

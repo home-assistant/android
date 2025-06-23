@@ -54,7 +54,7 @@ fun MatterCommissioningView(
     onSelectServer: (Int) -> Unit,
     onConfirmCommissioning: () -> Unit,
     onClose: () -> Unit,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
 ) {
     if (step == CommissioningFlowStep.NotStarted) return
 
@@ -62,20 +62,20 @@ fun MatterCommissioningView(
     val loadingSteps = listOf(
         CommissioningFlowStep.NotStarted,
         CommissioningFlowStep.CheckingCore,
-        CommissioningFlowStep.Working
+        CommissioningFlowStep.Working,
     )
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(rememberScrollState()),
     ) {
         Column(
             modifier = Modifier
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(horizontal = 16.dp)
                 .width(min(screenWidth.value, STEP_SCREEN_MAX_WIDTH_DP).dp)
-                .align(Alignment.Center)
+                .align(Alignment.Center),
         ) {
             MatterCommissioningViewHeader()
 
@@ -83,14 +83,14 @@ fun MatterCommissioningView(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .align(Alignment.CenterHorizontally)
+                        .align(Alignment.CenterHorizontally),
                 ) {
                     if (step in loadingSteps) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             CircularProgressIndicator()
                             if (step is CommissioningFlowStep.Working) {
@@ -99,7 +99,7 @@ fun MatterCommissioningView(
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier
                                         .fillMaxWidth(0.67f)
-                                        .padding(top = 16.dp)
+                                        .padding(top = 16.dp),
                                 )
                             }
                         }
@@ -127,7 +127,7 @@ fun MatterCommissioningView(
                                 else -> "" // not used because everything above is not in loadingSteps
                             },
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }
@@ -141,7 +141,7 @@ fun MatterCommissioningView(
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(min = 56.dp)
-                            .clickable { onSelectServer(it.id) }
+                            .clickable { onSelectServer(it.id) },
                     ) {
                         Text(it.friendlyName)
                     }
@@ -153,7 +153,7 @@ fun MatterCommissioningView(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 32.dp, bottom = 16.dp)
+                        .padding(top = 32.dp, bottom = 16.dp),
                 ) {
                     if (
                         step == CommissioningFlowStep.SelectServer ||
@@ -167,7 +167,8 @@ fun MatterCommissioningView(
                     Spacer(modifier = Modifier.weight(1f))
                     when (step) {
                         CommissioningFlowStep.NotRegistered,
-                        CommissioningFlowStep.NotSupported -> {
+                        CommissioningFlowStep.NotSupported,
+                        -> {
                             Button(onClick = { onClose() }) {
                                 Text(stringResource(commonR.string.close))
                             }
@@ -204,7 +205,7 @@ fun MatterCommissioningViewHeader() {
             contentDescription = null,
             modifier = Modifier
                 .size(48.dp)
-                .align(Alignment.CenterHorizontally)
+                .align(Alignment.CenterHorizontally),
         )
         Text(
             text = stringResource(commonR.string.matter_shared_title),
@@ -212,7 +213,7 @@ fun MatterCommissioningViewHeader() {
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .padding(vertical = 16.dp)
-                .align(Alignment.CenterHorizontally)
+                .align(Alignment.CenterHorizontally),
         )
     }
 }
@@ -220,19 +221,19 @@ fun MatterCommissioningViewHeader() {
 @Preview
 @Composable
 fun PreviewMatterCommissioningView(
-    @PreviewParameter(MatterCommissioningViewPreviewStates::class) step: CommissioningFlowStep
+    @PreviewParameter(MatterCommissioningViewPreviewStates::class) step: CommissioningFlowStep,
 ) {
     HomeAssistantAppTheme {
         MatterCommissioningView(
             step = step,
             deviceName = "Manufacturer Matter Light",
             servers = listOf(
-                Server(id = 0, _name = "Home", listOrder = -1, connection = ServerConnectionInfo(externalUrl = ""), session = ServerSessionInfo(), user = ServerUserInfo())
+                Server(id = 0, _name = "Home", listOrder = -1, connection = ServerConnectionInfo(externalUrl = ""), session = ServerSessionInfo(), user = ServerUserInfo()),
             ),
             onSelectServer = { },
             onConfirmCommissioning = { },
             onClose = { },
-            onContinue = { }
+            onContinue = { },
         )
     }
 }

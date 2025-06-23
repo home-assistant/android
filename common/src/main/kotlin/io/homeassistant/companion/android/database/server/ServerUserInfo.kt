@@ -10,5 +10,5 @@ data class ServerUserInfo(
     @ColumnInfo(name = "user_is_owner")
     val isOwner: Boolean? = null,
     @ColumnInfo(name = "user_is_admin")
-    val isAdmin: Boolean? = null
+    val isAdmin: Boolean? = null,
 )

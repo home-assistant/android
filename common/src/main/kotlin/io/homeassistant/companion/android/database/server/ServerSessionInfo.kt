@@ -12,7 +12,7 @@ data class ServerSessionInfo(
     @ColumnInfo(name = "token_type")
     val tokenType: String? = null,
     @ColumnInfo(name = "install_id")
-    val installId: String? = null
+    val installId: String? = null,
 ) {
     fun isComplete() =
         accessToken != null &&

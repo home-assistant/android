@@ -11,7 +11,7 @@ class ExternalBusRepositoryImpl @Inject constructor() : ExternalBusRepository {
 
     private val externalBusFlow = MutableSharedFlow<ExternalBusMessage>(
         // Don't suspend if the WebView is temporarily unavailable
-        extraBufferCapacity = 100
+        extraBufferCapacity = 100,
     )
     private val receiverFlows = mutableMapOf<List<String>, MutableSharedFlow<JSONObject>>()
 

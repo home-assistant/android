@@ -13,7 +13,7 @@ import org.json.JSONObject
 
 class WearPrefsRepositoryImpl @Inject constructor(
     @Named("wear") private val localStorage: LocalStorage,
-    @Named("integration") private val integrationStorage: LocalStorage
+    @Named("integration") private val integrationStorage: LocalStorage,
 ) : WearPrefsRepository {
 
     companion object {
@@ -64,12 +64,12 @@ class WearPrefsRepositoryImpl @Inject constructor(
             if (currentVersion == null || currentVersion < 2) {
                 val template = localStorage.getString(legacyPrefTileTemplate)
                 val templateRefreshInterval = localStorage.getInt(
-                    legacyPrefTileTemplateRefreshInterval
+                    legacyPrefTileTemplateRefreshInterval,
                 )
 
                 if (template != null && templateRefreshInterval != null) {
                     val templates = mapOf(
-                        UNKNOWN_TEMPLATE_TILE_ID.toString() to kotlinJsonMapper.encodeToString(TemplateTileConfig(template, templateRefreshInterval))
+                        UNKNOWN_TEMPLATE_TILE_ID.toString() to kotlinJsonMapper.encodeToString(TemplateTileConfig(template, templateRefreshInterval)),
                     )
 
                     localStorage.putString(PREF_TILE_TEMPLATES, JSONObject(templates).toString())
@@ -121,9 +121,9 @@ class WearPrefsRepositoryImpl @Inject constructor(
                     val entities = jsonArray.toStringList()
                     mapOf(
                         // the key is null since we don't (yet) have the tileId
-                        null to entities
+                        null to entities,
                     )
-                }
+                },
             )
         } ?: emptyMap()
     }

@@ -51,7 +51,7 @@ class SensorDetailViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val sensorDao: SensorDao,
     private val settingsDao: SettingsDao,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
 
     companion object {
@@ -59,18 +59,18 @@ class SensorDetailViewModel @Inject constructor(
 
         data class PermissionsDialog(
             val serverId: Int?,
-            val permissions: Array<String>? = null
+            val permissions: Array<String>? = null,
         )
         data class LocationPermissionsDialog(
             val block: Boolean,
             val serverId: Int?,
             val sensors: Array<String>,
-            val permissions: Array<String>? = null
+            val permissions: Array<String>? = null,
         )
         data class PermissionSnackbar(
             @StringRes val message: Int,
             val actionOpensSettings: Boolean,
-            val serverId: Int? = null
+            val serverId: Int? = null,
         )
         data class SettingDialogState(
             val setting: SensorSetting,
@@ -79,7 +79,7 @@ class SensorDetailViewModel @Inject constructor(
             /** List of entity ID to entity pairs */
             val entries: List<Pair<String, String>>,
             /** List of selected entity ID */
-            val entriesSelected: List<String>
+            val entriesSelected: List<String>,
         )
     }
 
@@ -191,7 +191,7 @@ class SensorDetailViewModel @Inject constructor(
                     ) {
                         val sensorName = basicSensor?.let {
                             getApplication<Application>().getString(
-                                basicSensor.name
+                                basicSensor.name,
                             )
                         }.orEmpty()
                         locationPermissionRequests.value = LocationPermissionsDialog(block = true, serverId = serverId, sensors = arrayOf(sensorName))
@@ -238,7 +238,7 @@ class SensorDetailViewModel @Inject constructor(
                 setting = setting,
                 loading = true,
                 entries = listOf(),
-                entriesSelected = listOf()
+                entriesSelected = listOf(),
             )
         }
 
@@ -268,7 +268,7 @@ class SensorDetailViewModel @Inject constructor(
                     setting.value.split(", ").filter { listEntries.contains(it) }
                 else ->
                     emptyList()
-            }
+            },
         )
         dialogLoadingJob.cancel()
         sensorSettingsDialog = state
@@ -523,10 +523,12 @@ class SensorDetailViewModel @Inject constructor(
                                 commonR.string.enable_sensor_missing_permission_activity_recognition
                             Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                             Manifest.permission.ACCESS_COARSE_LOCATION,
-                            Manifest.permission.ACCESS_FINE_LOCATION ->
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            ->
                                 commonR.string.enable_sensor_missing_permission_location
                             Manifest.permission.BLUETOOTH_ADVERTISE,
-                            Manifest.permission.BLUETOOTH_CONNECT ->
+                            Manifest.permission.BLUETOOTH_CONNECT,
+                            ->
                                 commonR.string.enable_sensor_missing_permission_nearby_devices
                             Manifest.permission.READ_PHONE_STATE ->
                                 commonR.string.enable_sensor_missing_permission_phone
@@ -534,8 +536,8 @@ class SensorDetailViewModel @Inject constructor(
                                 commonR.string.enable_sensor_missing_permission_general
                         },
                         true,
-                        serverId
-                    )
+                        serverId,
+                    ),
                 )
             }
             updateSensorEntity(hasPermission, serverId)
@@ -547,7 +549,7 @@ class SensorDetailViewModel @Inject constructor(
      * Convert a Flow into a State object that updates until the view model is cleared.
      */
     private fun <T> Flow<T>.collectAsState(
-        initial: T
+        initial: T,
     ): State<T> {
         val state = mutableStateOf(initial)
         viewModelScope.launch {

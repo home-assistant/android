@@ -37,16 +37,16 @@ fun NfcEditView(
     identifier: String?,
     showDeviceSample: Boolean,
     onDuplicateClicked: () -> Unit,
-    onFireEventClicked: () -> Unit
+    onFireEventClicked: () -> Unit,
 ) {
     val context = LocalContext.current
     LazyColumn(
-        contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues()
+        contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(),
     ) {
         item {
             Text(
                 text = stringResource(commonR.string.nfc_tag_identifier),
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = 8.dp),
             )
         }
         item {
@@ -58,7 +58,7 @@ fun NfcEditView(
                     modifier = Modifier
                         .padding(end = 8.dp)
                         .weight(1f),
-                    onClick = onDuplicateClicked
+                    onClick = onDuplicateClicked,
                 ) {
                     Text(stringResource(commonR.string.nfc_btn_create_duplicate))
                 }
@@ -66,7 +66,7 @@ fun NfcEditView(
                     modifier = Modifier
                         .padding(start = 8.dp)
                         .weight(1f),
-                    onClick = onFireEventClicked
+                    onClick = onFireEventClicked,
                 ) {
                     Text(stringResource(commonR.string.nfc_btn_fire_event))
                 }
@@ -79,21 +79,21 @@ fun NfcEditView(
         item {
             Text(
                 text = stringResource(commonR.string.nfc_trigger_summary),
-                modifier = Modifier.padding(top = 48.dp, bottom = 8.dp)
+                modifier = Modifier.padding(top = 48.dp, bottom = 8.dp),
             )
         }
         item {
             NfcTriggerExample(
                 modifier = Modifier.padding(bottom = 8.dp),
                 description = if (showDeviceSample) stringResource(commonR.string.nfc_trigger_any) else "",
-                example = tagTriggerExample
+                example = tagTriggerExample,
             )
         }
         if (showDeviceSample) {
             item {
                 NfcTriggerExample(
                     description = stringResource(commonR.string.nfc_trigger_device),
-                    example = deviceTriggerExample
+                    example = deviceTriggerExample,
                 )
             }
         }
@@ -102,18 +102,18 @@ fun NfcEditView(
 
 @Composable
 fun NfcCodeContainer(
-    text: String
+    text: String,
 ) {
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = colorResource(commonR.color.colorCodeBackground),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         SelectionContainer {
             Text(
                 text = text,
                 fontFamily = FontFamily.Monospace,
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp),
             )
         }
     }
@@ -123,14 +123,14 @@ fun NfcCodeContainer(
 fun NfcTriggerExample(
     modifier: Modifier = Modifier,
     description: String,
-    example: String
+    example: String,
 ) {
     val context = LocalContext.current
     Column(modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = description,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
             IconButton(
                 modifier = Modifier.padding(all = 8.dp),
@@ -142,11 +142,11 @@ fun NfcTriggerExample(
                     }
                     val shareIntent = Intent.createChooser(sendIntent, null)
                     context.startActivity(shareIntent)
-                }
+                },
             ) {
                 Icon(
                     imageVector = Icons.Default.Share,
-                    contentDescription = stringResource(commonR.string.nfc_btn_share)
+                    contentDescription = stringResource(commonR.string.nfc_btn_share),
                 )
             }
         }

@@ -39,7 +39,7 @@ class PhoneInstallActivity : AppCompatActivity() {
                     onAdvanced = {
                         startActivity(ManualSetupActivity.newInstance(this@PhoneInstallActivity))
                         finish()
-                    }
+                    },
                 )
             }
         }
@@ -58,7 +58,7 @@ class PhoneInstallActivity : AppCompatActivity() {
                         data = Uri.parse("https://play.google.com/store/apps/details?id=${BuildConfig.APPLICATION_ID}")
                     },
                     // A Wear device only has one companion device so this is not needed
-                    null
+                    null,
                 ).await()
             } catch (e: Exception) {
                 Timber.e(e, "Unable to open remote activity")
@@ -72,7 +72,7 @@ class PhoneInstallActivity : AppCompatActivity() {
                             ConfirmationActivity.OPEN_ON_PHONE_ANIMATION
                         } else {
                             ConfirmationActivity.FAILURE_ANIMATION
-                        }
+                        },
                     )
                     if (success) {
                         putExtra(ConfirmationActivity.EXTRA_ANIMATION_DURATION_MILLIS, 2000)
@@ -84,8 +84,8 @@ class PhoneInstallActivity : AppCompatActivity() {
                                 commonR.string.continue_on_phone
                             } else {
                                 commonR.string.failed_phone_connection
-                            }
-                        )
+                            },
+                        ),
                     )
                 }
             startActivity(confirmation)

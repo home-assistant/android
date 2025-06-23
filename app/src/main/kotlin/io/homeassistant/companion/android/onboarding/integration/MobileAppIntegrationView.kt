@@ -49,7 +49,7 @@ fun MobileAppIntegrationView(
     onLocationTrackingChanged: (Boolean) -> Unit,
     onSelectTLSCertificateClicked: () -> Unit,
     onCheckPassword: (String) -> Unit,
-    onFinishClicked: () -> Unit
+    onFinishClicked: () -> Unit,
 ) {
     val scrollState = rememberScrollState()
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -58,7 +58,7 @@ fun MobileAppIntegrationView(
             modifier = Modifier
                 .verticalScroll(scrollState)
                 .fillMaxWidth()
-                .weight(1f)
+                .weight(1f),
         ) {
             OnboardingHeaderView(
                 icon = if (onboardingViewModel.deviceIsWatch) {
@@ -68,7 +68,7 @@ fun MobileAppIntegrationView(
                 } else {
                     CommunityMaterial.Icon.cmd_cellphone
                 },
-                title = stringResource(id = commonR.string.connect_to_home_assistant)
+                title = stringResource(id = commonR.string.connect_to_home_assistant),
             )
 
             TextField(
@@ -81,8 +81,8 @@ fun MobileAppIntegrationView(
                 keyboardActions = KeyboardActions(
                     onDone = {
                         keyboardController?.hide()
-                    }
-                )
+                    },
+                ),
             )
             if (onboardingViewModel.locationTrackingPossible.value) {
                 Row {
@@ -90,17 +90,17 @@ fun MobileAppIntegrationView(
                         text = stringResource(commonR.string.enable_location_tracking),
                         modifier = Modifier
                             .align(Alignment.CenterVertically)
-                            .weight(1f)
+                            .weight(1f),
                     )
                     Switch(
                         checked = onboardingViewModel.locationTrackingEnabled,
                         onCheckedChange = onLocationTrackingChanged,
-                        colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb))
+                        colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb)),
                     )
                 }
                 Text(
                     text = stringResource(id = commonR.string.enable_location_tracking_description),
-                    fontWeight = FontWeight.Light
+                    fontWeight = FontWeight.Light,
                 )
             }
             if (onboardingViewModel.deviceIsWatch && onboardingViewModel.mayRequireTlsClientCertificate) {
@@ -108,15 +108,15 @@ fun MobileAppIntegrationView(
 
                 Text(
                     text = stringResource(id = commonR.string.tls_cert_onboarding_title),
-                    style = MaterialTheme.typography.h6
+                    style = MaterialTheme.typography.h6,
                 )
                 Text(
                     text = stringResource(id = commonR.string.tls_cert_onboarding_description),
-                    fontWeight = FontWeight.Light
+                    fontWeight = FontWeight.Light,
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Button(onClick = onSelectTLSCertificateClicked) {
                         Text(text = stringResource(id = commonR.string.select_file))
@@ -124,7 +124,7 @@ fun MobileAppIntegrationView(
                     Text(
                         text = onboardingViewModel.tlsClientCertificateFilename,
                         modifier = Modifier
-                            .align(Alignment.CenterVertically)
+                            .align(Alignment.CenterVertically),
                     )
                 }
                 if (onboardingViewModel.tlsClientCertificateUri != null) {
@@ -139,30 +139,30 @@ fun MobileAppIntegrationView(
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Done
+                            imeAction = ImeAction.Done,
                         ),
                         keyboardActions = KeyboardActions(
                             onDone = {
                                 keyboardController?.hide()
-                            }
+                            },
                         ),
                         trailingIcon = {
                             if (onboardingViewModel.tlsClientCertificatePasswordCorrect) {
                                 Icon(
                                     imageVector = Icons.Filled.CheckCircle,
                                     tint = colorResource(commonR.color.colorOnBackground),
-                                    contentDescription = stringResource(id = commonR.string.password_correct)
+                                    contentDescription = stringResource(id = commonR.string.password_correct),
                                 )
                             } else {
                                 Icon(
                                     imageVector = Icons.Filled.Error,
                                     tint = colorResource(commonR.color.colorWarning),
-                                    contentDescription = stringResource(id = commonR.string.password_incorrect)
+                                    contentDescription = stringResource(id = commonR.string.password_incorrect),
                                 )
                             }
                         },
                         isError = !onboardingViewModel.tlsClientCertificatePasswordCorrect,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
@@ -175,11 +175,11 @@ fun MobileAppIntegrationView(
             modifier = Modifier
                 .padding(top = 16.dp)
                 .fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
+            horizontalArrangement = Arrangement.End,
         ) {
             Button(
                 onClick = onFinishClicked,
-                enabled = !onboardingViewModel.deviceIsWatch || onboardingViewModel.tlsClientCertificateUri == null || onboardingViewModel.tlsClientCertificatePasswordCorrect
+                enabled = !onboardingViewModel.deviceIsWatch || onboardingViewModel.tlsClientCertificateUri == null || onboardingViewModel.tlsClientCertificatePasswordCorrect,
             ) {
                 Text(stringResource(id = commonR.string.continue_connect))
             }

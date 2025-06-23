@@ -7,7 +7,7 @@ import java.util.Locale
 import javax.inject.Inject
 
 class LanguagesProvider @Inject constructor(
-    private var langManager: LanguagesManager
+    private var langManager: LanguagesManager,
 ) {
 
     fun getSupportedLanguages(context: Context): Map<String, String> {

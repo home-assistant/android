@@ -77,7 +77,7 @@ class SensorDetailFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
@@ -87,7 +87,7 @@ class SensorDetailFragment : Fragment() {
                         onSetEnabled = { enable, serverId -> viewModel.setEnabled(enable, serverId) },
                         onToggleSettingSubmitted = { setting -> viewModel.setSetting(setting) },
                         onDialogSettingClicked = { setting -> viewModel.onSettingWithDialogPressed(setting) },
-                        onDialogSettingSubmitted = { state -> viewModel.submitSettingWithDialog(state) }
+                        onDialogSettingSubmitted = { state -> viewModel.submitSettingWithDialog(state) },
                     )
                 }
             }
@@ -128,7 +128,7 @@ class SensorDetailFragment : Fragment() {
                 }
             },
             viewLifecycleOwner,
-            Lifecycle.State.RESUMED
+            Lifecycle.State.RESUMED,
         )
 
         viewModel.permissionRequests.observe(viewLifecycleOwner) {
@@ -167,9 +167,9 @@ class SensorDetailFragment : Fragment() {
                                     it.permissions.toSet().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray()
                                 } else {
                                     it.permissions
-                                }
+                                },
                             )
-                        }
+                        },
                     )
                 }
                 viewModel.locationPermissionRequests.value = null

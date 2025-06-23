@@ -18,7 +18,7 @@ import io.homeassistant.companion.android.home.views.TimeText
 @Composable
 fun ThemeLazyColumn(
     state: ScalingLazyListState = rememberScalingLazyListState(),
-    content: ScalingLazyListScope.() -> Unit
+    content: ScalingLazyListScope.() -> Unit,
 ) {
     Scaffold(
         positionIndicator = {
@@ -26,18 +26,18 @@ fun ThemeLazyColumn(
                 PositionIndicator(scalingLazyListState = state)
             }
         },
-        timeText = { TimeText(scalingLazyListState = state) }
+        timeText = { TimeText(scalingLazyListState = state) },
     ) {
         ScalingLazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = 8.dp,
-                end = 8.dp
+                end = 8.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             state = state,
-            content = content
+            content = content,
         )
     }
 }

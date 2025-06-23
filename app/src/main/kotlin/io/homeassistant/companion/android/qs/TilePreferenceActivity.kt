@@ -60,7 +60,7 @@ class TilePreferenceActivity : BaseActivity() {
                 WebViewActivity.newInstance(
                     this@TilePreferenceActivity,
                     path = "entityId:${tileData.entityId}",
-                    serverId = tileData.serverId
+                    serverId = tileData.serverId,
                 )
             } else {
                 SettingsActivity.newInstance(this@TilePreferenceActivity).apply {

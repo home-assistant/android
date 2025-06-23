@@ -35,7 +35,7 @@ class DefaultIconFilter(
     /**
      * Whether to normalize search query or not, using [String.normalize].
      */
-    private val queryNormalized: Boolean = true
+    private val queryNormalized: Boolean = true,
 ) : IconFilter {
 
     /**

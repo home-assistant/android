@@ -65,14 +65,14 @@ class CameraWidget : AppWidgetProvider() {
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray
+        appWidgetIds: IntArray,
     ) {
         // There may be multiple widgets active, so update all of them
         appWidgetIds.forEach { appWidgetId ->
             updateAppWidget(
                 context,
                 appWidgetId,
-                appWidgetManager
+                appWidgetManager,
             )
         }
     }
@@ -80,7 +80,7 @@ class CameraWidget : AppWidgetProvider() {
     private fun updateAppWidget(
         context: Context,
         appWidgetId: Int,
-        appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
+        appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context),
     ) {
         if (!context.hasActiveConnection()) {
             Timber.d("Skipping widget update since network connection is not active")
@@ -142,20 +142,20 @@ class CameraWidget : AppWidgetProvider() {
                 if (url == null) {
                     setViewVisibility(
                         R.id.widgetCameraPlaceholder,
-                        View.VISIBLE
+                        View.VISIBLE,
                     )
                     setViewVisibility(
                         R.id.widgetCameraImage,
-                        View.GONE
+                        View.GONE,
                     )
                 } else {
                     setViewVisibility(
                         R.id.widgetCameraImage,
-                        View.VISIBLE
+                        View.VISIBLE,
                     )
                     setViewVisibility(
                         R.id.widgetCameraPlaceholder,
-                        View.GONE
+                        View.GONE,
                     )
                     Timber.d("Fetching camera image")
                     Handler(Looper.getMainLooper()).post {
@@ -181,14 +181,14 @@ class CameraWidget : AppWidgetProvider() {
                         context,
                         appWidgetId,
                         WebViewActivity.newInstance(context, "entityId:${widget.entityId}", widget.serverId),
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                     )
 
                     else -> PendingIntent.getBroadcast(
                         context,
                         appWidgetId,
                         updateCameraIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                     )
                 }
                 setOnClickPendingIntent(R.id.widgetCameraImage, tapWidgetPendingIntent)
@@ -211,7 +211,7 @@ class CameraWidget : AppWidgetProvider() {
         Timber.d(
             "Broadcast received: " + System.lineSeparator() +
                 "Broadcast action: " + lastIntent + System.lineSeparator() +
-                "AppWidgetId: " + appWidgetId
+                "AppWidgetId: " + appWidgetId,
         )
 
         super.onReceive(context, intent)
@@ -238,15 +238,15 @@ class CameraWidget : AppWidgetProvider() {
         mainScope.launch {
             Timber.d(
                 "Saving camera config data:" + System.lineSeparator() +
-                    "entity id: " + entitySelection + System.lineSeparator()
+                    "entity id: " + entitySelection + System.lineSeparator(),
             )
             cameraWidgetDao.add(
                 CameraWidgetEntity(
                     appWidgetId,
                     serverSelection,
                     entitySelection,
-                    tapActionSelection
-                )
+                    tapActionSelection,
+                ),
             )
 
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))

@@ -88,7 +88,7 @@ private object UpdateLocationRequestSerializer : KSerializer<UpdateLocationReque
                 speed = speed,
                 altitude = altitude,
                 course = course,
-                verticalAccuracy = verticalAccuracy
+                verticalAccuracy = verticalAccuracy,
             )
         }
     }

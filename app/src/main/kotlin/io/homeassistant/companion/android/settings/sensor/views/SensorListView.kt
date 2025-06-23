@@ -32,32 +32,32 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
 @Composable
 fun SensorListView(
     viewModel: SensorSettingsViewModel,
-    onSensorClicked: (String) -> Unit
+    onSensorClicked: (String) -> Unit,
 ) {
     LazyColumn(
-        contentPadding = safeBottomPaddingValues(applyHorizontal = false)
+        contentPadding = safeBottomPaddingValues(applyHorizontal = false),
     ) {
         viewModel.allSensors.filter { it.value.isNotEmpty() }.forEach { (manager, currentSensors) ->
             stickyHeader(
-                key = manager.id()
+                key = manager.id(),
             ) {
                 if (currentSensors.any()) {
                     Column(
                         modifier = Modifier
                             .background(MaterialTheme.colors.background)
-                            .fillMaxWidth()
+                            .fillMaxWidth(),
                     ) {
                         Row(
                             modifier = Modifier
                                 .height(48.dp)
                                 .padding(start = 72.dp, end = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
                                 text = stringResource(manager.name),
                                 style = MaterialTheme.typography.body2,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colors.primary
+                                color = MaterialTheme.colors.primary,
                             )
                         }
                     }
@@ -65,12 +65,12 @@ fun SensorListView(
             }
             items(
                 items = currentSensors,
-                key = { "${manager.id()}_${it.id}" }
+                key = { "${manager.id()}_${it.id}" },
             ) { basicSensor ->
                 SensorRow(
                     basicSensor = basicSensor,
                     dbSensor = viewModel.sensors[basicSensor.id],
-                    onSensorClicked = onSensorClicked
+                    onSensorClicked = onSensorClicked,
                 )
             }
             if (currentSensors.any() && manager.id() != viewModel.allSensors.keys.last().id()) {
@@ -86,7 +86,7 @@ fun SensorListView(
 fun SensorRow(
     basicSensor: SensorManager.BasicSensor,
     dbSensor: Sensor?,
-    onSensorClicked: (String) -> Unit
+    onSensorClicked: (String) -> Unit,
 ) {
     val context = LocalContext.current
     var iconToUse = basicSensor.statelessIcon
@@ -115,6 +115,6 @@ fun SensorRow(
             stringResource(commonR.string.disabled)
         },
         mdiIcon = mdiIcon,
-        enabled = dbSensor?.enabled == true
+        enabled = dbSensor?.enabled == true,
     ) { onSensorClicked(basicSensor.id) }
 }

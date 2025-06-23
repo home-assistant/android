@@ -25,7 +25,7 @@ object LightControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity,
-        info: HaControlInfo
+        info: HaControlInfo,
     ): Control.StatefulBuilder {
         val position = entity.getLightBrightness()
         control.setControlTemplate(
@@ -40,18 +40,18 @@ object LightControl : HaControl {
                         position?.max ?: 100f,
                         position?.value ?: 0f,
                         1f,
-                        "%.0f%%"
-                    )
+                        "%.0f%%",
+                    ),
                 )
             } else {
                 ToggleTemplate(
                     entity.entityId,
                     ControlButton(
                         entity.isActive(),
-                        "Description"
-                    )
+                        "Description",
+                    ),
                 )
-            }
+            },
         )
         return control
     }
@@ -64,7 +64,7 @@ object LightControl : HaControl {
 
     override suspend fun performAction(
         integrationRepository: IntegrationRepository,
-        action: ControlAction
+        action: ControlAction,
     ): Boolean {
         return when (action) {
             is BooleanAction -> {
@@ -72,8 +72,8 @@ object LightControl : HaControl {
                     action.templateId.split(".")[0],
                     if (action.newState) "turn_on" else "turn_off",
                     hashMapOf(
-                        "entity_id" to action.templateId
-                    )
+                        "entity_id" to action.templateId,
+                    ),
                 )
                 true
             }
@@ -84,8 +84,8 @@ object LightControl : HaControl {
                     "turn_on",
                     hashMapOf(
                         "entity_id" to action.templateId,
-                        "brightness" to convertBrightness.toInt()
-                    )
+                        "brightness" to convertBrightness.toInt(),
+                    ),
                 )
                 true
             }

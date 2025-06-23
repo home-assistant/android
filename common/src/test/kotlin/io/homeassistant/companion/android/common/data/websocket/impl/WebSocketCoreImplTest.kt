@@ -67,7 +67,7 @@ class WebSocketCoreImplTest {
 
     private fun TestScope.setupServer(
         url: String = "https://io.ha",
-        backgroundScope: CoroutineScope = this.backgroundScope
+        backgroundScope: CoroutineScope = this.backgroundScope,
     ) {
         mockOkHttpClient = mockk<OkHttpClient>(relaxed = true)
         val mockServerManager = mockk<ServerManager>(relaxed = true)

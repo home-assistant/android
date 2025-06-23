@@ -26,7 +26,7 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
         private var listenerLastRegistered = 0
         private val skipAccuracy = listOf(
             SENSOR_STATUS_UNRELIABLE,
-            SENSOR_STATUS_NO_CONTACT
+            SENSOR_STATUS_NO_CONTACT,
         )
         private var eventCount = 0
         private val heartRate = SensorManager.BasicSensor(
@@ -36,7 +36,7 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
             commonR.string.sensor_description_heart_rate,
             "mdi:heart-pulse",
             unitOfMeasurement = "bpm",
-            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
         )
     }
 
@@ -68,7 +68,7 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
     private lateinit var mySensorManager: android.hardware.SensorManager
 
     override suspend fun requestSensorUpdate(
-        context: Context
+        context: Context,
     ) {
         latestContext = context
         updateHeartRate()
@@ -92,7 +92,7 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
             mySensorManager.registerListener(
                 this,
                 heartRateSensor,
-                SENSOR_DELAY_NORMAL
+                SENSOR_DELAY_NORMAL,
             )
             Timber.d("Heart Rate sensor listener registered")
             isListenerRegistered = true
@@ -120,8 +120,8 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
                 event.values[0].roundToInt().toString(),
                 heartRate.statelessIcon,
                 mapOf(
-                    "accuracy" to getAccuracy(event.accuracy)
-                )
+                    "accuracy" to getAccuracy(event.accuracy),
+                ),
             )
         }
         if (validReading || eventCount >= 10) {

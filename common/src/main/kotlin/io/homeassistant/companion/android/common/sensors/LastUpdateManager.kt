@@ -19,7 +19,7 @@ class LastUpdateManager : SensorManager {
             commonR.string.sensor_description_last_update,
             "mdi:update",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
     }
 
@@ -38,7 +38,7 @@ class LastUpdateManager : SensorManager {
     }
 
     override suspend fun requestSensorUpdate(
-        context: Context
+        context: Context,
     ) {
         // No op
     }
@@ -59,7 +59,7 @@ class LastUpdateManager : SensorManager {
             lastUpdate,
             intentAction,
             lastUpdate.statelessIcon,
-            mapOf()
+            mapOf(),
         )
 
         val sensorDao = AppDatabase.getInstance(context).sensorDao()

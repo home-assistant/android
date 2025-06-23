@@ -57,7 +57,7 @@ fun ImprovSheetView(
     screenState: ImprovSheetState,
     onConnect: (String, String, String, String) -> Unit,
     onRestart: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     var selectedName by rememberSaveable(screenState.initialDeviceName) { mutableStateOf<String?>(screenState.initialDeviceName) }
     var selectedAddress by rememberSaveable(screenState.initialDeviceAddress) { mutableStateOf<String?>(screenState.initialDeviceAddress) }
@@ -74,7 +74,7 @@ fun ImprovSheetView(
             }
         } else {
             ""
-        }
+        },
     ) {
         Column(
             modifier = Modifier
@@ -82,7 +82,7 @@ fun ImprovSheetView(
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 16.dp)
                 .heightIn(min = 160.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (selectedAddress != null && !submittedWifi) {
                 ImprovWifiInput(
@@ -97,7 +97,7 @@ fun ImprovSheetView(
                     onSubmit = { ssid, password ->
                         onConnect(selectedName ?: "", selectedAddress ?: "", ssid, password)
                         submittedWifi = true
-                    }
+                    },
                 )
             } else if (screenState.scanning) {
                 screenState.devices.forEach {
@@ -106,14 +106,14 @@ fun ImprovSheetView(
                         onClick = { device ->
                             selectedName = device.name
                             selectedAddress = device.address
-                        }
+                        },
                     )
                 }
             } else if (screenState.deviceState == DeviceState.PROVISIONED) {
                 ImprovTextWithIcon(
                     icon = CommunityMaterial.Icon3.cmd_wifi_check,
                     text = stringResource(commonR.string.improv_device_provisioned),
-                    onButtonClick = onDismiss
+                    onButtonClick = onDismiss,
                 )
             } else if (screenState.hasError) {
                 ImprovTextWithIcon(
@@ -125,14 +125,14 @@ fun ImprovSheetView(
                             ErrorState.UNKNOWN_COMMAND -> commonR.string.improv_error_unknown_command
                             ErrorState.INVALID_RPC_PACKET -> commonR.string.improv_error_invalid_rpc_packet
                             else -> commonR.string.improv_error_unknown
-                        }
+                        },
                     ),
                     onButtonClick = {
                         selectedName = null
                         selectedAddress = null
                         submittedWifi = false
                         onRestart()
-                    }
+                    },
                 )
             } else {
                 CircularProgressIndicator()
@@ -148,10 +148,10 @@ fun ImprovSheetView(
                             commonR.string.improv_device_connecting
                         } else {
                             commonR.string.state_unknown
-                        }
+                        },
                     ),
                     modifier = Modifier.fillMaxWidth(0.8f).padding(top = 16.dp),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
             }
         }
@@ -161,7 +161,7 @@ fun ImprovSheetView(
 @Composable
 fun ImprovDeviceRow(
     device: ImprovDevice,
-    onClick: (ImprovDevice) -> Unit
+    onClick: (ImprovDevice) -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -169,13 +169,13 @@ fun ImprovDeviceRow(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .clickable { onClick(device) }
+            .clickable { onClick(device) },
     ) {
         Text(device.name.takeUnless { it.isNullOrBlank() } ?: device.address)
         Icon(
             imageVector = Icons.AutoMirrored.Default.ArrowForwardIos,
             contentDescription = null,
-            modifier = Modifier.size(24.dp).padding(4.dp)
+            modifier = Modifier.size(24.dp).padding(4.dp),
         )
     }
     Divider()
@@ -184,7 +184,7 @@ fun ImprovDeviceRow(
 @Composable
 fun ImprovWifiInput(
     activeSsid: String?,
-    onSubmit: (String, String) -> Unit
+    onSubmit: (String, String) -> Unit,
 ) {
     var ssidInput by rememberSaveable { mutableStateOf(activeSsid ?: "") }
     var passwordInput by rememberSaveable { mutableStateOf("") }
@@ -196,7 +196,7 @@ fun ImprovWifiInput(
             label = { Text(stringResource(commonR.string.improv_wifi_ssid)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
         TextField(
@@ -218,12 +218,12 @@ fun ImprovWifiInput(
                     Icon(image, description)
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
         Button(
             modifier = Modifier.padding(vertical = 8.dp).align(Alignment.CenterHorizontally),
             enabled = ssidInput.isNotBlank(),
-            onClick = { onSubmit(ssidInput, passwordInput) }
+            onClick = { onSubmit(ssidInput, passwordInput) },
         ) {
             Text(stringResource(commonR.string.continue_connect))
         }
@@ -236,12 +236,12 @@ fun ImprovTextWithIcon(icon: IIcon, text: String, onButtonClick: () -> Unit) {
         asset = icon,
         contentDescription = null,
         colorFilter = ColorFilter.tint(LocalContentColor.current),
-        modifier = Modifier.size(40.dp)
+        modifier = Modifier.size(40.dp),
     )
     Text(
         text = text,
         modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 16.dp),
-        textAlign = TextAlign.Center
+        textAlign = TextAlign.Center,
     )
     Button(onButtonClick) {
         Text(stringResource(commonR.string.continue_connect))
@@ -256,11 +256,11 @@ fun PreviewImprovDevices() {
             scanning = true,
             devices = listOf(ImprovDevice("Demo device", "A1:B2:C3:D4:E5:F6")),
             deviceState = null,
-            errorState = null
+            errorState = null,
         ),
         onConnect = { _, _, _, _ -> },
         onRestart = {},
-        onDismiss = {}
+        onDismiss = {},
     )
 }
 
@@ -272,11 +272,11 @@ fun PreviewImprovSubmitting() {
             scanning = false,
             devices = listOf(ImprovDevice("Demo device", "A1:B2:C3:D4:E5:F6")),
             deviceState = DeviceState.PROVISIONING,
-            errorState = ErrorState.NO_ERROR
+            errorState = ErrorState.NO_ERROR,
         ),
         onConnect = { _, _, _, _ -> },
         onRestart = {},
-        onDismiss = {}
+        onDismiss = {},
     )
 }
 
@@ -288,10 +288,10 @@ fun PreviewImprovInvalid() {
             scanning = false,
             devices = listOf(ImprovDevice("Demo device", "A1:B2:C3:D4:E5:F6")),
             deviceState = DeviceState.PROVISIONING,
-            errorState = ErrorState.INVALID_RPC_PACKET
+            errorState = ErrorState.INVALID_RPC_PACKET,
         ),
         onConnect = { _, _, _, _ -> },
         onRestart = {},
-        onDismiss = {}
+        onDismiss = {},
     )
 }

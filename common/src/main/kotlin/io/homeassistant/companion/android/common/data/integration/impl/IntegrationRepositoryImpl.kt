@@ -54,7 +54,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     @Named("manufacturer") private val manufacturer: String,
     @Named("model") private val model: String,
     @Named("osVersion") private val osVersion: String,
-    @Named("deviceId") private val deviceId: String
+    @Named("deviceId") private val deviceId: String,
 ) : IntegrationRepository {
 
     companion object {
@@ -103,7 +103,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             integrationService.registerDevice(
                 url.newBuilder().addPathSegments("api/mobile_app/registrations").build(),
                 serverManager.authenticationRepository(serverId).buildBearerToken(),
-                request
+                request,
             )
         try {
             persistDeviceRegistration(deviceRegistration)
@@ -114,9 +114,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                         cloudhookUrl = response.cloudhookUrl,
                         cloudUrl = response.remoteUiUrl,
                         useCloud = response.remoteUiUrl != null,
-                        secret = response.secret
-                    )
-                )
+                        secret = response.secret,
+                    ),
+                ),
             )
             getConfig() // To get version, name, etc stored
             webSocketRepository.getCurrentUser() // To get user info stored
@@ -171,7 +171,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         return DeviceRegistration(
             localStorage.getString(PREF_APP_VERSION),
             server.deviceName,
-            localStorage.getString(PREF_PUSH_TOKEN)
+            localStorage.getString(PREF_PUSH_TOKEN),
         )
     }
 
@@ -251,7 +251,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 wasSuccess =
                     integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
-                        updateLocationRequest
+                        updateLocationRequest,
                     ).isSuccessful
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
@@ -281,7 +281,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             ActionRequest(
                 domain,
                 action,
-                actionData
+                actionData,
             )
 
         var causeException: Exception? = null
@@ -346,7 +346,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         val fireEventRequest = FireEventRequest(
             eventType,
-            eventData.plus(Pair("device_id", deviceId))
+            eventData.plus(Pair("device_id", deviceId)),
         )
 
         var causeException: Exception? = null
@@ -474,7 +474,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 updateServerWithConfig(response)
                 localStorage.putLong(
                     "${serverId}_$PREF_CHECK_SENSOR_REGISTRATION_NEXT",
-                    current + TimeUnit.HOURS.toMillis(4)
+                    current + TimeUnit.HOURS.toMillis(4),
                 )
                 response.version
             }
@@ -487,7 +487,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     override suspend fun isHomeAssistantVersionAtLeast(
         year: Int,
         month: Int,
-        release: Int
+        release: Int,
     ): Boolean {
         if (!isRegistered()) return false
 
@@ -512,7 +512,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 updateServerWithConfig(response)
                 localStorage.putLong(
                     "${serverId}_$PREF_CHECK_SENSOR_REGISTRATION_NEXT",
-                    System.currentTimeMillis() + TimeUnit.HOURS.toMillis(4)
+                    System.currentTimeMillis() + TimeUnit.HOURS.toMillis(4),
                 )
                 return response
             }
@@ -537,9 +537,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 deviceRegistryId = config.hassDeviceId ?: server.deviceRegistryId,
                 connection = server.connection.copy(
                     cloudUrl = config.remoteUiUrl,
-                    cloudhookUrl = config.cloudhookUrl
-                )
-            )
+                    cloudhookUrl = config.cloudhookUrl,
+                ),
+            ),
         )
     }
 
@@ -565,8 +565,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                     emit(
                         AssistPipelineEvent(
                             type = AssistPipelineEventType.INTENT_END,
-                            data = AssistPipelineIntentEnd(response)
-                        )
+                            data = AssistPipelineIntentEnd(response),
+                        ),
                     )
                 } else {
                     emit(AssistPipelineEvent(type = AssistPipelineEventType.ERROR, data = null))
@@ -626,7 +626,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         val response = integrationService.getState(
             url.newBuilder().addPathSegments("api/states/$entityId").build(),
-            serverManager.authenticationRepository(serverId).buildBearerToken()
+            serverManager.authenticationRepository(serverId).buildBearerToken(),
         )
         return Entity(
             response.entityId,
@@ -722,7 +722,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             if (canRegisterCategoryStateClass) sensorRegistration.stateClass else null,
             if (canRegisterCategoryStateClass) sensorRegistration.entityCategory else null,
             if (canRegisterEntityDisabledState) sensorRegistration.disabled else null,
-            canRegisterNullProperties
+            canRegisterNullProperties,
         )
 
         val integrationRequest = RegisterSensorIntegrationRequest(registrationData)
@@ -757,9 +757,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                     if (it.state is String) it.state.ifBlank { null } else it.state,
                     it.type,
                     it.icon,
-                    it.attributes
+                    it.attributes,
                 )
-            }
+            },
         )
 
         var causeException: Exception? = null
@@ -818,7 +818,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             osVersion,
             null,
             appData,
-            null
+            null,
         )
     }
 
@@ -831,8 +831,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 updateLocation.speed,
                 updateLocation.altitude,
                 updateLocation.course,
-                updateLocation.verticalAccuracy
-            )
+                updateLocation.verticalAccuracy,
+            ),
         )
     }
 

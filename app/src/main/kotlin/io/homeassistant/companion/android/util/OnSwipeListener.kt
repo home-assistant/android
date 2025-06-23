@@ -114,7 +114,7 @@ abstract class OnSwipeListener(context: Context?) : View.OnTouchListener {
                             motionEvent,
                             abs(if (direction == SwipeDirection.UP || direction == SwipeDirection.DOWN) velocityY else velocityX),
                             direction,
-                            numberOfPointers
+                            numberOfPointers,
                         )
                     }
                     cleanup()
@@ -148,19 +148,20 @@ abstract class OnSwipeListener(context: Context?) : View.OnTouchListener {
         e2: MotionEvent,
         velocity: Float,
         direction: SwipeDirection,
-        pointerCount: Int
+        pointerCount: Int,
     ): Boolean
 
     abstract fun onMotionEventHandled(
         v: View?,
-        event: MotionEvent?
+        event: MotionEvent?,
     ): Boolean
 
     enum class SwipeDirection {
         UP,
         DOWN,
         LEFT,
-        RIGHT;
+        RIGHT,
+        ;
 
         companion object {
             fun fromVelocity(velocityX: Float, velocityY: Float): SwipeDirection {

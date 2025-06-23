@@ -36,7 +36,7 @@ class ManageShortcutsSettingsFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
@@ -48,7 +48,7 @@ class ManageShortcutsSettingsFragment : Fragment() {
                                 onIconDialogIconsSelected(tag, it)
                                 showingTag = null
                             },
-                            onDismissRequest = { showingTag = null }
+                            onDismissRequest = { showingTag = null },
                         )
                     }
 

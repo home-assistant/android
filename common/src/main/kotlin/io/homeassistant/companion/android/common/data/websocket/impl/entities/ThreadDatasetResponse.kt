@@ -11,5 +11,5 @@ data class ThreadDatasetResponse(
     val preferred: Boolean,
     // only on core >= 2023.9, may still be null
     val preferredBorderAgentId: String? = null,
-    val source: String
+    val source: String,
 )

@@ -85,16 +85,16 @@ class CameraTile : TileService() {
                         timeline(
                             requestParams.deviceConfiguration.screenWidthDp,
                             requestParams.deviceConfiguration.screenHeightDp,
-                            tileConfig?.entityId.isNullOrBlank()
+                            tileConfig?.entityId.isNullOrBlank(),
                         )
                     } else {
                         loggedOutTimeline(
                             this@CameraTile,
                             requestParams,
                             commonR.string.camera,
-                            commonR.string.camera_tile_log_in
+                            commonR.string.camera_tile_log_in,
                         )
-                    }
+                    },
                 )
                 .build()
         }
@@ -167,8 +167,8 @@ class CameraTile : TileService() {
                         .setAndroidResourceByResId(
                             ResourceBuilders.AndroidImageResourceByResId.Builder()
                                 .setResourceId(R.drawable.ic_refresh)
-                                .build()
-                        ).build()
+                                .build(),
+                        ).build(),
                 )
             if (imageData != null) {
                 builder.addIdToImageMapping(
@@ -180,9 +180,9 @@ class CameraTile : TileService() {
                                 .setWidthPx(imageWidth)
                                 .setHeightPx(imageHeight)
                                 .setFormat(ResourceBuilders.IMAGE_FORMAT_UNDEFINED)
-                                .build()
+                                .build(),
                         )
-                        .build()
+                        .build(),
                 )
             }
 
@@ -238,7 +238,7 @@ class CameraTile : TileService() {
                     LayoutElementBuilders.Text.Builder()
                         .setText(getString(commonR.string.camera_tile_no_entity_yet))
                         .setMaxLines(10)
-                        .build()
+                        .build(),
                 )
             } else {
                 addContent(
@@ -247,13 +247,13 @@ class CameraTile : TileService() {
                         .setWidth(DimensionBuilders.dp(width.toFloat()))
                         .setHeight(DimensionBuilders.dp(height.toFloat()))
                         .setContentScaleMode(CONTENT_SCALE_MODE_FIT)
-                        .build()
+                        .build(),
                 )
             }
             // Refresh button
             addContent(getRefreshButton())
             // Click: refresh
             setModifiers(getRefreshModifiers())
-        }.build()
+        }.build(),
     )
 }

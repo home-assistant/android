@@ -40,7 +40,7 @@ fun getChangeServerGridItem(
     screenManager: ScreenManager,
     serverManager: ServerManager,
     serverId: StateFlow<Int>,
-    onChangeServer: (Int) -> Unit
+    onChangeServer: (Int) -> Unit,
 ): GridItem.Builder {
     return GridItem.Builder().apply {
         setTitle(carContext.getString(R.string.aa_change_server))
@@ -48,13 +48,13 @@ fun getChangeServerGridItem(
             CarIcon.Builder(
                 IconicsDrawable(
                     carContext,
-                    CommunityMaterial.Icon2.cmd_home_switch
+                    CommunityMaterial.Icon2.cmd_home_switch,
                 ).apply {
                     sizeDp = 64
-                }.toAndroidIconCompat()
+                }.toAndroidIconCompat(),
             )
                 .setTint(CarColor.DEFAULT)
-                .build()
+                .build(),
         )
         setOnClickListener {
             Timber.i("Change server clicked")
@@ -62,8 +62,8 @@ fun getChangeServerGridItem(
                 ChangeServerScreen(
                     carContext,
                     serverManager,
-                    serverId
-                )
+                    serverId,
+                ),
             ) {
                 it?.toString()?.toIntOrNull()?.let { serverId ->
                     onChangeServer(serverId)
@@ -79,7 +79,7 @@ fun getNavigationGridItem(
     screenManager: ScreenManager,
     integrationRepository: IntegrationRepository,
     allEntities: Flow<Map<String, Entity>>,
-    entityRegistry: List<EntityRegistryResponse>?
+    entityRegistry: List<EntityRegistryResponse>?,
 ): GridItem.Builder {
     return GridItem.Builder().apply {
         setTitle(carContext.getString(R.string.aa_navigation))
@@ -87,13 +87,13 @@ fun getNavigationGridItem(
             CarIcon.Builder(
                 IconicsDrawable(
                     carContext,
-                    CommunityMaterial.Icon3.cmd_map_outline
+                    CommunityMaterial.Icon3.cmd_map_outline,
                 ).apply {
                     sizeDp = 64
-                }.toAndroidIconCompat()
+                }.toAndroidIconCompat(),
             )
                 .setTint(CarColor.DEFAULT)
-                .build()
+                .build(),
         )
         setOnClickListener {
             Timber.i("Navigation clicked")
@@ -106,11 +106,11 @@ fun getNavigationGridItem(
                             entity.domain in MAP_DOMAINS &&
                                 RegistriesDataHandler.getHiddenByForEntity(
                                     entity.entityId,
-                                    entityRegistry
+                                    entityRegistry,
                                 ) == null
                         }
-                    }
-                )
+                    },
+                ),
             )
         }
     }
@@ -126,7 +126,7 @@ fun getDomainList(
     prefsRepository: PrefsRepository,
     allEntities: Flow<Map<String, Entity>>,
     entityRegistry: List<EntityRegistryResponse>?,
-    lifecycleScope: LifecycleCoroutineScope
+    lifecycleScope: LifecycleCoroutineScope,
 ): ItemList.Builder {
     val listBuilder = ItemList.Builder()
     domains.forEach { domain ->
@@ -147,7 +147,7 @@ fun getDomainList(
             it.values.filter { entity ->
                 entity.domain == domain && RegistriesDataHandler.getHiddenByForEntity(
                     entity.entityId,
-                    entityRegistry
+                    entityRegistry,
                 ) == null
             }
         }
@@ -165,10 +165,10 @@ fun getDomainList(
                             IconicsDrawable(carContext, icon)
                                 .apply {
                                     sizeDp = 64
-                                }.toAndroidIconCompat()
+                                }.toAndroidIconCompat(),
                         )
                             .setTint(CarColor.DEFAULT)
-                            .build()
+                            .build(),
                     )
                 }
                     .setTitle(friendlyDomain)
@@ -185,11 +185,11 @@ fun getDomainList(
                                 entityRegistry,
                                 domains,
                                 entityList,
-                                allEntities
-                            ) { }
+                                allEntities,
+                            ) { },
                         )
                     }
-                    .build()
+                    .build(),
             )
         }
     }
@@ -207,7 +207,7 @@ fun getDomainsGridItem(
     serverId: StateFlow<Int>,
     allEntities: Flow<Map<String, Entity>>,
     prefsRepository: PrefsRepository,
-    entityRegistry: List<EntityRegistryResponse>?
+    entityRegistry: List<EntityRegistryResponse>?,
 ): GridItem.Builder {
     return GridItem.Builder().apply {
         setTitle(carContext.getString(R.string.all_entities))
@@ -215,13 +215,13 @@ fun getDomainsGridItem(
             CarIcon.Builder(
                 IconicsDrawable(
                     carContext,
-                    CommunityMaterial.Icon3.cmd_view_list
+                    CommunityMaterial.Icon3.cmd_view_list,
                 ).apply {
                     sizeDp = 64
-                }.toAndroidIconCompat()
+                }.toAndroidIconCompat(),
             )
                 .setTint(CarColor.DEFAULT)
-                .build()
+                .build(),
         )
         setOnClickListener {
             Timber.i("Categories clicked")
@@ -233,8 +233,8 @@ fun getDomainsGridItem(
                     serverId,
                     allEntities,
                     prefsRepository,
-                    entityRegistry
-                )
+                    entityRegistry,
+                ),
             )
         }
     }

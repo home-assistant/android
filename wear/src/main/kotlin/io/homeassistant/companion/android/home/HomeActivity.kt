@@ -51,32 +51,32 @@ class HomeActivity : ComponentActivity(), HomeView {
 
         fun getCameraTileSettingsIntent(
             context: Context,
-            tileId: Int
+            tileId: Int,
         ) = Intent(
             Intent.ACTION_VIEW,
             "$DEEPLINK_PREFIX_SET_CAMERA_TILE/$tileId".toUri(),
             context,
-            HomeActivity::class.java
+            HomeActivity::class.java,
         )
 
         fun getShortcutsTileSettingsIntent(
             context: Context,
-            tileId: Int
+            tileId: Int,
         ) = Intent(
             Intent.ACTION_VIEW,
             "$DEEPLINK_PREFIX_SET_SHORTCUT_TILE/$tileId".toUri(),
             context,
-            HomeActivity::class.java
+            HomeActivity::class.java,
         )
 
         fun getTemplateTileSettingsIntent(
             context: Context,
-            tileId: Int
+            tileId: Int,
         ) = Intent(
             Intent.ACTION_VIEW,
             "$DEEPLINK_PREFIX_SET_TEMPLATE_TILE/$tileId".toUri(),
             context,
-            HomeActivity::class.java
+            HomeActivity::class.java,
         )
     }
 

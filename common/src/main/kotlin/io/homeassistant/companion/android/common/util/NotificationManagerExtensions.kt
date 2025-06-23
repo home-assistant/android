@@ -28,14 +28,14 @@ fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolea
         this.getNotificationManager(),
         tag,
         id,
-        this::cancel
+        this::cancel,
     )
 
 fun cancelNotificationGroupIfNeeded(
     notificationManager: NotificationManager,
     tag: String?,
     id: Int,
-    cancel: (String, Int) -> Unit
+    cancel: (String, Int) -> Unit,
 ): Boolean {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
         Timber.d("Cancel notification with tag \"$tag\" and id \"$id\"")
@@ -102,11 +102,11 @@ fun cancelNotificationGroupIfNeeded(
                 } else {
                     if (isGroupSummary) {
                         Timber.d(
-                            "Notification is the group summary, but the group has more than or no notifications inside (" + groupNotifications.size + "). Cancel notification"
+                            "Notification is the group summary, but the group has more than or no notifications inside (" + groupNotifications.size + "). Cancel notification",
                         )
                     } else {
                         Timber.d(
-                            "Notification is in a group, but the group has more/less than 2 notifications inside (" + groupNotifications.size + "). Cancel notification"
+                            "Notification is in a group, but the group has more/less than 2 notifications inside (" + groupNotifications.size + "). Cancel notification",
                         )
                     }
                 }

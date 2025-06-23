@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
 
 class SensorWorker(
     appContext: Context,
-    workerParams: WorkerParameters
+    workerParams: WorkerParameters,
 ) : SensorWorkerBase(appContext, workerParams) {
 
     companion object {
@@ -46,7 +46,7 @@ class SensorWorker(
         get() {
             return EntryPointAccessors.fromApplication(
                 appContext,
-                SensorWorkerEntryPoint::class.java
+                SensorWorkerEntryPoint::class.java,
             )
                 .serverManager()
         }

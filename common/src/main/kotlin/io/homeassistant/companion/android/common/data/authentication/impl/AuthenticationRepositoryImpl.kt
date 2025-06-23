@@ -19,7 +19,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     private val serverManager: ServerManager,
     @Assisted private val serverId: Int,
     @Named("session") private val localStorage: LocalStorage,
-    @Named("installId") private val installId: String
+    @Named("installId") private val installId: String,
 ) : AuthenticationRepository {
 
     companion object {
@@ -39,7 +39,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
             url.newBuilder().addPathSegments("auth/token").build(),
             AuthenticationService.GRANT_TYPE_CODE,
             authorizationCode,
-            AuthenticationService.CLIENT_ID
+            AuthenticationService.CLIENT_ID,
         ).let {
             serverManager.updateServer(
                 server.copy(
@@ -48,9 +48,9 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
                         it.refreshToken!!,
                         System.currentTimeMillis() / 1000 + it.expiresIn,
                         it.tokenType,
-                        installId
-                    )
-                )
+                        installId,
+                    ),
+                ),
             )
         }
     }
@@ -70,8 +70,8 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
             MapAnySerializer,
             mapOf(
                 "access_token" to server.session.accessToken,
-                "expires_in" to server.session.expiresIn()
-            )
+                "expires_in" to server.session.expiresIn(),
+            ),
         )
     }
 
@@ -89,21 +89,21 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
         if (server.version?.isAtLeast(2022, 9, 0) == true) {
             authenticationService.revokeToken(
                 url.newBuilder().addPathSegments("auth/revoke").build(),
-                server.session.refreshToken!!
+                server.session.refreshToken!!,
             )
         } else {
             authenticationService.revokeTokenLegacy(
                 url.newBuilder().addPathSegments("auth/token").build(),
                 server.session.refreshToken!!,
-                AuthenticationService.REVOKE_ACTION
+                AuthenticationService.REVOKE_ACTION,
             )
         }
         serverManager.updateServer(
             server.copy(
                 session = server.session.copy(
-                    refreshToken = null
-                )
-            )
+                    refreshToken = null,
+                ),
+            ),
         )
     }
 
@@ -152,7 +152,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
             server.connection.getUrl()?.toHttpUrlOrNull()!!.newBuilder().addPathSegments("auth/token").build(),
             AuthenticationService.GRANT_TYPE_REFRESH,
             refreshToken,
-            AuthenticationService.CLIENT_ID
+            AuthenticationService.CLIENT_ID,
         ).let {
             if (it.isSuccessful) {
                 val refreshedToken = it.body() ?: throw AuthorizationException()
@@ -163,9 +163,9 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
                             refreshToken,
                             System.currentTimeMillis() / 1000 + refreshedToken.expiresIn,
                             refreshedToken.tokenType,
-                            installId
-                        )
-                    )
+                            installId,
+                        ),
+                    ),
                 )
                 return@let
             } else if (it.code() == 400 &&

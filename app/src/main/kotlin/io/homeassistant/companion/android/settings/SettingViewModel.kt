@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.Flow
 @HiltViewModel
 class SettingViewModel @Inject constructor(
     private val settingsDao: SettingsDao,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
     fun getSetting(id: Int): Setting {
         var setting = settingsDao.get(id)

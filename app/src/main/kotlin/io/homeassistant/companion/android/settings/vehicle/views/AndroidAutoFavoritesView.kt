@@ -40,7 +40,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 fun AndroidAutoFavoritesSettings(
     androidAutoViewModel: ManageAndroidAutoViewModel,
     serversList: List<Server>,
-    defaultServer: Int
+    defaultServer: Int,
 ) {
     val lazyListState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -71,7 +71,7 @@ fun AndroidAutoFavoritesSettings(
             Text(
                 text = stringResource(commonR.string.aa_set_favorites),
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
             )
         }
 
@@ -84,7 +84,7 @@ fun AndroidAutoFavoritesSettings(
                         androidAutoViewModel.loadEntities(it)
                         selectedServer = it
                     },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 16.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 16.dp),
                 )
             }
         }
@@ -98,7 +98,7 @@ fun AndroidAutoFavoritesSettings(
                     return@SingleEntityPicker false // Clear input
                 },
                 modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
-                label = { Text(stringResource(commonR.string.add_favorite)) }
+                label = { Text(stringResource(commonR.string.add_favorite)) },
             )
         }
         if (favoriteEntities.isNotEmpty() && androidAutoViewModel.sortedEntities.isNotEmpty()) {
@@ -117,7 +117,7 @@ fun AndroidAutoFavoritesSettings(
                                 androidAutoViewModel.onEntitySelected(
                                     false,
                                     it.entityId,
-                                    selectedServer
+                                    selectedServer,
                                 )
                             },
                             checked = true,

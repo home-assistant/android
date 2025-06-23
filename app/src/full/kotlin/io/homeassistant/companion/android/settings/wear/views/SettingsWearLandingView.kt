@@ -43,7 +43,7 @@ fun SettingWearLandingView(
     navigateTemplateTile: () -> Unit,
     loginWearOs: () -> Unit,
     onBackClicked: () -> Unit,
-    events: Flow<String>
+    events: Flow<String>,
 ) {
     val scaffoldState = rememberScaffoldState()
     LaunchedEffect("snackbar") {
@@ -64,28 +64,28 @@ fun SettingWearLandingView(
             SettingsWearTopAppBar(
                 title = { Text(stringResource(commonR.string.wear_settings)) },
                 onBackClicked = onBackClicked,
-                docsLink = WEAR_DOCS_LINK
+                docsLink = WEAR_DOCS_LINK,
             )
-        }
+        },
     ) { padding ->
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .fillMaxWidth()
                 .padding(safeBottomPaddingValues())
-                .padding(padding)
+                .padding(padding),
         ) {
             Row(
                 modifier = Modifier
                     .height(48.dp)
                     .padding(start = 72.dp, end = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = stringResource(id = commonR.string.manage_wear_device, deviceName),
                     style = MaterialTheme.typography.body2,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colors.primary
+                    color = MaterialTheme.colors.primary,
                 )
             }
             when {
@@ -98,14 +98,14 @@ fun SettingWearLandingView(
                         secondaryText = stringResource(commonR.string.set_favorites_on_device),
                         mdiIcon = CommunityMaterial.Icon3.cmd_star,
                         enabled = true,
-                        onClicked = navigateFavorites
+                        onClicked = navigateFavorites,
                     )
                     SettingsRow(
                         primaryText = stringResource(commonR.string.template_tiles),
                         secondaryText = stringResource(commonR.string.template_tile_set_on_watch),
                         mdiIcon = CommunityMaterial.Icon3.cmd_text_box,
                         enabled = true,
-                        onClicked = navigateTemplateTile
+                        onClicked = navigateTemplateTile,
                     )
                 }
                 else -> {
@@ -113,7 +113,7 @@ fun SettingWearLandingView(
                         onClick = loginWearOs,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 10.dp, start = 16.dp, end = 16.dp)
+                            .padding(top = 10.dp, start = 16.dp, end = 16.dp),
                     ) {
                         Text(stringResource(commonR.string.login_wear_os_device))
                     }
@@ -134,6 +134,6 @@ private fun PreviewSettingWearLandingView() {
         navigateTemplateTile = {},
         loginWearOs = {},
         onBackClicked = {},
-        events = emptyFlow()
+        events = emptyFlow(),
     )
 }

@@ -39,13 +39,13 @@ class ComplicationConfigActivity : ComponentActivity() {
 
         setContent {
             LoadConfigView(
-                complicationConfigViewModel
+                complicationConfigViewModel,
             ) {
                 setResult(Activity.RESULT_OK)
                 complicationConfigViewModel.selectedEntity?.let {
                     complicationConfigViewModel.addEntityStateComplication(
                         id,
-                        it
+                        it,
                     )
                 }
                 finish()

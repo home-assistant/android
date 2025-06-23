@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 
 data class AssistPipelineEvent(
     val type: String,
-    val data: AssistPipelineEventData?
+    val data: AssistPipelineEventData?,
 )
 
 object AssistPipelineEventType {
@@ -30,26 +30,26 @@ data class AssistPipelineRunStart(
     val language: String,
     // TODO replace the map https://github.com/home-assistant/android/issues/5341
     @Serializable(with = MapAnySerializer::class)
-    val runnerData: Map<String, @Polymorphic Any?>
+    val runnerData: Map<String, @Polymorphic Any?>,
 ) : AssistPipelineEventData
 
 @Serializable
 data class AssistPipelineSttEnd(
     // TODO Replace the map https://github.com/home-assistant/android/issues/5341
     @Serializable(with = MapAnySerializer::class)
-    val sttOutput: Map<String, @Polymorphic Any?>
+    val sttOutput: Map<String, @Polymorphic Any?>,
 ) : AssistPipelineEventData
 
 @Serializable
 data class AssistPipelineIntentStart(
     val engine: String,
     val language: String,
-    val intentInput: String
+    val intentInput: String,
 ) : AssistPipelineEventData
 
 @Serializable
 data class AssistPipelineIntentProgress(
-    val chatLogDelta: AssistChatLogDelta?
+    val chatLogDelta: AssistChatLogDelta?,
 ) : AssistPipelineEventData
 
 @Serializable
@@ -57,12 +57,12 @@ data class AssistChatLogDelta(val content: String? = null)
 
 @Serializable
 data class AssistPipelineIntentEnd(
-    val intentOutput: ConversationResponse
+    val intentOutput: ConversationResponse,
 ) : AssistPipelineEventData
 
 @Serializable
 data class AssistPipelineTtsEnd(
-    val ttsOutput: TtsOutputResponse
+    val ttsOutput: TtsOutputResponse,
 ) : AssistPipelineEventData
 
 @Serializable

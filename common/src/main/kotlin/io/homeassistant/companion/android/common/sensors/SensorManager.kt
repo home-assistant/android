@@ -53,14 +53,14 @@ interface SensorManager {
         val stateClass: String? = null,
         val entityCategory: String? = null,
         val updateType: UpdateType = UpdateType.WORKER,
-        val enabledByDefault: Boolean = false
+        val enabledByDefault: Boolean = false,
     ) {
         enum class UpdateType {
             INTENT,
             INTENT_ONLY,
             WORKER,
             LOCATION,
-            CUSTOM
+            CUSTOM,
         }
     }
 
@@ -112,7 +112,7 @@ interface SensorManager {
             basicSensor.id,
             serverManager(context).defaultServers.map { it.id },
             permission,
-            basicSensor.enabledByDefault
+            basicSensor.enabledByDefault,
         )
     }
 
@@ -124,7 +124,7 @@ interface SensorManager {
             basicSensor.id,
             serverId,
             permission,
-            basicSensor.enabledByDefault
+            basicSensor.enabledByDefault,
         )?.enabled == true
     }
 
@@ -166,7 +166,7 @@ interface SensorManager {
         settingName: String,
         settingType: SensorSettingType,
         default: String,
-        enabled: Boolean = true
+        enabled: Boolean = true,
     ) {
         getSetting(context, sensor, settingName, settingType, default, enabled)
     }
@@ -194,7 +194,7 @@ interface SensorManager {
         sensor: BasicSensor,
         settingName: String,
         default: Boolean,
-        enabled: Boolean = true
+        enabled: Boolean = true,
     ): Boolean {
         return getSetting(context, sensor, settingName, SensorSettingType.TOGGLE, default.toString(), enabled).toBoolean()
     }
@@ -204,7 +204,7 @@ interface SensorManager {
         sensor: BasicSensor,
         settingName: String,
         default: Int,
-        enabled: Boolean = true
+        enabled: Boolean = true,
     ): Int {
         return getSetting(context, sensor, settingName, SensorSettingType.NUMBER, default.toString(), enabled).toIntOrNull() ?: default
     }
@@ -220,7 +220,7 @@ interface SensorManager {
         settingType: SensorSettingType,
         default: String,
         enabled: Boolean = true,
-        entries: List<String> = arrayListOf()
+        entries: List<String> = arrayListOf(),
     ): String {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val setting = sensorDao
@@ -240,7 +240,7 @@ interface SensorManager {
         state: Any,
         mdiIcon: String,
         attributes: Map<String, Any?>,
-        forceUpdate: Boolean = false
+        forceUpdate: Boolean = false,
     ) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensors = sensorDao.get(basicSensor.id)
@@ -264,7 +264,7 @@ interface SensorManager {
                 stateClass = basicSensor.stateClass,
                 entityCategory = basicSensor.entityCategory,
                 lastSentState = if (forceUpdate) null else it.lastSentState,
-                lastSentIcon = if (forceUpdate) null else it.lastSentIcon
+                lastSentIcon = if (forceUpdate) null else it.lastSentIcon,
             )
             sensorDao.update(sensor)
         }
@@ -301,9 +301,9 @@ interface SensorManager {
                     basicSensor.id,
                     item.key,
                     value,
-                    valueType
+                    valueType,
                 )
-            }
+            },
         )
     }
 
@@ -316,7 +316,7 @@ interface SensorManager {
     fun serverManager(context: Context) =
         EntryPointAccessors.fromApplication(
             context.applicationContext,
-            SensorManagerEntryPoint::class.java
+            SensorManagerEntryPoint::class.java,
         )
             .serverManager()
 }

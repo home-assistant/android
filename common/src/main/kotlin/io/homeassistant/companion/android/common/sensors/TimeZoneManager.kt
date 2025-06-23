@@ -14,7 +14,7 @@ class TimeZoneManager : SensorManager {
             commonR.string.basic_sensor_name_current_time_zone,
             commonR.string.sensor_description_current_time_zone,
             "mdi:map-clock",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
     }
 
@@ -33,7 +33,7 @@ class TimeZoneManager : SensorManager {
     }
 
     override suspend fun requestSensorUpdate(
-        context: Context
+        context: Context,
     ) {
         updateTimeZone(context)
     }
@@ -56,8 +56,8 @@ class TimeZoneManager : SensorManager {
                 "time_zone_id" to timeZone.id,
                 "time_zone_short" to timeZone.getDisplayName(currentlyInDst, TimeZone.SHORT, Locale.ENGLISH),
                 "uses_daylight_time" to timeZone.useDaylightTime(),
-                "utc_offset" to timeZone.getOffset(System.currentTimeMillis())
-            )
+                "utc_offset" to timeZone.getOffset(System.currentTimeMillis()),
+            ),
         )
     }
 }
