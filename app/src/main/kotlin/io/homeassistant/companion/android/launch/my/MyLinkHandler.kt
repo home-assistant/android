@@ -117,10 +117,10 @@ class MyLinkHandlerImpl @Inject constructor(private val serverManager: ServerMan
         }
 
         val path = uri.buildUpon()
-            // We strip last / to handle old links created before https://github.com/home-assistant/frontend/pull/25841
+            // We strip the last / to handle old links created before https://github.com/home-assistant/frontend/pull/25841.
             // A trailing slash is always added by Netlify that is used to host https://my.home-assistant.io/, but
-            // the frontend was not supporting having a trailing slash before https://github.com/home-assistant/frontend/pull/25841
-            // in order to backward compatible we remove the trailing slash here.
+            // the frontend did not support having a trailing slash before https://github.com/home-assistant/frontend/pull/25841.
+            // For backward compatibility, we remove the trailing slash here.
             .path(uri.path?.removeSuffix("/"))
             .appendQueryParameter(MOBILE_PARAM, MOBILE_VALUE)
             .build().toString()
