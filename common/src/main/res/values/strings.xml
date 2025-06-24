@@ -1384,10 +1384,10 @@
     <string name="thermostat_tile">Thermostat tile</string>
     <string name="climate_heating">Heating</string>
     <string name="climate_cooling">Cooling</string>
-    <string name="launcher">Launcher</string>
-    <string name="launcher_option_title">Enable Home Assistant launcher mode</string>
-    <string name="launcher_option_summary">Add Home Assistant to the list of available device launchers that can replace your device\'s home screen</string>
-    <string name="default_launcher_prompt">Change launcher app</string>
-    <string name="default_launcher_prompt_def">Open settings to choose a default launcher app. Currently set to %s</string>
+    <string name="launcher">Device home screen</string>
+    <string name="launcher_option_title">Allow as home app</string>
+    <string name="launcher_option_summary">Include Home Assistant in the list of available home apps/launchers that can replace your device\'s home screen</string>
+    <string name="default_launcher_prompt">Change home app</string>
+    <string name="default_launcher_prompt_def">Open settings to choose your default home app. Currently set to %s.</string>
     <string name="unknown_launcher_label">unknown app</string>
 </resources>
