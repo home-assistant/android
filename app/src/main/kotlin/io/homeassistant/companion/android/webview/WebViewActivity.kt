@@ -51,7 +51,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -109,7 +108,6 @@ import javax.inject.Inject
 import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -222,8 +220,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var exoPlayer = mutableStateOf<ExoPlayer?>(null)
     private var isExoFullScreen = false
     private var playerSize = mutableStateOf<DpSize?>(null)
-    private var playerTop = mutableStateOf<Dp>(0.dp)
-    private var playerLeft = mutableStateOf<Dp>(0.dp)
+    private var playerTop = mutableStateOf(0.dp)
+    private var playerLeft = mutableStateOf(0.dp)
     private var failedConnection = "external"
     private var clearHistory = false
     private var moreInfoEntity = ""
@@ -298,40 +296,43 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         onBackPressedDispatcher.addCallback(this, onBackPressed)
 
         webView.apply {
-            setOnTouchListener(object : OnSwipeListener(this@WebViewActivity) {
-                override fun onSwipe(
-                    e1: MotionEvent,
-                    e2: MotionEvent,
-                    velocity: Float,
-                    direction: SwipeDirection,
-                    pointerCount: Int,
-                ): Boolean {
-                    if (pointerCount == 3 && velocity >= 75) {
-                        when (direction) {
-                            SwipeDirection.LEFT -> presenter.nextServer()
-                            SwipeDirection.RIGHT -> presenter.previousServer()
-                            SwipeDirection.UP -> {
-                                val serverChooser = ServerChooserFragment()
-                                supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this@WebViewActivity) { _, bundle ->
-                                    if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
-                                        presenter.switchActiveServer(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
+            setOnTouchListener(
+                object : OnSwipeListener(this@WebViewActivity) {
+                    override fun onSwipe(
+                        e1: MotionEvent,
+                        e2: MotionEvent,
+                        velocity: Float,
+                        direction: SwipeDirection,
+                        pointerCount: Int,
+                    ): Boolean {
+                        if (pointerCount == 3 && velocity >= 75) {
+                            when (direction) {
+                                SwipeDirection.LEFT -> presenter.nextServer()
+                                SwipeDirection.RIGHT -> presenter.previousServer()
+                                SwipeDirection.UP -> {
+                                    val serverChooser = ServerChooserFragment()
+                                    supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this@WebViewActivity) { _, bundle ->
+                                        if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
+                                            presenter.switchActiveServer(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
+                                        }
+                                        supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
                                     }
-                                    supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
+                                    serverChooser.show(supportFragmentManager, ServerChooserFragment.TAG)
                                 }
-                                serverChooser.show(supportFragmentManager, ServerChooserFragment.TAG)
-                            }
-                            SwipeDirection.DOWN -> {
-                                dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
+
+                                SwipeDirection.DOWN -> {
+                                    dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
+                                }
                             }
                         }
+                        return appLocked.value
                     }
-                    return appLocked.value
-                }
 
-                override fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean {
-                    return appLocked.value
-                }
-            })
+                    override fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean {
+                        return appLocked.value
+                    }
+                },
+            )
 
             settings.minimumFontSize = 5
             settings.javaScriptEnabled = true
@@ -649,6 +650,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 commissionMatterDevice.launch(IntentSenderRequest.Builder(intentSender).build())
                             }
                         }
+
                         MatterThreadStep.THREAD_NONE -> {
                             alertDialog?.cancel()
                             AlertDialog.Builder(this@WebViewActivity)
@@ -657,15 +659,18 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 .show()
                             presenter.finishMatterThreadFlow()
                         }
+
                         MatterThreadStep.THREAD_SENT -> {
                             Toast.makeText(this@WebViewActivity, commonR.string.thread_export_success, Toast.LENGTH_SHORT).show()
                             alertDialog?.cancel()
                             presenter.finishMatterThreadFlow()
                         }
+
                         MatterThreadStep.ERROR_MATTER -> {
                             Toast.makeText(this@WebViewActivity, commonR.string.matter_commissioning_unavailable, Toast.LENGTH_SHORT).show()
                             presenter.finishMatterThreadFlow()
                         }
+
                         MatterThreadStep.ERROR_THREAD_LOCAL_NETWORK -> {
                             alertDialog?.cancel()
                             AlertDialog.Builder(this@WebViewActivity)
@@ -674,12 +679,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 .show()
                             presenter.finishMatterThreadFlow()
                         }
+
                         MatterThreadStep.ERROR_THREAD_OTHER -> {
                             Toast.makeText(this@WebViewActivity, commonR.string.thread_export_unavailable, Toast.LENGTH_SHORT).show()
                             alertDialog?.cancel()
                             presenter.finishMatterThreadFlow()
                         }
-                        else -> { } // Do nothing
+
+                        else -> {} // Do nothing
                     }
                 }
             }
@@ -696,7 +703,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     fun onHomeAssistantSetTheme() {
                         // We need to launch the getAndSetStatusBarNavigationBarColors in another thread, because otherwise the evaluateJavascript inside the method
                         // will not trigger it's callback method :/
-                        GlobalScope.launch(Dispatchers.Main) {
+                        lifecycleScope.launch(Dispatchers.Main) {
                             getAndSetStatusBarNavigationBarColors()
                         }
                     }
@@ -732,6 +739,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         presenter.checkSecurityVersion()
                                     }
                                 }
+
                                 "config/get" -> {
                                     val pm: PackageManager = context.packageManager
                                     val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
@@ -782,6 +790,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         null,
                                     )
                                 }
+
                                 "assist/show" -> {
                                     val payload = if (json.has("payload")) json.getJSONObject("payload") else null
                                     startActivity(
@@ -793,10 +802,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         ),
                                     )
                                 }
+
                                 "config_screen/show" ->
                                     startActivity(
                                         SettingsActivity.newInstance(this@WebViewActivity),
                                     )
+
                                 "tag/write" ->
                                     writeNfcTag.launch(
                                         WriteNfcTag.Input(
@@ -804,6 +815,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                             messageId = JSONObject(message).getInt("id"),
                                         ),
                                     )
+
                                 "matter/commission" -> presenter.startCommissioningMatterDevice(this@WebViewActivity)
                                 "thread/import_credentials" -> {
                                     presenter.exportThreadCredentials(this@WebViewActivity)
@@ -813,6 +825,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         .create()
                                     alertDialog?.show()
                                 }
+
                                 "bar_code/scan" -> {
                                     val payload = if (json.has("payload")) json.getJSONObject("payload") else null
                                     if (payload?.has("title") != true || !payload.has("description")) return@post
@@ -826,12 +839,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         ),
                                     )
                                 }
+
                                 "improv/scan" -> scanForImprov()
                                 "improv/configure_device" -> {
                                     val payload = if (json.has("payload")) json.getJSONObject("payload") else null
                                     if (payload?.has("name") != true) return@post
                                     configureImprovDevice(payload.getString("name"))
                                 }
+
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)
@@ -855,25 +870,21 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 "document.getElementsByTagName('html')[0].computedStyleMap().get('--primary-background-color')[0]" +
                 "].join('" + htmlArraySpacer + "')",
         ) { webViewColors ->
-            GlobalScope.launch {
-                withContext(Dispatchers.Main) {
-                    var statusBarColor = 0
-                    var navigationBarColor = 0
+            lifecycleScope.launch(Dispatchers.Main) {
+                var statusBarColor = 0
+                var navigationBarColor = 0
 
-                    if (!webViewColors.isNullOrEmpty() && webViewColors != "null") {
-                        val trimmedColorString = webViewColors.substring(1, webViewColors.length - 1).trim()
-                        val colors = trimmedColorString.split(htmlArraySpacer)
+                if (!webViewColors.isNullOrEmpty() && webViewColors != "null") {
+                    val trimmedColorString = webViewColors.substring(1, webViewColors.length - 1).trim()
+                    val colors = trimmedColorString.split(htmlArraySpacer)
 
-                        for (color in colors) {
-                            Timber.d("Color from webview is \"$trimmedColorString\"")
-                        }
+                    Timber.d("Color from webview is \"$trimmedColorString\"")
 
-                        statusBarColor = presenter.parseWebViewColor(colors[0].trim())
-                        navigationBarColor = presenter.parseWebViewColor(colors[1].trim())
-                    }
-
-                    setStatusBarAndNavigationBarColor(statusBarColor, navigationBarColor)
+                    statusBarColor = presenter.parseWebViewColor(colors[0].trim())
+                    navigationBarColor = presenter.parseWebViewColor(colors[1].trim())
                 }
+
+                setStatusBarAndNavigationBarColor(statusBarColor, navigationBarColor)
             }
         }
     }
@@ -970,18 +981,20 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             exoPlayer.value = initializePlayer(this).apply {
                 setMediaItem(MediaItem.fromUri(uri))
                 playWhenReady = true
-                addListener(object : Player.Listener {
-                    override fun onVideoSizeChanged(videoSize: VideoSize) {
-                        super.onVideoSizeChanged(videoSize)
-                        if (videoSize.height == 0 || videoSize.width == 0) return
-                        playerSize.value?.let {
-                            // If height is already set, it means the frontend has imposed a constraint; avoid overriding.
-                            if (it.height == 0.dp) {
-                                playerSize.value = DpSize(it.width, it.width * videoSize.height / videoSize.width)
+                addListener(
+                    object : Player.Listener {
+                        override fun onVideoSizeChanged(videoSize: VideoSize) {
+                            super.onVideoSizeChanged(videoSize)
+                            if (videoSize.height == 0 || videoSize.width == 0) return
+                            playerSize.value?.let {
+                                // If height is already set, it means the frontend has imposed a constraint; avoid overriding.
+                                if (it.height == 0.dp) {
+                                    playerSize.value = DpSize(it.width, it.width * videoSize.height / videoSize.width)
+                                }
                             }
                         }
-                    }
-                })
+                    },
+                )
                 prepare()
                 volume = if (isMuted) 0f else 1f
             }
@@ -1053,6 +1066,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     vm?.vibrate(500)
                 }
             }
+
             "warning" -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     vm?.vibrate(VibrationEffect.createOneShot(400, VibrationEffect.EFFECT_HEAVY_CLICK))
@@ -1061,6 +1075,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     vm?.vibrate(1500)
                 }
             }
+
             "failure" -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     webView.performHapticFeedback(HapticFeedbackConstants.REJECT)
@@ -1069,15 +1084,19 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     vm?.vibrate(1000)
                 }
             }
+
             "light" -> {
                 webView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             }
+
             "medium" -> {
                 webView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             }
+
             "heavy" -> {
                 webView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
             }
+
             "selection" -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     webView.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
@@ -1088,6 +1107,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
         }
     }
+
     private fun authenticationResult(result: Int) {
         when (result) {
             Authenticator.SUCCESS -> {
@@ -1095,10 +1115,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 appLocked.value = false
                 presenter.setAppActive(true)
             }
+
             Authenticator.CANCELED -> {
                 Timber.d("Authentication canceled by user, closing activity")
                 finishAffinity()
             }
+
             else -> Timber.d("Authentication failed, retry attempts allowed")
         }
         unlockingApp = false
@@ -1537,11 +1559,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
                 getSystemService<DownloadManager>()?.enqueue(request) ?: Timber.d("Unable to start download, cannot get DownloadManager")
             }
+
             "data" -> {
                 lifecycleScope.launch {
                     DataUriDownloadManager.saveDataUri(this@WebViewActivity, url, mimetype)
                 }
             }
+
             else -> {
                 Timber.d("Received download request for unsupported scheme, forwarding to system")
                 try {
