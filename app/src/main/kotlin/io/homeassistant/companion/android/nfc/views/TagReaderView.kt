@@ -23,7 +23,7 @@ fun TagReaderView() {
             .fillMaxSize()
             .padding(all = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         CircularProgressIndicator()
         Text(
@@ -31,7 +31,7 @@ fun TagReaderView() {
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth(0.75f)
-                .padding(top = 16.dp)
+                .padding(top = 16.dp),
         )
     }
 }

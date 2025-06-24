@@ -14,7 +14,7 @@ import timber.log.Timber
 @ActivityScoped
 class LaunchPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
-    serverManager: ServerManager
+    serverManager: ServerManager,
 ) : LaunchPresenterBase(context as LaunchView, serverManager) {
     override fun resyncRegistration() {
         if (!serverManager.isRegistered()) return
@@ -25,8 +25,8 @@ class LaunchPresenterImpl @Inject constructor(
                         DeviceRegistration(
                             "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                             null,
-                            getMessagingToken()
-                        )
+                            getMessagingToken(),
+                        ),
                     )
                     serverManager.integrationRepository(it.id).getConfig() // Update cached data
                     serverManager.webSocketRepository(it.id).getCurrentUser() // Update cached data

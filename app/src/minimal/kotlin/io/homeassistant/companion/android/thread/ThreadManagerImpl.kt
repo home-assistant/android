@@ -20,7 +20,7 @@ class ThreadManagerImpl @Inject constructor() : ThreadManager {
         context: Context,
         serverId: Int,
         exportOnly: Boolean,
-        scope: CoroutineScope
+        scope: CoroutineScope,
     ): ThreadManager.SyncResult = ThreadManager.SyncResult.AppUnsupported
 
     override suspend fun getPreferredDatasetFromServer(serverId: Int): ThreadDatasetResponse? = null
@@ -29,7 +29,7 @@ class ThreadManagerImpl @Inject constructor() : ThreadManager {
         context: Context,
         datasetId: String,
         preferredBorderAgentId: String?,
-        serverId: Int
+        serverId: Int,
     ) { }
 
     override suspend fun getPreferredDatasetFromDevice(context: Context): IntentSender? {

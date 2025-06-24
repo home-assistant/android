@@ -17,7 +17,7 @@ val wearDeviceName = "Device Name"
 
 val attributes: Map<String, *> = mapOf(
     "friendly_name" to "Testing",
-    "icon" to "mdi:cellphone"
+    "icon" to "mdi:cellphone",
 )
 
 private val localDateTime: LocalDateTime = LocalDateTime.now()
@@ -29,7 +29,7 @@ val previewEntity3 = Entity("switch.testing", "on", attributes, localDateTime, l
 val previewEntityList = mapOf(
     previewEntity1.entityId to previewEntity1,
     previewEntity2.entityId to previewEntity2,
-    previewEntity3.entityId to previewEntity3
+    previewEntity3.entityId to previewEntity3,
 )
 
 val previewFavoritesList = listOf("light.test")

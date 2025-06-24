@@ -82,8 +82,8 @@ class ThermostatTile : TileService() {
                     this@ThermostatTile,
                     requestParams,
                     commonR.string.thermostat,
-                    commonR.string.thermostat_tile_log_in
-                )
+                    commonR.string.thermostat_tile_log_in,
+                ),
             ).build()
         } else {
             if (tileConfig?.entityId.isNullOrBlank()) {
@@ -94,9 +94,9 @@ class ThermostatTile : TileService() {
                                 LayoutElementBuilders.Text.Builder()
                                     .setText(getString(commonR.string.thermostat_tile_no_entity_yet))
                                     .setMaxLines(10)
-                                    .build()
-                            ).build()
-                    )
+                                    .build(),
+                            ).build(),
+                    ),
                 ).build()
             } else {
                 try {
@@ -121,8 +121,8 @@ class ThermostatTile : TileService() {
                             "set_temperature",
                             hashMapOf(
                                 "entity_id" to entity.entityId,
-                                "temperature" to updatedTargetTemp
-                            )
+                                "temperature" to updatedTargetTemp,
+                            ),
                         )
                         val updated = tileConfig.copy(targetTemperature = updatedTargetTemp)
                         thermostatTileDao.add(updated)
@@ -137,8 +137,8 @@ class ThermostatTile : TileService() {
                             tileConfig,
                             entity,
                             targetTemp,
-                            temperatureUnit
-                        )
+                            temperatureUnit,
+                        ),
                     ).build()
                 } catch (e: Exception) {
                     Timber.e(e, "Unable to fetch entity ${tileConfig.entityId}")
@@ -150,8 +150,8 @@ class ThermostatTile : TileService() {
                             null,
                             commonR.string.tile_fetch_entity_error,
                             commonR.string.refresh,
-                            ActionBuilders.LoadAction.Builder().build()
-                        )
+                            ActionBuilders.LoadAction.Builder().build(),
+                        ),
                     ).build()
                 }
             }
@@ -167,8 +167,8 @@ class ThermostatTile : TileService() {
                     .setAndroidResourceByResId(
                         ResourceBuilders.AndroidImageResourceByResId.Builder()
                             .setResourceId(R.drawable.ic_refresh)
-                            .build()
-                    ).build()
+                            .build(),
+                    ).build(),
             )
             .build()
     }
@@ -220,38 +220,38 @@ class ThermostatTile : TileService() {
                         .addContent(
                             LayoutElementBuilders.Text.Builder()
                                 .setText(friendlyHvacAction)
-                                .build()
+                                .build(),
                         )
                         .addContent(
                             LayoutElementBuilders.Text.Builder()
                                 .setText(if (targetTemperature == null) "-- $temperatureUnit" else "$targetTemperature $temperatureUnit")
                                 .setFontStyle(
                                     LayoutElementBuilders.FontStyle.Builder().setSize(
-                                        DimensionBuilders.sp(30f)
-                                    ).build()
+                                        DimensionBuilders.sp(30f),
+                                    ).build(),
                                 )
-                                .build()
+                                .build(),
                         )
                         .addContent(
                             LayoutElementBuilders.Text.Builder()
                                 .setText(if (currentTemperature == null) "-- $temperatureUnit" else "$currentTemperature $temperatureUnit")
-                                .build()
+                                .build(),
                         )
                         .addContent(
                             LayoutElementBuilders.Spacer.Builder()
-                                .setHeight(DimensionBuilders.dp(10f)).build()
+                                .setHeight(DimensionBuilders.dp(10f)).build(),
                         )
                         .addContent(
                             LayoutElementBuilders.Row.Builder()
                                 .addContent(getTempButton(hvacAction != "off" && entity.state != "unavailable", TAP_ACTION_DOWN))
                                 .addContent(
                                     LayoutElementBuilders.Spacer.Builder()
-                                        .setWidth(DimensionBuilders.dp(20f)).build()
+                                        .setWidth(DimensionBuilders.dp(20f)).build(),
                                 )
                                 .addContent(getTempButton(hvacAction != "off" && entity.state != "unavailable", TAP_ACTION_UP))
-                                .build()
+                                .build(),
                         )
-                        .build()
+                        .build(),
                 )
                 addContent(
                     LayoutElementBuilders.Arc.Builder()
@@ -260,15 +260,15 @@ class ThermostatTile : TileService() {
                                 .setLength(DimensionBuilders.DegreesProp.Builder(360f).build())
                                 .setThickness(DimensionBuilders.DpProp.Builder(2f).build())
                                 .setColor(ColorBuilders.argb(hvacActionColor))
-                                .build()
+                                .build(),
                         )
-                        .build()
+                        .build(),
                 )
                 if (tileConfig.showEntityName == true) {
                     addContent(
                         LayoutElementBuilders.Arc.Builder()
                             .setAnchorAngle(
-                                DimensionBuilders.DegreesProp.Builder(180f).build()
+                                DimensionBuilders.DegreesProp.Builder(180f).build(),
                             )
                             .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_CENTER)
                             .addContent(
@@ -276,20 +276,20 @@ class ThermostatTile : TileService() {
                                     .setLength(DimensionBuilders.DegreesProp.Builder(360f).build())
                                     .setThickness(DimensionBuilders.DpProp.Builder(30f).build())
                                     .setColor(ColorBuilders.argb(0x00000000)) // Fully transparent
-                                    .build()
+                                    .build(),
                             )
                             .addContent(
                                 LayoutElementBuilders.ArcText.Builder()
                                     .setText(entity.friendlyName)
-                                    .build()
+                                    .build(),
                             )
-                            .build()
+                            .build(),
                     )
                 }
                 // Refresh button
                 addContent(getRefreshButton())
                 setModifiers(getRefreshModifiers())
-            }.build()
+            }.build(),
         )
 
     private fun getTempButton(enabled: Boolean, action: String): LayoutElement {
@@ -304,8 +304,8 @@ class ThermostatTile : TileService() {
             .setButtonColors(
                 ButtonColors(
                     ColorBuilders.argb(getColor(if (enabled) commonR.color.colorPrimary else commonR.color.colorDeviceControlsOff)),
-                    ColorBuilders.argb(getColor(commonR.color.colorWidgetButtonLabelBlack))
-                )
+                    ColorBuilders.argb(getColor(commonR.color.colorWidgetButtonLabelBlack)),
+                ),
             )
             .build()
     }

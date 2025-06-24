@@ -82,7 +82,7 @@ fun ManageControlsView(
     onSelectNone: () -> Unit,
     onSelectEntity: (String, Int) -> Unit,
     onSetPanelSetting: (String, Int) -> Unit,
-    onSetStructureEnabled: (Boolean) -> Unit
+    onSetStructureEnabled: (Boolean) -> Unit,
 ) {
     var selectedServer by remember { mutableIntStateOf(defaultServer) }
     val initialPanelEnabled by rememberSaveable { mutableStateOf(panelEnabled) }
@@ -90,13 +90,13 @@ fun ManageControlsView(
     var panelPath by remember(panelSetting?.first) { mutableStateOf(panelSetting?.first ?: "") }
 
     LazyColumn(
-        contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false)
+        contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
     ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             item {
                 Text(
                     text = stringResource(commonR.string.controls_setting_panel),
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
             item {
@@ -104,24 +104,24 @@ fun ManageControlsView(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .padding(top = 16.dp, bottom = 48.dp)
-                        .height(IntrinsicSize.Min)
+                        .height(IntrinsicSize.Min),
                 ) {
                     ManageControlsModeButton(
                         isPanel = false,
                         selected = !panelEnabled,
                         onClick = { onSetPanelEnabled(false) },
-                        modifier = Modifier.weight(0.5f)
+                        modifier = Modifier.weight(0.5f),
                     )
                     Divider(
                         modifier = Modifier
                             .fillMaxHeight()
-                            .width(1.dp)
+                            .width(1.dp),
                     )
                     ManageControlsModeButton(
                         isPanel = true,
                         selected = panelEnabled,
                         onClick = { onSetPanelEnabled(true) },
-                        modifier = Modifier.weight(0.5f)
+                        modifier = Modifier.weight(0.5f),
                     )
                 }
             }
@@ -134,10 +134,10 @@ fun ManageControlsView(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .padding(start = 16.dp, bottom = 16.dp, end = 16.dp)
-                            .fillMaxWidth()
+                            .fillMaxWidth(),
                     ) {
                         Box(
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
                         ) {
                             Text(
                                 text = stringResource(commonR.string.controls_structure_enabled),
@@ -148,7 +148,7 @@ fun ManageControlsView(
                             checked = structureEnabled,
                             onCheckedChange = { onSetStructureEnabled(it) },
                             colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb)),
-                            modifier = Modifier.padding(start = 8.dp)
+                            modifier = Modifier.padding(start = 8.dp),
                         )
                     }
                 }
@@ -157,7 +157,7 @@ fun ManageControlsView(
             item {
                 Text(
                     text = stringResource(commonR.string.controls_setting_choose_setting),
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
             if (entitiesLoaded) {
@@ -167,7 +167,7 @@ fun ManageControlsView(
                             OutlinedButton(
                                 onClick = onSelectAll,
                                 enabled = authSetting !== ControlsAuthRequiredSetting.NONE,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
                             ) {
                                 Text(stringResource(commonR.string.controls_setting_choose_all))
                             }
@@ -175,7 +175,7 @@ fun ManageControlsView(
                             OutlinedButton(
                                 onClick = onSelectNone,
                                 enabled = authSetting !== ControlsAuthRequiredSetting.ALL,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
                             ) {
                                 Text(stringResource(commonR.string.controls_setting_choose_none))
                             }
@@ -189,7 +189,7 @@ fun ManageControlsView(
                                 onSelected = { selectedServer = it },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
                             )
                         }
                     }
@@ -205,7 +205,7 @@ fun ManageControlsView(
                                             !authRequiredList.contains("$selectedServer.${entity.entityId}")
                                         )
                                 ),
-                            onClick = { onSelectEntity(entity.entityId, selectedServer) }
+                            onClick = { onSelectEntity(entity.entityId, selectedServer) },
                         )
                     }
                 } else {
@@ -213,7 +213,7 @@ fun ManageControlsView(
                         Text(
                             text = stringResource(commonR.string.controls_setting_choose_empty),
                             modifier = Modifier.padding(all = 16.dp),
-                            fontStyle = FontStyle.Italic
+                            fontStyle = FontStyle.Italic,
                         )
                     }
                 }
@@ -231,12 +231,12 @@ fun ManageControlsView(
                     Box(
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
-                            .padding(bottom = 16.dp)
+                            .padding(bottom = 16.dp),
                     ) {
                         HaAlertWarning(
                             message = stringResource(commonR.string.controls_setting_alert),
                             action = null,
-                            onActionClicked = {}
+                            onActionClicked = {},
                         )
                     }
                 }
@@ -244,7 +244,7 @@ fun ManageControlsView(
             item {
                 Text(
                     text = stringResource(commonR.string.controls_setting_dashboard_setting),
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
             if (serversList.size > 1) {
@@ -256,7 +256,7 @@ fun ManageControlsView(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)
-                            .padding(top = 16.dp)
+                            .padding(top = 16.dp),
                     )
                 }
             }
@@ -268,12 +268,12 @@ fun ManageControlsView(
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, autoCorrectEnabled = false, keyboardType = KeyboardType.Uri),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(all = 16.dp)
+                        .padding(all = 16.dp),
                 )
             }
             item {
                 Row(
-                    modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
+                    modifier = Modifier.padding(start = 16.dp, bottom = 16.dp),
                 ) {
                     Button(
                         enabled = (
@@ -283,7 +283,7 @@ fun ManageControlsView(
                                 ) ||
                                 panelServer != panelSetting.second
                             ),
-                        onClick = { onSetPanelSetting(panelPath, panelServer) }
+                        onClick = { onSetPanelSetting(panelPath, panelServer) },
                     ) {
                         Text(stringResource(commonR.string.save))
                     }
@@ -298,29 +298,29 @@ fun ManageControlsEntity(
     entityName: String,
     entityDomain: String,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .clickable { onClick() }
             .fillMaxWidth()
             .padding(all = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Checkbox(
             checked = selected,
             modifier = Modifier.padding(end = 16.dp),
             // Handled by parent Row clickable modifier
-            onCheckedChange = null
+            onCheckedChange = null,
         )
         Column(
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         ) {
             Text(text = entityName, style = MaterialTheme.typography.body1)
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                 Text(
                     text = getEntityDomainString(entityDomain),
-                    style = MaterialTheme.typography.body2
+                    style = MaterialTheme.typography.body2,
                 )
             }
         }
@@ -332,16 +332,16 @@ fun ManageControlsModeButton(
     isPanel: Boolean,
     selected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Box(
         modifier = modifier
             .height(IntrinsicSize.Max)
-            .selectable(selected = selected, onClick = onClick)
+            .selectable(selected = selected, onClick = onClick),
     ) {
         Column(
             modifier = Modifier.padding(all = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Image(
                 asset = if (isPanel) {
@@ -351,25 +351,25 @@ fun ManageControlsModeButton(
                 },
                 contentDescription = null,
                 modifier = Modifier.size(36.dp),
-                colorFilter = ColorFilter.tint(LocalContentColor.current)
+                colorFilter = ColorFilter.tint(LocalContentColor.current),
             )
             Text(
                 text = stringResource(if (isPanel) commonR.string.lovelace else commonR.string.controls_setting_mode_builtin_title),
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
             Text(
                 // Add newline at the end for spacing
                 text = "${stringResource(if (isPanel) commonR.string.controls_setting_mode_panel_info else commonR.string.controls_setting_mode_builtin_info)}\n",
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
             RadioButton(
                 selected = selected,
                 // Handled by parent
-                onClick = null
+                onClick = null,
             )
         }
     }

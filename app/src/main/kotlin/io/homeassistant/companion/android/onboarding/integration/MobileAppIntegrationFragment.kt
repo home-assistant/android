@@ -48,7 +48,7 @@ class MobileAppIntegrationFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
@@ -59,7 +59,7 @@ class MobileAppIntegrationFragment : Fragment() {
                         onLocationTrackingChanged = this@MobileAppIntegrationFragment::onLocationTrackingChanged,
                         onSelectTLSCertificateClicked = this@MobileAppIntegrationFragment::onSelectTLSCertificateClicked,
                         onCheckPassword = this@MobileAppIntegrationFragment::onCheckTLSCertificatePassword,
-                        onFinishClicked = this@MobileAppIntegrationFragment::onComplete
+                        onFinishClicked = this@MobileAppIntegrationFragment::onComplete,
                     )
                 }
             }
@@ -73,13 +73,13 @@ class MobileAppIntegrationFragment : Fragment() {
                 val locationEnabled = DisabledLocationHandler.isLocationEnabled(requireContext())
                 val permissionOk = LocationSensorManager().checkPermission(
                     requireContext(),
-                    LocationSensorManager.backgroundLocation.id
+                    LocationSensorManager.backgroundLocation.id,
                 )
 
                 if (!locationEnabled) {
                     DisabledLocationHandler.showLocationDisabledWarnDialog(
                         requireActivity(),
-                        arrayOf(getString(LocationSensorManager.backgroundLocation.name))
+                        arrayOf(getString(LocationSensorManager.backgroundLocation.name)),
                     )
                     checked = false
                 } else if (!permissionOk) {
@@ -140,7 +140,7 @@ class MobileAppIntegrationFragment : Fragment() {
             requestLocationPermissions.launch(
                 LocationSensorManager().requiredPermissions(sensorId)
                     .toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                    .toTypedArray()
+                    .toTypedArray(),
             )
         } else {
             requestLocationPermissions.launch(LocationSensorManager().requiredPermissions(sensorId))
@@ -148,7 +148,7 @@ class MobileAppIntegrationFragment : Fragment() {
     }
 
     private fun onLocationPermissionResult(
-        results: Map<String, Boolean>
+        results: Map<String, Boolean>,
     ) {
         dialog?.dismiss()
 
@@ -171,8 +171,8 @@ class MobileAppIntegrationFragment : Fragment() {
             startActivity(
                 Intent(
                     Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                    Uri.parse("package:${activity?.packageName}")
-                )
+                    Uri.parse("package:${activity?.packageName}"),
+                ),
             )
         }
     }

@@ -6,5 +6,5 @@ import java.net.URL
 data class HomeAssistantInstance(
     val name: String,
     val url: URL,
-    val version: HomeAssistantVersion
+    val version: HomeAssistantVersion,
 )

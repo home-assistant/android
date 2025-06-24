@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 
 abstract class LaunchPresenterBase(
     private val view: LaunchView,
-    internal val serverManager: ServerManager
+    internal val serverManager: ServerManager,
 ) : LaunchPresenter {
 
     internal val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())

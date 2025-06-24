@@ -8,5 +8,5 @@ import kotlinx.serialization.Serializable
 data class TemplateUpdatedEvent(
     val result: String? = null,
     @Serializable(with = MapAnySerializer::class)
-    val listeners: Map<String, @Polymorphic Any?>
+    val listeners: Map<String, @Polymorphic Any?>,
 )

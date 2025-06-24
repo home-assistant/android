@@ -54,7 +54,8 @@ enum class WidgetType(val widgetIcon: IIcon) {
     STATE(CommunityMaterial.Icon3.cmd_shape),
     MEDIA(CommunityMaterial.Icon3.cmd_play_box_multiple),
     TEMPLATE(CommunityMaterial.Icon.cmd_code_braces),
-    TODO(CommunityMaterial.Icon.cmd_clipboard_list);
+    TODO(CommunityMaterial.Icon.cmd_clipboard_list),
+    ;
 
     fun configureActivity() = when (this) {
         BUTTON -> ButtonWidgetConfigureActivity::class.java
@@ -68,7 +69,7 @@ enum class WidgetType(val widgetIcon: IIcon) {
 
 @Composable
 fun ManageWidgetsView(
-    viewModel: ManageWidgetsViewModel
+    viewModel: ManageWidgetsViewModel,
 ) {
     var expandedAddWidget by remember { mutableStateOf(false) }
     Scaffold(floatingActionButton = {
@@ -79,7 +80,7 @@ fun ManageWidgetsView(
                 contentColor = MaterialTheme.colors.onPrimary,
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                 text = { Text(stringResource(R.string.add_widget)) },
-                onClick = { expandedAddWidget = true }
+                onClick = { expandedAddWidget = true },
             )
         }
     }) { contentPadding ->
@@ -90,7 +91,7 @@ fun ManageWidgetsView(
                 stringResource(R.string.widget_static_image_description) to WidgetType.STATE,
                 stringResource(R.string.widget_media_player_description) to WidgetType.MEDIA,
                 stringResource(R.string.template_widget) to WidgetType.TEMPLATE,
-                stringResource(R.string.todo_widget) to WidgetType.TODO
+                stringResource(R.string.todo_widget) to WidgetType.TODO,
             ).sortedBy { it.first }
 
             MdcAlertDialog(
@@ -106,14 +107,14 @@ fun ManageWidgetsView(
                     }
                 },
                 onCancel = { expandedAddWidget = false },
-                contentPadding = PaddingValues(all = 0.dp)
+                contentPadding = PaddingValues(all = 0.dp),
             )
         }
         LazyColumn(
             contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
             modifier = Modifier
                 .padding(contentPadding)
-                .fillMaxWidth()
+                .fillMaxWidth(),
         ) {
             if (viewModel.buttonWidgetList.value.isEmpty() && viewModel.staticWidgetList.value.isEmpty() &&
                 viewModel.mediaWidgetList.value.isEmpty() && viewModel.templateWidgetList.value.isEmpty() &&
@@ -123,7 +124,7 @@ fun ManageWidgetsView(
                     EmptyState(
                         icon = CommunityMaterial.Icon3.cmd_widgets,
                         title = stringResource(R.string.no_widgets),
-                        subtitle = stringResource(R.string.no_widgets_summary)
+                        subtitle = stringResource(R.string.no_widgets_summary),
                     )
                 }
             }
@@ -134,13 +135,13 @@ fun ManageWidgetsView(
                 widgetLabel = { item ->
                     val label = item.label
                     if (!label.isNullOrEmpty()) label else "${item.domain}.${item.service}"
-                }
+                },
             )
             widgetItems(
                 viewModel.cameraWidgetList.value,
                 widgetType = WidgetType.CAMERA,
                 title = R.string.camera_widgets,
-                widgetLabel = { item -> item.entityId }
+                widgetLabel = { item -> item.entityId },
             )
             widgetItems(
                 viewModel.staticWidgetList.value,
@@ -149,7 +150,7 @@ fun ManageWidgetsView(
                 widgetLabel = { item ->
                     val label = item.label
                     if (!label.isNullOrEmpty()) label else "${item.entityId} ${item.stateSeparator} ${item.attributeIds.orEmpty()}"
-                }
+                },
             )
             widgetItems(
                 viewModel.mediaWidgetList.value,
@@ -158,19 +159,19 @@ fun ManageWidgetsView(
                 widgetLabel = { item ->
                     val label = item.label
                     if (!label.isNullOrEmpty()) label else item.entityId
-                }
+                },
             )
             widgetItems(
                 viewModel.templateWidgetList.value,
                 widgetType = WidgetType.TEMPLATE,
                 title = R.string.template_widgets,
-                widgetLabel = { item -> item.template }
+                widgetLabel = { item -> item.template },
             )
             widgetItems(
                 viewModel.todoWidgetList.value,
                 widgetType = WidgetType.TODO,
                 title = R.string.todo_widgets,
-                widgetLabel = { item -> item.entityId }
+                widgetLabel = { item -> item.entityId },
             )
         }
     }
@@ -180,7 +181,7 @@ private fun <T : WidgetEntity> LazyListScope.widgetItems(
     widgetList: List<T>,
     @StringRes title: Int,
     widgetLabel: @Composable (T) -> String,
-    widgetType: WidgetType
+    widgetType: WidgetType,
 ) {
     if (widgetList.isNotEmpty()) {
         item {
@@ -196,7 +197,7 @@ private fun <T : WidgetEntity> LazyListScope.widgetItems(
 private fun PopupWidgetRow(
     widgetLabel: String,
     widgetType: WidgetType,
-    onClickCallback: () -> Unit
+    onClickCallback: () -> Unit,
 ) {
     val context = LocalContext.current
     Box(
@@ -209,16 +210,16 @@ private fun PopupWidgetRow(
                 }
                 context.startActivity(intent)
                 onClickCallback()
-            }
+            },
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
                 asset = widgetType.widgetIcon,
                 colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
-                contentDescription = widgetLabel
+                contentDescription = widgetLabel,
             )
             Text(text = widgetLabel, modifier = Modifier.padding(start = 16.dp))
         }
@@ -229,7 +230,7 @@ private fun PopupWidgetRow(
 private fun WidgetRow(
     widgetLabel: String,
     widgetId: Int,
-    widgetType: WidgetType
+    widgetType: WidgetType,
 ) {
     val context = LocalContext.current
     Row {

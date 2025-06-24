@@ -71,14 +71,14 @@ class NotificationActionReceiver : BroadcastReceiver() {
                             "${MessagingManager.SOURCE_REPLY_HISTORY}$index" to text!!
                         }
                         .toMap(),
-                    "${MessagingManager.SOURCE_REPLY}$databaseId"
+                    "${MessagingManager.SOURCE_REPLY}$databaseId",
                 )
             } else {
                 val notificationManagerCompat = NotificationManagerCompat.from(context)
                 notificationManagerCompat.cancel(
                     tag,
                     messageId,
-                    true
+                    true,
                 )
             }
         }
@@ -105,7 +105,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         action: NotificationAction,
         serverId: Int,
         onComplete: () -> Unit,
-        onFailure: () -> Unit
+        onFailure: () -> Unit,
     ) {
         ioScope.launch {
             try {
@@ -113,7 +113,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
                     "mobile_app_notification_action",
                     action.data
                         .filter { !it.key.startsWith(MessagingManager.SOURCE_REPLY_HISTORY) }
-                        .plus(Pair("action", action.key))
+                        .plus(Pair("action", action.key)),
                 )
                 onComplete()
             } catch (e: Exception) {

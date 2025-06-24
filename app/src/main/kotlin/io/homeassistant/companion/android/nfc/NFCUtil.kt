@@ -51,7 +51,7 @@ object NFCUtil {
             activity,
             0,
             Intent(activity, classType).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-            PendingIntent.FLAG_MUTABLE
+            PendingIntent.FLAG_MUTABLE,
         )
         val nfcIntentFilter = IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED)
         val filters = arrayOf(nfcIntentFilter)
@@ -65,7 +65,7 @@ object NFCUtil {
     private fun writeMessageToTag(
         nfcMessage: NdefMessage,
         fallbackMessage: NdefMessage,
-        tag: Tag?
+        tag: Tag?,
     ): Boolean {
         val nDefTag = Ndef.get(tag)
 

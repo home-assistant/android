@@ -20,7 +20,7 @@ import io.homeassistant.companion.android.views.ThemeLazyColumn
 @Composable
 fun SelectCameraTileView(
     tiles: List<CameraTile>,
-    onSelectTile: (tileId: Int) -> Unit
+    onSelectTile: (tileId: Int) -> Unit,
 ) {
     WearAppTheme {
         ThemeLazyColumn {
@@ -31,7 +31,7 @@ fun SelectCameraTileView(
                 item {
                     Text(
                         text = stringResource(commonR.string.camera_tile_no_tiles_yet),
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
                     )
                 }
             } else {
@@ -45,7 +45,7 @@ fun SelectCameraTileView(
                             null
                         },
                         onClick = { onSelectTile(tile.id) },
-                        colors = getFilledTonalButtonColors()
+                        colors = getFilledTonalButtonColors(),
                     )
                 }
             }
@@ -58,9 +58,9 @@ fun SelectCameraTileView(
 private fun PreviewSelectCameraTileViewOne() {
     SelectCameraTileView(
         tiles = listOf(
-            CameraTile(id = 1, entityId = "camera.buienradar", refreshInterval = 300)
+            CameraTile(id = 1, entityId = "camera.buienradar", refreshInterval = 300),
         ),
-        onSelectTile = {}
+        onSelectTile = {},
     )
 }
 

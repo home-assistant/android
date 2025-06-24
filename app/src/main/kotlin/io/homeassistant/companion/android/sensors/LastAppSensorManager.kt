@@ -19,7 +19,7 @@ class LastAppSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_last_used_app,
             commonR.string.sensor_description_last_used_app,
-            "mdi:android"
+            "mdi:android",
         )
     }
 
@@ -48,7 +48,7 @@ class LastAppSensorManager : SensorManager {
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     override suspend fun requestSensorUpdate(
-        context: Context
+        context: Context,
     ) {
         updateLastApp(context)
     }
@@ -84,8 +84,8 @@ class LastAppSensorManager : SensorManager {
             lastApp,
             last_used.statelessIcon,
             mapOf(
-                "Label" to appLabel
-            )
+                "Label" to appLabel,
+            ),
         )
     }
 }

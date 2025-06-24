@@ -12,10 +12,10 @@ import androidx.wear.tooling.preview.devices.WearDevices
 
 @Composable
 fun TimeText(
-    scalingLazyListState: ScalingLazyListState
+    scalingLazyListState: ScalingLazyListState,
 ) {
     TimeText(
-        modifier = Modifier.scrollAway(scrollState = scalingLazyListState)
+        modifier = Modifier.scrollAway(scrollState = scalingLazyListState),
     )
 }
 

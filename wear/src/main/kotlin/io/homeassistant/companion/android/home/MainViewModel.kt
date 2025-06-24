@@ -56,13 +56,13 @@ class MainViewModel @Inject constructor(
     private val sensorsDao: SensorDao,
     private val cameraTileDao: CameraTileDao,
     private val thermostatTileDao: ThermostatTileDao,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
 
     enum class LoadingState {
         LOADING,
         READY,
-        ERROR
+        ERROR,
     }
 
     private val app = application
@@ -161,7 +161,7 @@ class MainViewModel @Inject constructor(
 
             val assistantAppComponent = ComponentName(
                 BuildConfig.APPLICATION_ID,
-                "io.homeassistant.companion.android.conversation.AssistantActivity"
+                "io.homeassistant.companion.android.conversation.AssistantActivity",
             )
             isAssistantAppAllowed =
                 app.packageManager.getComponentEnabledSetting(assistantAppComponent) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
@@ -320,7 +320,7 @@ class MainViewModel @Inject constructor(
             entitiesInArea.addAll(
                 entitiesList
                     .filter { getAreaForEntity(it.entityId)?.areaId == area.areaId }
-                    .sortedBy { (it.attributes["friendly_name"] ?: it.entityId) as String }
+                    .sortedBy { (it.attributes["friendly_name"] ?: it.entityId) as String },
             )
             entitiesByArea[area.areaId]?.let {
                 it.clear()
@@ -393,7 +393,7 @@ class MainViewModel @Inject constructor(
     private suspend fun updateSensorEntity(
         sensorDao: SensorDao,
         basicSensor: SensorManager.BasicSensor,
-        isEnabled: Boolean
+        isEnabled: Boolean,
     ) {
         homePresenter.getServerId()?.let { serverId ->
             sensorDao.setSensorsEnabled(listOf(basicSensor.id), serverId, isEnabled)
@@ -563,12 +563,12 @@ class MainViewModel @Inject constructor(
     fun setAssistantApp(allowed: Boolean) {
         val assistantAppComponent = ComponentName(
             BuildConfig.APPLICATION_ID,
-            "io.homeassistant.companion.android.conversation.AssistantActivity"
+            "io.homeassistant.companion.android.conversation.AssistantActivity",
         )
         app.packageManager.setComponentEnabledSetting(
             assistantAppComponent,
             if (allowed) PackageManager.COMPONENT_ENABLED_STATE_DEFAULT else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-            PackageManager.DONT_KILL_APP
+            PackageManager.DONT_KILL_APP,
         )
         isAssistantAppAllowed = allowed
     }
@@ -594,7 +594,7 @@ class MainViewModel @Inject constructor(
      * Convert a Flow into a State object that updates until the view model is cleared.
      */
     private fun <T> Flow<T>.collectAsState(
-        initial: T
+        initial: T,
     ): State<T> {
         val state = mutableStateOf(initial)
         viewModelScope.launch {

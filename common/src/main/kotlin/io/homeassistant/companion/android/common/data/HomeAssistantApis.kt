@@ -17,7 +17,7 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 class HomeAssistantApis @Inject constructor(
     private val tlsHelper: TLSHelper,
-    @ApplicationContext private val appContext: Context
+    @ApplicationContext private val appContext: Context,
 ) {
     companion object {
         private const val LOCAL_HOST = "http://localhost/"
@@ -32,7 +32,7 @@ class HomeAssistantApis @Inject constructor(
             builder.addInterceptor(
                 HttpLoggingInterceptor().apply {
                     level = HttpLoggingInterceptor.Level.BODY
-                }
+                },
             )
         }
         builder.addNetworkInterceptor {
@@ -40,7 +40,7 @@ class HomeAssistantApis @Inject constructor(
                 it.request()
                     .newBuilder()
                     .header(USER_AGENT, USER_AGENT_STRING)
-                    .build()
+                    .build(),
             )
         }
 
@@ -69,8 +69,8 @@ class HomeAssistantApis @Inject constructor(
         .Builder()
         .addConverterFactory(
             kotlinJsonMapper.asConverterFactory(
-                "application/json; charset=UTF-8".toMediaType()
-            )
+                "application/json; charset=UTF-8".toMediaType(),
+            ),
         )
         .client(configureOkHttpClient(OkHttpClient.Builder()).build())
         .baseUrl(LOCAL_HOST)

@@ -14,7 +14,7 @@ class AndroidOsSensorManager : SensorManager {
             commonR.string.basic_sensor_name_android_os_version,
             commonR.string.sensor_description_android_os_version,
             "mdi:android",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         val osSecurityPatch = SensorManager.BasicSensor(
             "android_os_security_patch",
@@ -22,7 +22,7 @@ class AndroidOsSensorManager : SensorManager {
             commonR.string.basic_sensor_name_android_os_security_patch,
             commonR.string.sensor_description_android_os_security_patch,
             "mdi:security",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
     }
 
@@ -46,7 +46,7 @@ class AndroidOsSensorManager : SensorManager {
     }
 
     override suspend fun requestSensorUpdate(
-        context: Context
+        context: Context,
     ) {
         checkState(context, osVersion)
         checkState(context, osSecurityPatch)
@@ -54,7 +54,7 @@ class AndroidOsSensorManager : SensorManager {
 
     private suspend fun checkState(
         context: Context,
-        sensor: SensorManager.BasicSensor
+        sensor: SensorManager.BasicSensor,
     ) {
         if (!isEnabled(context, sensor)) {
             return
@@ -75,7 +75,7 @@ class AndroidOsSensorManager : SensorManager {
                 }
             },
             sensor.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 }

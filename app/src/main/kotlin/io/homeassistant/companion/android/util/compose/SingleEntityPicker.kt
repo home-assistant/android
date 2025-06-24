@@ -45,7 +45,7 @@ fun SingleEntityPicker(
     onEntityCleared: () -> Unit,
     onEntitySelected: (String) -> Boolean,
     modifier: Modifier = Modifier,
-    label: @Composable (() -> Unit) = { Text(stringResource(commonR.string.select_entity_to_display)) }
+    label: @Composable (() -> Unit) = { Text(stringResource(commonR.string.select_entity_to_display)) },
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -56,7 +56,7 @@ fun SingleEntityPicker(
                 ""
             } else {
                 entities.firstOrNull { it.entityId == currentEntity }?.friendlyName ?: currentEntity
-            }
+            },
         )
     }
 
@@ -79,8 +79,8 @@ fun SingleEntityPicker(
                 compareBy(
                     { !it.friendlyName.startsWith(query, ignoreCase = true) },
                     { !it.entityId.split(".")[1].startsWith(query.replace(" ", "_"), ignoreCase = true) },
-                    { it.friendlyName.lowercase() }
-                )
+                    { it.friendlyName.lowercase() },
+                ),
             ).take(75)
         }
     }
@@ -88,7 +88,7 @@ fun SingleEntityPicker(
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
-        modifier = modifier
+        modifier = modifier,
     ) {
         TextField(
             value = inputValue,
@@ -104,7 +104,7 @@ fun SingleEntityPicker(
                         IconButton(onClick = onEntityCleared, modifier = Modifier.clearAndSetSemantics { }) {
                             Icon(
                                 Icons.Filled.Clear,
-                                stringResource(commonR.string.search_clear_selection)
+                                stringResource(commonR.string.search_clear_selection),
                             )
                         }
                     }
@@ -113,7 +113,7 @@ fun SingleEntityPicker(
             },
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
             singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
         if (list.isNotEmpty()) {
             ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -125,21 +125,21 @@ fun SingleEntityPicker(
                             expanded = false
                             focusManager.clearFocus()
                         },
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     ) {
                         Column {
                             Text(
                                 text = it.friendlyName,
                                 style = MaterialTheme.typography.body1,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
                             )
                             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                                 Text(
                                     text = it.entityId,
                                     style = MaterialTheme.typography.body2,
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                             }
                         }
@@ -150,7 +150,7 @@ fun SingleEntityPicker(
                         Text(
                             text = stringResource(commonR.string.search_refine_for_more),
                             style = MaterialTheme.typography.body2,
-                            fontStyle = FontStyle.Italic
+                            fontStyle = FontStyle.Italic,
                         )
                     }
                 }

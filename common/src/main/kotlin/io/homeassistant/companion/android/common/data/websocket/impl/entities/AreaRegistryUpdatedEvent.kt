@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AreaRegistryUpdatedEvent(
     val action: String,
-    val areaId: String
+    val areaId: String,
 )

@@ -59,7 +59,7 @@ class MatterCommissioningService : Service(), CommissioningService.Callback {
 
             if (result?.success == true) {
                 commissioningServiceDelegate.sendCommissioningComplete(
-                    CommissioningCompleteMetadata.Builder().build()
+                    CommissioningCompleteMetadata.Builder().build(),
                 )
             } else {
                 commissioningServiceDelegate.sendCommissioningError(CommissioningError.OTHER)

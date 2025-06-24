@@ -23,7 +23,7 @@ object VacuumControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity,
-        info: HaControlInfo
+        info: HaControlInfo,
     ): Control.StatefulBuilder {
         entitySupportedFeatures = entity.attributes["supported_features"] as Int
         control.setControlTemplate(
@@ -31,9 +31,9 @@ object VacuumControl : HaControl {
                 entity.entityId,
                 ControlButton(
                     entity.isActive(),
-                    "Description"
-                )
-            )
+                    "Description",
+                ),
+            ),
         )
         return control
     }
@@ -46,7 +46,7 @@ object VacuumControl : HaControl {
 
     override suspend fun performAction(
         integrationRepository: IntegrationRepository,
-        action: ControlAction
+        action: ControlAction,
     ): Boolean {
         integrationRepository.callAction(
             action.templateId.split(".")[0],
@@ -54,8 +54,8 @@ object VacuumControl : HaControl {
                 if ((action as? BooleanAction)?.newState == true) "turn_on" else "turn_off"
             } else if ((action as? BooleanAction)?.newState == true) "start" else "return_to_base",
             hashMapOf(
-                "entity_id" to action.templateId
-            )
+                "entity_id" to action.templateId,
+            ),
         )
         return true
     }

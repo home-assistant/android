@@ -38,7 +38,7 @@ class NetworkSensorManager : SensorManager {
             commonR.string.sensor_description_hotspot,
             "mdi:access-point",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val wifiConnection = SensorManager.BasicSensor(
             "wifi_connection",
@@ -47,7 +47,7 @@ class NetworkSensorManager : SensorManager {
             commonR.string.sensor_description_wifi_connection,
             "mdi:wifi",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val bssidState = SensorManager.BasicSensor(
             "wifi_bssid",
@@ -56,7 +56,7 @@ class NetworkSensorManager : SensorManager {
             commonR.string.sensor_description_wifi_bssid,
             "mdi:wifi",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val wifiIp = SensorManager.BasicSensor(
             "wifi_ip_address",
@@ -65,7 +65,7 @@ class NetworkSensorManager : SensorManager {
             commonR.string.sensor_description_wifi_ip,
             "mdi:ip",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val wifiLinkSpeed = SensorManager.BasicSensor(
             "wifi_link_speed",
@@ -75,7 +75,7 @@ class NetworkSensorManager : SensorManager {
             "mdi:wifi-strength-3",
             unitOfMeasurement = "Mbps",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         val wifiState = SensorManager.BasicSensor(
             "wifi_state",
@@ -84,7 +84,7 @@ class NetworkSensorManager : SensorManager {
             commonR.string.sensor_description_wifi_state,
             "mdi:wifi",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val wifiFrequency = SensorManager.BasicSensor(
             "wifi_frequency",
@@ -95,7 +95,7 @@ class NetworkSensorManager : SensorManager {
             unitOfMeasurement = "MHz",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val wifiSignalStrength = SensorManager.BasicSensor(
             "wifi_signal_strength",
@@ -106,7 +106,7 @@ class NetworkSensorManager : SensorManager {
             deviceClass = "signal_strength",
             unitOfMeasurement = "dBm",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         val publicIp = SensorManager.BasicSensor(
             "public_ip_address",
@@ -115,7 +115,7 @@ class NetworkSensorManager : SensorManager {
             commonR.string.sensor_description_public_ip,
             "mdi:ip",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#public-ip-sensor",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         val ip6Addresses = SensorManager.BasicSensor(
             "ip6_addresses",
@@ -126,7 +126,7 @@ class NetworkSensorManager : SensorManager {
             unitOfMeasurement = "address(es)",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val networkType = SensorManager.BasicSensor(
             "network_type",
@@ -137,7 +137,7 @@ class NetworkSensorManager : SensorManager {
             deviceClass = "enum",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#network-type-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         private const val SETTING_GET_CURRENT_BSSID = "network_get_current_bssid"
     }
@@ -155,7 +155,7 @@ class NetworkSensorManager : SensorManager {
             wifiLinkSpeed,
             wifiState,
             wifiFrequency,
-            wifiSignalStrength
+            wifiSignalStrength,
         )
         val list = if (hasWifi(context)) {
             val withPublicIp = wifiSensors.plus(publicIp)
@@ -182,7 +182,7 @@ class NetworkSensorManager : SensorManager {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                 )
             }
             else -> {
@@ -192,7 +192,7 @@ class NetworkSensorManager : SensorManager {
     }
 
     override suspend fun requestSensorUpdate(
-        context: Context
+        context: Context,
     ) {
         updateHotspotEnabledSensor(context)
         updateWifiConnectionSensor(context)
@@ -242,7 +242,7 @@ class NetworkSensorManager : SensorManager {
             hotspotState,
             enabled,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
     private suspend fun updateWifiConnectionSensor(context: Context) {
@@ -282,7 +282,7 @@ class NetworkSensorManager : SensorManager {
             wifiConnection,
             ssid,
             icon,
-            attributes
+            attributes,
         )
     }
 
@@ -326,7 +326,7 @@ class NetworkSensorManager : SensorManager {
             bssidState,
             bssid,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -363,7 +363,7 @@ class NetworkSensorManager : SensorManager {
             wifiIp,
             deviceIp,
             wifiIp.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -393,8 +393,8 @@ class NetworkSensorManager : SensorManager {
             totalAddresses,
             ip6Addresses.statelessIcon,
             mapOf(
-                "ip6_addresses" to ipAddressList
-            )
+                "ip6_addresses" to ipAddressList,
+            ),
         )
     }
 
@@ -437,7 +437,7 @@ class NetworkSensorManager : SensorManager {
             wifiLinkSpeed,
             linkSpeed,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -461,7 +461,7 @@ class NetworkSensorManager : SensorManager {
             wifiState,
             wifiEnabled,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -487,7 +487,7 @@ class NetworkSensorManager : SensorManager {
             wifiFrequency,
             frequency,
             wifiFrequency.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -523,7 +523,7 @@ class NetworkSensorManager : SensorManager {
             wifiSignalStrength,
             rssi,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -562,7 +562,7 @@ class NetworkSensorManager : SensorManager {
                     publicIp,
                     ip,
                     publicIp.statelessIcon,
-                    mapOf()
+                    mapOf(),
                 )
             }
         })
@@ -614,8 +614,8 @@ class NetworkSensorManager : SensorManager {
             icon,
             mapOf(
                 "metered" to metered,
-                "options" to listOf("bluetooth", "cellular", "ethernet", "lowpan", "usb", "vpn", "wifi", "wifi_aware")
-            )
+                "options" to listOf("bluetooth", "cellular", "ethernet", "lowpan", "usb", "vpn", "wifi", "wifi_aware"),
+            ),
         )
     }
 

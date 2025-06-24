@@ -61,7 +61,7 @@ class AuthenticationFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
@@ -77,7 +77,7 @@ class AuthenticationFragment : Fragment() {
                                 @Deprecated("Deprecated in Java")
                                 override fun shouldOverrideUrlLoading(
                                     view: WebView?,
-                                    url: String
+                                    url: String,
                                 ): Boolean {
                                     return onRedirect(url)
                                 }
@@ -86,12 +86,12 @@ class AuthenticationFragment : Fragment() {
                                 override fun onReceivedError(
                                     view: WebView?,
                                     request: WebResourceRequest?,
-                                    error: WebResourceError?
+                                    error: WebResourceError?,
                                 ) {
                                     super.onReceivedError(view, request, error)
                                     if (request?.url?.toString() == authUrl) {
                                         Timber.e(
-                                            "onReceivedError: Status Code: ${error?.errorCode} Description: ${error?.description}"
+                                            "onReceivedError: Status Code: ${error?.errorCode} Description: ${error?.description}",
                                         )
                                         showError(
                                             requireContext().getString(
@@ -101,10 +101,10 @@ class AuthenticationFragment : Fragment() {
                                                     commonR.string.no_description
                                                 } else {
                                                     error.description
-                                                }
+                                                },
                                             ),
                                             null,
-                                            error
+                                            error,
                                         )
                                     }
                                 }
@@ -112,24 +112,24 @@ class AuthenticationFragment : Fragment() {
                                 override fun onReceivedHttpError(
                                     view: WebView?,
                                     request: WebResourceRequest?,
-                                    errorResponse: WebResourceResponse?
+                                    errorResponse: WebResourceResponse?,
                                 ) {
                                     super.onReceivedHttpError(view, request, errorResponse)
                                     if (request?.url?.toString() == authUrl) {
                                         Timber.e(
-                                            "onReceivedHttpError: Status Code: ${errorResponse?.statusCode} Description: ${errorResponse?.reasonPhrase}"
+                                            "onReceivedHttpError: Status Code: ${errorResponse?.statusCode} Description: ${errorResponse?.reasonPhrase}",
                                         )
                                         if (isTLSClientAuthNeeded && !isCertificateChainValid) {
                                             showError(
                                                 requireContext().getString(commonR.string.tls_cert_expired_message),
                                                 null,
-                                                null
+                                                null,
                                             )
                                         } else if (isTLSClientAuthNeeded && errorResponse?.statusCode == 400) {
                                             showError(
                                                 requireContext().getString(commonR.string.tls_cert_not_found_message),
                                                 null,
-                                                null
+                                                null,
                                             )
                                         } else {
                                             showError(
@@ -140,10 +140,10 @@ class AuthenticationFragment : Fragment() {
                                                         requireContext().getString(commonR.string.no_description)
                                                     } else {
                                                         errorResponse.reasonPhrase
-                                                    }
+                                                    },
                                                 ),
                                                 null,
-                                                null
+                                                null,
                                             )
                                         }
                                     }
@@ -152,7 +152,7 @@ class AuthenticationFragment : Fragment() {
                                 override fun onReceivedSslError(
                                     view: WebView?,
                                     handler: SslErrorHandler?,
-                                    error: SslError?
+                                    error: SslError?,
                                 ) {
                                     super.onReceivedSslError(view, handler, error)
                                     Timber.e("onReceivedSslError: $error")
@@ -161,7 +161,7 @@ class AuthenticationFragment : Fragment() {
                             }
                             authUrl = buildAuthUrl(viewModel.manualUrl.value)
                             loadUrl(authUrl!!)
-                        }
+                        },
                     )
                 }
             }
@@ -241,7 +241,7 @@ class AuthenticationFragment : Fragment() {
                             message
                         }
                     }
-                }
+                },
             )
             .setPositiveButton(android.R.string.ok) { _, _ -> }
             .show()

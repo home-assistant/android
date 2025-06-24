@@ -36,7 +36,7 @@ class DiscoveryFragment @Inject constructor() : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         lifecycle.addObserver(viewModel.homeAssistantSearcher)
 
@@ -47,7 +47,7 @@ class DiscoveryFragment @Inject constructor() : Fragment() {
                         discoveryActive = viewModel.discoveryActive,
                         foundInstances = viewModel.foundInstances,
                         manualSetupClicked = { navigateToManualSetup() },
-                        instanceClicked = { onInstanceClicked(it) }
+                        instanceClicked = { onInstanceClicked(it) },
                     )
                 }
             }

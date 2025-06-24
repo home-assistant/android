@@ -39,31 +39,31 @@ import io.homeassistant.companion.android.util.intervalToString
 @Composable
 fun RefreshIntervalPickerView(
     currentInterval: Int,
-    onSelectInterval: (Int) -> Unit
+    onSelectInterval: (Int) -> Unit,
 ) {
     // Refresh interval options: never, when viewed, every x time
     val options = listOf(0, 1, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 2 * 60 * 60, 5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60)
     val initialIndex = options.indexOf(currentInterval)
     val state = rememberPickerState(
         initialNumberOfOptions = options.size,
-        initiallySelectedOption = if (initialIndex != -1) initialIndex else 0
+        initiallySelectedOption = if (initialIndex != -1) initialIndex else 0,
     )
 
     Column(
         modifier = Modifier.padding(horizontal = 12.dp).fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         ListHeader {
             Image(
                 asset = CommunityMaterial.Icon3.cmd_timer_cog,
                 contentDescription = stringResource(R.string.refresh_interval),
-                colorFilter = ColorFilter.tint(LocalContentColor.current)
+                colorFilter = ColorFilter.tint(LocalContentColor.current),
             )
         }
         Picker(
             state = state,
             contentDescription = stringResource(R.string.refresh_interval),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         ) {
             Text(
                 text = intervalToString(LocalContext.current, options[it]),
@@ -71,24 +71,24 @@ fun RefreshIntervalPickerView(
                     MaterialTheme.typography.displayMedium.copy(
                         fontWeight = FontWeight.Medium,
                         // Ignore text scaling
-                        fontSize = MaterialTheme.typography.displayMedium.fontSize.value.dp.toSp()
+                        fontSize = MaterialTheme.typography.displayMedium.fontSize.value.dp.toSp(),
                     )
                 },
                 color = wearColorScheme.primary,
                 // In case of overflow, minimize weird layout behavior
                 textAlign = TextAlign.Center,
                 overflow = TextOverflow.Ellipsis,
-                maxLines = 2
+                maxLines = 2,
             )
         }
         FilledIconButton(
             onClick = { onSelectInterval(options[state.selectedOption]) },
-            modifier = Modifier.touchTargetAwareSize(IconButtonDefaults.SmallButtonSize)
+            modifier = Modifier.touchTargetAwareSize(IconButtonDefaults.SmallButtonSize),
         ) {
             Icon(
                 Icons.Filled.Check,
                 contentDescription = stringResource(id = R.string.save),
-                modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize))
+                modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize)),
             )
         }
     }

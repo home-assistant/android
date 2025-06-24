@@ -24,7 +24,7 @@ object UrlUtil {
                     .toString()
             } catch (e: IllegalArgumentException) {
                 throw MalformedHttpUrlException(
-                    e.message
+                    e.message,
                 )
             }
         }
@@ -84,7 +84,7 @@ object UrlUtil {
     fun splitNfcTagId(it: Uri?): String? {
         val matches =
             Regex("^https?://www\\.home-assistant\\.io/tag/(.*)").find(
-                it.toString()
+                it.toString(),
             )
         return matches?.groups?.get(1)?.value
     }

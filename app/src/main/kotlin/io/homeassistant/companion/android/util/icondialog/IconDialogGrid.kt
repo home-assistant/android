@@ -37,11 +37,11 @@ import kotlinx.coroutines.withContext
 fun IconDialogGrid(
     icons: List<IIcon>,
     tint: Color = MaterialTheme.colors.onSurface,
-    onClick: (IIcon) -> Unit
+    onClick: (IIcon) -> Unit,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 48.dp),
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
     ) {
         items(icons) { icon ->
             IconButton(onClick = { onClick(icon) }) {
@@ -49,7 +49,7 @@ fun IconDialogGrid(
                     asset = icon,
                     colorFilter = ColorFilter.tint(tint),
                     // https://material.io/design/iconography/system-icons.html#color
-                    alpha = 0.54f
+                    alpha = 0.54f,
                 )
             }
         }
@@ -69,7 +69,7 @@ fun IconDialogGrid(
     searchQuery: String,
     iconFilter: IconFilter = DefaultIconFilter(),
     tint: Color = MaterialTheme.colors.onSurface,
-    onClick: (IIcon) -> Unit
+    onClick: (IIcon) -> Unit,
 ) {
     var icons by remember { mutableStateOf<List<IIcon>>(emptyList()) }
     LaunchedEffect(typeface, searchQuery) {
@@ -87,11 +87,11 @@ private fun IconDialogGridPreview() {
             modifier = Modifier
                 .width(480.dp)
                 .height(500.dp),
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.medium,
         ) {
             IconDialogGrid(
                 icons = CommunityMaterial.icons.map { name -> CommunityMaterial.getIcon(name) },
-                onClick = {}
+                onClick = {},
             )
         }
     }

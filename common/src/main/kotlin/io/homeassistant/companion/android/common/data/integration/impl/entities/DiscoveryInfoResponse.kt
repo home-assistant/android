@@ -4,5 +4,5 @@ data class DiscoveryInfoResponse(
     val baseUrl: String,
     val locationName: String,
     val requiresApiPassword: Boolean,
-    val version: String
+    val version: String,
 )

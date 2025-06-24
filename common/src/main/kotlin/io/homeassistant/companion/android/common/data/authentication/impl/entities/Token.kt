@@ -7,5 +7,5 @@ data class Token(
     val accessToken: String,
     val expiresIn: Int,
     val refreshToken: String? = null,
-    val tokenType: String
+    val tokenType: String,
 )

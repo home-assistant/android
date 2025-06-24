@@ -81,7 +81,7 @@ class LogFragment : Fragment() {
                 }
             },
             viewLifecycleOwner,
-            Lifecycle.State.RESUMED
+            Lifecycle.State.RESUMED,
         )
 
         requireView().findViewById<TabLayout>(R.id.logTabLayout)

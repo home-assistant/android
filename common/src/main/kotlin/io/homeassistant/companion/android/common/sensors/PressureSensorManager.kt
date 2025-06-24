@@ -23,7 +23,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
             "mdi:gauge",
             deviceClass = "pressure",
             unitOfMeasurement = "hPa",
-            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
         )
     }
 
@@ -74,7 +74,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
             mySensorManager.registerListener(
                 this,
                 pressureSensors,
-                SENSOR_DELAY_NORMAL
+                SENSOR_DELAY_NORMAL,
             )
             Timber.d("Pressure sensor listener registered")
             isListenerRegistered = true
@@ -94,7 +94,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
                     pressureSensor,
                     event.values[0].toBigDecimal().setScale(1, RoundingMode.HALF_EVEN).toString(),
                     pressureSensor.statelessIcon,
-                    mapOf()
+                    mapOf(),
                 )
             }
         }

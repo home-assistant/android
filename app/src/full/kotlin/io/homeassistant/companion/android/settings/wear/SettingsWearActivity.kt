@@ -209,14 +209,14 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
                     remoteActivityHelper
                         ?.startRemoteActivity(
                             targetIntent = intent,
-                            targetNodeId = node.id
+                            targetNodeId = node.id,
                         )
                         ?.await()
 
                     Toast.makeText(
                         this@SettingsWearActivity,
                         getString(commonR.string.store_request_successful),
-                        Toast.LENGTH_SHORT
+                        Toast.LENGTH_SHORT,
                     ).show()
                 } catch (cancellationException: CancellationException) {
                     // Request was cancelled normally
@@ -224,7 +224,7 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
                     Toast.makeText(
                         this@SettingsWearActivity,
                         getString(commonR.string.store_request_unsuccessful),
-                        Toast.LENGTH_LONG
+                        Toast.LENGTH_LONG,
                     ).show()
                 }
             }

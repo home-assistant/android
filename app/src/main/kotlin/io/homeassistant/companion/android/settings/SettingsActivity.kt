@@ -102,7 +102,7 @@ class SettingsActivity : BaseActivity() {
                         }
                     } else {
                         null
-                    }
+                    },
                 )
             }
         }

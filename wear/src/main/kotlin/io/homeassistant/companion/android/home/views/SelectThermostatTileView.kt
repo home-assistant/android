@@ -20,7 +20,7 @@ import io.homeassistant.companion.android.views.ThemeLazyColumn
 @Composable
 fun SelectThermostatTileView(
     tiles: List<ThermostatTile>,
-    onSelectTile: (tileId: Int) -> Unit
+    onSelectTile: (tileId: Int) -> Unit,
 ) {
     WearAppTheme {
         ThemeLazyColumn {
@@ -31,7 +31,7 @@ fun SelectThermostatTileView(
                 item {
                     Text(
                         text = stringResource(commonR.string.thermostat_tile_no_tiles_yet),
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
                     )
                 }
             } else {
@@ -45,7 +45,7 @@ fun SelectThermostatTileView(
                             null
                         },
                         onClick = { onSelectTile(tile.id) },
-                        colors = getFilledTonalButtonColors()
+                        colors = getFilledTonalButtonColors(),
                     )
                 }
             }
@@ -58,9 +58,9 @@ fun SelectThermostatTileView(
 private fun PreviewSelectThermostatTileViewOne() {
     SelectThermostatTileView(
         tiles = listOf(
-            ThermostatTile(id = 1, entityId = "climate.living_room", refreshInterval = 300, targetTemperature = 21.0f, showEntityName = true)
+            ThermostatTile(id = 1, entityId = "climate.living_room", refreshInterval = 300, targetTemperature = 21.0f, showEntityName = true),
         ),
-        onSelectTile = {}
+        onSelectTile = {},
     )
 }
 

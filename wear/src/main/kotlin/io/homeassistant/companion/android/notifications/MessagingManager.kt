@@ -36,7 +36,7 @@ class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
     private val serverManager: ServerManager,
     private val sensorDao: SensorDao,
-    private val textToSpeechClient: TextToSpeechClient
+    private val textToSpeechClient: TextToSpeechClient,
 ) {
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -123,7 +123,7 @@ class MessagingManager @Inject constructor(
             } else {
                 if (previousGroup.isNotBlank()) {
                     Timber.d(
-                        "Remove group notification with tag \"$previousGroup\" and id \"$previousGroupId\""
+                        "Remove group notification with tag \"$previousGroup\" and id \"$previousGroupId\"",
                     )
                     notificationManagerCompat.cancelGroupIfNeeded(previousGroup, previousGroupId)
                 }

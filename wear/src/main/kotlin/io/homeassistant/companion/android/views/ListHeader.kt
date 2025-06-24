@@ -34,7 +34,7 @@ fun ListHeader(string: String, modifier: Modifier = Modifier) {
             modifier = modifier,
             textAlign = TextAlign.Center,
             maxLines = maxLines,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
@@ -43,6 +43,6 @@ fun ListHeader(string: String, modifier: Modifier = Modifier) {
 @Composable
 private fun PreviewListHeader() {
     ListHeader(
-        id = commonR.string.other
+        id = commonR.string.other,
     )
 }

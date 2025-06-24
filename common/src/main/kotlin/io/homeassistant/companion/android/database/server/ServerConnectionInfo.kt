@@ -32,7 +32,7 @@ data class ServerConnectionInfo(
     @ColumnInfo(name = "internal_vpn")
     val internalVpn: Boolean? = null,
     @ColumnInfo(name = "prioritize_internal")
-    val prioritizeInternal: Boolean = false
+    val prioritizeInternal: Boolean = false,
 ) {
     @Ignore
     lateinit var wifiHelper: WifiHelper
@@ -54,7 +54,7 @@ data class ServerConnectionInfo(
                     it.toHttpUrlOrNull()?.newBuilder()
                         ?.addPathSegments("api/webhook/$webhookId")
                         ?.build()
-                        ?.toUrl()
+                        ?.toUrl(),
                 )
             }
         }
@@ -68,7 +68,7 @@ data class ServerConnectionInfo(
                 it.toHttpUrlOrNull()?.newBuilder()
                     ?.addPathSegments("api/webhook/$webhookId")
                     ?.build()
-                    ?.toUrl()
+                    ?.toUrl(),
             )
         }
 

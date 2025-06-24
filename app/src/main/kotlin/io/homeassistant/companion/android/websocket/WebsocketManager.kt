@@ -46,7 +46,7 @@ import timber.log.Timber
 
 class WebsocketManager(
     appContext: Context,
-    workerParams: WorkerParameters
+    workerParams: WorkerParameters,
 ) : CoroutineWorker(appContext, workerParams) {
 
     companion object {
@@ -68,13 +68,13 @@ class WebsocketManager(
                 workManager.enqueueUniquePeriodicWork(
                     TAG,
                     ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
-                    websocketNotifications
+                    websocketNotifications,
                 )
             } else {
                 workManager.enqueueUniquePeriodicWork(
                     TAG,
                     ExistingPeriodicWorkPolicy.KEEP,
-                    websocketNotifications
+                    websocketNotifications,
                 )
             }
         }
@@ -218,7 +218,7 @@ class WebsocketManager(
             val notificationChannel = NotificationChannel(
                 CHANNEL_WEBSOCKET,
                 applicationContext.getString(R.string.websocket_setting_name),
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_LOW,
             )
             notificationManager.createNotificationChannel(notificationChannel)
         }
@@ -231,7 +231,7 @@ class WebsocketManager(
             applicationContext,
             0,
             intent,
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE,
         )
 
         val settingIntent = SettingsActivity.newInstance(applicationContext)
@@ -243,7 +243,7 @@ class WebsocketManager(
             applicationContext,
             0,
             settingIntent,
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE,
         )
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_WEBSOCKET)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
@@ -255,7 +255,7 @@ class WebsocketManager(
             .addAction(
                 io.homeassistant.companion.android.R.drawable.ic_websocket,
                 applicationContext.getString(R.string.settings),
-                settingPendingIntent
+                settingPendingIntent,
             )
             .build()
         return try {
@@ -275,7 +275,7 @@ class WebsocketManager(
                     val restrictedNotificationChannel = NotificationChannel(
                         CHANNEL_WEBSOCKET_ISSUES,
                         applicationContext.getString(R.string.websocket_notification_issues),
-                        NotificationManager.IMPORTANCE_DEFAULT
+                        NotificationManager.IMPORTANCE_DEFAULT,
                     )
                     notificationManager.createNotificationChannel(restrictedNotificationChannel)
                 }

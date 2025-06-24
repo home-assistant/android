@@ -22,7 +22,7 @@ class TrafficStatsManager : SensorManager {
             "mdi:radio-tower",
             unitOfMeasurement = "GB",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         val txBytesMobile = SensorManager.BasicSensor(
             "mobile_tx_gb",
@@ -32,7 +32,7 @@ class TrafficStatsManager : SensorManager {
             "mdi:radio-tower",
             unitOfMeasurement = "GB",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         val rxBytesTotal = SensorManager.BasicSensor(
             "total_rx_gb",
@@ -42,7 +42,7 @@ class TrafficStatsManager : SensorManager {
             "mdi:radio-tower",
             unitOfMeasurement = "GB",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         val txBytesTotal = SensorManager.BasicSensor(
             "total_tx_gb",
@@ -52,7 +52,7 @@ class TrafficStatsManager : SensorManager {
             "mdi:radio-tower",
             unitOfMeasurement = "GB",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         private var hasCellular = false
     }
@@ -89,7 +89,7 @@ class TrafficStatsManager : SensorManager {
         return true
     }
     override suspend fun requestSensorUpdate(
-        context: Context
+        context: Context,
     ) {
         updateMobileRxBytes(context)
         updateMobileTxBytes(context)
@@ -114,7 +114,7 @@ class TrafficStatsManager : SensorManager {
             rxBytesMobile,
             mobileRx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             rxBytesMobile.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -135,7 +135,7 @@ class TrafficStatsManager : SensorManager {
             txBytesMobile,
             mobileTx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             txBytesMobile.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
     private suspend fun updateTotalRxBytes(context: Context) {
@@ -155,7 +155,7 @@ class TrafficStatsManager : SensorManager {
             rxBytesTotal,
             totalRx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             rxBytesTotal.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -176,7 +176,7 @@ class TrafficStatsManager : SensorManager {
             txBytesTotal,
             totalTx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             txBytesTotal.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 }

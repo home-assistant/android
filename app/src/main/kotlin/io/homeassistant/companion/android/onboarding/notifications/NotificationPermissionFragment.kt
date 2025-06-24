@@ -36,13 +36,13 @@ class NotificationPermissionFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
                     NotificationPermissionView(
-                        onSetNotificationsEnabled = ::setNotifications
+                        onSetNotificationsEnabled = ::setNotifications,
                     )
                 }
             }

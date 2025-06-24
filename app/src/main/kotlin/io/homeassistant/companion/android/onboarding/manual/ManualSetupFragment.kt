@@ -21,7 +21,7 @@ class ManualSetupFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
@@ -30,7 +30,7 @@ class ManualSetupFragment : Fragment() {
                         manualUrl = viewModel.manualUrl,
                         onManualUrlUpdated = viewModel::onManualUrlUpdated,
                         manualContinueEnabled = viewModel.manualContinueEnabled,
-                        connectedClicked = { connectClicked() }
+                        connectedClicked = { connectClicked() },
                     )
                 }
             }

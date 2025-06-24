@@ -24,7 +24,7 @@ import timber.log.Timber
 class DeveloperSettingsPresenterImpl @Inject constructor(
     private val prefsRepository: PrefsRepository,
     private val serverManager: ServerManager,
-    private val threadManager: ThreadManager
+    private val threadManager: ThreadManager,
 ) : DeveloperSettingsPresenter, PreferenceDataStore() {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -107,7 +107,7 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
         context: Context,
         result: ActivityResult,
         serverId: Int,
-        isDeviceOnly: Boolean
+        isDeviceOnly: Boolean,
     ) {
         mainScope.launch {
             try {

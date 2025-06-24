@@ -28,7 +28,7 @@ fun TransparentChip(
     modifier: Modifier = Modifier,
     text: String,
     icon: IIcon? = null,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Surface(
         modifier = modifier,
@@ -36,14 +36,14 @@ fun TransparentChip(
         color = Color.Transparent,
         border = BorderStroke(
             width = 1.dp,
-            color = Color.LightGray
-        )
+            color = Color.LightGray,
+        ),
     ) {
         Row(
             modifier = Modifier
                 .height(32.dp)
                 .clickable { onClick() },
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             if (icon != null) {
                 Image(
@@ -51,7 +51,7 @@ fun TransparentChip(
                     colorFilter = ColorFilter.tint(MaterialTheme.colors.primary),
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
-                        .size(18.dp)
+                        .size(18.dp),
                 )
             }
             Text(
@@ -63,7 +63,7 @@ fun TransparentChip(
                     Modifier.padding(end = 16.dp)
                 } else {
                     Modifier.padding(horizontal = 16.dp)
-                }
+                },
             )
         }
     }

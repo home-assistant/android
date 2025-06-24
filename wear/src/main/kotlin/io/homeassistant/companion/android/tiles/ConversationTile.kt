@@ -48,9 +48,9 @@ class ConversationTile : TileService() {
                             this@ConversationTile,
                             requestParams,
                             commonR.string.assist,
-                            commonR.string.assist_log_in
+                            commonR.string.assist_log_in,
                         )
-                    }
+                    },
                 ).build()
         }
 
@@ -64,9 +64,9 @@ class ConversationTile : TileService() {
                         .setAndroidResourceByResId(
                             ResourceBuilders.AndroidImageResourceByResId.Builder()
                                 .setResourceId(io.homeassistant.companion.android.R.drawable.ic_comment_processing_outline)
-                                .build()
+                                .build(),
                         )
-                        .build()
+                        .build(),
                 )
                 .build()
         }
@@ -92,9 +92,9 @@ class ConversationTile : TileService() {
                                         ActionBuilders.AndroidActivity.Builder()
                                             .setClassName(ConversationActivity::class.java.name)
                                             .setPackageName(this.packageName)
-                                            .build()
-                                    ).build()
-                            ).build()
+                                            .build(),
+                                    ).build(),
+                            ).build(),
                     )
                     .setBackground(
                         ModifiersBuilders.Background.Builder()
@@ -102,17 +102,17 @@ class ConversationTile : TileService() {
                             .setCorner(
                                 ModifiersBuilders.Corner.Builder()
                                     .setRadius(dp(20f))
-                                    .build()
+                                    .build(),
                             )
-                            .build()
+                            .build(),
                     )
                     .setPadding(
                         ModifiersBuilders.Padding.Builder()
                             .setStart(dp(16f))
                             .setEnd(dp(24f))
-                            .build()
+                            .build(),
                     )
-                    .build()
+                    .build(),
             )
             .build()
 
@@ -122,16 +122,16 @@ class ConversationTile : TileService() {
             .setFontStyle(
                 LayoutElementBuilders.FontStyle.Builder()
                     .setSize(sp(24f))
-                    .build()
+                    .build(),
             )
             .setModifiers(
                 ModifiersBuilders.Modifiers.Builder()
                     .setPadding(
                         ModifiersBuilders.Padding.Builder()
                             .setStart(dp(8f))
-                            .build()
+                            .build(),
                     )
-                    .build()
+                    .build(),
             )
             .build()
 
@@ -145,9 +145,9 @@ class ConversationTile : TileService() {
                     .setPadding(
                         ModifiersBuilders.Padding.Builder()
                             .setTop(dp(2f))
-                            .build()
+                            .build(),
                     )
-                    .build()
+                    .build(),
             )
             .build()
 

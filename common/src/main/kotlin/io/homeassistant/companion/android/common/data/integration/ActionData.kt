@@ -9,5 +9,5 @@ data class ActionData(
     val description: String,
     @Serializable(with = AnySerializer::class)
     val target: Any? = false,
-    val fields: Map<String, ActionFields>
+    val fields: Map<String, ActionFields>,
 )

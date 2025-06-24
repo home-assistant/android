@@ -14,7 +14,7 @@ import timber.log.Timber
 
 class ServerSettingsPresenterImpl @Inject constructor(
     private val serverManager: ServerManager,
-    private val wifiHelper: WifiHelper
+    private val wifiHelper: WifiHelper,
 ) : ServerSettingsPresenter, PreferenceDataStore() {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -65,8 +65,8 @@ class ServerSettingsPresenterImpl @Inject constructor(
                     serverManager.getServer(serverId)?.let {
                         serverManager.updateServer(
                             it.copy(
-                                nameOverride = value?.ifBlank { null }
-                            )
+                                nameOverride = value?.ifBlank { null },
+                            ),
                         )
                     }
                     view.updateServerName(serverManager.getServer(serverId)?.friendlyName ?: "")
@@ -75,8 +75,8 @@ class ServerSettingsPresenterImpl @Inject constructor(
                     serverManager.getServer(serverId)?.let {
                         serverManager.updateServer(
                             it.copy(
-                                deviceName = value?.ifBlank { null }
-                            )
+                                deviceName = value?.ifBlank { null },
+                            ),
                         )
                     }
                 }
@@ -85,9 +85,9 @@ class ServerSettingsPresenterImpl @Inject constructor(
                         serverManager.updateServer(
                             it.copy(
                                 connection = it.connection.copy(
-                                    internalUrl = value
-                                )
-                            )
+                                    internalUrl = value,
+                                ),
+                            ),
                         )
                     }
                 }
@@ -114,7 +114,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
             serverManager.removeServer(serverId)
             view.onRemovedServer(
                 success = true,
-                hasAnyRemaining = serverManager.defaultServers.any { it.id != serverId }
+                hasAnyRemaining = serverManager.defaultServers.any { it.id != serverId },
             )
         } ?: run {
             view.onRemovedServer(success = false, hasAnyRemaining = true)
@@ -138,7 +138,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
             serverManager.getServer(serverId)?.let {
                 view.updateExternalUrl(
                     it.connection.getUrl(false)?.toString() ?: "",
-                    it.connection.useCloud && it.connection.canUseCloud()
+                    it.connection.useCloud && it.connection.canUseCloud(),
                 )
             }
         }
@@ -162,9 +162,9 @@ class ServerSettingsPresenterImpl @Inject constructor(
                 serverManager.updateServer(
                     it.copy(
                         connection = it.connection.copy(
-                            internalSsids = emptyList()
-                        )
-                    )
+                            internalSsids = emptyList(),
+                        ),
+                    ),
                 )
             }
             updateUrlStatus()

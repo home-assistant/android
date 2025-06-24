@@ -56,7 +56,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray
+        appWidgetIds: IntArray,
     ) {
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
@@ -78,7 +78,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 saveEntityConfiguration(
                     context,
                     intent.extras,
-                    appWidgetId
+                    appWidgetId,
                 )
                 onScreenOn(context)
             }
@@ -100,7 +100,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     context.applicationContext,
                     this@BaseWidgetProvider,
                     IntentFilter(Intent.ACTION_SCREEN_OFF),
-                    ContextCompat.RECEIVER_NOT_EXPORTED
+                    ContextCompat.RECEIVER_NOT_EXPORTED,
                 )
 
                 widgetsWithDifferentEntities.forEach { (id, pair) ->
@@ -139,7 +139,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     private suspend fun updateAllWidgets(
-        context: Context
+        context: Context,
     ) {
         val widgetProvider = getWidgetProvider(context)
         val appWidgetManager = AppWidgetManager.getInstance(context) ?: return
@@ -149,7 +149,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val invalidWidgetIds = dbWidgetIds.minus(systemWidgetIds)
         if (invalidWidgetIds.isNotEmpty()) {
             Timber.tag(widgetProvider.shortClassName).i(
-                "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted"
+                "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted",
             )
             onDeleted(context, invalidWidgetIds.toIntArray())
         }
@@ -162,7 +162,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     private fun updateView(
         context: Context,
         appWidgetId: Int,
-        appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
+        appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context),
     ) {
         widgetScope?.launch {
             val views = getWidgetRemoteViews(context, appWidgetId)

@@ -30,7 +30,7 @@ class ManageControlsSettingsFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
@@ -50,7 +50,7 @@ class ManageControlsSettingsFragment : Fragment() {
                         onSelectNone = { viewModel.setAuthSetting(ControlsAuthRequiredSetting.ALL) },
                         onSelectEntity = { entityId, serverId -> viewModel.toggleAuthForEntity(entityId, serverId) },
                         onSetPanelSetting = { path, serverId -> viewModel.setPanelConfig(path, serverId) },
-                        onSetStructureEnabled = { enabled -> viewModel.setStructureEnable(enabled) }
+                        onSetStructureEnabled = { enabled -> viewModel.setStructureEnable(enabled) },
                     )
                 }
             }

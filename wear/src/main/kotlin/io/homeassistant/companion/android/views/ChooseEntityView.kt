@@ -47,7 +47,7 @@ fun ChooseEntityView(
     favoriteEntityIds: State<List<String>>,
     onNoneClicked: () -> Unit,
     onEntitySelected: (entity: SimplifiedEntity) -> Unit,
-    allowNone: Boolean = true
+    allowNone: Boolean = true,
 ) {
     // Remember expanded state of each header
     val expandedStates = rememberExpandedStates(entitiesByDomainOrder)
@@ -68,8 +68,8 @@ fun ChooseEntityView(
                         label = { Text(stringResource(id = commonR.string.none)) },
                         onClick = onNoneClicked,
                         colors = ButtonDefaults.buttonColors(
-                            contentColor = Color.Black
-                        )
+                            contentColor = Color.Black,
+                        ),
                     )
                 }
             }
@@ -79,7 +79,7 @@ fun ChooseEntityView(
                     ExpandableListHeader(
                         string = stringResource(commonR.string.favorites),
                         expanded = expandedFavorites,
-                        onExpandChanged = { expandedFavorites = it }
+                        onExpandChanged = { expandedFavorites = it },
                     )
                 }
                 if (expandedFavorites) {
@@ -90,7 +90,7 @@ fun ChooseEntityView(
                             ?.let {
                                 ChooseEntityChip(
                                     entity = it,
-                                    onEntitySelected = onEntitySelected
+                                    onEntitySelected = onEntitySelected,
                                 )
                             }
                     }
@@ -105,14 +105,14 @@ fun ChooseEntityView(
                             string = stringForDomain(domain, LocalContext.current)
                                 ?: domain.replace('_', ' ').capitalize(Locale.getDefault()),
                             key = domain,
-                            expandedStates = expandedStates
+                            expandedStates = expandedStates,
                         )
                     }
                     if (expandedStates[domain] == true) {
                         items(entities, key = { it.entityId }) { entity ->
                             ChooseEntityChip(
                                 entity = entity,
-                                onEntitySelected = onEntitySelected
+                                onEntitySelected = onEntitySelected,
                             )
                         }
                     }
@@ -125,7 +125,7 @@ fun ChooseEntityView(
 @Composable
 private fun ChooseEntityChip(
     entity: Entity,
-    onEntitySelected: (entity: SimplifiedEntity) -> Unit
+    onEntitySelected: (entity: SimplifiedEntity) -> Unit,
 ) {
     val attributes = entity.attributes as Map<*, *>
     val iconBitmap = entity.getIcon(LocalContext.current)
@@ -135,14 +135,14 @@ private fun ChooseEntityChip(
         icon = {
             Image(
                 asset = iconBitmap,
-                colorFilter = ColorFilter.tint(Color.White)
+                colorFilter = ColorFilter.tint(Color.White),
             )
         },
         label = {
             Text(
                 text = attributes["friendly_name"].toString(),
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         },
         onClick = {
@@ -150,11 +150,11 @@ private fun ChooseEntityChip(
                 SimplifiedEntity(
                     entity.entityId,
                     attributes["friendly_name"] as String? ?: entity.entityId,
-                    attributes["icon"] as String? ?: ""
-                )
+                    attributes["icon"] as String? ?: "",
+                ),
             )
         },
-        colors = getFilledTonalButtonColors()
+        colors = getFilledTonalButtonColors(),
     )
 }
 
@@ -171,7 +171,7 @@ fun ChooseEntityViewEmptyPreview() {
         favoriteEntityIds = remember { mutableStateOf(listOf()) },
         onNoneClicked = {},
         onEntitySelected = {},
-        allowNone = true
+        allowNone = true,
     )
 }
 
@@ -186,17 +186,17 @@ fun ChooseEntityViewWithDataPreview() {
             mutableStateMapOf(
                 Pair(
                     playPreviewEntityScene1.entityId,
-                    mutableStateListOf(playPreviewEntityScene1)
+                    mutableStateListOf(playPreviewEntityScene1),
                 ),
                 Pair(
                     playPreviewEntityScene2.entityId,
-                    mutableStateListOf(playPreviewEntityScene2)
-                )
+                    mutableStateListOf(playPreviewEntityScene2),
+                ),
             )
         },
         favoriteEntityIds = remember { mutableStateOf(listOf(playPreviewEntityScene1.entityId)) },
         onNoneClicked = {},
         onEntitySelected = {},
-        allowNone = false
+        allowNone = false,
     )
 }

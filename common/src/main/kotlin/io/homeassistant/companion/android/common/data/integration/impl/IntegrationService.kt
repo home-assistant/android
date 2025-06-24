@@ -23,48 +23,48 @@ interface IntegrationService {
     suspend fun registerDevice(
         @Url url: HttpUrl,
         @Header("Authorization") auth: String,
-        @Body request: RegisterDeviceRequest
+        @Body request: RegisterDeviceRequest,
     ): RegisterDeviceResponse
 
     @GET
     suspend fun getState(
         @Url url: HttpUrl,
-        @Header("Authorization") auth: String
+        @Header("Authorization") auth: String,
     ): EntityResponse
 
     @POST
     suspend fun callWebhook(
         @Url url: HttpUrl,
-        @Body request: IntegrationRequest
+        @Body request: IntegrationRequest,
     ): Response<ResponseBody>
 
     @POST
     suspend fun getTemplate(
         @Url url: HttpUrl,
-        @Body request: IntegrationRequest
+        @Body request: IntegrationRequest,
     ): Map<String, String>
 
     @POST
     suspend fun getZones(
         @Url url: HttpUrl,
-        @Body request: IntegrationRequest
+        @Body request: IntegrationRequest,
     ): List<EntityResponse>
 
     @POST
     suspend fun getConfig(
         @Url url: HttpUrl,
-        @Body request: IntegrationRequest
+        @Body request: IntegrationRequest,
     ): GetConfigResponse
 
     @POST
     suspend fun getRateLimit(
         @Url url: String,
-        @Body request: RateLimitRequest
+        @Body request: RateLimitRequest,
     ): CheckRateLimits
 
     @POST
     suspend fun updateSensors(
         @Url url: HttpUrl,
-        @Body request: IntegrationRequest
+        @Body request: IntegrationRequest,
     ): Map<String, UpdateSensorResponse>
 }

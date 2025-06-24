@@ -36,7 +36,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 fun ExternalUrlInputView(
     url: String?,
     focusRequester: FocusRequester,
-    onSaveUrl: (String) -> Unit
+    onSaveUrl: (String) -> Unit,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
@@ -45,7 +45,7 @@ fun ExternalUrlInputView(
     var urlError by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier.padding(horizontal = 16.dp)
+        modifier = Modifier.padding(horizontal = 16.dp),
     ) {
         TextField(
             value = urlInput ?: "",
@@ -62,7 +62,7 @@ fun ExternalUrlInputView(
                         keyboardController?.hide()
                         focusManager.clearFocus()
                     }
-                }
+                },
             ),
             placeholder = { Text(stringResource(commonR.string.input_url)) },
             isError = urlError,
@@ -70,7 +70,7 @@ fun ExternalUrlInputView(
                 {
                     Icon(
                         imageVector = Icons.Default.Error,
-                        contentDescription = stringResource(commonR.string.url_invalid)
+                        contentDescription = stringResource(commonR.string.url_invalid),
                     )
                 }
             } else {
@@ -79,7 +79,7 @@ fun ExternalUrlInputView(
             modifier = Modifier
                 .focusRequester(focusRequester)
                 .fillMaxWidth()
-                .padding(bottom = 8.dp)
+                .padding(bottom = 8.dp),
         )
 
         if (urlError) {
@@ -87,7 +87,7 @@ fun ExternalUrlInputView(
                 text = stringResource(commonR.string.url_parse_error),
                 color = MaterialTheme.colors.error,
                 style = MaterialTheme.typography.caption,
-                modifier = Modifier.padding(start = 16.dp)
+                modifier = Modifier.padding(start = 16.dp),
             )
         }
 
@@ -100,7 +100,7 @@ fun ExternalUrlInputView(
                         keyboardController?.hide()
                         focusManager.clearFocus()
                     }
-                }
+                },
             ) {
                 Text(stringResource(commonR.string.update))
             }
@@ -115,7 +115,7 @@ fun ExternalUrlInputView(
 private fun performUrlUpdate(
     input: String?,
     current: String?,
-    onSaveUrl: (String) -> Unit
+    onSaveUrl: (String) -> Unit,
 ): Boolean {
     return if (input != current && input?.toHttpUrlOrNull()?.toString() != current) {
         val urlValue = input?.toHttpUrlOrNull()

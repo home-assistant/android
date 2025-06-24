@@ -25,7 +25,7 @@ import timber.log.Timber
 class LocationTrackingViewModel @Inject constructor(
     private val locationHistoryDao: LocationHistoryDao,
     private val prefsRepository: PrefsRepository,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
 
     companion object {
@@ -36,7 +36,8 @@ class LocationTrackingViewModel @Inject constructor(
         ALL(R.id.history_all),
         SENT(R.id.history_sent),
         SKIPPED(R.id.history_skipped),
-        FAILED(R.id.history_failed);
+        FAILED(R.id.history_failed),
+        ;
 
         companion object {
             val menuItemIdToFilter = values().associateBy { it.menuItemId }
@@ -57,7 +58,7 @@ class LocationTrackingViewModel @Inject constructor(
                     locationHistoryDao.getAll(listOf(LocationHistoryItemResult.SENT.name))
                 HistoryFilter.SKIPPED -> locationHistoryDao.getAll(
                     (LocationHistoryItemResult.values().toMutableList() - LocationHistoryItemResult.SENT - LocationHistoryItemResult.FAILED_SEND)
-                        .map { it.name }
+                        .map { it.name },
                 )
                 HistoryFilter.FAILED ->
                     locationHistoryDao.getAll(listOf(LocationHistoryItemResult.FAILED_SEND.name))

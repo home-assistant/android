@@ -8,7 +8,7 @@ import kotlinx.coroutines.runBlocking
 
 class PrefsRepositoryImpl @Inject constructor(
     @Named("themes") private val localStorage: LocalStorage,
-    @Named("integration") private val integrationStorage: LocalStorage
+    @Named("integration") private val integrationStorage: LocalStorage,
 ) : PrefsRepository {
 
     companion object {

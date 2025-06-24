@@ -33,7 +33,7 @@ class ManageTilesFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
@@ -46,7 +46,7 @@ class ManageTilesFragment : Fragment() {
                                 onIconDialogIconsSelected(it)
                                 showingDialog = false
                             },
-                            onDismissRequest = { showingDialog = false }
+                            onDismissRequest = { showingDialog = false },
                         )
                     }
 
@@ -54,7 +54,7 @@ class ManageTilesFragment : Fragment() {
                         viewModel = viewModel,
                         onShowIconDialog = {
                             showingDialog = true
-                        }
+                        },
                     )
                 }
             }

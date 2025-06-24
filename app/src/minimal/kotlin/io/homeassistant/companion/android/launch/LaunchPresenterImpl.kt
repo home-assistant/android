@@ -9,7 +9,7 @@ import timber.log.Timber
 
 class LaunchPresenterImpl @Inject constructor(
     view: LaunchView,
-    serverManager: ServerManager
+    serverManager: ServerManager,
 ) : LaunchPresenterBase(view, serverManager) {
     override fun resyncRegistration() {
         if (!serverManager.isRegistered()) return
@@ -18,8 +18,8 @@ class LaunchPresenterImpl @Inject constructor(
                 try {
                     serverManager.integrationRepository(it.id).updateRegistration(
                         DeviceRegistration(
-                            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
-                        )
+                            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                        ),
                     )
                     serverManager.integrationRepository(it.id).getConfig() // Update cached data
                     serverManager.webSocketRepository(it.id).getCurrentUser() // Update cached data

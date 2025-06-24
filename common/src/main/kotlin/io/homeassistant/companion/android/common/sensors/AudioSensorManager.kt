@@ -20,7 +20,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_audio_sensor,
             "mdi:volume-high",
             deviceClass = "enum",
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         private val audioState = SensorManager.BasicSensor(
             "audio_mode",
@@ -28,7 +28,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_name_audio_mode,
             commonR.string.sensor_description_audio_mode,
             "mdi:volume-high",
-            deviceClass = "enum"
+            deviceClass = "enum",
         )
         private val headphoneState = SensorManager.BasicSensor(
             "headphone_state",
@@ -36,7 +36,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_name_headphone,
             commonR.string.sensor_description_headphone,
             "mdi:headphones",
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val micMuted = SensorManager.BasicSensor(
             "mic_muted",
@@ -49,14 +49,14 @@ class AudioSensorManager : SensorManager {
                 SensorManager.BasicSensor.UpdateType.INTENT
             } else {
                 SensorManager.BasicSensor.UpdateType.WORKER
-            }
+            },
         )
         private val musicActive = SensorManager.BasicSensor(
             "music_active",
             "binary_sensor",
             commonR.string.sensor_name_music_active,
             commonR.string.sensor_description_music_active,
-            "mdi:music"
+            "mdi:music",
         )
         val speakerphoneState = SensorManager.BasicSensor(
             "speakerphone_state",
@@ -69,7 +69,7 @@ class AudioSensorManager : SensorManager {
                 SensorManager.BasicSensor.UpdateType.INTENT
             } else {
                 SensorManager.BasicSensor.UpdateType.WORKER
-            }
+            },
         )
         val volAlarm = SensorManager.BasicSensor(
             "volume_alarm",
@@ -78,7 +78,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_volume_alarm,
             "mdi:alarm",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val volCall = SensorManager.BasicSensor(
             "volume_call",
@@ -87,7 +87,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_volume_call,
             "mdi:phone",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val volMusic = SensorManager.BasicSensor(
             "volume_music",
@@ -96,7 +96,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_volume_music,
             "mdi:music",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val volRing = SensorManager.BasicSensor(
             "volume_ring",
@@ -105,7 +105,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_volume_ring,
             "mdi:phone-ring",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val volNotification = SensorManager.BasicSensor(
             "volume_notification",
@@ -114,7 +114,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_volume_notification,
             "mdi:bell-ring",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val volSystem = SensorManager.BasicSensor(
             "volume_system",
@@ -123,7 +123,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_volume_system,
             "mdi:cellphone-sound",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val volAccessibility = SensorManager.BasicSensor(
             "volume_accessibility",
@@ -132,7 +132,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_volume_accessibility,
             "mdi:human",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         val volDTMF = SensorManager.BasicSensor(
             "volume_dtmf",
@@ -141,7 +141,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_volume_dtmf,
             "mdi:volume-high",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
     }
 
@@ -156,7 +156,7 @@ class AudioSensorManager : SensorManager {
         val allSupportedSensors = listOf(
             audioSensor, audioState, headphoneState, micMuted, speakerphoneState,
             musicActive, volAlarm, volCall, volMusic, volRing, volNotification, volSystem,
-            volDTMF
+            volDTMF,
         )
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             allSupportedSensors.plus(volAccessibility)
@@ -214,8 +214,8 @@ class AudioSensorManager : SensorManager {
             ringerMode,
             icon,
             mapOf(
-                "options" to listOf("normal", "silent", "vibrate")
-            )
+                "options" to listOf("normal", "silent", "vibrate"),
+            ),
         )
     }
 
@@ -253,9 +253,9 @@ class AudioSensorManager : SensorManager {
             mapOf(
                 "options" to listOf(
                     "normal", "ringing", "in_call", "in_communication", "call_screening",
-                    "call_redirect", "communication_redirect"
-                )
-            )
+                    "call_redirect", "communication_redirect",
+                ),
+            ),
         )
     }
 
@@ -284,7 +284,7 @@ class AudioSensorManager : SensorManager {
             headphoneState,
             isHeadphones,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -302,7 +302,7 @@ class AudioSensorManager : SensorManager {
             micMuted,
             isMicMuted,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -320,7 +320,7 @@ class AudioSensorManager : SensorManager {
             musicActive,
             isMusicActive,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -340,7 +340,7 @@ class AudioSensorManager : SensorManager {
             speakerphoneState,
             isSpeakerOn,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -355,7 +355,7 @@ class AudioSensorManager : SensorManager {
             volAlarm,
             volumeLevelAlarm,
             volAlarm.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -371,7 +371,7 @@ class AudioSensorManager : SensorManager {
             volCall,
             volumeLevelCall,
             volCall.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -387,7 +387,7 @@ class AudioSensorManager : SensorManager {
             volMusic,
             volumeLevelMusic,
             volMusic.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -403,7 +403,7 @@ class AudioSensorManager : SensorManager {
             volRing,
             volumeLevelRing,
             volRing.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -419,7 +419,7 @@ class AudioSensorManager : SensorManager {
             volNotification,
             volumeLevelNotification,
             volNotification.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -435,7 +435,7 @@ class AudioSensorManager : SensorManager {
             volSystem,
             volumeLevelSystem,
             volSystem.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -452,7 +452,7 @@ class AudioSensorManager : SensorManager {
             volAccessibility,
             volumeLevelAccessibility,
             volAccessibility.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -468,7 +468,7 @@ class AudioSensorManager : SensorManager {
             volDTMF,
             volumeLevelDTMF,
             volDTMF.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 }

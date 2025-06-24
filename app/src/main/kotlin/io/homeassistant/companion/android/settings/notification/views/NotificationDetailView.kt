@@ -39,13 +39,13 @@ fun LoadNotification(notification: NotificationItem) {
         cal.timeInMillis = notification.received
         Text(
             text = cal.time.toString(),
-            modifier = valueModifier
+            modifier = valueModifier,
         )
 
         NotificationDetailViewHeader(stringId = commonR.string.notification_source)
         Text(
             text = notification.source,
-            modifier = valueModifier
+            modifier = valueModifier,
         )
 
         NotificationDetailViewHeader(stringId = commonR.string.notification_message)
@@ -56,7 +56,7 @@ fun LoadNotification(notification: NotificationItem) {
                     textSize = 16f
                 }
             },
-            modifier = valueModifier
+            modifier = valueModifier,
         )
 
         NotificationDetailViewHeader(stringId = commonR.string.notification_data)
@@ -74,21 +74,21 @@ fun LoadNotification(notification: NotificationItem) {
             }
         Text(
             text = notifData,
-            modifier = valueModifier.then(Modifier.padding(bottom = 16.dp))
+            modifier = valueModifier.then(Modifier.padding(bottom = 16.dp)),
         )
     }
 }
 
 @Composable
 fun NotificationDetailViewHeader(
-    @StringRes stringId: Int
+    @StringRes stringId: Int,
 ) {
     Text(
         text = stringResource(stringId),
         fontWeight = FontWeight.ExtraBold,
         fontSize = 20.sp,
         modifier = Modifier
-            .padding(top = 32.dp, bottom = 16.dp, start = 16.dp)
+            .padding(top = 32.dp, bottom = 16.dp, start = 16.dp),
     )
 }
 

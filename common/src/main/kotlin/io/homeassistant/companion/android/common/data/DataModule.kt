@@ -62,8 +62,8 @@ abstract class DataModule {
             LocalStorageImpl(
                 appContext.getSharedPreferences(
                     "session_0",
-                    Context.MODE_PRIVATE
-                )
+                    Context.MODE_PRIVATE,
+                ),
             )
 
         @Provides
@@ -73,8 +73,8 @@ abstract class DataModule {
             LocalStorageImpl(
                 appContext.getSharedPreferences(
                     "integration_0",
-                    Context.MODE_PRIVATE
-                )
+                    Context.MODE_PRIVATE,
+                ),
             )
 
         @Provides
@@ -84,8 +84,8 @@ abstract class DataModule {
             LocalStorageImpl(
                 appContext.getSharedPreferences(
                     "themes_0",
-                    Context.MODE_PRIVATE
-                )
+                    Context.MODE_PRIVATE,
+                ),
             )
 
         @Provides
@@ -95,8 +95,8 @@ abstract class DataModule {
             LocalStorageImpl(
                 appContext.getSharedPreferences(
                     "wear_0",
-                    Context.MODE_PRIVATE
-                )
+                    Context.MODE_PRIVATE,
+                ),
             )
 
         @Provides
@@ -120,7 +120,7 @@ abstract class DataModule {
         @Singleton
         fun provideDeviceId(@ApplicationContext appContext: Context) = Settings.Secure.getString(
             appContext.contentResolver,
-            Settings.Secure.ANDROID_ID
+            Settings.Secure.ANDROID_ID,
         )
 
         @Provides
@@ -150,7 +150,7 @@ abstract class DataModule {
         @Provides
         @Singleton
         fun providesTextToSpeechClient(
-            @ApplicationContext appContext: Context
+            @ApplicationContext appContext: Context,
         ): TextToSpeechClient = TextToSpeechClient(appContext, AndroidTextToSpeechEngine(appContext))
     }
 

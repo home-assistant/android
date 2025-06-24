@@ -36,32 +36,32 @@ class TodoWidgetEntityTest {
         assertFalse(
             referenceEntity.isSameConfiguration(
                 referenceEntity.copy(id = 43),
-            )
+            ),
         )
         assertFalse(
             referenceEntity.isSameConfiguration(
                 referenceEntity.copy(serverId = 2),
-            )
+            ),
         )
         assertFalse(
             referenceEntity.isSameConfiguration(
                 referenceEntity.copy(entityId = "HA"),
-            )
+            ),
         )
         assertFalse(
             referenceEntity.isSameConfiguration(
                 referenceEntity.copy(backgroundType = WidgetBackgroundType.DYNAMICCOLOR),
-            )
+            ),
         )
         assertFalse(
             referenceEntity.isSameConfiguration(
                 referenceEntity.copy(textColor = "White"),
-            )
+            ),
         )
         assertFalse(
             referenceEntity.isSameConfiguration(
                 referenceEntity.copy(showCompleted = true),
-            )
+            ),
         )
     }
 
@@ -80,7 +80,7 @@ class TodoWidgetEntityTest {
 
         assertEquals(
             LastUpdateData("hello_world", listOf(TodoItem(uid = "ha", null, null))),
-            kotlinJsonMapper.decodeFromString<LastUpdateData>(data)
+            kotlinJsonMapper.decodeFromString<LastUpdateData>(data),
         )
     }
 
@@ -90,7 +90,7 @@ class TodoWidgetEntityTest {
 
         assertEquals(
             data,
-            kotlinJsonMapper.encodeToString(LastUpdateData("hello_world", listOf(TodoItem(uid = "ha", null, null))))
+            kotlinJsonMapper.encodeToString(LastUpdateData("hello_world", listOf(TodoItem(uid = "ha", null, null)))),
         )
     }
 }

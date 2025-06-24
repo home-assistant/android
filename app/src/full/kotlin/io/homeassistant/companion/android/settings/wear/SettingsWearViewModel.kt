@@ -47,7 +47,7 @@ import timber.log.Timber
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
 class SettingsWearViewModel @Inject constructor(
     private val serverManager: ServerManager,
-    application: Application
+    application: Application,
 ) :
     AndroidViewModel(application),
     DataClient.OnDataChangedListener {
@@ -96,7 +96,7 @@ class SettingsWearViewModel @Inject constructor(
                             Wearable.getMessageClient(application).sendMessage(
                                 node.id,
                                 "/requestConfig",
-                                ByteArray(0)
+                                ByteArray(0),
                             ).await()
                             Timber.d("Request for config sent successfully")
                         } catch (e: Exception) {
@@ -178,7 +178,7 @@ class SettingsWearViewModel @Inject constructor(
                             commonR.string.template_error
                         } else {
                             commonR.string.template_render_error
-                        }
+                        },
                     )
                 }
             }
@@ -200,7 +200,7 @@ class SettingsWearViewModel @Inject constructor(
         favoriteEntityIds.apply {
             add(
                 favoriteEntityIds.indexOfFirst { it == toItem.key },
-                removeAt(favoriteEntityIds.indexOfFirst { it == fromItem.key })
+                removeAt(favoriteEntityIds.indexOfFirst { it == fromItem.key }),
             )
         }
     }
@@ -237,7 +237,7 @@ class SettingsWearViewModel @Inject constructor(
         deviceTrackingEnabled: Boolean,
         notificationsEnabled: Boolean,
         tlsClientCertificateUri: String,
-        tlsClientCertificatePassword: String
+        tlsClientCertificatePassword: String,
     ) {
         _hasData.value = false // Show loading indicator
         val putDataRequest = PutDataMapRequest.create("/authenticate").run {
@@ -328,8 +328,8 @@ class SettingsWearViewModel @Inject constructor(
         val templateTilesFromWear: Map<Int, TemplateTileConfig> = kotlinJsonMapper.decodeFromString(
             data.getString(
                 WearDataMessages.CONFIG_TEMPLATE_TILES,
-                "{}"
-            )
+                "{}",
+            ),
         )
         setTemplateTiles(templateTilesFromWear)
 
@@ -363,11 +363,11 @@ class SettingsWearViewModel @Inject constructor(
                         cloudUrl = wearCloudUrl,
                         webhookId = wearWebhookId,
                         cloudhookUrl = wearCloudhookUrl,
-                        useCloud = wearUseCloud
+                        useCloud = wearUseCloud,
                     ),
                     session = ServerSessionInfo(),
-                    user = ServerUserInfo()
-                )
+                    user = ServerUserInfo(),
+                ),
             )
             serverManager.authenticationRepository(serverId).registerRefreshToken(wearRefreshToken)
             remoteServerId = wearServerId

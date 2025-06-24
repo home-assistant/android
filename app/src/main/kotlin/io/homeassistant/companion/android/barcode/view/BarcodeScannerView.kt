@@ -72,7 +72,7 @@ fun BarcodeScannerView(
     requestPermission: () -> Unit,
     onResult: (String, BarcodeFormat) -> Unit,
     onCancel: (Boolean) -> Unit,
-    resultTimeoutMillis: Long = 1500L
+    resultTimeoutMillis: Long = 1500L,
 ) {
     val context = LocalContext.current
     val barcodeView = remember {
@@ -104,7 +104,7 @@ fun BarcodeScannerView(
     Box {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
-            factory = { barcodeView }
+            factory = { barcodeView },
         )
         if (hasPermission) {
             LifecycleResumeEffect("barcodeView") {
@@ -117,7 +117,7 @@ fun BarcodeScannerView(
 
         BoxWithConstraints(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxSize(),
         ) {
             val screenHeight = safeScreenHeight()
             val screenWidth = screenWidth()
@@ -130,7 +130,7 @@ fun BarcodeScannerView(
                     scaffoldState.snackbarHostState.showSnackbar(
                         context.getString(commonR.string.missing_camera_permission),
                         context.getString(commonR.string.settings),
-                        SnackbarDuration.Indefinite
+                        SnackbarDuration.Indefinite,
                     ).let { result ->
                         if (result == SnackbarResult.ActionPerformed) {
                             requestPermission()
@@ -156,16 +156,16 @@ fun BarcodeScannerView(
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = stringResource(commonR.string.cancel),
-                                    tint = Color.White
+                                    tint = Color.White,
                                 )
                             }
                         },
                         backgroundColor = Color.Transparent,
                         windowInsets = safeTopWindowInsets(),
-                        elevation = 0.dp
+                        elevation = 0.dp,
                     )
                 },
-                backgroundColor = Color.Transparent
+                backgroundColor = Color.Transparent,
             ) { paddingValues ->
                 Column(
                     modifier = Modifier
@@ -173,17 +173,17 @@ fun BarcodeScannerView(
                         .padding(paddingValues)
                         .padding(horizontal = 16.dp)
                         .padding(top = 32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
                         text = title,
                         color = Color.White,
-                        style = MaterialTheme.typography.h6
+                        style = MaterialTheme.typography.h6,
                     )
                     Text(
                         text = subtitle,
                         color = Color.White,
-                        style = MaterialTheme.typography.subtitle1
+                        style = MaterialTheme.typography.subtitle1,
                     )
                     action?.let {
                         Spacer(Modifier.height(32.dp))
@@ -212,7 +212,7 @@ fun BarcodeScannerView(
                             barcodeView.setTorchOff()
                         }
                     },
-                    modifier = Modifier.offset(offsetX, offsetY)
+                    modifier = Modifier.offset(offsetX, offsetY),
                 )
             }
         }
@@ -226,7 +226,7 @@ fun BarcodeScannerView(
 @Composable
 fun FlashlightButton(
     onToggle: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var flashlightOn by rememberSaveable { mutableStateOf(false) }
     OutlinedButton(
@@ -239,12 +239,12 @@ fun FlashlightButton(
         onClick = {
             onToggle(!flashlightOn)
             flashlightOn = !flashlightOn
-        }
+        },
     ) {
         Icon(
             imageVector = if (flashlightOn) Icons.Default.FlashlightOff else Icons.Default.FlashlightOn,
             contentDescription = stringResource(commonR.string.toggle_flashlight),
-            tint = Color.White
+            tint = Color.White,
         )
     }
 }

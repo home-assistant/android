@@ -10,7 +10,7 @@ interface ThemeableWidgetEntity {
 enum class WidgetBackgroundType {
     DYNAMICCOLOR,
     DAYNIGHT,
-    TRANSPARENT
+    TRANSPARENT,
 }
 
 class WidgetBackgroundTypeConverter {

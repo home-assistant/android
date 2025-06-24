@@ -22,7 +22,7 @@ import timber.log.Timber
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
     val serverManager: ServerManager,
-    app: Application
+    app: Application,
 ) : AndroidViewModel(app) {
 
     private val _homeAssistantSearcher = HomeAssistantSearcher(
@@ -30,7 +30,7 @@ class OnboardingViewModel @Inject constructor(
         wifiManager = app.getSystemService(),
         onStart = { discoveryActive = true },
         onInstanceFound = ::onInstanceFound,
-        onError = { discoveryActive = false }
+        onError = { discoveryActive = false },
     )
     val homeAssistantSearcher: LifecycleObserver = _homeAssistantSearcher
 
@@ -83,7 +83,7 @@ class OnboardingViewModel @Inject constructor(
         deviceTrackingEnabled = locationTrackingEnabled,
         notificationsEnabled = notificationsEnabled,
         tlsClientCertificateUri = tlsClientCertificateUri?.toString() ?: "",
-        tlsClientCertificatePassword = tlsClientCertificatePassword
+        tlsClientCertificatePassword = tlsClientCertificatePassword,
     )
 
     fun onDiscoveryActive() {
@@ -96,8 +96,8 @@ class OnboardingViewModel @Inject constructor(
                 HomeAssistantInstance(
                     name = it.friendlyName,
                     url = url,
-                    version = version
-                )
+                    version = version,
+                ),
             )
         }
     }

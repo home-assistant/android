@@ -30,7 +30,7 @@ class ServerChooserFragment : BottomSheetDialogFragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
@@ -40,7 +40,7 @@ class ServerChooserFragment : BottomSheetDialogFragment() {
                         onServerSelected = { serverId ->
                             setFragmentResult(RESULT_KEY, bundleOf(RESULT_SERVER to serverId))
                             dismiss()
-                        }
+                        },
                     )
                 }
             }

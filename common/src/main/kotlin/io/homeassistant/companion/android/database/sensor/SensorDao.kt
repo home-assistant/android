@@ -179,8 +179,8 @@ interface SensorDao {
                             stateType = "",
                             lastSentState = null,
                             lastSentIcon = null,
-                            coreRegistration = null
-                        )
+                            coreRegistration = null,
+                        ),
                     )
                 }
                 changedList = true

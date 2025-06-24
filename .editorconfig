@@ -12,9 +12,8 @@ ij_kotlin_name_count_to_use_star_import = 9999
 ij_kotlin_name_count_to_use_star_import_for_members = 9999
 # ktlint overrides
 ktlint_function_naming_ignore_when_annotated_with=Composable
-# Allow trailing commas but do not enforce it
-ktlint_standard_trailing-comma-on-call-site = disabled
 ij_kotlin_allow_trailing_comma_on_call_site = true
-ktlint_standard_trailing-comma-on-declaration-site = disabled
 ij_kotlin_allow_trailing_comma = true
+# Disable converting functions to expression bodies
+ktlint_standard_function-expression-body = disabled
 max_line_length = off

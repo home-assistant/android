@@ -30,7 +30,7 @@ fun ExposedDropdownMenu(label: String, keys: List<String>, currentIndex: Int?, o
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
-        modifier = modifier
+        modifier = modifier,
     ) {
         TextField(
             readOnly = true,
@@ -39,7 +39,7 @@ fun ExposedDropdownMenu(label: String, keys: List<String>, currentIndex: Int?, o
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             keys.forEachIndexed { index, key ->
@@ -61,7 +61,7 @@ fun ServerExposedDropdownMenu(
     current: Int?,
     onSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    @StringRes title: Int = commonR.string.server_select
+    @StringRes title: Int = commonR.string.server_select,
 ) {
     val keys = servers.map { it.friendlyName }
     val ids = servers.map { it.id }
@@ -71,7 +71,7 @@ fun ServerExposedDropdownMenu(
         keys = keys,
         currentIndex = currentIndex,
         onSelected = { onSelected(ids[it]) },
-        modifier = modifier
+        modifier = modifier,
     )
 }
 
@@ -80,7 +80,7 @@ fun WidgetBackgroundTypeExposedDropdownMenu(
     current: WidgetBackgroundType?,
     onSelected: (WidgetBackgroundType) -> Unit,
     modifier: Modifier = Modifier,
-    @StringRes title: Int = commonR.string.widget_background_type_title
+    @StringRes title: Int = commonR.string.widget_background_type_title,
 ) {
     val context = LocalContext.current
     val keys = remember { WidgetUtils.getBackgroundOptionList(context) }
@@ -90,6 +90,6 @@ fun WidgetBackgroundTypeExposedDropdownMenu(
         keys = keys.toList(),
         currentIndex = currentIndex,
         onSelected = { onSelected(WidgetUtils.getWidgetBackgroundType(context, keys[it])) },
-        modifier = modifier
+        modifier = modifier,
     )
 }

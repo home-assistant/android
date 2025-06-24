@@ -55,7 +55,7 @@ open class HomeAssistantApplication : Application() {
                 addAction(Intent.ACTION_POWER_CONNECTED)
                 addAction(Intent.ACTION_POWER_DISCONNECTED)
             },
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // This will trigger an update any time the wifi state has changed
@@ -66,7 +66,7 @@ open class HomeAssistantApplication : Application() {
                 addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION)
                 addAction(WifiManager.WIFI_STATE_CHANGED_ACTION)
             },
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // This will trigger for DND changes, including bedtime and theater mode
@@ -74,7 +74,7 @@ open class HomeAssistantApplication : Application() {
             this,
             sensorReceiver,
             IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED),
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // Listen to changes to the audio input/output on the device
@@ -87,7 +87,7 @@ open class HomeAssistantApplication : Application() {
                 addAction(AudioManager.RINGER_MODE_CHANGED_ACTION)
                 addAction(AudioSensorManager.VOLUME_CHANGED_ACTION)
             },
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // Listen for microphone mute changes
@@ -96,7 +96,7 @@ open class HomeAssistantApplication : Application() {
                 this,
                 sensorReceiver,
                 IntentFilter(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED),
-                ContextCompat.RECEIVER_EXPORTED
+                ContextCompat.RECEIVER_EXPORTED,
             )
         }
 
@@ -106,7 +106,7 @@ open class HomeAssistantApplication : Application() {
                 this,
                 sensorReceiver,
                 IntentFilter(AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED),
-                ContextCompat.RECEIVER_EXPORTED
+                ContextCompat.RECEIVER_EXPORTED,
             )
         }
 
@@ -119,7 +119,7 @@ open class HomeAssistantApplication : Application() {
                 addAction(Intent.ACTION_SCREEN_ON)
                 addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
             },
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         ContextCompat.registerReceiver(
@@ -128,7 +128,7 @@ open class HomeAssistantApplication : Application() {
             IntentFilter().apply {
                 addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
             },
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // Listen to changes to Wet Mode State
@@ -139,7 +139,7 @@ open class HomeAssistantApplication : Application() {
                 addAction("com.google.android.clockwork.actions.WET_MODE_STARTED")
                 addAction("com.google.android.clockwork.actions.WET_MODE_ENDED")
             },
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // Listen for bluetooth state changes
@@ -147,7 +147,7 @@ open class HomeAssistantApplication : Application() {
             this,
             sensorReceiver,
             IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED),
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // Listen for NFC state changes
@@ -155,7 +155,7 @@ open class HomeAssistantApplication : Application() {
             this,
             sensorReceiver,
             IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED),
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // Update complications when the screen is on

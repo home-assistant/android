@@ -23,7 +23,7 @@ abstract class AppSensorManagerBase : SensorManager {
             commonR.string.sensor_description_current_version,
             "mdi:android",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#current-version-sensor",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val app_rx_gb = SensorManager.BasicSensor(
@@ -35,7 +35,7 @@ abstract class AppSensorManagerBase : SensorManager {
             unitOfMeasurement = "GB",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-data-sensors",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val app_tx_gb = SensorManager.BasicSensor(
@@ -47,7 +47,7 @@ abstract class AppSensorManagerBase : SensorManager {
             unitOfMeasurement = "GB",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-data-sensors",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val app_memory = SensorManager.BasicSensor(
@@ -59,7 +59,7 @@ abstract class AppSensorManagerBase : SensorManager {
             unitOfMeasurement = "GB",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-memory-sensor",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val app_inactive = SensorManager.BasicSensor(
@@ -69,7 +69,7 @@ abstract class AppSensorManagerBase : SensorManager {
             commonR.string.sensor_description_app_inactive,
             "mdi:timer-outline",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-usage-sensors",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val app_standby_bucket = SensorManager.BasicSensor(
@@ -80,7 +80,7 @@ abstract class AppSensorManagerBase : SensorManager {
             "mdi:android",
             deviceClass = "enum",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-usage-sensors",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val app_importance = SensorManager.BasicSensor(
@@ -91,7 +91,7 @@ abstract class AppSensorManagerBase : SensorManager {
             "mdi:android",
             deviceClass = "enum",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-importance-sensor",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
     }
 
@@ -108,7 +108,7 @@ abstract class AppSensorManagerBase : SensorManager {
                     app_memory,
                     app_inactive,
                     app_standby_bucket,
-                    app_importance
+                    app_importance,
                 )
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) ->
                 listOf(
@@ -117,7 +117,7 @@ abstract class AppSensorManagerBase : SensorManager {
                     app_tx_gb,
                     app_memory,
                     app_inactive,
-                    app_importance
+                    app_importance,
                 )
             else -> listOf(currentVersion, app_rx_gb, app_tx_gb, app_memory, app_importance)
         }
@@ -128,7 +128,7 @@ abstract class AppSensorManagerBase : SensorManager {
     }
 
     override suspend fun requestSensorUpdate(
-        context: Context
+        context: Context,
     ) {
         val myUid = Process.myUid()
         updateCurrentVersion(context)
@@ -159,7 +159,7 @@ abstract class AppSensorManagerBase : SensorManager {
             currentVersion,
             state,
             currentVersion.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -180,7 +180,7 @@ abstract class AppSensorManagerBase : SensorManager {
             app_rx_gb,
             appRx.toBigDecimal().setScale(4, RoundingMode.HALF_EVEN),
             app_rx_gb.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -201,7 +201,7 @@ abstract class AppSensorManagerBase : SensorManager {
             app_tx_gb,
             appTx.toBigDecimal().setScale(4, RoundingMode.HALF_EVEN),
             app_tx_gb.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -222,8 +222,8 @@ abstract class AppSensorManagerBase : SensorManager {
             app_memory.statelessIcon,
             mapOf(
                 "free_memory" to freeSize.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
-                "total_memory" to totalSize.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN)
-            )
+                "total_memory" to totalSize.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
+            ),
         )
     }
 
@@ -242,7 +242,7 @@ abstract class AppSensorManagerBase : SensorManager {
             app_inactive,
             isAppInactive,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -267,8 +267,8 @@ abstract class AppSensorManagerBase : SensorManager {
             appStandbyBucket,
             app_standby_bucket.statelessIcon,
             mapOf(
-                "options" to listOf("active", "frequent", "rare", "restricted", "working_set", "never")
-            )
+                "options" to listOf("active", "frequent", "rare", "restricted", "working_set", "never"),
+            ),
         )
     }
 
@@ -325,9 +325,9 @@ abstract class AppSensorManagerBase : SensorManager {
             mapOf(
                 "options" to listOf(
                     "cached", "cant_save_state", "foreground", "foreground_service", "gone",
-                    "perceptible", "service", "top_sleeping", "visible", "not_running"
-                )
-            )
+                    "perceptible", "service", "top_sleeping", "visible", "not_running",
+                ),
+            ),
         )
     }
 }

@@ -4,12 +4,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class GetTodosResponse(
-    val response: Map<String, TodoResponse>
+    val response: Map<String, TodoResponse>,
 ) {
 
     @Serializable
     data class TodoResponse(
-        val items: List<TodoItem>
+        val items: List<TodoItem>,
     )
 
     @Serializable

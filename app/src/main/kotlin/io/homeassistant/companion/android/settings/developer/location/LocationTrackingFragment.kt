@@ -34,7 +34,7 @@ class LocationTrackingFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
@@ -43,7 +43,7 @@ class LocationTrackingFragment : Fragment() {
                         useHistory = viewModel.historyEnabled,
                         onSetHistory = viewModel::enableHistory,
                         history = viewModel.historyPagerFlow,
-                        serversList = serverManager.defaultServers
+                        serversList = serverManager.defaultServers,
                     )
                 }
             }
@@ -76,7 +76,7 @@ class LocationTrackingFragment : Fragment() {
                 }
             },
             viewLifecycleOwner,
-            Lifecycle.State.RESUMED
+            Lifecycle.State.RESUMED,
         )
     }
 

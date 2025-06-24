@@ -31,7 +31,7 @@ fun EntityViewList(
     onEntityClicked: (String, String) -> Unit,
     onEntityLongClicked: (String) -> Unit,
     isHapticEnabled: Boolean,
-    isToastEnabled: Boolean
+    isToastEnabled: Boolean,
 ) {
     // Remember expanded state of each header
     val expandedStates = rememberExpandedStates(entityLists.keys.map { it.hashCode() })
@@ -46,7 +46,7 @@ fun EntityViewList(
                             ExpandableListHeader(
                                 string = header,
                                 key = header.hashCode(),
-                                expandedStates = expandedStates
+                                expandedStates = expandedStates,
                             )
                         } else {
                             ListHeader(header)
@@ -59,7 +59,7 @@ fun EntityViewList(
                                 entity,
                                 onEntityClicked,
                                 isHapticEnabled,
-                                isToastEnabled
+                                isToastEnabled,
                             ) { entityId -> onEntityLongClicked(entityId) }
                         }
 
@@ -70,11 +70,11 @@ fun EntityViewList(
                                         label = {
                                             Text(
                                                 text = stringResource(commonR.string.loading_entities),
-                                                textAlign = TextAlign.Center
+                                                textAlign = TextAlign.Center,
                                             )
                                         },
                                         onClick = { /* No op */ },
-                                        colors = getPrimaryButtonColors()
+                                        colors = getPrimaryButtonColors(),
                                     )
                                 }
                             }
@@ -96,7 +96,7 @@ private fun PreviewEntityListView() {
         onEntityClicked = { _, _ -> },
         onEntityLongClicked = { },
         isHapticEnabled = false,
-        isToastEnabled = false
+        isToastEnabled = false,
     )
 }
 
@@ -110,7 +110,7 @@ private fun PreviewEntityListScenes() {
         onEntityClicked = { _, _ -> },
         onEntityLongClicked = { },
         isHapticEnabled = false,
-        isToastEnabled = false
+        isToastEnabled = false,
     )
 }
 
@@ -124,6 +124,6 @@ private fun PreviewEntityListEmpty() {
         onEntityClicked = { _, _ -> },
         onEntityLongClicked = { },
         isHapticEnabled = false,
-        isToastEnabled = false
+        isToastEnabled = false,
     )
 }

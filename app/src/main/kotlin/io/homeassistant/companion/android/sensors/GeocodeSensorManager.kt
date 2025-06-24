@@ -35,7 +35,7 @@ class GeocodeSensorManager : SensorManager {
             "sensor",
             commonR.string.basic_sensor_name_geolocation,
             commonR.string.sensor_description_geocoded_location,
-            "mdi:map"
+            "mdi:map",
         )
     }
 
@@ -56,7 +56,7 @@ class GeocodeSensorManager : SensorManager {
         return if (SDK_INT >= Build.VERSION_CODES.Q) {
             arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION,
             )
         } else {
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -64,7 +64,7 @@ class GeocodeSensorManager : SensorManager {
     }
 
     override suspend fun requestSensorUpdate(
-        context: Context
+        context: Context,
     ) {
         updateGeocodedLocation(context)
     }
@@ -108,7 +108,7 @@ class GeocodeSensorManager : SensorManager {
         HighAccuracyLocationService.updateNotificationAddress(
             context,
             location,
-            if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(commonR.string.unknown_address)
+            if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(commonR.string.unknown_address),
         )
 
         onSensorUpdated(
@@ -116,7 +116,7 @@ class GeocodeSensorManager : SensorManager {
             geocodedLocation,
             if (!prettyAddress.isNullOrEmpty()) prettyAddress else STATE_UNKNOWN,
             geocodedLocation.statelessIcon,
-            address?.toMap().orEmpty()
+            address?.toMap().orEmpty(),
         )
     }
 
@@ -135,7 +135,7 @@ class GeocodeSensorManager : SensorManager {
             "sub_locality" to subLocality,
             "sub_thoroughfare" to subThoroughfare,
             "thoroughfare" to thoroughfare,
-            "url" to url
+            "url" to url,
         )
     }
 
@@ -159,7 +159,7 @@ class GeocodeSensorManager : SensorManager {
                         override fun onError(errorMessage: String?) {
                             cont.resumeWithException(Exception(errorMessage))
                         }
-                    }
+                    },
                 )
             }
         } else {

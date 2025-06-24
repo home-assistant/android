@@ -27,7 +27,7 @@ fun SelectShortcutsTileView(
     shortcutTileEntitiesCountById: Map<Int?, Int>,
     onSelectShortcutsTile: (tileId: Int?) -> Unit,
     isShowShortcutTextEnabled: Boolean,
-    onShowShortcutTextEnabled: (Boolean) -> Unit
+    onShowShortcutTextEnabled: (Boolean) -> Unit,
 ) {
     WearAppTheme {
         ThemeLazyColumn {
@@ -48,10 +48,10 @@ fun SelectShortcutsTileView(
                             } else {
                                 CommunityMaterial.Icon.cmd_alphabetical_off
                             },
-                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
-                    colors = getSwitchButtonColors()
+                    colors = getSwitchButtonColors(),
                 )
             }
             item {
@@ -74,7 +74,7 @@ fun SelectShortcutsTileView(
                             }
                         },
                         onClick = { onSelectShortcutsTile(shortcutsTileId) },
-                        colors = getFilledTonalButtonColors()
+                        colors = getFilledTonalButtonColors(),
                     )
                 }
             }
@@ -89,11 +89,11 @@ private fun PreviewSelectShortcutsTileView() {
         shortcutTileEntitiesCountById = mapOf(
             null to 7,
             1111 to 1,
-            2222 to 0
+            2222 to 0,
         ),
         onSelectShortcutsTile = {},
         isShowShortcutTextEnabled = true,
-        onShowShortcutTextEnabled = {}
+        onShowShortcutTextEnabled = {},
     )
 }
 
@@ -104,6 +104,6 @@ private fun PreviewSelectShortcutsTileEmptyView() {
         shortcutTileEntitiesCountById = emptyMap(),
         onSelectShortcutsTile = {},
         isShowShortcutTextEnabled = true,
-        onShowShortcutTextEnabled = {}
+        onShowShortcutTextEnabled = {},
     )
 }

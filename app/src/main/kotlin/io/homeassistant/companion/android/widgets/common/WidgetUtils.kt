@@ -16,7 +16,7 @@ object WidgetUtils {
     fun getBackgroundOptionList(context: Context): Array<String> {
         val backgroundTypeValues = mutableListOf(
             context.getString(R.string.widget_background_type_daynight),
-            context.getString(R.string.widget_background_type_transparent)
+            context.getString(R.string.widget_background_type_transparent),
         )
         if (DynamicColors.isDynamicColorAvailable()) {
             backgroundTypeValues.add(0, context.getString(R.string.widget_background_type_dynamiccolor))

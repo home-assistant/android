@@ -39,7 +39,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             commonR.string.basic_sensor_name_activity,
             commonR.string.sensor_description_detected_activity,
             "mdi:walk",
-            deviceClass = "enum"
+            deviceClass = "enum",
         )
 
         private val sleepConfidence = SensorManager.BasicSensor(
@@ -50,7 +50,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             "mdi:sleep",
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            updateType = SensorManager.BasicSensor.UpdateType.CUSTOM
+            updateType = SensorManager.BasicSensor.UpdateType.CUSTOM,
         )
 
         private val sleepSegment = SensorManager.BasicSensor(
@@ -61,7 +61,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             "mdi:sleep",
             unitOfMeasurement = "ms",
             deviceClass = "duration",
-            updateType = SensorManager.BasicSensor.UpdateType.CUSTOM
+            updateType = SensorManager.BasicSensor.UpdateType.CUSTOM,
         )
     }
 
@@ -80,7 +80,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             context,
             0,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
         )
     }
 
@@ -91,7 +91,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             context,
             1,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
         )
     }
 
@@ -112,8 +112,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                     probActivity,
                     getSensorIcon(probActivity),
                     result.probableActivities.associate { typeToString(it) to it.confidence }.plus(
-                        "options" to listOf("in_vehicle", "on_bicycle", "on_foot", "still", "tilting", "walking", "running")
-                    )
+                        "options" to listOf("in_vehicle", "on_bicycle", "on_foot", "still", "tilting", "walking", "running"),
+                    ),
                 )
             }
         }
@@ -134,8 +134,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                     mapOf(
                         "light" to sleepClassifyEvent.last().light,
                         "motion" to sleepClassifyEvent.last().motion,
-                        "timestamp" to sleepClassifyEvent.last().timestampMillis
-                    )
+                        "timestamp" to sleepClassifyEvent.last().timestampMillis,
+                    ),
                 )
 
                 // Send the update immediately
@@ -155,8 +155,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                     mapOf(
                         "start" to sleepSegmentEvent.last().startTimeMillis,
                         "end" to sleepSegmentEvent.last().endTimeMillis,
-                        "status" to getSleepSegmentStatus(sleepSegmentEvent.last().status)
-                    )
+                        "status" to getSleepSegmentStatus(sleepSegmentEvent.last().status),
+                    ),
                 )
             }
         }
@@ -205,7 +205,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     override fun requiredPermissions(sensorId: String): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             arrayOf(
-                Manifest.permission.ACTIVITY_RECOGNITION
+                Manifest.permission.ACTIVITY_RECOGNITION,
             )
         } else {
             arrayOf()
@@ -238,7 +238,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         if ((
                 isEnabled(context, sleepConfidence) || isEnabled(
                     context,
-                    sleepSegment
+                    sleepSegment,
                 )
                 ) && !sleepRegistration
         ) {
@@ -250,7 +250,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                         Timber.d("Registering for sleep confidence updates only")
                         ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
                             pendingIntent,
-                            SleepSegmentRequest(SleepSegmentRequest.CLASSIFY_EVENTS_ONLY)
+                            SleepSegmentRequest(SleepSegmentRequest.CLASSIFY_EVENTS_ONLY),
                         )
                     }
 
@@ -258,7 +258,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                         Timber.d("Registering for sleep segment updates only")
                         ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
                             pendingIntent,
-                            SleepSegmentRequest(SleepSegmentRequest.SEGMENT_EVENTS_ONLY)
+                            SleepSegmentRequest(SleepSegmentRequest.SEGMENT_EVENTS_ONLY),
                         )
                     }
 
@@ -266,7 +266,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                         Timber.d("Registering for both sleep confidence and segment updates")
                         ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
                             pendingIntent,
-                            SleepSegmentRequest.getDefaultSleepSegmentRequest()
+                            SleepSegmentRequest.getDefaultSleepSegmentRequest(),
                         )
                     }
                 }

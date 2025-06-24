@@ -60,7 +60,7 @@ object NotificationData {
 }
 
 fun createChannelID(
-    channelName: String
+    channelName: String,
 ): String {
     return channelName
         .trim()
@@ -71,7 +71,7 @@ fun createChannelID(
 fun handleChannel(
     context: Context,
     notificationManagerCompat: NotificationManagerCompat,
-    data: Map<String, String>
+    data: Map<String, String>,
 ): String {
     // Define some values for a default channel
     var channelID = CHANNEL_GENERAL
@@ -87,7 +87,7 @@ fun handleChannel(
         val channel = NotificationChannel(
             channelID,
             channelName,
-            handleImportance(data)
+            handleImportance(data),
         )
 
         if (channelName == NotificationData.ALARM_STREAM) {
@@ -103,7 +103,7 @@ fun handleChannel(
 
 @RequiresApi(Build.VERSION_CODES.N)
 fun handleImportance(
-    data: Map<String, String>
+    data: Map<String, String>,
 ): Int {
     when (data[NotificationData.IMPORTANCE]) {
         "high" -> {
@@ -127,7 +127,7 @@ fun handleImportance(
 @RequiresApi(Build.VERSION_CODES.O)
 fun handleChannelSound(
     context: Context,
-    channel: NotificationChannel
+    channel: NotificationChannel,
 ) {
     val audioAttributes = AudioAttributes.Builder()
         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
@@ -138,20 +138,20 @@ fun handleChannelSound(
     channel.setSound(
         RingtoneManager.getActualDefaultRingtoneUri(
             context,
-            RingtoneManager.TYPE_ALARM
+            RingtoneManager.TYPE_ALARM,
         )
             ?: RingtoneManager.getActualDefaultRingtoneUri(
                 context,
-                RingtoneManager.TYPE_RINGTONE
+                RingtoneManager.TYPE_RINGTONE,
             ),
-        audioAttributes
+        audioAttributes,
     )
 }
 
 fun setChannelLedColor(
     context: Context,
     data: Map<String, String>,
-    channel: NotificationChannel
+    channel: NotificationChannel,
 ) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         val ledColor = data[NotificationData.LED_COLOR]
@@ -164,7 +164,7 @@ fun setChannelLedColor(
 
 fun setChannelVibrationPattern(
     data: Map<String, String>,
-    channel: NotificationChannel
+    channel: NotificationChannel,
 ) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         val vibrationPattern = data[NotificationData.VIBRATION_PATTERN]
@@ -176,7 +176,7 @@ fun setChannelVibrationPattern(
 }
 
 fun parseVibrationPattern(
-    vibrationPattern: String?
+    vibrationPattern: String?,
 ): LongArray {
     if (!vibrationPattern.isNullOrBlank()) {
         val pattern = vibrationPattern.split(",").toTypedArray()
@@ -197,7 +197,7 @@ fun parseVibrationPattern(
 fun parseColor(
     context: Context,
     colorString: String?,
-    default: Int
+    default: Int,
 ): Int {
     if (!colorString.isNullOrBlank()) {
         try {
@@ -212,7 +212,7 @@ fun parseColor(
 fun handleSmallIcon(
     context: Context,
     builder: NotificationCompat.Builder,
-    data: Map<String, String>
+    data: Map<String, String>,
 ) {
     val notificationIcon = data[NotificationData.NOTIFICATION_ICON] ?: ""
     if (notificationIcon.startsWith("mdi:") && notificationIcon.substringAfter("mdi:").isNotBlank() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -233,14 +233,14 @@ fun getGroupNotificationBuilder(
     context: Context,
     channelId: String,
     group: String,
-    data: Map<String, String>
+    data: Map<String, String>,
 ): NotificationCompat.Builder {
     val groupNotificationBuilder = NotificationCompat.Builder(context, channelId)
         .setStyle(
             NotificationCompat.BigTextStyle()
                 .setSummaryText(
-                    prepareText(group.substring(NotificationData.GROUP_PREFIX.length))
-                )
+                    prepareText(group.substring(NotificationData.GROUP_PREFIX.length)),
+                ),
         )
         .setGroup(group)
         .setGroupSummary(true)
@@ -254,7 +254,7 @@ fun getGroupNotificationBuilder(
 }
 
 fun prepareText(
-    text: String
+    text: String,
 ): Spanned {
     // Replace control char \r\n, \r, \n and also \r\n, \r, \n as text literals in strings to <br>
     val brText = text.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>")
@@ -265,7 +265,7 @@ fun prepareText(
 fun handleColor(
     context: Context,
     builder: NotificationCompat.Builder,
-    data: Map<String, String>
+    data: Map<String, String>,
 ) {
     val colorString = data["color"]
     val color = parseColor(context, colorString, R.color.colorPrimary)
@@ -274,7 +274,7 @@ fun handleColor(
 
 fun handleText(
     builder: NotificationCompat.Builder,
-    data: Map<String, String>
+    data: Map<String, String>,
 ) {
     data[NotificationData.TITLE]?.let {
         builder.setContentTitle(prepareText(it))
@@ -300,7 +300,7 @@ fun handleDeleteIntent(
     messageId: Int,
     group: String?,
     groupId: Int,
-    databaseId: Long?
+    databaseId: Long?,
 ) {
     val deleteIntent = Intent(context, NotificationDeleteReceiver::class.java).apply {
         putExtra(NotificationDeleteReceiver.EXTRA_DATA, HashMap(data))
@@ -312,7 +312,7 @@ fun handleDeleteIntent(
         context,
         messageId,
         deleteIntent,
-        PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
     builder.setDeleteIntent(deletePendingIntent)
 }

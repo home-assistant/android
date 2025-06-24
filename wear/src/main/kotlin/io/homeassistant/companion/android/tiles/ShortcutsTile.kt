@@ -94,9 +94,9 @@ class ShortcutsTile : TileService() {
                             this@ShortcutsTile,
                             requestParams,
                             commonR.string.shortcuts,
-                            commonR.string.shortcuts_tile_log_in
+                            commonR.string.shortcuts_tile_log_in,
                         )
-                    }
+                    },
                 ).build()
         }
 
@@ -116,7 +116,7 @@ class ShortcutsTile : TileService() {
                         val iconIIcon = getIcon(
                             entity.icon,
                             entity.domain,
-                            this@ShortcutsTile
+                            this@ShortcutsTile,
                         )
                         val iconBitmap = IconicsDrawable(this@ShortcutsTile, iconIIcon).apply {
                             colorInt = Color.WHITE
@@ -137,7 +137,7 @@ class ShortcutsTile : TileService() {
                                     .setWidthPx(iconSizePx)
                                     .setHeightPx(iconSizePx)
                                     .setFormat(ResourceBuilders.IMAGE_FORMAT_RGB_565)
-                                    .build()
+                                    .build(),
                             )
                             .build()
                     }.forEach { (id, imageResource) ->
@@ -196,7 +196,7 @@ class ShortcutsTile : TileService() {
             addContent(
                 LayoutElementBuilders.Text.Builder()
                     .setText(getString(commonR.string.shortcuts_tile_empty))
-                    .build()
+                    .build(),
             )
         } else {
             addContent(rowLayout(entities.subList(0, min(2, entities.size)), showLabels))
@@ -235,20 +235,20 @@ class ShortcutsTile : TileService() {
                         .setCorner(
                             ModifiersBuilders.Corner.Builder()
                                 .setRadius(dp(CIRCLE_SIZE / 2))
-                                .build()
+                                .build(),
                         )
-                        .build()
+                        .build(),
                 )
                 // Make clickable and call activity
                 .setClickable(
                     ModifiersBuilders.Clickable.Builder()
                         .setId(entity.entityId)
                         .setOnClick(
-                            ActionBuilders.LoadAction.Builder().build()
+                            ActionBuilders.LoadAction.Builder().build(),
                         )
-                        .build()
+                        .build(),
                 )
-                .build()
+                .build(),
         )
         addContent(
             // Add icon
@@ -256,7 +256,7 @@ class ShortcutsTile : TileService() {
                 .setResourceId(entity.entityId)
                 .setWidth(dp(iconSize))
                 .setHeight(dp(iconSize))
-                .build()
+                .build(),
         )
         if (showLabels) {
             addContent(
@@ -267,19 +267,19 @@ class ShortcutsTile : TileService() {
                             .setFontStyle(
                                 LayoutElementBuilders.FontStyle.Builder()
                                     .setSize(sp(TEXT_SIZE))
-                                    .build()
+                                    .build(),
                             )
-                            .build()
+                            .build(),
                     )
                     .setModifiers(
                         ModifiersBuilders.Modifiers.Builder()
                             .setPadding(
                                 ModifiersBuilders.Padding.Builder()
                                     .setAll(dp(TEXT_PADDING))
-                                    .build()
-                            ).build()
+                                    .build(),
+                            ).build(),
                     )
-                    .build()
+                    .build(),
             )
         }
     }
