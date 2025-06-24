@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 class ManageControlsViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
-    private val application: Application
+    private val application: Application,
 ) : AndroidViewModel(application) {
 
     var panelEnabled by mutableStateOf(false)
@@ -57,7 +57,7 @@ class ManageControlsViewModel @Inject constructor(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 panelEnabled =
                     application.packageManager.getComponentEnabledSetting(
-                        ComponentName(application, HaControlsPanelActivity::class.java)
+                        ComponentName(application, HaControlsPanelActivity::class.java),
                     ) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
 
                 val panelServer = prefsRepository.getControlsPanelServer()
@@ -81,7 +81,7 @@ class ManageControlsViewModel @Inject constructor(
                         ?.sortedWith(
                             compareBy(String.CASE_INSENSITIVE_ORDER) {
                                 (it.attributes as Map<String, Any>)["friendly_name"].toString()
-                            }
+                            },
                         )
                     if (entities != null) {
                         entitiesList[server.id] = entities
@@ -112,7 +112,7 @@ class ManageControlsViewModel @Inject constructor(
                 entitiesList.forEach { (server, entities) ->
                     authRequiredList.addAll(
                         entities.filter { server != serverId || it.entityId != entityId }
-                            .map { "$server.${it.entityId}" }
+                            .map { "$server.${it.entityId}" },
                     )
                 }
             } else if (authRequiredList.contains(settingId)) {
@@ -158,7 +158,7 @@ class ManageControlsViewModel @Inject constructor(
             } else {
                 PackageManager.COMPONENT_ENABLED_STATE_DEFAULT // Default is disabled
             },
-            PackageManager.DONT_KILL_APP
+            PackageManager.DONT_KILL_APP,
         )
         panelEnabled = enabled
         if (panelSetting?.second == null) {

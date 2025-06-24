@@ -70,7 +70,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:fire",
             "energy",
             unitOfMeasurement = "kcal",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val basalBodyTemperature = SensorManager.BasicSensor(
@@ -81,7 +81,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:thermometer",
             deviceClass = "temperature",
             unitOfMeasurement = "°C",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val basalMetabolicRate = SensorManager.BasicSensor(
@@ -91,7 +91,7 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.sensor_description_basal_metabolic_rate,
             "mdi:fire",
             unitOfMeasurement = "kcal/day",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val bloodGlucose = SensorManager.BasicSensor(
@@ -102,7 +102,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:diabetes",
             deviceClass = "blood_glucose_concentration",
             unitOfMeasurement = "mg/dL",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val bodyFat = SensorManager.BasicSensor(
@@ -112,7 +112,7 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.sensor_description_body_fat,
             "mdi:scale-bathroom",
             unitOfMeasurement = "%",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val bodyWaterMass = SensorManager.BasicSensor(
@@ -123,7 +123,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:water",
             deviceClass = "weight",
             unitOfMeasurement = "g",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val bodyTemperature = SensorManager.BasicSensor(
@@ -134,7 +134,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:thermometer",
             deviceClass = "temperature",
             unitOfMeasurement = "°C",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val boneMass = SensorManager.BasicSensor(
@@ -145,7 +145,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:bone",
             deviceClass = "weight",
             unitOfMeasurement = "g",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val diastolicBloodPressure = SensorManager.BasicSensor(
@@ -156,7 +156,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:heart-pulse",
             deviceClass = "pressure",
             unitOfMeasurement = "mmHg",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val distance = SensorManager.BasicSensor(
@@ -168,7 +168,7 @@ class HealthConnectSensorManager : SensorManager {
             deviceClass = "distance",
             unitOfMeasurement = "m",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val elevationGained = SensorManager.BasicSensor(
@@ -180,7 +180,7 @@ class HealthConnectSensorManager : SensorManager {
             deviceClass = "distance",
             unitOfMeasurement = "m",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val floorsClimbed = SensorManager.BasicSensor(
@@ -191,7 +191,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:stairs",
             unitOfMeasurement = "floors",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val heartRate = SensorManager.BasicSensor(
@@ -201,7 +201,7 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.sensor_description_health_connect_heart_rate,
             "mdi:heart-pulse",
             unitOfMeasurement = "bpm",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val heartRateVariability = SensorManager.BasicSensor(
@@ -212,7 +212,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:heart-pulse",
             deviceClass = "duration",
             unitOfMeasurement = "ms",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val height = SensorManager.BasicSensor(
@@ -223,7 +223,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:human-male-height",
             deviceClass = "distance",
             unitOfMeasurement = "m",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val hydration = SensorManager.BasicSensor(
@@ -235,7 +235,7 @@ class HealthConnectSensorManager : SensorManager {
             unitOfMeasurement = "mL",
             deviceClass = "volume",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val leanBodyMass = SensorManager.BasicSensor(
@@ -246,7 +246,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:scale-bathroom",
             deviceClass = "weight",
             unitOfMeasurement = "g",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val oxygenSaturation = SensorManager.BasicSensor(
@@ -256,7 +256,7 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.sensor_description_oxygen_saturation,
             "mdi:sleep",
             unitOfMeasurement = "%",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val respiratoryRate = SensorManager.BasicSensor(
@@ -266,7 +266,7 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.sensor_description_respiratory_rate,
             "mdi:account-voice",
             unitOfMeasurement = "bpm",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val restingHeartRate = SensorManager.BasicSensor(
@@ -276,7 +276,7 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.sensor_description_resting_heart_rate,
             "mdi:heart-pulse",
             unitOfMeasurement = "bpm",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val sleepDuration = SensorManager.BasicSensor(
@@ -287,7 +287,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:sleep",
             deviceClass = "duration",
             unitOfMeasurement = "min",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val steps = SensorManager.BasicSensor(
@@ -298,7 +298,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:walk",
             unitOfMeasurement = "steps",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val systolicBloodPressure = SensorManager.BasicSensor(
@@ -309,7 +309,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:heart-pulse",
             deviceClass = "pressure",
             unitOfMeasurement = "mmHg",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val totalCaloriesBurned = SensorManager.BasicSensor(
@@ -321,7 +321,7 @@ class HealthConnectSensorManager : SensorManager {
             "energy",
             unitOfMeasurement = "kcal",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val vo2Max = SensorManager.BasicSensor(
@@ -331,7 +331,7 @@ class HealthConnectSensorManager : SensorManager {
             commonR.string.sensor_description_vo2_max,
             "mdi:heart",
             unitOfMeasurement = "mL/kg/min",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val weight = SensorManager.BasicSensor(
@@ -342,7 +342,7 @@ class HealthConnectSensorManager : SensorManager {
             "mdi:scale-bathroom",
             unitOfMeasurement = "g",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            deviceClass = "weight"
+            deviceClass = "weight",
         )
     }
 
@@ -481,8 +481,8 @@ class HealthConnectSensorManager : SensorManager {
             activeCaloriesBurned.statelessIcon,
             attributes = mapOf(
                 "endTime" to response.records.last().endTime,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -500,8 +500,8 @@ class HealthConnectSensorManager : SensorManager {
             basalBodyTemperature.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -519,8 +519,8 @@ class HealthConnectSensorManager : SensorManager {
             basalMetabolicRate.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -541,8 +541,8 @@ class HealthConnectSensorManager : SensorManager {
                 "mealType" to getMealType(response.records.last().mealType),
                 "relationToMeal" to getRelationToMeal(response.records.last().relationToMeal),
                 "specimenSource" to getSpecimenSource(response.records.last().specimenSource),
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -562,8 +562,8 @@ class HealthConnectSensorManager : SensorManager {
                 "bodyPosition" to getBloodPressureBodyPosition(response.records.last().bodyPosition),
                 "date" to response.records.last().time,
                 "measurementLocation" to getBloodPressureMeasurementLocation(response.records.last().measurementLocation),
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -581,8 +581,8 @@ class HealthConnectSensorManager : SensorManager {
             bodyFat.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -600,8 +600,8 @@ class HealthConnectSensorManager : SensorManager {
             bodyWaterMass.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -620,8 +620,8 @@ class HealthConnectSensorManager : SensorManager {
             attributes = mapOf(
                 "date" to response.records.last().time,
                 "measurementLocation" to getBodyTemperatureMeasurementLocation(response.records.last().measurementLocation),
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -639,8 +639,8 @@ class HealthConnectSensorManager : SensorManager {
             boneMass.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -653,7 +653,7 @@ class HealthConnectSensorManager : SensorManager {
             distance,
             distanceTotal,
             distance.statelessIcon,
-            attributes = buildAggregationAttributes(distanceRequest)
+            attributes = buildAggregationAttributes(distanceRequest),
         )
     }
 
@@ -666,7 +666,7 @@ class HealthConnectSensorManager : SensorManager {
             elevationGained,
             elevationValue,
             elevationGained.statelessIcon,
-            attributes = buildAggregationAttributes(elevationGainedRequest)
+            attributes = buildAggregationAttributes(elevationGainedRequest),
         )
     }
 
@@ -679,7 +679,7 @@ class HealthConnectSensorManager : SensorManager {
             floorsClimbed,
             floors,
             floorsClimbed.statelessIcon,
-            attributes = buildAggregationAttributes(floorsClimbedRequest)
+            attributes = buildAggregationAttributes(floorsClimbedRequest),
         )
     }
 
@@ -697,8 +697,8 @@ class HealthConnectSensorManager : SensorManager {
             heartRate.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().samples.last().time,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -716,8 +716,8 @@ class HealthConnectSensorManager : SensorManager {
             heartRateVariability.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -735,8 +735,8 @@ class HealthConnectSensorManager : SensorManager {
             height.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -749,7 +749,7 @@ class HealthConnectSensorManager : SensorManager {
             hydration,
             hydrationTotal,
             hydration.statelessIcon,
-            attributes = buildAggregationAttributes(hydrationRequest)
+            attributes = buildAggregationAttributes(hydrationRequest),
         )
     }
 
@@ -767,8 +767,8 @@ class HealthConnectSensorManager : SensorManager {
             leanBodyMass.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -786,8 +786,8 @@ class HealthConnectSensorManager : SensorManager {
             oxygenSaturation.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -805,8 +805,8 @@ class HealthConnectSensorManager : SensorManager {
             respiratoryRate.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -824,8 +824,8 @@ class HealthConnectSensorManager : SensorManager {
             restingHeartRate.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -847,8 +847,8 @@ class HealthConnectSensorManager : SensorManager {
             sleepDuration.statelessIcon,
             attributes = mapOf(
                 "endTime" to lastSleepRecord.endTime,
-                "sources" to lastSleepRecord.metadata.dataOrigin.packageName
-            )
+                "sources" to lastSleepRecord.metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -861,7 +861,7 @@ class HealthConnectSensorManager : SensorManager {
             steps,
             totalSteps,
             steps.statelessIcon,
-            attributes = buildAggregationAttributes(stepsRequest)
+            attributes = buildAggregationAttributes(stepsRequest),
         )
     }
 
@@ -874,7 +874,7 @@ class HealthConnectSensorManager : SensorManager {
             totalCaloriesBurned,
             BigDecimal(energy).setScale(2, RoundingMode.HALF_EVEN),
             totalCaloriesBurned.statelessIcon,
-            attributes = buildAggregationAttributes(totalCaloriesBurnedRequest)
+            attributes = buildAggregationAttributes(totalCaloriesBurnedRequest),
         )
     }
 
@@ -893,8 +893,8 @@ class HealthConnectSensorManager : SensorManager {
             attributes = mapOf(
                 "date" to response.records.last().time,
                 "measurementMethod" to getMeasurementMethod(response.records.last().measurementMethod),
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -912,8 +912,8 @@ class HealthConnectSensorManager : SensorManager {
             weight.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
-                "source" to response.records.last().metadata.dataOrigin.packageName
-            )
+                "source" to response.records.last().metadata.dataOrigin.packageName,
+            ),
         )
     }
 
@@ -949,7 +949,7 @@ class HealthConnectSensorManager : SensorManager {
                 systolicBloodPressure,
                 totalCaloriesBurned,
                 vo2Max,
-                weight
+                weight,
             )
         } else {
             emptyList()
@@ -998,8 +998,8 @@ class HealthConnectSensorManager : SensorManager {
             metrics = setOf(metric),
             timeRangeFilter = TimeRangeFilter.between(
                 LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
-                LocalDateTime.of(LocalDate.now(), LocalTime.now())
-            )
+                LocalDateTime.of(LocalDate.now(), LocalTime.now()),
+            ),
         )
     }
 
@@ -1008,17 +1008,17 @@ class HealthConnectSensorManager : SensorManager {
             recordType = request,
             timeRangeFilter = TimeRangeFilter.between(
                 Instant.now().minus(30, ChronoUnit.DAYS),
-                Instant.now()
+                Instant.now(),
             ),
             ascendingOrder = false,
-            pageSize = 1
+            pageSize = 1,
         )
     }
 
     private fun buildAggregationAttributes(result: AggregationResult): Map<String, Any> {
         return mapOf(
             "endTime" to Instant.now(),
-            "sources" to result.dataOrigins.map { it.packageName }
+            "sources" to result.dataOrigins.map { it.packageName },
         )
     }
 

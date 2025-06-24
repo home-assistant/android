@@ -167,10 +167,10 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                 _name = "",
                 type = ServerType.TEMPORARY,
                 connection = ServerConnectionInfo(
-                    externalUrl = formattedUrl
+                    externalUrl = formattedUrl,
                 ),
                 session = ServerSessionInfo(),
-                user = ServerUserInfo()
+                user = ServerUserInfo(),
             )
             serverId = serverManager.addServer(server)
             serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
@@ -179,8 +179,8 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                     "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                     deviceName,
                     getMessagingToken(),
-                    false
-                )
+                    false,
+                ),
             )
             serverManager.convertTemporaryServer(serverId)
             launch {
@@ -244,8 +244,8 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
         val templateTilesFromPhone: Map<Int, TemplateTileConfig> = kotlinJsonMapper.decodeFromString(
             dataMap.getString(
                 WearDataMessages.CONFIG_TEMPLATE_TILES,
-                "{}"
-            )
+                "{}",
+            ),
         )
 
         wearPrefsRepository.setAllTemplateTiles(templateTilesFromPhone)

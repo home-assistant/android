@@ -85,8 +85,8 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
                             this,
                             System.currentTimeMillis().toInt(),
                             Intent(this, MediaPlayerControlsWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-                        )
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                        ),
                     )
                 } else {
                     showAddWidgetError()
@@ -102,11 +102,11 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
         if (extras != null) {
             appWidgetId = extras.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.INVALID_APPWIDGET_ID,
             )
             requestLauncherSetup = extras.getBoolean(
                 ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
-                false
+                false,
             )
         }
 
@@ -131,8 +131,8 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
                 WidgetUtils.getSelectedBackgroundOption(
                     this,
                     mediaPlayerWidget.backgroundType,
-                    backgroundTypeValues
-                )
+                    backgroundTypeValues,
+                ),
             )
             val entities = runBlocking {
                 try {
@@ -215,7 +215,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
 
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_SERVER_ID,
-                selectedServerId!!
+                selectedServerId!!,
             )
 
             selectedEntities = LinkedList()
@@ -226,27 +226,27 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
             }
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_ENTITY_ID,
-                selectedEntities.map { e -> e?.entityId }.reduce { a, b -> "$a,$b" }
+                selectedEntities.map { e -> e?.entityId }.reduce { a, b -> "$a,$b" },
             )
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_LABEL,
-                binding.label.text.toString()
+                binding.label.text.toString(),
             )
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_SHOW_VOLUME,
-                binding.widgetShowVolumeButtonCheckbox.isChecked
+                binding.widgetShowVolumeButtonCheckbox.isChecked,
             )
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_SHOW_SKIP,
-                binding.widgetShowSkipButtonsCheckbox.isChecked
+                binding.widgetShowSkipButtonsCheckbox.isChecked,
             )
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_SHOW_SEEK,
-                binding.widgetShowSeekButtonsCheckbox.isChecked
+                binding.widgetShowSeekButtonsCheckbox.isChecked,
             )
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_SHOW_SOURCE,
-                binding.widgetShowMediaPlayerSource.isChecked
+                binding.widgetShowMediaPlayerSource.isChecked,
             )
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_BACKGROUND_TYPE,
@@ -254,7 +254,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
                     getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
                     getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
                     else -> WidgetBackgroundType.DAYNIGHT
-                }
+                },
             )
 
             context.sendBroadcast(intent)
@@ -262,7 +262,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
             // Make sure we pass back the original appWidgetId
             setResult(
                 RESULT_OK,
-                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId),
             )
             finish()
         } catch (e: Exception) {
@@ -276,7 +276,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
         if (intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.INVALID_APPWIDGET_ID,
             )
             onAddWidget()
         }

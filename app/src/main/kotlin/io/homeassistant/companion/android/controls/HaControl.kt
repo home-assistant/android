@@ -28,7 +28,7 @@ interface HaControl {
     fun createControl(
         context: Context,
         entity: Entity,
-        info: HaControlInfo
+        info: HaControlInfo,
     ): Control {
         val controlPath = "entityId:${info.entityId}"
         val control = Control.StatefulBuilder(
@@ -37,8 +37,8 @@ interface HaControl {
                 context,
                 controlPath.hashCode(),
                 WebViewActivity.newInstance(context.applicationContext, controlPath, info.serverId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
-            )
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE,
+            ),
         )
         control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
         control.setSubtitle(info.area?.name ?: "")
@@ -50,7 +50,7 @@ interface HaControl {
         } else {
             control.setZone(
                 (if (info.serverName != null) "${info.serverName}: " else "") +
-                    (info.area?.name ?: getDomainString(context, entity))
+                    (info.area?.name ?: getDomainString(context, entity)),
             )
         }
         control.setStatus(Control.STATUS_OK)
@@ -74,7 +74,7 @@ interface HaControl {
                     entity.state in listOf(
                         "off",
                         "unavailable",
-                        "unknown"
+                        "unknown",
                     ) -> R.color.colorDeviceControlsOff
                     else -> R.color.colorDeviceControlsDefaultOn
                 }
@@ -100,7 +100,7 @@ interface HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity,
-        info: HaControlInfo
+        info: HaControlInfo,
     ): Control.StatefulBuilder
 
     fun getDeviceType(entity: Entity): Int

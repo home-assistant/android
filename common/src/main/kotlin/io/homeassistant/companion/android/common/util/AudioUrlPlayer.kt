@@ -47,16 +47,16 @@ class AudioUrlPlayer @VisibleForTesting constructor(private val audioManager: Au
                     setAudioAttributes(
                         AudioAttributes.Builder()
                             .setContentType(
-                                if (isAssistant) AudioAttributes.CONTENT_TYPE_SPEECH else AudioAttributes.CONTENT_TYPE_MUSIC
+                                if (isAssistant) AudioAttributes.CONTENT_TYPE_SPEECH else AudioAttributes.CONTENT_TYPE_MUSIC,
                             )
                             .setUsage(
                                 if (isAssistant && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                                     AudioAttributes.USAGE_ASSISTANT
                                 } else {
                                     AudioAttributes.USAGE_MEDIA
-                                }
+                                },
                             )
-                            .build()
+                            .build(),
                     )
                     setOnPreparedListener {
                         if (isActive) {
@@ -129,7 +129,7 @@ class AudioUrlPlayer @VisibleForTesting constructor(private val audioManager: Au
                             setContentType(AudioAttributesCompat.CONTENT_TYPE_MUSIC)
                         }
                         build()
-                    }
+                    },
                 )
                 setOnAudioFocusChangeListener(focusListener)
                 build()

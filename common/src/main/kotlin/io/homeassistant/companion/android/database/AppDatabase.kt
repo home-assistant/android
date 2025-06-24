@@ -101,7 +101,7 @@ import timber.log.Timber
         ThermostatTile::class,
         EntityStateComplications::class,
         Server::class,
-        Setting::class
+        Setting::class,
     ],
     version = 50,
     autoMigrations = [
@@ -130,7 +130,7 @@ import timber.log.Timber
         AutoMigration(from = 47, to = 48),
         AutoMigration(from = 48, to = 49),
         AutoMigration(from = 49, to = 50),
-    ]
+    ],
 )
 @TypeConverters(
     LocalNotificationSettingConverter::class,
@@ -138,7 +138,7 @@ import timber.log.Timber
     EntriesTypeConverter::class,
     SensorSettingTypeConverter::class,
     WidgetBackgroundTypeConverter::class,
-    WidgetTapActionConverter::class
+    WidgetTapActionConverter::class,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
@@ -206,7 +206,7 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_21_22,
                     MIGRATION_22_23,
                     MIGRATION_23_24,
-                    Migration40to41(context.assets)
+                    Migration40to41(context.assets),
                 )
                 .build()
         }
@@ -226,7 +226,7 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
-                    "CREATE TABLE IF NOT EXISTS `sensors` (`unique_id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, PRIMARY KEY(`unique_id`))"
+                    "CREATE TABLE IF NOT EXISTS `sensors` (`unique_id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, PRIMARY KEY(`unique_id`))",
                 )
             }
         }
@@ -298,7 +298,7 @@ abstract class AppDatabase : RoomDatabase() {
                                 it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
                                 it.put(
                                     "registered",
-                                    cursor.getInt(cursor.getColumnIndex("registered"))
+                                    cursor.getInt(cursor.getColumnIndex("registered")),
                                 )
                                 it.put("state", "")
                                 it.put("state_type", "")
@@ -352,7 +352,7 @@ abstract class AppDatabase : RoomDatabase() {
                                 it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
                                 it.put(
                                     "registered",
-                                    cursor.getInt(cursor.getColumnIndex("registered"))
+                                    cursor.getInt(cursor.getColumnIndex("registered")),
                                 )
                                 it.put("state", "")
                                 it.put("last_sent_state", "")
@@ -485,7 +485,7 @@ abstract class AppDatabase : RoomDatabase() {
                                     it.put("value_type", cursor.getString(cursor.getColumnIndex("value_type")))
                                     it.put("entries", entries)
                                     it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                                }
+                                },
                             )
                         }
                     }
@@ -562,92 +562,92 @@ abstract class AppDatabase : RoomDatabase() {
             RenameColumn(
                 tableName = "Authentication_List",
                 fromColumnName = "Username",
-                toColumnName = "username"
+                toColumnName = "username",
             ),
             RenameColumn(
                 tableName = "Authentication_List",
                 fromColumnName = "Password",
-                toColumnName = "password"
+                toColumnName = "password",
             ),
             RenameColumn(
                 tableName = "qs_tiles",
                 fromColumnName = "tileId",
-                toColumnName = "tile_id"
+                toColumnName = "tile_id",
             ),
             RenameColumn(
                 tableName = "qs_tiles",
                 fromColumnName = "entityId",
-                toColumnName = "entity_id"
+                toColumnName = "entity_id",
             ),
             RenameColumn(
                 tableName = "qs_tiles",
                 fromColumnName = "shouldVibrate",
-                toColumnName = "should_vibrate"
+                toColumnName = "should_vibrate",
             ),
             RenameColumn(
                 tableName = "qs_tiles",
                 fromColumnName = "authRequired",
-                toColumnName = "auth_required"
+                toColumnName = "auth_required",
             ),
             RenameColumn(
                 tableName = "settings",
                 fromColumnName = "websocketSetting",
-                toColumnName = "websocket_setting"
+                toColumnName = "websocket_setting",
             ),
             RenameColumn(
                 tableName = "settings",
                 fromColumnName = "sensorUpdateFrequency",
-                toColumnName = "sensor_update_frequency"
+                toColumnName = "sensor_update_frequency",
             ),
             RenameColumn(
                 tableName = "camera_widgets",
                 fromColumnName = "entityId",
-                toColumnName = "entity_id"
+                toColumnName = "entity_id",
             ),
             RenameColumn(
                 tableName = "entityStateComplications",
                 fromColumnName = "entityId",
-                toColumnName = "entity_id"
+                toColumnName = "entity_id",
             ),
             RenameColumn(
                 tableName = "mediaplayctrls_widgets",
                 fromColumnName = "entityId",
-                toColumnName = "entity_id"
+                toColumnName = "entity_id",
             ),
             RenameColumn(
                 tableName = "mediaplayctrls_widgets",
                 fromColumnName = "showSkip",
-                toColumnName = "show_skip"
+                toColumnName = "show_skip",
             ),
             RenameColumn(
                 tableName = "mediaplayctrls_widgets",
                 fromColumnName = "showSeek",
-                toColumnName = "show_seek"
+                toColumnName = "show_seek",
             ),
             RenameColumn(
                 tableName = "mediaplayctrls_widgets",
                 fromColumnName = "showVolume",
-                toColumnName = "show_volume"
+                toColumnName = "show_volume",
             ),
             RenameColumn(
                 tableName = "mediaplayctrls_widgets",
                 fromColumnName = "showSource",
-                toColumnName = "show_source"
-            )
+                toColumnName = "show_source",
+            ),
         )
         @RenameTable.Entries(
             RenameTable(
                 fromTableName = "Authentication_List",
-                toTableName = "authentication_list"
+                toTableName = "authentication_list",
             ),
             RenameTable(
                 fromTableName = "entityStateComplications",
-                toTableName = "entity_state_complications"
+                toTableName = "entity_state_complications",
             ),
             RenameTable(
                 fromTableName = "mediaplayctrls_widgets",
-                toTableName = "media_player_controls_widgets"
-            )
+                toTableName = "media_player_controls_widgets",
+            ),
         )
         class Migration36to37 : AutoMigrationSpec
 
@@ -814,7 +814,7 @@ abstract class AppDatabase : RoomDatabase() {
                                         .joinToString { zone -> "${serverId}_$zone" }
                                     db.execSQL(
                                         "UPDATE `sensor_settings` SET `value` = '$newSetting' " +
-                                            "WHERE `sensor_id` = 'location_background' AND `name` = 'location_ham_only_enter_zone'"
+                                            "WHERE `sensor_id` = 'location_background' AND `name` = 'location_ham_only_enter_zone'",
                                     )
                                 }
                             }
@@ -914,7 +914,7 @@ abstract class AppDatabase : RoomDatabase() {
                     notificationChannel = NotificationChannel(
                         CHANNEL_DATABASE,
                         TAG,
-                        NotificationManager.IMPORTANCE_HIGH
+                        NotificationManager.IMPORTANCE_HIGH,
                     )
                     notificationManager.createNotificationChannel(notificationChannel)
                 }
@@ -941,7 +941,7 @@ abstract class AppDatabase : RoomDatabase() {
                         Toast.makeText(
                             appContext,
                             commonR.string.database_event_failure,
-                            Toast.LENGTH_LONG
+                            Toast.LENGTH_LONG,
                         ).show()
                     }
                 }

@@ -3,12 +3,12 @@ package io.homeassistant.companion.android.data
 data class SimplifiedEntity(
     val entityId: String,
     val friendlyName: String = entityId,
-    val icon: String = ""
+    val icon: String = "",
 ) {
     constructor(entityString: String) : this(
         entityString.split(",")[0],
         entityString.split(",")[1],
-        entityString.split(",")[2]
+        entityString.split(",")[2],
     )
 
     val domain: String

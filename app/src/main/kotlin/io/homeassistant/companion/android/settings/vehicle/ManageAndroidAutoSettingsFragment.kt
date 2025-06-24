@@ -30,7 +30,7 @@ class ManageAndroidAutoSettingsFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
@@ -38,7 +38,7 @@ class ManageAndroidAutoSettingsFragment : Fragment() {
                     AndroidAutoFavoritesSettings(
                         androidAutoViewModel = viewModel,
                         serversList = serverManager.defaultServers,
-                        defaultServer = serverManager.getServer()?.id ?: 0
+                        defaultServer = serverManager.getServer()?.id ?: 0,
                     )
                 }
             }

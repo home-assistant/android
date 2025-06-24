@@ -387,145 +387,6 @@
     </issue>
 
     <issue
-        id="PrivateResource"
-        message="Overriding `@layout/exo_player_control_view` which is marked as private in androidx.media3:media3-ui:1.7.1. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name.">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@color/exo_black_opacity_60` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:background=&quot;@color/exo_black_opacity_60&quot;/>"
-        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="26"
-            column="29"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_height` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:layout_height=&quot;@dimen/exo_styled_bottom_bar_height&quot;"
-        errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="30"
-            column="32"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_margin_top` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:layout_marginTop=&quot;@dimen/exo_styled_bottom_bar_margin_top&quot;"
-        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="31"
-            column="35"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@color/exo_bottom_bar_background` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:background=&quot;@color/exo_bottom_bar_background&quot;"
-        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="33"
-            column="29"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="            android:paddingStart=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
-        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="39"
-            column="35"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="            android:paddingEnd=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
-        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="40"
-            column="33"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="            android:paddingLeft=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
-        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="41"
-            column="34"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="            android:paddingRight=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
-        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="42"
-            column="35"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_progress_layout_height` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:layout_height=&quot;@dimen/exo_styled_progress_layout_height&quot;"
-        errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="98"
-            column="32"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_progress_margin_bottom` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:layout_marginBottom=&quot;@dimen/exo_styled_progress_margin_bottom&quot;/>"
-        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="100"
-            column="38"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_minimal_controls_margin_bottom` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:layout_marginBottom=&quot;@dimen/exo_styled_minimal_controls_margin_bottom&quot;"
-        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="106"
-            column="38"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_controls_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:padding=&quot;@dimen/exo_styled_controls_padding&quot;"
-        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="123"
-            column="26"/>
-    </issue>
-
-    <issue
         id="DiscouragedApi"
         message="Use of this function is discouraged because resource reflection makes it harder to perform build optimizations and compile-time verification of code. It is much more efficient to retrieve resources by identifier (e.g. `R.foo.bar`) than by name (e.g. `getIdentifier(&quot;bar&quot;, &quot;foo&quot;, null)`)."
         errorLine1="        val stringId = app.resources.getIdentifier(identifierString, &quot;string&quot;, app.packageName)"
@@ -763,7 +624,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/onboarding/authentication/AuthenticationFragment.kt"
-            line="81"
+            line="85"
             column="33"/>
     </issue>
 
@@ -774,7 +635,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/onboarding/authentication/AuthenticationFragment.kt"
-            line="81"
+            line="85"
             column="33"/>
     </issue>
 
@@ -785,7 +646,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/onboarding/authentication/AuthenticationFragment.kt"
-            line="226"
+            line="230"
             column="29"/>
     </issue>
 
@@ -2600,7 +2461,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="247"
+            line="241"
             column="13"/>
     </issue>
 
@@ -2611,7 +2472,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="501"
+            line="505"
             column="21"/>
     </issue>
 
@@ -2622,7 +2483,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="502"
+            line="506"
             column="21"/>
     </issue>
 
@@ -2633,7 +2494,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="537"
+            line="541"
             column="25"/>
     </issue>
 
@@ -2644,7 +2505,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="537"
+            line="541"
             column="25"/>
     </issue>
 
@@ -2655,7 +2516,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="637"
+            line="634"
             column="13"/>
     </issue>
 
@@ -2666,7 +2527,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1105"
+            line="1056"
             column="21"/>
     </issue>
 
@@ -2982,17 +2843,6 @@
 
     <issue
         id="UnusedResources"
-        message="The resource `R.layout.exo_player_control_view` appears to be unused"
-        errorLine1="&lt;merge xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
-        errorLine2="^">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="21"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
         message="The resource `R.drawable.ic_baseline_info_24` appears to be unused"
         errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
         errorLine2="^">
@@ -3076,17 +2926,6 @@
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/values/styles.xml"
             line="61"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.style.ExoStyledControls_Button_Bottom_HaMute` appears to be unused"
-        errorLine1="    &lt;style name=&quot;ExoStyledControls.Button.Bottom.HaMute&quot;>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/values/styles.xml"
-            line="135"
             column="12"/>
     </issue>
 
@@ -3233,17 +3072,6 @@
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
             line="156"
             column="13"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="        val code = Uri.parse(url).getQueryParameter(&quot;code&quot;)"
-        errorLine2="                   ~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/onboarding/authentication/AuthenticationFragment.kt"
-            line="194"
-            column="20"/>
     </issue>
 
     <issue
@@ -3561,7 +3389,7 @@
         errorLine2="                                                        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="449"
+            line="453"
             column="57"/>
     </issue>
 
@@ -3572,7 +3400,7 @@
         errorLine2="                                                        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="449"
+            line="453"
             column="57"/>
     </issue>
 
@@ -3583,7 +3411,7 @@
         errorLine2="                                                        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="449"
+            line="453"
             column="57"/>
     </issue>
 
@@ -3594,7 +3422,7 @@
         errorLine2="                                                        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="449"
+            line="453"
             column="57"/>
     </issue>
 
@@ -3605,7 +3433,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="468"
+            line="472"
             column="41"/>
     </issue>
 
@@ -3616,7 +3444,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="468"
+            line="472"
             column="41"/>
     </issue>
 
@@ -3627,7 +3455,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="468"
+            line="472"
             column="41"/>
     </issue>
 
@@ -3638,7 +3466,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="468"
+            line="472"
             column="41"/>
     </issue>
 
@@ -3649,7 +3477,7 @@
         errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="970"
+            line="966"
             column="19"/>
     </issue>
 
@@ -3750,72 +3578,6 @@
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/websocket/WebsocketSettingFragment.kt"
             line="77"
             column="41"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="            &lt;ImageButton android:id=&quot;@+id/exo_ha_mute&quot;"
-        errorLine2="             ~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="65"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="            &lt;ImageButton android:id=&quot;@id/exo_fullscreen&quot;"
-        errorLine2="             ~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="68"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="            &lt;ImageButton android:id=&quot;@id/exo_overflow_show&quot;"
-        errorLine2="             ~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="71"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="                &lt;ImageButton android:id=&quot;@id/exo_overflow_hide&quot;"
-        errorLine2="                 ~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="87"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageButton android:id=&quot;@id/exo_minimal_fullscreen&quot;"
-        errorLine2="         ~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="111"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageButton android:id=&quot;@id/exo_play_pause&quot;"
-        errorLine2="         ~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="129"
-            column="10"/>
     </issue>
 
     <issue

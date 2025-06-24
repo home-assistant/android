@@ -32,7 +32,7 @@ fun SetThermostatTileView(
     entities: List<Entity>?,
     onSelectEntity: () -> Unit,
     onSelectRefreshInterval: () -> Unit,
-    onNameEnabled: (Int, Boolean) -> Unit
+    onNameEnabled: (Int, Boolean) -> Unit,
 ) {
     WearAppTheme {
         ThemeLazyColumn {
@@ -49,19 +49,19 @@ fun SetThermostatTileView(
                     icon = {
                         Image(
                             asset = icon,
-                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
                     colors = getFilledTonalButtonColors(),
                     label = {
                         Text(
-                            text = stringResource(id = R.string.choose_entity)
+                            text = stringResource(id = R.string.choose_entity),
                         )
                     },
                     secondaryLabel = {
                         Text(entity?.friendlyName ?: tile?.entityId ?: "")
                     },
-                    onClick = onSelectEntity
+                    onClick = onSelectEntity,
                 )
             }
 
@@ -71,21 +71,21 @@ fun SetThermostatTileView(
                     icon = {
                         Image(
                             asset = CommunityMaterial.Icon3.cmd_timer_cog,
-                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
                     colors = getFilledTonalButtonColors(),
                     label = {
                         Text(
-                            text = stringResource(id = R.string.refresh_interval)
+                            text = stringResource(id = R.string.refresh_interval),
                         )
                     },
                     secondaryLabel = {
                         Text(
-                            intervalToString(LocalContext.current, (tile?.refreshInterval ?: DEFAULT_REFRESH_INTERVAL).toInt())
+                            intervalToString(LocalContext.current, (tile?.refreshInterval ?: DEFAULT_REFRESH_INTERVAL).toInt()),
                         )
                     },
-                    onClick = onSelectRefreshInterval
+                    onClick = onSelectRefreshInterval,
                 )
             }
             item {
@@ -104,10 +104,10 @@ fun SetThermostatTileView(
                             } else {
                                 CommunityMaterial.Icon.cmd_alphabetical_off
                             },
-                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
-                    colors = getSwitchButtonColors()
+                    colors = getSwitchButtonColors(),
                 )
             }
         }

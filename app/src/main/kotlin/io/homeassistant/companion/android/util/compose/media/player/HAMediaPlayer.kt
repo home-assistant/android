@@ -94,6 +94,7 @@ fun HAMediaPlayer(
     contentScale: ContentScale,
     modifier: Modifier = Modifier,
     fullscreenModifier: Modifier = Modifier,
+    onFullscreenClicked: (isFullscreen: Boolean) -> Unit = {},
 ) {
     var showControls by remember { mutableStateOf(true) }
 
@@ -106,7 +107,7 @@ fun HAMediaPlayer(
 
     HAMediaPlayer(player, showControls, contentScale, modifier, fullscreenModifier, onPlayerClicked = {
         showControls = !showControls
-    })
+    }, onFullscreenClicked = onFullscreenClicked)
 }
 
 /**
@@ -122,6 +123,7 @@ fun HAMediaPlayer(
  * @param modifier The `Modifier` to be applied to the main player container.
  * @param fullscreenModifier The `Modifier` to be applied to the player container when it is in fullscreen mode.
  * @param onPlayerClicked Callback invoked when the player's surface (outside of controls) is clicked.
+ * @param onFullscreenClicked Callback invoked when the fullscreen button is clicked `isFullscreen` indicates the new state.
  */
 @Composable
 @OptIn(UnstableApi::class)
@@ -132,6 +134,7 @@ fun HAMediaPlayer(
     modifier: Modifier = Modifier,
     fullscreenModifier: Modifier = Modifier,
     onPlayerClicked: () -> Unit = {},
+    onFullscreenClicked: (isFullscreen: Boolean) -> Unit = {},
 ) {
     var isFullscreen by remember { mutableStateOf(false) }
     val presentationState = rememberPresentationState(player)
@@ -150,6 +153,7 @@ fun HAMediaPlayer(
             isFullScreen = isFullscreen,
             onClickFullscreen = {
                 isFullscreen = !isFullscreen
+                onFullscreenClicked(isFullscreen)
             },
             onPlayerClicked = onPlayerClicked,
         )

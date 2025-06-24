@@ -33,7 +33,7 @@ class SensorManagerTest {
                 serverId = 0,
                 enabled = true,
                 state = "test",
-            )
+            ),
         )
         justRun { sensorDao.update(any()) }
         val slot = slot<List<Attribute>>()
@@ -44,7 +44,7 @@ class SensorManagerTest {
             SensorManager.BasicSensor("test", "test"),
             "test",
             "test",
-            mapOf("test" to listOf("test", "hello"))
+            mapOf("test" to listOf("test", "hello")),
         )
 
         assertEquals("""["test","hello"]""", slot.captured.first().value)
@@ -54,7 +54,7 @@ class SensorManagerTest {
             SensorManager.BasicSensor("test", "test"),
             "test",
             "test",
-            mapOf("test" to listOf(true, false))
+            mapOf("test" to listOf(true, false)),
         )
 
         assertEquals("""[true,false]""", slot.captured.first().value)
@@ -64,7 +64,7 @@ class SensorManagerTest {
             SensorManager.BasicSensor("test", "test"),
             "test",
             "test",
-            mapOf("test" to true)
+            mapOf("test" to true),
         )
 
         assertEquals("""true""", slot.captured.first().value)

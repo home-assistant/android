@@ -26,7 +26,7 @@ import io.homeassistant.companion.android.views.rememberExpandedStates
 fun SetFavoritesView(
     mainViewModel: MainViewModel,
     favoriteEntityIds: List<String>,
-    onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit
+    onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit,
 ) {
     // Remember expanded state of each header
     val expandedStates = rememberExpandedStates(mainViewModel.supportedDomains())
@@ -43,7 +43,7 @@ fun SetFavoritesView(
                         ExpandableListHeader(
                             string = mainViewModel.stringForDomain(domain)!!,
                             key = domain,
-                            expandedStates = expandedStates
+                            expandedStates = expandedStates,
                         )
                     }
                     if (expandedStates[domain] == true) {
@@ -51,7 +51,7 @@ fun SetFavoritesView(
                             FavoriteToggleChip(
                                 entity = entity,
                                 favoriteEntityIds = favoriteEntityIds,
-                                onFavoriteSelected = onFavoriteSelected
+                                onFavoriteSelected = onFavoriteSelected,
                             )
                         }
                     }
@@ -65,7 +65,7 @@ fun SetFavoritesView(
 private fun FavoriteToggleChip(
     entity: Entity,
     favoriteEntityIds: List<String>,
-    onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit
+    onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit,
 ) {
     val attributes = entity.attributes as Map<*, *>
     val iconBitmap = entity.getIcon(LocalContext.current)
@@ -82,16 +82,16 @@ private fun FavoriteToggleChip(
         icon = {
             Image(
                 asset = iconBitmap,
-                colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
+                colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
             )
         },
         label = {
             Text(
                 text = attributes["friendly_name"].toString(),
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         },
-        colors = getSwitchButtonColors()
+        colors = getSwitchButtonColors(),
     )
 }

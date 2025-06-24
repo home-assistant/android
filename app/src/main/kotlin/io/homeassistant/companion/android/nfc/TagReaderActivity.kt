@@ -81,7 +81,7 @@ class TagReaderActivity : BaseActivity() {
         Toast.makeText(
             this,
             if (isNfcTag) commonR.string.nfc_processing_tag_error else commonR.string.qrcode_processing_tag_error,
-            Toast.LENGTH_LONG
+            Toast.LENGTH_LONG,
         ).show()
     }
 }

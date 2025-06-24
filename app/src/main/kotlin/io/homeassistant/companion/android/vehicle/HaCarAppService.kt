@@ -71,7 +71,7 @@ class HaCarAppService : CarAppService() {
             val entityFlow = allEntities.shareIn(
                 lifecycleScope,
                 SharingStarted.WhileSubscribed(10_000),
-                1
+                1,
             )
 
             override fun onCreateScreen(intent: Intent): Screen {
@@ -88,15 +88,15 @@ class HaCarAppService : CarAppService() {
                                     entityFlow,
                                     prefsRepository,
                                     { loadEntities(lifecycleScope, it) },
-                                    { loadEntities(lifecycleScope, serverId.value) }
-                                )
+                                    { loadEntities(lifecycleScope, serverId.value) },
+                                ),
                             )
 
                             push(
                                 LoginScreen(
                                     carContext,
-                                    serverManager
-                                )
+                                    serverManager,
+                                ),
                             )
                         }
                     return SwitchToDrivingOptimizedScreen(carContext)
@@ -111,13 +111,13 @@ class HaCarAppService : CarAppService() {
                                     entityFlow,
                                     prefsRepository,
                                     { loadEntities(lifecycleScope, it) },
-                                    { loadEntities(lifecycleScope, serverId.value) }
-                                )
+                                    { loadEntities(lifecycleScope, serverId.value) },
+                                ),
                             )
                         }
                     return LoginScreen(
                         carContext,
-                        serverManager
+                        serverManager,
                     )
                 }
             }

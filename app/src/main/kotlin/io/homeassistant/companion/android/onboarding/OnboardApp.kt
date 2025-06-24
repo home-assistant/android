@@ -24,7 +24,7 @@ class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>(
             notificationsPossible = intent.getBooleanExtra(EXTRA_NOTIFICATIONS_POSSIBLE, true),
             isWatch = intent.getBooleanExtra(EXTRA_IS_WATCH, false),
             discoveryOptions = intent.getStringExtra(EXTRA_DISCOVERY_OPTIONS)?.let { DiscoveryOptions.valueOf(it) },
-            mayRequireTlsClientCertificate = intent.getBooleanExtra(EXTRA_MAY_REQUIRE_TLS_CLIENT_CERTIFICATE, false)
+            mayRequireTlsClientCertificate = intent.getBooleanExtra(EXTRA_MAY_REQUIRE_TLS_CLIENT_CERTIFICATE, false),
         )
     }
 
@@ -33,7 +33,7 @@ class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>(
         ADD_EXISTING_EXTERNAL,
 
         /** Hide existing servers in the app from discovery results if discovered */
-        HIDE_EXISTING
+        HIDE_EXISTING,
     }
 
     data class Input(
@@ -43,7 +43,7 @@ class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>(
         val notificationsPossible: Boolean = true,
         val isWatch: Boolean = false,
         val discoveryOptions: DiscoveryOptions? = null,
-        val mayRequireTlsClientCertificate: Boolean = false
+        val mayRequireTlsClientCertificate: Boolean = false,
     )
 
     data class Output(
@@ -53,7 +53,7 @@ class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>(
         val deviceTrackingEnabled: Boolean,
         val notificationsEnabled: Boolean,
         val tlsClientCertificateUri: String,
-        val tlsClientCertificatePassword: String
+        val tlsClientCertificatePassword: String,
     ) {
         fun toIntent(): Intent {
             return Intent().apply {
@@ -76,7 +76,7 @@ class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>(
                     deviceTrackingEnabled = intent.getBooleanExtra("LocationTracking", false),
                     notificationsEnabled = intent.getBooleanExtra("Notifications", true),
                     tlsClientCertificateUri = intent.getStringExtra("TLSClientCertificateUri").toString(),
-                    tlsClientCertificatePassword = intent.getStringExtra("TLSClientCertificatePassword").toString()
+                    tlsClientCertificatePassword = intent.getStringExtra("TLSClientCertificatePassword").toString(),
                 )
             }
         }

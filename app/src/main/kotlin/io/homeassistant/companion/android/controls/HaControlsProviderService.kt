@@ -59,10 +59,10 @@ class HaControlsProviderService : ControlsProviderService() {
             "script" to DefaultButtonControl,
             "siren" to DefaultSwitchControl,
             "switch" to DefaultSwitchControl,
-            "vacuum" to VacuumControl
+            "vacuum" to VacuumControl,
         )
         private val domainToMinimumApi = mapOf(
-            "camera" to Build.VERSION_CODES.S
+            "camera" to Build.VERSION_CODES.S,
         )
 
         fun getSupportedDomains(): List<String> =
@@ -118,7 +118,7 @@ class HaControlsProviderService : ControlsProviderService() {
                                     it.entityId,
                                     areaRegistry[server.id],
                                     deviceRegistry[server.id],
-                                    entityRegistry[server.id]
+                                    entityRegistry[server.id],
                                 )
                             }
                             entities[server.id] = entities[server.id].orEmpty()
@@ -151,12 +151,12 @@ class HaControlsProviderService : ControlsProviderService() {
                                     serverId = serverId,
                                     serverName = serverNames[serverId],
                                     area = getAreaForEntity(entity.entityId, serverId),
-                                    splitMultiServerIntoStructure = splitServersIntoMultipleStructures
+                                    splitMultiServerIntoStructure = splitServersIntoMultipleStructures,
                                 ) // No auth for preview, no base url to prevent downloading images
                                 domainToHaControl[entity.domain]?.createControl(
                                     applicationContext,
                                     entity,
-                                    info
+                                    info,
                                 )
                             } catch (e: Exception) {
                                 Timber.e(e, "Unable to create control for ${entity.domain} entity, skipping")
@@ -194,7 +194,7 @@ class HaControlsProviderService : ControlsProviderService() {
                                     serverId,
                                     serverControlIds,
                                     webSocketScope,
-                                    subscriber
+                                    subscriber,
                                 )
                             }
                     }
@@ -211,7 +211,7 @@ class HaControlsProviderService : ControlsProviderService() {
     override fun performControlAction(
         controlId: String,
         action: ControlAction,
-        consumer: Consumer<Int>
+        consumer: Consumer<Int>,
     ) {
         Timber.d("Control: $controlId, action: $action")
         if (!serverManager.isRegistered()) return consumer.accept(ControlAction.RESPONSE_FAIL)
@@ -251,7 +251,7 @@ class HaControlsProviderService : ControlsProviderService() {
         serverId: Int,
         controlIds: List<String>,
         webSocketScope: CoroutineScope,
-        subscriber: Flow.Subscriber<in Control>
+        subscriber: Flow.Subscriber<in Control>,
     ) {
         val serverCount = serverManager.defaultServers.size
         val server = serverManager.getServer(serverId)
@@ -281,8 +281,8 @@ class HaControlsProviderService : ControlsProviderService() {
                         systemId = it,
                         entityId = entityId,
                         serverId = serverId,
-                        area = getAreaForEntity(entity.entityId, serverId)
-                    )
+                        area = getAreaForEntity(entity.entityId, serverId),
+                    ),
                 )?.let { control -> subscriber.onNext(control) }
             }
             return
@@ -360,8 +360,8 @@ class HaControlsProviderService : ControlsProviderService() {
                                 authRequired = entityRequiresAuth(entity.entityId, serverId),
                                 baseUrl = baseUrl,
                                 serverName = serverName,
-                                splitMultiServerIntoStructure = splitMultiServersIntoStructures
-                            )
+                                splitMultiServerIntoStructure = splitMultiServersIntoStructures,
+                            ),
                         )?.let { control -> subscriber.onNext(control) }
                     }
                 }
@@ -395,8 +395,8 @@ class HaControlsProviderService : ControlsProviderService() {
                                 authRequired = entityRequiresAuth(entity.entityId, serverId),
                                 baseUrl = baseUrl,
                                 serverName = serverName,
-                                splitMultiServerIntoStructure = splitMultiServersIntoStructures
-                            )
+                                splitMultiServerIntoStructure = splitMultiServersIntoStructures,
+                            ),
                         )?.let { control -> subscriber.onNext(control) }
                     }
                 }
@@ -416,8 +416,8 @@ class HaControlsProviderService : ControlsProviderService() {
                             authRequired = entityRequiresAuth(it.entityId, serverId),
                             baseUrl = baseUrl,
                             serverName = serverName,
-                            splitMultiServerIntoStructure = splitMultiServersIntoStructures
-                        )
+                            splitMultiServerIntoStructure = splitMultiServersIntoStructures,
+                        ),
                     )
                     if (control != null) {
                         subscriber.onNext(control)
@@ -454,7 +454,7 @@ class HaControlsProviderService : ControlsProviderService() {
         serverId: Int,
         serverName: String?,
         coroutineScope: CoroutineScope,
-        baseUrl: String
+        baseUrl: String,
     ) {
         val entityIds = controlIds.map {
             if (it.split(".")[0].toIntOrNull() != null) {
@@ -474,20 +474,20 @@ class HaControlsProviderService : ControlsProviderService() {
                     area = getAreaForEntity(it.value.entityId, serverId),
                     authRequired = entityRequiresAuth(it.value.entityId, serverId),
                     baseUrl = baseUrl,
-                    splitMultiServerIntoStructure = splitMultiServersIntoStructures
+                    splitMultiServerIntoStructure = splitMultiServersIntoStructures,
                 )
                 val control = try {
                     domainToHaControl[it.key.split(".")[0]]?.createControl(
                         applicationContext,
                         it.value,
-                        info
+                        info,
                     )
                 } catch (e: Exception) {
                     Timber.e(e, "Unable to create control for ${it.value.domain} entity, sending error entity")
                     domainToHaControl["ha_failed"]?.createControl(
                         applicationContext,
                         getFailedEntity(it.value.entityId, e),
-                        info
+                        info,
                     )
                 }
                 if (control != null) {
@@ -499,7 +499,7 @@ class HaControlsProviderService : ControlsProviderService() {
 
     private fun getFailedEntity(
         entityId: String,
-        exception: Exception
+        exception: Exception,
     ): Entity {
         return Entity(
             entityId = entityId,
@@ -514,7 +514,7 @@ class HaControlsProviderService : ControlsProviderService() {
         entityId,
         areaRegistry[serverId],
         deviceRegistry[serverId],
-        entityRegistry[serverId]
+        entityRegistry[serverId],
     )
 
     private suspend fun entityRequiresAuth(entityId: String, serverId: Int): Boolean {

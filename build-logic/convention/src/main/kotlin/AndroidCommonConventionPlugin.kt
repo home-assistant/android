@@ -79,7 +79,10 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     baseline = file("lint-baseline.xml")
                     // We already have renovate for this
                     checkDependencies = false
-                    disable += listOf("GradleDependency", "AndroidGradlePluginVersion")
+                    disable += listOf(
+                        "GradleDependency",
+                        "AndroidGradlePluginVersion",
+                    )
                     // Since we use baseline we should not have full path in the files
                     absolutePaths = false
 

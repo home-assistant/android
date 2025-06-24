@@ -71,8 +71,8 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun sendPing(): Boolean {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
-                "type" to "ping"
-            )
+                "type" to "ping",
+            ),
         )
         return socketResponse is PongSocketResponse
     }
@@ -80,8 +80,8 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun getConfig(): GetConfigResponse? {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
-                "type" to "get_config"
-            )
+                "type" to "get_config",
+            ),
         )
 
         return mapResponse(socketResponse)
@@ -94,10 +94,10 @@ class WebSocketRepositoryImpl internal constructor(
                 "domain" to TODO_DOMAIN,
                 "service" to "get_items",
                 "target" to mapOf(
-                    "entity_id" to entityId
+                    "entity_id" to entityId,
                 ),
-                "return_response" to true
-            )
+                "return_response" to true,
+            ),
         )
         return mapResponse(response)
     }
@@ -109,14 +109,14 @@ class WebSocketRepositoryImpl internal constructor(
                 "domain" to TODO_DOMAIN,
                 "service" to "update_item",
                 "target" to mapOf(
-                    "entity_id" to entityId
+                    "entity_id" to entityId,
                 ),
                 "service_data" to mapOf(
                     "item" to todoItem,
                     "status" to status,
-                    "rename" to newName
-                ).filterValues { it != null }
-            )
+                    "rename" to newName,
+                ).filterValues { it != null },
+            ),
         )
         return response?.success == true
     }
@@ -124,8 +124,8 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun getCurrentUser(): CurrentUserResponse? {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
-                "type" to "auth/current_user"
-            )
+                "type" to "auth/current_user",
+            ),
         )
 
         val response: CurrentUserResponse? = mapResponse(socketResponse)
@@ -136,8 +136,8 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun getStates(): List<EntityResponse>? {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
-                "type" to "get_states"
-            )
+                "type" to "get_states",
+            ),
         )
 
         return mapResponse(socketResponse)
@@ -146,8 +146,8 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun getAreaRegistry(): List<AreaRegistryResponse>? {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
-                "type" to "config/area_registry/list"
-            )
+                "type" to "config/area_registry/list",
+            ),
         )
 
         return mapResponse(socketResponse)
@@ -156,8 +156,8 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>? {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
-                "type" to "config/device_registry/list"
-            )
+                "type" to "config/device_registry/list",
+            ),
         )
 
         return mapResponse(socketResponse)
@@ -166,8 +166,8 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun getEntityRegistry(): List<EntityRegistryResponse>? {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
-                "type" to "config/entity_registry/list"
-            )
+                "type" to "config/entity_registry/list",
+            ),
         )
 
         return mapResponse(socketResponse)
@@ -177,8 +177,8 @@ class WebSocketRepositoryImpl internal constructor(
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
                 "type" to "config/entity_registry/get",
-                "entity_id" to entityId
-            )
+                "entity_id" to entityId,
+            ),
         )
 
         return mapResponse(socketResponse)
@@ -187,8 +187,8 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun getServices(): List<DomainResponse>? {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
-                "type" to "get_services"
-            )
+                "type" to "get_services",
+            ),
         )
 
         val response: Map<String, Map<String, ActionData>>? = mapResponse(socketResponse)
@@ -202,8 +202,8 @@ class WebSocketRepositoryImpl internal constructor(
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
                 "type" to "conversation/process",
-                "text" to speech
-            )
+                "text" to speech,
+            ),
         )
 
         return mapResponse(socketResponse)
@@ -211,10 +211,10 @@ class WebSocketRepositoryImpl internal constructor(
 
     override suspend fun getAssistPipeline(pipelineId: String?): AssistPipelineResponse? {
         val data = mapOf(
-            "type" to "assist_pipeline/pipeline/get"
+            "type" to "assist_pipeline/pipeline/get",
         )
         val socketResponse = webSocketCore.sendMessage(
-            if (pipelineId != null) data.plus("pipeline_id" to pipelineId) else data
+            if (pipelineId != null) data.plus("pipeline_id" to pipelineId) else data,
         )
 
         return mapResponse(socketResponse)
@@ -223,8 +223,8 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun getAssistPipelines(): AssistPipelineListResponse? {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
-                "type" to "assist_pipeline/pipeline/list"
-            )
+                "type" to "assist_pipeline/pipeline/list",
+            ),
         )
 
         return mapResponse(socketResponse)
@@ -234,15 +234,15 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun runAssistPipelineForText(
         text: String,
         pipelineId: String?,
-        conversationId: String?
+        conversationId: String?,
     ): Flow<AssistPipelineEvent>? {
         var data = mapOf(
             "start_stage" to "intent",
             "end_stage" to "intent",
             "input" to mapOf(
-                "text" to text
+                "text" to text,
             ),
-            "conversation_id" to conversationId
+            "conversation_id" to conversationId,
         )
         pipelineId?.let {
             data = data.plus("pipeline" to it)
@@ -252,7 +252,7 @@ class WebSocketRepositoryImpl internal constructor(
         }
         return webSocketCore.subscribeTo(
             SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-            data
+            data,
         )
     }
 
@@ -261,15 +261,15 @@ class WebSocketRepositoryImpl internal constructor(
         sampleRate: Int,
         outputTts: Boolean,
         pipelineId: String?,
-        conversationId: String?
+        conversationId: String?,
     ): Flow<AssistPipelineEvent>? {
         var data = mapOf(
             "start_stage" to "stt",
             "end_stage" to (if (outputTts) "tts" else "intent"),
             "input" to mapOf(
-                "sample_rate" to sampleRate
+                "sample_rate" to sampleRate,
             ),
-            "conversation_id" to conversationId
+            "conversation_id" to conversationId,
         )
         pipelineId?.let {
             data = data.plus("pipeline" to it)
@@ -279,7 +279,7 @@ class WebSocketRepositoryImpl internal constructor(
         }
         return webSocketCore.subscribeTo(
             SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-            data
+            data,
         )
     }
 
@@ -315,7 +315,7 @@ class WebSocketRepositoryImpl internal constructor(
 
     private suspend fun subscribeToTrigger(platform: String, data: Map<Any, Any>): Flow<TriggerEvent>? {
         val triggerData = mapOf(
-            "platform" to platform
+            "platform" to platform,
         ).plus(data)
         return webSocketCore.subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER, mapOf("trigger" to triggerData))
     }
@@ -325,9 +325,9 @@ class WebSocketRepositoryImpl internal constructor(
             SUBSCRIBE_TYPE_PUSH_NOTIFICATION_CHANNEL,
             mapOf(
                 "webhook_id" to it.connection.webhookId!!,
-                "support_confirm" to true
+                "support_confirm" to true,
             ),
-            10.seconds
+            10.seconds,
         )
     }
 
@@ -337,8 +337,8 @@ class WebSocketRepositoryImpl internal constructor(
                 mapOf(
                     "type" to "mobile_app/push_notification_confirm",
                     "webhook_id" to it.connection.webhookId!!,
-                    "confirm_id" to confirmId
-                )
+                    "confirm_id" to confirmId,
+                ),
             )
         }
         return response?.success == true
@@ -349,17 +349,17 @@ class WebSocketRepositoryImpl internal constructor(
             WebSocketRequest(
                 message = mapOf(
                     "type" to "matter/commission",
-                    "code" to code
+                    "code" to code,
                 ),
                 // Matter commissioning takes at least 60 seconds + interview
-                timeout = matterTimeout
-            )
+                timeout = matterTimeout,
+            ),
         )
 
         return response?.let {
             MatterCommissionResponse(
                 success = response.success == true,
-                errorCode = ((response.error as? JsonObject)?.get("code") as? JsonPrimitive)?.intOrNull
+                errorCode = ((response.error as? JsonObject)?.get("code") as? JsonPrimitive)?.intOrNull,
             )
         }
     }
@@ -367,20 +367,20 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun commissionMatterDeviceOnNetwork(pin: Long, ip: String): MatterCommissionResponse? {
         val data = mapOf(
             "type" to "matter/commission_on_network",
-            "pin" to pin
+            "pin" to pin,
         )
         val response = webSocketCore.sendMessage(
             WebSocketRequest(
                 message = if (webSocketCore.server()?.version?.isAtLeast(2024, 1) == true) data.plus("ip_addr" to ip) else data,
                 // Matter commissioning takes at least 60 seconds + interview
-                timeout = matterTimeout
-            )
+                timeout = matterTimeout,
+            ),
         )
 
         return response?.let {
             MatterCommissionResponse(
                 success = response.success == true,
-                errorCode = ((response.error as? JsonObject)?.get("code") as? JsonPrimitive)?.intOrNull
+                errorCode = ((response.error as? JsonObject)?.get("code") as? JsonPrimitive)?.intOrNull,
             )
         }
     }
@@ -388,8 +388,8 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun getThreadDatasets(): List<ThreadDatasetResponse>? {
         val response = webSocketCore.sendMessage(
             mapOf(
-                "type" to "thread/list_datasets"
-            )
+                "type" to "thread/list_datasets",
+            ),
         )
 
         val result = (response?.result as? JsonObject)?.get("datasets")
@@ -404,8 +404,8 @@ class WebSocketRepositoryImpl internal constructor(
         val response = webSocketCore.sendMessage(
             mapOf(
                 "type" to "thread/get_dataset_tlv",
-                "dataset_id" to datasetId
-            )
+                "dataset_id" to datasetId,
+            ),
         )
 
         return mapResponse(response)
@@ -416,8 +416,8 @@ class WebSocketRepositoryImpl internal constructor(
             mapOf(
                 "type" to "thread/add_dataset_tlv",
                 "source" to "Google",
-                "tlv" to tlv.toHexString()
-            )
+                "tlv" to tlv.toHexString(),
+            ),
         )
         return response?.success == true
     }
@@ -434,9 +434,9 @@ class WebSocketRepositoryImpl internal constructor(
                         id = user.id,
                         name = user.name,
                         isOwner = user.isOwner,
-                        isAdmin = user.isAdmin
-                    )
-                )
+                        isAdmin = user.isAdmin,
+                    ),
+                ),
             )
         }
     }

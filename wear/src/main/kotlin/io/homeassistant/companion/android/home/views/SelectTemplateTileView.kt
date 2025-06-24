@@ -20,7 +20,7 @@ import io.homeassistant.companion.android.views.ThemeLazyColumn
 @Composable
 fun SelectTemplateTileView(
     templateTiles: Map<Int, TemplateTileConfig>,
-    onSelectTemplateTile: (tileId: Int) -> Unit
+    onSelectTemplateTile: (tileId: Int) -> Unit,
 ) {
     WearAppTheme {
         ThemeLazyColumn {
@@ -31,7 +31,7 @@ fun SelectTemplateTileView(
                 item {
                     Text(
                         text = stringResource(commonR.string.template_tile_no_tiles_yet),
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
                     )
                 }
             } else {
@@ -43,7 +43,7 @@ fun SelectTemplateTileView(
                             Text(stringResource(commonR.string.template_tile_n, index + 1))
                         },
                         onClick = { onSelectTemplateTile(templateTileId) },
-                        colors = getFilledTonalButtonColors()
+                        colors = getFilledTonalButtonColors(),
                     )
                 }
             }
@@ -58,9 +58,9 @@ private fun PreviewSelectTemplateTileView() {
         templateTiles = mapOf(
             -1 to TemplateTileConfig("Old template", 0),
             1111 to TemplateTileConfig("New template #1", 10),
-            2222 to TemplateTileConfig("New template #2", 20)
+            2222 to TemplateTileConfig("New template #2", 20),
         ),
-        onSelectTemplateTile = {}
+        onSelectTemplateTile = {},
     )
 }
 
@@ -69,6 +69,6 @@ private fun PreviewSelectTemplateTileView() {
 private fun PreviewSelectTemplateTileEmptyView() {
     SelectTemplateTileView(
         templateTiles = mapOf(),
-        onSelectTemplateTile = {}
+        onSelectTemplateTile = {},
     )
 }

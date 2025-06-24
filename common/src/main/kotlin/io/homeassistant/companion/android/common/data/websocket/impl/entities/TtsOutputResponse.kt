@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 data class TtsOutputResponse(
     val mediaId: String,
     val mimeType: String,
-    val url: String
+    val url: String,
 )

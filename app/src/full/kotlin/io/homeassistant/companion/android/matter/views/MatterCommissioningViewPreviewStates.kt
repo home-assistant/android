@@ -13,6 +13,6 @@ class MatterCommissioningViewPreviewStates :
         MatterCommissioningViewModel.CommissioningFlowStep.Confirmation,
         MatterCommissioningViewModel.CommissioningFlowStep.Working,
         MatterCommissioningViewModel.CommissioningFlowStep.Success,
-        MatterCommissioningViewModel.CommissioningFlowStep.Failure(errorCode = 99)
+        MatterCommissioningViewModel.CommissioningFlowStep.Failure(errorCode = 99),
     )
 }

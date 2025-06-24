@@ -54,16 +54,16 @@ fun SettingsWearTemplateTile(
     refreshInterval: Int,
     onContentChanged: (String) -> Unit,
     onRefreshIntervalChanged: (Int) -> Unit,
-    onBackClicked: () -> Unit
+    onBackClicked: () -> Unit,
 ) {
     Scaffold(
         topBar = {
             SettingsWearTopAppBar(
                 title = { Text(stringResource(commonR.string.template_tile)) },
                 onBackClicked = onBackClicked,
-                docsLink = WEAR_DOCS_LINK
+                docsLink = WEAR_DOCS_LINK,
             )
-        }
+        },
     ) { padding ->
         Column(
             Modifier
@@ -77,22 +77,22 @@ fun SettingsWearTemplateTile(
                     colorFilter = ColorFilter.tint(colorResource(commonR.color.colorPrimary)),
                     modifier = Modifier
                         .height(24.dp)
-                        .width(24.dp)
+                        .width(24.dp),
                 )
                 Text(
                     stringResource(commonR.string.refresh_interval),
-                    modifier = Modifier.padding(start = 4.dp, end = 4.dp)
+                    modifier = Modifier.padding(start = 4.dp, end = 4.dp),
                 )
                 Box {
                     var dropdownExpanded by remember { mutableStateOf(false) }
                     OutlinedButton(
-                        onClick = { dropdownExpanded = true }
+                        onClick = { dropdownExpanded = true },
                     ) {
                         Text(intervalToString(LocalContext.current, refreshInterval))
                     }
                     DropdownMenu(
                         expanded = dropdownExpanded,
-                        onDismissRequest = { dropdownExpanded = false }
+                        onDismissRequest = { dropdownExpanded = false },
                     ) {
                         val options = listOf(0, 1, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 2 * 60 * 60, 5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60)
                         for (option in options) {
@@ -114,12 +114,12 @@ fun SettingsWearTemplateTile(
                     Text(stringResource(commonR.string.template_tile_content))
                 },
                 modifier = Modifier.padding(top = 8.dp),
-                maxLines = 10
+                maxLines = 10,
             )
             Text(
                 parseHtml(renderedTemplate),
                 fontSize = 12.sp,
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = 8.dp),
             )
         }
     }
@@ -158,6 +158,6 @@ private fun PreviewSettingsWearTemplateTile() {
         refreshInterval = 300,
         onContentChanged = {},
         onRefreshIntervalChanged = {},
-        onBackClicked = {}
+        onBackClicked = {},
     )
 }

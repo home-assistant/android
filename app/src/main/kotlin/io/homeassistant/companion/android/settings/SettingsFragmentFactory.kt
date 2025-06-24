@@ -8,7 +8,7 @@ import javax.inject.Inject
 
 class SettingsFragmentFactory @Inject constructor(
     private val settingsPresenter: SettingsPresenter,
-    private val languagesProvider: LanguagesProvider
+    private val languagesProvider: LanguagesProvider,
 ) : FragmentFactory() {
     @SuppressLint("NewApi")
     override fun instantiate(classLoader: ClassLoader, className: String): Fragment {

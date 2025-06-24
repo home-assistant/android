@@ -7,7 +7,7 @@ import java.time.LocalDateTime
 
 val attributes: Map<String, Any> = mapOf(
     "friendly_name" to "Testing",
-    "icon" to "mdi:cellphone"
+    "icon" to "mdi:cellphone",
 )
 
 val lightAttributes: Map<String, Any> = mapOf(
@@ -20,14 +20,14 @@ val lightAttributes: Map<String, Any> = mapOf(
     "max_mireds" to 526,
     "color_temp" to 300,
     "rgb_color" to listOf(255, 187, 130),
-    "color_mode" to "color_temp"
+    "color_mode" to "color_temp",
 )
 
 val fanAttributes: Map<String, Any> = mapOf(
     "friendly_name" to "Fan",
     "icon" to "mdi:fan",
     "supported_features" to 1,
-    "percentage" to 20
+    "percentage" to 20,
 )
 private val dateTime = LocalDateTime.now()
 
@@ -39,7 +39,7 @@ val previewEntity4 = Entity("fan.first", "on", fanAttributes, dateTime, dateTime
 val previewEntityList = mapOf(
     previewEntity1.entityId to previewEntity1,
     previewEntity2.entityId to previewEntity2,
-    previewEntity3.entityId to previewEntity3
+    previewEntity3.entityId to previewEntity3,
 )
 
 val previewFavoritesList = listOf("light.first", "scene.first")

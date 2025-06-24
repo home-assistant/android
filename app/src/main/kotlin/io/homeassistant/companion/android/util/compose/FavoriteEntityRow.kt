@@ -46,14 +46,14 @@ fun ReorderableCollectionItemScope.FavoriteEntityRow(
         rowModifier = rowModifier.longPressDraggableHandle()
     }
     Surface(
-        elevation = surfaceElevation.value
+        elevation = surfaceElevation.value,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = rowModifier
+            modifier = rowModifier,
         ) {
             Column(
-                modifier = Modifier.weight(1f).padding(start = 16.dp)
+                modifier = Modifier.weight(1f).padding(start = 16.dp),
             ) {
                 Text(text = entityName, style = MaterialTheme.typography.body1)
                 CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
@@ -63,7 +63,7 @@ fun ReorderableCollectionItemScope.FavoriteEntityRow(
             IconButton(onClick = onClick) {
                 Icon(
                     imageVector = if (checked) Icons.Default.Clear else Icons.Default.Add,
-                    contentDescription = stringResource(if (checked) R.string.delete else R.string.add_favorite)
+                    contentDescription = stringResource(if (checked) R.string.delete else R.string.add_favorite),
                 )
             }
             if (draggable) {
@@ -75,7 +75,7 @@ fun ReorderableCollectionItemScope.FavoriteEntityRow(
                         modifier = Modifier
                             .size(width = 40.dp, height = 24.dp)
                             .padding(end = 16.dp)
-                            .alpha(LocalContentAlpha.current)
+                            .alpha(LocalContentAlpha.current),
                     )
                 }
             }

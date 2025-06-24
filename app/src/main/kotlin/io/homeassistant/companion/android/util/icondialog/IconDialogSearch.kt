@@ -23,7 +23,7 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 @Composable
 fun IconDialogSearch(
     value: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
 ) {
     val isEnglish by remember { mutableStateOf(Locale.current.language == "en") }
     TextField(
@@ -45,7 +45,7 @@ fun IconDialogSearch(
             }
         } else {
             null
-        }
+        },
     )
 }
 

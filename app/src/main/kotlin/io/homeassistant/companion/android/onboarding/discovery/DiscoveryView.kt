@@ -51,7 +51,7 @@ fun DiscoveryView(
     discoveryActive: Boolean,
     foundInstances: SnapshotStateList<HomeAssistantInstance>,
     manualSetupClicked: () -> Unit,
-    instanceClicked: (instance: HomeAssistantInstance) -> Unit
+    instanceClicked: (instance: HomeAssistantInstance) -> Unit,
 ) {
     var discoveryTimeout by remember { mutableStateOf(false) }
     LaunchedEffect("discoveryTimeout") {
@@ -62,7 +62,7 @@ fun DiscoveryView(
     OnboardingScreen {
         OnboardingHeaderView(
             icon = CommunityMaterial.Icon2.cmd_home_search,
-            title = stringResource(id = commonR.string.select_instance)
+            title = stringResource(id = commonR.string.select_instance),
         )
         val indicatorModifier = Modifier
             .fillMaxWidth(0.25f)
@@ -81,13 +81,13 @@ fun DiscoveryView(
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
+                .weight(1f),
         ) {
             items(foundInstances.size, { foundInstances[it].url }) { index ->
                 val instance = foundInstances[index]
                 DiscoveredInstanceRow(
                     instance = instance,
-                    onClick = { instanceClicked(instance) }
+                    onClick = { instanceClicked(instance) },
                 )
             }
             item("discovery.error") {
@@ -96,7 +96,7 @@ fun DiscoveryView(
                         text = stringResource(if (!discoveryActive) commonR.string.failed_scan else commonR.string.slow_scan),
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.body2,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
@@ -105,12 +105,12 @@ fun DiscoveryView(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(top = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (discoveryHasError && discoveryActive) {
                 Text(
                     text = stringResource(commonR.string.manual_setup_hint),
-                    style = MaterialTheme.typography.body2
+                    style = MaterialTheme.typography.body2,
                 )
             }
             if (discoveryHasError) {
@@ -129,7 +129,7 @@ fun DiscoveryView(
 @Composable
 private fun DiscoveredInstanceRow(
     instance: HomeAssistantInstance,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -137,21 +137,21 @@ private fun DiscoveredInstanceRow(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            .clickable(onClick = onClick)
+            .clickable(onClick = onClick),
     ) {
         Column {
             Text(instance.name)
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                 Text(
                     text = instance.url.toString(),
-                    fontSize = 14.sp
+                    fontSize = 14.sp,
                 )
             }
         }
         Icon(
             imageVector = Icons.AutoMirrored.Default.ArrowForwardIos,
             contentDescription = null,
-            modifier = Modifier.size(24.dp).padding(4.dp)
+            modifier = Modifier.size(24.dp).padding(4.dp),
         )
     }
     Divider(Modifier.padding(8.dp))
@@ -166,7 +166,7 @@ fun DiscoveryViewActivePreview() {
             mutableStateListOf(homeAssistantInstance1, homeAssistantInstance2)
         },
         manualSetupClicked = { },
-        instanceClicked = {}
+        instanceClicked = {},
     )
 }
 
@@ -177,6 +177,6 @@ fun DiscoveryViewErrorPreview() {
         discoveryActive = false,
         foundInstances = remember { mutableStateListOf() },
         manualSetupClicked = { },
-        instanceClicked = {}
+        instanceClicked = {},
     )
 }

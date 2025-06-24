@@ -25,5 +25,5 @@ data class ButtonWidgetEntity(
     @ColumnInfo(name = "text_color")
     override val textColor: String? = null,
     @ColumnInfo(name = "require_authentication", defaultValue = "0")
-    val requireAuthentication: Boolean
+    val requireAuthentication: Boolean,
 ) : WidgetEntity, ThemeableWidgetEntity

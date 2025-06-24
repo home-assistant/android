@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ThreadDatasetTlvResponse(
-    val tlv: String
+    val tlv: String,
 ) {
     val tlvAsByteArray: ByteArray
         get() = tlv.chunked(2).map { it.toInt(16).toByte() }.toByteArray()

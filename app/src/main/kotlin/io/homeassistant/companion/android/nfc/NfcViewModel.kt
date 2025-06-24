@@ -23,7 +23,7 @@ import timber.log.Timber
 @HiltViewModel
 class NfcViewModel @Inject constructor(
     private val serverManager: ServerManager,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
 
     var isNfcEnabled by mutableStateOf(false)
@@ -78,8 +78,8 @@ class NfcViewModel @Inject constructor(
         navigator.navigateTo(
             Navigator.NavigatorItem(
                 id = NfcSetupActivity.NAV_EDIT,
-                popBackstackTo = NfcSetupActivity.NAV_WELCOME
-            )
+                popBackstackTo = NfcSetupActivity.NAV_WELCOME,
+            ),
         )
     }
 
@@ -92,8 +92,8 @@ class NfcViewModel @Inject constructor(
         navigator.navigateTo(
             Navigator.NavigatorItem(
                 id = NfcSetupActivity.NAV_EDIT,
-                popBackstackTo = NfcSetupActivity.NAV_WELCOME
-            )
+                popBackstackTo = NfcSetupActivity.NAV_WELCOME,
+            ),
         )
     }
 

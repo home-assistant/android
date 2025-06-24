@@ -21,7 +21,7 @@ import timber.log.Timber
 @HiltViewModel
 class BarcodeScannerViewModel @Inject constructor(
     private val externalBusRepository: ExternalBusRepository,
-    val app: Application
+    val app: Application,
 ) : AndroidViewModel(app) {
     var hasPermission by mutableStateOf(false)
         private set
@@ -38,14 +38,14 @@ class BarcodeScannerViewModel @Inject constructor(
 
         viewModelScope.launch {
             externalBusRepository.receive(
-                listOf(BarcodeActionType.NOTIFY.externalBusType, BarcodeActionType.CLOSE.externalBusType)
+                listOf(BarcodeActionType.NOTIFY.externalBusType, BarcodeActionType.CLOSE.externalBusType),
             ).collect { message ->
                 when (val type = BarcodeActionType.fromExternalBus(message.getString("type"))) {
                     BarcodeActionType.NOTIFY -> frontendActionsFlow.emit(
-                        BarcodeScannerAction(type, message.getJSONObject("payload").getString("message"))
+                        BarcodeScannerAction(type, message.getJSONObject("payload").getString("message")),
                     )
                     BarcodeActionType.CLOSE -> frontendActionsFlow.emit(
-                        BarcodeScannerAction(type)
+                        BarcodeScannerAction(type),
                     )
                     else -> Timber.w("Received unexpected external bus message of type ${type?.name}")
                 }
@@ -66,9 +66,9 @@ class BarcodeScannerViewModel @Inject constructor(
                     command = "bar_code/scan_result",
                     payload = mapOf(
                         "rawValue" to text,
-                        "format" to format
-                    )
-                )
+                        "format" to format,
+                    ),
+                ),
             )
         }
     }
@@ -81,9 +81,9 @@ class BarcodeScannerViewModel @Inject constructor(
                     type = "command",
                     command = "bar_code/aborted",
                     payload = mapOf(
-                        "reason" to (if (forAction) "alternative_options" else "canceled")
-                    )
-                )
+                        "reason" to (if (forAction) "alternative_options" else "canceled"),
+                    ),
+                ),
             )
         }
     }

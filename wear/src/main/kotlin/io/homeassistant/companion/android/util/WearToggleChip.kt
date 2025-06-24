@@ -75,19 +75,19 @@ object WearToggleChip {
 
                 var checkedBackgroundColors = listOf(
                     checkedStartBackgroundColor,
-                    checkedEndBackgroundColor
+                    checkedEndBackgroundColor,
                 )
                 var disabledCheckedBackgroundColors = listOf(
                     checkedStartBackgroundColor.copy(alpha = 0.38f),
-                    checkedEndBackgroundColor.copy(alpha = 0.38f)
+                    checkedEndBackgroundColor.copy(alpha = 0.38f),
                 )
                 val uncheckedBackgroundColors = listOf(
                     uncheckedBackgroundColor,
-                    uncheckedBackgroundColor
+                    uncheckedBackgroundColor,
                 )
                 val disabledUncheckedBackgroundColors = listOf(
                     uncheckedBackgroundColor.copy(alpha = 0.38f),
-                    uncheckedBackgroundColor.copy(alpha = 0.38f)
+                    uncheckedBackgroundColor.copy(alpha = 0.38f),
                 )
                 if (gradientDirection != LayoutDirection.Ltr) {
                     checkedBackgroundColors = checkedBackgroundColors.reversed()
@@ -139,16 +139,16 @@ object WearToggleChip {
                     // Painters that use the color stops
                     // For unchecked with position, we can reuse the checked painter
                     checkedBackgroundPaint = WearBrushPainter(
-                        Brush.horizontalGradient(*checkedColorStops)
+                        Brush.horizontalGradient(*checkedColorStops),
                     )
                     disabledCheckedBackgroundPaint = WearBrushPainter(
-                        Brush.horizontalGradient(*disabledCheckedColorStops)
+                        Brush.horizontalGradient(*disabledCheckedColorStops),
                     )
                     uncheckedBackgroundPaint = WearBrushPainter(
-                        Brush.horizontalGradient(*checkedColorStops)
+                        Brush.horizontalGradient(*checkedColorStops),
                     )
                     disabledUncheckedBackgroundPaint = WearBrushPainter(
-                        Brush.horizontalGradient(*disabledCheckedColorStops)
+                        Brush.horizontalGradient(*disabledCheckedColorStops),
                     )
                 } else {
                     // Color should be towards the end to match other enabled ToggleChips
@@ -167,7 +167,7 @@ object WearToggleChip {
                     checkedContentColor = wearColorScheme.onPrimaryContainer,
                     checkedSecondaryContentColor = wearColorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                     uncheckedContentColor = wearColorScheme.onSurface,
-                    uncheckedSecondaryContentColor = wearColorScheme.onSurfaceVariant
+                    uncheckedSecondaryContentColor = wearColorScheme.onSurfaceVariant,
                 ).apply {
                     checkedBackgroundPainter = checkedBackgroundPaint
                     disabledCheckedBackgroundPainter = disabledCheckedBackgroundPaint
@@ -183,7 +183,7 @@ object WearToggleChip {
                 uncheckedStartBackgroundColor = wearColorScheme.surfaceContainerLow,
                 uncheckedEndBackgroundColor = wearColorScheme.surfaceContainerLow,
                 uncheckedContentColor = wearColorScheme.onSurface,
-                uncheckedSecondaryContentColor = wearColorScheme.onSurfaceVariant
+                uncheckedSecondaryContentColor = wearColorScheme.onSurfaceVariant,
             )
         }
     }
@@ -209,27 +209,27 @@ object WearToggleChip {
         uncheckedContentColor: Color = contentColorFor(checkedEndBackgroundColor),
         uncheckedSecondaryContentColor: Color = uncheckedContentColor,
         uncheckedToggleControlColor: Color = uncheckedContentColor,
-        gradientDirection: LayoutDirection = LocalLayoutDirection.current
+        gradientDirection: LayoutDirection = LocalLayoutDirection.current,
     ): WearToggleChipColors {
         val checkedBackgroundColors: List<Color>
         val disabledCheckedBackgroundColors: List<Color>
         if (gradientDirection == LayoutDirection.Ltr) {
             checkedBackgroundColors = listOf(
                 checkedStartBackgroundColor,
-                checkedEndBackgroundColor
+                checkedEndBackgroundColor,
             )
             disabledCheckedBackgroundColors = listOf(
                 checkedStartBackgroundColor.copy(alpha = 0.38f),
-                checkedEndBackgroundColor.copy(alpha = 0.38f)
+                checkedEndBackgroundColor.copy(alpha = 0.38f),
             )
         } else {
             checkedBackgroundColors = listOf(
                 checkedEndBackgroundColor,
-                checkedStartBackgroundColor
+                checkedStartBackgroundColor,
             )
             disabledCheckedBackgroundColors = listOf(
                 checkedEndBackgroundColor.copy(alpha = 0.38f),
-                checkedStartBackgroundColor.copy(alpha = 0.38f)
+                checkedStartBackgroundColor.copy(alpha = 0.38f),
             )
         }
         val uncheckedBackgroundColors: List<Color>
@@ -237,20 +237,20 @@ object WearToggleChip {
         if (gradientDirection == LayoutDirection.Ltr) {
             uncheckedBackgroundColors = listOf(
                 uncheckedStartBackgroundColor,
-                uncheckedEndBackgroundColor
+                uncheckedEndBackgroundColor,
             )
             disabledUncheckedBackgroundColors = listOf(
                 uncheckedStartBackgroundColor.copy(alpha = 0.38f),
-                uncheckedEndBackgroundColor.copy(alpha = 0.38f)
+                uncheckedEndBackgroundColor.copy(alpha = 0.38f),
             )
         } else {
             uncheckedBackgroundColors = listOf(
                 uncheckedEndBackgroundColor,
-                uncheckedStartBackgroundColor
+                uncheckedStartBackgroundColor,
             )
             disabledUncheckedBackgroundColors = listOf(
                 uncheckedEndBackgroundColor.copy(alpha = 0.38f),
-                uncheckedStartBackgroundColor.copy(alpha = 0.38f)
+                uncheckedStartBackgroundColor.copy(alpha = 0.38f),
             )
         }
 
@@ -260,33 +260,33 @@ object WearToggleChip {
             checkedSecondaryContentColor = checkedSecondaryContentColor,
             checkedIconColor = checkedToggleControlColor,
             uncheckedBackgroundPainter = WearBrushPainter(
-                Brush.linearGradient(uncheckedBackgroundColors)
+                Brush.linearGradient(uncheckedBackgroundColors),
             ),
             uncheckedContentColor = uncheckedContentColor,
             uncheckedSecondaryContentColor = uncheckedSecondaryContentColor,
             uncheckedIconColor = uncheckedToggleControlColor,
             disabledCheckedBackgroundPainter = WearBrushPainter(
-                Brush.linearGradient(disabledCheckedBackgroundColors)
+                Brush.linearGradient(disabledCheckedBackgroundColors),
             ),
             disabledCheckedContentColor = checkedContentColor.copy(alpha = 0.38f),
             disabledCheckedSecondaryContentColor = checkedSecondaryContentColor.copy(
-                alpha = 0.38f
+                alpha = 0.38f,
             ),
             disabledCheckedIconColor = checkedToggleControlColor.copy(
-                alpha = 0.38f
+                alpha = 0.38f,
             ),
             disabledUncheckedBackgroundPainter = WearBrushPainter(
-                Brush.linearGradient(disabledUncheckedBackgroundColors)
+                Brush.linearGradient(disabledUncheckedBackgroundColors),
             ),
             disabledUncheckedContentColor = uncheckedContentColor.copy(
-                alpha = 0.38f
+                alpha = 0.38f,
             ),
             disabledUncheckedSecondaryContentColor = uncheckedSecondaryContentColor.copy(
-                alpha = 0.38f
+                alpha = 0.38f,
             ),
             disabledUncheckedIconColor = uncheckedToggleControlColor.copy(
-                alpha = 0.38f
-            )
+                alpha = 0.38f,
+            ),
         )
     }
 }
@@ -311,7 +311,7 @@ class WearToggleChipColors(
     var disabledUncheckedBackgroundPainter: Painter,
     var disabledUncheckedContentColor: Color,
     var disabledUncheckedSecondaryContentColor: Color,
-    var disabledUncheckedIconColor: Color
+    var disabledUncheckedIconColor: Color,
 ) : ToggleChipColors {
 
     @Composable
@@ -325,7 +325,7 @@ class WearToggleChipColors(
                 } else {
                     disabledUncheckedBackgroundPainter
                 }
-            }
+            },
         )
     }
 
@@ -336,7 +336,7 @@ class WearToggleChipColors(
                 if (checked) checkedContentColor else uncheckedContentColor
             } else {
                 if (checked) disabledCheckedContentColor else disabledUncheckedContentColor
-            }
+            },
         )
     }
 
@@ -351,7 +351,7 @@ class WearToggleChipColors(
                 } else {
                     disabledUncheckedSecondaryContentColor
                 }
-            }
+            },
         )
     }
 
@@ -362,7 +362,7 @@ class WearToggleChipColors(
                 if (checked) checkedIconColor else uncheckedIconColor
             } else {
                 if (checked) disabledCheckedIconColor else disabledUncheckedIconColor
-            }
+            },
         )
     }
 

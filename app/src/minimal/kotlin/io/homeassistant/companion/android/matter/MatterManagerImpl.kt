@@ -21,7 +21,7 @@ class MatterManagerImpl @Inject constructor() : MatterManager {
     override fun startNewCommissioningFlow(
         context: Context,
         onSuccess: (IntentSender) -> Unit,
-        onFailure: (Exception) -> Unit
+        onFailure: (Exception) -> Unit,
     ) {
         onFailure(IllegalStateException("Matter commissioning is not supported with the minimal flavor"))
     }

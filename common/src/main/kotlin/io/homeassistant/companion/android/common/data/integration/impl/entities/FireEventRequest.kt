@@ -8,5 +8,5 @@ import kotlinx.serialization.Serializable
 data class FireEventRequest(
     val eventType: String,
     @Serializable(with = MapAnySerializer::class)
-    val eventData: Map<String, @Polymorphic Any?>
+    val eventData: Map<String, @Polymorphic Any?>,
 )

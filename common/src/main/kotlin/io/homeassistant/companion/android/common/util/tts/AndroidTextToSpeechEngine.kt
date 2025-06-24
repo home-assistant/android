@@ -30,7 +30,7 @@ class AndroidTextToSpeechEngine(private val applicationContext: Context) : TextT
                         textToSpeech?.shutdown()
                         textToSpeech = null
                         continuation.resume(
-                            Result.failure(RuntimeException("Failed to initialize TTS client. Code: $code."))
+                            Result.failure(RuntimeException("Failed to initialize TTS client. Code: $code.")),
                         )
                     }
                 }

@@ -70,10 +70,10 @@ class HaControlsPanelActivity : AppCompatActivity() {
                 WebViewActivity.newInstance(
                     context = this@HaControlsPanelActivity,
                     path = path,
-                    serverId = serverId
+                    serverId = serverId,
                 ).apply {
                     putExtra(WebViewActivity.EXTRA_SHOW_WHEN_LOCKED, true)
-                }
+                },
             )
             overridePendingTransition(0, 0) // Disable activity start/stop animation
 
@@ -94,16 +94,16 @@ class HaControlsPanelActivity : AppCompatActivity() {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Center,
             ) {
                 Icon(
                     imageVector = Icons.Default.Lock,
-                    contentDescription = null
+                    contentDescription = null,
                 )
                 Text(
                     text = stringResource(commonR.string.tile_auth_required),
                     style = MaterialTheme.typography.h6,
-                    modifier = Modifier.padding(top = 16.dp)
+                    modifier = Modifier.padding(top = 16.dp),
                 )
             }
         }

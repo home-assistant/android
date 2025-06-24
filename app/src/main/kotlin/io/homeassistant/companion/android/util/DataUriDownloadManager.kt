@@ -32,7 +32,7 @@ object DataUriDownloadManager {
     suspend fun saveDataUri(
         context: Context,
         url: String,
-        mimetype: String
+        mimetype: String,
     ) {
         val mime = mimetype.ifBlank {
             url.removePrefix("data:").split(";")[0].ifBlank {
@@ -58,8 +58,8 @@ object DataUriDownloadManager {
                     context,
                     0,
                     sendIntent,
-                    PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
+                    PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                ),
             )
         } else {
             notification.setContentText(context.getString(commonR.string.downloads_failed))
@@ -72,7 +72,7 @@ object DataUriDownloadManager {
     private suspend fun writeDataUriToFile(
         context: Context,
         url: String,
-        mimetype: String
+        mimetype: String,
     ): Uri? = withContext(Dispatchers.IO) {
         try {
             val decodedBytes = if (url.split(",")[0].endsWith("base64")) {
@@ -127,12 +127,12 @@ object DataUriDownloadManager {
     private suspend fun scanAndGetDownload(
         context: Context,
         path: String,
-        mimetype: String
+        mimetype: String,
     ) = suspendCoroutine<Uri?> { cont ->
         MediaScannerConnection.scanFile(
             context,
             arrayOf(path),
-            arrayOf(mimetype)
+            arrayOf(mimetype),
         ) { _, uri ->
             Timber.d("Received uri from media scanner for file: $uri")
             cont.resume(uri)
@@ -145,7 +145,7 @@ object DataUriDownloadManager {
             val channel = NotificationChannel(
                 CHANNEL_DOWNLOADS,
                 context.getString(commonR.string.downloads),
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_DEFAULT,
             )
             notificationManager.createNotificationChannel(channel)
         }

@@ -41,7 +41,7 @@ class BarcodeScannerActivity : BaseActivity() {
             messageId: Int,
             title: String,
             subtitle: String,
-            action: String?
+            action: String?,
         ): Intent {
             return Intent(context, BarcodeScannerActivity::class.java).apply {
                 putExtra(EXTRA_MESSAGE_ID, messageId)
@@ -90,7 +90,8 @@ class BarcodeScannerActivity : BaseActivity() {
                             BarcodeFormat.MAXICODE,
                             BarcodeFormat.RSS_14,
                             BarcodeFormat.RSS_EXPANDED,
-                            BarcodeFormat.UPC_EAN_EXTENSION -> "unknown"
+                            BarcodeFormat.UPC_EAN_EXTENSION,
+                            -> "unknown"
                             else -> format.toString().lowercase(Locale.getDefault())
                         }
                         viewModel.sendScannerResult(messageId, text, frontendFormat)
@@ -98,7 +99,7 @@ class BarcodeScannerActivity : BaseActivity() {
                     onCancel = { forAction ->
                         viewModel.sendScannerClosing(messageId, forAction)
                         finish()
-                    }
+                    },
                 )
             }
         }

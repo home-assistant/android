@@ -38,7 +38,7 @@ import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 fun NfcWriteView(
     isNfcEnabled: Boolean,
     identifier: String?,
-    onSetIdentifier: ((String) -> Unit)? = null
+    onSetIdentifier: ((String) -> Unit)? = null,
 ) {
     var identifierDialog by remember { mutableStateOf(false) }
 
@@ -48,7 +48,7 @@ fun NfcWriteView(
             onSubmit = {
                 onSetIdentifier(it)
                 identifierDialog = false
-            }
+            },
         )
     }
 
@@ -58,11 +58,11 @@ fun NfcWriteView(
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(all = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Image(
             asset = CommunityMaterial.Icon3.cmd_nfc_tap,
-            colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface)
+            colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
         )
         Text(
             text =
@@ -74,7 +74,7 @@ fun NfcWriteView(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth(0.75f)
-                .padding(top = 16.dp)
+                .padding(top = 16.dp),
         )
         if (!isNfcEnabled) {
             val context = LocalContext.current
@@ -94,7 +94,7 @@ fun NfcWriteView(
 @Composable
 fun NfcWriteIdentifierDialog(
     onCancel: () -> Unit,
-    onSubmit: (String) -> Unit
+    onSubmit: (String) -> Unit,
 ) {
     val inputValue = remember { mutableStateOf("") }
 
@@ -105,13 +105,13 @@ fun NfcWriteIdentifierDialog(
             TextField(
                 value = inputValue.value,
                 keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Done
+                    imeAction = ImeAction.Done,
                 ),
-                onValueChange = { input -> inputValue.value = input }
+                onValueChange = { input -> inputValue.value = input },
             )
         },
         onCancel = onCancel,
-        onSave = { onSubmit(inputValue.value) }
+        onSave = { onSubmit(inputValue.value) },
     )
 }
 

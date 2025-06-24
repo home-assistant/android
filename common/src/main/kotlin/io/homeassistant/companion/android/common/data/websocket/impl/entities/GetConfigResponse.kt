@@ -22,5 +22,5 @@ data class GetConfigResponse(
     @Serializable(with = MapAnySerializer::class)
     val entities: Map<String, Map<String, @Polymorphic Any>>? = null,
     // only on core >= 2024.7.2 when using webhook
-    val hassDeviceId: String? = null
+    val hassDeviceId: String? = null,
 )

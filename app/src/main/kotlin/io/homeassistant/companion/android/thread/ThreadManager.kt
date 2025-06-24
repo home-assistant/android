@@ -44,7 +44,7 @@ interface ThreadManager {
         context: Context,
         serverId: Int,
         exportOnly: Boolean,
-        scope: CoroutineScope
+        scope: CoroutineScope,
     ): SyncResult
 
     /**
@@ -63,7 +63,7 @@ interface ThreadManager {
         context: Context,
         datasetId: String,
         preferredBorderAgentId: String?,
-        serverId: Int
+        serverId: Int,
     )
 
     /**

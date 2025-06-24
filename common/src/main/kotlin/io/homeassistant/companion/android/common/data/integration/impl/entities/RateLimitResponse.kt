@@ -14,5 +14,5 @@ data class RateLimitResponse(
     val maximum: Int,
     val remaining: Int,
     @JsonNames("resetsAt")
-    val resetsAt: String
+    val resetsAt: String,
 )

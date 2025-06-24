@@ -11,7 +11,7 @@ data class ImprovSheetState(
     val errorState: ErrorState?,
     val activeSsid: String? = null,
     val initialDeviceName: String? = null,
-    val initialDeviceAddress: String? = null
+    val initialDeviceAddress: String? = null,
 ) {
     /** @return `true` when [errorState] is not `null` or [ErrorState.NO_ERROR] */
     val hasError

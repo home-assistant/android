@@ -23,16 +23,16 @@ object DefaultSwitchControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity,
-        info: HaControlInfo
+        info: HaControlInfo,
     ): Control.StatefulBuilder {
         control.setControlTemplate(
             ToggleTemplate(
                 entity.entityId,
                 ControlButton(
                     entity.isActive(),
-                    "Description"
-                )
-            )
+                    "Description",
+                ),
+            ),
         )
         return control
     }
@@ -59,12 +59,12 @@ object DefaultSwitchControl : HaControl {
 
     override suspend fun performAction(
         integrationRepository: IntegrationRepository,
-        action: ControlAction
+        action: ControlAction,
     ): Boolean {
         integrationRepository.callAction(
             action.templateId.split(".")[0],
             if ((action as? BooleanAction)?.newState == true) "turn_on" else "turn_off",
-            hashMapOf("entity_id" to action.templateId)
+            hashMapOf("entity_id" to action.templateId),
         )
         return true
     }

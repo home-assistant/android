@@ -32,7 +32,7 @@ fun LoadSettingsHomeView(
     settingsWearViewModel: SettingsWearViewModel,
     deviceName: String,
     loginWearOs: () -> Unit,
-    onStartBackClicked: () -> Unit
+    onStartBackClicked: () -> Unit,
 ) {
     HomeAssistantAppTheme {
         val navController = rememberNavController()
@@ -41,7 +41,7 @@ fun LoadSettingsHomeView(
                 LoadWearFavoritesSettings(
                     settingsWearViewModel = settingsWearViewModel,
                     onBackClicked = { navController.navigateUp() },
-                    events = settingsWearViewModel.resultSnackbar
+                    events = settingsWearViewModel.resultSnackbar,
                 )
             }
             composable(SettingsWearMainView.LANDING) {
@@ -56,7 +56,7 @@ fun LoadSettingsHomeView(
                     navigateTemplateTile = { navController.navigate(SettingsWearMainView.TEMPLATES) },
                     loginWearOs = loginWearOs,
                     onBackClicked = onStartBackClicked,
-                    events = settingsWearViewModel.resultSnackbar
+                    events = settingsWearViewModel.resultSnackbar,
                 )
             }
             composable(SettingsWearMainView.TEMPLATES) {
@@ -67,12 +67,12 @@ fun LoadSettingsHomeView(
                     },
                     onBackClicked = {
                         navController.navigateUp()
-                    }
+                    },
                 )
             }
             composable(
                 route = SettingsWearMainView.TEMPLATE_TILE.format("{tileId}"),
-                arguments = listOf(navArgument("tileId") { type = NavType.IntType })
+                arguments = listOf(navArgument("tileId") { type = NavType.IntType }),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt("tileId")
                 val templateTile = settingsWearViewModel.templateTiles[tileId]
@@ -93,7 +93,7 @@ fun LoadSettingsHomeView(
                         },
                         onBackClicked = {
                             navController.navigateUp()
-                        }
+                        },
                     )
                 }
             }
@@ -105,7 +105,7 @@ fun LoadSettingsHomeView(
 fun SettingsWearTopAppBar(
     title: @Composable () -> Unit,
     onBackClicked: () -> Unit,
-    docsLink: String? = null
+    docsLink: String? = null,
 ) {
     val context = LocalContext.current
     TopAppBar(
@@ -115,7 +115,7 @@ fun SettingsWearTopAppBar(
             IconButton(onClick = onBackClicked) {
                 Image(
                     asset = CommunityMaterial.Icon.cmd_arrow_left,
-                    colorFilter = ColorFilter.tint(colorResource(commonR.color.colorOnBackground))
+                    colorFilter = ColorFilter.tint(colorResource(commonR.color.colorOnBackground)),
                 )
             }
         },
@@ -128,12 +128,12 @@ fun SettingsWearTopAppBar(
                     Image(
                         asset = CommunityMaterial.Icon2.cmd_help_circle_outline,
                         contentDescription = stringResource(commonR.string.help),
-                        colorFilter = ColorFilter.tint(colorResource(commonR.color.colorOnBackground))
+                        colorFilter = ColorFilter.tint(colorResource(commonR.color.colorOnBackground)),
                     )
                 }
             }
         },
         backgroundColor = colorResource(id = commonR.color.colorBackground),
-        contentColor = colorResource(id = commonR.color.colorOnBackground)
+        contentColor = colorResource(id = commonR.color.colorOnBackground),
     )
 }

@@ -12,7 +12,7 @@ import org.xmlpull.v1.XmlPullParser
 import timber.log.Timber
 
 class LanguagesManager @Inject constructor(
-    private var prefs: PrefsRepository
+    private var prefs: PrefsRepository,
 ) {
     companion object {
         const val DEF_LOCALE = "default"

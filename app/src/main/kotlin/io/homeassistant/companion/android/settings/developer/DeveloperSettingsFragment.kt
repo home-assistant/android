@@ -132,7 +132,7 @@ class DeveloperSettingsFragment : DeveloperSettingsView, PreferenceFragmentCompa
             Toast.makeText(
                 requireContext(),
                 if (success) commonR.string.clear_webview_cache_success else commonR.string.clear_webview_cache_failed,
-                Toast.LENGTH_SHORT
+                Toast.LENGTH_SHORT,
             ).show()
         }
     }

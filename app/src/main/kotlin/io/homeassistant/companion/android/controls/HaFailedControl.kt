@@ -19,14 +19,14 @@ object HaFailedControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity,
-        info: HaControlInfo
+        info: HaControlInfo,
     ): Control.StatefulBuilder {
         control.setStatus(if (entity.state == "notfound") Control.STATUS_NOT_FOUND else Control.STATUS_ERROR)
         control.setStatusText("")
         control.setControlTemplate(
             StatelessTemplate(
-                entity.entityId
-            )
+                entity.entityId,
+            ),
         )
         return control
     }
@@ -39,7 +39,7 @@ object HaFailedControl : HaControl {
 
     override suspend fun performAction(
         integrationRepository: IntegrationRepository,
-        action: ControlAction
+        action: ControlAction,
     ): Boolean {
         return false
     }

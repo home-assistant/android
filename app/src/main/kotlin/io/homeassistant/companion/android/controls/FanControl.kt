@@ -25,7 +25,7 @@ object FanControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity,
-        info: HaControlInfo
+        info: HaControlInfo,
     ): Control.StatefulBuilder {
         if (entity.supportsFanSetSpeed()) {
             val position = entity.getFanSpeed()
@@ -40,9 +40,9 @@ object FanControl : HaControl {
                         position?.max ?: 100f,
                         position?.value ?: 0f,
                         1f,
-                        "%.0f%%"
-                    )
-                )
+                        "%.0f%%",
+                    ),
+                ),
             )
         } else {
             control.setControlTemplate(
@@ -50,9 +50,9 @@ object FanControl : HaControl {
                     entity.entityId,
                     ControlButton(
                         entity.isActive(),
-                        ""
-                    )
-                )
+                        "",
+                    ),
+                ),
             )
         }
         return control
@@ -66,14 +66,14 @@ object FanControl : HaControl {
 
     override suspend fun performAction(
         integrationRepository: IntegrationRepository,
-        action: ControlAction
+        action: ControlAction,
     ): Boolean {
         when (action) {
             is BooleanAction -> {
                 integrationRepository.callAction(
                     action.templateId.split(".")[0],
                     if (action.newState) "turn_on" else "turn_off",
-                    hashMapOf("entity_id" to action.templateId)
+                    hashMapOf("entity_id" to action.templateId),
                 )
             }
             is FloatAction -> {
@@ -83,8 +83,8 @@ object FanControl : HaControl {
                     "set_percentage",
                     hashMapOf(
                         "entity_id" to action.templateId,
-                        "percentage" to convertPercentage.toInt()
-                    )
+                        "percentage" to convertPercentage.toInt(),
+                    ),
                 )
             }
         }

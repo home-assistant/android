@@ -35,13 +35,13 @@ class ConversationActivity : ComponentActivity() {
             conversationViewModel.updateSpeechResult(
                 result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS).let {
                     it?.get(0) ?: ""
-                }
+                },
             )
         }
     }
 
     private val requestPermission = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
+        ActivityResultContracts.RequestPermission(),
     ) { conversationViewModel.onPermissionResult(it, this::launchVoiceInputIntent) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,7 +61,7 @@ class ConversationActivity : ComponentActivity() {
         setContent {
             LoadAssistView(
                 conversationViewModel = conversationViewModel,
-                onVoiceInputIntent = this::launchVoiceInputIntent
+                onVoiceInputIntent = this::launchVoiceInputIntent,
             )
         }
     }
@@ -97,7 +97,7 @@ class ConversationActivity : ComponentActivity() {
         val searchIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
             )
         }
         searchResults.launch(searchIntent)

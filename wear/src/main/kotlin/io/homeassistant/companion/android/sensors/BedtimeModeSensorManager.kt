@@ -16,7 +16,7 @@ class BedtimeModeSensorManager : SensorManager {
             commonR.string.sensor_description_bedtime_mode,
             "mdi:sleep",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.WORKER
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER,
         )
     }
 
@@ -59,7 +59,7 @@ class BedtimeModeSensorManager : SensorManager {
             bedtimeMode,
             state,
             if (!state) "mdi:sleep-off" else bedtimeMode.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 }

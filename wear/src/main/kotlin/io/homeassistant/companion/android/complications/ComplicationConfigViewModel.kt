@@ -32,13 +32,13 @@ class ComplicationConfigViewModel @Inject constructor(
     application: Application,
     favoritesDao: FavoritesDao,
     private val serverManager: ServerManager,
-    private val entityStateComplicationsDao: EntityStateComplicationsDao
+    private val entityStateComplicationsDao: EntityStateComplicationsDao,
 ) : AndroidViewModel(application) {
 
     enum class LoadingState {
         LOADING,
         READY,
-        ERROR
+        ERROR,
     }
 
     val app = getApplication<HomeAssistantApplication>()
@@ -142,7 +142,7 @@ class ComplicationConfigViewModel @Inject constructor(
             SimplifiedEntity(
                 entityId = fullEntity.entityId,
                 friendlyName = fullEntity.friendlyName,
-                icon = (fullEntity.attributes as? Map<*, *>)?.get("icon") as? String ?: ""
+                icon = (fullEntity.attributes as? Map<*, *>)?.get("icon") as? String ?: "",
             )
         }
     }
@@ -169,7 +169,7 @@ class ComplicationConfigViewModel @Inject constructor(
      * Convert a Flow into a State object that updates until the view model is cleared.
      */
     private fun <T> Flow<T>.collectAsState(
-        initial: T
+        initial: T,
     ): State<T> {
         val state = mutableStateOf(initial)
         viewModelScope.launch {

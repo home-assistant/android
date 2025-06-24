@@ -49,7 +49,7 @@ import kotlinx.coroutines.flow.onEach
 @Composable
 fun ManageTilesView(
     viewModel: ManageTilesViewModel,
-    onShowIconDialog: (tag: String?) -> Unit
+    onShowIconDialog: (tag: String?) -> Unit,
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
@@ -76,18 +76,18 @@ fun ManageTilesView(
         Box(
             modifier = Modifier
                 .padding(contentPadding)
-                .verticalScroll(scrollState)
+                .verticalScroll(scrollState),
         ) {
             Column(
                 modifier = Modifier
                     .padding(safeBottomPaddingValues(applyHorizontal = false))
-                    .padding(all = 16.dp)
+                    .padding(all = 16.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = stringResource(R.string.tile_select),
                         fontSize = 15.sp,
-                        modifier = Modifier.padding(end = 10.dp)
+                        modifier = Modifier.padding(end = 10.dp),
                     )
                     Box {
                         OutlinedButton(onClick = { expandedTile = true }) {
@@ -116,7 +116,7 @@ fun ManageTilesView(
                     },
                     modifier = Modifier
                         .padding(top = 16.dp)
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
                 )
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -128,7 +128,7 @@ fun ManageTilesView(
                         },
                         modifier = Modifier
                             .padding(top = 16.dp)
-                            .fillMaxWidth()
+                            .fillMaxWidth(),
                     )
                 }
 
@@ -138,7 +138,7 @@ fun ManageTilesView(
                         current = viewModel.selectedServerId,
                         onSelected = viewModel::selectServerId,
                         title = R.string.tile_server,
-                        modifier = Modifier.padding(top = 16.dp)
+                        modifier = Modifier.padding(top = 16.dp),
                     )
                 }
 
@@ -153,31 +153,31 @@ fun ManageTilesView(
                     modifier = Modifier
                         .padding(vertical = 16.dp)
                         .fillMaxWidth(),
-                    label = { Text(stringResource(R.string.tile_entity)) }
+                    label = { Text(stringResource(R.string.tile_entity)) },
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = stringResource(id = R.string.tile_icon),
                         fontSize = 15.sp,
-                        modifier = Modifier.padding(end = 8.dp)
+                        modifier = Modifier.padding(end = 8.dp),
                     )
                     OutlinedButton(
-                        onClick = { onShowIconDialog(viewModel.selectedTile.id) }
+                        onClick = { onShowIconDialog(viewModel.selectedTile.id) },
                     ) {
                         viewModel.selectedIcon?.let { icon ->
                             com.mikepenz.iconics.compose.Image(
                                 icon,
                                 contentDescription = stringResource(id = R.string.tile_icon),
                                 colorFilter = ColorFilter.tint(colorResource(R.color.colorAccent)),
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                     }
                     if (viewModel.selectedIconId != null && viewModel.selectedEntityId.isNotBlank()) {
                         TextButton(
                             modifier = Modifier.padding(start = 4.dp),
-                            onClick = { viewModel.selectIcon(null) }
+                            onClick = { viewModel.selectIcon(null) },
                         ) {
                             Text(text = stringResource(R.string.tile_icon_original))
                         }
@@ -187,24 +187,24 @@ fun ManageTilesView(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = stringResource(R.string.tile_vibrate),
-                        fontSize = 15.sp
+                        fontSize = 15.sp,
                     )
                     Switch(
                         checked = viewModel.selectedShouldVibrate,
                         onCheckedChange = { viewModel.selectedShouldVibrate = it },
-                        colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb))
+                        colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb)),
                     )
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = stringResource(R.string.tile_auth_required),
-                        fontSize = 15.sp
+                        fontSize = 15.sp,
                     )
                     Switch(
                         checked = viewModel.tileAuthRequired,
                         onCheckedChange = { viewModel.tileAuthRequired = it },
-                        colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb))
+                        colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb)),
                     )
                 }
 
@@ -212,7 +212,7 @@ fun ManageTilesView(
                     onClick = { viewModel.addTile() },
                     enabled = viewModel.tileLabel.isNotBlank() &&
                         viewModel.selectedServerId in viewModel.servers.map { it.id } &&
-                        viewModel.selectedEntityId in viewModel.sortedEntities.map { it.entityId }
+                        viewModel.selectedEntityId in viewModel.sortedEntities.map { it.entityId },
                 ) {
                     Text(stringResource(viewModel.submitButtonLabel))
                 }

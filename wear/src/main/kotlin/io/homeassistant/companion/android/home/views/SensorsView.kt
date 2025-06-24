@@ -21,7 +21,7 @@ import io.homeassistant.companion.android.views.ThemeLazyColumn
 
 @Composable
 fun SensorsView(
-    onClickSensorManager: (SensorManager) -> Unit
+    onClickSensorManager: (SensorManager) -> Unit,
 ) {
     WearAppTheme {
         val sensorManagers = getSensorManagers()
@@ -37,7 +37,7 @@ fun SensorsView(
                             .fillMaxWidth(),
                         colors = getFilledTonalButtonColors(),
                         label = { Text(stringResource(manager.name)) },
-                        onClick = { onClickSensorManager(manager) }
+                        onClick = { onClickSensorManager(manager) },
                     )
                 }
             }

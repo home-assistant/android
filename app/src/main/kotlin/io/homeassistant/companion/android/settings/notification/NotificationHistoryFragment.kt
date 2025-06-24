@@ -103,7 +103,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                 }
             },
             viewLifecycleOwner,
-            Lifecycle.State.RESUMED
+            Lifecycle.State.RESUMED,
         )
         applyBottomSafeDrawingInsets()
     }
@@ -139,7 +139,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         builder.setMessage(commonR.string.confirm_delete_all_notification_message)
 
         builder.setPositiveButton(
-            commonR.string.confirm_positive
+            commonR.string.confirm_positive,
         ) { dialog, _ ->
             lifecycleScope.launch {
                 notificationDao.deleteAll()
@@ -149,7 +149,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         }
 
         builder.setNegativeButton(
-            commonR.string.confirm_negative
+            commonR.string.confirm_negative,
         ) { dialog, _ -> // Do nothing
             dialog.dismiss()
         }

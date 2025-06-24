@@ -85,7 +85,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         val fieldKeyInput = EditText(context)
         fieldKeyInput.layoutParams = ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT
+            ViewGroup.LayoutParams.MATCH_PARENT,
         )
 
         AlertDialog.Builder(context)
@@ -100,8 +100,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     position,
                     ActionFieldBinder(
                         binding.widgetTextConfigService.text.toString(),
-                        fieldKeyInput.text.toString()
-                    )
+                        fieldKeyInput.text.toString(),
+                    ),
                 )
 
                 dynamicFieldAdapter.notifyItemInserted(position)
@@ -211,11 +211,11 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         if (extras != null) {
             appWidgetId = extras.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.INVALID_APPWIDGET_ID,
             )
             requestLauncherSetup = extras.getBoolean(
                 ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
-                false
+                false,
             )
         }
 
@@ -237,8 +237,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 WidgetUtils.getSelectedBackgroundOption(
                     this,
                     buttonWidget.backgroundType,
-                    backgroundTypeValues
-                )
+                    backgroundTypeValues,
+                ),
             )
             binding.textColor.isVisible = buttonWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
             binding.textColorWhite.isChecked =
@@ -320,8 +320,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                             this,
                             System.currentTimeMillis().toInt(),
                             Intent(this, ButtonWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-                        )
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                        ),
                     )
                 } else {
                     showAddWidgetError()
@@ -348,7 +348,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     callback = {
                         onIconDialogIconsSelected(it)
                         alertDialog?.dismiss()
-                    }
+                    },
                 )
 
                 alertDialog.show(supportFragmentManager, IconDialogFragment.TAG)
@@ -361,7 +361,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         if (intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.INVALID_APPWIDGET_ID,
             )
             onAddWidget()
         }
@@ -382,7 +382,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
         dynamicFieldAdapter.replaceValues(
             actions[serverId].orEmpty() as HashMap<String, Action>,
-            entities[serverId].orEmpty() as HashMap<String, Entity>
+            entities[serverId].orEmpty() as HashMap<String, Entity>,
         )
 
         actionTextWatcher.afterTextChanged(binding.widgetTextConfigService.text)
@@ -418,7 +418,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             intent.putExtra(
                 ButtonWidget.EXTRA_SERVER_ID,
-                selectedServerId!!
+                selectedServerId!!,
             )
 
             // Analyze and send action and domain
@@ -428,21 +428,21 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             val action = actions[actionText]?.action ?: actionText.split(".", limit = 2)[1]
             intent.putExtra(
                 ButtonWidget.EXTRA_DOMAIN,
-                domain
+                domain,
             )
             intent.putExtra(
                 ButtonWidget.EXTRA_ACTION,
-                action
+                action,
             )
 
             // Fetch and send label and icon
             intent.putExtra(
                 ButtonWidget.EXTRA_LABEL,
-                binding.label.text.toString()
+                binding.label.text.toString(),
             )
             intent.putExtra(
                 ButtonWidget.EXTRA_ICON_NAME,
-                binding.widgetConfigIconSelector.tag as String
+                binding.widgetConfigIconSelector.tag as String,
             )
 
             // Analyze and send action data
@@ -461,7 +461,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             intent.putExtra(
                 ButtonWidget.EXTRA_ACTION_DATA,
-                kotlinJsonMapper.encodeToString(MapAnySerializer, actionDataMap)
+                kotlinJsonMapper.encodeToString(MapAnySerializer, actionDataMap),
             )
 
             intent.putExtra(
@@ -470,7 +470,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
                     getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
                     else -> WidgetBackgroundType.DAYNIGHT
-                }
+                },
             )
 
             intent.putExtra(
@@ -479,7 +479,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
                 } else {
                     null
-                }
+                },
             )
 
             intent.putExtra(ButtonWidget.EXTRA_REQUIRE_AUTHENTICATION, binding.widgetCheckboxRequireAuthentication.isChecked)
@@ -489,7 +489,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             // Make sure we pass back the original appWidgetId
             setResult(
                 RESULT_OK,
-                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId),
             )
             finish()
         } catch (e: Exception) {

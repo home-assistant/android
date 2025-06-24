@@ -150,7 +150,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                 replace(
                     R.id.content,
                     ExternalUrlFragment::class.java,
-                    Bundle().apply { putInt(ExternalUrlFragment.EXTRA_SERVER, serverId) }
+                    Bundle().apply { putInt(ExternalUrlFragment.EXTRA_SERVER, serverId) },
                 )
                 addToBackStack(getString(commonR.string.input_url))
             }
@@ -163,7 +163,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                     replace(
                         R.id.content,
                         SsidFragment::class.java,
-                        Bundle().apply { putInt(SsidFragment.EXTRA_SERVER, serverId) }
+                        Bundle().apply { putInt(SsidFragment.EXTRA_SERVER, serverId) },
                     )
                     addToBackStack(getString(commonR.string.pref_connection_homenetwork))
                 }
@@ -180,7 +180,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                     replace(
                         R.id.content,
                         WebsocketSettingFragment::class.java,
-                        Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, serverId) }
+                        Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, serverId) },
                     )
                     addToBackStack(getString(commonR.string.websocket_setting_name))
                 }
@@ -242,7 +242,7 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                 }
             },
             viewLifecycleOwner,
-            Lifecycle.State.RESUMED
+            Lifecycle.State.RESUMED,
         )
     }
 

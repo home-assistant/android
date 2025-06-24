@@ -14,7 +14,7 @@ import timber.log.Timber
 
 class MatterManagerImpl @Inject constructor(
     private val serverManager: ServerManager,
-    private val packageManager: PackageManager
+    private val packageManager: PackageManager,
 ) : MatterManager {
 
     override fun appSupportsCommissioning(): Boolean =
@@ -34,14 +34,14 @@ class MatterManagerImpl @Inject constructor(
     override fun startNewCommissioningFlow(
         context: Context,
         onSuccess: (IntentSender) -> Unit,
-        onFailure: (Exception) -> Unit
+        onFailure: (Exception) -> Unit,
     ) {
         if (appSupportsCommissioning()) {
             Matter.getCommissioningClient(context)
                 .commissionDevice(
                     CommissioningRequest.builder()
                         .setCommissioningService(ComponentName(context, MatterCommissioningService::class.java))
-                        .build()
+                        .build(),
                 )
                 .addOnSuccessListener { onSuccess(it) }
                 .addOnFailureListener { onFailure(it) }

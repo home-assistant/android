@@ -26,13 +26,13 @@ object ClimateControl : HaControl {
         "cool" to TemperatureControlTemplate.MODE_COOL,
         "heat" to TemperatureControlTemplate.MODE_HEAT,
         "heat_cool" to TemperatureControlTemplate.MODE_HEAT_COOL,
-        "off" to TemperatureControlTemplate.MODE_OFF
+        "off" to TemperatureControlTemplate.MODE_OFF,
     )
     private val temperatureControlModeFlags = mapOf(
         "cool" to TemperatureControlTemplate.FLAG_MODE_COOL,
         "heat" to TemperatureControlTemplate.FLAG_MODE_HEAT,
         "heat_cool" to TemperatureControlTemplate.FLAG_MODE_HEAT_COOL,
-        "off" to TemperatureControlTemplate.FLAG_MODE_OFF
+        "off" to TemperatureControlTemplate.FLAG_MODE_OFF,
     )
     private val climateStates = HashMap<String, ClimateState>()
 
@@ -40,7 +40,7 @@ object ClimateControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity,
-        info: HaControlInfo
+        info: HaControlInfo,
     ): Control.StatefulBuilder {
         val minValue = (entity.attributes["min_temp"] as? Number)?.toFloat() ?: 0f
         val maxValue = (entity.attributes["max_temp"] as? Number)?.toFloat() ?: 100f
@@ -68,7 +68,7 @@ object ClimateControl : HaControl {
             maxValue,
             currentValue,
             temperatureStepSize,
-            "%.${temperatureFormatSize}f $temperatureUnit"
+            "%.${temperatureFormatSize}f $temperatureUnit",
         )
         if (entityShouldBePresentedAsThermostat(entity)) {
             val state = ClimateState(entity.state, ArrayList())
@@ -77,7 +77,7 @@ object ClimateControl : HaControl {
                 // Set checked to true to always show the temperature indicator, regardless of climate mode
                 true,
                 context.getString(commonR.string.widget_tap_action_toggle),
-                rangeTemplate
+                rangeTemplate,
             )
             var modesFlag = 0
             (entity.attributes["hvac_modes"] as? List<String>)?.forEach {
@@ -91,8 +91,8 @@ object ClimateControl : HaControl {
                     toggleRangeTemplate,
                     temperatureControlModes[entity.state]!!,
                     temperatureControlModes[entity.state]!!,
-                    modesFlag
-                )
+                    modesFlag,
+                ),
             )
         } else {
             control.setControlTemplate(rangeTemplate)
@@ -113,7 +113,7 @@ object ClimateControl : HaControl {
 
     override suspend fun performAction(
         integrationRepository: IntegrationRepository,
-        action: ControlAction
+        action: ControlAction,
     ): Boolean {
         val entityStr: String = if (action.templateId.split(".").size > 2) {
             action.templateId.split(".", limit = 2)[1]
@@ -127,8 +127,8 @@ object ClimateControl : HaControl {
                     "set_temperature",
                     hashMapOf(
                         "entity_id" to entityStr,
-                        "temperature" to (action as? FloatAction)?.newValue.toString()
-                    )
+                        "temperature" to (action as? FloatAction)?.newValue.toString(),
+                    ),
                 )
                 true
             }
@@ -142,8 +142,8 @@ object ClimateControl : HaControl {
                             temperatureControlModes.entries.find {
                                 it.value == ((action as? ModeAction)?.newMode ?: -1)
                             }?.key ?: ""
-                            )
-                    )
+                            ),
+                    ),
                 )
                 true
             }
@@ -159,8 +159,8 @@ object ClimateControl : HaControl {
                     "set_hvac_mode",
                     hashMapOf(
                         "entity_id" to entityStr,
-                        "hvac_mode" to supportedModes[nextMode]
-                    )
+                        "hvac_mode" to supportedModes[nextMode],
+                    ),
                 )
                 true
             }

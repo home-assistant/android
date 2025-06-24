@@ -235,7 +235,7 @@ private fun toJsonElement(value: Any?): JsonElement {
         is Map<*, *> -> JsonObject(
             value.mapNotNull { (key, v) ->
                 if (key is String) key to toJsonElement(v) else throw IllegalArgumentException("Unsupported type: ${key?.javaClass} as map key")
-            }.toMap()
+            }.toMap(),
         )
         is List<*> -> JsonArray(value.map { toJsonElement(it) })
         is Array<*> -> JsonArray(value.map { toJsonElement(it) })

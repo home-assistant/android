@@ -31,7 +31,7 @@ class SensorSettingsFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
@@ -44,12 +44,12 @@ class SensorSettingsFragment : Fragment() {
                                 .replace(
                                     R.id.content,
                                     SensorDetailFragment.newInstance(
-                                        sensor
-                                    )
+                                        sensor,
+                                    ),
                                 )
                                 .addToBackStack("Sensor Detail")
                                 .commit()
-                        }
+                        },
                     )
                 }
             }
@@ -107,7 +107,7 @@ class SensorSettingsFragment : Fragment() {
                 }
             },
             viewLifecycleOwner,
-            Lifecycle.State.RESUMED
+            Lifecycle.State.RESUMED,
         )
     }
 

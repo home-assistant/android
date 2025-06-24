@@ -26,41 +26,41 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
 fun SettingsWearTemplateTileList(
     templateTiles: Map<Int, TemplateTileConfig>,
     onTemplateTileClicked: (tileId: Int) -> Unit,
-    onBackClicked: () -> Unit
+    onBackClicked: () -> Unit,
 ) {
     Scaffold(
         topBar = {
             SettingsWearTopAppBar(
                 title = { Text(stringResource(commonR.string.template_tiles)) },
                 onBackClicked = onBackClicked,
-                docsLink = WEAR_DOCS_LINK
+                docsLink = WEAR_DOCS_LINK,
             )
-        }
+        },
     ) { padding ->
         Column(
             Modifier
                 .verticalScroll(rememberScrollState())
                 .padding(safeBottomPaddingValues())
-                .padding(padding)
+                .padding(padding),
         ) {
             if (templateTiles.entries.isEmpty()) {
                 Text(
                     text = stringResource(commonR.string.template_tile_no_tiles_yet),
                     modifier = Modifier
-                        .padding(all = 16.dp)
+                        .padding(all = 16.dp),
                 )
             } else {
                 Row(
                     modifier = Modifier
                         .height(48.dp)
                         .padding(start = 72.dp, end = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = stringResource(id = commonR.string.template_tile_configure),
                         style = MaterialTheme.typography.body2,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colors.primary
+                        color = MaterialTheme.colors.primary,
                     )
                 }
 
@@ -75,7 +75,7 @@ fun SettingsWearTemplateTileList(
                         },
                         mdiIcon = CommunityMaterial.Icon3.cmd_text_box,
                         enabled = true,
-                        onClicked = { onTemplateTileClicked(templateTileEntry.key) }
+                        onClicked = { onTemplateTileClicked(templateTileEntry.key) },
                     )
                 }
             }
@@ -89,10 +89,10 @@ private fun PreviewSettingsWearTemplateTileList() {
     SettingsWearTemplateTileList(
         templateTiles = mapOf(
             123 to TemplateTileConfig("Example entity 1: {{ states('sensor.example_entity_1') }}", 300),
-            51468 to TemplateTileConfig("Example entity 2: {{ states('sensor.example_entity_2') }}", 0)
+            51468 to TemplateTileConfig("Example entity 2: {{ states('sensor.example_entity_2') }}", 0),
         ),
         onTemplateTileClicked = {},
-        onBackClicked = {}
+        onBackClicked = {},
     )
 }
 
@@ -101,10 +101,10 @@ private fun PreviewSettingsWearTemplateTileList() {
 private fun PreviewSettingsWearTemplateSingleLegacyTile() {
     SettingsWearTemplateTileList(
         templateTiles = mapOf(
-            -1 to TemplateTileConfig("Example entity 1: {{ states('sensor.example_entity_1') }}", 300)
+            -1 to TemplateTileConfig("Example entity 1: {{ states('sensor.example_entity_1') }}", 300),
         ),
         onTemplateTileClicked = {},
-        onBackClicked = {}
+        onBackClicked = {},
     )
 }
 
@@ -114,6 +114,6 @@ private fun PreviewSettingsWearTemplateTileListEmpty() {
     SettingsWearTemplateTileList(
         templateTiles = mapOf(),
         onTemplateTileClicked = {},
-        onBackClicked = {}
+        onBackClicked = {},
     )
 }

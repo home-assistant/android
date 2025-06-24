@@ -13,7 +13,7 @@ class NfcSensorManager : SensorManager {
             commonR.string.sensor_description_nfc_state,
             "mdi:nfc-variant",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
     }
 
@@ -43,7 +43,7 @@ class NfcSensorManager : SensorManager {
             nfcStateSensor,
             nfcEnabled,
             nfcStateSensor.statelessIcon,
-            emptyMap()
+            emptyMap(),
         )
     }
 }

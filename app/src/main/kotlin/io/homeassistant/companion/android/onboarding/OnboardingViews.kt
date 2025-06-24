@@ -36,7 +36,7 @@ import kotlin.math.min
 @Composable
 fun OnboardingScreen(
     modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     Box(Modifier.fillMaxSize()) {
         val screenWidth = screenWidth()
@@ -46,7 +46,7 @@ fun OnboardingScreen(
                 .padding(all = 16.dp)
                 .width(min(screenWidth.value, STEP_SCREEN_MAX_WIDTH_DP).dp)
                 .align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             content()
         }
@@ -56,7 +56,7 @@ fun OnboardingScreen(
 @Composable
 fun OnboardingHeaderView(
     icon: IIcon,
-    title: String
+    title: String,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Spacer(modifier = Modifier.height(32.dp))
@@ -66,7 +66,7 @@ fun OnboardingHeaderView(
             contentDescription = null,
             modifier = Modifier
                 .size(48.dp)
-                .align(Alignment.CenterHorizontally)
+                .align(Alignment.CenterHorizontally),
         )
         Text(
             text = title,
@@ -74,7 +74,7 @@ fun OnboardingHeaderView(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .padding(vertical = 16.dp)
-                .align(Alignment.CenterHorizontally)
+                .align(Alignment.CenterHorizontally),
         )
     }
 }
@@ -82,22 +82,22 @@ fun OnboardingHeaderView(
 @Composable
 fun OnboardingPermissionBullet(
     icon: IIcon,
-    text: String
+    text: String,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 12.dp)
+        modifier = Modifier.padding(vertical = 12.dp),
     ) {
         Image(
             asset = icon,
             colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
-            contentDescription = null
+            contentDescription = null,
         )
         Text(
             text = text,
             modifier = Modifier
                 .padding(start = 16.dp)
-                .fillMaxWidth()
+                .fillMaxWidth(),
         )
     }
 }

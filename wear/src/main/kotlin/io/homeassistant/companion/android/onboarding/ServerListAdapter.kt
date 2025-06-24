@@ -13,7 +13,7 @@ import io.homeassistant.companion.android.viewHolders.ManualSetupViewHolder
 import kotlin.math.min
 
 class ServerListAdapter(
-    val servers: ArrayList<HomeAssistantInstance>
+    val servers: ArrayList<HomeAssistantInstance>,
 ) : RecyclerView.Adapter<ViewHolder>() {
 
     lateinit var onInstanceClicked: (HomeAssistantInstance) -> Unit
@@ -28,7 +28,7 @@ class ServerListAdapter(
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
-        viewType: Int
+        viewType: Int,
     ): ViewHolder {
         return when (viewType) {
             TYPE_INSTANCE -> {
@@ -70,7 +70,7 @@ class ServerListAdapter(
 
     override fun getItemCount() = min(
         servers.size + 3,
-        4
+        4,
     )
 
     override fun getItemViewType(position: Int): Int {

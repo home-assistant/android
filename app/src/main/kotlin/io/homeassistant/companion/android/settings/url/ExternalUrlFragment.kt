@@ -24,7 +24,7 @@ class ExternalUrlFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
@@ -34,7 +34,7 @@ class ExternalUrlFragment : Fragment() {
                         useCloud = viewModel.useCloud,
                         externalUrl = viewModel.externalUrl,
                         onUseCloudToggle = { viewModel.toggleCloud(it) },
-                        onExternalUrlSaved = { viewModel.updateExternalUrl(it) }
+                        onExternalUrlSaved = { viewModel.updateExternalUrl(it) },
                     )
                 }
             }

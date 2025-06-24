@@ -26,7 +26,7 @@ fun SensorManagerUi(
     allSensors: List<Sensor>?,
     allAvailSensors: List<SensorManager.BasicSensor>?,
     sensorManager: SensorManager,
-    onSensorClicked: (String, Boolean) -> Unit
+    onSensorClicked: (String, Boolean) -> Unit,
 ) {
     WearAppTheme {
         ThemeLazyColumn {
@@ -46,7 +46,7 @@ fun SensorManagerUi(
                             .fillMaxSize()
                             .padding(vertical = 32.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                        verticalArrangement = Arrangement.Center,
                     ) {
                         ListHeader(id = R.string.loading)
                         CircularProgressIndicator()
@@ -62,7 +62,7 @@ fun SensorManagerUi(
                         SensorUi(
                             sensor = sensor,
                             manager = sensorManager,
-                            basicSensor = basicSensor
+                            basicSensor = basicSensor,
                         ) { sensorId, enabled -> onSensorClicked(sensorId, enabled) }
                     }
                 }
@@ -78,7 +78,7 @@ private fun PreviewSensorManagerUI() {
         SensorManagerUi(
             allSensors = listOf(),
             allAvailSensors = sensorList,
-            sensorManager = batterySensorManager
+            sensorManager = batterySensorManager,
         ) { _, _ -> }
     }
 }

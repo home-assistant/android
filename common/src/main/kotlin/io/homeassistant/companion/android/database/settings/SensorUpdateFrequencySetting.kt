@@ -5,7 +5,7 @@ import androidx.room.TypeConverter
 enum class SensorUpdateFrequencySetting {
     NORMAL,
     FAST_WHILE_CHARGING,
-    FAST_ALWAYS
+    FAST_ALWAYS,
 }
 
 class LocalSensorSettingConverter {

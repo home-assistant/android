@@ -9,5 +9,5 @@ data class NotificationAction(
     val title: String,
     val uri: String?,
     val behavior: String?,
-    var data: Map<String, String>
+    var data: Map<String, String>,
 ) : Parcelable

@@ -9,5 +9,5 @@ import kotlinx.serialization.json.JsonNames
 data class CheckRateLimits(
     val target: String,
     @JsonNames("rateLimits")
-    val rateLimits: RateLimitResponse
+    val rateLimits: RateLimitResponse,
 )

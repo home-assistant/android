@@ -34,7 +34,7 @@ import timber.log.Timber
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
 class OnboardingPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
-    private val serverManager: ServerManager
+    private val serverManager: ServerManager,
 ) : OnboardingPresenter {
 
     private val view = context as OnboardingView
@@ -53,7 +53,7 @@ class OnboardingPresenterImpl @Inject constructor(
             try {
                 request = OAuthRequest.Builder(context)
                     .setAuthProviderUrl(
-                        Uri.parse(UrlUtil.buildAuthenticationUrl(url))
+                        Uri.parse(UrlUtil.buildAuthenticationUrl(url)),
                     )
                     .setCodeChallenge(CodeChallenge(codeVerifier))
                     .build()
@@ -77,13 +77,13 @@ class OnboardingPresenterImpl @Inject constructor(
                                     RemoteAuthClient.ERROR_UNSUPPORTED -> commonR.string.failed_unsupported
                                     RemoteAuthClient.ERROR_PHONE_UNAVAILABLE -> commonR.string.failed_phone_connection
                                     else -> commonR.string.failed_connection
-                                }
+                                },
                             )
                         }
 
                         override fun onAuthorizationResponse(
                             request: OAuthRequest,
-                            response: OAuthResponse
+                            response: OAuthResponse,
                         ) {
                             response.responseUrl?.getQueryParameter("code")?.let { code ->
                                 register(url, code)
@@ -91,7 +91,7 @@ class OnboardingPresenterImpl @Inject constructor(
                                 view.showError(commonR.string.failed_registration)
                             }
                         }
-                    }
+                    },
                 )
             }
         }
@@ -125,7 +125,7 @@ class OnboardingPresenterImpl @Inject constructor(
             return HomeAssistantInstance(
                 getString("name", ""),
                 URL(getString("url", "")),
-                getString("version", "")
+                getString("version", ""),
             )
         }
     }
@@ -141,10 +141,10 @@ class OnboardingPresenterImpl @Inject constructor(
                     _name = "",
                     type = ServerType.TEMPORARY,
                     connection = ServerConnectionInfo(
-                        externalUrl = formattedUrl
+                        externalUrl = formattedUrl,
                     ),
                     session = ServerSessionInfo(),
-                    user = ServerUserInfo()
+                    user = ServerUserInfo(),
                 )
                 serverId = serverManager.addServer(server)
                 serverManager.authenticationRepository(serverId).registerAuthorizationCode(code)

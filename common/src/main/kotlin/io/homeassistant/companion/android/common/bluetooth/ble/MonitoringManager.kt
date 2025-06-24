@@ -52,7 +52,7 @@ class MonitoringManager {
             // find iBeacons
             beaconManager.beaconParsers.add(
                 BeaconParser()
-                    .setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24")
+                    .setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"),
             )
 
             BeaconManager.setRssiFilterImplClass(KalmanFilter::class.java)
@@ -69,7 +69,7 @@ class MonitoringManager {
                     if (beaconManager.isAnyConsumerBound) {
                         haMonitor.setBeacons(
                             context,
-                            beacons
+                            beacons,
                         )
                     }
                 }

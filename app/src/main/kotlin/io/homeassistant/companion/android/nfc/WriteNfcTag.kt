@@ -8,7 +8,7 @@ class WriteNfcTag : ActivityResultContract<WriteNfcTag.Input, Int>() {
 
     data class Input(
         val tagId: String? = null,
-        val messageId: Int = -1
+        val messageId: Int = -1,
     )
 
     override fun createIntent(context: Context, input: Input): Intent {

@@ -71,11 +71,11 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         if (extras != null) {
             appWidgetId = extras.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.INVALID_APPWIDGET_ID,
             )
             requestLauncherSetup = extras.getBoolean(
                 ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
-                false
+                false,
             )
         }
 
@@ -106,8 +106,8 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 WidgetUtils.getSelectedBackgroundOption(
                     this,
                     templateWidget.backgroundType,
-                    backgroundTypeValues
-                )
+                    backgroundTypeValues,
+                ),
             )
             binding.textColor.isVisible = templateWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
             binding.textColorWhite.isChecked =
@@ -141,8 +141,8 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                             this,
                             System.currentTimeMillis().toInt(),
                             Intent(this, TemplateWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-                        )
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                        ),
                     )
                 } else {
                     showAddWidgetError() // this shouldn't be possible
@@ -184,7 +184,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
                     getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
                     else -> WidgetBackgroundType.DAYNIGHT
-                }
+                },
             )
             putExtra(
                 TemplateWidget.EXTRA_TEXT_COLOR,
@@ -192,14 +192,14 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
                 } else {
                     null
-                }
+                },
             )
         }
         applicationContext.sendBroadcast(createIntent)
 
         setResult(
             RESULT_OK,
-            Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId),
         )
         finish()
     }
@@ -209,7 +209,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         if (intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.INVALID_APPWIDGET_ID,
             )
             onAddWidget()
         }
@@ -231,7 +231,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                             commonR.string.template_error
                         } else {
                             commonR.string.template_render_error
-                        }
+                        },
                     )
                     enabled = false
                 }

@@ -40,7 +40,7 @@ tasks.register("alldependencies") {
     setDependsOn(
         project.allprojects.flatMap {
             it.tasks.withType<DependencyReportTask>()
-        }
+        },
     )
 }
 

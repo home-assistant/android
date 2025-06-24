@@ -23,7 +23,7 @@ class SensorUpdateFrequencyFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
@@ -32,7 +32,7 @@ class SensorUpdateFrequencyFragment : Fragment() {
                         .collectAsState(initial = viewModel.getSetting(0))
                     SensorUpdateFrequencyView(
                         sensorUpdateFrequency = settings.value.sensorUpdateFrequency,
-                        onSettingChanged = { viewModel.updateSensorSetting(0, it) }
+                        onSettingChanged = { viewModel.updateSensorSetting(0, it) },
                     )
                 }
             }

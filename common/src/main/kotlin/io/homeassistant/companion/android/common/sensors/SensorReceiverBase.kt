@@ -75,7 +75,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         Intent.ACTION_BATTERY_LOW,
         Intent.ACTION_BATTERY_OKAY,
         Intent.ACTION_POWER_CONNECTED,
-        Intent.ACTION_POWER_DISCONNECTED
+        Intent.ACTION_POWER_DISCONNECTED,
     )
 
     protected abstract val skippableActions: Map<String, List<String>>
@@ -84,7 +84,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         context: Context,
         sensorId: String,
         sensorManagerId: String,
-        notificationId: Int
+        notificationId: Int,
     ): PendingIntent?
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -98,8 +98,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     String.format(
                         "Sensor(s) %s corresponding to received event %s are disabled, skipping sensors update",
                         sensors.toString(),
-                        intent.action
-                    )
+                        intent.action,
+                    ),
                 )
                 return
             }
@@ -127,7 +127,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                             try {
                                 serverManager.integrationRepository(sensor.serverId).fireEvent(
                                     "android.intent_received",
-                                    eventData as Map<String, Any>
+                                    eventData as Map<String, Any>,
                                 )
                                 Timber.d("Event successfully sent to Home Assistant")
                             } catch (e: Exception) {
@@ -169,7 +169,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         context: Context,
         serverManager: ServerManager,
         sensorDao: SensorDao,
-        intent: Intent?
+        intent: Intent?,
     ) {
         if (!serverManager.isRegistered()) {
             Timber.w("Device not registered, skipping sensor update/registration")
@@ -201,7 +201,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         context: Context,
         serverManager: ServerManager,
         server: Server,
-        sensorDao: SensorDao
+        sensorDao: SensorDao,
     ): Boolean {
         val currentHAversion = serverManager.integrationRepository(server.id).getHomeAssistantVersion()
         val supportsDisabledSensors = serverManager.integrationRepository(server.id).isHomeAssistantVersionAtLeast(2022, 6, 0)
@@ -378,7 +378,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         context: Context,
         serverManager: ServerManager,
         fullSensor: SensorWithAttributes,
-        basicSensor: SensorManager.BasicSensor
+        basicSensor: SensorManager.BasicSensor,
     ) {
         val reg = fullSensor.toSensorRegistration(basicSensor)
         val config = Configuration(context.resources.configuration)
@@ -390,7 +390,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     private suspend fun updateSensor(
         context: Context,
-        sensorId: String
+        sensorId: String,
     ) {
         val sensorManager = managers.firstOrNull {
             it.getAvailableSensors(context).any { s -> s.id == sensorId }
@@ -413,7 +413,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         basicSensor.id,
                         fullSensor.sensor.serverId,
                         fullSensor.sensor.state,
-                        fullSensor.sensor.icon
+                        fullSensor.sensor.icon,
                     )
                 } catch (e: Exception) {
                     Timber.e(e, "Exception while updating individual sensor.")
@@ -431,7 +431,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 notificationChannel = NotificationChannel(
                     CHANNEL_SENSOR_SYNC,
                     CHANNEL_SENSOR_SYNC,
-                    NotificationManager.IMPORTANCE_DEFAULT
+                    NotificationManager.IMPORTANCE_DEFAULT,
                 )
                 notificationManager.createNotificationChannel(notificationChannel)
             }

@@ -20,14 +20,14 @@ import io.homeassistant.companion.android.common.R as commonR
 fun HaAlertInfo(
     message: String,
     action: String?,
-    onActionClicked: (() -> Unit)?
+    onActionClicked: (() -> Unit)?,
 ) {
     HaAlert(
         message,
         action,
         onActionClicked,
         colorResource(commonR.color.colorAlertInfo),
-        colorResource(commonR.color.colorOnAlertInfo)
+        colorResource(commonR.color.colorOnAlertInfo),
     )
 }
 
@@ -35,14 +35,14 @@ fun HaAlertInfo(
 fun HaAlertWarning(
     message: String,
     action: String?,
-    onActionClicked: (() -> Unit)?
+    onActionClicked: (() -> Unit)?,
 ) {
     HaAlert(
         message,
         action,
         onActionClicked,
         colorResource(commonR.color.colorAlertWarning),
-        colorResource(commonR.color.colorOnAlertWarning)
+        colorResource(commonR.color.colorOnAlertWarning),
     )
 }
 
@@ -52,25 +52,25 @@ fun HaAlert(
     action: String?,
     onActionClicked: (() -> Unit)?,
     backgroundColor: Color,
-    onBackgroundColor: Color
+    onBackgroundColor: Color,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(backgroundColor, MaterialTheme.shapes.medium)
             .padding(all = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = message,
             modifier = Modifier
                 .weight(1f)
-                .padding(end = if (action != null) 8.dp else 0.dp)
+                .padding(end = if (action != null) 8.dp else 0.dp),
         )
         if (action != null && onActionClicked != null) {
             TextButton(
                 colors = ButtonDefaults.textButtonColors(contentColor = onBackgroundColor),
-                onClick = onActionClicked
+                onClick = onActionClicked,
             ) {
                 Text(action)
             }

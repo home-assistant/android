@@ -60,7 +60,7 @@ interface IntegrationRepository {
     suspend fun getAssistResponse(
         text: String,
         pipelineId: String? = null,
-        conversationId: String? = null
+        conversationId: String? = null,
     ): Flow<AssistPipelineEvent>?
 
     suspend fun getLastUsedPipelineId(): String?

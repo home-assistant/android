@@ -18,11 +18,11 @@ import timber.log.Timber
 class WidgetDynamicFieldAdapter(
     private var actions: HashMap<String, Action>,
     private var entities: HashMap<String, Entity>,
-    private val actionFieldList: ArrayList<ActionFieldBinder>
+    private val actionFieldList: ArrayList<ActionFieldBinder>,
 ) : RecyclerView.Adapter<WidgetDynamicFieldAdapter.ViewHolder>() {
 
     class ViewHolder(
-        val binding: WidgetButtonConfigureDynamicFieldBinding
+        val binding: WidgetButtonConfigureDynamicFieldBinding,
     ) : RecyclerView.ViewHolder(binding.root)
 
     private val dropDownOnFocus = View.OnFocusChangeListener { view, hasFocus ->
@@ -122,7 +122,7 @@ class WidgetDynamicFieldAdapter(
             // populate the autocomplete with valid values
             val fieldAdapter = SingleItemArrayAdapter<String>(context) { it!! }
             fieldAdapter.addAll(
-                actions[actionText]!!.actionData.fields.getValue(fieldKey).values!!.sorted().toMutableList()
+                actions[actionText]!!.actionData.fields.getValue(fieldKey).values!!.sorted().toMutableList(),
             )
             autoCompleteTextView.setAdapter(fieldAdapter)
             autoCompleteTextView.setTokenizer(CommaTokenizer())

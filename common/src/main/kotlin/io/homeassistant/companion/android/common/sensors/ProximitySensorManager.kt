@@ -21,7 +21,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
             commonR.string.sensor_name_proximity,
             commonR.string.sensor_description_proximity_sensor,
             "mdi:leak",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
     }
 
@@ -73,7 +73,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
             mySensorManager.registerListener(
                 this,
                 proximitySensors,
-                SENSOR_DELAY_NORMAL
+                SENSOR_DELAY_NORMAL,
             )
             Timber.d("Proximity sensor listener registered")
             isListenerRegistered = true
@@ -100,7 +100,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
                 proximitySensor,
                 state,
                 proximitySensor.statelessIcon,
-                mapOf()
+                mapOf(),
             )
         }
         mySensorManager.unregisterListener(this)

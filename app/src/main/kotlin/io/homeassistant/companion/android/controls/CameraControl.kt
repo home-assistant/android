@@ -29,7 +29,7 @@ object CameraControl : HaControl {
         context: Context,
         control: Control.StatefulBuilder,
         entity: Entity,
-        info: HaControlInfo
+        info: HaControlInfo,
     ): Control.StatefulBuilder {
         val image = if (info.baseUrl != null && (entity.attributes["entity_picture"] as? String)?.isNotBlank() == true) {
             getThumbnail(info.baseUrl + entity.attributes["entity_picture"] as String)
@@ -46,8 +46,8 @@ object CameraControl : HaControl {
                 entity.entityId,
                 entity.state != STATE_UNAVAILABLE && image != null,
                 icon,
-                context.getString(commonR.string.widget_camera_contentdescription)
-            )
+                context.getString(commonR.string.widget_camera_contentdescription),
+            ),
         )
         return control
     }
@@ -60,7 +60,7 @@ object CameraControl : HaControl {
 
     override suspend fun performAction(
         integrationRepository: IntegrationRepository,
-        action: ControlAction
+        action: ControlAction,
     ): Boolean {
         // No action is received, Android immediately invokes long press
         return true
