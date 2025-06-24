@@ -360,23 +360,7 @@ class SettingsFragment(
             }
         }
 
-        findPreference<SwitchPreference>("enable_ha_launcher")?.let { switchPreference ->
-            switchPreference.setOnPreferenceClickListener {
-                findPreference<Preference>("set_launcher_app")?.isVisible = switchPreference.isChecked
-                true
-            }
-        }
-
-        findPreference<Preference>("set_launcher_app")?.let {
-            it.isVisible = findPreference<SwitchPreference>("enable_ha_launcher")?.isChecked ?: false
-            it.summary = getString(commonR.string.default_launcher_prompt_def, getDefaultLauncherInfo())
-            it.setOnPreferenceClickListener {
-                val intent = Intent(Settings.ACTION_HOME_SETTINGS)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(intent)
-                true
-            }
-        }
+        setupLauncherPrefs()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -556,6 +540,39 @@ class SettingsFragment(
                 ?: false
     }
 
+    private fun getDefaultLauncherInfo(): String {
+        val intent = Intent(Intent.ACTION_MAIN)
+            .addCategory(Intent.CATEGORY_HOME)
+
+        getPackageManager()?.let { packageManager ->
+            packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)?.let {
+                val packageName = it.activityInfo.packageName
+                return packageManager.getApplicationLabel(packageManager.getApplicationInfo(packageName, 0)).toString()
+            }
+        }
+
+        return getString(commonR.string.unknown_launcher_label)
+    }
+
+    private fun setupLauncherPrefs() {
+        val launcherSwitchPref = findPreference<SwitchPreference>("enable_ha_launcher")
+        val launcherPref = findPreference<Preference>("set_launcher_app")
+
+        launcherSwitchPref?.setOnPreferenceClickListener {
+            launcherPref?.isVisible = launcherSwitchPref.isChecked
+            true
+        }
+
+        launcherPref?.apply {
+            isVisible = launcherSwitchPref?.isChecked ?: false
+            summary = getString(commonR.string.default_launcher_prompt_def, getDefaultLauncherInfo())
+            setOnPreferenceClickListener {
+                startActivity(Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                true
+            }
+        }
+    }
+
     override fun onAddServerResult(success: Boolean, serverId: Int?) {
         view?.let {
             snackbar = Snackbar.make(
@@ -577,20 +594,6 @@ class SettingsFragment(
     }
 
     override fun getPackageManager(): PackageManager? = context?.packageManager
-
-    private fun getDefaultLauncherInfo(): String {
-        val intent = Intent(Intent.ACTION_MAIN)
-            .addCategory(Intent.CATEGORY_HOME)
-
-        getPackageManager()?.let { packageManager ->
-            packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)?.let {
-                val packageName = it.activityInfo.packageName
-                return packageManager.getApplicationLabel(packageManager.getApplicationInfo(packageName, 0)).toString()
-            }
-        }
-
-        return getString(commonR.string.unknown_launcher_label)
-    }
 
     override fun onPause() {
         super.onPause()

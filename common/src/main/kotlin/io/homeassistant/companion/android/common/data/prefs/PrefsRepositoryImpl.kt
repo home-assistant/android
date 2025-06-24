@@ -38,7 +38,6 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_AUTO_FAVORITES = "auto_favorites"
         private const val PREF_LOCATION_HISTORY_DISABLED = "location_history"
         private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displayed"
-        private const val PREF_LAUNCHER_CAPABILITY_ENABLED = "launcher_capability_enabled"
     }
 
     init {
@@ -259,14 +258,6 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun addImprovPermissionDisplayedCount() {
         localStorage.putInt(PREF_IMPROV_PERMISSION_DISPLAYED, getImprovPermissionDisplayedCount() + 1)
-    }
-
-    override suspend fun isLauncherCapabilityEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_LAUNCHER_CAPABILITY_ENABLED)
-    }
-
-    override suspend fun setLauncherCapabilityEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_LAUNCHER_CAPABILITY_ENABLED, enabled)
     }
 
     override suspend fun removeServer(serverId: Int) {

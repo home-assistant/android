@@ -95,10 +95,6 @@ interface PrefsRepository {
 
     suspend fun addImprovPermissionDisplayedCount()
 
-    suspend fun isLauncherCapabilityEnabled(): Boolean
-
-    suspend fun setLauncherCapabilityEnabled(enabled: Boolean)
-
     /** Clean up any app-level preferences that might reference servers */
     suspend fun removeServer(serverId: Int)
 }

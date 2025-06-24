@@ -66,7 +66,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     private val launcherAliasComponent = ComponentName(
         BuildConfig.APPLICATION_ID,
-        "io.homeassistant.companion.android.launch.LauncherAlias"
+        "io.homeassistant.companion.android.launch.LauncherAlias",
     )
 
     private var suggestionFlow = MutableStateFlow<SettingsHomeSuggestion?>(null)
@@ -83,7 +83,10 @@ class SettingsPresenterImpl @Inject constructor(
                 val componentSetting = view.getPackageManager()?.getComponentEnabledSetting(voiceCommandAppComponent)
                 componentSetting != null && componentSetting != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
             }
-            "enable_ha_launcher" -> prefsRepository.isLauncherCapabilityEnabled()
+            "enable_ha_launcher" -> {
+                val componentSetting = view.getPackageManager()?.getComponentEnabledSetting(launcherAliasComponent)
+                componentSetting != null && componentSetting != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            }
             else -> throw IllegalArgumentException("No boolean found by this key: $key")
         }
     }
@@ -104,7 +107,6 @@ class SettingsPresenterImpl @Inject constructor(
                         PackageManager.DONT_KILL_APP,
                     )
                 "enable_ha_launcher" -> {
-                    prefsRepository.setLauncherCapabilityEnabled(value)
                     enableLauncherMode(value)
                 }
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
@@ -310,7 +312,7 @@ class SettingsPresenterImpl @Inject constructor(
         view.getPackageManager()?.setComponentEnabledSetting(
             launcherAliasComponent,
             if (enable) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-            PackageManager.DONT_KILL_APP
+            if (enable) PackageManager.DONT_KILL_APP else 0,
         )
     }
 }
