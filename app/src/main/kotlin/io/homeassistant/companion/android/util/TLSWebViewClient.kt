@@ -12,7 +12,6 @@ import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
@@ -73,7 +72,7 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
                         // If no key is available, then the user must be prompt for a key
                         // The whole operation is wrapped in the selectPrivateKey method but caution as it must occurs outside of the main thread
                         // see: https://developer.android.com/reference/android/security/KeyChain#getPrivateKey(android.content.Context,%20java.lang.String)
-                        selectClientCert(activity, request.principals, request)
+                        selectClientCert(activity, request)
                     }
                 }
             }
@@ -81,7 +80,7 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
-    private fun selectClientCert(activity: Activity, principals: Array<Principal>?, request: ClientCertRequest) {
+    private fun selectClientCert(activity: Activity, request: ClientCertRequest) {
         require(activity is AppCompatActivity)
         // Use applicationContext to avoid leaking the caller Activity in the callback
         val appContext = activity.applicationContext
@@ -90,8 +89,8 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
         KeyChain.choosePrivateKeyAlias(
             activity,
             getKeyChainAliasCallback(appContext, request),
-            arrayOf<String>(),
-            principals,
+            request.keyTypes,
+            request.principals,
             null,
             null,
         )
