@@ -106,9 +106,7 @@ class SettingsPresenterImpl @Inject constructor(
                         if (value) PackageManager.COMPONENT_ENABLED_STATE_DEFAULT else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
                         PackageManager.DONT_KILL_APP,
                     )
-                "enable_ha_launcher" -> {
-                    enableLauncherMode(value)
-                }
+                "enable_ha_launcher" -> enableLauncherMode(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
