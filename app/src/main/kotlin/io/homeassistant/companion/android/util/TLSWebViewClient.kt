@@ -11,17 +11,17 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
-import javax.inject.Inject
-import javax.inject.Named
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-open class TLSWebViewClient @Inject constructor(@Named("keyChainRepository") private var keyChainRepository: KeyChainRepository) : WebViewClient() {
+open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) : WebViewClient() {
 
     var isTLSClientAuthNeeded = false
         private set
@@ -35,15 +35,13 @@ open class TLSWebViewClient @Inject constructor(@Named("keyChainRepository") pri
     private var key: PrivateKey? = null
     private var chain: Array<X509Certificate>? = null
 
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
+
     private fun getActivity(context: Context?): Activity? {
         if (context == null) {
             return null
         } else if (context is ContextWrapper) {
-            return if (context is Activity) {
-                context
-            } else {
-                getActivity(context.baseContext)
-            }
+            return context as? Activity ?: getActivity(context.baseContext)
         }
         return null
     }
@@ -85,12 +83,26 @@ open class TLSWebViewClient @Inject constructor(@Named("keyChainRepository") pri
     @RequiresApi(Build.VERSION_CODES.M)
     private fun selectClientCert(activity: Activity, principals: Array<Principal>?, request: ClientCertRequest) {
         require(activity is AppCompatActivity)
+        // Use applicationContext to avoid leaking the caller Activity in the callback
+        val appContext = activity.applicationContext
 
-        val kcac = KeyChainAliasCallback { alias ->
+        // prompt the user for a key
+        KeyChain.choosePrivateKeyAlias(
+            activity,
+            getKeyChainAliasCallback(appContext, request),
+            arrayOf<String>(),
+            principals,
+            null,
+            null,
+        )
+    }
+
+    private fun getKeyChainAliasCallback(context: Context, request: ClientCertRequest): KeyChainAliasCallback {
+        return KeyChainAliasCallback { alias ->
             if (alias != null) {
-                activity.lifecycleScope.launch {
+                ioScope.launch {
                     // Load the key and the chain
-                    keyChainRepository.load(activity.applicationContext, alias)
+                    keyChainRepository.load(context, alias)
 
                     key = keyChainRepository.getPrivateKey()
                     chain = keyChainRepository.getCertificateChain()
@@ -108,9 +120,6 @@ open class TLSWebViewClient @Inject constructor(@Named("keyChainRepository") pri
                 request.proceed(key, chain)
             }
         }
-
-        // prompt the user for a key
-        KeyChain.choosePrivateKeyAlias(activity, kcac, arrayOf<String>(), principals, null, null)
     }
 
     private fun checkChainValidity() {
