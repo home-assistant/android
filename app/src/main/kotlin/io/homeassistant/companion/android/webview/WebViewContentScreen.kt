@@ -51,7 +51,7 @@ internal fun WebViewContentScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Transparent)
-                    .then(if (currentAppLocked) Modifier.hazeEffect(style = HazeMaterials.regular()) else Modifier),
+                    .then(if (currentAppLocked) Modifier.hazeEffect(style = HazeMaterials.thin()) else Modifier),
             )
 
             player?.let { player ->
