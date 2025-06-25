@@ -1,8 +1,17 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Incorrect or missing information in the app documentation
+  - name: Issue or suggestion for the app documentation
     url: https://github.com/home-assistant/companion.home-assistant/issues
-    about: Our documentation has its own issue tracker. Please report issues with the companion docs there.
-  - name: I'm unsure where to go
+    about: Please report any errors, missing information, or suggestions for the companion app documentation here.
+  - name: Issue or suggestion for the developer documentation
+    url: https://github.com/home-assistant/developers.home-assistant/issues
+    about: Please report any errors, missing information, or suggestions for the developer documentation here.
+  - name: Problem with your dashboard
+    url: https://github.com/home-assistant/frontend/issues
+    about: Most of the app's interface is provided by the Home Assistant frontend (WebView). Please report dashboard issues here.
+  - name: I have a question or need support
+    url: https://www.home-assistant.io/help
+    about: GitHub is for tracking bugs and feature requests. For help and support, please visit our help page.
+  - name: I'm not sure where to go
     url: https://www.home-assistant.io/join-chat
-    about: If you are unsure where to go, then joining our chat is recommended; Just ask!
+    about: If you're unsure where to report your issue or ask your question, join our chat and we'll help
