@@ -10,8 +10,8 @@ import android.webkit.ClientCertRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import java.lang.ref.WeakReference
 import java.security.PrivateKey
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
@@ -19,9 +19,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) : WebViewClient() {
-
     var isTLSClientAuthNeeded = false
         private set
 
@@ -34,8 +34,6 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
     private var key: PrivateKey? = null
     private var chain: Array<X509Certificate>? = null
 
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
-
     private fun getActivity(context: Context?): Activity? {
         if (context == null) {
             return null
@@ -47,6 +45,7 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onReceivedClientCertRequest(view: WebView, request: ClientCertRequest) {
+        Timber.d("onReceivedClientCertRequest invoked looking for cert in local storage or ask the user for it")
         // Let the WebViewActivity know the endpoint requires TLS Client Auth
         isTLSClientAuthNeeded = true
 
@@ -81,44 +80,26 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun selectClientCert(activity: Activity, request: ClientCertRequest) {
-        require(activity is AppCompatActivity)
-        // Use applicationContext to avoid leaking the caller Activity in the callback
-        val appContext = activity.applicationContext
-
         // prompt the user for a key
         KeyChain.choosePrivateKeyAlias(
             activity,
-            getKeyChainAliasCallback(appContext, request),
-            request.keyTypes,
-            request.principals,
-            null,
-            null,
-        )
-    }
-
-    private fun getKeyChainAliasCallback(context: Context, request: ClientCertRequest): KeyChainAliasCallback {
-        return KeyChainAliasCallback { alias ->
-            if (alias != null) {
-                ioScope.launch {
-                    // Load the key and the chain
-                    keyChainRepository.load(context, alias)
-
-                    key = keyChainRepository.getPrivateKey()
-                    chain = keyChainRepository.getCertificateChain()
-
-                    // If we got the key and the cert
-                    if (key == null || chain == null) {
-                        // Either the user didn't choose a key or no key was available
-                        hasUserDeniedAccess = true
-                    }
-
+            SafeKeyChainAliasCallback(keyChainRepository, activity.applicationContext) { key, chain ->
+                if (key == null || chain == null) {
+                    hasUserDeniedAccess = true
+                    request.ignore()
+                } else {
                     checkChainValidity()
+                    this.key = key
+                    this.chain = chain
                     request.proceed(key, chain)
                 }
-            } else {
-                request.proceed(key, chain)
-            }
-        }
+            },
+            request.keyTypes,
+            request.principals,
+            request.host,
+            request.port,
+            null,
+        )
     }
 
     private fun checkChainValidity() {
@@ -130,6 +111,42 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
             } catch (ex: CertificateException) {
                 isCertificateChainValid = false
             }
+        }
+    }
+}
+
+/**
+ * Addresses a potential memory leak with [KeyChain.choosePrivateKeyAlias].
+ *
+ * [KeyChain.choosePrivateKeyAlias] holds a strong reference to its callback even after
+ * invocation. To prevent this callback from leaking its capturing context (e.g., a WebView),
+ * this wrapper stores the actual result consumer ([onResult]) in a [WeakReference].
+ *
+ * If the consumer (e.g., WebView) is destroyed before the user selects a key,
+ * the [WeakReference] will allow it to be garbage collected, and the result will not be
+ * delivered to the (now-gone) consumer. The user's selection is intended to be
+ * handled independently by [KeyChainRepository.load] within its coroutine scope,
+ * ensuring the choice is persisted even if the initial UI component is gone.
+ */
+private class SafeKeyChainAliasCallback(
+    private var keyChainRepository: KeyChainRepository,
+    context: Context,
+    onResult: (key: PrivateKey?, chain: Array<X509Certificate>?) -> Unit,
+) : KeyChainAliasCallback {
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
+    private val context = context.applicationContext
+    private val onResult = WeakReference(onResult)
+
+    override fun alias(alias: String?) {
+        if (alias != null) {
+            ioScope.launch {
+                keyChainRepository.load(context, alias)
+                val key = keyChainRepository.getPrivateKey()
+                val chain = keyChainRepository.getCertificateChain()
+                onResult.get()?.invoke(key, chain)
+            }
+        } else {
+            onResult.get()?.invoke(null, null)
         }
     }
 }
