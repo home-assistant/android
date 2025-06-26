@@ -44,6 +44,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.St
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.UnknownTypeSocketResponse
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import java.io.IOException
@@ -56,6 +57,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -326,6 +328,7 @@ internal class WebSocketCoreImpl(
         Timber.d("Websocket: onOpen")
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     override fun onMessage(webSocket: WebSocket, text: String) {
         Timber.d("Websocket: onMessage (${if (BuildConfig.DEBUG) "text: $text" else "text"})")
         val jsonElement = kotlinJsonMapper.decodeFromString<JsonElement>(text)
@@ -338,7 +341,7 @@ internal class WebSocketCoreImpl(
         // Send messages to the queue to ensure they are handled in order and don't block the function
         messages.forEach { message ->
             Timber.d("Message id ${message.maybeId()} received")
-            val success = messageQueue.trySend(
+            val result = messageQueue.trySend(
                 wsScope.launch(start = CoroutineStart.LAZY) {
                     when (message) {
                         is AuthRequiredSocketResponse -> Timber.d("Auth Requested")
@@ -349,7 +352,14 @@ internal class WebSocketCoreImpl(
                     }
                 },
             )
-            if (!success.isSuccess) Timber.w("Message id ${message.maybeId()} not being processed")
+
+            FailFast.failWhen(!result.isSuccess) {
+                "Failed to process message (ID: ${message.maybeId()}). " +
+                    "IsFailure? ${result.isFailure}. " +
+                    "Is wsScope active? ${wsScope.isActive}. " +
+                    "Queue status: isClosedForSend = ${messageQueue.isClosedForSend}. " +
+                    "Exception: ${result.exceptionOrNull()}"
+            }
         }
     }
 
