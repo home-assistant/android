@@ -85,7 +85,8 @@ class SettingsPresenterImpl @Inject constructor(
             }
             "enable_ha_launcher" -> {
                 val componentSetting = view.getPackageManager()?.getComponentEnabledSetting(launcherAliasComponent)
-                componentSetting != null && componentSetting != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                // By default it should be disabled and only shown when the user enabled it
+                componentSetting != null && componentSetting == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
             }
             else -> throw IllegalArgumentException("No boolean found by this key: $key")
         }
