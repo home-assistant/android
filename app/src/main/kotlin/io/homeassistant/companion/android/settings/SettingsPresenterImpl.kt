@@ -64,6 +64,11 @@ class SettingsPresenterImpl @Inject constructor(
         "io.homeassistant.companion.android.assist.VoiceCommandIntentActivity",
     )
 
+    private val launcherAliasComponent = ComponentName(
+        BuildConfig.APPLICATION_ID,
+        "io.homeassistant.companion.android.launch.LauncherAlias",
+    )
+
     private var suggestionFlow = MutableStateFlow<SettingsHomeSuggestion?>(null)
 
     override fun getBoolean(key: String, defValue: Boolean): Boolean = runBlocking {
@@ -76,6 +81,10 @@ class SettingsPresenterImpl @Inject constructor(
             "always_show_first_view_on_app_start" -> prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()
             "assist_voice_command_intent" -> {
                 val componentSetting = view.getPackageManager()?.getComponentEnabledSetting(voiceCommandAppComponent)
+                componentSetting != null && componentSetting != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            }
+            "enable_ha_launcher" -> {
+                val componentSetting = view.getPackageManager()?.getComponentEnabledSetting(launcherAliasComponent)
                 componentSetting != null && componentSetting != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
             }
             else -> throw IllegalArgumentException("No boolean found by this key: $key")
@@ -97,6 +106,7 @@ class SettingsPresenterImpl @Inject constructor(
                         if (value) PackageManager.COMPONENT_ENABLED_STATE_DEFAULT else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
                         PackageManager.DONT_KILL_APP,
                     )
+                "enable_ha_launcher" -> enableLauncherMode(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -294,5 +304,13 @@ class SettingsPresenterImpl @Inject constructor(
         } else if (filteredSuggestions.none { it.id == suggestionFlow.value?.id }) {
             suggestionFlow.emit(null)
         }
+    }
+
+    private fun enableLauncherMode(enable: Boolean) {
+        view.getPackageManager()?.setComponentEnabledSetting(
+            launcherAliasComponent,
+            if (enable) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            if (enable) PackageManager.DONT_KILL_APP else 0,
+        )
     }
 }

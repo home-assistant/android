@@ -359,6 +359,8 @@ class SettingsFragment(
                 return@setOnPreferenceClickListener true
             }
         }
+
+        setupLauncherPrefs()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -538,6 +540,39 @@ class SettingsFragment(
                 ?: false
     }
 
+    private fun getDefaultLauncherInfo(): String {
+        val intent = Intent(Intent.ACTION_MAIN)
+            .addCategory(Intent.CATEGORY_HOME)
+
+        getPackageManager()?.let { packageManager ->
+            packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)?.let {
+                val packageName = it.activityInfo.packageName
+                return packageManager.getApplicationLabel(packageManager.getApplicationInfo(packageName, 0)).toString()
+            }
+        }
+
+        return getString(commonR.string.unknown_launcher_label)
+    }
+
+    private fun setupLauncherPrefs() {
+        val launcherSwitchPref = findPreference<SwitchPreference>("enable_ha_launcher")
+        val launcherPref = findPreference<Preference>("set_launcher_app")
+
+        launcherSwitchPref?.setOnPreferenceClickListener {
+            launcherPref?.isVisible = launcherSwitchPref.isChecked
+            true
+        }
+
+        launcherPref?.apply {
+            isVisible = launcherSwitchPref?.isChecked ?: false
+            summary = getString(commonR.string.default_launcher_prompt_def, getDefaultLauncherInfo())
+            setOnPreferenceClickListener {
+                startActivity(Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                true
+            }
+        }
+    }
+
     override fun onAddServerResult(success: Boolean, serverId: Int?) {
         view?.let {
             snackbar = Snackbar.make(
@@ -569,6 +604,7 @@ class SettingsFragment(
         super.onResume()
         activity?.title = getString(commonR.string.companion_app)
         context?.let { presenter.updateSuggestions(it) }
+        findPreference<Preference>("set_launcher_app")?.summary = getString(commonR.string.default_launcher_prompt_def, getDefaultLauncherInfo())
     }
 
     override fun onDestroy() {
