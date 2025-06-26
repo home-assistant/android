@@ -74,6 +74,8 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
                         selectClientCert(activity, request)
                     }
                 }
+            } else {
+                request.ignore()
             }
         }
     }
