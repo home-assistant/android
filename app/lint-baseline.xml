@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.10.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.10.0)" variant="all" version="8.10.0">
+<issues format="6" by="lint 8.10.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.10.1)" variant="all" version="8.10.1">
 
     <issue
         id="MissingPermission"
@@ -74,7 +74,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="108"
+            line="109"
             column="17"/>
     </issue>
 
@@ -85,7 +85,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="995"
+            line="994"
             column="17"/>
     </issue>
 
@@ -118,7 +118,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="95"
+            line="96"
             column="26"/>
     </issue>
 
@@ -129,7 +129,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="96"
+            line="97"
             column="25"/>
     </issue>
 
@@ -475,145 +475,6 @@
     </issue>
 
     <issue
-        id="PrivateResource"
-        message="Overriding `@layout/exo_player_control_view` which is marked as private in androidx.media3:media3-ui:1.7.1. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name.">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@color/exo_black_opacity_60` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:background=&quot;@color/exo_black_opacity_60&quot;/>"
-        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="26"
-            column="29"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_height` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:layout_height=&quot;@dimen/exo_styled_bottom_bar_height&quot;"
-        errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="30"
-            column="32"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_margin_top` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:layout_marginTop=&quot;@dimen/exo_styled_bottom_bar_margin_top&quot;"
-        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="31"
-            column="35"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@color/exo_bottom_bar_background` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:background=&quot;@color/exo_bottom_bar_background&quot;"
-        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="33"
-            column="29"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="            android:paddingStart=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
-        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="39"
-            column="35"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="            android:paddingEnd=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
-        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="40"
-            column="33"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="            android:paddingLeft=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
-        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="41"
-            column="34"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="            android:paddingRight=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
-        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="42"
-            column="35"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_progress_layout_height` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:layout_height=&quot;@dimen/exo_styled_progress_layout_height&quot;"
-        errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="98"
-            column="32"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_progress_margin_bottom` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:layout_marginBottom=&quot;@dimen/exo_styled_progress_margin_bottom&quot;/>"
-        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="100"
-            column="38"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_minimal_controls_margin_bottom` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:layout_marginBottom=&quot;@dimen/exo_styled_minimal_controls_margin_bottom&quot;"
-        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="106"
-            column="38"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_controls_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:padding=&quot;@dimen/exo_styled_controls_padding&quot;"
-        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="123"
-            column="26"/>
-    </issue>
-
-    <issue
         id="DiscouragedApi"
         message="Use of this function is discouraged because resource reflection makes it harder to perform build optimizations and compile-time verification of code. It is much more efficient to retrieve resources by identifier (e.g. `R.foo.bar`) than by name (e.g. `getIdentifier(&quot;bar&quot;, &quot;foo&quot;, null)`)."
         errorLine1="        val stringId = app.resources.getIdentifier(identifierString, &quot;string&quot;, app.packageName)"
@@ -796,7 +657,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="478"
+            line="485"
             column="17"/>
     </issue>
 
@@ -807,7 +668,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="478"
+            line="485"
             column="17"/>
     </issue>
 
@@ -829,7 +690,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="33"
+            line="34"
             column="9"/>
     </issue>
 
@@ -840,7 +701,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="35"
+            line="36"
             column="9"/>
     </issue>
 
@@ -1011,17 +872,6 @@
 
     <issue
         id="UnusedResources"
-        message="The resource `R.layout.exo_player_control_view` appears to be unused"
-        errorLine1="&lt;merge xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
-        errorLine2="^">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="21"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
         message="The resource `R.drawable.ic_baseline_info_24` appears to be unused"
         errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
         errorLine2="^">
@@ -1105,17 +955,6 @@
         <location
             file="src/main/res/values/styles.xml"
             line="61"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.style.ExoStyledControls_Button_Bottom_HaMute` appears to be unused"
-        errorLine1="    &lt;style name=&quot;ExoStyledControls.Button.Bottom.HaMute&quot;>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/styles.xml"
-            line="135"
             column="12"/>
     </issue>
 
@@ -1221,6 +1060,39 @@
     </issue>
 
     <issue
+        id="AvoidAnySerializer"
+        message="Prefer polymorphic serializer over AnySerializer."
+        errorLine1="                        MapAnySerializer,"
+        errorLine2="                        ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/widgets/button/ButtonWidget.kt"
+            line="299"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="AvoidAnySerializer"
+        message="Prefer polymorphic serializer over AnySerializer."
+        errorLine1="                        val dbMap: Map&lt;String, Any?> = kotlinJsonMapper.decodeFromString(MapAnySerializer, buttonWidget.serviceData)"
+        errorLine2="                                                                                         ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
+            line="150"
+            column="90"/>
+    </issue>
+
+    <issue
+        id="AvoidAnySerializer"
+        message="Prefer polymorphic serializer over AnySerializer."
+        errorLine1="                kotlinJsonMapper.encodeToString(MapAnySerializer, actionDataMap)"
+        errorLine2="                                                ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
+            line="464"
+            column="49"/>
+    </issue>
+
+    <issue
         id="ReportShortcutUsage"
         message="Calling this method indicates use of dynamic shortcuts, but there are no calls to methods that track shortcut usage, such as `pushDynamicShortcut` or `reportShortcutUsed`. Calling these methods is recommended, as they track shortcut usage and allow launchers to adjust which shortcuts appear based on activation history. Please see https://developer.android.com/develop/ui/views/launch/shortcuts/managing-shortcuts#track-usage"
         errorLine1="            shortcutManager.addDynamicShortcuts(listOf(shortcut))"
@@ -1229,17 +1101,6 @@
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
             line="158"
             column="13"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="        val code = Uri.parse(url).getQueryParameter(&quot;code&quot;)"
-        errorLine2="                   ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/authentication/AuthenticationFragment.kt"
-            line="194"
-            column="20"/>
     </issue>
 
     <issue
@@ -1282,7 +1143,7 @@
         errorLine2="                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/developer/location/views/LocationTrackingView.kt"
-            line="235"
+            line="238"
             column="45"/>
     </issue>
 
@@ -1304,7 +1165,7 @@
         errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1454"
+            line="1453"
             column="16"/>
     </issue>
 
@@ -1315,7 +1176,7 @@
         errorLine2="                                ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1584"
+            line="1583"
             column="33"/>
     </issue>
 
@@ -1326,7 +1187,7 @@
         errorLine2="                                ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1584"
+            line="1583"
             column="33"/>
     </issue>
 
@@ -1337,7 +1198,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1619"
+            line="1618"
             column="41"/>
     </issue>
 
@@ -1348,7 +1209,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1619"
+            line="1618"
             column="41"/>
     </issue>
 
@@ -1359,7 +1220,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1659"
+            line="1658"
             column="13"/>
     </issue>
 
@@ -1370,7 +1231,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1675"
+            line="1674"
             column="13"/>
     </issue>
 
@@ -1381,7 +1242,7 @@
         errorLine2="                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1684"
+            line="1683"
             column="23"/>
     </issue>
 
@@ -1392,7 +1253,7 @@
         errorLine2="                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1684"
+            line="1683"
             column="23"/>
     </issue>
 
@@ -1403,7 +1264,7 @@
         errorLine2="                                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1802"
+            line="1801"
             column="68"/>
     </issue>
 
@@ -1414,7 +1275,7 @@
         errorLine2="                                    ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1871"
+            line="1870"
             column="37"/>
     </issue>
 
@@ -1425,7 +1286,7 @@
         errorLine2="                                    ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1871"
+            line="1870"
             column="37"/>
     </issue>
 
@@ -1458,7 +1319,7 @@
         errorLine2="                                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcNavigationView.kt"
-            line="86"
+            line="96"
             column="65"/>
     </issue>
 
@@ -1469,7 +1330,7 @@
         errorLine2="                                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="119"
+            line="121"
             column="104"/>
     </issue>
 
@@ -1480,7 +1341,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="308"
+            line="310"
             column="52"/>
     </issue>
 
@@ -1491,7 +1352,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="308"
+            line="310"
             column="52"/>
     </issue>
 
@@ -1502,7 +1363,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="329"
+            line="331"
             column="52"/>
     </issue>
 
@@ -1513,7 +1374,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="329"
+            line="331"
             column="52"/>
     </issue>
 
@@ -1524,7 +1385,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="511"
+            line="518"
             column="21"/>
     </issue>
 
@@ -1535,7 +1396,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/settings/wear/SettingsWearActivity.kt"
-            line="198"
+            line="203"
             column="22"/>
     </issue>
 
@@ -1546,7 +1407,7 @@
         errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/settings/wear/views/SettingsWearHomeView.kt"
-            line="121"
+            line="125"
             column="61"/>
     </issue>
 
@@ -1557,7 +1418,7 @@
         errorLine2="                                                        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="448"
+            line="453"
             column="57"/>
     </issue>
 
@@ -1568,7 +1429,7 @@
         errorLine2="                                                        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="448"
+            line="453"
             column="57"/>
     </issue>
 
@@ -1579,7 +1440,7 @@
         errorLine2="                                                        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="448"
+            line="453"
             column="57"/>
     </issue>
 
@@ -1590,7 +1451,7 @@
         errorLine2="                                                        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="448"
+            line="453"
             column="57"/>
     </issue>
 
@@ -1601,7 +1462,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="467"
+            line="472"
             column="41"/>
     </issue>
 
@@ -1612,7 +1473,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="467"
+            line="472"
             column="41"/>
     </issue>
 
@@ -1623,7 +1484,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="467"
+            line="472"
             column="41"/>
     </issue>
 
@@ -1634,7 +1495,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="467"
+            line="472"
             column="41"/>
     </issue>
 
@@ -1645,7 +1506,7 @@
         errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="969"
+            line="966"
             column="19"/>
     </issue>
 
@@ -1656,7 +1517,7 @@
         errorLine2="                                                               ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1249"
+            line="1189"
             column="64"/>
     </issue>
 
@@ -1667,7 +1528,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1400"
+            line="1340"
             column="31"/>
     </issue>
 
@@ -1678,7 +1539,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1400"
+            line="1340"
             column="31"/>
     </issue>
 
@@ -1689,7 +1550,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1422"
+            line="1362"
             column="21"/>
     </issue>
 
@@ -1700,7 +1561,7 @@
         errorLine2="                  ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1575"
+            line="1515"
             column="19"/>
     </issue>
 
@@ -1711,7 +1572,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1725"
+            line="1675"
             column="25"/>
     </issue>
 
@@ -1751,72 +1612,6 @@
     <issue
         id="ContentDescription"
         message="Missing `contentDescription` attribute on image"
-        errorLine1="            &lt;ImageButton android:id=&quot;@+id/exo_ha_mute&quot;"
-        errorLine2="             ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="65"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="            &lt;ImageButton android:id=&quot;@id/exo_fullscreen&quot;"
-        errorLine2="             ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="68"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="            &lt;ImageButton android:id=&quot;@id/exo_overflow_show&quot;"
-        errorLine2="             ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="71"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="                &lt;ImageButton android:id=&quot;@id/exo_overflow_hide&quot;"
-        errorLine2="                 ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="87"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageButton android:id=&quot;@id/exo_minimal_fullscreen&quot;"
-        errorLine2="         ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="111"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageButton android:id=&quot;@id/exo_play_pause&quot;"
-        errorLine2="         ~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/exo_player_control_view.xml"
-            line="129"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
         errorLine1="&lt;ImageView xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
         errorLine2=" ~~~~~~~~~">
         <location
@@ -1843,7 +1638,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/entity/EntityWidgetConfigureActivity.kt"
-            line="139"
+            line="141"
             column="38"/>
     </issue>
 
@@ -1854,7 +1649,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/template/TemplateWidgetConfigureActivity.kt"
-            line="95"
+            line="97"
             column="38"/>
     </issue>
 

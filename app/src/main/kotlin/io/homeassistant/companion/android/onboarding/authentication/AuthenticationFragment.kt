@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.onboarding.authentication
 
 import android.annotation.SuppressLint
-import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
@@ -18,7 +17,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import dagger.hilt.android.AndroidEntryPoint
@@ -32,6 +31,7 @@ import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegr
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import javax.inject.Named
@@ -66,15 +66,19 @@ class AuthenticationFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
-                    AndroidView({
-                        WebView(requireContext()).apply {
+                    HAWebView(
+                        configure = {
                             themesManager.setThemeForWebView(requireContext(), settings)
                             settings.javaScriptEnabled = true
                             settings.domStorageEnabled = true
-                            settings.userAgentString = settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
+                            settings.userAgentString =
+                                settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
                             webViewClient = object : TLSWebViewClient(keyChainRepository) {
                                 @Deprecated("Deprecated in Java")
-                                override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
+                                override fun shouldOverrideUrlLoading(
+                                    view: WebView?,
+                                    url: String,
+                                ): Boolean {
                                     return onRedirect(url)
                                 }
 
@@ -96,7 +100,7 @@ class AuthenticationFragment : Fragment() {
                                                 if (error?.description.isNullOrBlank()) {
                                                     commonR.string.no_description
                                                 } else {
-                                                    error?.description
+                                                    error.description
                                                 },
                                             ),
                                             null,
@@ -135,7 +139,7 @@ class AuthenticationFragment : Fragment() {
                                                     if (errorResponse?.reasonPhrase.isNullOrBlank()) {
                                                         requireContext().getString(commonR.string.no_description)
                                                     } else {
-                                                        errorResponse?.reasonPhrase
+                                                        errorResponse.reasonPhrase
                                                     },
                                                 ),
                                                 null,
@@ -157,8 +161,8 @@ class AuthenticationFragment : Fragment() {
                             }
                             authUrl = buildAuthUrl(viewModel.manualUrl.value)
                             loadUrl(authUrl!!)
-                        }
-                    })
+                        },
+                    )
                 }
             }
         }
@@ -191,7 +195,7 @@ class AuthenticationFragment : Fragment() {
     }
 
     private fun onRedirect(url: String): Boolean {
-        val code = Uri.parse(url).getQueryParameter("code")
+        val code = url.toUri().getQueryParameter("code")
         return if (url.startsWith(AUTH_CALLBACK) && !code.isNullOrBlank()) {
             viewModel.registerAuthCode(code)
             parentFragmentManager
