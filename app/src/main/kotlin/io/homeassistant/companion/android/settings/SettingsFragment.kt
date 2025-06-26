@@ -557,11 +557,10 @@ class SettingsFragment(
     }
 
     private fun setupLauncherPrefs() {
-        val launcherCategory = findPreference<PreferenceCategory>("launcher_category")
         val launcherSwitchPref = findPreference<SwitchPreference>("enable_ha_launcher")
         val launcherPref = findPreference<Preference>("set_launcher_app")
 
-        launcherCategory?.isVisible = true
+        findPreference<PreferenceCategory>("launcher_category")?.isVisible = true
 
         launcherSwitchPref?.setOnPreferenceClickListener {
             launcherPref?.isVisible = launcherSwitchPref.isChecked
