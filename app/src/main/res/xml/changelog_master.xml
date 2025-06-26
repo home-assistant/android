@@ -6,7 +6,7 @@
         <change>Viewing more info for entities from device controls, notifications, shortcuts and tiles is now more responsive</change>
         <change>Support invitation links from my.home-assistant.io</change>
         <change>Redirect links from my.home-assistant.io directly open the app without confirmation</change>
-        <change>The app can now be use as a launcher</change>
+        <change>The app can now be used as a launcher</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2025.6.6 - Wear" versioncode="2">
