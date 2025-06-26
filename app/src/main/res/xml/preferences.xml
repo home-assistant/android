@@ -186,7 +186,9 @@
             android:summary="@string/manage_widgets_summary" />
     </PreferenceCategory>
     <PreferenceCategory
-        android:title="@string/launcher">
+        android:key="launcher_category"
+        android:title="@string/launcher"
+        app:isPreferenceVisible="false">
         <SwitchPreference
             android:key="enable_ha_launcher"
             android:icon="@drawable/ic_android_debug_bridge"

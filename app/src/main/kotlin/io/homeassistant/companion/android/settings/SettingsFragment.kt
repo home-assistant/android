@@ -360,7 +360,9 @@ class SettingsFragment(
             }
         }
 
-        setupLauncherPrefs()
+        if (!isAutomotive) {
+            setupLauncherPrefs()
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -557,6 +559,8 @@ class SettingsFragment(
     private fun setupLauncherPrefs() {
         val launcherSwitchPref = findPreference<SwitchPreference>("enable_ha_launcher")
         val launcherPref = findPreference<Preference>("set_launcher_app")
+
+        findPreference<PreferenceCategory>("launcher_category")?.isVisible = true
 
         launcherSwitchPref?.setOnPreferenceClickListener {
             launcherPref?.isVisible = launcherSwitchPref.isChecked
