@@ -12,6 +12,7 @@ androidSdk-automotive-min = "29"
 androidSdk-wear-min = "26"
 androidSdk-wear-target = "33"
 androidTools = "31.10.1"
+androidxHiltNavigationCompose = "1.2.0"
 androidxTestCore = "1.6.1"
 androidxTestExt = "1.2.1"
 androidxTestRules = "1.6.1"
@@ -123,6 +124,7 @@ androidx-glance-appwidget-testing = { module = "androidx.glance:glance-appwidget
 androidx-health-connect-client = { module = "androidx.health.connect:connect-client", version.ref = "connectClient" }
 androidx-health-services-client = { module = "androidx.health:health-services-client", version.ref = "healthServicesClient" }
 androidx-media = { module = "androidx.media:media", version.ref = "media" }
+androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "androidxHiltNavigationCompose" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "room" }
@@ -152,6 +154,7 @@ compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-
 compose-animation = { module = "androidx.compose.animation:animation" }
 compose-foundation = { module = "androidx.compose.foundation:foundation" }
 compose-material = { module = "androidx.compose.material:material" }
+compose-material3 = { group = "androidx.compose.material3", name = "material3-android" }
 compose-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
 compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 compose-runtime = { module = "androidx.compose.runtime:runtime" }

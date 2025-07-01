@@ -1,0 +1,8 @@
+<resources>
+    <string name="home_assistant_branding_icon_content_description">Home Assistant branding icon</string>
+    <string name="searching_home_network">Searching on\nhome network</string>
+    <string name="welcome_home_assistant_title">Home Assistant\nCompanion app</string>
+    <string name="welcome_details">Allows you to access your Home Assistant installation on the go. It runs locally in your home via a device like the Home Assistant Green or Raspberry Pi.</string>
+    <string name="welcome_connect_to_ha">Connect to my Home Assistant server</string>
+    <string name="welcome_learn_more">Learn more</string>
+</resources>
