@@ -60,6 +60,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.consumeEach
@@ -130,7 +131,7 @@ internal class WebSocketCoreImpl(
     private val okHttpClient: OkHttpClient,
     private val serverManager: ServerManager,
     private val serverId: Int,
-    private val wsScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job() + CoroutineExceptionHandler { ctx, err -> Timber.e(err, "Uncaught exception in WebSocketCoreImpl") }),
+    private val wsScope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + CoroutineExceptionHandler { ctx, err -> Timber.e(err, "Uncaught exception in WebSocketCoreImpl") }),
     // We need a dedicated scope in test to control job that are in background
     private val backgroundScope: CoroutineScope = wsScope,
 ) : WebSocketCore, WebSocketListener() {
