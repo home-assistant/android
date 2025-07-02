@@ -141,7 +141,7 @@ private fun TopBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun OneServerFound(serverDiscovered: ServerDiscovered, onDismiss: () -> Unit, onConnectClick: (serverUrl: URL) -> Unit) {
-    val bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = true, initialValue = SheetValue.Expanded)
+    val bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = false, initialValue = SheetValue.Expanded)
 
     ModalBottomSheet(
         sheetState = bottomSheetState,
@@ -194,7 +194,7 @@ private fun ScreenContent(contentPadding: PaddingValues, onManualSetupClick: () 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = contentPadding.calculateTopPadding()) // Apply only top padding
+            .padding(contentPadding)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

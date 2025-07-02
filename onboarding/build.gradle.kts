@@ -41,4 +41,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
 
     implementation(libs.androidx.hilt.navigation.compose)
+
+    lintChecks(libs.compose.lint.checks)
 }

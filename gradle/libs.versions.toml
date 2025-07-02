@@ -24,6 +24,7 @@ car-versions = "1.4.0"
 changeLog = "3.7.1"
 community-material-typeface = "7.0.96.1-kotlin"
 compose-bom = "2025.06.01"
+composeLintChecks = "1.4.2"
 connectClient = "1.1.0-rc02"
 constraintlayout = "2.2.1"
 coreKtx = "1.16.0"
@@ -153,6 +154,7 @@ community-material-typeface = { module = "com.mikepenz:community-material-typefa
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
 compose-animation = { module = "androidx.compose.animation:animation" }
 compose-foundation = { module = "androidx.compose.foundation:foundation" }
+compose-lint-checks = { module = "com.slack.lint.compose:compose-lint-checks", version.ref = "composeLintChecks" }
 compose-material = { module = "androidx.compose.material:material" }
 compose-material3 = { group = "androidx.compose.material3", name = "material3-android" }
 compose-material-icons-core = { module = "androidx.compose.material:material-icons-core" }

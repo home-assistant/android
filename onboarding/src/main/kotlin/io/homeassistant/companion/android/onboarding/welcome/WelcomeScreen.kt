@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.onboarding.welcome
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -42,14 +43,14 @@ fun WelcomeScreen(
     onLearnMoreClick: () -> Unit = {},
     viewModel: WelcomeViewModel = hiltViewModel(),
 ) {
-    val paddingModifier = Modifier.padding(horizontal = HASpacing.M, vertical = HASpacing.S)
-
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .windowInsetsPadding(WindowInsets.safeDrawing),
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .padding(horizontal = HASpacing.M),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(HASpacing.XL),
     ) {
         // We use spacer to position the image where we want when there is remaining space in the column using percentage
         val positionPercentage = 0.2f
@@ -59,9 +60,9 @@ fun WelcomeScreen(
             imageVector = ImageVector.vectorResource(R.drawable.ic_home_assistant_branding),
             contentDescription = stringResource(R.string.home_assistant_branding_icon_content_description),
             // TODO should be in a variable
-            modifier = paddingModifier.size(120.dp),
+            modifier = Modifier.size(120.dp),
         )
-        WelcomeText(paddingModifier)
+        WelcomeText()
 
         Spacer(modifier = Modifier.weight(1f - positionPercentage))
 
@@ -70,28 +71,24 @@ fun WelcomeScreen(
 }
 
 @Composable
-private fun ColumnScope.WelcomeText(modifier: Modifier) {
+private fun ColumnScope.WelcomeText() {
     Text(
         text = stringResource(R.string.welcome_home_assistant_title),
         style = HATextStyle.Headline,
-        modifier = modifier,
     )
 
     Text(
         text = stringResource(R.string.welcome_details),
         style = HATextStyle.Body,
-        modifier = modifier,
     )
 }
 
 @Composable
-private fun BottomButtons(
+private fun ColumnScope.BottomButtons(
     onConnectClick: () -> Unit,
     onLearnMoreClick: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    val buttonModifier = modifier
-        .padding(horizontal = HASpacing.M)
+    val buttonModifier = Modifier
         .widthIn(max = MaxButtonWidth)
         .fillMaxWidth()
 
