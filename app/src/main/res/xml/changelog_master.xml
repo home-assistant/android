@@ -1,20 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2025.6.6 - Main" versioncode="3">
-        <change>The app now uses all available space on the screen (edge-to-edge support)</change>
-        <change>Viewing more info for entities from device controls, notifications, shortcuts and tiles is now more responsive</change>
-        <change>Support invitation links from my.home-assistant.io</change>
-        <change>Redirect links from my.home-assistant.io directly open the app without confirmation</change>
-        <change>The app can now be used as a home app</change>
+    <release version="2025.7.1 - Main" versioncode="3">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2025.6.6 - Wear" versioncode="2">
+    <release version="2025.7.1 - Wear" versioncode="2">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2025.6.6 - Automotive" versioncode="1">
-        <change>Support invitation links from my.home-assistant.io</change>
-        <change>Redirect links from my.home-assistant.io directly open the app without confirmation</change>
+    <release version="2025.7.1 - Automotive" versioncode="1">
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
