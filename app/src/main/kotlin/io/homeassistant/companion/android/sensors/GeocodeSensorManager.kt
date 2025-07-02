@@ -19,6 +19,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 import timber.log.Timber
@@ -30,6 +31,7 @@ class GeocodeSensorManager : SensorManager {
         const val SETTINGS_INCLUDE_LOCATION = "geocode_include_location_updates"
         private const val DEFAULT_MINIMUM_ACCURACY = 200
         val LOCATION_OUTDATED_THRESHOLD = 5.minutes
+        private val GPS_ROLLOVER_WEEKS1024 = (7 * 1024).days
         val geocodedLocation = SensorManager.BasicSensor(
             "geocoded_location",
             "sensor",
@@ -98,9 +100,14 @@ class GeocodeSensorManager : SensorManager {
             return
         }
 
-        if (Clock.System.now() - location.instant() > LOCATION_OUTDATED_THRESHOLD) {
-            Timber.w("Skipping geocoded update due to old timestamp ${location.instant()}")
-            return
+        var timeDifference = Clock.System.now() - location.instant()
+        if (timeDifference > LOCATION_OUTDATED_THRESHOLD) {
+            if ((timeDifference >= GPS_ROLLOVER_WEEKS1024) && (timeDifference < GPS_ROLLOVER_WEEKS1024 + LOCATION_OUTDATED_THRESHOLD)) {
+                Timber.i("Timestamp OK. GPS week 1024 rollover bug")
+            } else {
+                Timber.w("Skipping geocoded update due to old timestamp ${location.instant()}")
+                return
+            }
         }
 
         val prettyAddress = address?.getAddressLine(0)
