@@ -31,7 +31,7 @@ class GeocodeSensorManager : SensorManager {
         private const val SETTING_ACCURACY = "geocode_minimum_accuracy"
         const val SETTINGS_INCLUDE_LOCATION = "geocode_include_location_updates"
         private const val DEFAULT_MINIMUM_ACCURACY = 200
-        private val LOCATION_OUTDATED_THRESHOLD = 5.minutes
+        val LOCATION_OUTDATED_THRESHOLD = 5.minutes
 
         /**
          * Represents the duration of 1024 weeks, used to detect and correct the GPS week rollover bug.
