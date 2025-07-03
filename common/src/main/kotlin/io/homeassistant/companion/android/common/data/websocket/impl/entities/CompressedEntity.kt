@@ -62,9 +62,9 @@ data class CompressedEntityState(
     fun toEntity(entityId: String): Entity {
         return Entity(
             entityId = entityId,
-            state = state!!,
+            state = checkNotNull(state) { "State must not be null" },
             attributes = attributes,
-            lastChanged = LocalDateTime.ofEpochSecond(round(lastChanged!!).toLong(), 0, ZoneOffset.UTC),
+            lastChanged = LocalDateTime.ofEpochSecond(round(checkNotNull(lastChanged) { "lastChanged must not be null" }).toLong(), 0, ZoneOffset.UTC),
             lastUpdated = LocalDateTime.ofEpochSecond(
                 if (lastUpdated != null) {
                     round(lastUpdated * 1000).toLong()
