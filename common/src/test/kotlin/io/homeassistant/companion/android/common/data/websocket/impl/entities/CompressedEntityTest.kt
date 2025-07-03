@@ -18,7 +18,7 @@ class CompressedEntityTest {
         val state = Random.nextInt().toString()
         val lastChanged = 42.0
         val lastUpdated = 41.1
-        val rawData = """{"s":"$state","lc":$lastChanged,"lu":$lastUpdated,}"""
+        val rawData = """{"s":"$state","lc":$lastChanged,"lu":$lastUpdated}"""
         assertEquals(CompressedEntityState(state = state, lastChanged = lastChanged, lastUpdated = lastUpdated), kotlinJsonMapper.decodeFromString<CompressedEntityState>(rawData))
     }
 
