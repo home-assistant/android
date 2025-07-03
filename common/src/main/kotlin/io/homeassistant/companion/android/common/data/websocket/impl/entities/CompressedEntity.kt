@@ -49,7 +49,7 @@ data class CompressedEntityState(
     val state: String? = null,
     @Serializable(with = MapAnySerializer::class)
     @JsonNames("a")
-    val attributes: Map<String, @Polymorphic Any?>,
+    val attributes: Map<String, @Polymorphic Any?> = emptyMap(),
     @JsonNames("lc")
     val lastChanged: Double? = null,
     @JsonNames("lu")
