@@ -50,6 +50,13 @@ open class HomeAssistantApplication : Application() {
                     .penaltyDeath()
                     .build(),
             )
+
+            StrictMode.setThreadPolicy(
+                StrictMode.ThreadPolicy.Builder()
+                    .detectAll()
+                    .penaltyLog()
+                    .build(),
+            )
         }
 
         // We should initialize the logger as early as possible in the lifecycle of the application
