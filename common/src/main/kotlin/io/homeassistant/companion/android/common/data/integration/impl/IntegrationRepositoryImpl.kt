@@ -46,6 +46,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -201,12 +203,14 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         var causeException: Exception? = null
         for (it in server.connection.getApiUrls()) {
             try {
-                return integrationService.getTemplate(
+                val templateResult = integrationService.getTemplate(
                     it.toHttpUrlOrNull()!!,
                     RenderTemplateIntegrationRequest(
                         mapOf("template" to Template(template, variables)),
                     ),
                 )["template"]
+                // We check if the result is a JsonPrimitive instead of a simple global toString to avoid rendering " around the string
+                return if (templateResult is JsonPrimitive) templateResult.contentOrNull else templateResult.toString()
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
