@@ -65,7 +65,10 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
     override fun onCreate() {
         super.onCreate()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && BuildConfig.DEBUG) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            BuildConfig.DEBUG &&
+            !BuildConfig.NO_STRICT_MODE
+        ) {
             StrictMode.setVmPolicy(
                 StrictMode.VmPolicy.Builder()
                     .detectIncorrectContextUse()
