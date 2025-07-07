@@ -39,7 +39,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.database.server.ServerConnectionInfo
+import io.homeassistant.companion.android.database.server.Server
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
 import kotlinx.coroutines.flow.Flow
@@ -132,7 +132,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration, allowReregistration: Boolean) {
         val request = RegisterDeviceIntegrationRequest(createUpdateRegistrationRequest(deviceRegistration))
-        server.connection.callWebhookOnUrls(request, onSuccess = { response ->
+        server.callWebhookOnUrls(request, onSuccess = { response ->
             // The server should return a body with the registration, but might return:
             // 200 with empty body for broken direct webhook
             if (response.code() == 200 && response.body()?.contentLength() == 0L) {
@@ -229,7 +229,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun updateLocation(updateLocation: UpdateLocation) {
         val updateLocationRequest = createUpdateLocation(updateLocation)
-        server.connection.callWebhookOnUrls(updateLocationRequest)
+        server.callWebhookOnUrls(updateLocationRequest)
     }
 
     override suspend fun callAction(
@@ -237,7 +237,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         action: String,
         actionData: Map<String, Any?>,
     ) {
-        server.connection.callWebhookOnUrls(
+        server.callWebhookOnUrls(
             CallServiceIntegrationRequest(
                 ActionRequest(
                     domain,
@@ -249,11 +249,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun scanTag(data: Map<String, String>) {
-        server.connection.callWebhookOnUrls(ScanTagIntegrationRequest(data))
+        server.callWebhookOnUrls(ScanTagIntegrationRequest(data))
     }
 
     override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>) {
-        server.connection.callWebhookOnUrls(
+        server.callWebhookOnUrls(
             FireEventIntegrationRequest(
                 FireEventRequest(
                     eventType,
@@ -614,7 +614,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         val integrationRequest = RegisterSensorIntegrationRequest(registrationData)
 
-        server.connection.callWebhookOnUrls(integrationRequest) { response ->
+        server.callWebhookOnUrls(integrationRequest) { response ->
             // If we created sensor or it already exists
             response.isSuccessful || response.code() == 409
         }
@@ -668,16 +668,16 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    private suspend fun ServerConnectionInfo.callWebhookOnUrls(
+    private suspend fun Server.callWebhookOnUrls(
         request: IntegrationRequest,
         onSuccess: suspend (response: Response<ResponseBody>) -> Unit = {},
         isValidResponse: (response: Response<ResponseBody>) -> Boolean = { response -> response.isSuccessful },
     ) {
         var firstCauseException: Exception? = null
-        val httpURLs = getApiUrls().mapNotNull { it.toHttpUrlOrNull() }
+        val httpURLs = connection.getApiUrls().mapNotNull { it.toHttpUrlOrNull() }
 
         if (httpURLs.isEmpty()) {
-            throw IntegrationException("No valid url can be found in server connection ${if (BuildConfig.DEBUG) getApiUrls() else ""}")
+            throw IntegrationException("No valid url can be found in server connection ${if (BuildConfig.DEBUG) connection.getApiUrls() else ""}")
         }
 
         httpURLs.forEach { url ->

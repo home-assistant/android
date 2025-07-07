@@ -173,7 +173,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
             ) {
                 revokeSession()
             }
-            throw AuthorizationException("Fail to refresh token", it.code(), it.errorBody())
+            throw AuthorizationException("Failed to refresh token", it.code(), it.errorBody())
         }
     }
 
