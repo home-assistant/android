@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.views
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -42,9 +41,12 @@ fun SettingsSubheader(
 
 @Preview
 @Composable
-fun PreviewSettingsSubheading() {
-    Column {
-        SettingsSubheader("Attributes")
-        SettingsSubheader("Health Connect sensors", paddingForIcon = true)
-    }
+fun PreviewSettingsSubheadingDefault() {
+    SettingsSubheader("Attributes")
+}
+
+@Preview
+@Composable
+fun PreviewSettingsSubheadingWithPadding() {
+    SettingsSubheader("Health Connect sensors", paddingForIcon = true)
 }
