@@ -11,6 +11,7 @@ import android.net.wifi.WifiManager
 import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
+import android.os.StrictMode
 import android.telephony.TelephonyManager
 import androidx.core.content.ContextCompat
 import coil3.ImageLoader
@@ -63,6 +64,29 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
 
     override fun onCreate() {
         super.onCreate()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            BuildConfig.DEBUG &&
+            !BuildConfig.NO_STRICT_MODE
+        ) {
+            StrictMode.setVmPolicy(
+                StrictMode.VmPolicy.Builder()
+                    .detectIncorrectContextUse()
+                    .detectUnsafeIntentLaunch()
+                    .detectLeakedRegistrationObjects()
+                    .penaltyLog()
+                    .penaltyDeath()
+                    .build(),
+            )
+
+            StrictMode.setThreadPolicy(
+                StrictMode.ThreadPolicy.Builder()
+                    .detectAll()
+                    .penaltyLog()
+                    .build(),
+            )
+        }
+
         // We should initialize the logger as early as possible in the lifecycle of the application
         Timber.plant(Timber.DebugTree())
 
