@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.common.util.HAGesture
 import io.homeassistant.companion.android.improv.ImprovRepository
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
@@ -316,8 +317,10 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun getGestureAction(direction: GestureDirection, pointerCount: Int): GestureAction =
-        prefsRepository.getGestureAction(direction, pointerCount)
+    override suspend fun getGestureAction(direction: GestureDirection, pointerCount: Int): GestureAction {
+        val gesture = HAGesture.fromSwipeListener(direction, pointerCount)
+        return gesture?.let { prefsRepository.getGestureAction(it) } ?: GestureAction.NONE
+    }
 
     override fun sessionTimeOut(): Int = runBlocking {
         serverManager.getServer(serverId)?.let {

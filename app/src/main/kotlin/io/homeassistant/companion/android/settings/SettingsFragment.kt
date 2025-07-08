@@ -36,6 +36,7 @@ import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
 import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
+import io.homeassistant.companion.android.settings.gestures.GesturesFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.notification.NotificationChannelFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
@@ -159,6 +160,14 @@ class SettingsFragment(
                 }
                 return@setOnPreferenceClickListener true
             }
+        }
+
+        findPreference<Preference>("gestures")?.setOnPreferenceClickListener {
+            parentFragmentManager.commit {
+                replace(R.id.content, GesturesFragment::class.java, null)
+                addToBackStack(getString(commonR.string.gestures))
+            }
+            return@setOnPreferenceClickListener true
         }
 
         findPreference<ListPreference>("page_zoom")?.let {

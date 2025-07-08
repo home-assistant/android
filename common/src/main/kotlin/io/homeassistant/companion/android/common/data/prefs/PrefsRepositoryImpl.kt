@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.common.data.prefs
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.util.GestureAction
-import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.common.util.HAGesture
 import javax.inject.Inject
 import javax.inject.Named
 import kotlinx.coroutines.runBlocking
@@ -263,24 +263,24 @@ class PrefsRepositoryImpl @Inject constructor(
         localStorage.putInt(PREF_IMPROV_PERMISSION_DISPLAYED, getImprovPermissionDisplayedCount() + 1)
     }
 
-    override suspend fun getGestureAction(direction: GestureDirection, pointers: Int): GestureAction {
-        val current = localStorage.getString("${PREF_GESTURE_ACTION_PREFIX}_${direction.name}_${pointers}")
+    override suspend fun getGestureAction(gesture: HAGesture): GestureAction {
+        val current = localStorage.getString("${PREF_GESTURE_ACTION_PREFIX}_${gesture.name}")
         val action = GestureAction.entries.firstOrNull { it.name == current }
         return when {
             // User preference
             action != null -> action
             // Defaults
-            pointers == 3 && direction == GestureDirection.UP -> GestureAction.SERVER_LIST
-            pointers == 3 && direction == GestureDirection.DOWN -> GestureAction.QUICKBAR_DEFAULT
-            pointers == 3 && direction == GestureDirection.LEFT -> GestureAction.SERVER_PREVIOUS
-            pointers == 3 && direction == GestureDirection.RIGHT -> GestureAction.SERVER_NEXT
+            gesture == HAGesture.SWIPE_UP_THREE -> GestureAction.SERVER_LIST
+            gesture == HAGesture.SWIPE_DOWN_THREE -> GestureAction.QUICKBAR_DEFAULT
+            gesture == HAGesture.SWIPE_LEFT_THREE -> GestureAction.SERVER_PREVIOUS
+            gesture == HAGesture.SWIPE_RIGHT_THREE -> GestureAction.SERVER_NEXT
             // No user preference and not default
             else -> GestureAction.NONE
         }
     }
 
-    override suspend fun setGestureAction(direction: GestureDirection, pointers: Int, action: GestureAction) {
-        localStorage.putString("${PREF_GESTURE_ACTION_PREFIX}_${direction.name}_${pointers}", action.name)
+    override suspend fun setGestureAction(gesture: HAGesture, action: GestureAction) {
+        localStorage.putString("${PREF_GESTURE_ACTION_PREFIX}_${gesture.name}", action.name)
     }
 
     override suspend fun removeServer(serverId: Int) {
