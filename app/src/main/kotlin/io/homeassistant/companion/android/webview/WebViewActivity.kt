@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.graphics.Rect
 import android.net.Uri
 import android.net.http.SslError
@@ -44,6 +43,7 @@ import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
@@ -51,6 +51,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -222,6 +223,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var playerSize = mutableStateOf<DpSize?>(null)
     private var playerTop = mutableStateOf(0.dp)
     private var playerLeft = mutableStateOf(0.dp)
+    private var statusBarColor = mutableStateOf<Color?>(null)
+    private var navigationBarColor = mutableStateOf<Color?>(null)
     private var failedConnection = "external"
     private var clearHistory = false
     private var moreInfoEntity = ""
@@ -243,6 +246,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
 
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         if (intent.extras?.containsKey(EXTRA_SERVER) == true) {
             intent.extras?.getInt(EXTRA_SERVER)?.let {
@@ -268,15 +272,19 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             val playerLeft by remember { playerLeft }
             val currentAppLocked by remember { appLocked }
             val customViewFromWebView by remember { customViewFromWebView }
+            val statusBarColor by remember { statusBarColor }
+            val navigationBarColor by remember { navigationBarColor }
 
             WebViewContentScreen(
                 webView,
                 player,
-                playerSize,
-                playerTop,
-                playerLeft,
+                playerSize = playerSize,
+                playerTop = playerTop,
+                playerLeft = playerLeft,
                 currentAppLocked,
                 customViewFromWebView,
+                statusBarColor = statusBarColor,
+                navigationBarColor = navigationBarColor,
             ) { isFullScreen ->
                 isExoFullScreen = isFullScreen
                 if (isFullScreen) hideSystemUI() else showSystemUI()
@@ -610,7 +618,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         // Set WebView background color to transparent, so that the theme of the android activity has control over it.
         // This enables the ability to have the launch screen behind the WebView until the web frontend gets rendered
-        webView.setBackgroundColor(Color.TRANSPARENT)
+        webView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
         themesManager.setThemeForWebView(this, webView.settings)
 
@@ -1223,16 +1231,17 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         // Set background colors
         if (statusBarColor != 0) {
-            window.statusBarColor = statusBarColor
+            this.statusBarColor.value = Color(statusBarColor)
         } else {
             Timber.e("Cannot set status bar color. Skipping coloring...")
         }
         if (navigationBarColor != 0) {
-            window.navigationBarColor = navigationBarColor
+            this.navigationBarColor.value = Color(navigationBarColor)
         } else {
             Timber.e("Cannot set navigation bar color. Skipping coloring...")
         }
 
+        // Adjust the color of the font based on the color of the theme used in HA
         // Set foreground colors
         if (statusBarColor != 0) {
             windowInsetsController.isAppearanceLightStatusBars = !isColorDark(statusBarColor)

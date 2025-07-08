@@ -4,9 +4,17 @@ import android.view.View
 import android.webkit.WebView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,6 +44,8 @@ internal fun WebViewContentScreen(
     playerLeft: Dp,
     currentAppLocked: Boolean,
     customViewFromWebView: View?,
+    statusBarColor: Color? = null,
+    navigationBarColor: Color? = null,
     onFullscreenClicked: (isFullscreen: Boolean) -> Unit,
 ) {
     HomeAssistantAppTheme {
@@ -44,15 +54,20 @@ internal fun WebViewContentScreen(
                 .fillMaxSize()
                 .background(colorResource(commonR.color.colorLaunchScreenBackground)),
         ) {
-            HAWebView(
-                factory = {
-                    webView
-                },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Transparent)
-                    .then(if (currentAppLocked) Modifier.hazeEffect(style = HazeMaterials.thin()) else Modifier),
-            )
+            Column {
+                statusBarColor?.Overlay(modifier = Modifier.height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding()))
+                HAWebView(
+                    factory = {
+                        webView
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .background(Color.Transparent)
+                        .then(if (currentAppLocked) Modifier.hazeEffect(style = HazeMaterials.thin()) else Modifier),
+                )
+                navigationBarColor?.Overlay(modifier = Modifier.height(WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
+            }
 
             player?.let { player ->
                 playerSize?.let { playerSize ->
@@ -79,6 +94,11 @@ internal fun WebViewContentScreen(
             }
         }
     }
+}
+
+@Composable
+private fun Color.Overlay(modifier: Modifier) {
+    Spacer(modifier = modifier.fillMaxWidth().background(this))
 }
 
 @Preview
