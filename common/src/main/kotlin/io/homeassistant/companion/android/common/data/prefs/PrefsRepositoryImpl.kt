@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.common.data.prefs
 
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
+import io.homeassistant.companion.android.common.util.GestureAction
+import io.homeassistant.companion.android.common.util.GestureDirection
 import javax.inject.Inject
 import javax.inject.Named
 import kotlinx.coroutines.runBlocking
@@ -38,6 +40,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_AUTO_FAVORITES = "auto_favorites"
         private const val PREF_LOCATION_HISTORY_DISABLED = "location_history"
         private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displayed"
+        private const val PREF_GESTURE_ACTION_PREFIX = "gesture_action"
     }
 
     init {
@@ -258,6 +261,26 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun addImprovPermissionDisplayedCount() {
         localStorage.putInt(PREF_IMPROV_PERMISSION_DISPLAYED, getImprovPermissionDisplayedCount() + 1)
+    }
+
+    override suspend fun getGestureAction(direction: GestureDirection, pointers: Int): GestureAction {
+        val current = localStorage.getString("${PREF_GESTURE_ACTION_PREFIX}_${direction.name}_${pointers}")
+        val action = GestureAction.entries.firstOrNull { it.name == current }
+        return when {
+            // User preference
+            action != null -> action
+            // Defaults
+            pointers == 3 && direction == GestureDirection.UP -> GestureAction.SERVER_LIST
+            pointers == 3 && direction == GestureDirection.DOWN -> GestureAction.QUICKBAR_DEFAULT
+            pointers == 3 && direction == GestureDirection.LEFT -> GestureAction.SERVER_PREVIOUS
+            pointers == 3 && direction == GestureDirection.RIGHT -> GestureAction.SERVER_NEXT
+            // No user preference and not default
+            else -> GestureAction.NONE
+        }
+    }
+
+    override suspend fun setGestureAction(direction: GestureDirection, pointers: Int, action: GestureAction) {
+        localStorage.putString("${PREF_GESTURE_ACTION_PREFIX}_${direction.name}_${pointers}", action.name)
     }
 
     override suspend fun removeServer(serverId: Int) {

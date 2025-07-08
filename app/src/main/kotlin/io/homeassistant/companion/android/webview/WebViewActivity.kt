@@ -81,6 +81,8 @@ import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.GestureAction
+import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
@@ -302,28 +304,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         e1: MotionEvent,
                         e2: MotionEvent,
                         velocity: Float,
-                        direction: SwipeDirection,
+                        direction: GestureDirection,
                         pointerCount: Int,
                     ): Boolean {
-                        if (pointerCount == 3 && velocity >= 75) {
-                            when (direction) {
-                                SwipeDirection.LEFT -> presenter.nextServer()
-                                SwipeDirection.RIGHT -> presenter.previousServer()
-                                SwipeDirection.UP -> {
-                                    val serverChooser = ServerChooserFragment()
-                                    supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this@WebViewActivity) { _, bundle ->
-                                        if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
-                                            presenter.switchActiveServer(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
-                                        }
-                                        supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
-                                    }
-                                    serverChooser.show(supportFragmentManager, ServerChooserFragment.TAG)
-                                }
-
-                                SwipeDirection.DOWN -> {
-                                    dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
-                                }
-                            }
+                        if (pointerCount > 1 && velocity >= 75 && !appLocked.value) {
+                            handleWebViewGesture(direction, pointerCount)
                         }
                         return appLocked.value
                     }
@@ -859,6 +844,33 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 },
                 javascriptInterface,
             )
+        }
+    }
+
+    private fun handleWebViewGesture(direction: GestureDirection, pointerCount: Int) {
+        lifecycleScope.launch {
+            when (presenter.getGestureAction(direction, pointerCount)) {
+                GestureAction.SERVER_NEXT -> presenter.nextServer()
+                GestureAction.SERVER_PREVIOUS -> presenter.previousServer()
+                GestureAction.SERVER_LIST -> {
+                    val serverChooser = ServerChooserFragment()
+                    supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this@WebViewActivity) { _, bundle ->
+                        if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
+                            presenter.switchActiveServer(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
+                        }
+                        supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
+                    }
+                    serverChooser.show(supportFragmentManager, ServerChooserFragment.TAG)
+                }
+
+                GestureAction.QUICKBAR_DEFAULT -> {
+                    webView.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
+                }
+
+                GestureAction.NONE -> {
+                    // Do nothing
+                }
+            }
         }
     }
 
