@@ -349,7 +349,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 val exceptionOk = e is IntegrationException &&
                     (e.cause is IOException || e.cause is CancellationException)
                 if (exceptionOk) {
-                    Timber.w("Exception while updating sensors: ${e::class.java.simpleName}: ${e.cause?.let { it::class.java.name } }")
+                    Timber.w(e, "Exception while updating sensors")
                 } else {
                     Timber.e(e, "Exception while updating sensors.")
                 }

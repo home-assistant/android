@@ -44,11 +44,11 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
             serverManager.updateServer(
                 server.copy(
                     session = ServerSessionInfo(
-                        it.accessToken,
-                        it.refreshToken!!,
-                        System.currentTimeMillis() / 1000 + it.expiresIn,
-                        it.tokenType,
-                        installId,
+                        accessToken = it.accessToken,
+                        refreshToken = it.refreshToken!!,
+                        tokenExpiration = System.currentTimeMillis() / 1000 + it.expiresIn,
+                        tokenType = it.tokenType,
+                        installId = installId,
                     ),
                 ),
             )
@@ -159,11 +159,11 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
                 serverManager.updateServer(
                     server.copy(
                         session = ServerSessionInfo(
-                            refreshedToken.accessToken,
-                            refreshToken,
-                            System.currentTimeMillis() / 1000 + refreshedToken.expiresIn,
-                            refreshedToken.tokenType,
-                            installId,
+                            accessToken = refreshedToken.accessToken,
+                            refreshToken = refreshToken,
+                            tokenExpiration = System.currentTimeMillis() / 1000 + refreshedToken.expiresIn,
+                            tokenType = refreshedToken.tokenType,
+                            installId = installId,
                         ),
                     ),
                 )
@@ -173,7 +173,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
             ) {
                 revokeSession()
             }
-            throw AuthorizationException()
+            throw AuthorizationException("Failed to refresh token", it.code(), it.errorBody())
         }
     }
 
