@@ -25,11 +25,11 @@ interface SensorDao {
 
     @Transaction
     @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id")
-    fun getFull(id: String): Map<Sensor, List<Attribute>>
+    suspend fun getFull(id: String): Map<Sensor, List<Attribute>>
 
     @Transaction
     @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id AND sensors.server_id = :serverId")
-    fun getFull(id: String, serverId: Int): Map<Sensor, List<Attribute>>
+    suspend fun getFull(id: String, serverId: Int): Map<Sensor, List<Attribute>>
 
     @Transaction
     @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id")
