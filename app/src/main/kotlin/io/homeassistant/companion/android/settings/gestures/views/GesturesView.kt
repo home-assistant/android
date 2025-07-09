@@ -20,7 +20,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
 import io.homeassistant.companion.android.settings.views.SettingsRow
@@ -73,14 +72,7 @@ private fun GestureSettingRow(
 
     Box {
         SettingsRow(
-            primaryText = when (gesture.pointers) {
-                2 -> stringResource(R.string.gestures_pointers_two)
-                3 -> stringResource(R.string.gestures_pointers_three)
-                else -> {
-                    FailFast.fail { "Missing pointer count string for $gesture" }
-                    gesture.pointers.toString()
-                }
-            },
+            primaryText = stringResource(gesture.pointers.description),
             secondaryText = stringResource(currentAction.description),
             icon = null,
             onClicked = { expanded = true },
