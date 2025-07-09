@@ -11,6 +11,10 @@ import android.os.Build
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class StepsSensorManager : SensorManager, SensorEventListener {
@@ -27,6 +31,8 @@ class StepsSensorManager : SensorManager, SensorEventListener {
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
         )
     }
+
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#pedometer-sensors"
@@ -96,13 +102,15 @@ class StepsSensorManager : SensorManager, SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event?.sensor?.type == Sensor.TYPE_STEP_COUNTER) {
-            onSensorUpdated(
-                latestContext,
-                stepsSensor,
-                event.values[0].roundToInt().toString(),
-                stepsSensor.statelessIcon,
-                mapOf(),
-            )
+            ioScope.launch {
+                onSensorUpdated(
+                    latestContext,
+                    stepsSensor,
+                    event.values[0].roundToInt().toString(),
+                    stepsSensor.statelessIcon,
+                    mapOf(),
+                )
+            }
         }
         mySensorManager.unregisterListener(this)
         Timber.d("Steps sensor listener unregistered")

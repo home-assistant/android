@@ -23,7 +23,11 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.AppDatabase
 import java.time.Instant
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.guava.await
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
@@ -98,6 +102,8 @@ class HealthServicesSensorManager : SensorManager {
     private var callBackRegistered = false
     private var dataTypesRegistered = emptySet<DataType<*, *>>()
     private var activityStateRegistered = false
+
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/wear-os/sensors#health-services"
@@ -196,30 +202,32 @@ class HealthServicesSensorManager : SensorManager {
         val passiveListenerCallback: PassiveListenerCallback = object : PassiveListenerCallback {
             override fun onUserActivityInfoReceived(info: UserActivityInfo) {
                 Timber.d("User activity state: ${info.userActivityState.name}")
-                callbackLastUpdated = System.currentTimeMillis()
-                val forceUpdate = info.userActivityState == UserActivityState.USER_ACTIVITY_EXERCISE
-                onSensorUpdated(
-                    latestContext,
-                    userActivityState,
-                    when (info.userActivityState) {
-                        UserActivityState.USER_ACTIVITY_ASLEEP -> "asleep"
-                        UserActivityState.USER_ACTIVITY_PASSIVE -> "passive"
-                        UserActivityState.USER_ACTIVITY_EXERCISE -> "exercise"
-                        else -> STATE_UNKNOWN
-                    },
-                    getActivityIcon(info),
-                    mapOf(
-                        "time" to info.stateChangeTime,
-                        "exercise_type" to info.exerciseInfo?.exerciseType?.name,
-                        "options" to listOf("asleep", "passive", "exercise"),
-                    ),
-                    forceUpdate = forceUpdate,
-                )
-                val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-                val sensorData = sensorDao.get(userActivityState.id)
+                ioScope.launch {
+                    callbackLastUpdated = System.currentTimeMillis()
+                    val forceUpdate = info.userActivityState == UserActivityState.USER_ACTIVITY_EXERCISE
+                    onSensorUpdated(
+                        latestContext,
+                        userActivityState,
+                        when (info.userActivityState) {
+                            UserActivityState.USER_ACTIVITY_ASLEEP -> "asleep"
+                            UserActivityState.USER_ACTIVITY_PASSIVE -> "passive"
+                            UserActivityState.USER_ACTIVITY_EXERCISE -> "exercise"
+                            else -> STATE_UNKNOWN
+                        },
+                        getActivityIcon(info),
+                        mapOf(
+                            "time" to info.stateChangeTime,
+                            "exercise_type" to info.exerciseInfo?.exerciseType?.name,
+                            "options" to listOf("asleep", "passive", "exercise"),
+                        ),
+                        forceUpdate = forceUpdate,
+                    )
+                    val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
+                    val sensorData = sensorDao.get(userActivityState.id)
 
-                if (sensorData.any { it.state != it.lastSentState } || forceUpdate) {
-                    SensorReceiver.updateAllSensors(latestContext)
+                    if (sensorData.any { it.state != it.lastSentState } || forceUpdate) {
+                        SensorReceiver.updateAllSensors(latestContext)
+                    }
                 }
             }
 
@@ -332,6 +340,7 @@ class HealthServicesSensorManager : SensorManager {
                     else -> "mdi:run"
                 }
             }
+
             UserActivityState.USER_ACTIVITY_PASSIVE -> "mdi:human-handsdown"
             UserActivityState.USER_ACTIVITY_ASLEEP -> "mdi:sleep"
             else -> userActivityState.statelessIcon
@@ -356,13 +365,15 @@ class HealthServicesSensorManager : SensorManager {
                     lastIndex = index
                 }
             }
-            onSensorUpdated(
-                latestContext,
-                basicSensor,
-                dataPoints[lastIndex].value,
-                basicSensor.statelessIcon,
-                mapOf(),
-            )
+            ioScope.launch {
+                onSensorUpdated(
+                    latestContext,
+                    basicSensor,
+                    dataPoints[lastIndex].value,
+                    basicSensor.statelessIcon,
+                    mapOf(),
+                )
+            }
         }
     }
 }

@@ -50,6 +50,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
@@ -200,7 +201,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     @Inject
     lateinit var prefsRepository: PrefsRepository
 
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     lateinit var latestContext: Context
 
@@ -378,7 +379,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
-    private fun restartHighAccuracyService(intervalInSeconds: Int) {
+    private suspend fun restartHighAccuracyService(intervalInSeconds: Int) {
         onSensorUpdated(
             latestContext,
             highAccuracyUpdateInterval,
@@ -390,7 +391,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         HighAccuracyLocationService.restartService(latestContext, intervalInSeconds)
     }
 
-    private fun startHighAccuracyService(intervalInSeconds: Int) {
+    private suspend fun startHighAccuracyService(intervalInSeconds: Int) {
         onSensorUpdated(
             latestContext,
             highAccuracyMode,
@@ -409,7 +410,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         HighAccuracyLocationService.startService(latestContext, intervalInSeconds)
     }
 
-    private fun stopHighAccuracyService() {
+    private suspend fun stopHighAccuracyService() {
         onSensorUpdated(
             latestContext,
             highAccuracyMode,

@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.Flow
 interface SensorDao {
 
     @Query("SELECT * FROM Sensors WHERE id = :id")
-    fun get(id: String): List<Sensor>
+    suspend fun get(id: String): List<Sensor>
 
     @Query("SELECT * FROM Sensors WHERE id = :id AND server_id = :serverId")
     fun get(id: String, serverId: Int): Sensor?
@@ -148,7 +148,7 @@ interface SensorDao {
     }
 
     @Transaction
-    fun getAnyIsEnabled(sensorId: String, servers: List<Int>, permission: Boolean, enabledByDefault: Boolean): Boolean {
+    suspend fun getAnyIsEnabled(sensorId: String, servers: List<Int>, permission: Boolean, enabledByDefault: Boolean): Boolean {
         // Create and update entries for all
         var sensorList = get(sensorId)
         var changedList = false

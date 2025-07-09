@@ -38,7 +38,7 @@ class MessagingManager @Inject constructor(
     private val sensorDao: SensorDao,
     private val textToSpeechClient: TextToSpeechClient,
 ) {
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     fun handleMessage(notificationData: Map<String, String>, source: String) {
         val notificationDao = AppDatabase.getInstance(context).notificationDao()
@@ -57,7 +57,7 @@ class MessagingManager @Inject constructor(
             return
         }
 
-        mainScope.launch {
+        ioScope.launch {
             val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
             val message = notificationData[NotificationData.MESSAGE]
             when {
@@ -70,7 +70,7 @@ class MessagingManager @Inject constructor(
                     }
                 }
                 message == DeviceCommandData.COMMAND_BLE_TRANSMITTER && allowCommands -> {
-                    if (!commandBleTransmitter(context, notificationData, sensorDao, mainScope)) {
+                    if (!commandBleTransmitter(context, notificationData, sensorDao)) {
                         sendNotification(notificationData)
                     }
                 }

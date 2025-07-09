@@ -38,6 +38,7 @@ interface SensorManager {
 
     val name: Int
 
+    // TODO any reason to use mainScope here and not iO?
     val sensorWorkerScope: CoroutineScope
         get() = CoroutineScope(Dispatchers.Main + Job())
 
@@ -234,7 +235,7 @@ interface SensorManager {
         return setting ?: default
     }
 
-    fun onSensorUpdated(
+    suspend fun onSensorUpdated(
         context: Context,
         basicSensor: BasicSensor,
         state: Any,
