@@ -58,6 +58,7 @@ fun SettingsRow(
             } else {
                 Spacer(modifier = Modifier.width(24.dp))
             }
+            // Spacer to reach 72dp grid line from start (16 + 24 + 32)
             Spacer(modifier = Modifier.width(32.dp))
         },
         onClicked = onClicked,

@@ -63,7 +63,7 @@ fun GesturesView(
 }
 
 @Composable
-fun GestureSettingRow(
+private fun GestureSettingRow(
     gesture: HAGesture,
     getAction: () -> GestureAction,
     onSetAction: (GestureAction) -> Unit,
@@ -88,7 +88,7 @@ fun GestureSettingRow(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            // Match text padding
+            // Prevent dropdown menu hitting screen edge which looks wrong
             offset = DpOffset(x = 8.dp, y = 0.dp),
         ) {
             GestureAction.entries.forEach { action ->
@@ -106,7 +106,7 @@ fun GestureSettingRow(
 
 @Preview
 @Composable
-fun PreviewGesturesView() {
+private fun PreviewGesturesView() {
     GesturesView(
         onGetAction = { _ -> GestureAction.NONE },
         onSetAction = { _, _ -> },

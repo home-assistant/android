@@ -1,9 +1,10 @@
 package io.homeassistant.companion.android.common.util
 
+import androidx.annotation.StringRes
 import io.homeassistant.companion.android.common.R
 import kotlin.math.abs
 
-enum class GestureAction(val description: Int) {
+enum class GestureAction(@StringRes val description: Int) {
     NONE(R.string.none),
     QUICKBAR_DEFAULT(R.string.gestures_action_quickbar_default),
     SERVER_LIST(R.string.gestures_action_server_list),
@@ -11,7 +12,7 @@ enum class GestureAction(val description: Int) {
     SERVER_PREVIOUS(R.string.gestures_action_server_previous),
 }
 
-enum class GestureDirection(val description: Int) {
+enum class GestureDirection(@StringRes val description: Int) {
     /** A gesture from bottom to top */
     UP(R.string.gestures_direction_up),
 

@@ -41,12 +41,12 @@ fun SettingsSubheader(
 
 @Preview
 @Composable
-fun PreviewSettingsSubheadingDefault() {
+private fun PreviewSettingsSubheadingDefault() {
     SettingsSubheader("Attributes")
 }
 
 @Preview
 @Composable
-fun PreviewSettingsSubheadingWithPadding() {
+private fun PreviewSettingsSubheadingWithPadding() {
     SettingsSubheader("Health Connect sensors", paddingForIcon = true)
 }
