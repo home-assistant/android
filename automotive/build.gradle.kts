@@ -1,5 +1,3 @@
-import com.google.gms.googleservices.GoogleServicesPlugin.GoogleServicesPluginConfig
-
 plugins {
     alias(libs.plugins.homeassistant.android.application)
     alias(libs.plugins.homeassistant.android.flavor)
@@ -89,6 +87,6 @@ dependencies {
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.
-configure<GoogleServicesPluginConfig> {
+googleServices {
     disableVersionCheck = true
 }
