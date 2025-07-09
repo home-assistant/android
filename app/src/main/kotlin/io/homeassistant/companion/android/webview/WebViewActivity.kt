@@ -855,6 +855,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                             }
                         }
                     }
+
+                    @JavascriptInterface
+                    fun handleBlob(data: String?, filename: String?) {
+                        data?.let {
+                            lifecycleScope.launch {
+                                DataUriDownloadManager.saveDataUri(this@WebViewActivity, url = data, mimetype = "", filename = filename)
+                            }
+                        }
+                    }
                 },
                 javascriptInterface,
             )
@@ -1536,6 +1545,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         Timber.d("WebView requested download of $url")
         val uri = url.toUri()
         when (uri.scheme?.lowercase()) {
+            "blob" -> {
+                triggerBlobDownload(url, contentDisposition, mimetype)
+            }
+
             "http", "https" -> {
                 val request = DownloadManager.Request(uri)
                     .setMimeType(mimetype)
@@ -1578,6 +1591,30 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
             }
         }
+    }
+
+    private fun triggerBlobDownload(url: String, contentDisposition: String, mimetype: String) {
+        val filename = URLUtil.guessFileName(url, contentDisposition, mimetype)
+        val jsCode = """
+        (function() {
+            var url = '$url';
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.responseType = 'blob';
+            xhr.onload = function(e) {
+                if (xhr.status == 200) {
+                    var blob = xhr.response;
+                    var reader = new FileReader();
+                    reader.onloadend = function() {
+                        $javascriptInterface.handleBlob(reader.result, '$filename');
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            };
+            xhr.send();
+        })();
+        """.trimIndent()
+        webView.evaluateJavascript(jsCode, null)
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
