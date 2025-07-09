@@ -18,7 +18,7 @@ interface SensorDao {
     suspend fun get(id: String): List<Sensor>
 
     @Query("SELECT * FROM Sensors WHERE id = :id AND server_id = :serverId")
-    fun get(id: String, serverId: Int): Sensor?
+    suspend fun get(id: String, serverId: Int): Sensor?
 
     @Query("SELECT * FROM sensors")
     fun getAllFlow(): Flow<List<Sensor>>
@@ -135,7 +135,7 @@ interface SensorDao {
     }
 
     @Transaction
-    fun getOrDefault(sensorId: String, serverId: Int, permission: Boolean, enabledByDefault: Boolean): Sensor? {
+    suspend fun getOrDefault(sensorId: String, serverId: Int, permission: Boolean, enabledByDefault: Boolean): Sensor? {
         val sensor = get(sensorId, serverId)
 
         if (sensor?.enabled == true && !permission) {
