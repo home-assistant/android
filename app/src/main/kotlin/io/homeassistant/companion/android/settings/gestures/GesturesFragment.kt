@@ -27,7 +27,7 @@ class GesturesFragment : Fragment() {
             setContent {
                 HomeAssistantAppTheme {
                     GesturesView(
-                        onGetAction = viewModel::getGestureAction,
+                        gestureActions = viewModel.gestureActions,
                         onSetAction = viewModel::setGestureAction,
                     )
                 }

@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.settings.sensor.views
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,6 +19,7 @@ import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.settings.sensor.SensorSettingsViewModel
 import io.homeassistant.companion.android.settings.views.SettingsRow
 import io.homeassistant.companion.android.settings.views.SettingsSubheader
+import io.homeassistant.companion.android.settings.views.SettingsSubheaderDefaults
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -36,16 +36,13 @@ fun SensorListView(
                 key = manager.id(),
             ) {
                 if (currentSensors.any()) {
-                    Box(
+                    SettingsSubheader(
+                        text = stringResource(manager.name),
                         modifier = Modifier
                             .background(MaterialTheme.colors.background)
                             .fillMaxWidth(),
-                    ) {
-                        SettingsSubheader(
-                            text = stringResource(manager.name),
-                            paddingForIcon = true,
-                        )
-                    }
+                        textPadding = SettingsSubheaderDefaults.TextWithIconRowPadding,
+                    )
                 }
             }
             items(

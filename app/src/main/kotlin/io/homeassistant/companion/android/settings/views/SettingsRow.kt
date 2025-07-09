@@ -45,7 +45,7 @@ fun SettingsRow(
                 Image(
                     asset = mdiIcon,
                     modifier = Modifier
-                        .size(24.dp)
+                        .size(DefaultIconSize)
                         .alpha(if (enabled) ContentAlpha.high else ContentAlpha.disabled),
                     colorFilter = ColorFilter.tint(
                         if (enabled) {
@@ -56,10 +56,10 @@ fun SettingsRow(
                     ),
                 )
             } else {
-                Spacer(modifier = Modifier.width(24.dp))
+                Spacer(modifier = Modifier.width(DefaultIconSize))
             }
-            // Spacer to reach 72dp grid line from start (16 + 24 + 32)
-            Spacer(modifier = Modifier.width(32.dp))
+            // Spacer to reach 72dp grid line from start
+            Spacer(modifier = Modifier.width(72.dp - 16.dp - DefaultIconSize))
         },
         onClicked = onClicked,
     )
@@ -103,3 +103,5 @@ fun SettingsRow(
         }
     }
 }
+
+private val DefaultIconSize = 24.dp

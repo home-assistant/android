@@ -29,7 +29,7 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @Composable
 fun GesturesView(
-    onGetAction: (HAGesture) -> GestureAction,
+    gestureActions: Map<HAGesture, GestureAction>,
     onSetAction: (HAGesture, GestureAction) -> Unit,
 ) {
     LazyColumn(
@@ -53,7 +53,7 @@ fun GesturesView(
             items(gestures) { gesture ->
                 GestureSettingRow(
                     gesture = gesture,
-                    getAction = { onGetAction(gesture) },
+                    action = gestureActions[gesture],
                     onSetAction = { action -> onSetAction(gesture, action) },
                 )
             }
@@ -64,16 +64,15 @@ fun GesturesView(
 @Composable
 private fun GestureSettingRow(
     gesture: HAGesture,
-    getAction: () -> GestureAction,
+    action: GestureAction?,
     onSetAction: (GestureAction) -> Unit,
 ) {
-    var currentAction by remember(gesture.name) { mutableStateOf(getAction()) }
     var expanded by remember { mutableStateOf(false) }
 
     Box {
         SettingsRow(
             primaryText = stringResource(gesture.pointers.description),
-            secondaryText = stringResource(currentAction.description),
+            secondaryText = action?.let { stringResource(it.description) } ?: "",
             icon = null,
             onClicked = { expanded = true },
         )
@@ -86,7 +85,6 @@ private fun GestureSettingRow(
             GestureAction.entries.forEach { action ->
                 DropdownMenuItem({
                     onSetAction(action)
-                    currentAction = action
                     expanded = false
                 }) {
                     Text(stringResource(action.description))
@@ -100,7 +98,7 @@ private fun GestureSettingRow(
 @Composable
 private fun PreviewGesturesView() {
     GesturesView(
-        onGetAction = { _ -> GestureAction.NONE },
+        gestureActions = HAGesture.entries.associateWith { GestureAction.NONE },
         onSetAction = { _, _ -> },
     )
 }
