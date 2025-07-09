@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.prefs
 
+import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.util.GestureAction
@@ -14,8 +15,9 @@ class PrefsRepositoryImpl @Inject constructor(
 ) : PrefsRepository {
 
     companion object {
-        private const val MIGRATION_PREF = "migration"
-        private const val MIGRATION_VERSION = 1
+        @VisibleForTesting const val MIGRATION_PREF = "migration"
+
+        @VisibleForTesting const val MIGRATION_VERSION = 1
 
         private const val PREF_VER = "version"
         private const val PREF_THEME = "theme"

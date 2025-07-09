@@ -48,10 +48,10 @@ enum class GestureDirection(@StringRes val description: Int) {
 /** Number of pointers used in a gesture */
 enum class GesturePointers(
     val asInt: Int,
-    @StringRes val description: Int
+    @StringRes val description: Int,
 ) {
     TWO(asInt = 2, description = R.string.gestures_pointers_two),
-    THREE(asInt = 3, description = R.string.gestures_pointers_three)
+    THREE(asInt = 3, description = R.string.gestures_pointers_three),
 }
 
 /**
