@@ -1241,8 +1241,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             Timber.e("Cannot set navigation bar color. Skipping coloring...")
         }
 
-        // Adjust the color of the font based on the color of the theme used in HA
-        // Set foreground colors
+        // Adjust the color of system bar font/icons to ensure proper contrast with
+        // the current Home Assistant theme's background color.
         if (statusBarColor != 0) {
             windowInsetsController.isAppearanceLightStatusBars = !isColorDark(statusBarColor)
         }
