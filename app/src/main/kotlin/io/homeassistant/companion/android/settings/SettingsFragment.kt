@@ -13,10 +13,13 @@ import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.view.View
+import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.fragment.app.commit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -79,6 +82,8 @@ class SettingsFragment(
     private val serverMutex = Mutex()
 
     private var snackbar: Snackbar? = null
+
+    private var currentBottomInset: Int = 0
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         presenter.init(this)
@@ -368,6 +373,14 @@ class SettingsFragment(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         applyBottomSafeDrawingInsets()
+
+        // Retrieve the bottom system inset. This is needed to manually adjust the position of the Snackbar,
+        // the Snackbar is rendered directly within a CoordinatorLayout that doesn't handle the inset on purpose.
+        ViewCompat.setOnApplyWindowInsetsListener(listView) { view, windowInsets ->
+            val insetsSystemBars = windowInsets.getInsets(systemBars())
+            currentBottomInset = insetsSystemBars.bottom
+            windowInsets
+        }
     }
 
     private fun removeSystemFromThemesIfNeeded() {
@@ -592,6 +605,10 @@ class SettingsFragment(
                         requireContext().startActivity(intent)
                     }
                 }
+                val snackbarView = this.view
+                val params = snackbarView.layoutParams as ViewGroup.MarginLayoutParams
+                params.bottomMargin += currentBottomInset
+                snackbarView.layoutParams = params
                 show()
             }
         }
