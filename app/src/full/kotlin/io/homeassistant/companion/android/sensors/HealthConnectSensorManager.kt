@@ -42,6 +42,7 @@ import androidx.health.connect.client.response.ReadRecordsResponse
 import androidx.health.connect.client.time.TimeRangeFilter
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -344,45 +345,48 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             deviceClass = "weight",
         )
+
+        private val sensorPermissionMap = mapOf(
+            activeCaloriesBurned.id to ActiveCaloriesBurnedRecord::class,
+            basalBodyTemperature.id to BasalBodyTemperatureRecord::class,
+            basalMetabolicRate.id to BasalMetabolicRateRecord::class,
+            bloodGlucose.id to BloodGlucoseRecord::class,
+            bodyFat.id to BodyFatRecord::class,
+            bodyWaterMass.id to BodyWaterMassRecord::class,
+            bodyTemperature.id to BodyTemperatureRecord::class,
+            boneMass.id to BoneMassRecord::class,
+            diastolicBloodPressure.id to BloodPressureRecord::class,
+            distance.id to DistanceRecord::class,
+            elevationGained.id to ElevationGainedRecord::class,
+            floorsClimbed.id to FloorsClimbedRecord::class,
+            heartRate.id to HeartRateRecord::class,
+            heartRateVariability.id to HeartRateVariabilityRmssdRecord::class,
+            height.id to HeightRecord::class,
+            hydration.id to HydrationRecord::class,
+            leanBodyMass.id to LeanBodyMassRecord::class,
+            oxygenSaturation.id to OxygenSaturationRecord::class,
+            respiratoryRate.id to RespiratoryRateRecord::class,
+            restingHeartRate.id to RestingHeartRateRecord::class,
+            sleepDuration.id to SleepSessionRecord::class,
+            steps.id to StepsRecord::class,
+            systolicBloodPressure.id to BloodPressureRecord::class,
+            totalCaloriesBurned.id to TotalCaloriesBurnedRecord::class,
+            vo2Max.id to Vo2MaxRecord::class,
+            weight.id to WeightRecord::class,
+        )
     }
 
     override val name: Int
         get() = commonR.string.sensor_name_health_connect
 
     override fun requiredPermissions(sensorId: String): Array<String> {
-        return try {
-            when {
-                (sensorId == activeCaloriesBurned.id) -> arrayOf(HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class))
-                (sensorId == basalBodyTemperature.id) -> arrayOf(HealthPermission.getReadPermission(BasalBodyTemperatureRecord::class))
-                (sensorId == basalMetabolicRate.id) -> arrayOf(HealthPermission.getReadPermission(BasalMetabolicRateRecord::class))
-                (sensorId == bloodGlucose.id) -> arrayOf(HealthPermission.getReadPermission(BloodGlucoseRecord::class))
-                (sensorId == bodyFat.id) -> arrayOf(HealthPermission.getReadPermission(BodyFatRecord::class))
-                (sensorId == bodyWaterMass.id) -> arrayOf(HealthPermission.getReadPermission(BodyWaterMassRecord::class))
-                (sensorId == bodyTemperature.id) -> arrayOf(HealthPermission.getReadPermission(BodyTemperatureRecord::class))
-                (sensorId == boneMass.id) -> arrayOf(HealthPermission.getReadPermission(BoneMassRecord::class))
-                (sensorId == diastolicBloodPressure.id) -> arrayOf(HealthPermission.getReadPermission(BloodPressureRecord::class))
-                (sensorId == distance.id) -> arrayOf(HealthPermission.getReadPermission(DistanceRecord::class))
-                (sensorId == elevationGained.id) -> arrayOf(HealthPermission.getReadPermission(ElevationGainedRecord::class))
-                (sensorId == floorsClimbed.id) -> arrayOf(HealthPermission.getReadPermission(FloorsClimbedRecord::class))
-                (sensorId == heartRate.id) -> arrayOf(HealthPermission.getReadPermission(HeartRateRecord::class))
-                (sensorId == heartRateVariability.id) -> arrayOf(HealthPermission.getReadPermission(HeartRateVariabilityRmssdRecord::class))
-                (sensorId == height.id) -> arrayOf(HealthPermission.getReadPermission(HeightRecord::class))
-                (sensorId == hydration.id) -> arrayOf(HealthPermission.getReadPermission(HydrationRecord::class))
-                (sensorId == leanBodyMass.id) -> arrayOf(HealthPermission.getReadPermission(LeanBodyMassRecord::class))
-                (sensorId == oxygenSaturation.id) -> arrayOf(HealthPermission.getReadPermission(OxygenSaturationRecord::class))
-                (sensorId == respiratoryRate.id) -> arrayOf(HealthPermission.getReadPermission(RespiratoryRateRecord::class))
-                (sensorId == restingHeartRate.id) -> arrayOf(HealthPermission.getReadPermission(RestingHeartRateRecord::class))
-                (sensorId == sleepDuration.id) -> arrayOf(HealthPermission.getReadPermission(SleepSessionRecord::class))
-                (sensorId == steps.id) -> arrayOf(HealthPermission.getReadPermission(StepsRecord::class))
-                (sensorId == systolicBloodPressure.id) -> arrayOf(HealthPermission.getReadPermission(BloodPressureRecord::class))
-                (sensorId == totalCaloriesBurned.id) -> arrayOf(HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class))
-                (sensorId == vo2Max.id) -> arrayOf(HealthPermission.getReadPermission(Vo2MaxRecord::class))
-                (sensorId == weight.id) -> arrayOf(HealthPermission.getReadPermission(WeightRecord::class))
-                else -> arrayOf()
+        return FailFast.failOnCatch({ "Unable to get required permissions for $sensorId" }, emptyArray<String>()) {
+            val permissions = sensorPermissionMap[sensorId]?.let { recordClass ->
+                val readPermission = HealthPermission.getReadPermission(recordClass)
+                arrayOf(readPermission, HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND)
             }
-        } catch (e: Exception) {
-            Timber.e(e, "Unable to get required permissions")
-            arrayOf()
+            FailFast.failWhen(permissions == null) { "Missing sensor mapping for $sensorId" }
+            permissions ?: emptyArray()
         }
     }
 

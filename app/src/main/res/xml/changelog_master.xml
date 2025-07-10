@@ -2,6 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2025.7.2 - Main" versioncode="3">
+        <change>Health Connect sensors now require permission to access health data in the background</change>
         <change>Gestures for the main Home Assistant UI can now be changed</change>
         <change>Downloading snapshots from camera card is now working</change>
         <change>Bug fixes and dependency updates</change>

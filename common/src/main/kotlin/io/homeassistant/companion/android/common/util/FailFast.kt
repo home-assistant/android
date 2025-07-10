@@ -90,7 +90,7 @@ object FailFast {
      * @param block The block of code to execute.
      */
     fun failOnCatch(message: () -> String? = { null }, block: () -> Unit) {
-        failOnCatch<Unit>(message, Unit, block)
+        failOnCatch(message, Unit, block)
     }
 
     /**
