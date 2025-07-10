@@ -186,7 +186,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE, enabled.toString(), SensorSettingType.TOGGLE))
         }
 
-        fun getHighAccuracyModeIntervalSetting(context: Context): Int {
+        suspend fun getHighAccuracyModeIntervalSetting(context: Context): Int {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
             val sensorSettings = sensorDao.getSettings(backgroundLocation.id)
             return sensorSettings.firstOrNull { it.name == SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL }?.value?.toIntOrNull() ?: DEFAULT_UPDATE_INTERVAL_HA_SECONDS
@@ -422,7 +422,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         HighAccuracyLocationService.stopService(latestContext)
     }
 
-    private fun getHighAccuracyModeUpdateInterval(): Int {
+    private suspend fun getHighAccuracyModeUpdateInterval(): Int {
         val updateIntervalHighAccuracySeconds = getSetting(
             latestContext,
             backgroundLocation,
@@ -574,7 +574,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
-    private fun getHighAccuracyModeSetting(): Boolean {
+    private suspend fun getHighAccuracyModeSetting(): Boolean {
         return getSetting(
             latestContext,
             backgroundLocation,
@@ -584,7 +584,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         ).toBoolean()
     }
 
-    private fun getHighAccuracyBTZoneCombinedSetting(): Boolean {
+    private suspend fun getHighAccuracyBTZoneCombinedSetting(): Boolean {
         return getSetting(
             latestContext,
             backgroundLocation,
@@ -594,7 +594,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         ).toBoolean()
     }
 
-    private fun getSendLocationAsSetting(serverId: Int): String {
+    private suspend fun getSendLocationAsSetting(serverId: Int): String {
         return if (serverManager(latestContext).getServer(serverId)?.version?.isAtLeast(2022, 2, 0) == true) {
             getSetting(
                 context = latestContext,
