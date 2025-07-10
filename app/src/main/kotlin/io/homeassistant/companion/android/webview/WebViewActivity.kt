@@ -310,6 +310,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         if (pointerCount > 1 && velocity >= 75 && !appLocked.value) {
                             handleWebViewGesture(direction, pointerCount)
                         }
+                        // Swipe as a gesture is handled async. Irregardless of the result, and to
+                        // not block, we don't consume it and allow other views to respond to it.
+                        // (Except if the app is locked, but that realistically shouldn't happen
+                        // as the locked blur should prevent the WebView from getting swipes.)
                         return appLocked.value
                     }
 
