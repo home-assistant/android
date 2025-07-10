@@ -50,16 +50,16 @@ interface SensorDao {
     fun getSettingsFlow(id: String): Flow<List<SensorSetting>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun add(sensor: Sensor)
+    suspend fun add(sensor: Sensor)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(attribute: Attribute)
+    suspend fun add(attribute: Attribute)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(attributes: List<Attribute>)
+    suspend fun add(attributes: List<Attribute>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(sensorSetting: SensorSetting)
+    suspend fun add(sensorSetting: SensorSetting)
 
     @Query("DELETE FROM sensors WHERE id = :sensorId AND server_id = :serverId")
     suspend fun removeSensor(sensorId: String, serverId: Int)
@@ -88,10 +88,10 @@ interface SensorDao {
     fun update(sensor: Sensor)
 
     @Query("DELETE FROM sensor_attributes WHERE sensor_id = :sensorId")
-    fun clearAttributes(sensorId: String)
+    suspend fun clearAttributes(sensorId: String)
 
     @Transaction
-    fun replaceAllAttributes(sensorId: String, attributes: List<Attribute>) {
+    suspend fun replaceAllAttributes(sensorId: String, attributes: List<Attribute>) {
         clearAttributes(sensorId)
         add(attributes)
     }
