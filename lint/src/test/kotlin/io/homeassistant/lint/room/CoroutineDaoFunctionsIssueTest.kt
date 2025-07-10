@@ -43,7 +43,7 @@ class CoroutineDaoFunctionsIssueTest {
             )
             .run()
             .expect(
-                """src/io/homeassistan/companion/android/TestDao.kt:7: Error: DAO functions should be suspend or return a Flow. [CoroutineDaoFunction]
+                """src/io/homeassistan/companion/android/TestDao.kt:7: Error: DAO functions should suspend or return a Flow. [CoroutineDaoFunction]
     fun test()
     ~~~~~~~~~~
 1 error""",
