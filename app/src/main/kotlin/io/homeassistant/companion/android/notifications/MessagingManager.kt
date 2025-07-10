@@ -575,7 +575,7 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun handleDeviceCommands(data: Map<String, String>) {
+    private suspend fun handleDeviceCommands(data: Map<String, String>) {
         val message = data[NotificationData.MESSAGE]
         val command = data[NotificationData.COMMAND]
         val serverId = data[THIS_SERVER_ID]!!

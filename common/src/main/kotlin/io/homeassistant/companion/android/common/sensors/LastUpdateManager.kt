@@ -86,7 +86,9 @@ class LastUpdateManager : SensorManager {
             // delete old settings from DB:
             sensorDao.removeSettings(lastUpdate.id, intentSettings.map { it.name })
             // add new settings to DB:
-            newIntentSettings.forEach(sensorDao::add)
+            newIntentSettings.forEach {
+                sensorDao.add(it)
+            }
         }
         val addNewIntentToggle = allSettings.firstOrNull { it.name == SETTING_ADD_NEW_INTENT }
         if (addNewIntentToggle == null) {
