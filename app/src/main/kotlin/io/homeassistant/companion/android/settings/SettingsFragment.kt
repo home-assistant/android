@@ -367,7 +367,9 @@ class SettingsFragment(
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        applyBottomSafeDrawingInsets()
+        // We don't consume the insets so that the snackbar can use the insets from the
+        // CoordinatorLayout and be displayed above the navigation bar.
+        applyBottomSafeDrawingInsets(consumeInsets = false)
     }
 
     private fun removeSystemFromThemesIfNeeded() {
