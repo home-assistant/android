@@ -57,6 +57,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.getSystemService
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
+import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
@@ -440,9 +441,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 } else {
                                     Timber.w("No intent to launch app found, opening app store")
                                     val marketIntent = Intent(Intent.ACTION_VIEW)
-                                    marketIntent.data = Uri.parse(
-                                        MARKET_PREFIX + it.toString().substringAfter(APP_PREFIX),
-                                    )
+                                    marketIntent.data = (MARKET_PREFIX + it.toString().substringAfter(APP_PREFIX)).toUri()
                                     startActivity(marketIntent)
                                 }
                                 return true
@@ -459,7 +458,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     Timber.w("No app found for intent prefix, opening app store")
                                     val marketIntent = Intent(Intent.ACTION_VIEW)
                                     marketIntent.data =
-                                        Uri.parse(MARKET_PREFIX + intent.`package`.toString())
+                                        (MARKET_PREFIX + intent.`package`.toString()).toUri()
                                     startActivity(marketIntent)
                                 } else {
                                     startActivity(intent)
@@ -683,8 +682,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     private fun webViewAddJavascriptInterface() {
-        webView.removeJavascriptInterface(javascriptInterface)
         webView.apply {
+            removeJavascriptInterface(javascriptInterface)
             addJavascriptInterface(
                 object : Any() {
                     // TODO This feature is deprecated and should be removed after 2022.6
@@ -845,6 +844,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                             }
                         }
                     }
+
+                    @JavascriptInterface
+                    fun handleBlob(data: String?, filename: String?) {
+                        data?.let {
+                            lifecycleScope.launch {
+                                DataUriDownloadManager.saveDataUri(this@WebViewActivity, url = data, mimetype = "", filename = filename)
+                            }
+                        }
+                    }
                 },
                 javascriptInterface,
             )
@@ -991,7 +999,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     fun exoPlayHls(json: JSONObject) {
         val payload = json.getJSONObject("payload")
-        val uri = Uri.parse(payload.getString("url"))
+        val uri = payload.getString("url").toUri()
         val isMuted = payload.optBoolean("muted")
         runOnUiThread {
             exoPlayer.value = initializePlayer(this).apply {
@@ -1225,7 +1233,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             waitForConnection()
         } else {
             try {
-                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                val browserIntent = Intent(Intent.ACTION_VIEW, url.toUri())
                 startActivity(browserIntent)
             } catch (e: Exception) {
                 Timber.e(e, "Unable to view url")
@@ -1376,7 +1384,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             alert.setMessage(commonR.string.security_vulnerably_message)
             alert.setPositiveButton(commonR.string.security_vulnerably_view) { _, _ ->
                 val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse("https://www.home-assistant.io/latest-security-alert/")
+                intent.data = "https://www.home-assistant.io/latest-security-alert/".toUri()
                 startActivity(intent)
             }
             alert.setNegativeButton(commonR.string.security_vulnerably_understand) { _, _ ->
@@ -1398,7 +1406,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             ) { _, _ ->
                 val url = serverManager.getServer(presenter.getActiveServer())?.let {
                     val base = it.connection.getUrl(buttonRefreshesInternal) ?: return@let null
-                    Uri.parse(base.toString())
+                    base.toString().toUri()
                         .buildUpon()
                         .appendQueryParameter("external_auth", "1")
                         .build()
@@ -1551,8 +1559,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     private fun downloadFile(url: String, contentDisposition: String, mimetype: String) {
         Timber.d("WebView requested download of $url")
-        val uri = Uri.parse(url)
+        val uri = url.toUri()
         when (uri.scheme?.lowercase()) {
+            "blob" -> {
+                triggerBlobDownload(url, contentDisposition, mimetype)
+            }
+
             "http", "https" -> {
                 val request = DownloadManager.Request(uri)
                     .setMimeType(mimetype)
@@ -1583,7 +1595,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
 
             else -> {
-                Timber.d("Received download request for unsupported scheme, forwarding to system")
+                Timber.w("Received download request for unsupported scheme ${uri.scheme}, forwarding to system")
                 try {
                     val browserIntent = Intent(Intent.ACTION_VIEW, uri).apply {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -1595,6 +1607,30 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
             }
         }
+    }
+
+    private fun triggerBlobDownload(url: String, contentDisposition: String, mimetype: String) {
+        val filename = URLUtil.guessFileName(url, contentDisposition, mimetype)
+        val jsCode = """
+        (function() {
+            var url = '$url';
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.responseType = 'blob';
+            xhr.onload = function(e) {
+                if (xhr.status == 200) {
+                    var blob = xhr.response;
+                    var reader = new FileReader();
+                    reader.onloadend = function() {
+                        $javascriptInterface.handleBlob(reader.result, '$filename');
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            };
+            xhr.send();
+        })();
+        """.trimIndent()
+        webView.evaluateJavascript(jsCode, null)
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
@@ -1713,7 +1749,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 bundle.getString(ImprovSetupDialog.RESULT_DOMAIN)?.let { improvDomain ->
                     val url = serverManager.getServer(presenter.getActiveServer())?.let url@{
                         val base = it.connection.getUrl() ?: return@url null
-                        Uri.parse(base.toString())
+                        base.toString().toUri()
                             .buildUpon()
                             .appendEncodedPath("config/integrations/dashboard/add")
                             .appendQueryParameter("domain", improvDomain)
