@@ -181,7 +181,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             SINGLE_ACCURATE_LOCATION,
         }
 
-        fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
+        suspend fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
             sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE, enabled.toString(), SensorSettingType.TOGGLE))
         }
@@ -192,7 +192,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             return sensorSettings.firstOrNull { it.name == SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL }?.value?.toIntOrNull() ?: DEFAULT_UPDATE_INTERVAL_HA_SECONDS
         }
 
-        fun setHighAccuracyModeIntervalSetting(context: Context, updateInterval: Int) {
+        suspend fun setHighAccuracyModeIntervalSetting(context: Context, updateInterval: Int) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
             sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL, updateInterval.toString(), SensorSettingType.NUMBER))
         }
