@@ -7,6 +7,7 @@ import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.View
 import android.view.ViewConfiguration
+import io.homeassistant.companion.android.common.util.GestureDirection
 import kotlin.math.abs
 
 // Adapted from the system GestureDetector/GestureListener and https://stackoverflow.com/a/26387629
@@ -108,11 +109,11 @@ abstract class OnSwipeListener(context: Context?) : View.OnTouchListener {
                     ) {
                         // ≈ onFling in GestureDetector.OnGestureListener
                         // Calculate the direction based on which velocity is highest
-                        val direction = SwipeDirection.fromVelocity(velocityX, velocityY)
+                        val direction = GestureDirection.fromVelocity(velocityX, velocityY)
                         handled = onSwipe(
                             downEvent!!,
                             motionEvent,
-                            abs(if (direction == SwipeDirection.UP || direction == SwipeDirection.DOWN) velocityY else velocityX),
+                            abs(if (direction == GestureDirection.UP || direction == GestureDirection.DOWN) velocityY else velocityX),
                             direction,
                             numberOfPointers,
                         )
@@ -143,42 +144,26 @@ abstract class OnSwipeListener(context: Context?) : View.OnTouchListener {
         numberOfPointers = 0
     }
 
+    /**
+     * Callback for when a swipe gesture is detected.
+     *
+     * @return `true` if the listener has consumed the event, `false` otherwise.
+     * */
     abstract fun onSwipe(
         e1: MotionEvent,
         e2: MotionEvent,
         velocity: Float,
-        direction: SwipeDirection,
+        direction: GestureDirection,
         pointerCount: Int,
     ): Boolean
 
+    /**
+     * Callback for when a motion event is detected.
+     *
+     * @return `true` if the listener has consumed the event, `false` otherwise.
+     * */
     abstract fun onMotionEventHandled(
         v: View?,
         event: MotionEvent?,
     ): Boolean
-
-    enum class SwipeDirection {
-        UP,
-        DOWN,
-        LEFT,
-        RIGHT,
-        ;
-
-        companion object {
-            fun fromVelocity(velocityX: Float, velocityY: Float): SwipeDirection {
-                return if (abs(velocityX) > abs(velocityY)) {
-                    if (velocityX > 0) {
-                        RIGHT
-                    } else {
-                        LEFT
-                    }
-                } else {
-                    if (velocityY > 0) {
-                        DOWN
-                    } else {
-                        UP
-                    }
-                }
-            }
-        }
-    }
 }
