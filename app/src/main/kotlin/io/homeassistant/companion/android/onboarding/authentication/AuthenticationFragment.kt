@@ -16,7 +16,17 @@ import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.colorResource
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -66,7 +76,14 @@ class AuthenticationFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
+                    // TODO once the frontend supports edge to edge we should simply send the insets to the frontend instead of this spacer https://github.com/home-assistant/frontend/pull/25566
+                    Spacer(
+                        modifier = Modifier.fillMaxWidth().height(WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding())
+                            .background(colorResource(commonR.color.colorLaunchScreenBackground)),
+                    )
+
                     HAWebView(
+                        modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
                         configure = {
                             themesManager.setThemeForWebView(requireContext(), settings)
                             settings.javaScriptEnabled = true
