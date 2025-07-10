@@ -115,9 +115,8 @@ class SensorDetailViewModel @Inject constructor(
     var sensorSettingsDialog by mutableStateOf<SettingDialogState?>(null)
         private set
 
-    val settingUpdateFrequency by lazy {
-        settingsDao.get(0)?.sensorUpdateFrequency ?: SensorUpdateFrequencySetting.NORMAL
-    }
+    var settingUpdateFrequency by mutableStateOf<SensorUpdateFrequencySetting>(SensorUpdateFrequencySetting.NORMAL)
+        private set
 
     val serverNames: Map<Int, String>
         get() = serverManager.defaultServers.associate { it.id to it.friendlyName }
@@ -165,6 +164,10 @@ class SensorDetailViewModel @Inject constructor(
                     }
                 }
             }
+        }
+        viewModelScope.launch {
+            // TODO why 0 ?????
+            settingUpdateFrequency = settingsDao.get(0)?.sensorUpdateFrequency ?: SensorUpdateFrequencySetting.NORMAL
         }
     }
 

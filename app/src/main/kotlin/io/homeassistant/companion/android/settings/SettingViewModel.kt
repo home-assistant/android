@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
@@ -11,16 +12,22 @@ import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
     private val settingsDao: SettingsDao,
     application: Application,
 ) : AndroidViewModel(application) {
-    fun getSetting(id: Int): Setting {
+
+    companion object {
+        val DEFAULT_UPDATE_FREQUENCY = SensorUpdateFrequencySetting.NORMAL
+        val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.FLAVOR == "full") WebsocketSetting.NEVER else WebsocketSetting.ALWAYS
+    }
+    suspend fun getSetting(id: Int): Setting {
         var setting = settingsDao.get(id)
         if (setting == null) {
-            setting = Setting(id, if (BuildConfig.FLAVOR == "full") WebsocketSetting.NEVER else WebsocketSetting.ALWAYS, SensorUpdateFrequencySetting.NORMAL)
+            setting = Setting(id, DEFAULT_WEBSOCKET_SETTING, DEFAULT_UPDATE_FREQUENCY)
             settingsDao.insert(setting)
         }
         return setting
@@ -29,17 +36,21 @@ class SettingViewModel @Inject constructor(
     fun getSettingFlow(id: Int): Flow<Setting> = settingsDao.getFlow(id)
 
     fun updateWebsocketSetting(id: Int, setting: WebsocketSetting) {
-        settingsDao.get(id)?.let {
-            it.websocketSetting = setting
-            settingsDao.update(it)
+        viewModelScope.launch {
+            settingsDao.get(id)?.let {
+                it.websocketSetting = setting
+                settingsDao.update(it)
+            }
+            WebsocketManager.start(getApplication())
         }
-        WebsocketManager.start(getApplication())
     }
 
     fun updateSensorSetting(id: Int, setting: SensorUpdateFrequencySetting) {
-        settingsDao.get(id)?.let {
-            it.sensorUpdateFrequency = setting
-            settingsDao.update(it)
+        viewModelScope.launch {
+            settingsDao.get(id)?.let {
+                it.sensorUpdateFrequency = setting
+                settingsDao.update(it)
+            }
         }
     }
 }

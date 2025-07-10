@@ -32,7 +32,6 @@ import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.webview.WebViewActivity
-import java.lang.IllegalStateException
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -124,9 +123,9 @@ class WebsocketManager(
         return@withContext Result.success()
     }
 
-    private fun shouldWeRun(): Boolean = serverManager.defaultServers.any { shouldRunForServer(it.id) }
+    private suspend fun shouldWeRun(): Boolean = serverManager.defaultServers.any { shouldRunForServer(it.id) }
 
-    private fun shouldRunForServer(serverId: Int): Boolean {
+    private suspend fun shouldRunForServer(serverId: Int): Boolean {
         val server = serverManager.getServer(serverId) ?: return false
         val setting = settingsDao.get(serverId)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
         val isHome = server.connection.isInternal(requiresUrl = false)

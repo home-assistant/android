@@ -11,9 +11,11 @@ import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.settings.SettingViewModel
+import io.homeassistant.companion.android.settings.SettingViewModel.Companion.DEFAULT_UPDATE_FREQUENCY
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.sensor.views.SensorUpdateFrequencyView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import kotlinx.coroutines.flow.onStart
 
 @AndroidEntryPoint
 class SensorUpdateFrequencyFragment : Fragment() {
@@ -29,9 +31,12 @@ class SensorUpdateFrequencyFragment : Fragment() {
             setContent {
                 HomeAssistantAppTheme {
                     val settings = viewModel.getSettingFlow(0)
-                        .collectAsState(initial = viewModel.getSetting(0))
+                        .onStart {
+                            emit(viewModel.getSetting(0))
+                        }
+                        .collectAsState(null)
                     SensorUpdateFrequencyView(
-                        sensorUpdateFrequency = settings.value.sensorUpdateFrequency,
+                        sensorUpdateFrequency = settings.value?.sensorUpdateFrequency ?: DEFAULT_UPDATE_FREQUENCY,
                         onSettingChanged = { viewModel.updateSensorSetting(0, it) },
                     )
                 }
