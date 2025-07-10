@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.websocket
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
@@ -16,16 +15,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.getSystemService
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import io.homeassistant.companion.android.settings.SettingViewModel
+import io.homeassistant.companion.android.settings.SettingViewModel.Companion.DEFAULT_WEBSOCKET_SETTING
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.websocket.views.WebsocketSettingView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import javax.inject.Inject
+import kotlinx.coroutines.flow.onStart
 
 @AndroidEntryPoint
 class WebsocketSettingFragment : Fragment() {
@@ -62,10 +64,11 @@ class WebsocketSettingFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
-                    val settings = viewModel.getSettingFlow(serverId)
-                        .collectAsState(initial = viewModel.getSetting(serverId))
+                    val settings = viewModel.getSettingFlow(serverId).onStart {
+                        emit(viewModel.getSetting(serverId))
+                    }.collectAsState(initial = null)
                     WebsocketSettingView(
-                        websocketSetting = settings.value.websocketSetting,
+                        websocketSetting = settings.value?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING,
                         unrestrictedBackgroundAccess = isIgnoringBatteryOptimizations,
                         hasWifi = wifiHelper.hasWifi(),
                         onSettingChanged = { viewModel.updateWebsocketSetting(serverId, it) },
@@ -74,7 +77,7 @@ class WebsocketSettingFragment : Fragment() {
                                 requestBackgroundAccessResult.launch(
                                     Intent(
                                         Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                                        Uri.parse("package:${activity?.packageName}"),
+                                        "package:${activity?.packageName}".toUri(),
                                     ),
                                 )
                             }

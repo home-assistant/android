@@ -573,7 +573,7 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun handleDeviceCommands(data: Map<String, String>) {
+    private suspend fun handleDeviceCommands(data: Map<String, String>) {
         val message = data[NotificationData.MESSAGE]
         val command = data[NotificationData.COMMAND]
         val serverId = data[THIS_SERVER_ID]!!
@@ -1901,7 +1901,7 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun togglePersistentConnection(mode: String, serverId: Int) {
+    private suspend fun togglePersistentConnection(mode: String, serverId: Int) {
         when (mode.uppercase()) {
             WebsocketSetting.NEVER.name -> {
                 settingsDao.get(serverId)?.let {

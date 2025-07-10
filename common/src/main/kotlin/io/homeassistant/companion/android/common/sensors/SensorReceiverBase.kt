@@ -46,7 +46,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         const val ACTION_STOP_BEACON_SCANNING = "io.homeassistant.companion.android.STOP_BEACON_SCANNING"
         const val EXTRA_SENSOR_ID = "sensorId"
 
-        fun shouldDoFastUpdates(context: Context): Boolean {
+        suspend fun shouldDoFastUpdates(context: Context): Boolean {
             val settingDao = AppDatabase.getInstance(context).settingsDao().get(0)
             return when (settingDao?.sensorUpdateFrequency) {
                 SensorUpdateFrequencySetting.FAST_ALWAYS -> true

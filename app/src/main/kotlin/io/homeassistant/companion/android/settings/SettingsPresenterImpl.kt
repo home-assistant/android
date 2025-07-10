@@ -231,7 +231,7 @@ class SettingsPresenterImpl @Inject constructor(
         )
     }
 
-    private fun setNotifications(serverId: Int, enabled: Boolean) {
+    private suspend fun setNotifications(serverId: Int, enabled: Boolean) {
         // Full: this only refers to the system permission on Android 13+ so no changes are necessary.
         // Minimal: change persistent connection setting to reflect preference.
         if (BuildConfig.FLAVOR != "full") {
