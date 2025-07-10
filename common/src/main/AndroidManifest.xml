@@ -7,7 +7,7 @@
 
     <application>
         <receiver android:name=".sensors.SensorUpdateReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="io.homeassistant.companion.android.UPDATE_SENSORS" />
             </intent-filter>
@@ -16,7 +16,7 @@
         <receiver
             android:name=".notifications.NotificationDeleteReceiver"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="false" />
     </application>
 
 </manifest>

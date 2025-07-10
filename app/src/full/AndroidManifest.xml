@@ -79,7 +79,7 @@
 
         <receiver android:name=".location.HighAccuracyLocationReceiver"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="false" />
 
         <service
             android:name=".notifications.FirebaseCloudMessagingService"
@@ -92,12 +92,12 @@
         <service
             android:name=".location.HighAccuracyLocationService"
             android:enabled="true"
-            android:exported="true"
+            android:exported="false"
             android:foregroundServiceType="location"/>
 
         <service
             android:name=".matter.MatterCommissioningService"
-            android:exported="true" />
+            android:exported="false" />
 
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
@@ -114,7 +114,7 @@
             android:resource="@xml/automotive_app_desc"/>
         <service
             android:name=".vehicle.HaCarAppService"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="androidx.car.app.CarAppService" />
                 <category android:name="androidx.car.app.category.IOT"/>

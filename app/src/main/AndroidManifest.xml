@@ -269,7 +269,7 @@
         <receiver
             android:name=".sensors.LocationSensorManager"
             android:enabled="true"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="io.homeassistant.companion.android.background.REQUEST_ACCURATE_UPDATE" />
             </intent-filter>
@@ -278,7 +278,7 @@
         <receiver
             android:name=".sensors.ActivitySensorManager"
             android:enabled="true"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="io.homeassistant.companion.android.background.REQUEST_ACTIVITY_UPDATES" />
             </intent-filter>
@@ -404,7 +404,7 @@
         <activity
             android:name=".settings.SettingsActivity"
             android:parentActivityName=".webview.WebViewActivity"
-            android:exported="true"
+            android:exported="false"
             android:configChanges="orientation|screenSize"
             android:theme="@style/Theme.HomeAssistant.Config" />
 
@@ -948,7 +948,7 @@
         <receiver
             android:name=".notifications.NotificationActionReceiver"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="false" />
 
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"

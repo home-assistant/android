@@ -30,7 +30,7 @@
 
         <receiver android:name=".location.HighAccuracyLocationReceiver"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="false" />
 
         <service
             android:name=".notifications.FirebaseCloudMessagingService"
@@ -43,12 +43,12 @@
         <service
             android:name=".location.HighAccuracyLocationService"
             android:enabled="true"
-            android:exported="true"
+            android:exported="false"
             android:foregroundServiceType="location"/>
 
         <service
             android:name=".matter.MatterCommissioningService"
-            android:exported="true" />
+            android:exported="false" />
 
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
