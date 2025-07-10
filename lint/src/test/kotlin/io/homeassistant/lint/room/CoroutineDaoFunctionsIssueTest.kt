@@ -23,7 +23,7 @@ class CoroutineDaoFunctionsIssueTest {
     ).indented()
 
     @Test
-    fun `Given a DAO when fun function is not suspendable and does not return a Flow then CoroutineThreadDaoFunction is raised`() {
+    fun `Given a DAO when function is not suspending and does not return a Flow then CoroutineDaoFunction issue is raised`() {
         lint().issues(CoroutineDaoFunctionsIssue.ISSUE)
             .allowMissingSdk()
             .files(
@@ -51,7 +51,7 @@ class CoroutineDaoFunctionsIssueTest {
     }
 
     @Test
-    fun `Given a DAO when fun function is suspendable and does not return a Flow then no issues`() {
+    fun `Given a DAO when function is suspending and does not return a Flow then no issues`() {
         lint().issues(CoroutineDaoFunctionsIssue.ISSUE)
             .allowMissingSdk()
             .files(
@@ -74,7 +74,7 @@ class CoroutineDaoFunctionsIssueTest {
     }
 
     @Test
-    fun `Given a DAO when fun function is not suspendable and does return a Flow then no issues`() {
+    fun `Given a DAO when function is not suspending and does return a Flow then no issues`() {
         lint().issues(CoroutineDaoFunctionsIssue.ISSUE)
             .allowMissingSdk()
             .files(

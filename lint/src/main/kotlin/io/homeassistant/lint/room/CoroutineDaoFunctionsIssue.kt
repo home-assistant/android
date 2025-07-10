@@ -19,8 +19,8 @@ object CoroutineDaoFunctionsIssue {
     @JvmField
     val ISSUE = Issue.Companion.create(
         id = "CoroutineDaoFunction",
-        briefDescription = "DAO functions should be suspend or return a Flow",
-        explanation = "All functions in a DAO must be suspend or return a Flow to ensure they can be executed properly in coroutines",
+        briefDescription = "DAO functions should suspend or return a Flow",
+        explanation = "All functions in a DAO should suspend or return a Flow to ensure they can be executed properly in coroutines",
         category = Category.Companion.CORRECTNESS,
         severity = Severity.ERROR,
         priority = 10,
@@ -51,7 +51,7 @@ object CoroutineDaoFunctionsIssue {
                     ISSUE,
                     method,
                     context.getLocation(method),
-                    "DAO functions should be suspend or return a Flow.",
+                    "DAO functions should suspend or return a Flow.",
                 )
             }
         }
