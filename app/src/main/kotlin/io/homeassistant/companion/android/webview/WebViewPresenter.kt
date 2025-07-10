@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.webview
 import android.content.Context
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
+import io.homeassistant.companion.android.common.util.GestureAction
+import io.homeassistant.companion.android.common.util.GestureDirection
 import kotlinx.coroutines.flow.Flow
 import org.json.JSONObject
 
@@ -44,6 +46,8 @@ interface WebViewPresenter {
     fun sessionTimeOut(): Int
 
     fun onExternalBusMessage(message: JSONObject)
+
+    suspend fun getGestureAction(direction: GestureDirection, pointerCount: Int): GestureAction
 
     fun onStart(context: Context)
 
