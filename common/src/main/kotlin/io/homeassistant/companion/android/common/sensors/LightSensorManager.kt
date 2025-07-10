@@ -9,6 +9,10 @@ import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class LightSensorManager : SensorManager, SensorEventListener {
@@ -26,6 +30,8 @@ class LightSensorManager : SensorManager, SensorEventListener {
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
         )
     }
+
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#light-sensor"
@@ -88,13 +94,15 @@ class LightSensorManager : SensorManager, SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event?.sensor?.type == Sensor.TYPE_LIGHT) {
-            onSensorUpdated(
-                latestContext,
-                lightSensor,
-                event.values[0].roundToInt().toString(),
-                lightSensor.statelessIcon,
-                mapOf(),
-            )
+            ioScope.launch {
+                onSensorUpdated(
+                    latestContext,
+                    lightSensor,
+                    event.values[0].roundToInt().toString(),
+                    lightSensor.statelessIcon,
+                    mapOf(),
+                )
+            }
         }
         mySensorManager.unregisterListener(this)
         Timber.d("Light sensor listener unregistered")

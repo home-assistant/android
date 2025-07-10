@@ -182,7 +182,7 @@ class PhoneStateSensorManager : SensorManager {
         }
     }
 
-    private fun updatePhoneStateSensor(context: Context, state: String) {
+    private suspend fun updatePhoneStateSensor(context: Context, state: String) {
         var phoneIcon = "mdi:phone"
         if (state == "ringing" || state == "offhook") {
             phoneIcon += "-in-talk"

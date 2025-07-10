@@ -9,6 +9,10 @@ import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class OnBodySensorManager : SensorManager, SensorEventListener {
@@ -27,6 +31,8 @@ class OnBodySensorManager : SensorManager, SensorEventListener {
 
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
+
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/wear-os/sensors"
@@ -80,13 +86,15 @@ class OnBodySensorManager : SensorManager, SensorEventListener {
         if (event?.sensor?.type == Sensor.TYPE_LOW_LATENCY_OFFBODY_DETECT) {
             val state = event.values[0].roundToInt() != 0
             Timber.d("onbody state: $state and ${event.values[0]}")
-            onSensorUpdated(
-                latestContext,
-                onBodySensor,
-                state,
-                if (state) onBodySensor.statelessIcon else "mdi:account-off",
-                mapOf(),
-            )
+            ioScope.launch {
+                onSensorUpdated(
+                    latestContext,
+                    onBodySensor,
+                    state,
+                    if (state) onBodySensor.statelessIcon else "mdi:account-off",
+                    mapOf(),
+                )
+            }
         }
 
         // Send update immediately

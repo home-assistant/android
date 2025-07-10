@@ -18,6 +18,10 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class HeartRateSensorManager : SensorManager, SensorEventListener {
@@ -39,6 +43,8 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
         )
     }
+
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/wear-os/sensors"
@@ -114,15 +120,17 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
             Timber.d("No HR event received")
         }
         if (event != null && validReading) {
-            onSensorUpdated(
-                latestContext,
-                heartRate,
-                event.values[0].roundToInt().toString(),
-                heartRate.statelessIcon,
-                mapOf(
-                    "accuracy" to getAccuracy(event.accuracy),
-                ),
-            )
+            ioScope.launch {
+                onSensorUpdated(
+                    latestContext,
+                    heartRate,
+                    event.values[0].roundToInt().toString(),
+                    heartRate.statelessIcon,
+                    mapOf(
+                        "accuracy" to getAccuracy(event.accuracy),
+                    ),
+                )
+            }
         }
         if (validReading || eventCount >= 10) {
             mySensorManager.unregisterListener(this)

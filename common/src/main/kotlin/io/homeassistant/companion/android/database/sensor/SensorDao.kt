@@ -15,21 +15,21 @@ import kotlinx.coroutines.flow.Flow
 interface SensorDao {
 
     @Query("SELECT * FROM Sensors WHERE id = :id")
-    fun get(id: String): List<Sensor>
+    suspend fun get(id: String): List<Sensor>
 
     @Query("SELECT * FROM Sensors WHERE id = :id AND server_id = :serverId")
-    fun get(id: String, serverId: Int): Sensor?
+    suspend fun get(id: String, serverId: Int): Sensor?
 
     @Query("SELECT * FROM sensors")
     fun getAllFlow(): Flow<List<Sensor>>
 
     @Transaction
     @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id")
-    fun getFull(id: String): Map<Sensor, List<Attribute>>
+    suspend fun getFull(id: String): Map<Sensor, List<Attribute>>
 
     @Transaction
     @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id AND sensors.server_id = :serverId")
-    fun getFull(id: String, serverId: Int): Map<Sensor, List<Attribute>>
+    suspend fun getFull(id: String, serverId: Int): Map<Sensor, List<Attribute>>
 
     @Transaction
     @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id")
@@ -135,7 +135,7 @@ interface SensorDao {
     }
 
     @Transaction
-    fun getOrDefault(sensorId: String, serverId: Int, permission: Boolean, enabledByDefault: Boolean): Sensor? {
+    suspend fun getOrDefault(sensorId: String, serverId: Int, permission: Boolean, enabledByDefault: Boolean): Sensor? {
         val sensor = get(sensorId, serverId)
 
         if (sensor?.enabled == true && !permission) {
@@ -148,7 +148,7 @@ interface SensorDao {
     }
 
     @Transaction
-    fun getAnyIsEnabled(sensorId: String, servers: List<Int>, permission: Boolean, enabledByDefault: Boolean): Boolean {
+    suspend fun getAnyIsEnabled(sensorId: String, servers: List<Int>, permission: Boolean, enabledByDefault: Boolean): Boolean {
         // Create and update entries for all
         var sensorList = get(sensorId)
         var changedList = false

@@ -106,7 +106,7 @@ class BluetoothSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.CUSTOM,
         )
 
-        fun enableDisableBLETransmitter(context: Context, transmitEnabled: Boolean) {
+        suspend fun enableDisableBLETransmitter(context: Context, transmitEnabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
             val sensorEntity = sensorDao.get(bleTransmitter.id)
             if (sensorEntity.none { it.enabled }) {
@@ -116,7 +116,7 @@ class BluetoothSensorManager : SensorManager {
             sensorDao.add(SensorSetting(bleTransmitter.id, SETTING_BLE_TRANSMIT_ENABLED, transmitEnabled.toString(), SensorSettingType.TOGGLE))
         }
 
-        fun enableDisableBeaconMonitor(context: Context, monitorEnabled: Boolean) {
+        suspend fun enableDisableBeaconMonitor(context: Context, monitorEnabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
             val sensorEntity = sensorDao.get(beaconMonitor.id)
             if (sensorEntity.none { it.enabled }) {

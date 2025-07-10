@@ -19,6 +19,9 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -65,10 +68,12 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         )
     }
 
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
+
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
-            ACTION_UPDATE_ACTIVITY -> handleActivityUpdate(intent, context)
-            ACTION_SLEEP_ACTIVITY -> sensorWorkerScope.launch { handleSleepUpdate(intent, context) }
+            ACTION_UPDATE_ACTIVITY -> ioScope.launch { handleActivityUpdate(intent, context) }
+            ACTION_SLEEP_ACTIVITY -> ioScope.launch { handleSleepUpdate(intent, context) }
             else -> Timber.w("Unknown intent action: ${intent.action}!")
         }
     }
@@ -95,7 +100,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         )
     }
 
-    private fun handleActivityUpdate(intent: Intent, context: Context) {
+    private suspend fun handleActivityUpdate(intent: Intent, context: Context) {
         Timber.d("Received activity update.")
         if (ActivityRecognitionResult.hasResult(intent)) {
             val result = ActivityRecognitionResult.extractResult(intent)

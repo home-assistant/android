@@ -6,18 +6,20 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.slot
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class SensorManagerTest {
 
     @Test
-    fun `Given attributes when invoking onSensorUpdated then attributes are replaced in DAO properly formatted in json`() {
+    fun `Given attributes when invoking onSensorUpdated then attributes are replaced in DAO properly formatted in json`() = runTest {
         val context: Context = mockk()
         val sensorManager = FakeSensorManager()
         val appDatabase: AppDatabase = mockk()
@@ -27,7 +29,7 @@ class SensorManagerTest {
 
         every { AppDatabase.getInstance(context) } returns appDatabase
         every { appDatabase.sensorDao() } returns sensorDao
-        every { sensorDao.get("test") } returns listOf(
+        coEvery { sensorDao.get("test") } returns listOf(
             Sensor(
                 id = "test",
                 serverId = 0,

@@ -40,6 +40,8 @@ import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.content.getSystemService
+import androidx.core.graphics.scale
+import androidx.core.net.toUri
 import androidx.core.text.isDigitsOnly
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.R
@@ -269,7 +271,7 @@ class MessagingManager @Inject constructor(
         const val THIS_SERVER_ID = "server_id"
     }
 
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     fun handleMessage(notificationData: Map<String, String>, source: String) {
         var now = System.currentTimeMillis()
@@ -295,7 +297,7 @@ class MessagingManager @Inject constructor(
 
             val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
             if (confirmation) {
-                mainScope.launch {
+                ioScope.launch {
                     try {
                         serverManager.integrationRepository(receivedServer ?: ServerManager.SERVER_ID_ACTIVE)
                             .fireEvent("mobile_app_notification_received", jsonData)
@@ -315,7 +317,7 @@ class MessagingManager @Inject constructor(
         }
         jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, serverId.toString()) }
 
-        mainScope.launch {
+        ioScope.launch {
             val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
             when {
                 jsonData[NotificationData.MESSAGE] == REQUEST_LOCATION_UPDATE && allowCommands -> {
@@ -403,7 +405,7 @@ class MessagingManager @Inject constructor(
                             }
                         }
                         DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
-                            if (!commandBleTransmitter(context, jsonData, sensorDao, mainScope)) {
+                            if (!commandBleTransmitter(context, jsonData, sensorDao)) {
                                 sendNotification(jsonData)
                             }
                         }
@@ -716,7 +718,7 @@ class MessagingManager @Inject constructor(
                 }
             }
             COMMAND_APP_LOCK -> {
-                mainScope.launch {
+                ioScope.launch {
                     setAppLock(data)
                 }
             }
@@ -733,7 +735,7 @@ class MessagingManager @Inject constructor(
             }
             COMMAND_SCREEN_ON -> {
                 if (!command.isNullOrEmpty()) {
-                    mainScope.launch {
+                    ioScope.launch {
                         prefsRepository.setKeepScreenOnEnabled(
                             command == COMMAND_KEEP_SCREEN_ON,
                         )
@@ -779,13 +781,13 @@ class MessagingManager @Inject constructor(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (Settings.System.canWrite(context)) {
                         if (!processScreenCommands(data)) {
-                            mainScope.launch { sendNotification(data) }
+                            ioScope.launch { sendNotification(data) }
                         }
                     } else {
                         notifyMissingPermission(message.toString(), serverId)
                     }
                 } else if (!processScreenCommands(data)) {
-                    mainScope.launch { sendNotification(data) }
+                    ioScope.launch { sendNotification(data) }
                 }
             }
             COMMAND_FLASHLIGHT -> {
@@ -1450,7 +1452,7 @@ class MessagingManager @Inject constructor(
             val ratio: Float = (width.toFloat() / height.toFloat())
             newHeight = (newWidth / ratio).toInt()
         }
-        return Bitmap.createScaledBitmap(this, newWidth, newHeight, false)
+        return scale(newWidth, newHeight, false)
     }
 
     private fun handleVisibility(
@@ -1580,13 +1582,11 @@ class MessagingManager @Inject constructor(
             }
             UrlUtil.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX) -> {
                 Intent(Intent.ACTION_VIEW).apply {
-                    this.data = Uri.parse(
-                        if (uri.startsWith(DEEP_LINK_PREFIX)) {
-                            uri.removePrefix(DEEP_LINK_PREFIX)
-                        } else {
-                            uri
-                        },
-                    )
+                    this.data = if (uri.startsWith(DEEP_LINK_PREFIX)) {
+                        uri.removePrefix(DEEP_LINK_PREFIX)
+                    } else {
+                        uri
+                    }.toUri()
                 }
             }
             else -> {
@@ -1615,7 +1615,7 @@ class MessagingManager @Inject constructor(
                 }
                 if (intentPackage == null && (!intent.`package`.isNullOrEmpty() || uri.startsWith(APP_PREFIX))) {
                     val marketIntent = Intent(Intent.ACTION_VIEW)
-                    marketIntent.data = Uri.parse(MARKET_PREFIX + if (uri.startsWith(INTENT_PREFIX)) intent.`package`.toString() else uri.removePrefix(APP_PREFIX))
+                    marketIntent.data = (MARKET_PREFIX + if (uri.startsWith(INTENT_PREFIX)) intent.`package`.toString() else uri.removePrefix(APP_PREFIX)).toUri()
                     marketIntent
                 } else {
                     intent
@@ -1655,7 +1655,7 @@ class MessagingManager @Inject constructor(
     private fun requestSystemAlertPermission() {
         val intent = Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:${context.packageName}"),
+            "package:${context.packageName}".toUri(),
         )
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
@@ -1671,7 +1671,7 @@ class MessagingManager @Inject constructor(
     private fun navigateAppDetails() {
         val intent = Intent(
             Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            Uri.parse("package:${context.packageName}"),
+            "package:${context.packageName}".toUri(),
         )
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
@@ -1680,7 +1680,7 @@ class MessagingManager @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.M)
     private fun requestWriteSystemPermission() {
         val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
-        intent.data = Uri.parse("package:" + context.packageName)
+        intent.data = ("package:" + context.packageName).toUri()
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
     }
@@ -1717,7 +1717,7 @@ class MessagingManager @Inject constructor(
             ),
         )
         var hasCorrectPackage = false
-        if (mediaList.size > 0) {
+        if (mediaList.isNotEmpty()) {
             for (item in mediaList) {
                 if (item.packageName == data[MEDIA_PACKAGE_NAME]) {
                     hasCorrectPackage = true
@@ -1730,7 +1730,7 @@ class MessagingManager @Inject constructor(
                         ),
                     )
                     if (!success) {
-                        mainScope.launch {
+                        ioScope.launch {
                             Timber.d(
 
                                 "Posting notification as the command was not sent to the session",
@@ -1741,7 +1741,7 @@ class MessagingManager @Inject constructor(
                 }
             }
             if (!hasCorrectPackage) {
-                mainScope.launch {
+                ioScope.launch {
                     Timber.d(
 
                         "Posting notification as the package is not found in the list of media sessions",
@@ -1750,7 +1750,7 @@ class MessagingManager @Inject constructor(
                 }
             }
         } else {
-            mainScope.launch {
+            ioScope.launch {
                 Timber.d("Posting notification as there are no active media sessions")
                 sendNotification(data)
             }
@@ -1798,7 +1798,7 @@ class MessagingManager @Inject constructor(
             val packageName = data[INTENT_PACKAGE_NAME]
             val action = data[INTENT_ACTION]
             val className = data[INTENT_CLASS_NAME]
-            val intentUri = if (!data[INTENT_URI].isNullOrEmpty()) Uri.parse(data[INTENT_URI]) else null
+            val intentUri = if (!data[INTENT_URI].isNullOrEmpty()) data[INTENT_URI]?.toUri() else null
             val intent = if (intentUri != null) Intent(action, intentUri) else Intent(action)
             val type = data[INTENT_TYPE]
             if (!type.isNullOrEmpty()) {
@@ -1818,7 +1818,7 @@ class MessagingManager @Inject constructor(
             } else if (intent.resolveActivity(context.packageManager) != null) {
                 context.startActivity(intent)
             } else {
-                mainScope.launch {
+                ioScope.launch {
                     Timber.d(
 
                         "Posting notification as we do not have enough data to start the activity",
@@ -1867,14 +1867,12 @@ class MessagingManager @Inject constructor(
                 Timber.w("No intent to launch app found, opening app store")
                 val marketIntent = Intent(Intent.ACTION_VIEW)
                 marketIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                marketIntent.data = Uri.parse(
-                    MARKET_PREFIX + data[PACKAGE_NAME],
-                )
+                marketIntent.data = (MARKET_PREFIX + data[PACKAGE_NAME]).toUri()
                 context.startActivity(marketIntent)
             }
         } catch (e: Exception) {
             Timber.e(e, "Unable to launch app")
-            mainScope.launch { sendNotification(data) }
+            ioScope.launch { sendNotification(data) }
         }
     }
 

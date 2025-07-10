@@ -9,6 +9,10 @@ import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class ProximitySensorManager : SensorManager, SensorEventListener {
@@ -28,6 +32,8 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
     private var maxRange: Int = 0
+
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#proximity-sensor"
@@ -95,13 +101,15 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
                     maxRange == 5 -> "near"
                     else -> sensorValue
                 }
-            onSensorUpdated(
-                latestContext,
-                proximitySensor,
-                state,
-                proximitySensor.statelessIcon,
-                mapOf(),
-            )
+            ioScope.launch {
+                onSensorUpdated(
+                    latestContext,
+                    proximitySensor,
+                    state,
+                    proximitySensor.statelessIcon,
+                    mapOf(),
+                )
+            }
         }
         mySensorManager.unregisterListener(this)
         Timber.d("Proximity sensor listener unregistered")

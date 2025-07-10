@@ -89,30 +89,30 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         Timber.d("Received intent: ${intent.action}")
-        skippableActions[intent.action]?.let { sensors ->
-            val noSensorsEnabled = sensors.none {
-                isSensorEnabled(it)
+        ioScope.launch {
+            skippableActions[intent.action]?.let { sensors ->
+                val noSensorsEnabled = sensors.none {
+                    isSensorEnabled(it)
+                }
+                if (noSensorsEnabled) {
+                    Timber.d(
+                        String.format(
+                            "Sensor(s) %s corresponding to received event %s are disabled, skipping sensors update",
+                            sensors.toString(),
+                            intent.action,
+                        ),
+                    )
+                    return@launch
+                }
             }
-            if (noSensorsEnabled) {
-                Timber.d(
-                    String.format(
-                        "Sensor(s) %s corresponding to received event %s are disabled, skipping sensors update",
-                        sensors.toString(),
-                        intent.action,
-                    ),
-                )
-                return
+
+            if (intent.action == ACTION_STOP_BEACON_SCANNING) {
+                BluetoothSensorManager.enableDisableBeaconMonitor(context, false)
+                return@launch
             }
-        }
 
-        if (intent.action == ACTION_STOP_BEACON_SCANNING) {
-            BluetoothSensorManager.enableDisableBeaconMonitor(context, false)
-            return
-        }
-
-        @Suppress("DEPRECATION")
-        if (isSensorEnabled(LastUpdateManager.lastUpdate.id)) {
-            ioScope.launch {
+            @Suppress("DEPRECATION")
+            if (isSensorEnabled(LastUpdateManager.lastUpdate.id)) {
                 LastUpdateManager().sendLastUpdate(context, intent.action)
                 val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
                 for (setting in allSettings) {
@@ -137,9 +137,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     }
                 }
             }
-        }
 
-        ioScope.launch {
             if (intent.action == Intent.ACTION_TIME_TICK && !shouldDoFastUpdates(context)) {
                 Timber.i("Skipping faster update because not charging/different preference")
                 return@launch
@@ -161,7 +159,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         }
     }
 
-    private fun isSensorEnabled(id: String): Boolean {
+    private suspend fun isSensorEnabled(id: String): Boolean {
         return sensorDao.get(id).any { it.enabled }
     }
 
