@@ -30,9 +30,11 @@ class SettingsRowScreenshotTest {
             primaryText = "Title",
             secondaryText = "Subtitle",
             icon = {
-                Spacer(Modifier
-                    .border(width = 1.dp, color = Color.Magenta)
-                    .size(width = 56.dp, height = 16.dp))
+                Spacer(
+                    Modifier
+                        .border(width = 1.dp, color = Color.Magenta)
+                        .size(width = 56.dp, height = 16.dp),
+                )
             },
             onClicked = {},
         )
