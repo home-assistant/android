@@ -2,7 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2025.7.2 - Main" versioncode="3">
-        <change>Health sensors now requires read health data in background permission</change>
+        <change>Health Connect sensors now require permission to access health data in the background</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2025.7.2 - Wear" versioncode="2">
