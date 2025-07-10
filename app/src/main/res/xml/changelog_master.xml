@@ -9,6 +9,7 @@
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2025.7.2 - Automotive" versioncode="1">
+        <change>Downloading snapshots from camera card is now working</change>
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
