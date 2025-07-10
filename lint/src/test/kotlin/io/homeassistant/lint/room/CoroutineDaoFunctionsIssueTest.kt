@@ -19,8 +19,8 @@ class CoroutineDaoFunctionsIssueTest {
         package kotlinx.coroutines.flow
         
         interface Flow<T>
-        """.trimIndent(),
-    )
+        """,
+    ).indented()
 
     @Test
     fun `Given a DAO when fun function is not suspendable and does not return a Flow then CoroutineThreadDaoFunction is raised`() {
@@ -38,8 +38,8 @@ class CoroutineDaoFunctionsIssueTest {
               interface TestDao {
                   fun test()
               }
-                    """.trimIndent(),
-                ),
+                    """,
+                ).indented(),
             )
             .run()
             .expect(
@@ -66,8 +66,8 @@ class CoroutineDaoFunctionsIssueTest {
               interface TestDao {
                   suspend fun test()
               }
-                    """.trimIndent(),
-                ),
+                    """,
+                ).indented(),
             )
             .run()
             .expectClean()
@@ -91,8 +91,8 @@ class CoroutineDaoFunctionsIssueTest {
               interface TestDao {
                   fun test(): Flow<Int>
               }
-                    """.trimIndent(),
-                ),
+                    """,
+                ).indented(),
             )
             .run()
             .expectClean()
