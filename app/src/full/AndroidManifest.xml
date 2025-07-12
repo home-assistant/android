@@ -114,7 +114,7 @@
             android:resource="@xml/automotive_app_desc"/>
         <service
             android:name=".vehicle.HaCarAppService"
-            android:intentMatchingFlags="none"
+            android:intentMatchingFlags="allowNullAction"
             android:exported="true">
             <intent-filter>
                 <action android:name="androidx.car.app.CarAppService" />
