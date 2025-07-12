@@ -107,7 +107,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/AndroidManifest.xml"
-            line="124"
+            line="126"
             column="27"/>
     </issue>
 
@@ -162,7 +162,7 @@
         errorLine2="        ^">
         <location
             file="src/full/AndroidManifest.xml"
-            line="115"
+            line="116"
             column="9"/>
     </issue>
 
@@ -196,6 +196,17 @@
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/sensors/SensorReceiver.kt"
             line="61"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `intentMatchingFlags` is only used in API level 36 and higher (current min is 21)"
+        errorLine1="            android:intentMatchingFlags=&quot;allowNullAction&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/full/AndroidManifest.xml"
+            line="118"
             column="13"/>
     </issue>
 
@@ -514,7 +525,7 @@
         errorLine2="         ~~~~~~~~">
         <location
             file="src/full/AndroidManifest.xml"
-            line="80"
+            line="81"
             column="10"/>
     </issue>
 
@@ -558,7 +569,7 @@
         errorLine2="         ~~~~~~~">
         <location
             file="src/full/AndroidManifest.xml"
-            line="92"
+            line="93"
             column="10"/>
     </issue>
 
@@ -569,7 +580,7 @@
         errorLine2="         ~~~~~~~">
         <location
             file="src/full/AndroidManifest.xml"
-            line="98"
+            line="99"
             column="10"/>
     </issue>
 
@@ -580,7 +591,7 @@
         errorLine2="         ~~~~~~~">
         <location
             file="src/full/AndroidManifest.xml"
-            line="115"
+            line="116"
             column="10"/>
     </issue>
 
@@ -635,7 +646,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="491"
+            line="500"
             column="17"/>
     </issue>
 
@@ -646,7 +657,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="491"
+            line="500"
             column="17"/>
     </issue>
 
@@ -1308,7 +1319,7 @@
         errorLine2="                                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="121"
+            line="122"
             column="104"/>
     </issue>
 
@@ -1319,7 +1330,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="310"
+            line="319"
             column="52"/>
     </issue>
 
@@ -1330,7 +1341,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="310"
+            line="319"
             column="52"/>
     </issue>
 
@@ -1341,7 +1352,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="331"
+            line="340"
             column="52"/>
     </issue>
 
@@ -1352,7 +1363,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="331"
+            line="340"
             column="52"/>
     </issue>
 
@@ -1363,7 +1374,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="524"
+            line="533"
             column="21"/>
     </issue>
 
@@ -1396,7 +1407,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewPresenterImpl.kt"
-            line="128"
+            line="131"
             column="27"/>
     </issue>
 
@@ -1407,7 +1418,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewPresenterImpl.kt"
-            line="372"
+            line="380"
             column="13"/>
     </issue>
 
