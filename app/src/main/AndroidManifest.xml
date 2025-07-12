@@ -71,7 +71,6 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:enableOnBackInvokedCallback="true"
         android:localeConfig="@xml/locales_config"
-        android:intentMatchingFlags="enforceIntentFilter"
         tools:ignore="GoogleAppIndexingWarning,UnusedAttribute"
         tools:targetApi="tiramisu">
 
