@@ -78,6 +78,7 @@ import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.HealthConnectSensorManager
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
+import io.homeassistant.companion.android.settings.views.SettingsSubheader
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.compose.TransparentChip
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
@@ -200,7 +201,7 @@ fun SensorDetailView(
                 viewModel.sensor?.let { sensor ->
                     if (sensor.sensor.enabled && sensor.attributes.isNotEmpty()) {
                         item {
-                            SensorDetailHeader(stringResource(commonR.string.attributes))
+                            SettingsSubheader(stringResource(commonR.string.attributes))
                         }
                         items(sensor.attributes, key = { "${it.sensorId}-${it.name}" }) { attribute ->
                             val summary = when (attribute.valueType) {
@@ -221,7 +222,7 @@ fun SensorDetailView(
                     }
                     if (sensor.sensor.enabled && viewModel.sensorSettings.value.isNotEmpty()) {
                         item {
-                            SensorDetailHeader(stringResource(commonR.string.sensor_settings))
+                            SettingsSubheader(stringResource(commonR.string.sensor_settings))
                         }
                         items(viewModel.sensorSettings.value, key = { "${it.sensorId}-${it.name}" }) { setting ->
                             when (setting.valueType) {
@@ -425,23 +426,6 @@ fun SensorDetailEnableRow(
                 colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb)),
             )
         }
-    }
-}
-
-@Composable
-fun SensorDetailHeader(text: String) {
-    Row(
-        modifier = Modifier
-            .height(48.dp)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.body2,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colors.primary,
-        )
     }
 }
 

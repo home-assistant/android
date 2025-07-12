@@ -70,7 +70,7 @@ internal fun WebViewContentScreen(
                 }
             }
             customViewFromWebView?.let { customViewFromWebView ->
-                AndroidView<View>(
+                AndroidView(
                     factory = {
                         customViewFromWebView
                     },

@@ -26,7 +26,7 @@ private const val VALUE_PARAM_NAME = "value"
 private const val STRING_PARAM_NAME = "string"
 private const val SERIALIZER_PARAM_NAME = "serializer"
 private const val DESERIALIZER_PARAM_NAME = "deserializer"
-private val WELL_KNOWN_SERIALIZABLE_TYPES = listOf<String>(
+private val WELL_KNOWN_SERIALIZABLE_TYPES = listOf(
     "java.lang.Boolean",
     "java.lang.Integer",
     "java.lang.Float",
@@ -36,7 +36,7 @@ private val WELL_KNOWN_SERIALIZABLE_TYPES = listOf<String>(
     "java.util.Map",
     "java.lang.String",
 )
-private val ANY_SERIALIZER_TYPES = listOf<String>(
+private val ANY_SERIALIZER_TYPES = listOf(
     "io.homeassistant.companion.android.common.util.AnySerializer",
     "io.homeassistant.companion.android.common.util.MapAnySerializer",
 )

@@ -33,6 +33,7 @@ object DataUriDownloadManager {
         context: Context,
         url: String,
         mimetype: String,
+        filename: String? = null,
     ) {
         val mime = mimetype.ifBlank {
             url.removePrefix("data:").split(";")[0].ifBlank {
@@ -43,7 +44,7 @@ object DataUriDownloadManager {
 
         createNotificationChannel(context)
         val notification = NotificationCompat.Builder(context, CHANNEL_DOWNLOADS)
-            .setContentTitle(context.getString(commonR.string.downloads_unnamed_file))
+            .setContentTitle(filename ?: context.getString(commonR.string.downloads_unnamed_file))
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
             .setAutoCancel(true)
         if (result != null) {

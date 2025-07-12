@@ -25,12 +25,55 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
 
+/**
+ * A Composable that displays a typical Material Design clickable list item
+ * with a title, subtitle, and icon slot (from the MDI library).
+ */
 @Composable
 fun SettingsRow(
     primaryText: String,
     secondaryText: String,
     mdiIcon: IIcon?,
     enabled: Boolean,
+    onClicked: () -> Unit,
+) {
+    SettingsRow(
+        primaryText = primaryText,
+        secondaryText = secondaryText,
+        icon = {
+            if (mdiIcon != null) {
+                Image(
+                    asset = mdiIcon,
+                    modifier = Modifier
+                        .size(DefaultIconSize)
+                        .alpha(if (enabled) ContentAlpha.high else ContentAlpha.disabled),
+                    colorFilter = ColorFilter.tint(
+                        if (enabled) {
+                            MaterialTheme.colors.primary
+                        } else {
+                            contentColorFor(backgroundColor = MaterialTheme.colors.background)
+                        },
+                    ),
+                )
+            } else {
+                Spacer(modifier = Modifier.width(DefaultIconSize))
+            }
+            // Spacer to reach 72dp grid line from start
+            Spacer(modifier = Modifier.width(72.dp - 16.dp - DefaultIconSize))
+        },
+        onClicked = onClicked,
+    )
+}
+
+/**
+ * A Composable that displays a typical Material Design clickable list item
+ * with a title and subtitle.
+ */
+@Composable
+fun SettingsRow(
+    primaryText: String,
+    secondaryText: String,
+    icon: (@Composable () -> Unit)?,
     onClicked: () -> Unit,
 ) {
     Row(
@@ -41,24 +84,9 @@ fun SettingsRow(
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (mdiIcon != null) {
-            Image(
-                asset = mdiIcon,
-                modifier = Modifier
-                    .size(24.dp)
-                    .alpha(if (enabled) ContentAlpha.high else ContentAlpha.disabled),
-                colorFilter = ColorFilter.tint(
-                    if (enabled) {
-                        MaterialTheme.colors.primary
-                    } else {
-                        contentColorFor(backgroundColor = MaterialTheme.colors.background)
-                    },
-                ),
-            )
-        } else {
-            Spacer(modifier = Modifier.width(24.dp))
+        if (icon != null) {
+            icon()
         }
-        Spacer(modifier = Modifier.width(32.dp))
         Column(
             verticalArrangement = Arrangement.Center,
         ) {
@@ -75,3 +103,5 @@ fun SettingsRow(
         }
     }
 }
+
+private val DefaultIconSize = 24.dp
