@@ -867,6 +867,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     if (webView.canGoForward()) webView.goForward()
                 }
 
+                GestureAction.NAVIGATE_RELOAD -> {
+                    webView.reload()
+                }
+
                 GestureAction.QUICKBAR_DEVICES -> {
                     webView.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_D))
                 }
