@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
@@ -42,8 +43,16 @@ class SettingsActivity : BaseActivity() {
     private var externalAuthCallback: ((Int) -> Boolean)? = null
 
     companion object {
-        fun newInstance(context: Context): Intent {
-            return Intent(context, SettingsActivity::class.java)
+        const val SCREEN_DEVELOPER = "developer"
+        const val SCREEN_NOTIFICATION_HISTORY = "notification_history"
+        const val SCREEN_WEBSOCKET = "websocket"
+
+        fun newInstance(context: Context, screen: String? = null): Intent {
+            return Intent(context, SettingsActivity::class.java).apply {
+                if (!screen.isNullOrBlank()) {
+                    putExtra("fragment", screen)
+                }
+            }
         }
     }
 
@@ -73,14 +82,15 @@ class SettingsActivity : BaseActivity() {
                 replace(
                     R.id.content,
                     when {
-                        settingsNavigation == "websocket" ->
+                        settingsNavigation == SCREEN_WEBSOCKET ->
                             if (serverManager.defaultServers.size == 1) {
                                 WebsocketSettingFragment::class.java
                             } else {
                                 SettingsFragment::class.java
                             }
 
-                        settingsNavigation == "notification_history" -> NotificationHistoryFragment::class.java
+                        settingsNavigation == SCREEN_DEVELOPER -> DeveloperSettingsFragment::class.java
+                        settingsNavigation == SCREEN_NOTIFICATION_HISTORY -> NotificationHistoryFragment::class.java
                         settingsNavigation?.startsWith("sensors/") == true -> SensorDetailFragment::class.java
                         settingsNavigation?.startsWith("tiles/") == true -> ManageTilesFragment::class.java
                         else -> SettingsFragment::class.java

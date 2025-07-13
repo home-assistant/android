@@ -107,6 +107,7 @@ import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import io.homeassistant.companion.android.webview.externalbus.NavigateTo
+import io.homeassistant.companion.android.webview.externalbus.ShowSidebar
 import javax.inject.Inject
 import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
@@ -896,8 +897,24 @@ class WebViewActivity :
     private fun handleWebViewGesture(direction: GestureDirection, pointerCount: Int) {
         lifecycleScope.launch {
             when (presenter.getGestureAction(direction, pointerCount)) {
-                GestureAction.SERVER_NEXT -> presenter.nextServer()
-                GestureAction.SERVER_PREVIOUS -> presenter.previousServer()
+                GestureAction.NAVIGATE_FORWARD -> {
+                    if (webView.canGoForward()) webView.goForward()
+                }
+
+                GestureAction.QUICKBAR_DEVICES -> {
+                    webView.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_D))
+                }
+
+                GestureAction.QUICKBAR_DEFAULT -> {
+                    webView.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
+                }
+
+                GestureAction.QUICKBAR_COMMANDS -> {
+                    webView.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_C))
+                }
+
+                GestureAction.SHOW_SIDEBAR -> sendExternalBusMessage(ShowSidebar)
+
                 GestureAction.SERVER_LIST -> {
                     val serverChooser = ServerChooserFragment()
                     supportFragmentManager.setFragmentResultListener(
@@ -915,9 +932,25 @@ class WebViewActivity :
                     serverChooser.show(supportFragmentManager, ServerChooserFragment.TAG)
                 }
 
-                GestureAction.QUICKBAR_DEFAULT -> {
-                    webView.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
-                }
+                GestureAction.SERVER_NEXT -> presenter.nextServer()
+
+                GestureAction.SERVER_PREVIOUS -> presenter.previousServer()
+
+                GestureAction.OPEN_ASSIST -> startActivity(
+                    AssistActivity.newInstance(
+                        this@WebViewActivity,
+                        serverId = presenter.getActiveServer(),
+                    ),
+                )
+
+                GestureAction.OPEN_APP_SETTINGS -> startActivity(SettingsActivity.newInstance(this@WebViewActivity))
+
+                GestureAction.OPEN_APP_DEVELOPER -> startActivity(
+                    SettingsActivity.newInstance(
+                        context = this@WebViewActivity,
+                        screen = SettingsActivity.SCREEN_DEVELOPER,
+                    ),
+                )
 
                 GestureAction.NONE -> {
                     // Do nothing

@@ -7,10 +7,17 @@ import kotlin.math.abs
 
 enum class GestureAction(@StringRes val description: Int, val category: GestureActionCategory) {
     NONE(R.string.none, GestureActionCategory.NONE),
+    NAVIGATE_FORWARD(R.string.gestures_action_navigate_forward),
     QUICKBAR_DEFAULT(R.string.gestures_action_quickbar_default, GestureActionCategory.FRONTEND),
+    QUICKBAR_DEVICES(R.string.gestures_action_quickbar_devices),
+    QUICKBAR_COMMANDS(R.string.gestures_action_quickbar_commands),
+    SHOW_SIDEBAR(R.string.gestures_action_show_sidebar),
     SERVER_LIST(R.string.gestures_action_server_list, GestureActionCategory.SERVERS),
     SERVER_NEXT(R.string.gestures_action_server_next, GestureActionCategory.SERVERS),
     SERVER_PREVIOUS(R.string.gestures_action_server_previous, GestureActionCategory.SERVERS),
+    OPEN_ASSIST(R.string.gestures_action_open_assist),
+    OPEN_APP_SETTINGS(R.string.gestures_action_open_app_settings),
+    OPEN_APP_DEVELOPER(R.string.gestures_action_open_app_developer),
 }
 
 enum class GestureActionCategory(@StringRes val description: Int) {
