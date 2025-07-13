@@ -295,6 +295,7 @@
     <string name="screen_orientation_option_label_landscape">Landscape</string>
     <string name="gestures">Gestures</string>
     <string name="gestures_action_navigate_forward">Go to next page</string>
+    <string name="gestures_action_navigate_reload">Reload page</string>
     <string name="gestures_action_open_app_settings">Open app settings</string>
     <string name="gestures_action_open_app_developer">Open app troubleshooting</string>
     <string name="gestures_action_open_assist">Open Assist</string>
