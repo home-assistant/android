@@ -1,6 +1,3 @@
-import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
-import com.google.gms.googleservices.GoogleServicesPlugin.GoogleServicesPluginConfig
-
 plugins {
     alias(libs.plugins.homeassistant.android.application)
     alias(libs.plugins.homeassistant.android.flavor)
@@ -32,16 +29,16 @@ android {
     }
 
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
+}
 
-    screenshotTests {
-        imageDifferenceThreshold = 0.00025f // 0.025%
-    }
+screenshotTests {
+    imageDifferenceThreshold = 0.00025f // 0.025%
+}
 
-    firebaseAppDistribution {
-        serviceCredentialsFile = "firebaseAppDistributionServiceCredentialsFile.json"
-        releaseNotesFile = "./app/build/outputs/changelogBeta"
-        groups = "continuous-deployment"
-    }
+firebaseAppDistribution {
+    serviceCredentialsFile = "firebaseAppDistributionServiceCredentialsFile.json"
+    releaseNotesFile = "./app/build/outputs/changelogBeta"
+    groups = "continuous-deployment"
 }
 
 dependencies {
@@ -52,6 +49,6 @@ dependencies {
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.
-configure<GoogleServicesPluginConfig> {
+googleServices {
     disableVersionCheck = true
 }
