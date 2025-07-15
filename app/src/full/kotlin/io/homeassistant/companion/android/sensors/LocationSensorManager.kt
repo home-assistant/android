@@ -474,7 +474,11 @@ class LocationSensorManager :
             DEFAULT_UPDATE_INTERVAL_HA_SECONDS.toString(),
         )
 
-        var updateIntervalHighAccuracySecondsInt = if (updateIntervalHighAccuracySeconds.isEmpty()) DEFAULT_UPDATE_INTERVAL_HA_SECONDS else updateIntervalHighAccuracySeconds.toInt()
+        var updateIntervalHighAccuracySecondsInt = if (updateIntervalHighAccuracySeconds.isEmpty()) {
+            DEFAULT_UPDATE_INTERVAL_HA_SECONDS
+        } else {
+            updateIntervalHighAccuracySeconds.toInt()
+        }
         if (updateIntervalHighAccuracySecondsInt < 5) {
             updateIntervalHighAccuracySecondsInt = DEFAULT_UPDATE_INTERVAL_HA_SECONDS
 
