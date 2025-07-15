@@ -114,7 +114,11 @@
             android:resource="@xml/automotive_app_desc"/>
         <service
             android:name=".vehicle.HaCarAppService"
-            android:exported="false">
+            android:exported="true"
+            tools:ignore="ExportedService,NewApi">
+            <!--As mentioned in the documentation it is safe to export this service without defining permission
+            https://developer.android.com/training/cars/apps#declare-carappservice
+            -->
             <intent-filter>
                 <action android:name="androidx.car.app.CarAppService" />
                 <category android:name="androidx.car.app.category.IOT"/>
