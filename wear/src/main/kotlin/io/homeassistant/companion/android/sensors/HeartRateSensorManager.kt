@@ -121,8 +121,8 @@ class HeartRateSensorManager : SensorManager, SensorEventListener {
                 heartRate.statelessIcon,
                 mapOf(
                     "accuracy" to getAccuracy(event.accuracy),
-                    "device_class" to "heart_rate",
-                    "state_class" to "measurement"
+                    "state_class" to "measurement",
+                    "device_class" to "heart_rate"
                 ),
             )
         }
