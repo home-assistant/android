@@ -62,11 +62,7 @@ class CameraWidget : AppWidgetProvider() {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    override fun onUpdate(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray,
-    ) {
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them
         appWidgetIds.forEach { appWidgetId ->
             updateAppWidget(
@@ -128,7 +124,9 @@ class CameraWidget : AppWidgetProvider() {
         if (widget != null) {
             try {
                 val entityPictureUrl = retrieveCameraImageUrl(widget.serverId, widget.entityId)
-                val baseUrl = serverManager.getServer(widget.serverId)?.connection?.getUrl().toString().removeSuffix("/")
+                val baseUrl = serverManager.getServer(
+                    widget.serverId,
+                )?.connection?.getUrl().toString().removeSuffix("/")
                 url = "$baseUrl$entityPictureUrl"
             } catch (e: Exception) {
                 Timber.e(e, "Failed to fetch entity or entity does not exist")

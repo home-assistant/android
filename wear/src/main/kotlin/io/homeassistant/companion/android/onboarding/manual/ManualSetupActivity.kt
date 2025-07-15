@@ -17,7 +17,9 @@ import io.homeassistant.companion.android.util.adjustInset
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
+class ManualSetupActivity :
+    AppCompatActivity(),
+    ManualSetupView {
     companion object {
         fun newInstance(context: Context): Intent {
             return Intent(context, ManualSetupActivity::class.java)

@@ -22,22 +22,19 @@ class NotificationPermissionFragment : Fragment() {
 
     private val viewModel by activityViewModels<OnboardingViewModel>()
 
-    private val permissionsRequest = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-        Timber.i("Notification permission was ${if (isGranted) "granted" else "not granted"}")
-        viewModel.setNotifications(isGranted)
+    private val permissionsRequest =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            Timber.i("Notification permission was ${if (isGranted) "granted" else "not granted"}")
+            viewModel.setNotifications(isGranted)
 
-        if (isGranted) {
-            onComplete()
-        } else {
-            showPermissionDeniedDialog()
+            if (isGranted) {
+                onComplete()
+            } else {
+                showPermissionDeniedDialog()
+            }
         }
-    }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {

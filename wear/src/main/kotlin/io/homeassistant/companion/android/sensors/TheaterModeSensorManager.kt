@@ -44,7 +44,17 @@ class TheaterModeSensorManager : SensorManager {
         }
 
         val state = try {
-            Settings.Global.getInt(context.contentResolver, if (Build.MANUFACTURER == "samsung") "setting_theater_mode_on" else "theater_mode_on") == 1
+            Settings.Global.getInt(
+                context.contentResolver,
+                if (Build.MANUFACTURER ==
+                    "samsung"
+                ) {
+                    "setting_theater_mode_on"
+                } else {
+                    "theater_mode_on"
+                },
+            ) ==
+                1
         } catch (e: Exception) {
             Timber.e(e, "Unable to update theater mode sensor")
             false

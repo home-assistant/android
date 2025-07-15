@@ -4,5 +4,9 @@ import okhttp3.ResponseBody
 
 class AuthorizationException : Exception {
     constructor() : super()
-    constructor(message: String, httpCode: Int, errorBody: ResponseBody?) : super("$message, httpCode: $httpCode, errorBody: ${errorBody?.string()}")
+    constructor(
+        message: String,
+        httpCode: Int,
+        errorBody: ResponseBody?,
+    ) : super("$message, httpCode: $httpCode, errorBody: ${errorBody?.string()}")
 }

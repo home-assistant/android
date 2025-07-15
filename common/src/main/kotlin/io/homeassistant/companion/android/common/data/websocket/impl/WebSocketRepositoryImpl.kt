@@ -58,7 +58,8 @@ private val matterTimeout = 2.minutes
 class WebSocketRepositoryImpl internal constructor(
     private val webSocketCore: WebSocketCore,
     private val serverManager: ServerManager,
-) : WebSocketRepository, WebSocketListener() {
+) : WebSocketListener(),
+    WebSocketRepository {
 
     override fun getConnectionState(): WebSocketState? {
         return webSocketCore.getConnectionState()
@@ -286,8 +287,7 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun sendVoiceData(binaryHandlerId: Int, data: ByteArray): Boolean? =
         webSocketCore.sendBytes(byteArrayOf(binaryHandlerId.toByte()) + data)
 
-    override suspend fun getStateChanges(): Flow<StateChangedEvent>? =
-        subscribeToEventsForType(EVENT_STATE_CHANGED)
+    override suspend fun getStateChanges(): Flow<StateChangedEvent>? = subscribeToEventsForType(EVENT_STATE_CHANGED)
 
     override suspend fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent>? =
         subscribeToTrigger("state", mapOf("entity_id" to entityIds))
@@ -371,7 +371,13 @@ class WebSocketRepositoryImpl internal constructor(
         )
         val response = webSocketCore.sendMessage(
             WebSocketRequest(
-                message = if (webSocketCore.server()?.version?.isAtLeast(2024, 1) == true) data.plus("ip_addr" to ip) else data,
+                message = if (webSocketCore.server()?.version?.isAtLeast(2024, 1) ==
+                    true
+                ) {
+                    data.plus("ip_addr" to ip)
+                } else {
+                    data
+                },
                 // Matter commissioning takes at least 60 seconds + interview
                 timeout = matterTimeout,
             ),

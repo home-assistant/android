@@ -19,10 +19,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
 @Composable
-fun IconDialogContent(
-    iconFilter: IconFilter = DefaultIconFilter(),
-    onSelect: (IIcon) -> Unit,
-) {
+fun IconDialogContent(iconFilter: IconFilter = DefaultIconFilter(), onSelect: (IIcon) -> Unit) {
     var searchQuery by remember { mutableStateOf("") }
     Column {
         IconDialogSearch(value = searchQuery, onValueChange = { searchQuery = it })
@@ -36,11 +33,7 @@ fun IconDialogContent(
 }
 
 @Composable
-fun IconDialog(
-    iconFilter: IconFilter = DefaultIconFilter(),
-    onSelect: (IIcon) -> Unit,
-    onDismissRequest: () -> Unit,
-) {
+fun IconDialog(iconFilter: IconFilter = DefaultIconFilter(), onSelect: (IIcon) -> Unit, onDismissRequest: () -> Unit) {
     Dialog(onDismissRequest = onDismissRequest) {
         Surface(
             modifier = Modifier

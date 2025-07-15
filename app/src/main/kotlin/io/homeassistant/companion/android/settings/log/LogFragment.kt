@@ -167,7 +167,8 @@ class LogFragment : Fragment() {
                 // Recreate log dir
                 fLogFilePath.mkdir()
 
-                val filePathWithoutExt = path + "/homeassistant_companion_log_$month-$day-$year" + "_" + "$hour-$minute-$second"
+                val filePathWithoutExt =
+                    path + "/homeassistant_companion_log_$month-$day-$year" + "_" + "$hour-$minute-$second"
                 val logFilePath = "$filePathWithoutExt.txt"
 
                 Timber.i("Create log file to: $logFilePath")
@@ -176,7 +177,11 @@ class LogFragment : Fragment() {
                 fLogFile.appendText(currentLog)
 
                 if (fLogFile.exists()) {
-                    val uriToLog: Uri = FileProvider.getUriForFile(requireContext(), requireContext().packageName + ".provider", fLogFile)
+                    val uriToLog: Uri = FileProvider.getUriForFile(
+                        requireContext(),
+                        requireContext().packageName + ".provider",
+                        fLogFile,
+                    )
 
                     val sendIntent: Intent = Intent().apply {
                         action = Intent.ACTION_SEND
@@ -190,7 +195,8 @@ class LogFragment : Fragment() {
                     val shareIntent = Intent.createChooser(sendIntent, null).apply {
                         // Lets exclude github app, because github doesn't support sharing text files (only images)
                         // Also no issue template will be used
-                        val excludedComponents = getExcludedComponentsForPackageName(sendIntent, arrayOf("com.github.android"))
+                        val excludedComponents =
+                            getExcludedComponentsForPackageName(sendIntent, arrayOf("com.github.android"))
                         if (excludedComponents.size > 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                             putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, excludedComponents.toTypedArray())
                         }
@@ -205,7 +211,11 @@ class LogFragment : Fragment() {
                     }
                 } else {
                     Timber.e("Could not open share dialog, because log file does not exist.")
-                    Toast.makeText(requireContext(), getString(commonR.string.log_file_not_created), Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        requireContext(),
+                        getString(commonR.string.log_file_not_created),
+                        Toast.LENGTH_LONG,
+                    ).show()
                 }
             }
             .setNegativeButton(commonR.string.confirm_negative) { _, _ ->
@@ -219,7 +229,10 @@ class LogFragment : Fragment() {
         activity?.title = getString(commonR.string.log)
     }
 
-    private fun getExcludedComponentsForPackageName(sendIntent: Intent, packageNames: Array<String>): ArrayList<ComponentName> {
+    private fun getExcludedComponentsForPackageName(
+        sendIntent: Intent,
+        packageNames: Array<String>,
+    ): ArrayList<ComponentName> {
         val excludedComponents = ArrayList<ComponentName>()
         val resInfos = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             requireContext().packageManager.queryIntentActivities(sendIntent, PackageManager.ResolveInfoFlags.of(0))

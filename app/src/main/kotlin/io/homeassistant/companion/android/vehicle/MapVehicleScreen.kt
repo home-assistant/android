@@ -76,7 +76,8 @@ class MapVehicleScreen(
         val gridLimit = manager.getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID)
         val gridBuilder = ItemList.Builder()
         entities
-            .map { // Null checks handled during collection
+            .map {
+                // Null checks handled during collection
                 val attrs = it.attributes as Map<*, *>
                 val lat = attrs["latitude"] as Double
                 val lon = attrs["longitude"] as Double
@@ -85,7 +86,9 @@ class MapVehicleScreen(
             .sortedBy { it.first.friendlyName }
             .forEachIndexed { index, pair ->
                 if (index >= gridLimit) {
-                    Timber.i("Grid limit ($gridLimit) reached, not adding any more navigation entities (${entities.size})")
+                    Timber.i(
+                        "Grid limit ($gridLimit) reached, not adding any more navigation entities (${entities.size})",
+                    )
                     return@forEachIndexed
                 }
                 val icon = pair.first.getIcon(carContext)

@@ -23,6 +23,9 @@ import io.homeassistant.companion.android.settings.developer.location.views.Loca
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import javax.inject.Inject
 
+private const val FAQ_LINK =
+    "https://companion.home-assistant.io/docs/troubleshooting/faqs#device-tracker-is-not-updating-in-android-app"
+
 @AndroidEntryPoint
 class LocationTrackingFragment : Fragment() {
 
@@ -31,11 +34,7 @@ class LocationTrackingFragment : Fragment() {
 
     val viewModel: LocationTrackingViewModel by viewModels()
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -62,7 +61,11 @@ class LocationTrackingFragment : Fragment() {
 
                 override fun onPrepareMenu(menu: Menu) {
                     menu.findItem(R.id.get_help).apply {
-                        intent = Intent(Intent.ACTION_VIEW, "https://companion.home-assistant.io/docs/troubleshooting/faqs#device-tracker-is-not-updating-in-android-app".toUri())
+                        intent =
+                            Intent(
+                                Intent.ACTION_VIEW,
+                                FAQ_LINK.toUri(),
+                            )
                     }
                 }
 
@@ -72,6 +75,7 @@ class LocationTrackingFragment : Fragment() {
                         menuItem.isChecked = true
                         true
                     }
+
                     else -> false
                 }
             },

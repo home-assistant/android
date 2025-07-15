@@ -65,14 +65,13 @@ class HaControlsProviderService : ControlsProviderService() {
             "camera" to Build.VERSION_CODES.S,
         )
 
-        fun getSupportedDomains(): List<String> =
-            domainToHaControl
-                .filter { it.value != null }
-                .map { it.key }
-                .filter {
-                    domainToMinimumApi[it] == null ||
-                        Build.VERSION.SDK_INT >= domainToMinimumApi[it]!!
-                }
+        fun getSupportedDomains(): List<String> = domainToHaControl
+            .filter { it.value != null }
+            .map { it.key }
+            .filter {
+                domainToMinimumApi[it] == null ||
+                    Build.VERSION.SDK_INT >= domainToMinimumApi[it]!!
+            }
     }
 
     @Inject
@@ -103,9 +102,12 @@ class HaControlsProviderService : ControlsProviderService() {
                 serverManager.defaultServers.map { server ->
                     async {
                         try {
-                            val getAreaRegistry = async { serverManager.webSocketRepository(server.id).getAreaRegistry() }
-                            val getDeviceRegistry = async { serverManager.webSocketRepository(server.id).getDeviceRegistry() }
-                            val getEntityRegistry = async { serverManager.webSocketRepository(server.id).getEntityRegistry() }
+                            val getAreaRegistry =
+                                async { serverManager.webSocketRepository(server.id).getAreaRegistry() }
+                            val getDeviceRegistry =
+                                async { serverManager.webSocketRepository(server.id).getDeviceRegistry() }
+                            val getEntityRegistry =
+                                async { serverManager.webSocketRepository(server.id).getEntityRegistry() }
                             val getEntities = async { serverManager.integrationRepository(server.id).getEntities() }
 
                             areaRegistry[server.id] = getAreaRegistry.await()
@@ -124,7 +126,10 @@ class HaControlsProviderService : ControlsProviderService() {
                             entities[server.id] = entities[server.id].orEmpty()
                                 .sortedWith(compareBy(nullsLast()) { areaForEntity[server.id]?.get(it.entityId)?.name })
                         } catch (e: Exception) {
-                            Timber.e(e, "Unable to load entities/registries for server ${server.id} (${server.friendlyName}), skipping")
+                            Timber.e(
+                                e,
+                                "Unable to load entities/registries for server ${server.id} (${server.friendlyName}), skipping",
+                            )
                         }
                     }
                 }.awaitAll()
@@ -208,11 +213,7 @@ class HaControlsProviderService : ControlsProviderService() {
         }
     }
 
-    override fun performControlAction(
-        controlId: String,
-        action: ControlAction,
-        consumer: Consumer<Int>,
-    ) {
+    override fun performControlAction(controlId: String, action: ControlAction, consumer: Consumer<Int>) {
         Timber.d("Control: $controlId, action: $action")
         if (!serverManager.isRegistered()) return consumer.accept(ControlAction.RESPONSE_FAIL)
 
@@ -337,14 +338,24 @@ class HaControlsProviderService : ControlsProviderService() {
                             // All initial states will be in the first message
                             sentInitial = true
                             (entityIds - entities.keys).forEach { missingEntity ->
-                                Timber.e("Unable to get $missingEntity from Home Assistant, not returned in subscribe_entities.")
+                                Timber.e(
+                                    "Unable to get $missingEntity from Home Assistant, not returned in subscribe_entities.",
+                                )
                                 val entity = getFailedEntity(missingEntity, error404)
                                 entities["ha_failed.$missingEntity"] = entity
                                 toSend["ha_failed.$missingEntity"] = entity
                             }
                         }
                         Timber.d("Sending ${toSend.size} entities to subscriber")
-                        sendEntitiesToSubscriber(subscriber, controlIds, toSend, serverId, serverName, webSocketScope, baseUrl)
+                        sendEntitiesToSubscriber(
+                            subscriber,
+                            controlIds,
+                            toSend,
+                            serverId,
+                            serverName,
+                            webSocketScope,
+                            baseUrl,
+                        )
                     } ?: run {
                     entityIds.forEachIndexed { index, entityId ->
                         val entity = getFailedEntity(entityId, Exception())
@@ -369,7 +380,8 @@ class HaControlsProviderService : ControlsProviderService() {
         } else {
             // Set up initial states
             entityIds.forEachIndexed { index, entityId ->
-                webSocketScope.launch { // using launch to create controls async
+                webSocketScope.launch {
+                    // using launch to create controls async
                     var id = entityId
                     try {
                         val entity = serverManager.integrationRepository(serverId).getEntity(entityId)
@@ -428,20 +440,44 @@ class HaControlsProviderService : ControlsProviderService() {
         webSocketScope.launch {
             serverManager.webSocketRepository(serverId).getAreaRegistryUpdates()?.collect {
                 areaRegistry[serverId] = serverManager.webSocketRepository(serverId).getAreaRegistry()
-                sendEntitiesToSubscriber(subscriber, controlIds, entities, serverId, serverName, webSocketScope, baseUrl)
+                sendEntitiesToSubscriber(
+                    subscriber,
+                    controlIds,
+                    entities,
+                    serverId,
+                    serverName,
+                    webSocketScope,
+                    baseUrl,
+                )
             }
         }
         webSocketScope.launch {
             serverManager.webSocketRepository(serverId).getDeviceRegistryUpdates()?.collect {
                 deviceRegistry[serverId] = serverManager.webSocketRepository(serverId).getDeviceRegistry()
-                sendEntitiesToSubscriber(subscriber, controlIds, entities, serverId, serverName, webSocketScope, baseUrl)
+                sendEntitiesToSubscriber(
+                    subscriber,
+                    controlIds,
+                    entities,
+                    serverId,
+                    serverName,
+                    webSocketScope,
+                    baseUrl,
+                )
             }
         }
         webSocketScope.launch {
             serverManager.webSocketRepository(serverId).getEntityRegistryUpdates()?.collect { event ->
                 if (event.action == "update" && entityIds.contains(event.entityId)) {
                     entityRegistry[serverId] = serverManager.webSocketRepository(serverId).getEntityRegistry()
-                    sendEntitiesToSubscriber(subscriber, controlIds, entities, serverId, serverName, webSocketScope, baseUrl)
+                    sendEntitiesToSubscriber(
+                        subscriber,
+                        controlIds,
+                        entities,
+                        serverId,
+                        serverName,
+                        webSocketScope,
+                        baseUrl,
+                    )
                 }
             }
         }
@@ -497,10 +533,7 @@ class HaControlsProviderService : ControlsProviderService() {
         }
     }
 
-    private fun getFailedEntity(
-        entityId: String,
-        exception: Exception,
-    ): Entity {
+    private fun getFailedEntity(entityId: String, exception: Exception): Entity {
         return Entity(
             entityId = entityId,
             state = if (exception is HttpException && exception.code() == 404) "notfound" else "exception",

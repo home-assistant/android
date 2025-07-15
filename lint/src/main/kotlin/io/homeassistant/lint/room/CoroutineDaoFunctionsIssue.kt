@@ -20,7 +20,9 @@ object CoroutineDaoFunctionsIssue {
     val ISSUE = Issue.Companion.create(
         id = "CoroutineDaoFunction",
         briefDescription = "DAO functions should suspend or return a Flow",
-        explanation = "All functions in a DAO should suspend or return a Flow to ensure they can be executed properly in coroutines",
+        explanation = """All functions in a DAO should suspend or return a Flow to ensure 
+            |they can be executed properly in coroutines
+        """.trimMargin(),
         category = Category.Companion.CORRECTNESS,
         severity = Severity.ERROR,
         priority = 10,
@@ -30,7 +32,9 @@ object CoroutineDaoFunctionsIssue {
         ),
     )
 
-    class IssueDetector : Detector(), SourceCodeScanner {
+    class IssueDetector :
+        Detector(),
+        SourceCodeScanner {
         override fun getApplicableUastTypes() = listOf(UClass::class.java)
 
         override fun createUastHandler(context: JavaContext): UElementHandler {

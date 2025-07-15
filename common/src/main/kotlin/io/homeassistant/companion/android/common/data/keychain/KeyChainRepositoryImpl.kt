@@ -11,9 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-class KeyChainRepositoryImpl @Inject constructor(
-    private val prefsRepository: PrefsRepository,
-) : KeyChainRepository {
+class KeyChainRepositoryImpl @Inject constructor(private val prefsRepository: PrefsRepository) : KeyChainRepository {
 
     private var alias: String? = null
     private var key: PrivateKey? = null

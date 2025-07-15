@@ -65,7 +65,9 @@ fun SingleEntityPicker(
     LaunchedEffect(entities.size, inputValue) {
         list = withContext(Dispatchers.IO) {
             val query = inputValue.trim()
-            val items = if (inputValue.isBlank() || inputValue == (entities.firstOrNull { it.entityId == currentEntity }?.friendlyName ?: currentEntity)) {
+            val items = if (inputValue.isBlank() ||
+                inputValue == (entities.firstOrNull { it.entityId == currentEntity }?.friendlyName ?: currentEntity)
+            ) {
                 entities
             } else {
                 entities.filter {

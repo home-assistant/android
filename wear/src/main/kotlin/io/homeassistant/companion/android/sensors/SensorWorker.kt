@@ -16,10 +16,7 @@ import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.sensors.SensorWorkerBase
 import java.util.concurrent.TimeUnit
 
-class SensorWorker(
-    appContext: Context,
-    workerParams: WorkerParameters,
-) : SensorWorkerBase(appContext, workerParams) {
+class SensorWorker(appContext: Context, workerParams: WorkerParameters) : SensorWorkerBase(appContext, workerParams) {
 
     companion object {
         fun start(context: Context) {

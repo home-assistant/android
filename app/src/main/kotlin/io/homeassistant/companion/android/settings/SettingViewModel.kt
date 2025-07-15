@@ -13,14 +13,23 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 
 @HiltViewModel
-class SettingViewModel @Inject constructor(
-    private val settingsDao: SettingsDao,
-    application: Application,
-) : AndroidViewModel(application) {
+class SettingViewModel @Inject constructor(private val settingsDao: SettingsDao, application: Application) :
+    AndroidViewModel(application) {
     fun getSetting(id: Int): Setting {
         var setting = settingsDao.get(id)
         if (setting == null) {
-            setting = Setting(id, if (BuildConfig.FLAVOR == "full") WebsocketSetting.NEVER else WebsocketSetting.ALWAYS, SensorUpdateFrequencySetting.NORMAL)
+            setting =
+                Setting(
+                    id,
+                    if (BuildConfig.FLAVOR ==
+                        "full"
+                    ) {
+                        WebsocketSetting.NEVER
+                    } else {
+                        WebsocketSetting.ALWAYS
+                    },
+                    SensorUpdateFrequencySetting.NORMAL,
+                )
             settingsDao.insert(setting)
         }
         return setting

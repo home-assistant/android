@@ -23,7 +23,9 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
-class ActivitySensorManager : BroadcastReceiver(), SensorManager {
+class ActivitySensorManager :
+    BroadcastReceiver(),
+    SensorManager {
 
     companion object {
         const val ACTION_UPDATE_ACTIVITY =
@@ -112,7 +114,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                     probActivity,
                     getSensorIcon(probActivity),
                     result.probableActivities.associate { typeToString(it) to it.confidence }.plus(
-                        "options" to listOf("in_vehicle", "on_bicycle", "on_foot", "still", "tilting", "walking", "running"),
+                        "options" to
+                            listOf("in_vehicle", "on_bicycle", "on_foot", "still", "tilting", "walking", "running"),
                     ),
                 )
             }
@@ -236,11 +239,13 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             }
         }
         if ((
-                isEnabled(context, sleepConfidence) || isEnabled(
-                    context,
-                    sleepSegment,
-                )
-                ) && !sleepRegistration
+                isEnabled(context, sleepConfidence) ||
+                    isEnabled(
+                        context,
+                        sleepSegment,
+                    )
+                ) &&
+            !sleepRegistration
         ) {
             val pendingIntent = getSleepPendingIntent(context)
             Timber.d("Registering for sleep updates")

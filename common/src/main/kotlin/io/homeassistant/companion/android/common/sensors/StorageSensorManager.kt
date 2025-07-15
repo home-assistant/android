@@ -40,7 +40,9 @@ class StorageSensorManager : SensorManager {
             for (item in pathsSD) {
                 if (item != null) {
                     Timber.d(
-                        "PATH $item is mounted ${Environment.getExternalStorageState(item) == Environment.MEDIA_MOUNTED} and removable is ${Environment.isExternalStorageRemovable(
+                        "PATH $item is mounted ${Environment.getExternalStorageState(
+                            item,
+                        ) == Environment.MEDIA_MOUNTED} and removable is ${Environment.isExternalStorageRemovable(
                             item,
                         )}",
                     )
@@ -69,9 +71,7 @@ class StorageSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateInternalStorageSensor(context)
         updateExternalStorageSensor(context)
     }
@@ -139,11 +139,7 @@ class StorageSensorManager : SensorManager {
         return "$sizeWithThousandsSeparator$suffix"
     }
 
-    private data class StorageStats(
-        val totalBytes: String,
-        val freeBytes: String,
-        val percentage: Int,
-    )
+    private data class StorageStats(val totalBytes: String, val freeBytes: String, val percentage: Int)
 
     private fun getStorageStats(path: File) = with(StatFs(path.path)) {
         StorageStats(

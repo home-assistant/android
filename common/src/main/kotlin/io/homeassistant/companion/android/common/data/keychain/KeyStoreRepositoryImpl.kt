@@ -32,17 +32,18 @@ class KeyStoreRepositoryImpl @Inject constructor() : KeyChainRepository {
         throw IllegalArgumentException("Key alias cannot be null.")
     }
 
-    override suspend fun setData(alias: String, privateKey: PrivateKey, certificateChain: Array<X509Certificate>) = withContext(Dispatchers.IO) {
-        // clear state
-        this@KeyStoreRepositoryImpl.alias = null
-        this@KeyStoreRepositoryImpl.key = null
-        this@KeyStoreRepositoryImpl.chain = null
+    override suspend fun setData(alias: String, privateKey: PrivateKey, certificateChain: Array<X509Certificate>) =
+        withContext(Dispatchers.IO) {
+            // clear state
+            this@KeyStoreRepositoryImpl.alias = null
+            this@KeyStoreRepositoryImpl.key = null
+            this@KeyStoreRepositoryImpl.chain = null
 
-        // store and load certificate to/from KeyStore
-        doStore(alias, privateKey, certificateChain)
-        this@KeyStoreRepositoryImpl.alias = alias
-        doLoad()
-    }
+            // store and load certificate to/from KeyStore
+            doStore(alias, privateKey, certificateChain)
+            this@KeyStoreRepositoryImpl.alias = alias
+            doLoad()
+        }
 
     override fun getAlias(): String? {
         return alias

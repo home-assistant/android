@@ -33,9 +33,9 @@ internal sealed interface SocketResponse {
  * This class is used as fallback when the type received is not known within the codebase.
  * The type can be found directly within the [content].
  */
-internal data class UnknownTypeSocketResponse(
-    override val content: JsonElement,
-) : SocketResponse, UnknownJsonContent
+internal data class UnknownTypeSocketResponse(override val content: JsonElement) :
+    SocketResponse,
+    UnknownJsonContent
 
 @Serializable
 internal sealed interface AuthSocketResponse : SocketResponse {
@@ -86,7 +86,5 @@ internal data class PongSocketResponse(
 
 @Serializable
 @SerialName("event")
-internal data class EventSocketResponse(
-    override val id: Long? = null,
-    val event: JsonElement? = null,
-) : SocketResponseWithId
+internal data class EventSocketResponse(override val id: Long? = null, val event: JsonElement? = null) :
+    SocketResponseWithId

@@ -76,7 +76,9 @@ object MissingSerializableAnnotationIssue {
         implementation = ISSUE_IMPLEMENTATION,
     )
 
-    class IssueDetector : Detector(), Detector.UastScanner {
+    class IssueDetector :
+        Detector(),
+        Detector.UastScanner {
 
         override fun getApplicableUastTypes(): List<Class<out UElement>>? {
             return listOf(UCallExpression::class.java)
@@ -93,12 +95,18 @@ object MissingSerializableAnnotationIssue {
                                 val argumentType = argument.getExpressionType()
 
                                 if (argumentType == null) {
-                                    Logger.warn("Missing argument type in $ENCODE_TO_STRING_METHOD_NAME call, check $ISSUE_CLASS_NAME code.")
+                                    Logger.warn(
+                                        "Missing argument type in $ENCODE_TO_STRING_METHOD_NAME call, check $ISSUE_CLASS_NAME code.",
+                                    )
                                     return
                                 }
                                 argumentType
                             }
-                            DECODE_FROM_STRING_METHOD_NAME -> DecodeFromStringStringVisitor.getTypeArgumentToCheck(context, node) ?: return
+                            DECODE_FROM_STRING_METHOD_NAME -> DecodeFromStringStringVisitor.getTypeArgumentToCheck(
+                                context,
+                                node,
+                            )
+                                ?: return
                             else -> return
                         }
                         inspectType(node, argument)
@@ -173,7 +181,9 @@ private object EncodeToStringVisitor {
             when (value.name) {
                 VALUE_PARAM_NAME -> valueIndexParam = index
                 SERIALIZER_PARAM_NAME -> serializerIndexParam = index
-                else -> Logger.warn("$ISSUE_CLASS_NAME is outdated for $ENCODE_TO_STRING_METHOD_NAME please open an issue or update the lint rule.")
+                else -> Logger.warn(
+                    "$ISSUE_CLASS_NAME is outdated for $ENCODE_TO_STRING_METHOD_NAME please open an issue or update the lint rule.",
+                )
             }
         }
 
@@ -189,7 +199,9 @@ private object EncodeToStringVisitor {
 
         val argument = node.getArgumentForParameter(valueIndexParam)
         if (argument == null) {
-            Logger.warn("Fail to get argument value in $ENCODE_TO_STRING_METHOD_NAME call, check $ISSUE_CLASS_NAME code.")
+            Logger.warn(
+                "Fail to get argument value in $ENCODE_TO_STRING_METHOD_NAME call, check $ISSUE_CLASS_NAME code.",
+            )
             return null
         }
         return argument
@@ -223,12 +235,16 @@ private object DecodeFromStringStringVisitor {
             when (value.name) {
                 STRING_PARAM_NAME -> {} // no-op
                 DESERIALIZER_PARAM_NAME -> deserializerIndexParam = index
-                else -> Logger.warn("$ISSUE_CLASS_NAME is outdated for $DECODE_FROM_STRING_METHOD_NAME please open an issue or update the lint rule.")
+                else -> Logger.warn(
+                    "$ISSUE_CLASS_NAME is outdated for $DECODE_FROM_STRING_METHOD_NAME please open an issue or update the lint rule.",
+                )
             }
         }
 
         if (deserializerIndexParam == null) {
-            Logger.warn("Missing deserializer parameter in $DECODE_FROM_STRING_METHOD_NAME call, check $ISSUE_CLASS_NAME code.")
+            Logger.warn(
+                "Missing deserializer parameter in $DECODE_FROM_STRING_METHOD_NAME call, check $ISSUE_CLASS_NAME code.",
+            )
             return false
         }
 

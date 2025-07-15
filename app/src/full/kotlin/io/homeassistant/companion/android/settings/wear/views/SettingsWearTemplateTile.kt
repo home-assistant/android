@@ -94,7 +94,10 @@ fun SettingsWearTemplateTile(
                         expanded = dropdownExpanded,
                         onDismissRequest = { dropdownExpanded = false },
                     ) {
-                        val options = listOf(0, 1, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 2 * 60 * 60, 5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60)
+                        val options = listOf(
+                            0, 1, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 2 * 60 * 60,
+                            5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60,
+                        )
                         for (option in options) {
                             DropdownMenuItem(onClick = {
                                 onRefreshIntervalChanged(option)
@@ -127,7 +130,8 @@ fun SettingsWearTemplateTile(
 
 private fun parseHtml(renderedText: String) = buildAnnotatedString {
     // Replace control char \r\n, \r, \n and also \r\n, \r, \n as text literals in strings to <br>
-    val renderedSpanned = fromHtml(renderedText.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>"), FROM_HTML_MODE_LEGACY)
+    val renderedSpanned =
+        fromHtml(renderedText.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>"), FROM_HTML_MODE_LEGACY)
     append(renderedSpanned.toString())
     renderedSpanned.getSpans(0, renderedSpanned.length, CharacterStyle::class.java).forEach { span ->
         val start = renderedSpanned.getSpanStart(span)
@@ -142,7 +146,11 @@ private fun parseHtml(renderedText: String) = buildAnnotatedString {
             is StyleSpan -> when (span.style) {
                 Typeface.BOLD -> addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)
                 Typeface.ITALIC -> addStyle(SpanStyle(fontStyle = FontStyle.Italic), start, end)
-                Typeface.BOLD_ITALIC -> addStyle(SpanStyle(fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic), start, end)
+                Typeface.BOLD_ITALIC -> addStyle(
+                    SpanStyle(fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic),
+                    start,
+                    end,
+                )
             }
             is UnderlineSpan -> addStyle(SpanStyle(textDecoration = TextDecoration.Underline), start, end)
         }

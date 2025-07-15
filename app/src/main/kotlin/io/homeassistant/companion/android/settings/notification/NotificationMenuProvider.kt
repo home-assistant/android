@@ -14,7 +14,11 @@ abstract class NotificationMenuProvider : MenuProvider {
 
     override fun onPrepareMenu(menu: Menu) {
         menu.findItem(R.id.get_help).apply {
-            intent = Intent(Intent.ACTION_VIEW, "https://companion.home-assistant.io/docs/notifications/notifications-basic".toUri())
+            intent =
+                Intent(
+                    Intent.ACTION_VIEW,
+                    "https://companion.home-assistant.io/docs/notifications/notifications-basic".toUri(),
+                )
         }
     }
 }

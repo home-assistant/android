@@ -23,13 +23,12 @@ fun NotificationManagerCompat.getActiveNotification(tag: String?, id: Int): Stat
     }
 }
 
-fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolean =
-    cancelNotificationGroupIfNeeded(
-        this.getNotificationManager(),
-        tag,
-        id,
-        this::cancel,
-    )
+fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolean = cancelNotificationGroupIfNeeded(
+    this.getNotificationManager(),
+    tag,
+    id,
+    this::cancel,
+)
 
 fun cancelNotificationGroupIfNeeded(
     notificationManager: NotificationManager,
@@ -77,15 +76,21 @@ fun cancelNotificationGroupIfNeeded(
                 // If the notification which should be delete is A group summary AND
                 // If there are only one left notifications, then this means only the empty group of
                 // the notification is left.
-                if (isGroupSummary && groupNotifications.size == 1 ||
-                    !isGroupSummary && groupNotifications.size == 2
+                if (isGroupSummary &&
+                    groupNotifications.size == 1 ||
+                    !isGroupSummary &&
+                    groupNotifications.size == 2
                 ) {
                     val group = groupNotifications[0].notification.group
 
                     if (isGroupSummary) {
-                        Timber.d("Notification is the group summary \"$group\" with no notifications inside. Try to cancel this group summary notification...")
+                        Timber.d(
+                            "Notification is the group summary \"$group\" with no notifications inside. Try to cancel this group summary notification...",
+                        )
                     } else {
-                        Timber.d("Notification is inside of group \"$group\", but is the last one in the group. Try to cancel the group notification....")
+                        Timber.d(
+                            "Notification is inside of group \"$group\", but is the last one in the group. Try to cancel the group notification....",
+                        )
                     }
                     // If group is null, the group is a group which is generate by the system.
                     // This group can't be canceled, but it will be canceled by canceling the last notification inside of the group
@@ -96,17 +101,21 @@ fun cancelNotificationGroupIfNeeded(
                         cancel(group, groupId)
                         true
                     } else {
-                        Timber.d("Cannot cancel group notification, because group tag is empty. Anyway cancel notification.")
+                        Timber.d(
+                            "Cannot cancel group notification, because group tag is empty. Anyway cancel notification.",
+                        )
                         false
                     }
                 } else {
                     if (isGroupSummary) {
                         Timber.d(
-                            "Notification is the group summary, but the group has more than or no notifications inside (" + groupNotifications.size + "). Cancel notification",
+                            "Notification is the group summary, but the group has more than or " +
+                                "no notifications inside (${groupNotifications.size}). Cancel notification",
                         )
                     } else {
                         Timber.d(
-                            "Notification is in a group, but the group has more/less than 2 notifications inside (" + groupNotifications.size + "). Cancel notification",
+                            "Notification is in a group, but the group has more/less than " +
+                                "2 notifications inside (${groupNotifications.size}). Cancel notification",
                         )
                     }
                 }
@@ -116,7 +125,9 @@ fun cancelNotificationGroupIfNeeded(
         } else {
             if (statusBarNotification == null) {
                 Timber.d("Notification is not in a group. Cancel notification...")
-            } else if (groupKey.isNullOrBlank()) Timber.d("Notification is in a group but has no group key. Cancel notification")
+            } else if (groupKey.isNullOrBlank()) {
+                Timber.d("Notification is in a group but has no group key. Cancel notification")
+            }
         }
     }
     return false

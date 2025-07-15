@@ -31,25 +31,20 @@ object DefaultButtonControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity): Int =
-        when (entity.domain) {
-            "scene", "script" -> DeviceTypes.TYPE_ROUTINE
-            else -> DeviceTypes.TYPE_UNKNOWN
-        }
+    override fun getDeviceType(entity: Entity): Int = when (entity.domain) {
+        "scene", "script" -> DeviceTypes.TYPE_ROUTINE
+        else -> DeviceTypes.TYPE_UNKNOWN
+    }
 
-    override fun getDomainString(context: Context, entity: Entity): String =
-        when (entity.domain) {
-            "button" -> context.getString(commonR.string.domain_button)
-            "input_button" -> context.getString(commonR.string.domain_input_button)
-            "scene" -> context.getString(commonR.string.domain_scene)
-            "script" -> context.getString(commonR.string.domain_script)
-            else -> entity.domain.capitalize(Locale.getDefault())
-        }
+    override fun getDomainString(context: Context, entity: Entity): String = when (entity.domain) {
+        "button" -> context.getString(commonR.string.domain_button)
+        "input_button" -> context.getString(commonR.string.domain_input_button)
+        "scene" -> context.getString(commonR.string.domain_scene)
+        "script" -> context.getString(commonR.string.domain_script)
+        else -> entity.domain.capitalize(Locale.getDefault())
+    }
 
-    override suspend fun performAction(
-        integrationRepository: IntegrationRepository,
-        action: ControlAction,
-    ): Boolean {
+    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
         integrationRepository.callAction(
             action.templateId.split(".")[0],
             when (action.templateId.split(".")[0]) {

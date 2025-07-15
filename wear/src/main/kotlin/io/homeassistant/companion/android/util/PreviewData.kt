@@ -44,7 +44,8 @@ val previewEntityList = mapOf(
 
 val previewFavoritesList = listOf("light.first", "scene.first")
 
-val simplifiedEntity = SimplifiedEntity(previewEntity1.entityId, attributes["friendly_name"].toString(), attributes["icon"].toString())
+val simplifiedEntity =
+    SimplifiedEntity(previewEntity1.entityId, attributes["friendly_name"].toString(), attributes["icon"].toString())
 
 val playPreviewEntityScene1 = Entity("scene.first", "on", mapOf("friendly_name" to "Cleaning mode"), dateTime, dateTime)
 val playPreviewEntityScene2 = Entity("scene.second", "on", mapOf("friendly_name" to "Colorful"), dateTime, dateTime)

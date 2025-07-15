@@ -15,9 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 @RequiresApi(Build.VERSION_CODES.O)
-class NotificationViewModel @Inject constructor(
-    application: Application,
-) : AndroidViewModel(application) {
+class NotificationViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
 
     val app = application
 

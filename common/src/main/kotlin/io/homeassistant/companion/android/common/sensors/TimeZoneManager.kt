@@ -32,9 +32,7 @@ class TimeZoneManager : SensorManager {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateTimeZone(context)
     }
 

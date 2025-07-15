@@ -10,7 +10,8 @@ enum class SensorUpdateFrequencySetting {
 
 class LocalSensorSettingConverter {
     @TypeConverter
-    fun toLocalSensorSetting(setting: String): SensorUpdateFrequencySetting = SensorUpdateFrequencySetting.valueOf(setting)
+    fun toLocalSensorSetting(setting: String): SensorUpdateFrequencySetting =
+        SensorUpdateFrequencySetting.valueOf(setting)
 
     @TypeConverter
     fun fromLocalSensorSetting(setting: SensorUpdateFrequencySetting): String = setting.name

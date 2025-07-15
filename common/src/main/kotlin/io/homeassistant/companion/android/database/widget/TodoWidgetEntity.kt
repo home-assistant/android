@@ -25,7 +25,8 @@ data class TodoWidgetEntity(
     @ColumnInfo(name = "show_completed", defaultValue = "true")
     val showCompleted: Boolean = true,
     @ColumnInfo(name = "latest_update_data") val latestUpdateData: LastUpdateData? = null,
-) : WidgetEntity, ThemeableWidgetEntity {
+) : WidgetEntity,
+    ThemeableWidgetEntity {
 
     @Serializable
     @OptIn(ExperimentalSerializationApi::class)
@@ -37,11 +38,7 @@ data class TodoWidgetEntity(
     )
 
     @Serializable
-    data class TodoItem(
-        val uid: String? = null,
-        val summary: String? = null,
-        val status: String? = null,
-    )
+    data class TodoItem(val uid: String? = null, val summary: String? = null, val status: String? = null)
 
     fun isSameConfiguration(other: TodoWidgetEntity): Boolean {
         /**

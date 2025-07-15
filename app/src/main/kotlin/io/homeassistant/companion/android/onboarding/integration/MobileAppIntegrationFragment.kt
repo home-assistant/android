@@ -35,9 +35,10 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class MobileAppIntegrationFragment : Fragment() {
 
-    private val requestLocationPermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        onLocationPermissionResult(it)
-    }
+    private val requestLocationPermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+            onLocationPermissionResult(it)
+        }
     private val getContent = registerForActivityResult(ActivityResultContracts.GetContent()) {
         onGetContentResult(it)
     }
@@ -45,11 +46,7 @@ class MobileAppIntegrationFragment : Fragment() {
     private var dialog: AlertDialog? = null
     private val viewModel by activityViewModels<OnboardingViewModel>()
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -57,7 +54,8 @@ class MobileAppIntegrationFragment : Fragment() {
                         onboardingViewModel = viewModel,
                         openPrivacyPolicy = this@MobileAppIntegrationFragment::openPrivacyPolicy,
                         onLocationTrackingChanged = this@MobileAppIntegrationFragment::onLocationTrackingChanged,
-                        onSelectTLSCertificateClicked = this@MobileAppIntegrationFragment::onSelectTLSCertificateClicked,
+                        onSelectTLSCertificateClicked =
+                        this@MobileAppIntegrationFragment::onSelectTLSCertificateClicked,
                         onCheckPassword = this@MobileAppIntegrationFragment::onCheckTLSCertificatePassword,
                         onFinishClicked = this@MobileAppIntegrationFragment::onComplete,
                     )
@@ -128,7 +126,8 @@ class MobileAppIntegrationFragment : Fragment() {
                 cursor.moveToFirst()
 
                 viewModel.tlsClientCertificateUri = uri
-                viewModel.tlsClientCertificateFilename = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+                viewModel.tlsClientCertificateFilename =
+                    cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
             }
             // check with empty password
             onCheckTLSCertificatePassword("")
@@ -147,9 +146,7 @@ class MobileAppIntegrationFragment : Fragment() {
         }
     }
 
-    private fun onLocationPermissionResult(
-        results: Map<String, Boolean>,
-    ) {
+    private fun onLocationPermissionResult(results: Map<String, Boolean>) {
         dialog?.dismiss()
 
         if (

@@ -10,5 +10,7 @@ import dagger.hilt.android.components.ActivityComponent
 interface MobileAppIntegrationModule {
 
     @Binds
-    fun mobileAppIntegrationPresenter(mobileAppIntegrationPresenterImpl: MobileAppIntegrationPresenterImpl): MobileAppIntegrationPresenter
+    fun mobileAppIntegrationPresenter(
+        mobileAppIntegrationPresenterImpl: MobileAppIntegrationPresenterImpl,
+    ): MobileAppIntegrationPresenter
 }

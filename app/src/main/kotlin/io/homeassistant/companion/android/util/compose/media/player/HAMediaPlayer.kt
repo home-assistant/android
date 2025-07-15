@@ -228,12 +228,7 @@ private fun BoxScope.ShowControlsButton(action: () -> Unit) {
 }
 
 @Composable
-private fun BottomControls(
-    player: Player,
-    isFullScreen: Boolean,
-    onClickFullscreen: () -> Unit,
-    modifier: Modifier,
-) {
+private fun BottomControls(player: Player, isFullScreen: Boolean, onClickFullscreen: () -> Unit, modifier: Modifier) {
     Row(
         modifier = modifier
             .height(BottomControlsHeight)
@@ -336,8 +331,7 @@ private fun PlayPauseButton(player: Player, modifier: Modifier) {
     }
 }
 
-private fun Player.currentPositionDuration(): Duration =
-    currentPosition.toDuration(DurationUnit.MILLISECONDS)
+private fun Player.currentPositionDuration(): Duration = currentPosition.toDuration(DurationUnit.MILLISECONDS)
 
 @Preview(showSystemUi = true)
 @Composable

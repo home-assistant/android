@@ -25,18 +25,18 @@ import io.homeassistant.companion.android.webview.WebViewActivity
 interface HaControl {
 
     @SuppressLint("ResourceType")
-    fun createControl(
-        context: Context,
-        entity: Entity,
-        info: HaControlInfo,
-    ): Control {
+    fun createControl(context: Context, entity: Entity, info: HaControlInfo): Control {
         val controlPath = "entityId:${info.entityId}"
         val control = Control.StatefulBuilder(
             info.systemId,
             PendingIntent.getActivity(
                 context,
                 controlPath.hashCode(),
-                WebViewActivity.newInstance(context.applicationContext, controlPath, info.serverId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                WebViewActivity.newInstance(
+                    context.applicationContext,
+                    controlPath,
+                    info.serverId,
+                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE,
             ),
         )
@@ -87,7 +87,11 @@ interface HaControl {
             val iconOverride = listOf("media_player", "number")
             if (entity.domain in iconOverride) {
                 val icon = IconicsDrawable(context, entity.getIcon(context)).apply { sizeDp = 48 }
-                val tint = if (entity.isActive()) R.color.colorDeviceControlsDefaultOn else R.color.colorDeviceControlsOff
+                val tint = if (entity.isActive()) {
+                    R.color.colorDeviceControlsDefaultOn
+                } else {
+                    R.color.colorDeviceControlsOff
+                }
                 icon.setTint(ContextCompat.getColor(context, tint))
                 control.setCustomIcon(icon.toAndroidIconCompat().toIcon(context))
             }

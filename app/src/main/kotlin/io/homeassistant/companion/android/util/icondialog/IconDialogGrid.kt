@@ -34,11 +34,7 @@ import kotlinx.coroutines.withContext
  * @param onClick Invoked when the user clicks on the given icon
  */
 @Composable
-fun IconDialogGrid(
-    icons: List<IIcon>,
-    tint: Color = MaterialTheme.colors.onSurface,
-    onClick: (IIcon) -> Unit,
-) {
+fun IconDialogGrid(icons: List<IIcon>, tint: Color = MaterialTheme.colors.onSurface, onClick: (IIcon) -> Unit) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 48.dp),
         modifier = Modifier.fillMaxSize(),

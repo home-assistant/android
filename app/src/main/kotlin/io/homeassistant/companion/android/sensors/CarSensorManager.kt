@@ -168,7 +168,10 @@ class CarSensorManager :
                 stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             ),
             autoPermissions = listOf("com.google.android.gms.permission.CAR_SPEED"),
-            automotivePermissions = listOf("android.car.permission.CAR_SPEED", "android.car.permission.READ_CAR_DISPLAY_UNITS"),
+            automotivePermissions = listOf(
+                "android.car.permission.CAR_SPEED",
+                "android.car.permission.READ_CAR_DISPLAY_UNITS",
+            ),
         )
 
         private val allSensorsList = listOf(
@@ -214,7 +217,10 @@ class CarSensorManager :
 
     private val isAutomotive get() = latestContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
 
-    private val carSensorsList get() = allSensorsList.filter { (isAutomotive && it.automotiveEnabled) || (!isAutomotive && it.autoEnabled) }
+    private val carSensorsList get() = allSensorsList.filter {
+        (isAutomotive && it.automotiveEnabled) ||
+            (!isAutomotive && it.autoEnabled)
+    }
     private val sensorsList get() = carSensorsList.map { it.sensor }
 
     private suspend fun allDisabled(): Boolean = sensorsList.none { isEnabled(latestContext, it) }
@@ -392,7 +398,10 @@ class CarSensorManager :
     private suspend fun updateCarInfo() {
         listenerSensors.forEach { (listener, sensors) ->
             if (sensors.any { isEnabled(latestContext, it) }) {
-                if (listenerLastRegistered[listener] != -1L && listenerLastRegistered[listener]!! + SensorManager.SENSOR_LISTENER_TIMEOUT < System.currentTimeMillis()) {
+                if (listenerLastRegistered[listener] != -1L &&
+                    listenerLastRegistered[listener]!! + SensorManager.SENSOR_LISTENER_TIMEOUT <
+                    System.currentTimeMillis()
+                ) {
                     Timber.d("Re-registering CarInfo $listener listener as it appears to be stuck")
                     setListener(listener, false)
                 }
@@ -513,7 +522,13 @@ class CarSensorManager :
         onSensorUpdated(
             latestContext,
             evConnector.sensor,
-            if (evConnectorTypeStatus == "success") getEvConnectorType(data.evConnectorTypes.value!!) else STATE_UNKNOWN,
+            if (evConnectorTypeStatus ==
+                "success"
+            ) {
+                getEvConnectorType(data.evConnectorTypes.value!!)
+            } else {
+                STATE_UNKNOWN
+            },
             evConnector.sensor.statelessIcon,
             mapOf(
                 "status" to evConnectorTypeStatus,

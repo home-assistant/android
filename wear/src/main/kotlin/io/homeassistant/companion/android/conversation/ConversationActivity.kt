@@ -68,7 +68,9 @@ class ConversationActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        conversationViewModel.setPermissionInfo(hasRecordingPermission()) { requestPermission.launch(Manifest.permission.RECORD_AUDIO) }
+        conversationViewModel.setPermissionInfo(hasRecordingPermission()) {
+            requestPermission.launch(Manifest.permission.RECORD_AUDIO)
+        }
     }
 
     override fun onPause() {

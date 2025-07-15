@@ -145,10 +145,11 @@ fun getDomainList(
 
         val entityList = allEntities.map {
             it.values.filter { entity ->
-                entity.domain == domain && RegistriesDataHandler.getHiddenByForEntity(
-                    entity.entityId,
-                    entityRegistry,
-                ) == null
+                entity.domain == domain &&
+                    RegistriesDataHandler.getHiddenByForEntity(
+                        entity.entityId,
+                        entityRegistry,
+                    ) == null
             }
         }
         var domainIsEmpty = false

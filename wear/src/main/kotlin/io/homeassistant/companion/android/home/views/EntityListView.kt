@@ -104,7 +104,10 @@ private fun PreviewEntityListView() {
 @Composable
 private fun PreviewEntityListScenes() {
     EntityViewList(
-        entityLists = mapOf(stringResource(commonR.string.scenes) to listOf(playPreviewEntityScene1, playPreviewEntityScene2, playPreviewEntityScene3)),
+        entityLists = mapOf(
+            stringResource(commonR.string.scenes) to
+                listOf(playPreviewEntityScene1, playPreviewEntityScene2, playPreviewEntityScene3),
+        ),
         entityListsOrder = listOf(stringResource(commonR.string.scenes)),
         entityListFilter = { true },
         onEntityClicked = { _, _ -> },

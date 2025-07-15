@@ -41,10 +41,7 @@ private const val SCREEN_MAIN = "main"
 private const val SCREEN_CHOOSE_ENTITY = "choose_entity"
 
 @Composable
-fun LoadConfigView(
-    complicationConfigViewModel: ComplicationConfigViewModel,
-    onAcceptClicked: () -> Unit,
-) {
+fun LoadConfigView(complicationConfigViewModel: ComplicationConfigViewModel, onAcceptClicked: () -> Unit) {
     WearAppTheme {
         val swipeDismissableNavController = rememberSwipeDismissableNavController()
         SwipeDismissableNavHost(

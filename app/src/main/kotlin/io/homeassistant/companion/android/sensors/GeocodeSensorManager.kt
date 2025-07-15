@@ -76,9 +76,7 @@ class GeocodeSensorManager : SensorManager {
         }
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateGeocodedLocation(context)
     }
 
@@ -99,7 +97,9 @@ class GeocodeSensorManager : SensorManager {
         val minAccuracy = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
             ?: DEFAULT_MINIMUM_ACCURACY
-        sensorDao.add(SensorSetting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER))
+        sensorDao.add(
+            SensorSetting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER),
+        )
 
         if (!location.isStillValid()) {
             return
@@ -156,7 +156,11 @@ class GeocodeSensorManager : SensorManager {
      * The returned addresses should be localized for the locale provided to this class's constructor.
      * https://developer.android.com/reference/android/location/Geocoder#getFromLocation(double,%20double,%20int)
      */
-    private suspend fun Geocoder.getFromLocationAwait(latitude: Double, longitude: Double, maxResults: Int): List<Address> {
+    private suspend fun Geocoder.getFromLocationAwait(
+        latitude: Double,
+        longitude: Double,
+        maxResults: Int,
+    ): List<Address> {
         return if (SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             suspendCoroutine { cont ->
                 getFromLocation(

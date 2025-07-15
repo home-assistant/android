@@ -52,52 +52,47 @@ abstract class DataModule {
 
         @Provides
         @Singleton
-        fun providesOkHttpClient(homeAssistantApis: HomeAssistantApis): OkHttpClient =
-            homeAssistantApis.okHttpClient
+        fun providesOkHttpClient(homeAssistantApis: HomeAssistantApis): OkHttpClient = homeAssistantApis.okHttpClient
 
         @Provides
         @Named("session")
         @Singleton
-        fun provideSessionLocalStorage(@ApplicationContext appContext: Context): LocalStorage =
-            LocalStorageImpl(
-                appContext.getSharedPreferences(
-                    "session_0",
-                    Context.MODE_PRIVATE,
-                ),
-            )
+        fun provideSessionLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl(
+            appContext.getSharedPreferences(
+                "session_0",
+                Context.MODE_PRIVATE,
+            ),
+        )
 
         @Provides
         @Named("integration")
         @Singleton
-        fun provideIntegrationLocalStorage(@ApplicationContext appContext: Context): LocalStorage =
-            LocalStorageImpl(
-                appContext.getSharedPreferences(
-                    "integration_0",
-                    Context.MODE_PRIVATE,
-                ),
-            )
+        fun provideIntegrationLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl(
+            appContext.getSharedPreferences(
+                "integration_0",
+                Context.MODE_PRIVATE,
+            ),
+        )
 
         @Provides
         @Named("themes")
         @Singleton
-        fun providePrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage =
-            LocalStorageImpl(
-                appContext.getSharedPreferences(
-                    "themes_0",
-                    Context.MODE_PRIVATE,
-                ),
-            )
+        fun providePrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl(
+            appContext.getSharedPreferences(
+                "themes_0",
+                Context.MODE_PRIVATE,
+            ),
+        )
 
         @Provides
         @Named("wear")
         @Singleton
-        fun provideWearPrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage =
-            LocalStorageImpl(
-                appContext.getSharedPreferences(
-                    "wear_0",
-                    Context.MODE_PRIVATE,
-                ),
-            )
+        fun provideWearPrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl(
+            appContext.getSharedPreferences(
+                "wear_0",
+                Context.MODE_PRIVATE,
+            ),
+        )
 
         @Provides
         @Named("manufacturer")
@@ -137,7 +132,8 @@ abstract class DataModule {
 
         @Provides
         @Singleton
-        fun connectivityManager(@ApplicationContext appContext: Context) = appContext.getSystemService<ConnectivityManager>()!!
+        fun connectivityManager(@ApplicationContext appContext: Context) =
+            appContext.getSystemService<ConnectivityManager>()!!
 
         @Provides
         @Singleton
@@ -149,9 +145,8 @@ abstract class DataModule {
 
         @Provides
         @Singleton
-        fun providesTextToSpeechClient(
-            @ApplicationContext appContext: Context,
-        ): TextToSpeechClient = TextToSpeechClient(appContext, AndroidTextToSpeechEngine(appContext))
+        fun providesTextToSpeechClient(@ApplicationContext appContext: Context): TextToSpeechClient =
+            TextToSpeechClient(appContext, AndroidTextToSpeechEngine(appContext))
     }
 
     @Binds

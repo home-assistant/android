@@ -33,11 +33,7 @@ class DiscoveryFragment @Inject constructor() : Fragment() {
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         lifecycle.addObserver(viewModel.homeAssistantSearcher)
 
         return ComposeView(requireContext()).apply {

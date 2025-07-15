@@ -43,14 +43,13 @@ class BufferingState(private val player: Player) {
      * * [Player.EVENT_PLAYBACK_STATE_CHANGED] in order to
      *   determine whether the player is buffering.
      */
-    suspend fun observe(): Nothing =
-        player.listen { events ->
-            if (
-                events.containsAny(
-                    Player.EVENT_PLAYBACK_STATE_CHANGED,
-                )
-            ) {
-                isBuffering = isBuffering(this)
-            }
+    suspend fun observe(): Nothing = player.listen { events ->
+        if (
+            events.containsAny(
+                Player.EVENT_PLAYBACK_STATE_CHANGED,
+            )
+        ) {
+            isBuffering = isBuffering(this)
         }
+    }
 }

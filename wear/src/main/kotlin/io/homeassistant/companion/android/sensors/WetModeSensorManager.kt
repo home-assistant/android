@@ -37,10 +37,7 @@ class WetModeSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-        intent: Intent?,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context, intent: Intent?) {
         if (intent?.action == "com.google.android.clockwork.actions.WET_MODE_STARTED") {
             wetModeEnabled = true
         } else if (intent?.action == "com.google.android.clockwork.actions.WET_MODE_ENDED") {

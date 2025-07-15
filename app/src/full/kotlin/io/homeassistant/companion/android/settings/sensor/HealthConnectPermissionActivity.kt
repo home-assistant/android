@@ -10,7 +10,10 @@ class HealthConnectPermissionActivity : BaseActivity() {
         super.onResume()
         if (
             intent.action == "androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" ||
-            (intent.action == "android.intent.action.VIEW_PERMISSION_USAGE" && intent.hasCategory("android.intent.category.HEALTH_PERMISSIONS"))
+            (
+                intent.action == "android.intent.action.VIEW_PERMISSION_USAGE" &&
+                    intent.hasCategory("android.intent.category.HEALTH_PERMISSIONS")
+                )
         ) {
             Intent(Intent.ACTION_VIEW, Uri.parse(resources.getString(commonR.string.privacy_url))).also {
                 startActivity(it)

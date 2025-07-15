@@ -53,11 +53,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    override fun onUpdate(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray,
-    ) {
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
             widgetScope?.launch {
@@ -138,9 +134,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    private suspend fun updateAllWidgets(
-        context: Context,
-    ) {
+    private suspend fun updateAllWidgets(context: Context) {
         val widgetProvider = getWidgetProvider(context)
         val appWidgetManager = AppWidgetManager.getInstance(context) ?: return
         val systemWidgetIds = appWidgetManager.getAppWidgetIds(widgetProvider).toSet()
@@ -177,7 +171,11 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     abstract fun getWidgetProvider(context: Context): ComponentName
-    abstract suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity? = null): RemoteViews
+    abstract suspend fun getWidgetRemoteViews(
+        context: Context,
+        appWidgetId: Int,
+        suggestedEntity: Entity? = null,
+    ): RemoteViews
 
     // A map of widget IDs to [server ID, list of entity IDs]
     abstract suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>>

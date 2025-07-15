@@ -209,9 +209,17 @@ private fun TitleBar(listName: String?, serverId: Int, listEntityId: String, out
             modifier = GlanceModifier.padding(end = 4.dp).defaultWeight(),
         )
         CircleIconButton(
-            modifier = GlanceModifier.size(HomeAssistantGlanceTheme.dimensions.iconSize).semantics { testTag = "Refresh" },
+            modifier = GlanceModifier.size(HomeAssistantGlanceTheme.dimensions.iconSize).semantics {
+                testTag = "Refresh"
+            },
             contentColor = GlanceTheme.colors.primary,
-            imageProvider = if (outOfSync) ImageProvider(R.drawable.ic_sync_problem) else ImageProvider(R.drawable.ic_refresh),
+            imageProvider = if (outOfSync) {
+                ImageProvider(
+                    R.drawable.ic_sync_problem,
+                )
+            } else {
+                ImageProvider(R.drawable.ic_refresh)
+            },
             contentDescription = LocalContext.current.getString(commonR.string.widget_todo_refresh),
             backgroundColor = GlanceTheme.colors.widgetBackground,
             onClick = actionRefreshTodo(),
@@ -243,7 +251,11 @@ private fun TodoItem(todoItem: TodoItemState) {
 
 @Composable
 private fun HeaderItem(name: String) {
-    Text(text = name, style = HomeAssistantGlanceTypography.bodyLarge, modifier = GlanceModifier.padding(horizontal = 16.dp, vertical = 8.dp))
+    Text(
+        text = name,
+        style = HomeAssistantGlanceTypography.bodyLarge,
+        modifier = GlanceModifier.padding(horizontal = 16.dp, vertical = 8.dp),
+    )
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)
@@ -258,7 +270,11 @@ private fun ScreenPreview() {
                 serverId = 1,
                 listEntityId = "",
                 listName = "Shopping List",
-                todoItems = listOf(TodoItemState(null, "Eggs", true), TodoItemState(null, "Milk", false), TodoItemState(null, "Bread", false)),
+                todoItems = listOf(
+                    TodoItemState(null, "Eggs", true),
+                    TodoItemState(null, "Milk", false),
+                    TodoItemState(null, "Bread", false),
+                ),
                 outOfSync = false,
                 showComplete = true,
             ),

@@ -28,11 +28,7 @@ class SensorSettingsFragment : Fragment() {
 
     val viewModel: SensorSettingsViewModel by viewModels()
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -74,17 +70,19 @@ class SensorSettingsFragment : Fragment() {
                 override fun onPrepareMenu(menu: Menu) {
                     val searchViewItem = menu.findItem(R.id.action_search)
                     val searchView = searchViewItem.actionView as SearchView
-                    searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                        override fun onQueryTextSubmit(query: String?): Boolean {
-                            searchView.clearFocus()
-                            return false
-                        }
+                    searchView.setOnQueryTextListener(
+                        object : SearchView.OnQueryTextListener {
+                            override fun onQueryTextSubmit(query: String?): Boolean {
+                                searchView.clearFocus()
+                                return false
+                            }
 
-                        override fun onQueryTextChange(query: String?): Boolean {
-                            viewModel.setSensorsSearchQuery(query)
-                            return false
-                        }
-                    })
+                            override fun onQueryTextChange(query: String?): Boolean {
+                                viewModel.setSensorsSearchQuery(query)
+                                return false
+                            }
+                        },
+                    )
                     if (!viewModel.searchQuery.isNullOrBlank() && !searchViewItem.isActionViewExpanded) {
                         viewModel.setSensorsSearchQuery(null)
                     }
@@ -93,16 +91,24 @@ class SensorSettingsFragment : Fragment() {
 
                     menu.findItem(R.id.get_help)?.let {
                         it.isVisible = true
-                        it.intent = Intent(ACTION_VIEW, "https://companion.home-assistant.io/docs/core/sensors#android-sensors".toUri())
+                        it.intent =
+                            Intent(
+                                ACTION_VIEW,
+                                "https://companion.home-assistant.io/docs/core/sensors#android-sensors".toUri(),
+                            )
                     }
                 }
 
                 override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {
-                    R.id.action_show_sensors_all, R.id.action_show_sensors_enabled, R.id.action_show_sensors_disabled -> {
+                    R.id.action_show_sensors_all,
+                    R.id.action_show_sensors_enabled,
+                    R.id.action_show_sensors_disabled,
+                    -> {
                         menuItem.isChecked = !menuItem.isChecked
                         viewModel.setSensorFilterChoice(menuItem.itemId)
                         true
                     }
+
                     else -> false
                 }
             },

@@ -71,15 +71,22 @@ object UrlUtil {
     }
 
     /** @return `true` if both URLs have the same 'base': an equal protocol, host, port and userinfo */
-    fun URL.baseIsEqual(other: URL?): Boolean =
-        if (other == null) {
-            false
-        } else {
-            host?.lowercase() == other.host?.lowercase() &&
-                port.let { if (it == -1) defaultPort else it } == other.port.let { if (it == -1) defaultPort else it } &&
-                protocol?.lowercase() == other.protocol?.lowercase() &&
-                userInfo == other.userInfo
-        }
+    fun URL.baseIsEqual(other: URL?): Boolean = if (other == null) {
+        false
+    } else {
+        host?.lowercase() == other.host?.lowercase() &&
+            port.let {
+                if (it ==
+                    -1
+                ) {
+                    defaultPort
+                } else {
+                    it
+                }
+            } == other.port.let { if (it == -1) defaultPort else it } &&
+            protocol?.lowercase() == other.protocol?.lowercase() &&
+            userInfo == other.userInfo
+    }
 
     fun splitNfcTagId(it: Uri?): String? {
         val matches =

@@ -135,7 +135,9 @@ private object SensorRegistrationRequestSerializer : KSerializer<SensorRegistrat
                 }
             }
             SensorRegistrationRequest(
-                uniqueId = checkNotNull(uniqueId) { "Missing uniqueId field in SensorRegistrationRequest while deserializing" },
+                uniqueId = checkNotNull(uniqueId) {
+                    "Missing uniqueId field in SensorRegistrationRequest while deserializing"
+                },
                 state = state,
                 type = checkNotNull(type) { "Missing type field in SensorRegistrationRequest while deserializing" },
                 icon = checkNotNull(icon) { "Missing icon field in SensorRegistrationRequest while deserializing" },

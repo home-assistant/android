@@ -49,7 +49,12 @@ internal sealed interface TodoState {
                 WidgetBackgroundType.DAYNIGHT -> HomeAssistantGlanceTheme.colors
                 WidgetBackgroundType.TRANSPARENT -> ColorProviders(
                     glanceHaLightColors
-                        .copy(background = Color.Transparent, onSurface = Color(textColor?.toColorInt() ?: glanceHaLightColors.onSurface.toArgb())),
+                        .copy(
+                            background = Color.Transparent,
+                            onSurface = Color(
+                                textColor?.toColorInt() ?: glanceHaLightColors.onSurface.toArgb(),
+                            ),
+                        ),
                 )
             }
         }
@@ -83,7 +88,11 @@ internal data class TodoStateWithData(
          * Create a complete [TodoStateWithData] from the DB and from the server. Set the flag [outOfSync] to false, since the data
          * includes an updated state from the server.
          */
-        fun from(todoEntity: TodoWidgetEntity, entity: Entity, todos: List<TodoWidgetEntity.TodoItem>): TodoStateWithData {
+        fun from(
+            todoEntity: TodoWidgetEntity,
+            entity: Entity,
+            todos: List<TodoWidgetEntity.TodoItem>,
+        ): TodoStateWithData {
             return TodoStateWithData(
                 backgroundType = todoEntity.backgroundType,
                 textColor = todoEntity.textColor,

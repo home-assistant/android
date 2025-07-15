@@ -38,7 +38,8 @@ class ChangeLog @Inject constructor() {
     }
 }
 
-class DarkThemeChangeLog internal constructor(context: Context) : ChangeLog(ContextThemeWrapper(context, R.style.Theme_HomeAssistant_PopupTheme), DARK_THEME_CSS) {
+class DarkThemeChangeLog internal constructor(context: Context) :
+    ChangeLog(ContextThemeWrapper(context, R.style.Theme_HomeAssistant_PopupTheme), DARK_THEME_CSS) {
     companion object {
         internal const val DARK_THEME_CSS = "body { color: #ffffff; background-color: #282828; }\n$DEFAULT_CSS"
     }

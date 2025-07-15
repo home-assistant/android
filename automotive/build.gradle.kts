@@ -16,7 +16,8 @@ android {
         minSdk = libs.versions.androidSdk.automotive.min.get().toInt()
 
         // We add 3 because the app, wear (+1) and automotive versions need to have different version codes.
-        versionCode = 3 + checkNotNull(versionCode) { "Did you forget to apply the convention plugin that set the version code?" }
+        versionCode =
+            3 + checkNotNull(versionCode) { "Did you forget to apply the convention plugin that set the version code?" }
 
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
         manifestPlaceholders["sentryDsn"] = System.getenv("SENTRY_DSN") ?: ""

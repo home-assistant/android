@@ -31,7 +31,9 @@ import timber.log.Timber
 
 @AndroidEntryPoint
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
-class OnboardingActivity : AppCompatActivity(), OnboardingView {
+class OnboardingActivity :
+    AppCompatActivity(),
+    OnboardingView {
 
     private lateinit var adapter: ServerListAdapter
 
@@ -222,8 +224,14 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
                 "/request_home_assistant_instance",
                 ByteArray(0),
             ).apply {
-                addOnSuccessListener { Timber.d("requestInstances: request home assistant instances from $node.id: ${node.displayName}") }
-                addOnFailureListener { Timber.w("requestInstances: failed to request home assistant instances from $node.id: ${node.displayName}") }
+                addOnSuccessListener {
+                    Timber.d("requestInstances: request home assistant instances from $node.id: ${node.displayName}")
+                }
+                addOnFailureListener {
+                    Timber.w(
+                        "requestInstances: failed to request home assistant instances from $node.id: ${node.displayName}",
+                    )
+                }
             }
         }
     }

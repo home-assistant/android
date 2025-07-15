@@ -69,36 +69,35 @@ class ShortcutsTile : TileService() {
     @Inject
     lateinit var wearPrefsRepository: WearPrefsRepository
 
-    override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
-        serviceScope.future {
-            val state = requestParams.currentState
-            if (state.lastClickableId.isNotEmpty()) {
-                Intent().also { intent ->
-                    intent.action = "io.homeassistant.companion.android.TILE_ACTION"
-                    intent.putExtra("entity_id", state.lastClickableId)
-                    intent.setPackage(packageName)
-                    sendBroadcast(intent)
-                }
+    override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> = serviceScope.future {
+        val state = requestParams.currentState
+        if (state.lastClickableId.isNotEmpty()) {
+            Intent().also { intent ->
+                intent.action = "io.homeassistant.companion.android.TILE_ACTION"
+                intent.putExtra("entity_id", state.lastClickableId)
+                intent.setPackage(packageName)
+                sendBroadcast(intent)
             }
-
-            val tileId = requestParams.tileId
-            val entities = getEntities(tileId)
-
-            Tile.Builder()
-                .setResourcesVersion(entities.toString())
-                .setTileTimeline(
-                    if (serverManager.isRegistered()) {
-                        timeline(tileId)
-                    } else {
-                        loggedOutTimeline(
-                            this@ShortcutsTile,
-                            requestParams,
-                            commonR.string.shortcuts,
-                            commonR.string.shortcuts_tile_log_in,
-                        )
-                    },
-                ).build()
         }
+
+        val tileId = requestParams.tileId
+        val entities = getEntities(tileId)
+
+        Tile.Builder()
+            .setResourcesVersion(entities.toString())
+            .setTileTimeline(
+                if (serverManager.isRegistered()) {
+                    timeline(tileId)
+                } else {
+                    loggedOutTimeline(
+                        this@ShortcutsTile,
+                        requestParams,
+                        commonR.string.shortcuts,
+                        commonR.string.shortcuts_tile_log_in,
+                    )
+                },
+            ).build()
+    }
 
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {

@@ -40,9 +40,13 @@ class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
         if (isStarting || restartInProcess) {
             shouldStop = true
             if (restartInProcess) {
-                Timber.d("Stop service ${serviceClass.simpleName}. Service currently restarting. Stopping service after it is restarted.")
+                Timber.d(
+                    "Stop service ${serviceClass.simpleName}. Service currently restarting. Stopping service after it is restarted.",
+                )
             } else {
-                Timber.d("Stop service ${serviceClass.simpleName}. Service is currently starting. Stopping service after it is started.")
+                Timber.d(
+                    "Stop service ${serviceClass.simpleName}. Service is currently starting. Stopping service after it is started.",
+                )
             }
         } else if (isRunning) {
             context.stopService(Intent(context, serviceClass))
@@ -62,7 +66,12 @@ class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
 
                 // Restart service in 2 seconds
                 val restartIntent = Intent(context, serviceClass).apply { block() }
-                val restartServicePI = PendingIntent.getService(context, 1, restartIntent, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE)
+                val restartServicePI = PendingIntent.getService(
+                    context,
+                    1,
+                    restartIntent,
+                    PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE,
+                )
 
                 val alarmManager: AlarmManager = context.getSystemService()!!
                 val calendar: Calendar = Calendar.getInstance()
@@ -109,7 +118,9 @@ class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
         Timber.d("Service ${serviceClass.simpleName} was created. Start service")
 
         if (shouldStop) {
-            Timber.d("Service ${serviceClass.simpleName} should be stopped after. Service will be stopped after is started...")
+            Timber.d(
+                "Service ${serviceClass.simpleName} should be stopped after. Service will be stopped after is started...",
+            )
             shouldStop = false
             service.stopSelf()
         }

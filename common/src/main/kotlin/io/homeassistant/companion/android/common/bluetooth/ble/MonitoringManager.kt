@@ -80,13 +80,23 @@ class MonitoringManager {
         builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
         builder.setContentTitle(context.getString(R.string.beacon_scanning))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNEL_BEACON_MONITOR, context.getString(R.string.beacon_scanning), NotificationManager.IMPORTANCE_LOW)
+            val channel =
+                NotificationChannel(
+                    CHANNEL_BEACON_MONITOR,
+                    context.getString(R.string.beacon_scanning),
+                    NotificationManager.IMPORTANCE_LOW,
+                )
             val notifManager = context.getSystemService<NotificationManager>()!!
             notifManager.createNotificationChannel(channel)
         }
         val stopScanningIntent = Intent(context, SensorUpdateReceiver::class.java)
         stopScanningIntent.action = SensorReceiverBase.ACTION_STOP_BEACON_SCANNING
-        val stopScanningPendingIntent = PendingIntent.getBroadcast(context, 0, stopScanningIntent, PendingIntent.FLAG_MUTABLE)
+        val stopScanningPendingIntent = PendingIntent.getBroadcast(
+            context,
+            0,
+            stopScanningIntent,
+            PendingIntent.FLAG_MUTABLE,
+        )
         builder.addAction(0, context.getString(R.string.disable), stopScanningPendingIntent)
         beaconManager.enableForegroundServiceScanning(builder.build(), 444)
         beaconManager.setEnableScheduledScanJobs(false)

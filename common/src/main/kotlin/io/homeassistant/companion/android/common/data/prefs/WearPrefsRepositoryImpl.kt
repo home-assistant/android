@@ -69,7 +69,8 @@ class WearPrefsRepositoryImpl @Inject constructor(
 
                 if (template != null && templateRefreshInterval != null) {
                     val templates = mapOf(
-                        UNKNOWN_TEMPLATE_TILE_ID.toString() to kotlinJsonMapper.encodeToString(TemplateTileConfig(template, templateRefreshInterval)),
+                        UNKNOWN_TEMPLATE_TILE_ID.toString() to
+                            kotlinJsonMapper.encodeToString(TemplateTileConfig(template, templateRefreshInterval)),
                     )
 
                     localStorage.putString(PREF_TILE_TEMPLATES, JSONObject(templates).toString())

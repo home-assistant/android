@@ -95,7 +95,9 @@ fun MobileAppIntegrationView(
                     Switch(
                         checked = onboardingViewModel.locationTrackingEnabled,
                         onCheckedChange = onLocationTrackingChanged,
-                        colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb)),
+                        colors = SwitchDefaults.colors(
+                            uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb),
+                        ),
                     )
                 }
                 Text(
@@ -179,7 +181,10 @@ fun MobileAppIntegrationView(
         ) {
             Button(
                 onClick = onFinishClicked,
-                enabled = !onboardingViewModel.deviceIsWatch || onboardingViewModel.tlsClientCertificateUri == null || onboardingViewModel.tlsClientCertificatePasswordCorrect,
+                enabled =
+                !onboardingViewModel.deviceIsWatch ||
+                    onboardingViewModel.tlsClientCertificateUri == null ||
+                    onboardingViewModel.tlsClientCertificatePasswordCorrect,
             ) {
                 Text(stringResource(id = commonR.string.continue_connect))
             }

@@ -73,11 +73,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     override fun getWidgetProvider(context: Context): ComponentName =
         ComponentName(context, MediaPlayerControlsWidget::class.java)
 
-    override fun onUpdate(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray,
-    ) {
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them
         appWidgetIds.forEach { appWidgetId ->
             updateView(
@@ -104,7 +100,11 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
-    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity?): RemoteViews {
+    override suspend fun getWidgetRemoteViews(
+        context: Context,
+        appWidgetId: Int,
+        suggestedEntity: Entity?,
+    ): RemoteViews {
         val updateMediaIntent = Intent(context, MediaPlayerControlsWidget::class.java).apply {
             action = UPDATE_MEDIA_IMAGE
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -146,8 +146,16 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
 
         val widget = mediaPlayCtrlWidgetDao.get(appWidgetId)
-        val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
-        return RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_media_controls_wrapper_dynamiccolor else R.layout.widget_media_controls_wrapper_default).apply {
+        val useDynamicColors =
+            widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
+        return RemoteViews(
+            context.packageName,
+            if (useDynamicColors) {
+                R.layout.widget_media_controls_wrapper_dynamiccolor
+            } else {
+                R.layout.widget_media_controls_wrapper_default
+            },
+        ).apply {
             if (widget != null) {
                 val entityIds: LinkedList<String> = LinkedList()
                 entityIds.addAll(widget.entityId.split(","))
@@ -171,7 +179,11 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     )
                 }
 
-                val artist = (entity?.attributes?.get("media_artist") ?: entity?.attributes?.get("media_album_artist"))?.toString()
+                val artist = (
+                    entity?.attributes?.get(
+                        "media_artist",
+                    ) ?: entity?.attributes?.get("media_album_artist")
+                    )?.toString()
                 val title = entity?.attributes?.get("media_title")?.toString()
                 val album = entity?.attributes?.get("media_album_name")?.toString()
                 val icon = entity?.attributes?.get("icon")?.toString()
@@ -247,8 +259,16 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                 )
 
                 val entityPictureUrl = entity?.attributes?.get("entity_picture")?.toString()
-                val baseUrl = serverManager.getServer(widget.serverId)?.connection?.getUrl().toString().removeSuffix("/")
-                val url = if (entityPictureUrl?.startsWith("http") == true) entityPictureUrl else "$baseUrl$entityPictureUrl"
+                val baseUrl = serverManager.getServer(
+                    widget.serverId,
+                )?.connection?.getUrl().toString().removeSuffix("/")
+                val url = if (entityPictureUrl?.startsWith("http") ==
+                    true
+                ) {
+                    entityPictureUrl
+                } else {
+                    "$baseUrl$entityPictureUrl"
+                }
                 if (entityPictureUrl == null) {
                     setViewVisibility(
                         R.id.widgetMediaPlaceholder,
@@ -403,7 +423,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     override suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>> =
         mediaPlayCtrlWidgetDao.getAll().associate { it.id to (it.serverId to it.entityId.split(",")) }
 
-    private suspend fun getEntity(context: Context, serverId: Int, entityIds: List<String>, suggestedEntity: Entity?): Entity? {
+    private suspend fun getEntity(
+        context: Context,
+        serverId: Int,
+        entityIds: List<String>,
+        suggestedEntity: Entity?,
+    ): Entity? {
         val entity: Entity?
         try {
             entity = if (suggestedEntity != null && entityIds.contains(suggestedEntity.entityId)) {
@@ -469,8 +494,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         val showSeek: Boolean = extras.getBoolean(EXTRA_SHOW_SEEK)
         val showVolume: Boolean = extras.getBoolean(EXTRA_SHOW_VOLUME)
         val showSource: Boolean = extras.getBoolean(EXTRA_SHOW_SOURCE)
-        val backgroundType = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
-            ?: WidgetBackgroundType.DAYNIGHT
+        val backgroundType =
+            BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
+                ?: WidgetBackgroundType.DAYNIGHT
 
         if (serverId == null || entitySelection == null) {
             Timber.e("Did not receive complete configuration data")
@@ -503,7 +529,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity) {
         mediaPlayCtrlWidgetDao.get(appWidgetId)?.let {
             widgetScope?.launch {
-                val views = getWidgetRemoteViews(context, appWidgetId, getEntity(context, it.serverId, it.entityId.split(","), null))
+                val views =
+                    getWidgetRemoteViews(
+                        context,
+                        appWidgetId,
+                        getEntity(context, it.serverId, it.entityId.split(","), null),
+                    )
                 AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
             }
         }
@@ -526,7 +557,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             val domain = "media_player"
             val action = "media_previous_track"
-            val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
+            val entityId: String = getEntity(
+                context,
+                entity.serverId,
+                entity.entityId.split(","),
+                null,
+            )?.entityId.toString()
 
             val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
@@ -572,7 +608,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             val domain = "media_player"
             val action = "media_seek"
-            val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
+            val entityId: String = getEntity(
+                context,
+                entity.serverId,
+                entity.entityId.split(","),
+                null,
+            )?.entityId.toString()
 
             val actionDataMap: HashMap<String, Any> = hashMapOf(
                 "entity_id" to entityId,
@@ -604,7 +645,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             val domain = "media_player"
             val action = "media_play_pause"
-            val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
+            val entityId: String = getEntity(
+                context,
+                entity.serverId,
+                entity.entityId.split(","),
+                null,
+            )?.entityId.toString()
 
             val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
@@ -654,7 +700,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             val domain = "media_player"
             val action = "media_seek"
-            val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
+            val entityId: String = getEntity(
+                context,
+                entity.serverId,
+                entity.entityId.split(","),
+                null,
+            )?.entityId.toString()
 
             val actionDataMap: HashMap<String, Any> = hashMapOf(
                 "entity_id" to entityId,
@@ -686,7 +737,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             val domain = "media_player"
             val action = "media_next_track"
-            val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
+            val entityId: String = getEntity(
+                context,
+                entity.serverId,
+                entity.entityId.split(","),
+                null,
+            )?.entityId.toString()
 
             val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
@@ -715,7 +771,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             val domain = "media_player"
             val action = "volume_down"
-            val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
+            val entityId: String = getEntity(
+                context,
+                entity.serverId,
+                entity.entityId.split(","),
+                null,
+            )?.entityId.toString()
 
             val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
@@ -744,7 +805,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             val domain = "media_player"
             val action = "volume_up"
-            val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
+            val entityId: String = getEntity(
+                context,
+                entity.serverId,
+                entity.entityId.split(","),
+                null,
+            )?.entityId.toString()
 
             val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 

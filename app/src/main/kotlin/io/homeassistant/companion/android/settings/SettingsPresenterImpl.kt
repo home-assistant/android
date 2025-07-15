@@ -53,7 +53,8 @@ class SettingsPresenterImpl @Inject constructor(
     private val changeLog: ChangeLog,
     private val settingsDao: SettingsDao,
     private val sensorDao: SensorDao,
-) : SettingsPresenter, PreferenceDataStore() {
+) : PreferenceDataStore(),
+    SettingsPresenter {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -104,7 +105,11 @@ class SettingsPresenterImpl @Inject constructor(
                 "assist_voice_command_intent" ->
                     view.getPackageManager()?.setComponentEnabledSetting(
                         voiceCommandAppComponent,
-                        if (value) PackageManager.COMPONENT_ENABLED_STATE_DEFAULT else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        if (value) {
+                            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
+                        } else {
+                            PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                        },
                         PackageManager.DONT_KILL_APP,
                     )
                 "enable_ha_launcher" -> enableLauncherMode(value)
@@ -272,7 +277,8 @@ class SettingsPresenterImpl @Inject constructor(
             false
         } else if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val roleManager = context.getSystemService<RoleManager>()
-            roleManager?.isRoleAvailable(RoleManager.ROLE_ASSISTANT) == true && !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)
+            roleManager?.isRoleAvailable(RoleManager.ROLE_ASSISTANT) == true &&
+                !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)
         } else if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val defaultApp: String? = Settings.Secure.getString(context.contentResolver, "assistant")
             defaultApp?.contains(BuildConfig.APPLICATION_ID) == false
@@ -289,7 +295,9 @@ class SettingsPresenterImpl @Inject constructor(
         }
 
         // Notifications
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            !NotificationManagerCompat.from(context).areNotificationsEnabled()
+        ) {
             suggestions += SettingsHomeSuggestion(
                 SettingsPresenter.SUGGESTION_NOTIFICATION_PERMISSION,
                 commonR.string.suggestion_notifications_title,
@@ -310,7 +318,11 @@ class SettingsPresenterImpl @Inject constructor(
     private fun enableLauncherMode(enable: Boolean) {
         view.getPackageManager()?.setComponentEnabledSetting(
             launcherAliasComponent,
-            if (enable) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            if (enable) {
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+            } else {
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            },
             PackageManager.DONT_KILL_APP,
         )
     }

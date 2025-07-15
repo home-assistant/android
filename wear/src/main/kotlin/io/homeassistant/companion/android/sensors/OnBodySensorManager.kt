@@ -11,7 +11,9 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlin.math.roundToInt
 import timber.log.Timber
 
-class OnBodySensorManager : SensorManager, SensorEventListener {
+class OnBodySensorManager :
+    SensorManager,
+    SensorEventListener {
     companion object {
         private var isListenerRegistered = false
         private val onBodySensor = SensorManager.BasicSensor(

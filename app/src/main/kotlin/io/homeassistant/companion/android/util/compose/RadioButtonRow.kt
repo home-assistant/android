@@ -13,11 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun RadioButtonRow(
-    text: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
+fun RadioButtonRow(text: String, selected: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()

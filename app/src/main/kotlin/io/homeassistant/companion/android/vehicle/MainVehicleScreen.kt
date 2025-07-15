@@ -98,7 +98,10 @@ class MainVehicleScreen(
                             domainsAdded = true
 
                             val newFavorites = getFavoritesList(entities)
-                            invalidate = invalidate || newFavorites.size != favoritesEntities.size || newFavorites.toSet() != favoritesEntities.toSet()
+                            invalidate =
+                                invalidate ||
+                                newFavorites.size != favoritesEntities.size ||
+                                newFavorites.toSet() != favoritesEntities.toSet()
                             favoritesEntities = newFavorites
 
                             if (invalidate) invalidate()

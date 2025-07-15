@@ -9,7 +9,9 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class AndroidAutoSensorManager : SensorManager, Observer<Int> {
+class AndroidAutoSensorManager :
+    SensorManager,
+    Observer<Int> {
 
     companion object {
         private val androidAutoConnected = SensorManager.BasicSensor(

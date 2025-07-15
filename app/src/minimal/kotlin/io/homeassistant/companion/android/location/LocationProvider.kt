@@ -41,7 +41,9 @@ suspend fun getLastLocation(context: Context): Location? {
      * Note: In systems where no application or service actively requests location updates,
      * the last known location may never gets updated.
      */
-    return if (lastKnownLocation == null || Clock.System.now() - lastKnownLocation.instant() > LOCATION_OUTDATED_THRESHOLD) {
+    return if (lastKnownLocation == null ||
+        Clock.System.now() - lastKnownLocation.instant() > LOCATION_OUTDATED_THRESHOLD
+    ) {
         Timber.d("Last known location is null or too old, getting current location.")
         locationManager.getCurrentLocation(context)
     } else {
@@ -51,6 +53,12 @@ suspend fun getLastLocation(context: Context): Location? {
 
 private suspend fun LocationManager.getCurrentLocation(context: Context): Location? {
     return suspendCoroutine {
-        LocationManagerCompat.getCurrentLocation(this, provider, CancellationSignal(), ContextCompat.getMainExecutor(context), it::resume)
+        LocationManagerCompat.getCurrentLocation(
+            this,
+            provider,
+            CancellationSignal(),
+            ContextCompat.getMainExecutor(context),
+            it::resume,
+        )
     }
 }

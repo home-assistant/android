@@ -48,7 +48,17 @@ class BedtimeModeSensorManager : SensorManager {
         }
 
         val state = try {
-            Settings.Global.getInt(context.contentResolver, if (Build.MANUFACTURER == "samsung") "setting_bedtime_mode_running_state" else "bedtime_mode") == 1
+            Settings.Global.getInt(
+                context.contentResolver,
+                if (Build.MANUFACTURER ==
+                    "samsung"
+                ) {
+                    "setting_bedtime_mode_running_state"
+                } else {
+                    "bedtime_mode"
+                },
+            ) ==
+                1
         } catch (e: Exception) {
             Timber.e(e, "Unable to update bedtime mode sensor")
             false

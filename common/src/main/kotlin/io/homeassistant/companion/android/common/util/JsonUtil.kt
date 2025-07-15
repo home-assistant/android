@@ -36,10 +36,9 @@ import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.modules.plus
 import org.json.JSONArray
 
-fun JSONArray.toStringList(): List<String> =
-    List(length()) { i ->
-        getString(i)
-    }
+fun JSONArray.toStringList(): List<String> = List(length()) { i ->
+    getString(i)
+}
 
 /**
  * Kotlinx serialization Json instance to use while interacting with the API of Home Assistant Core.
@@ -175,7 +174,8 @@ abstract class UnknownJsonContentDeserializer<T : UnknownJsonContent> : Deserial
  */
 object MapAnySerializer : KSerializer<Map<String, Any?>> {
     @OptIn(ExperimentalSerializationApi::class)
-    override val descriptor: SerialDescriptor = mapSerialDescriptor(String.serializer().descriptor, JsonElement.serializer().descriptor)
+    override val descriptor: SerialDescriptor =
+        mapSerialDescriptor(String.serializer().descriptor, JsonElement.serializer().descriptor)
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: Encoder, value: Map<String, Any?>) {
@@ -234,7 +234,13 @@ private fun toJsonElement(value: Any?): JsonElement {
         is Number -> JsonPrimitive(value)
         is Map<*, *> -> JsonObject(
             value.mapNotNull { (key, v) ->
-                if (key is String) key to toJsonElement(v) else throw IllegalArgumentException("Unsupported type: ${key?.javaClass} as map key")
+                if (key is String) {
+                    key to toJsonElement(
+                        v,
+                    )
+                } else {
+                    throw IllegalArgumentException("Unsupported type: ${key?.javaClass} as map key")
+                }
             }.toMap(),
         )
         is List<*> -> JsonArray(value.map { toJsonElement(it) })

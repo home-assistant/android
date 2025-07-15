@@ -11,7 +11,8 @@ android {
 
         versionName = project.version.toString()
         // We add 1 because the app and wear versions need to have different version codes.
-        versionCode = 1 + checkNotNull(versionCode) { "Did you forget to apply the convention plugin that set the version code?" }
+        versionCode =
+            1 + checkNotNull(versionCode) { "Did you forget to apply the convention plugin that set the version code?" }
     }
 
     experimentalProperties["android.experimental.enableScreenshotTest"] = true

@@ -11,7 +11,9 @@ import io.homeassistant.companion.android.common.R as commonR
 import java.math.RoundingMode
 import timber.log.Timber
 
-class PressureSensorManager : SensorManager, SensorEventListener {
+class PressureSensorManager :
+    SensorManager,
+    SensorEventListener {
     companion object {
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0

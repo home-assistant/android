@@ -48,7 +48,9 @@ tasks.register("versionFile") {
     group = "publishing"
     description = "Writes the project.version to a file version.txt at the root of the project"
 
-    notCompatibleWithConfigurationCache("The version of the project depends on the timestamp of the build and cannot be cached.")
+    notCompatibleWithConfigurationCache(
+        "The version of the project depends on the timestamp of the build and cannot be cached.",
+    )
 
     // Use a provider to avoid capturing script object references
     outputs.file("$projectDir/version.txt")

@@ -13,12 +13,7 @@ data class EntityRegistryResponse(
 )
 
 @Serializable
-data class EntityRegistryOptions(
-    val sensor: EntityRegistrySensorOptions? = null,
-)
+data class EntityRegistryOptions(val sensor: EntityRegistrySensorOptions? = null)
 
 @Serializable
-data class EntityRegistrySensorOptions(
-    val displayPrecision: Int? = null,
-    val suggestedDisplayPrecision: Int? = null,
-)
+data class EntityRegistrySensorOptions(val displayPrecision: Int? = null, val suggestedDisplayPrecision: Int? = null)

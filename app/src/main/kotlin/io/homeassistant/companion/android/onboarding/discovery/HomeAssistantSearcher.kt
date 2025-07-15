@@ -18,7 +18,8 @@ class HomeAssistantSearcher constructor(
     private val onStart: () -> Unit,
     private val onInstanceFound: (instance: HomeAssistantInstance) -> Unit,
     private val onError: () -> Unit,
-) : NsdManager.DiscoveryListener, DefaultLifecycleObserver {
+) : NsdManager.DiscoveryListener,
+    DefaultLifecycleObserver {
 
     companion object {
         private const val SERVICE_TYPE = "_home-assistant._tcp"
@@ -98,7 +99,13 @@ class HomeAssistantSearcher constructor(
                     resolvedService?.let {
                         val baseUrl = it.attributes["base_url"]
                         val versionAttr = it.attributes["version"]
-                        val version = if (versionAttr?.isNotEmpty() == true) HomeAssistantVersion.fromString(versionAttr.commonToUtf8String()) else null
+                        val version = if (versionAttr?.isNotEmpty() ==
+                            true
+                        ) {
+                            HomeAssistantVersion.fromString(versionAttr.commonToUtf8String())
+                        } else {
+                            null
+                        }
                         if (baseUrl?.isNotEmpty() == true && version != null) {
                             try {
                                 val instance = HomeAssistantInstance(
