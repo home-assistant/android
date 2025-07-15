@@ -62,8 +62,10 @@ class ServerManagerImpl @Inject constructor(
 
     init {
         // Initial (blocking) load
-        serverDao.getAll().forEach {
-            mutableServers[it.id] = it.apply { connection.wifiHelper = wifiHelper }
+        runBlocking {
+            serverDao.getAll().forEach {
+                mutableServers[it.id] = it.apply { connection.wifiHelper = wifiHelper }
+            }
         }
 
         // Listen for updates and update flow
@@ -131,7 +133,7 @@ class ServerManagerImpl @Inject constructor(
         }
     }
 
-    override fun getServer(webhookId: String): Server? =
+    override suspend fun getServer(webhookId: String): Server? =
         mutableServers.values.firstOrNull { it.connection.webhookId == webhookId }
             ?: serverDao.get(webhookId)?.apply { connection.wifiHelper = wifiHelper }
 

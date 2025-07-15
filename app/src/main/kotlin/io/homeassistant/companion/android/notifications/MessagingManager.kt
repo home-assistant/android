@@ -272,30 +272,30 @@ class MessagingManager @Inject constructor(
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     fun handleMessage(notificationData: Map<String, String>, source: String) {
-        var now = System.currentTimeMillis()
-        var jsonData = notificationData
-        val notificationId: Long
+        mainScope.launch {
+            var now = System.currentTimeMillis()
+            var jsonData = notificationData
+            val notificationId: Long
 
-        if (source.startsWith(SOURCE_REPLY)) {
-            notificationId = source.substringAfter(SOURCE_REPLY).toLong()
-            notificationDao.get(notificationId.toInt())?.let {
-                val dbData: Map<String, String> = kotlinJsonMapper.decodeFromString(it.data)
+            if (source.startsWith(SOURCE_REPLY)) {
+                notificationId = source.substringAfter(SOURCE_REPLY).toLong()
+                notificationDao.get(notificationId.toInt())?.let {
+                    val dbData: Map<String, String> = kotlinJsonMapper.decodeFromString(it.data)
 
-                now = it.received // Allow for updating the existing notification without a tag
-                jsonData = jsonData + dbData // Add the notificationData, this contains the reply text
-            } ?: return
-        } else {
-            val jsonObject = JSONObject(jsonData)
-            val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
-                serverManager.getServer(webhookId = it)?.id
-            }
-            val notificationRow =
-                NotificationItem(0, now, jsonData[NotificationData.MESSAGE].toString(), jsonObject.toString(), source, receivedServer)
-            notificationId = notificationDao.add(notificationRow)
+                    now = it.received // Allow for updating the existing notification without a tag
+                    jsonData = jsonData + dbData // Add the notificationData, this contains the reply text
+                } ?: return@launch
+            } else {
+                val jsonObject = JSONObject(jsonData)
+                val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
+                    serverManager.getServer(webhookId = it)?.id
+                }
+                val notificationRow =
+                    NotificationItem(0, now, jsonData[NotificationData.MESSAGE].toString(), jsonObject.toString(), source, receivedServer)
+                notificationId = notificationDao.add(notificationRow)
 
-            val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
-            if (confirmation) {
-                mainScope.launch {
+                val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
+                if (confirmation) {
                     try {
                         serverManager.integrationRepository(receivedServer ?: ServerManager.SERVER_ID_ACTIVE)
                             .fireEvent("mobile_app_notification_received", jsonData)
@@ -304,9 +304,7 @@ class MessagingManager @Inject constructor(
                     }
                 }
             }
-        }
 
-        mainScope.launch {
             val serverId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
                 serverManager.getServer(webhookId = webhookId)?.id
             } ?: ServerManager.SERVER_ID_ACTIVE
@@ -504,7 +502,7 @@ class MessagingManager @Inject constructor(
                             }
                         }
                         COMMAND_PERSISTENT_CONNECTION -> {
-                            val validPersistentTypes = WebsocketSetting.values().map { setting -> setting.name }
+                            val validPersistentTypes = WebsocketSetting.entries.map { setting -> setting.name }
 
                             when {
                                 jsonData[PERSISTENT].isNullOrEmpty() -> {
@@ -591,18 +589,22 @@ class MessagingManager @Inject constructor(
                             DND_ALARMS_ONLY -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_ALARMS,
                             )
+
                             DND_ALL -> notificationManager?.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
                             DND_NONE -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_NONE,
                             )
+
                             DND_PRIORITY_ONLY -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_PRIORITY,
                             )
+
                             else -> Timber.d("Skipping invalid command")
                         }
                     }
                 }
             }
+
             COMMAND_RINGER_MODE -> {
                 val audioManager = context.getSystemService<AudioManager>()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -617,6 +619,7 @@ class MessagingManager @Inject constructor(
                     processRingerMode(audioManager!!, command)
                 }
             }
+
             COMMAND_BROADCAST_INTENT -> {
                 try {
                     val packageName = data[INTENT_PACKAGE_NAME]
@@ -643,6 +646,7 @@ class MessagingManager @Inject constructor(
                     }
                 }
             }
+
             COMMAND_VOLUME_LEVEL -> {
                 val audioManager =
                     context.getSystemService<AudioManager>()
@@ -665,6 +669,7 @@ class MessagingManager @Inject constructor(
                     )
                 }
             }
+
             COMMAND_BLUETOOTH -> {
                 val bluetoothAdapter = context.getSystemService<BluetoothManager>()?.adapter
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -672,6 +677,7 @@ class MessagingManager @Inject constructor(
                         ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) -> {
                             Timber.d("We have proper bluetooth permissions proceeding with command")
                         }
+
                         else -> {
                             Timber.e("Missing Bluetooth permissions, notifying user to grant permissions")
                             notifyMissingPermission(message.toString(), serverId)
@@ -685,6 +691,7 @@ class MessagingManager @Inject constructor(
                     bluetoothAdapter?.enable()
                 }
             }
+
             COMMAND_HIGH_ACCURACY_MODE -> {
                 when (command) {
                     DeviceCommandData.TURN_OFF -> LocationSensorManager.setHighAccuracyModeSetting(context, false)
@@ -697,6 +704,7 @@ class MessagingManager @Inject constructor(
                 intent.putExtra("command", command)
                 context.sendBroadcast(intent)
             }
+
             COMMAND_ACTIVITY -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(context)) {
@@ -717,11 +725,13 @@ class MessagingManager @Inject constructor(
                     processActivityCommand(data)
                 }
             }
+
             COMMAND_APP_LOCK -> {
                 mainScope.launch {
                     setAppLock(data)
                 }
             }
+
             COMMAND_WEBVIEW -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(context)) {
@@ -733,6 +743,7 @@ class MessagingManager @Inject constructor(
                     openWebview(command, data)
                 }
             }
+
             COMMAND_SCREEN_ON -> {
                 if (!command.isNullOrEmpty()) {
                     mainScope.launch {
@@ -752,6 +763,7 @@ class MessagingManager @Inject constructor(
                 wakeLock?.acquire(1 * 30 * 1000L) // 30 seconds
                 wakeLock?.release()
             }
+
             COMMAND_MEDIA -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                     if (!NotificationManagerCompat.getEnabledListenerPackages(context)
@@ -763,6 +775,7 @@ class MessagingManager @Inject constructor(
                     }
                 }
             }
+
             COMMAND_LAUNCH_APP -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(context)) {
@@ -774,9 +787,11 @@ class MessagingManager @Inject constructor(
                     launchApp(data)
                 }
             }
+
             COMMAND_PERSISTENT_CONNECTION -> {
                 togglePersistentConnection(data[PERSISTENT].toString(), serverId.toIntOrNull() ?: ServerManager.SERVER_ID_ACTIVE)
             }
+
             COMMAND_AUTO_SCREEN_BRIGHTNESS, COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_SCREEN_OFF_TIMEOUT -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (Settings.System.canWrite(context)) {
@@ -790,6 +805,7 @@ class MessagingManager @Inject constructor(
                     mainScope.launch { sendNotification(data) }
                 }
             }
+
             COMMAND_FLASHLIGHT -> {
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
                     when (command) {
@@ -803,6 +819,7 @@ class MessagingManager @Inject constructor(
                     requestCameraPermission()
                 }
             }
+
             else -> Timber.d("No command received")
         }
     }
@@ -831,66 +848,80 @@ class MessagingManager @Inject constructor(
                         name,
                         value.split(";").map { it.toInt() }.toIntArray(),
                     )
+
                     "ArrayList<Integer>" -> intent.putIntegerArrayListExtra(
                         name,
                         value.split(";").map { it.toInt() }.toCollection(ArrayList()),
                     )
+
                     "double" -> intent.putExtra(name, value.toDouble())
                     "double[]" -> intent.putExtra(
                         name,
                         value.split(";").map { it.toDouble() }.toDoubleArray(),
                     )
+
                     "float" -> intent.putExtra(name, value.toFloat())
                     "float[]" -> intent.putExtra(
                         name,
                         value.split(";").map { it.toFloat() }.toFloatArray(),
                     )
+
                     "long" -> intent.putExtra(name, value.toLong())
                     "long[]" -> intent.putExtra(
                         name,
                         value.split(";").map { it.toLong() }.toLongArray(),
                     )
+
                     "short" -> intent.putExtra(name, value.toShort())
                     "short[]" -> intent.putExtra(
                         name,
                         value.split(";").map { it.toShort() }.toShortArray(),
                     )
+
                     "byte" -> intent.putExtra(name, value.toByte())
                     "byte[]" -> intent.putExtra(
                         name,
                         value.split(";").map { it.toByte() }.toByteArray(),
                     )
+
                     "boolean" -> intent.putExtra(name, value.toBoolean())
                     "boolean[]" -> intent.putExtra(
                         name,
                         value.split(";").map { it.toBoolean() }.toBooleanArray(),
                     )
+
                     "char" -> intent.putExtra(name, value[0])
                     "char[]" -> intent.putExtra(
                         name,
                         value.split(";").map { it[0] }.toCharArray(),
                     )
+
                     "String" -> intent.putExtra(name, value)
                     "String.urlencoded", "urlencoded" -> intent.putExtra(
                         name,
                         URLDecoder.decode(value, "UTF-8"),
                     )
+
                     "String[]" -> intent.putExtra(
                         name,
                         value.split(";").toTypedArray(),
                     )
+
                     "ArrayList<String>" -> intent.putStringArrayListExtra(
                         name,
                         value.split(";").toCollection(ArrayList()),
                     )
+
                     "String[].urlencoded" -> intent.putExtra(
                         name,
                         value.split(";").map { URLDecoder.decode(value, "UTF-8") }.toTypedArray(),
                     )
+
                     "ArrayList<String>.urlencoded" -> intent.putStringArrayListExtra(
                         name,
                         value.split(";").map { URLDecoder.decode(value, "UTF-8") }.toCollection(ArrayList()),
                     )
+
                     else -> {
                         intent.putExtra(name, value)
                     }
@@ -1163,15 +1194,19 @@ class MessagingManager @Inject constructor(
             "high" -> {
                 builder.priority = NotificationCompat.PRIORITY_HIGH
             }
+
             "low" -> {
                 builder.priority = NotificationCompat.PRIORITY_LOW
             }
+
             "max" -> {
                 builder.priority = NotificationCompat.PRIORITY_MAX
             }
+
             "min" -> {
                 builder.priority = NotificationCompat.PRIORITY_MIN
             }
+
             else -> {
                 builder.priority = NotificationCompat.PRIORITY_DEFAULT
             }
@@ -1217,7 +1252,7 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun handleServer(
+    private suspend fun handleServer(
         builder: NotificationCompat.Builder,
         data: Map<String, String>,
     ) {
@@ -1513,6 +1548,7 @@ class MessagingManager @Inject constructor(
                             )
                         }
                     }
+
                     notificationAction.key == REPLY || notificationAction.behavior?.lowercase() == TEXT_INPUT -> {
                         val remoteInput: RemoteInput = RemoteInput.Builder(KEY_TEXT_REPLY).run {
                             setLabel(context.getString(commonR.string.action_reply))
@@ -1533,6 +1569,7 @@ class MessagingManager @Inject constructor(
                             .build()
                         builder.addAction(action)
                     }
+
                     else -> {
                         val actionPendingIntent = PendingIntent.getBroadcast(
                             context,
@@ -1562,9 +1599,11 @@ class MessagingManager @Inject constructor(
             uri.isBlank() -> {
                 WebViewActivity.newInstance(context, null, serverId)
             }
+
             uri.startsWith(APP_PREFIX) -> {
                 context.packageManager.getLaunchIntentForPackage(uri.substringAfter(APP_PREFIX))
             }
+
             uri.startsWith(INTENT_PREFIX) -> {
                 try {
                     Intent.parseUri(uri, Intent.URI_INTENT_SCHEME)
@@ -1573,6 +1612,7 @@ class MessagingManager @Inject constructor(
                     null
                 }
             }
+
             uri.startsWith(SETTINGS_PREFIX) -> {
                 if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY) {
                     SettingsActivity.newInstance(context)
@@ -1580,6 +1620,7 @@ class MessagingManager @Inject constructor(
                     WebViewActivity.newInstance(context, null, serverId)
                 }
             }
+
             UrlUtil.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX) -> {
                 Intent(Intent.ACTION_VIEW).apply {
                     this.data = Uri.parse(
@@ -1591,6 +1632,7 @@ class MessagingManager @Inject constructor(
                     )
                 }
             }
+
             else -> {
                 WebViewActivity.newInstance(context, uri, serverId)
             }
@@ -1911,18 +1953,21 @@ class MessagingManager @Inject constructor(
                     settingsDao.update(it)
                 }
             }
+
             WebsocketSetting.ALWAYS.name -> {
                 settingsDao.get(serverId)?.let {
                     it.websocketSetting = WebsocketSetting.ALWAYS
                     settingsDao.update(it)
                 }
             }
+
             WebsocketSetting.HOME_WIFI.name -> {
                 settingsDao.get(serverId)?.let {
                     it.websocketSetting = WebsocketSetting.HOME_WIFI
                     settingsDao.update(it)
                 }
             }
+
             WebsocketSetting.SCREEN_ON.name -> {
                 settingsDao.get(serverId)?.let {
                     it.websocketSetting = WebsocketSetting.SCREEN_ON
@@ -1953,6 +1998,7 @@ class MessagingManager @Inject constructor(
                         Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
                     }
                 }
+
                 else -> command!!.toInt()
             },
         )
@@ -1979,12 +2025,15 @@ class MessagingManager @Inject constructor(
                             COMMAND_WEBVIEW, COMMAND_ACTIVITY, COMMAND_LAUNCH_APP -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                 requestSystemAlertPermission()
                             }
+
                             COMMAND_RINGER_MODE, COMMAND_DND, COMMAND_VOLUME_LEVEL -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                 requestDNDPermission()
                             }
+
                             COMMAND_MEDIA -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                                 requestNotificationPermission()
                             }
+
                             COMMAND_BLUETOOTH -> {
                                 Handler(Looper.getMainLooper()).post {
                                     Toast.makeText(
@@ -1995,6 +2044,7 @@ class MessagingManager @Inject constructor(
                                 }
                                 navigateAppDetails()
                             }
+
                             COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_AUTO_SCREEN_BRIGHTNESS, COMMAND_SCREEN_OFF_TIMEOUT -> {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                     requestWriteSystemPermission()

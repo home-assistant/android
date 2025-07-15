@@ -14,10 +14,10 @@ interface ServerDao {
     suspend fun get(id: Int): Server?
 
     @Query("SELECT * FROM servers WHERE webhook_id = :webhookId")
-    fun get(webhookId: String): Server?
+    suspend fun get(webhookId: String): Server?
 
     @Query("SELECT * FROM servers ORDER BY `list_order` ASC")
-    fun getAll(): List<Server>
+    suspend fun getAll(): List<Server>
 
     @Query("SELECT * FROM servers ORDER BY `list_order` ASC")
     fun getAllFlow(): Flow<List<Server>>

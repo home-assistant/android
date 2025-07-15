@@ -45,7 +45,7 @@ interface ServerManager {
      * Get the server for the provided webhook ID.
      * @return [Server] or `null` if there is no server for the webhook ID
      */
-    fun getServer(webhookId: String): Server?
+    suspend fun getServer(webhookId: String): Server?
 
     /**
      * Mark the server for the provided ID as 'active', the default to use when no specific ID is
