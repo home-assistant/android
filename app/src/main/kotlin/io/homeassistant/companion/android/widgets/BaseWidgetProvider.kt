@@ -89,8 +89,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     fun onScreenOn(context: Context) {
         setupWidgetScope()
-        if (!serverManager.isRegistered()) return
         widgetScope!!.launch {
+            if (!serverManager.isRegistered()) return@launch
             updateAllWidgets(context)
 
             val allWidgets = getAllWidgetIdsWithEntities(context)

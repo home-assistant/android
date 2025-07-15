@@ -65,7 +65,7 @@ class BaseGlanceEntityWidgetReceiverTest {
     }
 
     private fun serverRegistered() {
-        every { mockedServerManager.isRegistered() } returns true
+        coEvery { mockedServerManager.isRegistered() } returns true
     }
 
     @BeforeEach
@@ -81,7 +81,7 @@ class BaseGlanceEntityWidgetReceiverTest {
         val entitiesPerServer = mockk<Map<Int, EntitiesPerServer>>()
         val receiver = getReceiver(entitiesPerServer)
 
-        every { mockedServerManager.isRegistered() } returns false
+        coEvery { mockedServerManager.isRegistered() } returns false
 
         receiver.onReceive(context, intent)
 
@@ -112,7 +112,7 @@ class BaseGlanceEntityWidgetReceiverTest {
         serverRegistered()
         coEvery { glanceManager.getGlanceIds(mockedWidget.javaClass) } returns glanceIds
         every { glanceManager.getAppWidgetId(any()) } answers { firstArg<FakeGlanceId>().id }
-        every { mockedServerManager.getServer(any<Int>()) } returns mockk()
+        coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
         every { mockedServerManager.integrationRepository(any()) } returns integrationRepository
         coEvery { integrationRepository.getEntityUpdates(listOf("entity1")) } returns channelFlow {
             close()
@@ -150,7 +150,7 @@ class BaseGlanceEntityWidgetReceiverTest {
         every { glanceManager.getAppWidgetId(any()) } answers { firstArg<FakeGlanceId>().id }
         every { glanceManager.getGlanceIdBy(any<Int>()) } answers { FakeGlanceId(firstArg()) }
         coJustRun { mockedWidget.update(context, any()) }
-        every { mockedServerManager.getServer(any<Int>()) } returns mockk()
+        coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
         every { mockedServerManager.integrationRepository(any()) } returns integrationRepository
         coEvery { integrationRepository.getEntityUpdates(listOf("entity1")) } returns channelFlow {
             widget1EntityProducer = this
@@ -223,7 +223,7 @@ class BaseGlanceEntityWidgetReceiverTest {
         serverRegistered()
         coEvery { glanceManager.getGlanceIds(mockedWidget.javaClass) } returns glanceIds
         every { glanceManager.getAppWidgetId(any()) } answers { firstArg<FakeGlanceId>().id }
-        every { mockedServerManager.getServer(any<Int>()) } returns mockk()
+        coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
         every { mockedServerManager.integrationRepository(any()) } returns integrationRepository
         coEvery { integrationRepository.getEntityUpdates(listOf("entity1")) } returns channelFlow {
             producer = this

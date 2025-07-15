@@ -12,17 +12,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.vehicle.views.AndroidAutoFavoritesSettings
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class ManageAndroidAutoSettingsFragment : Fragment() {
-
-    @Inject
-    lateinit var serverManager: ServerManager
 
     val viewModel: ManageAndroidAutoViewModel by viewModels()
 
@@ -37,8 +32,8 @@ class ManageAndroidAutoSettingsFragment : Fragment() {
                 HomeAssistantAppTheme {
                     AndroidAutoFavoritesSettings(
                         androidAutoViewModel = viewModel,
-                        serversList = serverManager.defaultServers,
-                        defaultServer = serverManager.getServer()?.id ?: 0,
+                        serversList = viewModel.defaultServers,
+                        defaultServer = viewModel.defaultServerId,
                     )
                 }
             }

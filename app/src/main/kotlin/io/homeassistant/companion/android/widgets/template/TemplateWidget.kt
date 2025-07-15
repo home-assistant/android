@@ -114,6 +114,7 @@ class TemplateWidget : AppWidgetProvider() {
                 )
                 onScreenOn(context)
             }
+
             Intent.ACTION_SCREEN_ON -> onScreenOn(context)
             Intent.ACTION_SCREEN_OFF -> onScreenOff()
         }
@@ -121,8 +122,8 @@ class TemplateWidget : AppWidgetProvider() {
 
     private fun onScreenOn(context: Context) {
         setupWidgetScope()
-        if (!serverManager.isRegistered()) return
         widgetScope!!.launch {
+            if (!serverManager.isRegistered()) return@launch
             updateAllWidgets(context)
 
             val allWidgets = templateWidgetDao.getAll()

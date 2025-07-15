@@ -426,7 +426,7 @@ class WebSocketRepositoryImpl internal constructor(
      * Update server entry in [serverManager] with information from a [CurrentUserResponse] like user
      * name and admin status.
      */
-    private fun updateServerWithUser(user: CurrentUserResponse) {
+    private suspend fun updateServerWithUser(user: CurrentUserResponse) {
         webSocketCore.server()?.let {
             serverManager.updateServer(
                 it.copy(

@@ -593,7 +593,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         ).toBoolean()
     }
 
-    private fun getSendLocationAsSetting(serverId: Int): String {
+    private suspend fun getSendLocationAsSetting(serverId: Int): String {
         return if (serverManager(latestContext).getServer(serverId)?.version?.isAtLeast(2022, 2, 0) == true) {
             getSetting(
                 context = latestContext,

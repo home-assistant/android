@@ -80,7 +80,7 @@ internal interface WebSocketCore {
 
     fun shutdown()
 
-    fun server(): Server?
+    suspend fun server(): Server?
 }
 
 internal class WebSocketCoreFactory @Inject constructor(

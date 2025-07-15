@@ -53,12 +53,12 @@ interface LinkHandler {
      * @return A [LinkDestination] indicating where the link should navigate to,
      *         or [LinkDestination.NoDestination] if the link is unhandled or invalid.
      */
-    fun handleLink(uri: Uri): LinkDestination
+    suspend fun handleLink(uri: Uri): LinkDestination
 }
 
 class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManager) : LinkHandler {
 
-    override fun handleLink(uri: Uri): LinkDestination {
+    override suspend fun handleLink(uri: Uri): LinkDestination {
         return when (uri.scheme) {
             "https" -> handleUniversalLink(uri)
             DEEP_LINK_SCHEME -> handleDeepLink(uri)
@@ -71,7 +71,7 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
         }
     }
 
-    private fun handleUniversalLink(uri: Uri): LinkDestination {
+    private suspend fun handleUniversalLink(uri: Uri): LinkDestination {
         val path = uri.path.orEmpty()
 
         if (uri.host != MY_BASE_DOMAIN) {
@@ -130,7 +130,7 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
         }
     }
 
-    private fun handleNavigateLink(uri: Uri): LinkDestination {
+    private suspend fun handleNavigateLink(uri: Uri): LinkDestination {
         if (!serverManager.isRegistered()) {
             Timber.w("No server registered, cannot handle deep link")
             return LinkDestination.NoDestination

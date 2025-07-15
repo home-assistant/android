@@ -70,9 +70,8 @@ class WebViewPresenterImpl @Inject constructor(
     private var matterThreadIntentSender: IntentSender? = null
 
     init {
-        updateActiveServer()
-
         mainScope.launch {
+            updateActiveServer()
             externalBusRepository.getSentFlow().collect {
                 try {
                     view.sendExternalBusMessage(it)
@@ -139,14 +138,14 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun getActiveServer(): Int = serverId
 
-    override fun getActiveServerName(): String? =
+    override suspend fun getActiveServerName(): String? =
         if (serverManager.isRegistered()) {
             serverManager.getServer(serverId)?.friendlyName
         } else {
             null
         }
 
-    override fun updateActiveServer() {
+    override suspend fun updateActiveServer() {
         if (serverManager.isRegistered()) {
             serverManager.getServer()?.let {
                 serverId = it.id
@@ -154,7 +153,7 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun setActiveServer(id: Int) {
+    override suspend fun setActiveServer(id: Int) {
         serverManager.getServer(id)?.let {
             if (serverManager.authenticationRepository(id).getSessionState() == SessionState.CONNECTED) {
                 serverManager.activateServer(id)
@@ -163,7 +162,7 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun switchActiveServer(id: Int) {
+    override suspend fun switchActiveServer(id: Int) {
         if (serverId != id && serverId != ServerManager.SERVER_ID_ACTIVE) {
             setAppActive(false) // 'Lock' old server
         }
@@ -172,11 +171,11 @@ class WebViewPresenterImpl @Inject constructor(
         view.unlockAppIfNeeded()
     }
 
-    override fun nextServer() = moveToServer(next = true)
+    override suspend fun nextServer() = moveToServer(next = true)
 
-    override fun previousServer() = moveToServer(next = false)
+    override suspend fun previousServer() = moveToServer(next = false)
 
-    private fun moveToServer(next: Boolean) {
+    private suspend fun moveToServer(next: Boolean) {
         val servers = serverManager.defaultServers
         if (servers.size < 2) return
         val currentServerIndex = servers.indexOfFirst { it.id == serverId }
@@ -328,7 +327,7 @@ class WebViewPresenterImpl @Inject constructor(
         mainScope.cancel()
     }
 
-    override fun isSsidUsed(): Boolean =
+    override suspend fun isSsidUsed(): Boolean =
         serverManager.getServer(serverId)?.connection?.internalSsids?.isNotEmpty() == true
 
     override fun getAuthorizationHeader(): String = runBlocking {
@@ -418,14 +417,17 @@ class WebViewPresenterImpl @Inject constructor(
                             matterThreadIntentSender = result.exportIntent
                             mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY)
                         }
+
                         is ThreadManager.SyncResult.NoneHaveCredentials,
                         is ThreadManager.SyncResult.OnlyOnServer,
                         -> {
                             mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_NONE)
                         }
+
                         is ThreadManager.SyncResult.NotConnected -> {
                             mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_LOCAL_NETWORK)
                         }
+
                         else -> {
                             mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_OTHER)
                         }
@@ -455,6 +457,7 @@ class WebViewPresenterImpl @Inject constructor(
                     startMatterCommissioningFlow(context)
                 }
             }
+
             MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY -> {
                 mainScope.launch {
                     val sent = threadUseCase.sendThreadDatasetExportResult(result, serverId)
@@ -466,6 +469,7 @@ class WebViewPresenterImpl @Inject constructor(
                     }
                 }
             }
+
             else -> {
                 // Any errors will have been shown in the UI provided by Play Services
                 if (result.resultCode == Activity.RESULT_OK) {

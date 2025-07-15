@@ -169,12 +169,12 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
 
     private fun startWatchingForEntitiesChanges(context: Context) {
         setupWidgetScope()
-        if (!serverManager.isRegistered()) {
-            Timber.tag(widgetClassName).d("No server registered won't watch for entities")
-            return
-        }
-
         widgetScope.launch {
+            if (!serverManager.isRegistered()) {
+                Timber.tag(widgetClassName).d("No server registered won't watch for entities")
+                return@launch
+            }
+
             val entitiesPerServer = cleanupOrphansWidgetAndGetEntitiesByServer(context)
 
             entitiesPerServer.forEach { (appWidgetId, entitiesPerServer) ->

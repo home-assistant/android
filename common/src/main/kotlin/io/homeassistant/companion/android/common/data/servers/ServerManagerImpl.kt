@@ -86,11 +86,11 @@ class ServerManagerImpl @Inject constructor(
         }
     }
 
-    override fun isRegistered(): Boolean =
+    override suspend fun isRegistered(): Boolean =
         mutableServers.values.any {
             it.type == ServerType.DEFAULT &&
                 it.connection.isRegistered() &&
-                FailFast.failOnCatch(
+                FailFast.failOnCatchSuspend(
                     message = {
                         """Failed to get authenticationRepository for ${it.id}. Current repository ids: ${authenticationRepos.keys}."""
                     },
@@ -123,7 +123,7 @@ class ServerManagerImpl @Inject constructor(
         }
     }
 
-    override fun getServer(id: Int): Server? {
+    override suspend fun getServer(id: Int): Server? {
         val serverId = if (id == SERVER_ID_ACTIVE) activeServerId() else id
         return serverId?.let {
             mutableServers[serverId]

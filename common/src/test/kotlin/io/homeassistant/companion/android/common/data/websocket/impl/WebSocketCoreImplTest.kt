@@ -85,7 +85,7 @@ class WebSocketCoreImplTest {
         )
 
         mockConnection = mockk(relaxed = true)
-        every { mockServerManager.getServer(any<Int>()) } returns testServer
+        coEvery { mockServerManager.getServer(any<Int>()) } returns testServer
         every { mockServerManager.authenticationRepository(testServerId) } returns mockAuthenticationRepository
         coEvery { mockAuthenticationRepository.retrieveAccessToken() } returns "mock_access_token"
         // The implementation use a background scope to properly handle async messages, to not block the test
@@ -163,7 +163,7 @@ connect()
     fun `Given no server When connect is invoked Then it returns false and connection state is null`() =
         runTest {
             val serverManager = mockk<ServerManager>(relaxed = true)
-            every { serverManager.getServer(any<Int>()) } returns null
+            coEvery { serverManager.getServer(any<Int>()) } returns null
 
             val webSocketCore = WebSocketCoreImpl(
                 okHttpClient = mockk(),

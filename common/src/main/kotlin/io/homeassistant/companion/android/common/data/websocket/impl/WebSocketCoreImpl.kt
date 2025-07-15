@@ -168,7 +168,7 @@ internal class WebSocketCoreImpl(
         }
     }
 
-    override fun server() = serverManager.getServer(serverId)
+    override suspend fun server() = serverManager.getServer(serverId)
 
     override suspend fun connect(): Boolean {
         connectedMutex.withLock {

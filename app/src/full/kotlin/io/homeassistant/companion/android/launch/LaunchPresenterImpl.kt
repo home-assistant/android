@@ -17,21 +17,23 @@ class LaunchPresenterImpl @Inject constructor(
     serverManager: ServerManager,
 ) : LaunchPresenterBase(context as LaunchView, serverManager) {
     override fun resyncRegistration() {
-        if (!serverManager.isRegistered()) return
-        serverManager.defaultServers.forEach {
-            ioScope.launch {
-                try {
-                    serverManager.integrationRepository(it.id).updateRegistration(
-                        DeviceRegistration(
-                            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                            null,
-                            getMessagingToken(),
-                        ),
-                    )
-                    serverManager.integrationRepository(it.id).getConfig() // Update cached data
-                    serverManager.webSocketRepository(it.id).getCurrentUser() // Update cached data
-                } catch (e: Exception) {
-                    Timber.e(e, "Issue updating Registration")
+        ioScope.launch {
+            if (!serverManager.isRegistered()) return@launch
+            serverManager.defaultServers.forEach {
+                ioScope.launch {
+                    try {
+                        serverManager.integrationRepository(it.id).updateRegistration(
+                            DeviceRegistration(
+                                "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                                null,
+                                getMessagingToken(),
+                            ),
+                        )
+                        serverManager.integrationRepository(it.id).getConfig() // Update cached data
+                        serverManager.webSocketRepository(it.id).getCurrentUser() // Update cached data
+                    } catch (e: Exception) {
+                        Timber.e(e, "Issue updating Registration")
+                    }
                 }
             }
         }

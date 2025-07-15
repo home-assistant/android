@@ -16,7 +16,7 @@ interface AuthenticationRepository {
 
     suspend fun deletePreferences()
 
-    fun getSessionState(): SessionState
+    suspend fun getSessionState(): SessionState
 
     suspend fun buildAuthenticationUrl(baseUrl: String): String
 

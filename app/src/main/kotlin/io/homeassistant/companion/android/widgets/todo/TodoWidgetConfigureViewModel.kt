@@ -90,28 +90,28 @@ class TodoWidgetConfigureViewModel @Inject constructor(
         selectedEntityId = null
     }
 
-    fun isValidSelection(): Boolean {
+    suspend fun isValidSelection(): Boolean {
         return serverManager.getServer(selectedServerId) != null &&
             selectedEntityId in entities.value.map { it.entityId }
     }
 
     fun addWidgetConfiguration() {
-        if (!isValidSelection()) {
-            Timber.d("Widget data is invalid")
-            throw IllegalArgumentException("Widget data is invalid")
-        }
-        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-            Timber.w("Widget ID is invalid")
-            throw IllegalArgumentException("Widget ID is invalid")
-        }
-
-        val textColor = if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
-            supportedTextColors.getOrNull(textColorIndex) ?: supportedTextColors.first()
-        } else {
-            ""
-        }
-
         viewModelScope.launch {
+            if (!isValidSelection()) {
+                Timber.d("Widget data is invalid")
+                throw IllegalArgumentException("Widget data is invalid")
+            }
+            if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+                Timber.w("Widget ID is invalid")
+                throw IllegalArgumentException("Widget ID is invalid")
+            }
+
+            val textColor = if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
+                supportedTextColors.getOrNull(textColorIndex) ?: supportedTextColors.first()
+            } else {
+                ""
+            }
+
             val listEntityId = selectedEntityId!!
             val integrationRepository = serverManager.integrationRepository(selectedServerId)
             val webSocketRepository = serverManager.webSocketRepository(selectedServerId)

@@ -50,6 +50,9 @@ class AssistViewModel @Inject constructor(
     var inputMode by mutableStateOf<AssistInputMode?>(null)
         private set
 
+    var userCanManagePipelines by mutableStateOf(false)
+        private set
+
     fun onCreate(hasPermission: Boolean, serverId: Int?, pipelineId: String?, startListening: Boolean?) {
         viewModelScope.launch {
             this@AssistViewModel.hasPermission = hasPermission
@@ -107,10 +110,9 @@ class AssistViewModel @Inject constructor(
             }
 
             if (serverManager.isRegistered()) {
-                viewModelScope.launch {
-                    loadPipelines()
-                }
+                loadPipelines()
             }
+            userCanManagePipelines = serverManager.getServer()?.user?.isAdmin == true
         }
     }
 
@@ -166,8 +168,6 @@ class AssistViewModel @Inject constructor(
             }
         }
     }
-
-    fun userCanManagePipelines(): Boolean = serverManager.getServer()?.user?.isAdmin == true
 
     fun changePipeline(serverId: Int, id: String) = viewModelScope.launch {
         if (serverId == selectedServerId && id == selectedPipeline?.id) return@launch

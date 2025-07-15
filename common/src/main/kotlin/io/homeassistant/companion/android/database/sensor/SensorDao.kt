@@ -66,6 +66,7 @@ interface SensorDao {
 
     @Transaction
     suspend fun removeServer(serverId: Int) {
+        // TODO improve the transaction to minimize the number of DB queries
         getAllServer(serverId).forEach {
             removeSensor(it.id, serverId)
             if (get(it.id).isEmpty()) {

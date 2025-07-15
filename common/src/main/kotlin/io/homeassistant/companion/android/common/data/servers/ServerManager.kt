@@ -27,7 +27,7 @@ interface ServerManager {
     /**
      * @return `true` if the app is registered with any server
      */
-    fun isRegistered(): Boolean
+    suspend fun isRegistered(): Boolean
 
     /**
      * Add a new server to the manager, and if the [ServerType] is not temporary also to the database.
@@ -39,7 +39,7 @@ interface ServerManager {
      * Get the server for the provided ID.
      * @return [Server] or `null` if there is no server for the ID
      */
-    fun getServer(id: Int = SERVER_ID_ACTIVE): Server?
+    suspend fun getServer(id: Int = SERVER_ID_ACTIVE): Server?
 
     /**
      * Get the server for the provided webhook ID.
@@ -88,4 +88,20 @@ interface ServerManager {
      * @throws [IllegalArgumentException] if there is no server with the provided ID
      */
     fun webSocketRepository(serverId: Int = SERVER_ID_ACTIVE): WebSocketRepository
+}
+
+/**
+ * Helper class to retrieve a [Server] using [ServerManager.getServer]. This class will cache the
+ * server after the first retrieval. Note that this class does **not** observe any server changes.
+ *
+ * @property serverManager the [ServerManager] instance to use
+ * @property serverId the ID of the server to retrieve
+ */
+class ServerRetriever(val serverManager: ServerManager, val serverId: Int) {
+    @Suppress("ktlint:standard:property-naming")
+    private var _sever: Server? = null
+
+    suspend operator fun invoke(): Server {
+        return _sever ?: checkNotNull(serverManager.getServer(serverId)) { "No server found for id $serverId" }
+    }
 }

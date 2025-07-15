@@ -31,11 +31,13 @@ class AssistShortcutViewModel @Inject constructor(
         private set
 
     init {
-        if (serverManager.isRegistered()) {
-            serverManager.getServer()?.id?.let { serverId = it }
-            getData()
-        } else {
-            supported = false
+        viewModelScope.launch {
+            if (serverManager.isRegistered()) {
+                serverManager.getServer()?.id?.let { serverId = it }
+                getData()
+            } else {
+                supported = false
+            }
         }
     }
 

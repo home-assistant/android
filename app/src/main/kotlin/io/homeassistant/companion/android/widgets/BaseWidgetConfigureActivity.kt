@@ -9,11 +9,13 @@ import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.lifecycleScope
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.WidgetDao
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 abstract class BaseWidgetConfigureActivity : BaseActivity() {
 
@@ -36,37 +38,39 @@ abstract class BaseWidgetConfigureActivity : BaseActivity() {
 
     protected fun setupServerSelect(widgetServerId: Int?) {
         val servers = serverManager.defaultServers
-        val activeServerId = serverManager.getServer()?.id
-        serverSelectList.adapter =
-            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, servers.map { it.friendlyName })
-        serverSelectList.setSelection(
-            if (widgetServerId != null) {
-                servers.indexOfFirst { it.id == widgetServerId }
-            } else {
-                servers.indexOfFirst { it.id == activeServerId }
-            },
-        )
+        lifecycleScope.launch {
+            val activeServerId = serverManager.getServer()?.id
+            serverSelectList.adapter =
+                ArrayAdapter(this@BaseWidgetConfigureActivity, android.R.layout.simple_spinner_dropdown_item, servers.map { it.friendlyName })
+            serverSelectList.setSelection(
+                if (widgetServerId != null) {
+                    servers.indexOfFirst { it.id == widgetServerId }
+                } else {
+                    servers.indexOfFirst { it.id == activeServerId }
+                },
+            )
 
-        if (
-            serverManager.defaultServers.size > 1 ||
-            (widgetServerId != null && serverManager.getServer(widgetServerId) == null)
-        ) {
-            serverSelect.visibility = View.VISIBLE
-        }
-
-        selectedServerId = widgetServerId ?: serverManager.getServer()?.id
-        serverSelectList.onItemSelectedListener = object : OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                val newId = serverManager.defaultServers.getOrNull(position)?.id
-                val isDifferent = selectedServerId != newId
-                selectedServerId = newId
-                if (isDifferent && newId != null) {
-                    onServerSelected(newId)
-                }
+            if (
+                serverManager.defaultServers.size > 1 ||
+                (widgetServerId != null && serverManager.getServer(widgetServerId) == null)
+            ) {
+                serverSelect.visibility = View.VISIBLE
             }
 
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                selectedServerId = null
+            selectedServerId = widgetServerId ?: serverManager.getServer()?.id
+            serverSelectList.onItemSelectedListener = object : OnItemSelectedListener {
+                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    val newId = serverManager.defaultServers.getOrNull(position)?.id
+                    val isDifferent = selectedServerId != newId
+                    selectedServerId = newId
+                    if (isDifferent && newId != null) {
+                        onServerSelected(newId)
+                    }
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    selectedServerId = null
+                }
             }
         }
     }

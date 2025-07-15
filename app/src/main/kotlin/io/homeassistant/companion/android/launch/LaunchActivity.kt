@@ -88,7 +88,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         presenter.onViewReady(intent.getStringExtra(EXTRA_SERVER_URL_TO_ONBOARD))
     }
 
-    override fun displayWebview() {
+    override suspend fun displayWebview() {
         presenter.setSessionExpireMillis(0)
 
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) && BuildConfig.FLAVOR == "full") {

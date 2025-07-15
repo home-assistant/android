@@ -194,13 +194,16 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                     .setMessage(commonR.string.server_delete_confirm)
                     .setPositiveButton(commonR.string.delete) { dialog, _ ->
                         dialog.cancel()
-                        serverDeleteHandler.postDelayed({
-                            serverDeleteDialog = AlertDialog.Builder(requireContext())
-                                .setMessage(commonR.string.server_delete_working)
-                                .setCancelable(false)
-                                .create()
-                            serverDeleteDialog?.show()
-                        }, 2500L)
+                        serverDeleteHandler.postDelayed(
+                            {
+                                serverDeleteDialog = AlertDialog.Builder(requireContext())
+                                    .setMessage(commonR.string.server_delete_working)
+                                    .setCancelable(false)
+                                    .create()
+                                serverDeleteDialog?.show()
+                            },
+                            2500L,
+                        )
                         lifecycleScope.launch { presenter.deleteServer() }
                     }
                     .setNegativeButton(commonR.string.cancel, null)
@@ -223,19 +226,23 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
 
                 override fun onPrepareMenu(menu: Menu) {
                     super.onPrepareMenu(menu)
-                    menu.findItem(R.id.share_server).isVisible = presenter.serverURL() != null
+                    lifecycleScope.launch {
+                        menu.findItem(R.id.share_server).isVisible = presenter.serverURL() != null
+                    }
                 }
 
                 override fun onMenuItemSelected(menuItem: MenuItem): Boolean = when (menuItem.itemId) {
                     R.id.share_server -> {
                         menuItem.isChecked = true
-                        val sendIntent: Intent = Intent().apply {
-                            action = Intent.ACTION_SEND
-                            putExtra(Intent.EXTRA_SUBJECT, getString(commonR.string.join_our_server))
-                            putExtra(Intent.EXTRA_TEXT, "$BASE_INVITE_URL${URLEncoder.encode(presenter.serverURL(), Charsets.UTF_8.toString())}")
-                            type = "text/plain"
+                        lifecycleScope.launch {
+                            val sendIntent: Intent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(Intent.EXTRA_SUBJECT, getString(commonR.string.join_our_server))
+                                putExtra(Intent.EXTRA_TEXT, "$BASE_INVITE_URL${URLEncoder.encode(presenter.serverURL(), Charsets.UTF_8.toString())}")
+                                type = "text/plain"
+                            }
+                            startActivity(Intent.createChooser(sendIntent, null))
                         }
-                        startActivity(Intent.createChooser(sendIntent, null))
                         true
                     }
                     else -> false

@@ -52,12 +52,12 @@ class MessagingManager @Inject constructor(
         val notificationRow =
             NotificationItem(0, now, notificationData[NotificationData.MESSAGE].toString(), jsonObject.toString(), source, serverId)
         notificationDao.add(notificationRow)
-        if (serverManager.getServer(serverId) == null) {
-            Timber.w("Received notification but no server for it, discarding")
-            return
-        }
-
         mainScope.launch {
+            if (serverManager.getServer(serverId) == null) {
+                Timber.w("Received notification but no server for it, discarding")
+                return@launch
+            }
+
             val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
             val message = notificationData[NotificationData.MESSAGE]
             when {

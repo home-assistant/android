@@ -90,7 +90,7 @@ object FailFast {
      * @param block The block of code to execute.
      */
     fun failOnCatch(message: () -> String? = { null }, block: () -> Unit) {
-        failOnCatch<Unit>(message, Unit, block)
+        failOnCatch(message, Unit, block)
     }
 
     /**
@@ -109,6 +109,15 @@ object FailFast {
      * @return The result of the `block` execution, or the `fallback` value if an exception occurs.
      */
     fun <T> failOnCatch(message: () -> String? = { null }, fallback: T, block: () -> T): T {
+        return try {
+            block()
+        } catch (e: Throwable) {
+            handler.handleException(FailFastException(e), message())
+            fallback
+        }
+    }
+
+    suspend fun <T> failOnCatchSuspend(message: () -> String? = { null }, fallback: T, block: suspend () -> T): T {
         return try {
             block()
         } catch (e: Throwable) {

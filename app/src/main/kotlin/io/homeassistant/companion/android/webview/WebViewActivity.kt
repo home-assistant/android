@@ -247,7 +247,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         if (intent.extras?.containsKey(EXTRA_SERVER) == true) {
             intent.extras?.getInt(EXTRA_SERVER)?.let {
-                presenter.setActiveServer(it)
+                lifecycleScope.launch {
+                    presenter.setActiveServer(it)
+                }
                 intent.removeExtra(EXTRA_SERVER)
             }
         }
@@ -308,13 +310,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     ): Boolean {
                         if (pointerCount == 3 && velocity >= 75) {
                             when (direction) {
-                                SwipeDirection.LEFT -> presenter.nextServer()
-                                SwipeDirection.RIGHT -> presenter.previousServer()
+                                SwipeDirection.LEFT -> lifecycleScope.launch { presenter.nextServer() }
+                                SwipeDirection.RIGHT -> lifecycleScope.launch { presenter.previousServer() }
                                 SwipeDirection.UP -> {
                                     val serverChooser = ServerChooserFragment()
                                     supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this@WebViewActivity) { _, bundle ->
                                         if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
-                                            presenter.switchActiveServer(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
+                                            lifecycleScope.launch {
+                                                presenter.switchActiveServer(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
+                                            }
                                         }
                                         supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
                                     }
@@ -908,7 +912,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             recreate()
         }
 
-        presenter.updateActiveServer()
+        lifecycleScope.launch {
+            presenter.updateActiveServer()
+        }
 
         appLocked.value = presenter.isAppLocked()
 
@@ -1138,28 +1144,30 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus && !isFinishing) {
             unlockAppIfNeeded()
-            var path = intent.getStringExtra(EXTRA_PATH)
-            if (path?.startsWith("entityId:") == true) {
-                // Get the entity ID from a string formatted "entityId:domain.entity"
-                // https://github.com/home-assistant/core/blob/dev/homeassistant/core.py#L159
-                val pattern = "(?<=^entityId:)((?!.+__)(?!_)[\\da-z_]+(?<!_)\\.(?!_)[\\da-z_]+(?<!_)$)".toRegex()
-                val entity = pattern.find(path)?.value ?: ""
-                if (
-                    entity.isNotBlank() &&
-                    serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true
-                ) {
-                    path = "/?more-info-entity-id=$entity"
-                } else {
-                    moreInfoEntity = entity
+            lifecycleScope.launch {
+                var path = intent.getStringExtra(EXTRA_PATH)
+                if (path?.startsWith("entityId:") == true) {
+                    // Get the entity ID from a string formatted "entityId:domain.entity"
+                    // https://github.com/home-assistant/core/blob/dev/homeassistant/core.py#L159
+                    val pattern = "(?<=^entityId:)((?!.+__)(?!_)[\\da-z_]+(?<!_)\\.(?!_)[\\da-z_]+(?<!_)$)".toRegex()
+                    val entity = pattern.find(path)?.value ?: ""
+                    if (
+                        entity.isNotBlank() &&
+                        serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true
+                    ) {
+                        path = "/?more-info-entity-id=$entity"
+                    } else {
+                        moreInfoEntity = entity
+                    }
                 }
-            }
-            presenter.onViewReady(path)
-            intent.removeExtra(EXTRA_PATH)
+                presenter.onViewReady(path)
+                intent.removeExtra(EXTRA_PATH)
 
-            if (presenter.isFullScreen() || isVideoFullScreen) {
-                hideSystemUI()
-            } else {
-                showSystemUI()
+                if (presenter.isFullScreen() || isVideoFullScreen) {
+                    hideSystemUI()
+                } else {
+                    showSystemUI()
+                }
             }
         }
     }
@@ -1275,142 +1283,146 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
         isShowingError = true
 
-        val serverName = if (serverManager.defaultServers.size > 1) presenter.getActiveServerName() else null
-        val alert = AlertDialog.Builder(this)
-            .setTitle(
-                getString(
-                    commonR.string.error_connection_failed_to,
-                    serverName ?: getString(commonR.string.app_name),
-                ),
-            )
-            .setOnDismissListener {
-                isShowingError = false
-                alertDialog = null
-                waitForConnection()
+        lifecycleScope.launch {
+            val serverName = if (serverManager.defaultServers.size > 1) presenter.getActiveServerName() else null
+            val alert = AlertDialog.Builder(this@WebViewActivity)
+                .setTitle(
+                    getString(
+                        commonR.string.error_connection_failed_to,
+                        serverName ?: getString(commonR.string.app_name),
+                    ),
+                )
+                .setOnDismissListener {
+                    isShowingError = false
+                    alertDialog = null
+                    waitForConnection()
+                }
+
+            var tlsWebViewClient: TLSWebViewClient? = null
+            if (WebViewFeature.isFeatureSupported(WebViewFeature.GET_WEB_VIEW_CLIENT)) {
+                tlsWebViewClient = WebViewCompat.getWebViewClient(webView) as TLSWebViewClient
             }
 
-        var tlsWebViewClient: TLSWebViewClient? = null
-        if (WebViewFeature.isFeatureSupported(WebViewFeature.GET_WEB_VIEW_CLIENT)) {
-            tlsWebViewClient = WebViewCompat.getWebViewClient(webView) as TLSWebViewClient
-        }
-
-        if (tlsWebViewClient?.isTLSClientAuthNeeded == true &&
-            (errorType == ErrorType.TIMEOUT_GENERAL || errorType == ErrorType.TIMEOUT_EXTERNAL_BUS) &&
-            !tlsWebViewClient.hasUserDeniedAccess
-        ) {
-            // Ignore if a timeout occurs but the user has not denied access
-            // It is likely due to the user not choosing a key yet
-            return
-        } else if (tlsWebViewClient?.isTLSClientAuthNeeded == true &&
-            errorType == ErrorType.AUTHENTICATION &&
-            tlsWebViewClient.hasUserDeniedAccess
-        ) {
-            // If no key is available to the app
-            alert.setMessage(commonR.string.tls_cert_not_found_message)
-            alert.setTitle(commonR.string.tls_cert_title)
-            alert.setPositiveButton(android.R.string.ok) { _, _ ->
-                serverManager.getServer(presenter.getActiveServer())?.let {
+            if (tlsWebViewClient?.isTLSClientAuthNeeded == true &&
+                (errorType == ErrorType.TIMEOUT_GENERAL || errorType == ErrorType.TIMEOUT_EXTERNAL_BUS) &&
+                !tlsWebViewClient.hasUserDeniedAccess
+            ) {
+                // Ignore if a timeout occurs but the user has not denied access
+                // It is likely due to the user not choosing a key yet
+                return@launch
+            } else if (tlsWebViewClient?.isTLSClientAuthNeeded == true &&
+                errorType == ErrorType.AUTHENTICATION &&
+                tlsWebViewClient.hasUserDeniedAccess
+            ) {
+                // If no key is available to the app
+                alert.setMessage(commonR.string.tls_cert_not_found_message)
+                alert.setTitle(commonR.string.tls_cert_title)
+                alert.setPositiveButton(android.R.string.ok) { _, _ ->
                     ioScope.launch {
-                        serverManager.removeServer(it.id)
-                        withContext(Dispatchers.Main) { relaunchApp() }
+                        serverManager.getServer(presenter.getActiveServer())?.let {
+                            serverManager.removeServer(it.id)
+                            withContext(Dispatchers.Main) { relaunchApp() }
+                        }
+                    }
+                }
+                alert.setNeutralButton(commonR.string.exit) { _, _ ->
+                    finishAffinity()
+                }
+            } else if (tlsWebViewClient?.isTLSClientAuthNeeded == true &&
+                !tlsWebViewClient.isCertificateChainValid
+            ) {
+                // If the chain is no longer valid
+                alert.setMessage(commonR.string.tls_cert_expired_message)
+                alert.setTitle(commonR.string.tls_cert_title)
+                alert.setPositiveButton(android.R.string.ok) { _, _ ->
+                    ioScope.launch {
+                        keyChainRepository.clear()
+                    }
+                    relaunchApp()
+                }
+            } else if (errorType == ErrorType.AUTHENTICATION) {
+                alert.setMessage(commonR.string.error_auth_revoked)
+                alert.setPositiveButton(android.R.string.ok) { _, _ ->
+                    ioScope.launch {
+                        serverManager.getServer(presenter.getActiveServer())?.let {
+                            serverManager.removeServer(it.id)
+                            withContext(Dispatchers.Main) { relaunchApp() }
+                        }
+                    }
+                }
+            } else if (errorType == ErrorType.SSL) {
+                if (description != null) {
+                    alert.setMessage(getString(commonR.string.webview_error_description) + " " + description)
+                } else if (error!!.primaryError == SslError.SSL_DATE_INVALID) {
+                    alert.setMessage(commonR.string.webview_error_SSL_DATE_INVALID)
+                } else if (error.primaryError == SslError.SSL_EXPIRED) {
+                    alert.setMessage(commonR.string.webview_error_SSL_EXPIRED)
+                } else if (error.primaryError == SslError.SSL_IDMISMATCH) {
+                    alert.setMessage(commonR.string.webview_error_SSL_IDMISMATCH)
+                } else if (error.primaryError == SslError.SSL_INVALID) {
+                    alert.setMessage(commonR.string.webview_error_SSL_INVALID)
+                } else if (error.primaryError == SslError.SSL_NOTYETVALID) {
+                    alert.setMessage(commonR.string.webview_error_SSL_NOTYETVALID)
+                } else if (error.primaryError == SslError.SSL_UNTRUSTED) {
+                    alert.setMessage(commonR.string.webview_error_SSL_UNTRUSTED)
+                }
+                alert.setPositiveButton(commonR.string.settings) { _, _ ->
+                    startActivity(SettingsActivity.newInstance(this@WebViewActivity))
+                }
+                alert.setNeutralButton(commonR.string.exit) { _, _ ->
+                    finishAffinity()
+                }
+            } else if (errorType == ErrorType.SECURITY_WARNING) {
+                alert.setTitle(commonR.string.security_vulnerably_title)
+                alert.setMessage(commonR.string.security_vulnerably_message)
+                alert.setPositiveButton(commonR.string.security_vulnerably_view) { _, _ ->
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data = "https://www.home-assistant.io/latest-security-alert/".toUri()
+                    startActivity(intent)
+                }
+                alert.setNegativeButton(commonR.string.security_vulnerably_understand) { _, _ ->
+                    // Noop
+                }
+            } else {
+                alert.setMessage(commonR.string.webview_error)
+                alert.setPositiveButton(commonR.string.settings) { _, _ ->
+                    startActivity(SettingsActivity.newInstance(this@WebViewActivity))
+                }
+                val isInternal = serverManager.getServer(presenter.getActiveServer())?.connection?.isInternal() == true
+                val buttonRefreshesInternal = failedConnection == "external" && isInternal
+                alert.setNegativeButton(
+                    if (buttonRefreshesInternal) {
+                        commonR.string.refresh_internal
+                    } else {
+                        commonR.string.refresh_external
+                    },
+                ) { _, _ ->
+                    lifecycleScope.launch {
+                        val url = serverManager.getServer(presenter.getActiveServer())?.let {
+                            val base = it.connection.getUrl(buttonRefreshesInternal) ?: return@let null
+                            base.toString().toUri()
+                                .buildUpon()
+                                .appendQueryParameter("external_auth", "1")
+                                .build()
+                                .toString()
+                        }
+                        failedConnection = if (buttonRefreshesInternal) "internal" else "external"
+                        if (url != null) {
+                            loadUrl(url = url, keepHistory = true, openInApp = true)
+                        } else {
+                            waitForConnection()
+                        }
+                    }
+                }
+                if (errorType == ErrorType.TIMEOUT_EXTERNAL_BUS) {
+                    alert.setNeutralButton(commonR.string.wait) { _, _ ->
+                        waitForConnection()
                     }
                 }
             }
-            alert.setNeutralButton(commonR.string.exit) { _, _ ->
-                finishAffinity()
-            }
-        } else if (tlsWebViewClient?.isTLSClientAuthNeeded == true &&
-            !tlsWebViewClient.isCertificateChainValid
-        ) {
-            // If the chain is no longer valid
-            alert.setMessage(commonR.string.tls_cert_expired_message)
-            alert.setTitle(commonR.string.tls_cert_title)
-            alert.setPositiveButton(android.R.string.ok) { _, _ ->
-                ioScope.launch {
-                    keyChainRepository.clear()
-                }
-                relaunchApp()
-            }
-        } else if (errorType == ErrorType.AUTHENTICATION) {
-            alert.setMessage(commonR.string.error_auth_revoked)
-            alert.setPositiveButton(android.R.string.ok) { _, _ ->
-                serverManager.getServer(presenter.getActiveServer())?.let {
-                    ioScope.launch {
-                        serverManager.removeServer(it.id)
-                        withContext(Dispatchers.Main) { relaunchApp() }
-                    }
-                }
-            }
-        } else if (errorType == ErrorType.SSL) {
-            if (description != null) {
-                alert.setMessage(getString(commonR.string.webview_error_description) + " " + description)
-            } else if (error!!.primaryError == SslError.SSL_DATE_INVALID) {
-                alert.setMessage(commonR.string.webview_error_SSL_DATE_INVALID)
-            } else if (error.primaryError == SslError.SSL_EXPIRED) {
-                alert.setMessage(commonR.string.webview_error_SSL_EXPIRED)
-            } else if (error.primaryError == SslError.SSL_IDMISMATCH) {
-                alert.setMessage(commonR.string.webview_error_SSL_IDMISMATCH)
-            } else if (error.primaryError == SslError.SSL_INVALID) {
-                alert.setMessage(commonR.string.webview_error_SSL_INVALID)
-            } else if (error.primaryError == SslError.SSL_NOTYETVALID) {
-                alert.setMessage(commonR.string.webview_error_SSL_NOTYETVALID)
-            } else if (error.primaryError == SslError.SSL_UNTRUSTED) {
-                alert.setMessage(commonR.string.webview_error_SSL_UNTRUSTED)
-            }
-            alert.setPositiveButton(commonR.string.settings) { _, _ ->
-                startActivity(SettingsActivity.newInstance(this))
-            }
-            alert.setNeutralButton(commonR.string.exit) { _, _ ->
-                finishAffinity()
-            }
-        } else if (errorType == ErrorType.SECURITY_WARNING) {
-            alert.setTitle(commonR.string.security_vulnerably_title)
-            alert.setMessage(commonR.string.security_vulnerably_message)
-            alert.setPositiveButton(commonR.string.security_vulnerably_view) { _, _ ->
-                val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = "https://www.home-assistant.io/latest-security-alert/".toUri()
-                startActivity(intent)
-            }
-            alert.setNegativeButton(commonR.string.security_vulnerably_understand) { _, _ ->
-                // Noop
-            }
-        } else {
-            alert.setMessage(commonR.string.webview_error)
-            alert.setPositiveButton(commonR.string.settings) { _, _ ->
-                startActivity(SettingsActivity.newInstance(this))
-            }
-            val isInternal = serverManager.getServer(presenter.getActiveServer())?.connection?.isInternal() == true
-            val buttonRefreshesInternal = failedConnection == "external" && isInternal
-            alert.setNegativeButton(
-                if (buttonRefreshesInternal) {
-                    commonR.string.refresh_internal
-                } else {
-                    commonR.string.refresh_external
-                },
-            ) { _, _ ->
-                val url = serverManager.getServer(presenter.getActiveServer())?.let {
-                    val base = it.connection.getUrl(buttonRefreshesInternal) ?: return@let null
-                    base.toString().toUri()
-                        .buildUpon()
-                        .appendQueryParameter("external_auth", "1")
-                        .build()
-                        .toString()
-                }
-                failedConnection = if (buttonRefreshesInternal) "internal" else "external"
-                if (url != null) {
-                    loadUrl(url = url, keepHistory = true, openInApp = true)
-                } else {
-                    waitForConnection()
-                }
-            }
-            if (errorType == ErrorType.TIMEOUT_EXTERNAL_BUS) {
-                alert.setNeutralButton(commonR.string.wait) { _, _ ->
-                    waitForConnection()
-                }
-            }
+            alertDialog = alert.create()
+            alertDialog?.show()
         }
-        alertDialog = alert.create()
-        alertDialog?.show()
     }
 
     @SuppressLint("InflateParams")
@@ -1557,19 +1569,21 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         Environment.DIRECTORY_DOWNLOADS,
                         URLUtil.guessFileName(url, contentDisposition, mimetype),
                     )
-                val server = serverManager.getServer(presenter.getActiveServer())
-                if (url.startsWith(server?.connection?.getUrl(true).toString()) ||
-                    url.startsWith(server?.connection?.getUrl(false).toString())
-                ) {
-                    request.addRequestHeader("Authorization", presenter.getAuthorizationHeader())
-                }
-                try {
-                    request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
-                } catch (e: Exception) {
-                    // Cannot get cookies, probably not relevant
-                }
+                lifecycleScope.launch {
+                    val server = serverManager.getServer(presenter.getActiveServer())
+                    if (url.startsWith(server?.connection?.getUrl(true).toString()) ||
+                        url.startsWith(server?.connection?.getUrl(false).toString())
+                    ) {
+                        request.addRequestHeader("Authorization", presenter.getAuthorizationHeader())
+                    }
+                    try {
+                        request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
+                    } catch (e: Exception) {
+                        // Cannot get cookies, probably not relevant
+                    }
 
-                getSystemService<DownloadManager>()?.enqueue(request) ?: Timber.d("Unable to start download, cannot get DownloadManager")
+                    getSystemService<DownloadManager>()?.enqueue(request) ?: Timber.d("Unable to start download, cannot get DownloadManager")
+                }
             }
 
             "data" -> {
@@ -1672,14 +1686,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             // /config/* as these are the settings of HA but NOT /config/dashboard. This is just the overview of the HA settings
             // /hassio/* as these are the addons section of HA settings.
             if (webView.url?.matches(".*://.*/(config/(?!\\bdashboard\\b)|hassio)/*.*".toRegex()) == false) {
-                Timber.d("Show first view of default dashboard.")
-                if (serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true) {
-                    sendExternalBusMessage(
-                        NavigateTo("/", true),
-                    )
-                } else {
-                    webView.evaluateJavascript(
-                        """
+                lifecycleScope.launch {
+                    Timber.d("Show first view of default dashboard.")
+                    if (serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true) {
+                        sendExternalBusMessage(
+                            NavigateTo("/", true),
+                        )
+                    } else {
+                        webView.evaluateJavascript(
+                            """
                     var anchor = 'a:nth-child(1)';
                     var defaultPanel = window.localStorage.getItem('defaultPanel')?.replaceAll('"',"");
                     if(defaultPanel) anchor = 'a[href="/' + defaultPanel + '"]';
@@ -1688,8 +1703,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                                                    .shadowRoot.querySelector('paper-listbox > ' + anchor).click();
                     window.scrollTo(0, 0);
                     """,
-                        null,
-                    )
+                            null,
+                        )
+                    }
                 }
             } else {
                 Timber.d("User is in the Home Assistant config. Will not show first view of the default dashboard.")
@@ -1731,18 +1747,20 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         supportFragmentManager.setFragmentResultListener(ImprovSetupDialog.RESULT_KEY, this) { _, bundle ->
             if (bundle.containsKey(ImprovSetupDialog.RESULT_DOMAIN)) {
                 bundle.getString(ImprovSetupDialog.RESULT_DOMAIN)?.let { improvDomain ->
-                    val url = serverManager.getServer(presenter.getActiveServer())?.let url@{
-                        val base = it.connection.getUrl() ?: return@url null
-                        base.toString().toUri()
-                            .buildUpon()
-                            .appendEncodedPath("config/integrations/dashboard/add")
-                            .appendQueryParameter("domain", improvDomain)
-                            .appendQueryParameter("external_auth", "1")
-                            .build()
-                            .toString()
-                    }
-                    if (url != null) {
-                        loadUrl(url = url, keepHistory = true, openInApp = true)
+                    lifecycleScope.launch {
+                        val url = serverManager.getServer(presenter.getActiveServer())?.let url@{
+                            val base = it.connection.getUrl() ?: return@url null
+                            base.toString().toUri()
+                                .buildUpon()
+                                .appendEncodedPath("config/integrations/dashboard/add")
+                                .appendQueryParameter("domain", improvDomain)
+                                .appendQueryParameter("external_auth", "1")
+                                .build()
+                                .toString()
+                        }
+                        if (url != null) {
+                            loadUrl(url = url, keepHistory = true, openInApp = true)
+                        }
                     }
                 }
                 supportFragmentManager.clearFragmentResultListener(ImprovSetupDialog.RESULT_KEY)
@@ -1757,7 +1775,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         this.intent = intent
         if (intent.extras?.containsKey(EXTRA_SERVER) == true) {
             intent.extras?.getInt(EXTRA_SERVER)?.let {
-                presenter.setActiveServer(it)
+                lifecycleScope.launch {
+                    presenter.setActiveServer(it)
+                }
                 intent.removeExtra(EXTRA_SERVER)
             }
         }

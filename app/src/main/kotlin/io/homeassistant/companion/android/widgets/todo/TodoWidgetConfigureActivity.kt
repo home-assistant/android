@@ -115,17 +115,19 @@ class TodoWidgetConfigureActivity : BaseActivity() {
 
     @SuppressLint("ObsoleteSdkInt")
     private fun onSetupWidget() {
-        if (intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) == true) {
-            if (
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                viewModel.isValidSelection()
-            ) {
-                requestPinWidget()
+        lifecycleScope.launch {
+            if (intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) == true) {
+                if (
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                    viewModel.isValidSelection()
+                ) {
+                    requestPinWidget()
+                } else {
+                    showAddWidgetError()
+                }
             } else {
-                showAddWidgetError()
+                onAddWidget()
             }
-        } else {
-            onAddWidget()
         }
     }
 

@@ -12,18 +12,13 @@ import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
-import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.controls.views.ManageControlsView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @AndroidEntryPoint
 class ManageControlsSettingsFragment : Fragment() {
-
-    @Inject
-    lateinit var serverManager: ServerManager
 
     val viewModel: ManageControlsViewModel by viewModels()
 
@@ -42,8 +37,8 @@ class ManageControlsSettingsFragment : Fragment() {
                         entitiesLoaded = viewModel.entitiesLoaded,
                         entitiesList = viewModel.entitiesList,
                         panelSetting = viewModel.panelSetting,
-                        serversList = serverManager.defaultServers,
-                        defaultServer = serverManager.getServer()?.id ?: 0,
+                        serversList = viewModel.defaultServers,
+                        defaultServer = viewModel.defaultServerId,
                         structureEnabled = viewModel.structureEnabled,
                         onSetPanelEnabled = viewModel::enablePanelForControls,
                         onSelectAll = { viewModel.setAuthSetting(ControlsAuthRequiredSetting.NONE) },

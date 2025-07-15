@@ -122,16 +122,21 @@ class ServerSettingsPresenterImpl @Inject constructor(
     }
 
     override fun onFinish() {
-        if (serverManager.getServer()?.id != serverId) {
-            setAppActive(false)
+        runBlocking {
+            if (serverManager.getServer()?.id != serverId) {
+                setAppActive(false)
+            }
         }
         mainScope.cancel()
     }
 
     override fun hasMultipleServers(): Boolean = serverManager.defaultServers.size > 1
 
-    override fun updateServerName() =
-        view.updateServerName(serverManager.getServer(serverId)?.friendlyName ?: "")
+    override fun updateServerName() {
+        mainScope.launch {
+            view.updateServerName(serverManager.getServer(serverId)?.friendlyName ?: "")
+        }
+    }
 
     override fun updateUrlStatus() {
         mainScope.launch {
@@ -180,7 +185,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun serverURL(): String? {
+    override suspend fun serverURL(): String? {
         return serverManager.getServer(serverId)?.connection?.getUrl()?.toString()
     }
 }
