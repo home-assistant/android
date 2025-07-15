@@ -141,7 +141,9 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         mainScope.launch {
             if (result != null) {
                 val (url, authCode, deviceName, deviceTrackingEnabled, notificationsEnabled) = result
-                val messagingToken = pushManager.getToken().orEmpty()
+                val pushProvider = pushManager.defaultProvider
+                val messagingToken = pushProvider?.getToken().orEmpty()
+                val pushUrl = pushProvider?.getUrl().orEmpty()
                 if (messagingToken.isBlank() && BuildConfig.FLAVOR == "full") {
                     AlertDialog.Builder(this@LaunchActivity)
                         .setTitle(commonR.string.firebase_error_title)
@@ -153,6 +155,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                                     authCode,
                                     deviceName,
                                     messagingToken,
+                                    pushUrl,
                                     deviceTrackingEnabled,
                                     notificationsEnabled
                                 )
@@ -165,6 +168,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                         authCode,
                         deviceName,
                         messagingToken,
+                        pushUrl,
                         deviceTrackingEnabled,
                         notificationsEnabled
                     )
@@ -180,6 +184,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         authCode: String,
         deviceName: String,
         messagingToken: String,
+        pushUrl: String,
         deviceTrackingEnabled: Boolean,
         notificationsEnabled: Boolean
     ) {
@@ -201,7 +206,8 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 DeviceRegistration(
                     appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                     deviceName = deviceName,
-                    pushToken = messagingToken
+                    pushToken = messagingToken,
+                    pushUrl = pushUrl,
                 )
             )
             serverId = serverManager.convertTemporaryServer(serverId)

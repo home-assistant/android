@@ -11,13 +11,10 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class PushModule {
+abstract class FirebasePushModule {
     @Binds
     @Singleton
     @IntoMap
     @ClassKey(FirebasePushProvider::class)
     abstract fun bindFirebasePushProvider(firebasePushProvider: FirebasePushProvider): PushProvider
-
-    @Binds
-    abstract fun pushManager(pushManagerImpl: PushManagerImpl): PushManager
 }

@@ -5,11 +5,9 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.settings.PushProviderSetting
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,9 +15,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+/**
+ * This interface provides an abstraction for push notifications using various protocols,
+ * such as FCM and UnifiedPush.
+ *
+ * The methods `getUrl()` and `getToken()` are used for device registration and `onMessage()` is
+ * a callback for when the provider receives a notification message.
+ */
 interface PushProvider {
-    val setting: PushProviderSetting
-
     val mainScope: CoroutineScope
         get() = CoroutineScope(Dispatchers.Main + Job())
 
@@ -30,14 +33,14 @@ interface PushProvider {
     fun isEnabled(context: Context): Boolean {
         val settingsDao = AppDatabase.getInstance(context).settingsDao()
         return serverManager(context).defaultServers.any {
-            settingsDao.get(it.id)?.pushProvider == setting
+            settingsDao.get(it.id)?.pushProvider == id()
         }
     }
 
     /** @return `true` if this provider is enabled for the specified server */
     fun isEnabled(context: Context, serverId: Int): Boolean {
         val settingsDao = AppDatabase.getInstance(context).settingsDao()
-        return settingsDao.get(serverId)?.pushProvider == setting
+        return settingsDao.get(serverId)?.pushProvider == id()
     }
 
     /** @return Set of server IDs for which this provider is enabled */
@@ -45,11 +48,29 @@ interface PushProvider {
         val settingsDao = AppDatabase.getInstance(context).settingsDao()
         val serverManager = serverManager(context)
         return serverManager.defaultServers.filter {
-            settingsDao.get(it.id)?.pushProvider == setting
+            settingsDao.get(it.id)?.pushProvider == id()
         }.map { it.id }.toSet()
     }
 
-    suspend fun getUrl(): String = BuildConfig.PUSH_URL
+    /**
+     * Get a list of available distributors for this provider. A distributor
+     * is most likely to be another Android app.
+     *
+     * @return List of distributor names, or an empty list if the provider doesn't support
+     * selecting a distributor
+     */
+    suspend fun getDistributors(): List<String>
+
+    /**
+     * Get the current distributor for this provider. A distributor is
+     * most likely to be another Android app.
+     *
+     * @return Name of the distributor, or `null` if one isn't selected or
+     * the provider doesn't support selecting a distributor
+     */
+    suspend fun getDistributor(): String?
+
+    suspend fun getUrl(): String
 
     suspend fun getToken(): String
 

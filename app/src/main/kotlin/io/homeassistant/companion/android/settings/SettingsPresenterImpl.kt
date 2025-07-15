@@ -16,13 +16,13 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.notifications.id
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.server.ServerUserInfo
-import io.homeassistant.companion.android.database.settings.PushProviderSetting
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
@@ -231,7 +231,7 @@ class SettingsPresenterImpl @Inject constructor(
                     serverId,
                     if (enabled) WebsocketSetting.ALWAYS else WebsocketSetting.NEVER,
                     SensorUpdateFrequencySetting.NORMAL,
-                    PushProviderSetting.NONE
+                    if (enabled) pushManager.defaultProvider?.id() else null
                 )
             )
         }

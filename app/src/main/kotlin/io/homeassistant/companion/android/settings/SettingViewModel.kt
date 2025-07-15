@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.database.settings.PushProviderSetting
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
@@ -25,7 +24,7 @@ class SettingViewModel @Inject constructor(
                 serverId,
                 if (BuildConfig.FLAVOR == "full") WebsocketSetting.NEVER else WebsocketSetting.ALWAYS,
                 SensorUpdateFrequencySetting.NORMAL,
-                if (BuildConfig.FLAVOR == "full") PushProviderSetting.FCM else PushProviderSetting.NONE
+                null,
             )
             settingsDao.insert(setting)
         }
@@ -45,13 +44,6 @@ class SettingViewModel @Inject constructor(
     fun updateSensorSetting(serverId: Int, setting: SensorUpdateFrequencySetting) {
         settingsDao.get(serverId)?.let {
             it.sensorUpdateFrequency = setting
-            settingsDao.update(it)
-        }
-    }
-
-    fun updatePushProviderSetting(serverId: Int, setting: PushProviderSetting) {
-        settingsDao.get(serverId)?.let {
-            it.pushProvider = setting
             settingsDao.update(it)
         }
     }

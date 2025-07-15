@@ -2,8 +2,8 @@ package io.homeassistant.companion.android.notifications
 
 import android.content.Context
 import com.google.firebase.messaging.FirebaseMessaging
+import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.notifications.PushProvider
-import io.homeassistant.companion.android.database.settings.PushProviderSetting
 import javax.inject.Inject
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -18,16 +18,20 @@ class FirebasePushProvider @Inject constructor(
         const val SOURCE = "FCM"
     }
 
-    override val setting = PushProviderSetting.FCM
-
     override fun isAvailable(context: Context): Boolean = true
+
+    override suspend fun getDistributors(): List<String> = emptyList()
+
+    override suspend fun getDistributor(): String? = null
 
     private var token: String? = null
     private val tokenMutex = Mutex()
 
     suspend fun setToken(token: String) = tokenMutex.withLock {
-        this.token = token
+       this.token = token
     }
+
+    override suspend fun getUrl(): String = BuildConfig.PUSH_URL
 
     override suspend fun getToken(): String {
         return tokenMutex.withLock { token } ?: try {
