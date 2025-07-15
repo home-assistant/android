@@ -5,11 +5,20 @@ import io.homeassistant.companion.android.common.R
 import kotlin.math.abs
 
 enum class GestureAction(@StringRes val description: Int) {
-    NONE(R.string.none),
+    NAVIGATE_FORWARD(R.string.gestures_action_navigate_forward),
+    NAVIGATE_DASHBOARD(R.string.gestures_action_navigate_dashboard),
+    NAVIGATE_RELOAD(R.string.gestures_action_navigate_reload),
     QUICKBAR_DEFAULT(R.string.gestures_action_quickbar_default),
+    QUICKBAR_DEVICES(R.string.gestures_action_quickbar_devices),
+    QUICKBAR_COMMANDS(R.string.gestures_action_quickbar_commands),
+    SHOW_SIDEBAR(R.string.gestures_action_show_sidebar),
     SERVER_LIST(R.string.gestures_action_server_list),
     SERVER_NEXT(R.string.gestures_action_server_next),
     SERVER_PREVIOUS(R.string.gestures_action_server_previous),
+    OPEN_ASSIST(R.string.gestures_action_open_assist),
+    OPEN_APP_SETTINGS(R.string.gestures_action_open_app_settings),
+    OPEN_APP_DEVELOPER(R.string.gestures_action_open_app_developer),
+    NONE(R.string.none),
 }
 
 enum class GestureDirection(@StringRes val description: Int) {

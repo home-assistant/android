@@ -24,3 +24,8 @@ class NavigateTo(path: String, replace: Boolean = false) : ExternalBusMessage(
         ),
     ),
 )
+object ShowSidebar : ExternalBusMessage(
+    id = -1,
+    type = "command",
+    command = "sidebar/show",
+)

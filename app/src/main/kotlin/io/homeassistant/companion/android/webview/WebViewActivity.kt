@@ -107,6 +107,7 @@ import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import io.homeassistant.companion.android.webview.externalbus.NavigateTo
+import io.homeassistant.companion.android.webview.externalbus.ShowSidebar
 import javax.inject.Inject
 import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
@@ -862,8 +863,30 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private fun handleWebViewGesture(direction: GestureDirection, pointerCount: Int) {
         lifecycleScope.launch {
             when (presenter.getGestureAction(direction, pointerCount)) {
-                GestureAction.SERVER_NEXT -> presenter.nextServer()
-                GestureAction.SERVER_PREVIOUS -> presenter.previousServer()
+                GestureAction.NAVIGATE_FORWARD -> {
+                    if (webView.canGoForward()) webView.goForward()
+                }
+
+                GestureAction.NAVIGATE_DASHBOARD -> navigateToDefaultDashboard()
+
+                GestureAction.NAVIGATE_RELOAD -> {
+                    webView.reload()
+                }
+
+                GestureAction.QUICKBAR_DEVICES -> {
+                    webView.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_D))
+                }
+
+                GestureAction.QUICKBAR_DEFAULT -> {
+                    webView.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
+                }
+
+                GestureAction.QUICKBAR_COMMANDS -> {
+                    webView.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_C))
+                }
+
+                GestureAction.SHOW_SIDEBAR -> sendExternalBusMessage(ShowSidebar)
+
                 GestureAction.SERVER_LIST -> {
                     val serverChooser = ServerChooserFragment()
                     supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this@WebViewActivity) { _, bundle ->
@@ -875,9 +898,25 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     serverChooser.show(supportFragmentManager, ServerChooserFragment.TAG)
                 }
 
-                GestureAction.QUICKBAR_DEFAULT -> {
-                    webView.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
-                }
+                GestureAction.SERVER_NEXT -> presenter.nextServer()
+
+                GestureAction.SERVER_PREVIOUS -> presenter.previousServer()
+
+                GestureAction.OPEN_ASSIST -> startActivity(
+                    AssistActivity.newInstance(
+                        this@WebViewActivity,
+                        serverId = presenter.getActiveServer(),
+                    ),
+                )
+
+                GestureAction.OPEN_APP_SETTINGS -> startActivity(SettingsActivity.newInstance(this@WebViewActivity))
+
+                GestureAction.OPEN_APP_DEVELOPER -> startActivity(
+                    SettingsActivity.newInstance(
+                        context = this@WebViewActivity,
+                        screen = SettingsActivity.SCREEN_DEVELOPER,
+                    ),
+                )
 
                 GestureAction.NONE -> {
                     // Do nothing
@@ -1679,23 +1718,31 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         if (presenter.isAlwaysShowFirstViewOnAppStartEnabled() &&
             LifecycleHandler.isAppInBackground()
         ) {
-            // Clearing history and replace the current page with the default page from the frontend.
-            // This way the user have a clear history stack.
-            webView.clearHistory()
-
             // Pattern matches urls which are NOT allowed to show the first view after app is started
             // This is
             // /config/* as these are the settings of HA but NOT /config/dashboard. This is just the overview of the HA settings
             // /hassio/* as these are the addons section of HA settings.
             if (webView.url?.matches(".*://.*/(config/(?!\\bdashboard\\b)|hassio)/*.*".toRegex()) == false) {
                 Timber.d("Show first view of default dashboard.")
-                if (serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true) {
-                    sendExternalBusMessage(
-                        NavigateTo("/", true),
-                    )
-                } else {
-                    webView.evaluateJavascript(
-                        """
+                navigateToDefaultDashboard()
+            } else {
+                Timber.d("User is in the Home Assistant config. Will not show first view of the default dashboard.")
+            }
+        }
+    }
+
+    /** Clear history and replace the current page with the default dashboard. */
+    private fun navigateToDefaultDashboard() {
+        // This way the user have a clear history stack.
+        webView.clearHistory()
+
+        if (serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true) {
+            sendExternalBusMessage(
+                NavigateTo("/", true),
+            )
+        } else {
+            webView.evaluateJavascript(
+                """
                     var anchor = 'a:nth-child(1)';
                     var defaultPanel = window.localStorage.getItem('defaultPanel')?.replaceAll('"',"");
                     if(defaultPanel) anchor = 'a[href="/' + defaultPanel + '"]';
@@ -1704,12 +1751,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                                                    .shadowRoot.querySelector('paper-listbox > ' + anchor).click();
                     window.scrollTo(0, 0);
                     """,
-                        null,
-                    )
-                }
-            } else {
-                Timber.d("User is in the Home Assistant config. Will not show first view of the default dashboard.")
-            }
+                null,
+            )
         }
     }
 
