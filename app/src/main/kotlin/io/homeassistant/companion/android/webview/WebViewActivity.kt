@@ -227,7 +227,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var playerTop = mutableStateOf(0.dp)
     private var playerLeft = mutableStateOf(0.dp)
     private var statusBarColor = mutableStateOf<Color?>(null)
-    private var navigationBarColor = mutableStateOf<Color?>(null)
+    private var backgroundColor = mutableStateOf<Color?>(null)
     private var failedConnection = "external"
     private var clearHistory = false
     private var moreInfoEntity = ""
@@ -262,7 +262,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         // Initially set status and navigation bar color to colorLaunchScreenBackground to match the launch screen until the web frontend is loaded
         val colorLaunchScreenBackground = ResourcesCompat.getColor(resources, commonR.color.colorLaunchScreenBackground, theme)
-        setStatusBarAndNavigationBarColor(colorLaunchScreenBackground, colorLaunchScreenBackground)
+        setStatusBarAndBackgroundColor(colorLaunchScreenBackground, colorLaunchScreenBackground)
 
         webView = WebView(this)
 
@@ -276,7 +276,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             val currentAppLocked by remember { appLocked }
             val customViewFromWebView by remember { customViewFromWebView }
             val statusBarColor by remember { statusBarColor }
-            val navigationBarColor by remember { navigationBarColor }
+            val backgroundColor by remember { backgroundColor }
 
             WebViewContentScreen(
                 webView,
@@ -287,7 +287,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 currentAppLocked,
                 customViewFromWebView,
                 statusBarColor = statusBarColor,
-                navigationBarColor = navigationBarColor,
+                backgroundColor = backgroundColor,
             ) { isFullScreen ->
                 isExoFullScreen = isFullScreen
                 if (isFullScreen) hideSystemUI() else showSystemUI()
@@ -904,7 +904,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         ) { webViewColors ->
             lifecycleScope.launch(Dispatchers.Main) {
                 var statusBarColor = 0
-                var navigationBarColor = 0
+                var backgroundColor = 0
 
                 if (!webViewColors.isNullOrEmpty() && webViewColors != "null") {
                     val trimmedColorString = webViewColors.substring(1, webViewColors.length - 1).trim()
@@ -913,10 +913,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     Timber.d("Color from webview is \"$trimmedColorString\"")
 
                     statusBarColor = presenter.parseWebViewColor(colors[0].trim())
-                    navigationBarColor = presenter.parseWebViewColor(colors[1].trim())
+                    backgroundColor = presenter.parseWebViewColor(colors[1].trim())
                 }
 
-                setStatusBarAndNavigationBarColor(statusBarColor, navigationBarColor)
+                setStatusBarAndBackgroundColor(statusBarColor, backgroundColor)
             }
         }
     }
@@ -1249,20 +1249,17 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
-    override fun setStatusBarAndNavigationBarColor(statusBarColor: Int, navigationBarColor: Int) {
-        // window.statusBarColor and window.navigationBarColor must both be set before
-        // windowInsetsController sets the foreground colors.
-
+    override fun setStatusBarAndBackgroundColor(statusBarColor: Int, backgroundColor: Int) {
         // Set background colors
         if (statusBarColor != 0) {
             this.statusBarColor.value = Color(statusBarColor)
         } else {
             Timber.e("Cannot set status bar color. Skipping coloring...")
         }
-        if (navigationBarColor != 0) {
-            this.navigationBarColor.value = Color(navigationBarColor)
+        if (backgroundColor != 0) {
+            this.backgroundColor.value = Color(backgroundColor)
         } else {
-            Timber.e("Cannot set navigation bar color. Skipping coloring...")
+            Timber.e("Cannot set background color. Skipping coloring...")
         }
 
         // Adjust the color of system bar font/icons to ensure proper contrast with
@@ -1270,8 +1267,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         if (statusBarColor != 0) {
             windowInsetsController.isAppearanceLightStatusBars = !isColorDark(statusBarColor)
         }
-        if (navigationBarColor != 0) {
-            windowInsetsController.isAppearanceLightNavigationBars = !isColorDark(navigationBarColor)
+        if (backgroundColor != 0) {
+            windowInsetsController.isAppearanceLightNavigationBars = !isColorDark(backgroundColor)
         }
     }
 
