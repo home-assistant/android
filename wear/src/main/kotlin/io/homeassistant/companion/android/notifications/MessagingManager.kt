@@ -86,7 +86,7 @@ class MessagingManager @Inject constructor(
     private fun sendNotification(data: Map<String, String>, received: Long? = null) {
         val notificationManagerCompat = NotificationManagerCompat.from(context)
 
-        val tag = data["tag"]
+        val tag = data["tag"].takeIf { !it.isNullOrBlank() }
         val messageId = tag?.hashCode() ?: received?.toInt() ?: System.currentTimeMillis().toInt()
 
         var group = data["group"]
