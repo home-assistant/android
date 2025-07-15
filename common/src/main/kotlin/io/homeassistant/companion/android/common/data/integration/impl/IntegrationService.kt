@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateSensorResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import kotlinx.serialization.json.JsonObject
 import okhttp3.HttpUrl
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -42,7 +43,7 @@ interface IntegrationService {
     suspend fun getTemplate(
         @Url url: HttpUrl,
         @Body request: IntegrationRequest,
-    ): Map<String, String>
+    ): JsonObject
 
     @POST
     suspend fun getZones(

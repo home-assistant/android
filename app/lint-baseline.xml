@@ -63,7 +63,7 @@
         errorLine2="        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/util/DataUriDownloadManager.kt"
-            line="68"
+            line="69"
             column="9"/>
     </issue>
 
@@ -107,7 +107,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/AndroidManifest.xml"
-            line="124"
+            line="126"
             column="27"/>
     </issue>
 
@@ -162,7 +162,7 @@
         errorLine2="        ^">
         <location
             file="src/full/AndroidManifest.xml"
-            line="115"
+            line="116"
             column="9"/>
     </issue>
 
@@ -196,6 +196,17 @@
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/sensors/SensorReceiver.kt"
             line="61"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `intentMatchingFlags` is only used in API level 36 and higher (current min is 21)"
+        errorLine1="            android:intentMatchingFlags=&quot;allowNullAction&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/full/AndroidManifest.xml"
+            line="118"
             column="13"/>
     </issue>
 
@@ -508,6 +519,83 @@
     </issue>
 
     <issue
+        id="ExportedReceiver"
+        message="Exported receiver does not require permission"
+        errorLine1="        &lt;receiver android:name=&quot;.location.HighAccuracyLocationReceiver&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="src/full/AndroidManifest.xml"
+            line="81"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ExportedReceiver"
+        message="Exported receiver does not require permission"
+        errorLine1="        &lt;receiver"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="269"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ExportedReceiver"
+        message="Exported receiver does not require permission"
+        errorLine1="        &lt;receiver"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="278"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ExportedReceiver"
+        message="Exported receiver does not require permission"
+        errorLine1="        &lt;receiver"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="948"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ExportedService"
+        message="Exported service does not require permission"
+        errorLine1="        &lt;service"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="src/full/AndroidManifest.xml"
+            line="93"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ExportedService"
+        message="Exported service does not require permission"
+        errorLine1="        &lt;service"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="src/full/AndroidManifest.xml"
+            line="99"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ExportedService"
+        message="Exported service does not require permission"
+        errorLine1="        &lt;service"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="src/full/AndroidManifest.xml"
+            line="116"
+            column="10"/>
+    </issue>
+
+    <issue
         id="InsecureBaseConfiguration"
         message="Insecure Base Configuration"
         errorLine1="    &lt;base-config cleartextTrafficPermitted=&quot;true&quot;>"
@@ -558,7 +646,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="489"
+            line="500"
             column="17"/>
     </issue>
 
@@ -569,7 +657,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="489"
+            line="500"
             column="17"/>
     </issue>
 
@@ -1231,7 +1319,7 @@
         errorLine2="                                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="121"
+            line="122"
             column="104"/>
     </issue>
 
@@ -1242,7 +1330,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="310"
+            line="319"
             column="52"/>
     </issue>
 
@@ -1253,7 +1341,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="310"
+            line="319"
             column="52"/>
     </issue>
 
@@ -1264,7 +1352,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="331"
+            line="340"
             column="52"/>
     </issue>
 
@@ -1275,7 +1363,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="331"
+            line="340"
             column="52"/>
     </issue>
 
@@ -1286,7 +1374,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="522"
+            line="533"
             column="21"/>
     </issue>
 
@@ -1315,176 +1403,11 @@
     <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                    marketIntent.data = Uri.parse("
-        errorLine2="                                                        ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="454"
-            column="57"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                    marketIntent.data = Uri.parse("
-        errorLine2="                                                        ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="454"
-            column="57"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                    marketIntent.data = Uri.parse("
-        errorLine2="                                                        ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="454"
-            column="57"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                    marketIntent.data = Uri.parse("
-        errorLine2="                                                        ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="454"
-            column="57"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                        Uri.parse(MARKET_PREFIX + intent.`package`.toString())"
-        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="473"
-            column="41"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                        Uri.parse(MARKET_PREFIX + intent.`package`.toString())"
-        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="473"
-            column="41"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                        Uri.parse(MARKET_PREFIX + intent.`package`.toString())"
-        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="473"
-            column="41"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                        Uri.parse(MARKET_PREFIX + intent.`package`.toString())"
-        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="473"
-            column="41"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="        val uri = Uri.parse(payload.getString(&quot;url&quot;))"
-        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="978"
-            column="19"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))"
-        errorLine2="                                                               ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1212"
-            column="64"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                intent.data = Uri.parse(&quot;https://www.home-assistant.io/latest-security-alert/&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1363"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                intent.data = Uri.parse(&quot;https://www.home-assistant.io/latest-security-alert/&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1363"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                    Uri.parse(base.toString())"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1385"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="        val uri = Uri.parse(url)"
-        errorLine2="                  ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1538"
-            column="19"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                        Uri.parse(base.toString())"
-        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1700"
-            column="25"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
         errorLine1="                    url = Uri.parse(url.toString())"
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewPresenterImpl.kt"
-            line="128"
+            line="131"
             column="27"/>
     </issue>
 
@@ -1495,7 +1418,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewPresenterImpl.kt"
-            line="372"
+            line="380"
             column="13"/>
     </issue>
 

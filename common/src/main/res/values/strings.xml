@@ -293,6 +293,18 @@
     <string name="screen_orientation_option_label_system">Follow system settings</string>
     <string name="screen_orientation_option_label_portrait">Portrait</string>
     <string name="screen_orientation_option_label_landscape">Landscape</string>
+    <string name="gestures">Gestures</string>
+    <string name="gestures_action_quickbar_default">Search entities</string>
+    <string name="gestures_action_server_list">Server list</string>
+    <string name="gestures_action_server_next">Next server</string>
+    <string name="gestures_action_server_previous">Previous server</string>
+    <string name="gestures_description">Set up gestures for quick actions whenever you are using the main Home Assistant UI.\n\nNote: if your device has gestures that work in any app, they may override Home Assistant gestures.</string>
+    <string name="gestures_direction_down">Swipe down</string>
+    <string name="gestures_direction_left">Swipe left</string>
+    <string name="gestures_direction_right">Swipe right</string>
+    <string name="gestures_direction_up">Swipe up</string>
+    <string name="gestures_pointers_two">Using two fingers</string>
+    <string name="gestures_pointers_three">Using three fingers</string>
     <string name="get_help">Get help</string>
     <string name="grant_permission">Grant permission</string>
     <string name="help">Help</string>
@@ -780,7 +792,7 @@
     <string name="server_settings">Server settings</string>
     <string name="servers_devices_category">Servers &amp; devices</string>
     <string name="server_activate">Activate</string>
-    <string name="server_activate_swipe_hint">Tip: quickly activate using a three-finger swipe left, right, or up when viewing a server.</string>
+    <string name="server_activate_gesture_hint">Tip: you can quickly activate and switch servers by using gestures.</string>
     <string name="server_add">Add server</string>
     <string name="server_add_success">Server added</string>
     <string name="server_add_failed">Couldn\'t add server</string>
