@@ -58,6 +58,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.getSystemService
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
+import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
@@ -82,6 +83,8 @@ import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.GestureAction
+import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
@@ -310,29 +313,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         e1: MotionEvent,
                         e2: MotionEvent,
                         velocity: Float,
-                        direction: SwipeDirection,
+                        direction: GestureDirection,
                         pointerCount: Int,
                     ): Boolean {
-                        if (pointerCount == 3 && velocity >= 75) {
-                            when (direction) {
-                                SwipeDirection.LEFT -> presenter.nextServer()
-                                SwipeDirection.RIGHT -> presenter.previousServer()
-                                SwipeDirection.UP -> {
-                                    val serverChooser = ServerChooserFragment()
-                                    supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this@WebViewActivity) { _, bundle ->
-                                        if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
-                                            presenter.switchActiveServer(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
-                                        }
-                                        supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
-                                    }
-                                    serverChooser.show(supportFragmentManager, ServerChooserFragment.TAG)
-                                }
-
-                                SwipeDirection.DOWN -> {
-                                    dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
-                                }
-                            }
+                        if (pointerCount > 1 && velocity >= 75 && !appLocked.value) {
+                            handleWebViewGesture(direction, pointerCount)
                         }
+                        // Swipe as a gesture is handled async. Irregardless of the result, and to
+                        // not block, we don't consume it and allow other views to respond to it.
+                        // (Except if the app is locked, but that realistically shouldn't happen
+                        // as the locked blur should prevent the WebView from getting swipes.)
                         return appLocked.value
                     }
 
@@ -459,9 +449,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 } else {
                                     Timber.w("No intent to launch app found, opening app store")
                                     val marketIntent = Intent(Intent.ACTION_VIEW)
-                                    marketIntent.data = Uri.parse(
-                                        MARKET_PREFIX + it.toString().substringAfter(APP_PREFIX),
-                                    )
+                                    marketIntent.data = (MARKET_PREFIX + it.toString().substringAfter(APP_PREFIX)).toUri()
                                     startActivity(marketIntent)
                                 }
                                 return true
@@ -478,7 +466,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     Timber.w("No app found for intent prefix, opening app store")
                                     val marketIntent = Intent(Intent.ACTION_VIEW)
                                     marketIntent.data =
-                                        Uri.parse(MARKET_PREFIX + intent.`package`.toString())
+                                        (MARKET_PREFIX + intent.`package`.toString()).toUri()
                                     startActivity(marketIntent)
                                 } else {
                                     startActivity(intent)
@@ -702,8 +690,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     private fun webViewAddJavascriptInterface() {
-        webView.removeJavascriptInterface(javascriptInterface)
         webView.apply {
+            removeJavascriptInterface(javascriptInterface)
             addJavascriptInterface(
                 object : Any() {
                     // TODO This feature is deprecated and should be removed after 2022.6
@@ -864,9 +852,45 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                             }
                         }
                     }
+
+                    @JavascriptInterface
+                    fun handleBlob(data: String?, filename: String?) {
+                        data?.let {
+                            lifecycleScope.launch {
+                                DataUriDownloadManager.saveDataUri(this@WebViewActivity, url = data, mimetype = "", filename = filename)
+                            }
+                        }
+                    }
                 },
                 javascriptInterface,
             )
+        }
+    }
+
+    private fun handleWebViewGesture(direction: GestureDirection, pointerCount: Int) {
+        lifecycleScope.launch {
+            when (presenter.getGestureAction(direction, pointerCount)) {
+                GestureAction.SERVER_NEXT -> presenter.nextServer()
+                GestureAction.SERVER_PREVIOUS -> presenter.previousServer()
+                GestureAction.SERVER_LIST -> {
+                    val serverChooser = ServerChooserFragment()
+                    supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this@WebViewActivity) { _, bundle ->
+                        if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
+                            presenter.switchActiveServer(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
+                        }
+                        supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
+                    }
+                    serverChooser.show(supportFragmentManager, ServerChooserFragment.TAG)
+                }
+
+                GestureAction.QUICKBAR_DEFAULT -> {
+                    webView.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
+                }
+
+                GestureAction.NONE -> {
+                    // Do nothing
+                }
+            }
         }
     }
 
@@ -983,7 +1007,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     fun exoPlayHls(json: JSONObject) {
         val payload = json.getJSONObject("payload")
-        val uri = Uri.parse(payload.getString("url"))
+        val uri = payload.getString("url").toUri()
         val isMuted = payload.optBoolean("muted")
         runOnUiThread {
             exoPlayer.value = initializePlayer(this).apply {
@@ -1217,7 +1241,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             waitForConnection()
         } else {
             try {
-                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                val browserIntent = Intent(Intent.ACTION_VIEW, url.toUri())
                 startActivity(browserIntent)
             } catch (e: Exception) {
                 Timber.e(e, "Unable to view url")
@@ -1369,7 +1393,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             alert.setMessage(commonR.string.security_vulnerably_message)
             alert.setPositiveButton(commonR.string.security_vulnerably_view) { _, _ ->
                 val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse("https://www.home-assistant.io/latest-security-alert/")
+                intent.data = "https://www.home-assistant.io/latest-security-alert/".toUri()
                 startActivity(intent)
             }
             alert.setNegativeButton(commonR.string.security_vulnerably_understand) { _, _ ->
@@ -1391,7 +1415,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             ) { _, _ ->
                 val url = serverManager.getServer(presenter.getActiveServer())?.let {
                     val base = it.connection.getUrl(buttonRefreshesInternal) ?: return@let null
-                    Uri.parse(base.toString())
+                    base.toString().toUri()
                         .buildUpon()
                         .appendQueryParameter("external_auth", "1")
                         .build()
@@ -1544,8 +1568,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     private fun downloadFile(url: String, contentDisposition: String, mimetype: String) {
         Timber.d("WebView requested download of $url")
-        val uri = Uri.parse(url)
+        val uri = url.toUri()
         when (uri.scheme?.lowercase()) {
+            "blob" -> {
+                triggerBlobDownload(url, contentDisposition, mimetype)
+            }
+
             "http", "https" -> {
                 val request = DownloadManager.Request(uri)
                     .setMimeType(mimetype)
@@ -1576,7 +1604,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
 
             else -> {
-                Timber.d("Received download request for unsupported scheme, forwarding to system")
+                Timber.w("Received download request for unsupported scheme ${uri.scheme}, forwarding to system")
                 try {
                     val browserIntent = Intent(Intent.ACTION_VIEW, uri).apply {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -1588,6 +1616,30 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
             }
         }
+    }
+
+    private fun triggerBlobDownload(url: String, contentDisposition: String, mimetype: String) {
+        val filename = URLUtil.guessFileName(url, contentDisposition, mimetype)
+        val jsCode = """
+        (function() {
+            var url = '$url';
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.responseType = 'blob';
+            xhr.onload = function(e) {
+                if (xhr.status == 200) {
+                    var blob = xhr.response;
+                    var reader = new FileReader();
+                    reader.onloadend = function() {
+                        $javascriptInterface.handleBlob(reader.result, '$filename');
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            };
+            xhr.send();
+        })();
+        """.trimIndent()
+        webView.evaluateJavascript(jsCode, null)
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
@@ -1706,7 +1758,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 bundle.getString(ImprovSetupDialog.RESULT_DOMAIN)?.let { improvDomain ->
                     val url = serverManager.getServer(presenter.getActiveServer())?.let url@{
                         val base = it.connection.getUrl() ?: return@url null
-                        Uri.parse(base.toString())
+                        base.toString().toUri()
                             .buildUpon()
                             .appendEncodedPath("config/integrations/dashboard/add")
                             .appendQueryParameter("domain", improvDomain)

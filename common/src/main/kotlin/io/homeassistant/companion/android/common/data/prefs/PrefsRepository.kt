@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.common.data.prefs
 
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
+import io.homeassistant.companion.android.common.util.GestureAction
+import io.homeassistant.companion.android.common.util.HAGesture
 
 interface PrefsRepository {
     suspend fun getAppVersion(): String?
@@ -94,6 +96,10 @@ interface PrefsRepository {
     suspend fun getImprovPermissionDisplayedCount(): Int
 
     suspend fun addImprovPermissionDisplayedCount()
+
+    suspend fun getGestureAction(gesture: HAGesture): GestureAction
+
+    suspend fun setGestureAction(gesture: HAGesture, action: GestureAction)
 
     /** Clean up any app-level preferences that might reference servers */
     suspend fun removeServer(serverId: Int)

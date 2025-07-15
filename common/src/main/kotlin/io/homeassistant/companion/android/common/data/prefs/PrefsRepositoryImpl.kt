@@ -1,7 +1,10 @@
 package io.homeassistant.companion.android.common.data.prefs
 
+import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
+import io.homeassistant.companion.android.common.util.GestureAction
+import io.homeassistant.companion.android.common.util.HAGesture
 import javax.inject.Inject
 import javax.inject.Named
 import kotlinx.coroutines.runBlocking
@@ -12,8 +15,9 @@ class PrefsRepositoryImpl @Inject constructor(
 ) : PrefsRepository {
 
     companion object {
-        private const val MIGRATION_PREF = "migration"
-        private const val MIGRATION_VERSION = 1
+        @VisibleForTesting const val MIGRATION_PREF = "migration"
+
+        @VisibleForTesting const val MIGRATION_VERSION = 1
 
         private const val PREF_VER = "version"
         private const val PREF_THEME = "theme"
@@ -38,6 +42,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_AUTO_FAVORITES = "auto_favorites"
         private const val PREF_LOCATION_HISTORY_DISABLED = "location_history"
         private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displayed"
+        private const val PREF_GESTURE_ACTION_PREFIX = "gesture_action"
     }
 
     init {
@@ -258,6 +263,26 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun addImprovPermissionDisplayedCount() {
         localStorage.putInt(PREF_IMPROV_PERMISSION_DISPLAYED, getImprovPermissionDisplayedCount() + 1)
+    }
+
+    override suspend fun getGestureAction(gesture: HAGesture): GestureAction {
+        val current = localStorage.getString("${PREF_GESTURE_ACTION_PREFIX}_${gesture.name}")
+        val action = GestureAction.entries.firstOrNull { it.name == current }
+        return when {
+            // User preference
+            action != null -> action
+            // Defaults
+            gesture == HAGesture.SWIPE_UP_THREE -> GestureAction.SERVER_LIST
+            gesture == HAGesture.SWIPE_DOWN_THREE -> GestureAction.QUICKBAR_DEFAULT
+            gesture == HAGesture.SWIPE_LEFT_THREE -> GestureAction.SERVER_PREVIOUS
+            gesture == HAGesture.SWIPE_RIGHT_THREE -> GestureAction.SERVER_NEXT
+            // No user preference and not default
+            else -> GestureAction.NONE
+        }
+    }
+
+    override suspend fun setGestureAction(gesture: HAGesture, action: GestureAction) {
+        localStorage.putString("${PREF_GESTURE_ACTION_PREFIX}_${gesture.name}", action.name)
     }
 
     override suspend fun removeServer(serverId: Int) {

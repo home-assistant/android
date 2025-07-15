@@ -15,6 +15,9 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.GestureAction
+import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.common.util.HAGesture
 import io.homeassistant.companion.android.improv.ImprovRepository
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
@@ -312,6 +315,11 @@ class WebViewPresenterImpl @Inject constructor(
         mainScope.launch {
             externalBusRepository.received(message)
         }
+    }
+
+    override suspend fun getGestureAction(direction: GestureDirection, pointerCount: Int): GestureAction {
+        val gesture = HAGesture.fromSwipeListener(direction, pointerCount)
+        return gesture?.let { prefsRepository.getGestureAction(it) } ?: GestureAction.NONE
     }
 
     override fun sessionTimeOut(): Int = runBlocking {

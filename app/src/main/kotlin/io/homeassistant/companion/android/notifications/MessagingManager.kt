@@ -912,7 +912,7 @@ class MessagingManager @Inject constructor(
     private suspend fun sendNotification(data: Map<String, String>, id: Long? = null, received: Long? = null) {
         val notificationManagerCompat = NotificationManagerCompat.from(context)
 
-        val tag = data["tag"]
+        val tag = data["tag"].takeIf { !it.isNullOrBlank() }
         val messageId = tag?.hashCode() ?: received?.toInt() ?: System.currentTimeMillis().toInt()
 
         var group = data["group"]

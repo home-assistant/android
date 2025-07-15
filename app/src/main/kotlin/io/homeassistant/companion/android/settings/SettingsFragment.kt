@@ -36,6 +36,7 @@ import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
 import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
+import io.homeassistant.companion.android.settings.gestures.GesturesFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.notification.NotificationChannelFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
@@ -159,6 +160,14 @@ class SettingsFragment(
                 }
                 return@setOnPreferenceClickListener true
             }
+        }
+
+        findPreference<Preference>("gestures")?.setOnPreferenceClickListener {
+            parentFragmentManager.commit {
+                replace(R.id.content, GesturesFragment::class.java, null)
+                addToBackStack(getString(commonR.string.gestures))
+            }
+            return@setOnPreferenceClickListener true
         }
 
         findPreference<ListPreference>("page_zoom")?.let {
@@ -367,7 +376,9 @@ class SettingsFragment(
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        applyBottomSafeDrawingInsets()
+        // We don't consume the insets so that the snackbar can use the insets from the
+        // CoordinatorLayout and be displayed above the navigation bar.
+        applyBottomSafeDrawingInsets(consumeInsets = false)
     }
 
     private fun removeSystemFromThemesIfNeeded() {
