@@ -105,6 +105,9 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "androidTestImplementation"(libs.bundles.androidx.compose.ui.test)
                     "androidTestImplementation"(libs.leakcanary.android.instrumentation)
 
+                    "androidTestImplementation"(libs.hilt.android.test)
+                    "kspAndroidTest"(libs.hilt.android.compiler)
+
                     "testImplementation"(libs.bundles.androidx.glance.testing)
                 }
             }

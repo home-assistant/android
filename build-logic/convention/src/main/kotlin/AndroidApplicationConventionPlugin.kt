@@ -46,6 +46,8 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
 
                     versionName = project.version.toString()
                     versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+
+                    testInstrumentationRunner = "io.homeassistant.companion.android.CustomTestRunner"
                 }
 
                 buildFeatures {

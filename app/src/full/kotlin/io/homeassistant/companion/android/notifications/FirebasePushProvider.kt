@@ -28,7 +28,7 @@ class FirebasePushProvider @Inject constructor(
     private val tokenMutex = Mutex()
 
     suspend fun setToken(token: String) = tokenMutex.withLock {
-       this.token = token
+        this.token = token
     }
 
     override suspend fun getUrl(): String = BuildConfig.PUSH_URL
