@@ -12,6 +12,8 @@ import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -33,7 +35,9 @@ class SettingViewModel @Inject constructor(
         return setting
     }
 
-    fun getSettingFlow(id: Int): Flow<Setting> = settingsDao.getFlow(id)
+    fun getSettingFlow(id: Int): Flow<Setting> = settingsDao.getFlow(id).onStart {
+        emit(getSetting(id))
+    }.distinctUntilChanged()
 
     fun updateWebsocketSetting(id: Int, setting: WebsocketSetting) {
         viewModelScope.launch {

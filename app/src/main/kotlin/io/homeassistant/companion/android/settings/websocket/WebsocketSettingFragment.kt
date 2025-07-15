@@ -12,6 +12,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.getSystemService
@@ -27,7 +28,6 @@ import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.websocket.views.WebsocketSettingView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import javax.inject.Inject
-import kotlinx.coroutines.flow.onStart
 
 @AndroidEntryPoint
 class WebsocketSettingFragment : Fragment() {
@@ -64,9 +64,8 @@ class WebsocketSettingFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
-                    val settings = viewModel.getSettingFlow(serverId).onStart {
-                        emit(viewModel.getSetting(serverId))
-                    }.collectAsState(initial = null)
+                    val settingFlow = remember { viewModel.getSettingFlow(serverId) }
+                    val settings = settingFlow.collectAsState(initial = null)
                     WebsocketSettingView(
                         websocketSetting = settings.value?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING,
                         unrestrictedBackgroundAccess = isIgnoringBatteryOptimizations,

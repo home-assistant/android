@@ -166,7 +166,7 @@ class SensorDetailViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            // TODO why 0 ?????
+            // 0 is used for storing app level settings
             settingUpdateFrequency = settingsDao.get(0)?.sensorUpdateFrequency ?: SensorUpdateFrequencySetting.NORMAL
         }
     }

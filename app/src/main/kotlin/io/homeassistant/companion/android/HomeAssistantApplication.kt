@@ -305,7 +305,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
         // Register for faster sensor updates if enabled
         val settingDao = AppDatabase.getInstance(applicationContext).settingsDao()
         ioScope.launch {
-            // TODO why 0 ????
+            // 0 is used for storing app level settings
             val settings = settingDao.get(0)
             if (settings != null && (settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING || settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_ALWAYS)) {
                 ContextCompat.registerReceiver(
