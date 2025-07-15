@@ -9,7 +9,7 @@ import io.homeassistant.companion.android.common.util.FailFast.setHandler
  * Don't forget to register the handler in [FailFast.setHandler].
  */
 fun interface FailFastHandler {
-    fun handleException(exception: Exception, additionalMessage: String?)
+    fun handleException(throwable: Throwable, additionalMessage: String?)
 }
 
 private class FailFastException : Exception {
@@ -59,6 +59,19 @@ object FailFast {
      */
     fun fail(message: () -> String) {
         handler.handleException(FailFastException(message()), null)
+    }
+
+    /**
+     * Triggers the configured [FailFastHandler] with a given [Throwable].
+     *
+     * This method allows to manually trigger the [FailFastHandler] by providing a specific
+     * [Throwable]. The provided `throwable` is passed directly to the [FailFastHandler], to keep
+     * the original stack trace.
+     *
+     * @param throwable The [Throwable] to be handled.
+     */
+    fun failWith(throwable: Throwable) {
+        handler.handleException(throwable, null)
     }
 
     /**

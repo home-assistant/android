@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositor
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -35,6 +36,7 @@ import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidget
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
 import io.homeassistant.companion.android.widgets.todo.TodoWidget
+import java.util.concurrent.Executors
 import javax.inject.Inject
 import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
@@ -75,7 +77,19 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
                     .detectUnsafeIntentLaunch()
                     .detectLeakedRegistrationObjects()
                     .penaltyLog()
-                    .penaltyDeath()
+                    .penaltyListener(Executors.newSingleThreadExecutor()) { violation ->
+                        val shouldSkip = violation.stackTrace.any {
+                            // We ignore an issue in the webview client that use the wrong context when
+                            // configuration change (rotation).
+                            it.fileName.startsWith("chromium-TrichromeWebViewGoogle") &&
+                                it.methodName == "onConfigurationChanged"
+                        }
+                        if (!shouldSkip) {
+                            FailFast.failWith(violation)
+                        } else {
+                            Timber.w(violation, "Ignoring unexpected violation")
+                        }
+                    }
                     .build(),
             )
 

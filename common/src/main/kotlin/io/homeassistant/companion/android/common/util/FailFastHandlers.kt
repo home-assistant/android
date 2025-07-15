@@ -12,9 +12,9 @@ private const val HEADER = """
 private const val SEPARATOR = """----------------------------------------------------------------"""
 
 object CrashFailFastHandler : FailFastHandler {
-    override fun handleException(exception: Exception, additionalMessage: String?) {
+    override fun handleException(throwable: Throwable, additionalMessage: String?) {
         Timber.e(
-            exception,
+            throwable,
             buildString {
                 appendLine(HEADER.trimIndent())
                 appendLine()
@@ -41,9 +41,9 @@ object CrashFailFastHandler : FailFastHandler {
 }
 
 object LogOnlyFailFastHandler : FailFastHandler {
-    override fun handleException(exception: Exception, additionalMessage: String?) {
+    override fun handleException(throwable: Throwable, additionalMessage: String?) {
         Timber.e(
-            exception,
+            throwable,
             buildString {
                 appendLine(HEADER.trimIndent())
                 appendLine()
