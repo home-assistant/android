@@ -6,6 +6,7 @@ import kotlin.math.abs
 
 enum class GestureAction(@StringRes val description: Int) {
     NAVIGATE_FORWARD(R.string.gestures_action_navigate_forward),
+    NAVIGATE_DASHBOARD(R.string.gestures_action_navigate_dashboard),
     NAVIGATE_RELOAD(R.string.gestures_action_navigate_reload),
     QUICKBAR_DEFAULT(R.string.gestures_action_quickbar_default),
     QUICKBAR_DEVICES(R.string.gestures_action_quickbar_devices),
