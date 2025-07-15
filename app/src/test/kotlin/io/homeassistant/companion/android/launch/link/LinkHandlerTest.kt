@@ -32,7 +32,7 @@ class LinkHandlerTest {
      */
     @Test
     fun `Given unknown URI when invoking handleLink then returns NoDestination`() {
-        var caughtException: Exception? = null
+        var caughtException: Throwable? = null
         FailFast.setHandler { exception, additionalMessage ->
             caughtException = exception
         }
@@ -45,7 +45,7 @@ class LinkHandlerTest {
 
     @Test
     fun `Given unknown URI scheme when invoking handleLink then returns NoDestination`() {
-        var caughtException: Exception? = null
+        var caughtException: Throwable? = null
         FailFast.setHandler { exception, additionalMessage ->
             caughtException = exception
         }
@@ -58,7 +58,7 @@ class LinkHandlerTest {
 
     @Test
     fun `Given unknown URI host when invoking handleLink then returns NoDestination`() {
-        var caughtException: Exception? = null
+        var caughtException: Throwable? = null
         FailFast.setHandler { exception, additionalMessage ->
             caughtException = exception
         }
@@ -71,7 +71,7 @@ class LinkHandlerTest {
 
     @Test
     fun `Given unknown deep link host when invoking handleLink then returns NosDestination`() {
-        var caughtException: Exception? = null
+        var caughtException: Throwable? = null
         FailFast.setHandler { exception, additionalMessage ->
             caughtException = exception
         }
@@ -124,7 +124,7 @@ class LinkHandlerTest {
 
     @Test
     fun `Given no url in invite when invoking handleLink then returns NoDestination`() {
-        var caughtException: Exception? = null
+        var caughtException: Throwable? = null
         FailFast.setHandler { exception, additionalMessage ->
             caughtException = exception
         }
@@ -157,7 +157,7 @@ class LinkHandlerTest {
 
     @Test
     fun `Given server registered and a valid URI with mobile flag set when invoking handleLink then returns NoDestination`() {
-        var caughtException: Exception? = null
+        var caughtException: Throwable? = null
         FailFast.setHandler { exception, additionalMessage ->
             caughtException = exception
         }

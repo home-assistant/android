@@ -7,13 +7,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
 
 class FailFastTest {
-    private var exceptionCaught: Exception? = null
+    private var exceptionCaught: Throwable? = null
 
     @BeforeEach
     fun setUp() {
         FailFast.setHandler(object : FailFastHandler {
-            override fun handleException(exception: Exception, additionalMessage: String?) {
-                exceptionCaught = exception
+            override fun handleException(throwable: Throwable, additionalMessage: String?) {
+                exceptionCaught = throwable
             }
         })
     }
