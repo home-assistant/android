@@ -1,2 +1,6 @@
 # Enforce trailing comma
 93871a5e078ffaf6d7809e298592703f89e78530
+
+# Update dependency org.jlleitschuh.gradle.ktlint to v13 (max line length 120)
+a2eb66ee40bf1d8e4b0624502d1e2668bd7cc447
+
