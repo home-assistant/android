@@ -161,18 +161,7 @@ interface SensorManager {
         return true
     }
 
-    fun addSettingIfNotPresent(
-        context: Context,
-        sensor: BasicSensor,
-        settingName: String,
-        settingType: SensorSettingType,
-        default: String,
-        enabled: Boolean = true,
-    ) {
-        getSetting(context, sensor, settingName, settingType, default, enabled)
-    }
-
-    fun isSettingEnabled(context: Context, sensor: BasicSensor, settingName: String): Boolean {
+    suspend fun isSettingEnabled(context: Context, sensor: BasicSensor, settingName: String): Boolean {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val setting = sensorDao
             .getSettings(sensor.id)
@@ -190,7 +179,7 @@ interface SensorManager {
         }
     }
 
-    fun getToggleSetting(
+    suspend fun getToggleSetting(
         context: Context,
         sensor: BasicSensor,
         settingName: String,
@@ -200,7 +189,7 @@ interface SensorManager {
         return getSetting(context, sensor, settingName, SensorSettingType.TOGGLE, default.toString(), enabled).toBoolean()
     }
 
-    fun getNumberSetting(
+    suspend fun getNumberSetting(
         context: Context,
         sensor: BasicSensor,
         settingName: String,
@@ -214,7 +203,7 @@ interface SensorManager {
      * Get the stored setting value for...
      * @param default Value to use if the setting does not exist
      */
-    fun getSetting(
+    suspend fun getSetting(
         context: Context,
         sensor: BasicSensor,
         settingName: String,

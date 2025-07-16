@@ -43,7 +43,7 @@ interface SensorDao {
 
     @Transaction
     @Query("SELECT * FROM sensor_settings WHERE sensor_id = :id")
-    fun getSettings(id: String): List<SensorSetting>
+    suspend fun getSettings(id: String): List<SensorSetting>
 
     @Transaction
     @Query("SELECT * FROM sensor_settings WHERE sensor_id = :id ORDER BY sensor_id")
