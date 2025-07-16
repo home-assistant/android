@@ -107,7 +107,7 @@ class CoroutineDaoFunctionsIssueTest {
     }
 
     @Test
-    fun `Given a DAO when function is not suspending and does return a PagindSource then no issues`() {
+    fun `Given a DAO when function is not suspending and does return a PagingSource then no issues`() {
         lint().issues(CoroutineDaoFunctionsIssue.ISSUE)
             .allowMissingSdk()
             .files(
