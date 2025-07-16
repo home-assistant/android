@@ -319,19 +319,23 @@ open class HomeAssistantApplication :
         }
 
         // Register for faster sensor updates if enabled
-        val settingDao = AppDatabase.getInstance(applicationContext).settingsDao().get(0)
-        if (settingDao != null &&
-            (
-                settingDao.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING ||
-                    settingDao.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_ALWAYS
+        val settingDao = AppDatabase.getInstance(applicationContext).settingsDao()
+        ioScope.launch {
+            // 0 is used for storing app level settings
+            val settings = settingDao.get(0)
+            if (settings != null &&
+                (
+                    settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING ||
+                        settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_ALWAYS
+                    )
+            ) {
+                ContextCompat.registerReceiver(
+                    this@HomeAssistantApplication,
+                    sensorReceiver,
+                    IntentFilter(Intent.ACTION_TIME_TICK),
+                    ContextCompat.RECEIVER_EXPORTED,
                 )
-        ) {
-            ContextCompat.registerReceiver(
-                this,
-                sensorReceiver,
-                IntentFilter(Intent.ACTION_TIME_TICK),
-                ContextCompat.RECEIVER_EXPORTED,
-            )
+            }
         }
 
         // Register for changes to the configuration
