@@ -99,26 +99,31 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         when (intent.action) {
             FIRE_EVENT -> {
-                val serverId = notificationDao.get(databaseId.toInt())?.serverId ?: ServerManager.SERVER_ID_ACTIVE
-                fireEvent(notificationAction, serverId, onComplete, onFailure)
+                ioScope.launch {
+                    val serverId = notificationDao.get(databaseId.toInt())?.serverId ?: ServerManager.SERVER_ID_ACTIVE
+                    fireEvent(notificationAction, serverId, onComplete, onFailure)
+                }
             }
         }
     }
 
-    private fun fireEvent(action: NotificationAction, serverId: Int, onComplete: () -> Unit, onFailure: () -> Unit) {
-        ioScope.launch {
-            try {
-                serverManager.integrationRepository(serverId).fireEvent(
-                    "mobile_app_notification_action",
-                    action.data
-                        .filter { !it.key.startsWith(MessagingManager.SOURCE_REPLY_HISTORY) }
-                        .plus(Pair("action", action.key)),
-                )
-                onComplete()
-            } catch (e: Exception) {
-                Timber.e(e, "Unable to fire event.")
-                onFailure()
-            }
+    private suspend fun fireEvent(
+        action: NotificationAction,
+        serverId: Int,
+        onComplete: () -> Unit,
+        onFailure: () -> Unit,
+    ) {
+        try {
+            serverManager.integrationRepository(serverId).fireEvent(
+                "mobile_app_notification_action",
+                action.data
+                    .filter { !it.key.startsWith(MessagingManager.SOURCE_REPLY_HISTORY) }
+                    .plus(Pair("action", action.key)),
+            )
+            onComplete()
+        } catch (e: Exception) {
+            Timber.e(e, "Unable to fire event.")
+            onFailure()
         }
     }
 }
