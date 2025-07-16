@@ -54,9 +54,7 @@ class MobileDataManager : SensorManager {
         return context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         checkState(context, mobileDataState, "mobile_data", mobileDataState.statelessIcon)
         checkState(context, mobileDataRoaming, Settings.Global.DATA_ROAMING, mobileDataRoaming.statelessIcon)
     }

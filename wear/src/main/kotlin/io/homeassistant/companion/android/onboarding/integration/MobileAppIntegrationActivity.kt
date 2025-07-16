@@ -15,7 +15,9 @@ import io.homeassistant.companion.android.util.adjustInset
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationView {
+class MobileAppIntegrationActivity :
+    AppCompatActivity(),
+    MobileAppIntegrationView {
     companion object {
         const val EXTRA_SERVER = "server"
 

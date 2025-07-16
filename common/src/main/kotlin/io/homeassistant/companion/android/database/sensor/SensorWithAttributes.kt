@@ -4,10 +4,7 @@ import io.homeassistant.companion.android.common.data.integration.SensorRegistra
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 
-data class SensorWithAttributes(
-    val sensor: Sensor,
-    val attributes: List<Attribute>,
-) {
+data class SensorWithAttributes(val sensor: Sensor, val attributes: List<Attribute>) {
     fun toSensorRegistration(basicSensor: SensorManager.BasicSensor): SensorRegistration<Any> {
         val attributes = attributes.associate {
             val attributeValue = when (it.valueType) {

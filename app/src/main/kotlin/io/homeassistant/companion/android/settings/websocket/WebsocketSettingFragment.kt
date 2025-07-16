@@ -41,9 +41,10 @@ class WebsocketSettingFragment : Fragment() {
 
     private var isIgnoringBatteryOptimizations by mutableStateOf(false)
 
-    private val requestBackgroundAccessResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        setIgnoringBatteryOptimizations()
-    }
+    private val requestBackgroundAccessResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            setIgnoringBatteryOptimizations()
+        }
 
     private var serverId = -1
 
@@ -54,11 +55,7 @@ class WebsocketSettingFragment : Fragment() {
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {

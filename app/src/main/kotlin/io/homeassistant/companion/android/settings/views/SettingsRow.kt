@@ -30,13 +30,7 @@ import com.mikepenz.iconics.typeface.IIcon
  * with a title, subtitle, and icon slot (from the MDI library).
  */
 @Composable
-fun SettingsRow(
-    primaryText: String,
-    secondaryText: String,
-    mdiIcon: IIcon?,
-    enabled: Boolean,
-    onClicked: () -> Unit,
-) {
+fun SettingsRow(primaryText: String, secondaryText: String, mdiIcon: IIcon?, enabled: Boolean, onClicked: () -> Unit) {
     SettingsRow(
         primaryText = primaryText,
         secondaryText = secondaryText,
@@ -70,12 +64,7 @@ fun SettingsRow(
  * with a title and subtitle.
  */
 @Composable
-fun SettingsRow(
-    primaryText: String,
-    secondaryText: String,
-    icon: (@Composable () -> Unit)?,
-    onClicked: () -> Unit,
-) {
+fun SettingsRow(primaryText: String, secondaryText: String, icon: (@Composable () -> Unit)?, onClicked: () -> Unit) {
     Row(
         modifier = Modifier
             .clickable { onClicked() }

@@ -12,9 +12,7 @@ import io.homeassistant.companion.android.viewHolders.LoadingViewHolder
 import io.homeassistant.companion.android.viewHolders.ManualSetupViewHolder
 import kotlin.math.min
 
-class ServerListAdapter(
-    val servers: ArrayList<HomeAssistantInstance>,
-) : RecyclerView.Adapter<ViewHolder>() {
+class ServerListAdapter(val servers: ArrayList<HomeAssistantInstance>) : RecyclerView.Adapter<ViewHolder>() {
 
     lateinit var onInstanceClicked: (HomeAssistantInstance) -> Unit
     lateinit var onManualSetupClicked: () -> Unit
@@ -26,10 +24,7 @@ class ServerListAdapter(
         private const val TYPE_MANUAL = 4
     }
 
-    override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int,
-    ): ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return when (viewType) {
             TYPE_INSTANCE -> {
                 val view = LayoutInflater.from(parent.context)

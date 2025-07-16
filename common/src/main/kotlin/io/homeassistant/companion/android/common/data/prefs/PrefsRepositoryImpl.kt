@@ -146,15 +146,13 @@ class PrefsRepositoryImpl @Inject constructor(
         localStorage.putStringSet(PREF_CONTROLS_AUTH_ENTITIES, entities.toSet())
     }
 
-    override suspend fun getControlsPanelServer(): Int? =
-        localStorage.getInt(CONTROLS_PANEL_SERVER)
+    override suspend fun getControlsPanelServer(): Int? = localStorage.getInt(CONTROLS_PANEL_SERVER)
 
     override suspend fun setControlsPanelServer(serverId: Int) {
         localStorage.putInt(CONTROLS_PANEL_SERVER, serverId)
     }
 
-    override suspend fun getControlsPanelPath(): String? =
-        localStorage.getString(CONTROLS_PANEL_PATH)
+    override suspend fun getControlsPanelPath(): String? = localStorage.getString(CONTROLS_PANEL_PATH)
 
     override suspend fun setControlsPanelPath(path: String?) {
         if (path.isNullOrBlank()) {
@@ -180,8 +178,7 @@ class PrefsRepositoryImpl @Inject constructor(
         localStorage.putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, enabled)
     }
 
-    override suspend fun getPageZoomLevel(): Int =
-        localStorage.getInt(PREF_PAGE_ZOOM_LEVEL) ?: 100
+    override suspend fun getPageZoomLevel(): Int = localStorage.getInt(PREF_PAGE_ZOOM_LEVEL) ?: 100
 
     override suspend fun setPageZoomLevel(level: Int?) {
         localStorage.putInt(PREF_PAGE_ZOOM_LEVEL, level)
@@ -244,15 +241,17 @@ class PrefsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getAutoFavorites(): List<String> {
-        return localStorage.getString(PREF_AUTO_FAVORITES)?.removeSurrounding("[", "]")?.split(", ")?.filter { it.isNotBlank() } ?: emptyList()
+        return localStorage.getString(PREF_AUTO_FAVORITES)?.removeSurrounding("[", "]")?.split(", ")?.filter {
+            it.isNotBlank()
+        }
+            ?: emptyList()
     }
 
     override suspend fun setAutoFavorites(favorites: List<String>) {
         localStorage.putString(PREF_AUTO_FAVORITES, favorites.toString())
     }
 
-    override suspend fun isLocationHistoryEnabled(): Boolean =
-        !localStorage.getBoolean(PREF_LOCATION_HISTORY_DISABLED)
+    override suspend fun isLocationHistoryEnabled(): Boolean = !localStorage.getBoolean(PREF_LOCATION_HISTORY_DISABLED)
 
     override suspend fun setLocationHistoryEnabled(enabled: Boolean) {
         localStorage.putBoolean(PREF_LOCATION_HISTORY_DISABLED, !enabled)

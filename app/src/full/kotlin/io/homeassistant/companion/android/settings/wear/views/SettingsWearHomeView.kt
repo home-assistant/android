@@ -102,11 +102,7 @@ fun LoadSettingsHomeView(
 }
 
 @Composable
-fun SettingsWearTopAppBar(
-    title: @Composable () -> Unit,
-    onBackClicked: () -> Unit,
-    docsLink: String? = null,
-) {
+fun SettingsWearTopAppBar(title: @Composable () -> Unit, onBackClicked: () -> Unit, docsLink: String? = null) {
     val context = LocalContext.current
     TopAppBar(
         title = title,

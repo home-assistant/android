@@ -58,16 +58,12 @@ object FanControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity): Int =
-        DeviceTypes.TYPE_FAN
+    override fun getDeviceType(entity: Entity): Int = DeviceTypes.TYPE_FAN
 
     override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.domain_fan)
 
-    override suspend fun performAction(
-        integrationRepository: IntegrationRepository,
-        action: ControlAction,
-    ): Boolean {
+    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
         when (action) {
             is BooleanAction -> {
                 integrationRepository.callAction(

@@ -68,9 +68,7 @@ enum class WidgetType(val widgetIcon: IIcon) {
 }
 
 @Composable
-fun ManageWidgetsView(
-    viewModel: ManageWidgetsViewModel,
-) {
+fun ManageWidgetsView(viewModel: ManageWidgetsViewModel) {
     var expandedAddWidget by remember { mutableStateOf(false) }
     Scaffold(floatingActionButton = {
         if (viewModel.supportsAddingWidgets) {
@@ -116,9 +114,12 @@ fun ManageWidgetsView(
                 .padding(contentPadding)
                 .fillMaxWidth(),
         ) {
-            if (viewModel.buttonWidgetList.value.isEmpty() && viewModel.staticWidgetList.value.isEmpty() &&
-                viewModel.mediaWidgetList.value.isEmpty() && viewModel.templateWidgetList.value.isEmpty() &&
-                viewModel.cameraWidgetList.value.isEmpty() && viewModel.todoWidgetList.value.isEmpty()
+            if (viewModel.buttonWidgetList.value.isEmpty() &&
+                viewModel.staticWidgetList.value.isEmpty() &&
+                viewModel.mediaWidgetList.value.isEmpty() &&
+                viewModel.templateWidgetList.value.isEmpty() &&
+                viewModel.cameraWidgetList.value.isEmpty() &&
+                viewModel.todoWidgetList.value.isEmpty()
             ) {
                 item {
                     EmptyState(
@@ -149,7 +150,11 @@ fun ManageWidgetsView(
                 title = R.string.entity_state_widgets,
                 widgetLabel = { item ->
                     val label = item.label
-                    if (!label.isNullOrEmpty()) label else "${item.entityId} ${item.stateSeparator} ${item.attributeIds.orEmpty()}"
+                    if (!label.isNullOrEmpty()) {
+                        label
+                    } else {
+                        "${item.entityId} ${item.stateSeparator} ${item.attributeIds.orEmpty()}"
+                    }
                 },
             )
             widgetItems(
@@ -194,11 +199,7 @@ private fun <T : WidgetEntity> LazyListScope.widgetItems(
 }
 
 @Composable
-private fun PopupWidgetRow(
-    widgetLabel: String,
-    widgetType: WidgetType,
-    onClickCallback: () -> Unit,
-) {
+private fun PopupWidgetRow(widgetLabel: String, widgetType: WidgetType, onClickCallback: () -> Unit) {
     val context = LocalContext.current
     Box(
         modifier = Modifier
@@ -227,11 +228,7 @@ private fun PopupWidgetRow(
 }
 
 @Composable
-private fun WidgetRow(
-    widgetLabel: String,
-    widgetId: Int,
-    widgetType: WidgetType,
-) {
+private fun WidgetRow(widgetLabel: String, widgetId: Int, widgetType: WidgetType) {
     val context = LocalContext.current
     Row {
         Button(onClick = {

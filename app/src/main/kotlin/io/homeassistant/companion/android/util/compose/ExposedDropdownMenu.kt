@@ -24,7 +24,13 @@ import io.homeassistant.companion.android.widgets.common.WidgetUtils
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ExposedDropdownMenu(label: String, keys: List<String>, currentIndex: Int?, onSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
+fun ExposedDropdownMenu(
+    label: String,
+    keys: List<String>,
+    currentIndex: Int?,
+    onSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     var expanded by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     ExposedDropdownMenuBox(
@@ -84,7 +90,8 @@ fun WidgetBackgroundTypeExposedDropdownMenu(
 ) {
     val context = LocalContext.current
     val keys = remember { WidgetUtils.getBackgroundOptionList(context) }
-    val currentIndex = remember(current) { current?.let { WidgetUtils.getSelectedBackgroundOption(context, current, keys) } }
+    val currentIndex =
+        remember(current) { current?.let { WidgetUtils.getSelectedBackgroundOption(context, current, keys) } }
     ExposedDropdownMenu(
         label = stringResource(title),
         keys = keys.toList(),
