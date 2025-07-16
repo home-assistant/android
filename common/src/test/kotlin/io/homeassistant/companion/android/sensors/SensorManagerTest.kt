@@ -7,8 +7,8 @@ import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.mockk.coEvery
+import io.mockk.coJustRun
 import io.mockk.every
-import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.slot
@@ -37,9 +37,9 @@ class SensorManagerTest {
                 state = "test",
             ),
         )
-        justRun { sensorDao.update(any()) }
+        coJustRun { sensorDao.update(any()) }
         val slot = slot<List<Attribute>>()
-        justRun { sensorDao.replaceAllAttributes(any(), capture(slot)) }
+        coJustRun { sensorDao.replaceAllAttributes(any(), capture(slot)) }
 
         sensorManager.onSensorUpdated(
             context,
