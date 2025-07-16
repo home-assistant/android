@@ -46,10 +46,7 @@ enum class GestureDirection(@StringRes val description: Int) {
 }
 
 /** Number of pointers used in a gesture */
-enum class GesturePointers(
-    val asInt: Int,
-    @StringRes val description: Int,
-) {
+enum class GesturePointers(val asInt: Int, @StringRes val description: Int) {
     TWO(asInt = 2, description = R.string.gestures_pointers_two),
     THREE(asInt = 3, description = R.string.gestures_pointers_three),
 }
@@ -58,10 +55,7 @@ enum class GesturePointers(
  * Enum with all supported gestures by the app. Currently, a gesture
  * is always a combination of swipe + a direction and pointer count.
  */
-enum class HAGesture(
-    val direction: GestureDirection,
-    val pointers: GesturePointers,
-) {
+enum class HAGesture(val direction: GestureDirection, val pointers: GesturePointers) {
     SWIPE_LEFT_TWO(GestureDirection.LEFT, GesturePointers.TWO),
     SWIPE_LEFT_THREE(GestureDirection.LEFT, GesturePointers.THREE),
     SWIPE_RIGHT_TWO(GestureDirection.RIGHT, GesturePointers.TWO),

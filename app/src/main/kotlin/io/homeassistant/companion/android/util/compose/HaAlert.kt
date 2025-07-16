@@ -17,11 +17,7 @@ import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
-fun HaAlertInfo(
-    message: String,
-    action: String?,
-    onActionClicked: (() -> Unit)?,
-) {
+fun HaAlertInfo(message: String, action: String?, onActionClicked: (() -> Unit)?) {
     HaAlert(
         message,
         action,
@@ -32,11 +28,7 @@ fun HaAlertInfo(
 }
 
 @Composable
-fun HaAlertWarning(
-    message: String,
-    action: String?,
-    onActionClicked: (() -> Unit)?,
-) {
+fun HaAlertWarning(message: String, action: String?, onActionClicked: (() -> Unit)?) {
     HaAlert(
         message,
         action,

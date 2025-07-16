@@ -127,9 +127,7 @@ abstract class AppSensorManagerBase : SensorManager {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         val myUid = Process.myUid()
         updateCurrentVersion(context)
         updateAppMemory(context)

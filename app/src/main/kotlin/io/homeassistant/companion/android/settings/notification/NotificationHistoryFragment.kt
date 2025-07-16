@@ -150,7 +150,8 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
 
         builder.setNegativeButton(
             commonR.string.confirm_negative,
-        ) { dialog, _ -> // Do nothing
+        ) { dialog, _ ->
+            // Do nothing
             dialog.dismiss()
         }
 
@@ -183,7 +184,11 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         }
     }
 
-    private fun filterNotifications(filterValue: Int, notificationDao: NotificationDao, prefCategory: PreferenceCategory?) {
+    private fun filterNotifications(
+        filterValue: Int,
+        notificationDao: NotificationDao,
+        prefCategory: PreferenceCategory?,
+    ) {
         val notificationList = notificationDao.getLastItems(filterValue)
         reloadNotifications(notificationList, prefCategory)
     }

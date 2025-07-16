@@ -24,16 +24,17 @@ object WidgetUtils {
         return backgroundTypeValues.toTypedArray()
     }
 
-    fun getSelectedBackgroundOption(context: Context, selectedType: WidgetBackgroundType, options: Array<String>) = when {
-        selectedType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable() ->
-            options.indexOf(context.getString(R.string.widget_background_type_dynamiccolor))
+    fun getSelectedBackgroundOption(context: Context, selectedType: WidgetBackgroundType, options: Array<String>) =
+        when {
+            selectedType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable() ->
+                options.indexOf(context.getString(R.string.widget_background_type_dynamiccolor))
 
-        selectedType == WidgetBackgroundType.TRANSPARENT ->
-            options.indexOf(context.getString(R.string.widget_background_type_transparent))
+            selectedType == WidgetBackgroundType.TRANSPARENT ->
+                options.indexOf(context.getString(R.string.widget_background_type_transparent))
 
-        else ->
-            options.indexOf(context.getString(R.string.widget_background_type_daynight))
-    }
+            else ->
+                options.indexOf(context.getString(R.string.widget_background_type_daynight))
+        }
 
     fun getWidgetBackgroundType(context: Context, selectedOption: String) = when (selectedOption) {
         context.getString(R.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR

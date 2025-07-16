@@ -285,7 +285,7 @@
     <string name="filter_sensors_enabled">Enabled sensors</string>
     <string name="filter_sensors_disabled">Disabled sensors</string>
     <string name="filter_updates">Filter updates</string>
-    <string name="firebase_error_message">This means you will be unable to receive cloud notifications.\n\nLocal notifications will still be available via persistent connection settings in companion app settings</string>
+    <string name="firebase_error_message">This means you will be unable to receive cloud notifications.\n\nLocal notifications will still be available via persistent connection settings in Companion app settings</string>
     <string name="firebase_error_title">Firebase error</string>
     <string name="fullscreen_def">Put application in full screen</string>
     <string name="fullscreen">Fullscreen</string>

@@ -37,7 +37,8 @@ class AssistViewModel @Inject constructor(
     private var requestPermission: (() -> Unit)? = null
     private var requestSilently = true
 
-    private val startMessage = AssistMessage(application.getString(commonR.string.assist_how_can_i_assist), isInput = false)
+    private val startMessage =
+        AssistMessage(application.getString(commonR.string.assist_how_can_i_assist), isInput = false)
     private val _conversation = mutableStateListOf(startMessage)
     val conversation: List<AssistMessage> = _conversation
 
@@ -69,8 +70,10 @@ class AssistViewModel @Inject constructor(
             }
 
             if (
-                pipelineId == PIPELINE_LAST_USED && recorderAutoStart &&
-                hasPermission && hasMicrophone &&
+                pipelineId == PIPELINE_LAST_USED &&
+                recorderAutoStart &&
+                hasPermission &&
+                hasMicrophone &&
                 serverManager.getServer(selectedServerId) != null &&
                 serverManager.integrationRepository(selectedServerId).getLastUsedPipelineSttSupport()
             ) {
@@ -91,14 +94,20 @@ class AssistViewModel @Inject constructor(
                 _conversation.clear()
                 _conversation.add(
                     AssistMessage(
-                        app.getString(commonR.string.no_assist_support, "2023.5", app.getString(commonR.string.no_assist_support_assist_pipeline)),
+                        app.getString(
+                            commonR.string.no_assist_support,
+                            "2023.5",
+                            app.getString(commonR.string.no_assist_support_assist_pipeline),
+                        ),
                         isInput = false,
                     ),
                 )
             } else {
                 setPipeline(
                     when {
-                        pipelineId == PIPELINE_LAST_USED -> serverManager.integrationRepository(selectedServerId).getLastUsedPipelineId()
+                        pipelineId == PIPELINE_LAST_USED -> serverManager.integrationRepository(
+                            selectedServerId,
+                        ).getLastUsedPipelineId()
                         pipelineId == PIPELINE_PREFERRED -> null
                         pipelineId?.isNotBlank() == true -> pipelineId
                         else -> null
@@ -122,7 +131,8 @@ class AssistViewModel @Inject constructor(
     fun onNewIntent(intent: Intent, lockedMatches: Boolean) {
         if (
             (intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT != 0) ||
-            intent.action in listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST", Intent.ACTION_VOICE_COMMAND)
+            intent.action in
+            listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST", Intent.ACTION_VOICE_COMMAND)
         ) {
             if (!lockedMatches && inputMode != AssistInputMode.BLOCKED) {
                 _conversation.clear()
@@ -142,7 +152,12 @@ class AssistViewModel @Inject constructor(
 
     private suspend fun checkSupport(): Boolean? {
         if (!serverManager.isRegistered()) return false
-        if (!serverManager.integrationRepository(selectedServerId).isHomeAssistantVersionAtLeast(2023, 5, 0)) return false
+        if (!serverManager.integrationRepository(
+                selectedServerId,
+            ).isHomeAssistantVersionAtLeast(2023, 5, 0)
+        ) {
+            return false
+        }
         return serverManager.webSocketRepository(selectedServerId).getConfig()?.components?.contains("assist_pipeline")
     }
 
@@ -181,7 +196,8 @@ class AssistViewModel @Inject constructor(
 
     private suspend fun setPipeline(id: String?) {
         selectedPipeline =
-            allPipelines[selectedServerId]?.firstOrNull { it.id == id } ?: serverManager.webSocketRepository(selectedServerId).getAssistPipeline(id)
+            allPipelines[selectedServerId]?.firstOrNull { it.id == id }
+                ?: serverManager.webSocketRepository(selectedServerId).getAssistPipeline(id)
         selectedPipeline?.let {
             currentPipeline = AssistUiPipeline(
                 serverId = selectedServerId,
@@ -269,7 +285,9 @@ class AssistViewModel @Inject constructor(
             if (proactive == true) _conversation.add(AssistMessage("…", isInput = true))
             if (proactive != true) runAssistPipeline(null)
         } else {
-            _conversation.add(AssistMessage(app.getString(commonR.string.assist_error), isInput = false, isError = true))
+            _conversation.add(
+                AssistMessage(app.getString(commonR.string.assist_error), isInput = false, isError = true),
+            )
         }
         recorderProactive = recording && proactive == true
     }
@@ -315,7 +333,8 @@ class AssistViewModel @Inject constructor(
                         _conversation.add(lastMessage.copy(message = event.chunk))
                     } else {
                         // Replace last message with the updated message with the new chunk append
-                        _conversation[_conversation.lastIndex] = lastMessage.copy(message = lastMessage.message + event.chunk)
+                        _conversation[_conversation.lastIndex] =
+                            lastMessage.copy(message = lastMessage.message + event.chunk)
                     }
                 }
                 is AssistEvent.ContinueConversation -> onMicrophoneInput()

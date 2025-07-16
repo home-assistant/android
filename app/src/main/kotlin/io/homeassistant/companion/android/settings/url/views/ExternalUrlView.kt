@@ -61,10 +61,7 @@ fun ExternalUrlView(
 }
 
 @Composable
-fun ExternalUrlCloudView(
-    useCloud: Boolean,
-    onUseCloudToggle: (Boolean) -> Unit,
-) {
+fun ExternalUrlCloudView(useCloud: Boolean, onUseCloudToggle: (Boolean) -> Unit) {
     Row(
         modifier = Modifier
             .clickable { onUseCloudToggle(!useCloud) }
@@ -81,7 +78,9 @@ fun ExternalUrlCloudView(
         Switch(
             checked = useCloud,
             onCheckedChange = null,
-            colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb)),
+            colors = SwitchDefaults.colors(
+                uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb),
+            ),
         )
     }
 }

@@ -560,12 +560,17 @@ class HealthConnectSensorManager : SensorManager {
         onSensorUpdated(
             context,
             if (isDiastolic) diastolicBloodPressure else systolicBloodPressure,
-            if (isDiastolic) response.records.last().diastolic.inMillimetersOfMercury else response.records.last().systolic.inMillimetersOfMercury,
+            if (isDiastolic) {
+                response.records.last().diastolic.inMillimetersOfMercury
+            } else {
+                response.records.last().systolic.inMillimetersOfMercury
+            },
             if (isDiastolic) diastolicBloodPressure.statelessIcon else systolicBloodPressure.statelessIcon,
             attributes = mapOf(
                 "bodyPosition" to getBloodPressureBodyPosition(response.records.last().bodyPosition),
                 "date" to response.records.last().time,
-                "measurementLocation" to getBloodPressureMeasurementLocation(response.records.last().measurementLocation),
+                "measurementLocation" to
+                    getBloodPressureMeasurementLocation(response.records.last().measurementLocation),
                 "source" to response.records.last().metadata.dataOrigin.packageName,
             ),
         )
@@ -623,7 +628,8 @@ class HealthConnectSensorManager : SensorManager {
             bodyTemperature.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
-                "measurementLocation" to getBodyTemperatureMeasurementLocation(response.records.last().measurementLocation),
+                "measurementLocation" to
+                    getBodyTemperatureMeasurementLocation(response.records.last().measurementLocation),
                 "source" to response.records.last().metadata.dataOrigin.packageName,
             ),
         )
@@ -650,7 +656,8 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateDistanceSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val distanceRequest = healthConnectClient.aggregateOrNull(buildAggregationRequest(DistanceRecord.DISTANCE_TOTAL)) ?: return
+        val distanceRequest =
+            healthConnectClient.aggregateOrNull(buildAggregationRequest(DistanceRecord.DISTANCE_TOTAL)) ?: return
         val distanceTotal = distanceRequest[DistanceRecord.DISTANCE_TOTAL]?.inMeters ?: 0
         onSensorUpdated(
             context,
@@ -663,7 +670,9 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateElevationGainedSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val elevationGainedRequest = healthConnectClient.aggregateOrNull(buildAggregationRequest(ElevationGainedRecord.ELEVATION_GAINED_TOTAL)) ?: return
+        val elevationGainedRequest =
+            healthConnectClient.aggregateOrNull(buildAggregationRequest(ElevationGainedRecord.ELEVATION_GAINED_TOTAL))
+                ?: return
         val elevationValue = elevationGainedRequest[ElevationGainedRecord.ELEVATION_GAINED_TOTAL]?.inMeters ?: 0
         onSensorUpdated(
             context,
@@ -676,7 +685,9 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateFloorsClimbedSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val floorsClimbedRequest = healthConnectClient.aggregateOrNull(buildAggregationRequest(FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL)) ?: return
+        val floorsClimbedRequest =
+            healthConnectClient.aggregateOrNull(buildAggregationRequest(FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL))
+                ?: return
         val floors = floorsClimbedRequest[FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL] ?: 0
         onSensorUpdated(
             context,
@@ -746,7 +757,8 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateHydrationSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val hydrationRequest = healthConnectClient.aggregateOrNull(buildAggregationRequest(HydrationRecord.VOLUME_TOTAL)) ?: return
+        val hydrationRequest =
+            healthConnectClient.aggregateOrNull(buildAggregationRequest(HydrationRecord.VOLUME_TOTAL)) ?: return
         val hydrationTotal = hydrationRequest[HydrationRecord.VOLUME_TOTAL]?.inMilliliters ?: 0
         onSensorUpdated(
             context,
@@ -858,7 +870,8 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateStepsSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val stepsRequest = healthConnectClient.aggregateOrNull(buildAggregationRequest(StepsRecord.COUNT_TOTAL)) ?: return
+        val stepsRequest =
+            healthConnectClient.aggregateOrNull(buildAggregationRequest(StepsRecord.COUNT_TOTAL)) ?: return
         val totalSteps = stepsRequest[StepsRecord.COUNT_TOTAL] ?: 0
         onSensorUpdated(
             context,
@@ -871,7 +884,9 @@ class HealthConnectSensorManager : SensorManager {
 
     private suspend fun updateTotalCaloriesBurnedSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
-        val totalCaloriesBurnedRequest = healthConnectClient.aggregateOrNull(buildAggregationRequest(TotalCaloriesBurnedRecord.ENERGY_TOTAL)) ?: return
+        val totalCaloriesBurnedRequest =
+            healthConnectClient.aggregateOrNull(buildAggregationRequest(TotalCaloriesBurnedRecord.ENERGY_TOTAL))
+                ?: return
         val energy = totalCaloriesBurnedRequest[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories ?: 0.0
         onSensorUpdated(
             context,
@@ -967,7 +982,9 @@ class HealthConnectSensorManager : SensorManager {
     override suspend fun checkPermission(context: Context, sensorId: String): Boolean {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return false
         return try {
-            healthConnectClient.permissionController.getGrantedPermissions().containsAll(requiredPermissions(sensorId).toSet())
+            healthConnectClient.permissionController.getGrantedPermissions().containsAll(
+                requiredPermissions(sensorId).toSet(),
+            )
         } catch (e: Exception) {
             Timber.e(e, "Unable to check permissions")
             true // default to true as we still need to check sensor enabled state
@@ -983,7 +1000,9 @@ class HealthConnectSensorManager : SensorManager {
         }
     }
 
-    private suspend fun <T : Record> HealthConnectClient.readRecordsOrNull(request: ReadRecordsRequest<T>): ReadRecordsResponse<T>? = try {
+    private suspend fun <T : Record> HealthConnectClient.readRecordsOrNull(
+        request: ReadRecordsRequest<T>,
+    ): ReadRecordsResponse<T>? = try {
         readRecords(request)
     } catch (e: Exception) {
         Timber.e(e, "Could not read records")

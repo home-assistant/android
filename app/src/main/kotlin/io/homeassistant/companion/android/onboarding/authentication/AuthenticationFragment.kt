@@ -16,7 +16,17 @@ import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.colorResource
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -58,15 +68,20 @@ class AuthenticationFragment : Fragment() {
     lateinit var keyChainRepository: KeyChainRepository
 
     @SuppressLint("SetJavaScriptEnabled")
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
+                    // TODO once the frontend supports edge to edge we should simply send the insets to the frontend instead of this spacer https://github.com/home-assistant/frontend/pull/25566
+                    Spacer(
+                        modifier = Modifier.fillMaxWidth().height(
+                            WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding(),
+                        )
+                            .background(colorResource(commonR.color.colorLaunchScreenBackground)),
+                    )
+
                     HAWebView(
+                        modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
                         configure = {
                             themesManager.setThemeForWebView(requireContext(), settings)
                             settings.javaScriptEnabled = true
@@ -75,10 +90,7 @@ class AuthenticationFragment : Fragment() {
                                 settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
                             webViewClient = object : TLSWebViewClient(keyChainRepository) {
                                 @Deprecated("Deprecated in Java")
-                                override fun shouldOverrideUrlLoading(
-                                    view: WebView?,
-                                    url: String,
-                                ): Boolean {
+                                override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
                                     return onRedirect(url)
                                 }
 
@@ -220,7 +232,9 @@ class AuthenticationFragment : Fragment() {
             .setTitle(commonR.string.error_connection_failed)
             .setMessage(
                 when (sslError?.primaryError) {
-                    SslError.SSL_DATE_INVALID -> requireContext().getString(commonR.string.webview_error_SSL_DATE_INVALID)
+                    SslError.SSL_DATE_INVALID -> requireContext().getString(
+                        commonR.string.webview_error_SSL_DATE_INVALID,
+                    )
                     SslError.SSL_EXPIRED -> requireContext().getString(commonR.string.webview_error_SSL_EXPIRED)
                     SslError.SSL_IDMISMATCH -> requireContext().getString(commonR.string.webview_error_SSL_IDMISMATCH)
                     SslError.SSL_INVALID -> requireContext().getString(commonR.string.webview_error_SSL_INVALID)
@@ -231,10 +245,18 @@ class AuthenticationFragment : Fragment() {
                             when (error?.errorCode) {
                                 WebViewClient.ERROR_FAILED_SSL_HANDSHAKE ->
                                     requireContext().getString(commonR.string.webview_error_FAILED_SSL_HANDSHAKE)
-                                WebViewClient.ERROR_AUTHENTICATION -> requireContext().getString(commonR.string.webview_error_AUTHENTICATION)
-                                WebViewClient.ERROR_PROXY_AUTHENTICATION -> requireContext().getString(commonR.string.webview_error_PROXY_AUTHENTICATION)
-                                WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME -> requireContext().getString(commonR.string.webview_error_AUTH_SCHEME)
-                                WebViewClient.ERROR_HOST_LOOKUP -> requireContext().getString(commonR.string.webview_error_HOST_LOOKUP)
+                                WebViewClient.ERROR_AUTHENTICATION -> requireContext().getString(
+                                    commonR.string.webview_error_AUTHENTICATION,
+                                )
+                                WebViewClient.ERROR_PROXY_AUTHENTICATION -> requireContext().getString(
+                                    commonR.string.webview_error_PROXY_AUTHENTICATION,
+                                )
+                                WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME -> requireContext().getString(
+                                    commonR.string.webview_error_AUTH_SCHEME,
+                                )
+                                WebViewClient.ERROR_HOST_LOOKUP -> requireContext().getString(
+                                    commonR.string.webview_error_HOST_LOOKUP,
+                                )
                                 else -> message
                             }
                         } else {

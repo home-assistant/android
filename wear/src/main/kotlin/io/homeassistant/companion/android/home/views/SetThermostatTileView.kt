@@ -82,7 +82,10 @@ fun SetThermostatTileView(
                     },
                     secondaryLabel = {
                         Text(
-                            intervalToString(LocalContext.current, (tile?.refreshInterval ?: DEFAULT_REFRESH_INTERVAL).toInt()),
+                            intervalToString(
+                                LocalContext.current,
+                                (tile?.refreshInterval ?: DEFAULT_REFRESH_INTERVAL).toInt(),
+                            ),
                         )
                     },
                     onClick = onSelectRefreshInterval,

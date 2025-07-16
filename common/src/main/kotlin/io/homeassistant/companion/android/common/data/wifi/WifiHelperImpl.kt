@@ -11,20 +11,18 @@ class WifiHelperImpl @Inject constructor(
     private val connectivityManager: ConnectivityManager,
     private val wifiManager: WifiManager?,
 ) : WifiHelper {
-    override fun hasWifi(): Boolean =
-        wifiManager != null
+    override fun hasWifi(): Boolean = wifiManager != null
 
-    override fun isUsingWifi(): Boolean =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            connectivityManager.activeNetwork?.let {
-                connectivityManager
-                    .getNetworkCapabilities(it)
-                    ?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
-            } ?: false
-        } else {
-            connectivityManager.activeNetworkInfo?.isConnected == true &&
-                connectivityManager.activeNetworkInfo?.type == ConnectivityManager.TYPE_WIFI
-        }
+    override fun isUsingWifi(): Boolean = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        connectivityManager.activeNetwork?.let {
+            connectivityManager
+                .getNetworkCapabilities(it)
+                ?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+        } ?: false
+    } else {
+        connectivityManager.activeNetworkInfo?.isConnected == true &&
+            connectivityManager.activeNetworkInfo?.type == ConnectivityManager.TYPE_WIFI
+    }
 
     override fun isUsingSpecificWifi(networks: List<String>): Boolean {
         if (networks.isEmpty()) return false
@@ -34,14 +32,15 @@ class WifiHelperImpl @Inject constructor(
             formattedSsid != null &&
                 (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || formattedSsid !== WifiManager.UNKNOWN_SSID) &&
                 formattedSsid in networks
-            ) || (
-            formattedBssid != null &&
-                formattedBssid != WifiHelper.INVALID_BSSID &&
-                networks.any {
-                    it.startsWith(WifiHelper.BSSID_PREFIX) &&
-                        it.removePrefix(WifiHelper.BSSID_PREFIX).equals(formattedBssid, ignoreCase = true)
-                }
-            )
+            ) ||
+            (
+                formattedBssid != null &&
+                    formattedBssid != WifiHelper.INVALID_BSSID &&
+                    networks.any {
+                        it.startsWith(WifiHelper.BSSID_PREFIX) &&
+                            it.removePrefix(WifiHelper.BSSID_PREFIX).equals(formattedBssid, ignoreCase = true)
+                    }
+                )
     }
 
     override fun getWifiSsid(): String? =
@@ -50,27 +49,25 @@ class WifiHelperImpl @Inject constructor(
     override fun getWifiBssid(): String? =
         wifiManager?.connectionInfo?.bssid // Deprecated but callback doesn't provide BSSID info instantly
 
-    override fun isUsingEthernet(): Boolean =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            connectivityManager.activeNetwork?.let {
-                connectivityManager
-                    .getNetworkCapabilities(it)
-                    ?.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) == true
-            } == true
-        } else {
-            connectivityManager.activeNetworkInfo?.isConnected == true &&
-                connectivityManager.activeNetworkInfo?.type == ConnectivityManager.TYPE_ETHERNET
-        }
+    override fun isUsingEthernet(): Boolean = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        connectivityManager.activeNetwork?.let {
+            connectivityManager
+                .getNetworkCapabilities(it)
+                ?.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) == true
+        } == true
+    } else {
+        connectivityManager.activeNetworkInfo?.isConnected == true &&
+            connectivityManager.activeNetworkInfo?.type == ConnectivityManager.TYPE_ETHERNET
+    }
 
-    override fun isUsingVpn(): Boolean =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            connectivityManager.activeNetwork?.let {
-                connectivityManager
-                    .getNetworkCapabilities(it)
-                    ?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
-            } == true
-        } else {
-            connectivityManager.activeNetworkInfo?.isConnected == true &&
-                connectivityManager.activeNetworkInfo?.type == ConnectivityManager.TYPE_VPN
-        }
+    override fun isUsingVpn(): Boolean = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        connectivityManager.activeNetwork?.let {
+            connectivityManager
+                .getNetworkCapabilities(it)
+                ?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
+        } == true
+    } else {
+        connectivityManager.activeNetworkInfo?.isConnected == true &&
+            connectivityManager.activeNetworkInfo?.type == ConnectivityManager.TYPE_VPN
+    }
 }

@@ -33,33 +33,19 @@ class TLSHelper @Inject constructor(
 
     private fun getMTLSKeyManagerForOKHTTP(): X509ExtendedKeyManager {
         return object : X509ExtendedKeyManager() {
-            override fun getClientAliases(
-                p0: String?,
-                p1: Array<out Principal>?,
-            ): Array<String> {
+            override fun getClientAliases(p0: String?, p1: Array<out Principal>?): Array<String> {
                 return emptyArray()
             }
 
-            override fun chooseClientAlias(
-                p0: Array<out String>?,
-                p1: Array<out Principal>?,
-                p2: Socket?,
-            ): String {
+            override fun chooseClientAlias(p0: Array<out String>?, p1: Array<out Principal>?, p2: Socket?): String {
                 return ""
             }
 
-            override fun getServerAliases(
-                p0: String?,
-                p1: Array<out Principal>?,
-            ): Array<String> {
+            override fun getServerAliases(p0: String?, p1: Array<out Principal>?): Array<String> {
                 return arrayOf()
             }
 
-            override fun chooseServerAlias(
-                p0: String?,
-                p1: Array<out Principal>?,
-                p2: Socket?,
-            ): String {
+            override fun chooseServerAlias(p0: String?, p1: Array<out Principal>?, p2: Socket?): String {
                 return ""
             }
 

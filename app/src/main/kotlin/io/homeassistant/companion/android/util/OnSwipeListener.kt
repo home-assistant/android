@@ -113,7 +113,15 @@ abstract class OnSwipeListener(context: Context?) : View.OnTouchListener {
                         handled = onSwipe(
                             downEvent!!,
                             motionEvent,
-                            abs(if (direction == GestureDirection.UP || direction == GestureDirection.DOWN) velocityY else velocityX),
+                            abs(
+                                if (direction == GestureDirection.UP ||
+                                    direction == GestureDirection.DOWN
+                                ) {
+                                    velocityY
+                                } else {
+                                    velocityX
+                                },
+                            ),
                             direction,
                             numberOfPointers,
                         )
@@ -162,8 +170,5 @@ abstract class OnSwipeListener(context: Context?) : View.OnTouchListener {
      *
      * @return `true` if the listener has consumed the event, `false` otherwise.
      * */
-    abstract fun onMotionEventHandled(
-        v: View?,
-        event: MotionEvent?,
-    ): Boolean
+    abstract fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean
 }

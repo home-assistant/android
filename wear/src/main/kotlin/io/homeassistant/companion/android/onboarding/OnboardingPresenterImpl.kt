@@ -81,10 +81,7 @@ class OnboardingPresenterImpl @Inject constructor(
                             )
                         }
 
-                        override fun onAuthorizationResponse(
-                            request: OAuthRequest,
-                            response: OAuthResponse,
-                        ) {
+                        override fun onAuthorizationResponse(request: OAuthRequest, response: OAuthResponse) {
                             response.responseUrl?.getQueryParameter("code")?.let { code ->
                                 register(url, code)
                             } ?: run {

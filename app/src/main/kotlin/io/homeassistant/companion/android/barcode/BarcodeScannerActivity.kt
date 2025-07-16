@@ -37,13 +37,7 @@ class BarcodeScannerActivity : BaseActivity() {
         private const val EXTRA_SUBTITLE = "subtitle"
         private const val EXTRA_ACTION = "action"
 
-        fun newInstance(
-            context: Context,
-            messageId: Int,
-            title: String,
-            subtitle: String,
-            action: String?,
-        ): Intent {
+        fun newInstance(context: Context, messageId: Int, title: String, subtitle: String, action: String?): Intent {
             return Intent(context, BarcodeScannerActivity::class.java).apply {
                 putExtra(EXTRA_MESSAGE_ID, messageId)
                 putExtra(EXTRA_TITLE, title)

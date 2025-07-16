@@ -44,7 +44,11 @@ class NotificationActionReceiver : BroadcastReceiver() {
     lateinit var notificationDao: NotificationDao
 
     override fun onReceive(context: Context, intent: Intent) {
-        val notificationAction = IntentCompat.getParcelableExtra(intent, EXTRA_NOTIFICATION_ACTION, NotificationAction::class.java)
+        val notificationAction = IntentCompat.getParcelableExtra(
+            intent,
+            EXTRA_NOTIFICATION_ACTION,
+            NotificationAction::class.java,
+        )
 
         if (notificationAction == null) {
             Timber.e("Failed to get notification action.")
@@ -101,12 +105,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun fireEvent(
-        action: NotificationAction,
-        serverId: Int,
-        onComplete: () -> Unit,
-        onFailure: () -> Unit,
-    ) {
+    private fun fireEvent(action: NotificationAction, serverId: Int, onComplete: () -> Unit, onFailure: () -> Unit) {
         ioScope.launch {
             try {
                 serverManager.integrationRepository(serverId).fireEvent(

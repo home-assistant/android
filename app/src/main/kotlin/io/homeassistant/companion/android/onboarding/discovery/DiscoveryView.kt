@@ -93,7 +93,9 @@ fun DiscoveryView(
             item("discovery.error") {
                 AnimatedVisibility(discoveryHasError) {
                     Text(
-                        text = stringResource(if (!discoveryActive) commonR.string.failed_scan else commonR.string.slow_scan),
+                        text = stringResource(
+                            if (!discoveryActive) commonR.string.failed_scan else commonR.string.slow_scan,
+                        ),
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.body2,
                         modifier = Modifier.fillMaxWidth(),
@@ -127,10 +129,7 @@ fun DiscoveryView(
 }
 
 @Composable
-private fun DiscoveredInstanceRow(
-    instance: HomeAssistantInstance,
-    onClick: () -> Unit,
-) {
+private fun DiscoveredInstanceRow(instance: HomeAssistantInstance, onClick: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,

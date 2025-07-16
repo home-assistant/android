@@ -19,11 +19,7 @@ import androidx.compose.ui.viewinterop.AndroidView
  *                a pre-configured WebView instance.
  */
 @Composable
-fun HAWebView(
-    modifier: Modifier = Modifier,
-    configure: WebView.() -> Unit = {},
-    factory: () -> WebView? = { null },
-) {
+fun HAWebView(modifier: Modifier = Modifier, configure: WebView.() -> Unit = {}, factory: () -> WebView? = { null }) {
     AndroidView(
         factory = { context ->
             (factory() ?: WebView(context)).apply {
