@@ -60,12 +60,18 @@ class AndroidTextToSpeechEngine(private val applicationContext: Context) : TextT
                     @Deprecated("Deprecated in Java")
                     override fun onError(utteranceId: String?) {
                         utterance.streamVolumeAdjustment.resetVolume()
-                        continuation.resume(Result.failure(RuntimeException("Playback error; utterance ID: $utteranceId")))
+                        continuation.resume(
+                            Result.failure(RuntimeException("Playback error; utterance ID: $utteranceId")),
+                        )
                     }
 
                     override fun onError(utteranceId: String?, errorCode: Int) {
                         utterance.streamVolumeAdjustment.resetVolume()
-                        continuation.resume(Result.failure(RuntimeException("Playback error; utterance ID: $utteranceId; error code: $errorCode")))
+                        continuation.resume(
+                            Result.failure(
+                                RuntimeException("Playback error; utterance ID: $utteranceId; error code: $errorCode"),
+                            ),
+                        )
                     }
                 }
                 textToSpeech.setOnUtteranceProgressListener(listener)

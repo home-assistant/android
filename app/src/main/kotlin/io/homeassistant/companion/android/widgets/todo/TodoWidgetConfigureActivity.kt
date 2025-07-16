@@ -62,6 +62,7 @@ import timber.log.Timber
 @AndroidEntryPoint
 class TodoWidgetConfigureActivity : BaseActivity() {
     companion object {
+        @Suppress("ktlint:standard:max-line-length")
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.todo.TodoWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
@@ -166,10 +167,7 @@ class TodoWidgetConfigureActivity : BaseActivity() {
 }
 
 @Composable
-private fun TodoWidgetConfigureScreen(
-    viewModel: TodoWidgetConfigureViewModel,
-    onAddWidget: () -> Unit,
-) {
+private fun TodoWidgetConfigureScreen(viewModel: TodoWidgetConfigureViewModel, onAddWidget: () -> Unit) {
     val servers by viewModel.servers.collectAsStateWithLifecycle()
     val entities by viewModel.entities.collectAsStateWithLifecycle()
 
@@ -258,7 +256,9 @@ private fun TodoWidgetConfigureView(
                 Switch(
                     checked = showCompleted,
                     onCheckedChange = { onShowCompletedChanged(it) },
-                    colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb)),
+                    colors = SwitchDefaults.colors(
+                        uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb),
+                    ),
                 )
             }
 

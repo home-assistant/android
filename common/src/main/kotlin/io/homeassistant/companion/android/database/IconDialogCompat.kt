@@ -13,9 +13,7 @@ import kotlinx.coroutines.withContext
 /**
  * Translation layer for IDs used by the old icondialog package to material icon names.
  */
-class IconDialogCompat @Inject constructor(
-    private val assets: AssetManager,
-) {
+class IconDialogCompat @Inject constructor(private val assets: AssetManager) {
     /**
      * Loads map of icon IDs to regular icon names.
      */

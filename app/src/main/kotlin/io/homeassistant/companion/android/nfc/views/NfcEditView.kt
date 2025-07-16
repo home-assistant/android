@@ -101,9 +101,7 @@ fun NfcEditView(
 }
 
 @Composable
-fun NfcCodeContainer(
-    text: String,
-) {
+fun NfcCodeContainer(text: String) {
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = colorResource(commonR.color.colorCodeBackground),
@@ -120,11 +118,7 @@ fun NfcCodeContainer(
 }
 
 @Composable
-fun NfcTriggerExample(
-    modifier: Modifier = Modifier,
-    description: String,
-    example: String,
-) {
+fun NfcTriggerExample(modifier: Modifier = Modifier, description: String, example: String) {
     val context = LocalContext.current
     Column(modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {

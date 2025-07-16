@@ -15,7 +15,8 @@ import timber.log.Timber
 class ServerSettingsPresenterImpl @Inject constructor(
     private val serverManager: ServerManager,
     private val wifiHelper: WifiHelper,
-) : ServerSettingsPresenter, PreferenceDataStore() {
+) : PreferenceDataStore(),
+    ServerSettingsPresenter {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     private lateinit var view: ServerSettingsView
@@ -42,7 +43,9 @@ class ServerSettingsPresenterImpl @Inject constructor(
             when (key) {
                 "trust_server" -> serverManager.integrationRepository(serverId).setTrusted(value)
                 "app_lock" -> serverManager.authenticationRepository(serverId).setLockEnabled(value)
-                "app_lock_home_bypass" -> serverManager.authenticationRepository(serverId).setLockHomeBypassEnabled(value)
+                "app_lock_home_bypass" -> serverManager.authenticationRepository(
+                    serverId,
+                ).setLockHomeBypassEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -52,7 +55,10 @@ class ServerSettingsPresenterImpl @Inject constructor(
         when (key) {
             "server_name" -> serverManager.getServer(serverId)?.nameOverride
             "registration_name" -> serverManager.getServer(serverId)?.deviceName
-            "connection_internal" -> (serverManager.getServer(serverId)?.connection?.getUrl(isInternal = true, force = true) ?: "").toString()
+            "connection_internal" -> (
+                serverManager.getServer(serverId)?.connection?.getUrl(isInternal = true, force = true)
+                    ?: ""
+                ).toString()
             "session_timeout" -> serverManager.integrationRepository(serverId).getSessionTimeOut().toString()
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
@@ -130,8 +136,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
 
     override fun hasMultipleServers(): Boolean = serverManager.defaultServers.size > 1
 
-    override fun updateServerName() =
-        view.updateServerName(serverManager.getServer(serverId)?.friendlyName ?: "")
+    override fun updateServerName() = view.updateServerName(serverManager.getServer(serverId)?.friendlyName ?: "")
 
     override fun updateUrlStatus() {
         mainScope.launch {
@@ -145,7 +150,9 @@ class ServerSettingsPresenterImpl @Inject constructor(
         mainScope.launch {
             val connection = serverManager.getServer(serverId)?.connection
             val ssids = connection?.internalSsids.orEmpty()
-            view.enableInternalConnection(ssids.isNotEmpty() || connection?.internalEthernet == true || connection?.internalVpn == true)
+            view.enableInternalConnection(
+                ssids.isNotEmpty() || connection?.internalEthernet == true || connection?.internalVpn == true,
+            )
             view.updateHomeNetwork(ssids, connection?.internalEthernet, connection?.internalVpn)
         }
     }

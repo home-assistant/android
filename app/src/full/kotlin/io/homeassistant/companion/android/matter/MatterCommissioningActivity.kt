@@ -36,9 +36,10 @@ class MatterCommissioningActivity : AppCompatActivity() {
     private var servers by mutableStateOf<List<Server>>(emptyList())
     private var newMatterDevice = false
 
-    private val threadPermissionLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        deviceCode?.let { viewModel.onThreadPermissionResult(result, it) }
-    }
+    private val threadPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+            deviceCode?.let { viewModel.onThreadPermissionResult(result, it) }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

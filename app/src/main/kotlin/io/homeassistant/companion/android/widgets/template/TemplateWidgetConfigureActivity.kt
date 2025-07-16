@@ -37,6 +37,7 @@ import timber.log.Timber
 @AndroidEntryPoint
 class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     companion object {
+        @Suppress("ktlint:standard:max-line-length")
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
@@ -88,7 +89,8 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         val templateWidget = templateWidgetDao.get(appWidgetId)
 
         val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
-        binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
+        binding.backgroundType.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         setupServerSelect(templateWidget?.serverId)
 
@@ -111,9 +113,14 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             )
             binding.textColor.isVisible = templateWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
             binding.textColorWhite.isChecked =
-                templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
+                templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) }
+                    ?: true
             binding.textColorBlack.isChecked =
-                templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
+                templateWidget.textColor?.let {
+                    it.toColorInt() ==
+                        ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack)
+                }
+                    ?: false
         } else {
             binding.backgroundType.setSelection(0)
         }
@@ -140,7 +147,10 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                         PendingIntent.getActivity(
                             this,
                             System.currentTimeMillis().toInt(),
-                            Intent(this, TemplateWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                            Intent(
+                                this,
+                                TemplateWidgetConfigureActivity::class.java,
+                            ).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
                         ),
                     )
@@ -188,8 +198,16 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             )
             putExtra(
                 TemplateWidget.EXTRA_TEXT_COLOR,
-                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent)) {
-                    getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
+                if (binding.backgroundType.selectedItem as String? ==
+                    getString(commonR.string.widget_background_type_transparent)
+                ) {
+                    getHexForColor(
+                        if (binding.textColorWhite.isChecked) {
+                            android.R.color.white
+                        } else {
+                            commonR.color.colorWidgetButtonLabelBlack
+                        },
+                    )
                 } else {
                     null
                 },
@@ -221,7 +239,10 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             var enabled: Boolean
             withContext(Dispatchers.IO) {
                 try {
-                    templateText = serverManager.integrationRepository(selectedServerId!!).renderTemplate(template, mapOf()).toString()
+                    templateText =
+                        serverManager.integrationRepository(
+                            selectedServerId!!,
+                        ).renderTemplate(template, mapOf()).toString()
                     enabled = true
                 } catch (e: Exception) {
                     Timber.e(e, "Exception while rendering template")
@@ -236,7 +257,8 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     enabled = false
                 }
             }
-            binding.renderedTemplate.text = templateText?.let { HtmlCompat.fromHtml(it, HtmlCompat.FROM_HTML_MODE_LEGACY) }
+            binding.renderedTemplate.text =
+                templateText?.let { HtmlCompat.fromHtml(it, HtmlCompat.FROM_HTML_MODE_LEGACY) }
             binding.addButton.isEnabled = enabled && isValidServerId()
         }
     }

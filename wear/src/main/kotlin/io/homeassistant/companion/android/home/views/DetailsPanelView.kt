@@ -98,7 +98,9 @@ fun DetailsPanelView(
                                 if (isChecked) wearColorScheme.tertiary else wearColorScheme.onSurface,
                             ),
                             contentDescription = stringResource(if (isChecked) R.string.enabled else R.string.disabled),
-                            modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize)),
+                            modifier = Modifier.size(
+                                IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize),
+                            ),
                         )
                     }
                 } else {
@@ -126,7 +128,9 @@ fun DetailsPanelView(
                     }
                 }
 
-                if (entity.supportsLightColorTemperature() && attributes["color_mode"] == EntityExt.LIGHT_MODE_COLOR_TEMP) {
+                if (entity.supportsLightColorTemperature() &&
+                    attributes["color_mode"] == EntityExt.LIGHT_MODE_COLOR_TEMP
+                ) {
                     item {
                         ColorTempSlider(attributes, onColorTempChanged, isToastEnabled, isHapticEnabled)
                     }
@@ -293,9 +297,12 @@ fun ColorTempSlider(
 
     val useKelvin = attributes.containsKey("color_temp_kelvin") // Added in 2022.11
 
-    val minValue = ((if (useKelvin) attributes["min_color_temp_kelvin"] else attributes["min_mireds"]) as? Number)?.toFloat() ?: 0f
-    val maxValue = ((if (useKelvin) attributes["max_color_temp_kelvin"] else attributes["max_mireds"]) as? Number)?.toFloat() ?: 0f
-    var currentValue = ((if (useKelvin) attributes["color_temp_kelvin"] else attributes["color_temp"]) as? Number)?.toFloat() ?: 0f
+    val minValue =
+        ((if (useKelvin) attributes["min_color_temp_kelvin"] else attributes["min_mireds"]) as? Number)?.toFloat() ?: 0f
+    val maxValue =
+        ((if (useKelvin) attributes["max_color_temp_kelvin"] else attributes["max_mireds"]) as? Number)?.toFloat() ?: 0f
+    var currentValue =
+        ((if (useKelvin) attributes["color_temp_kelvin"] else attributes["color_temp"]) as? Number)?.toFloat() ?: 0f
     if (currentValue < minValue) {
         currentValue = minValue
     }

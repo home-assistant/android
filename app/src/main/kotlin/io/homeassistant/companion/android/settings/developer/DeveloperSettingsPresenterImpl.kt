@@ -25,7 +25,8 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
     private val prefsRepository: PrefsRepository,
     private val serverManager: ServerManager,
     private val threadManager: ThreadManager,
-) : DeveloperSettingsPresenter, PreferenceDataStore() {
+) : PreferenceDataStore(),
+    DeveloperSettingsPresenter {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     private lateinit var view: DeveloperSettingsView
@@ -63,12 +64,27 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
     override fun runThreadDebug(context: Context, serverId: Int) {
         mainScope.launch {
             try {
-                when (val syncResult = threadManager.syncPreferredDataset(context, serverId, false, CoroutineScope(coroutineContext + SupervisorJob()))) {
+                when (
+                    val syncResult = threadManager.syncPreferredDataset(
+                        context,
+                        serverId,
+                        false,
+                        CoroutineScope(
+                            coroutineContext + SupervisorJob(),
+                        ),
+                    )
+                ) {
                     is ThreadManager.SyncResult.ServerUnsupported ->
-                        view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_unsupported_server), false)
+                        view.onThreadDebugResult(
+                            context.getString(commonR.string.thread_debug_result_unsupported_server),
+                            false,
+                        )
                     is ThreadManager.SyncResult.OnlyOnServer -> {
                         if (syncResult.imported) {
-                            view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_imported), true)
+                            view.onThreadDebugResult(
+                                context.getString(commonR.string.thread_debug_result_imported),
+                                true,
+                            )
                         } else {
                             view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_error), false)
                         }
@@ -84,9 +100,15 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
                         } else if (syncResult.matches == true) {
                             view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_match), true)
                         } else if (syncResult.fromApp == true && syncResult.updated == true) {
-                            view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_updated), true)
+                            view.onThreadDebugResult(
+                                context.getString(commonR.string.thread_debug_result_updated),
+                                true,
+                            )
                         } else if (syncResult.fromApp == true && syncResult.updated == false) {
-                            view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_removed), true)
+                            view.onThreadDebugResult(
+                                context.getString(commonR.string.thread_debug_result_removed),
+                                true,
+                            )
                         } else {
                             view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_error), false)
                         }
@@ -117,7 +139,9 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
                         view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_exported), true)
                     } else {
                         // If we got permission while both had a dataset, the device prefers a different network
-                        val out = "${context.getString(commonR.string.thread_debug_result_mismatch)} ${context.getString(commonR.string.thread_debug_result_mismatch_detail, submitted)}"
+                        val out = "${context.getString(
+                            commonR.string.thread_debug_result_mismatch,
+                        )} ${context.getString(commonR.string.thread_debug_result_mismatch_detail, submitted)}"
                         view.onThreadDebugResult(out, null)
                     }
                 } else {

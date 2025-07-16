@@ -224,10 +224,7 @@ fun BarcodeScannerView(
  * The button size fits with the overlay radius.
  */
 @Composable
-fun FlashlightButton(
-    onToggle: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-) {
+fun FlashlightButton(onToggle: (Boolean) -> Unit, modifier: Modifier = Modifier) {
     var flashlightOn by rememberSaveable { mutableStateOf(false) }
     OutlinedButton(
         modifier = modifier.size(48.dp),

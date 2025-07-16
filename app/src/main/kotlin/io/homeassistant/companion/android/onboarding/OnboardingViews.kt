@@ -31,10 +31,7 @@ import kotlin.math.min
  * Base layout for onboarding views which centers content and limits the container width if needed.
  */
 @Composable
-fun OnboardingScreen(
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
-) {
+fun OnboardingScreen(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Box(Modifier.fillMaxSize()) {
         val screenWidth = screenWidth()
         Column(
@@ -50,10 +47,7 @@ fun OnboardingScreen(
 }
 
 @Composable
-fun OnboardingHeaderView(
-    icon: IIcon,
-    title: String,
-) {
+fun OnboardingHeaderView(icon: IIcon, title: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Spacer(modifier = Modifier.height(32.dp))
         Image(
@@ -76,10 +70,7 @@ fun OnboardingHeaderView(
 }
 
 @Composable
-fun OnboardingPermissionBullet(
-    icon: IIcon,
-    text: String,
-) {
+fun OnboardingPermissionBullet(icon: IIcon, text: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(vertical = 12.dp),

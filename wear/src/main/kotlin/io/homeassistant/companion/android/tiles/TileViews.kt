@@ -101,7 +101,8 @@ fun primaryLayoutTimeline(
     builder.setContent(
         Text.Builder(context, context.getString(text))
             .setTypography(Typography.TYPOGRAPHY_BODY1)
-            .setMaxLines(if (title != null) 3 else 4) // It is highly recommended that main content has [if] 1 label is present: content with max 3 lines
+            // It is highly recommended that main content has [if] 1 label is present: content with max 3 lines
+            .setMaxLines(if (title != null) 3 else 4)
             .setColor(argb(theme.onSurface))
             .build(),
     )
@@ -124,25 +125,24 @@ fun primaryLayoutTimeline(
  * - handles the refresh action ([MODIFIER_CLICK_REFRESH]) in `onTileRequest`;
  * - adds a resource for [RESOURCE_REFRESH] in `onTileResourcesRequest`.
  */
-fun getRefreshButton(): LayoutElementBuilders.Arc =
-    LayoutElementBuilders.Arc.Builder()
-        .setAnchorAngle(
-            DimensionBuilders.DegreesProp.Builder(180f).build(),
-        )
-        .addContent(
-            LayoutElementBuilders.ArcAdapter.Builder()
-                .setContent(
-                    LayoutElementBuilders.Image.Builder()
-                        .setResourceId(RESOURCE_REFRESH)
-                        .setWidth(DimensionBuilders.dp(24f))
-                        .setHeight(DimensionBuilders.dp(24f))
-                        .setModifiers(getRefreshModifiers())
-                        .build(),
-                )
-                .setRotateContents(false)
-                .build(),
-        )
-        .build()
+fun getRefreshButton(): LayoutElementBuilders.Arc = LayoutElementBuilders.Arc.Builder()
+    .setAnchorAngle(
+        DimensionBuilders.DegreesProp.Builder(180f).build(),
+    )
+    .addContent(
+        LayoutElementBuilders.ArcAdapter.Builder()
+            .setContent(
+                LayoutElementBuilders.Image.Builder()
+                    .setResourceId(RESOURCE_REFRESH)
+                    .setWidth(DimensionBuilders.dp(24f))
+                    .setHeight(DimensionBuilders.dp(24f))
+                    .setModifiers(getRefreshModifiers())
+                    .build(),
+            )
+            .setRotateContents(false)
+            .build(),
+    )
+    .build()
 
 /** @return a modifier for tiles that represents a 'tap to refresh' [ActionBuilders.LoadAction] */
 fun getRefreshModifiers(): ModifiersBuilders.Modifiers {

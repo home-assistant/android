@@ -74,11 +74,7 @@ class SensorDetailFragment : Fragment() {
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -140,14 +136,20 @@ class SensorDetailFragment : Fragment() {
                 it.permissions.any { perm -> perm == Manifest.permission.PACKAGE_USAGE_STATS } ->
                     activityResultRequest.launch(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
                 it.permissions.any { perm -> perm.startsWith("android.permission.health") } -> {
-                    val healthConnectPermissions = it.permissions.filter { perm -> perm.startsWith("android.permission.health") }
+                    val healthConnectPermissions = it.permissions.filter { perm ->
+                        perm.startsWith("android.permission.health")
+                    }
                     healthPermissionsRequest?.launch(healthConnectPermissions.toSet())
                 }
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ->
-                    if (it.permissions.size == 1 && it.permissions[0] == Manifest.permission.ACCESS_BACKGROUND_LOCATION) {
+                    if (it.permissions.size == 1 &&
+                        it.permissions[0] == Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    ) {
                         permissionsRequest.launch(it.permissions)
                     } else {
-                        permissionsRequest.launch(it.permissions.toSet().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray())
+                        permissionsRequest.launch(
+                            it.permissions.toSet().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray(),
+                        )
                     }
                 else -> permissionsRequest.launch(it.permissions)
             }
@@ -164,7 +166,9 @@ class SensorDetailFragment : Fragment() {
                             requestForServer = it.serverId
                             permissionsRequest.launch(
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                    it.permissions.toSet().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray()
+                                    it.permissions.toSet().minus(
+                                        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                                    ).toTypedArray()
                                 } else {
                                     it.permissions
                                 },

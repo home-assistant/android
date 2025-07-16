@@ -21,11 +21,7 @@ class NotificationChannelFragment : Fragment() {
     val viewModel: NotificationViewModel by viewModels()
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -36,7 +32,9 @@ class NotificationChannelFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        addHelpMenuProvider("https://companion.home-assistant.io/docs/notifications/notifications-basic#notification-channels")
+        addHelpMenuProvider(
+            "https://companion.home-assistant.io/docs/notifications/notifications-basic#notification-channels",
+        )
     }
 
     override fun onResume() {

@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositor
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -35,6 +36,7 @@ import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidget
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
 import io.homeassistant.companion.android.widgets.todo.TodoWidget
+import java.util.concurrent.Executors
 import javax.inject.Inject
 import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
@@ -45,7 +47,9 @@ import okhttp3.OkHttpClient
 import timber.log.Timber
 
 @HiltAndroidApp
-open class HomeAssistantApplication : Application(), SingletonImageLoader.Factory {
+open class HomeAssistantApplication :
+    Application(),
+    SingletonImageLoader.Factory {
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
@@ -75,7 +79,19 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
                     .detectUnsafeIntentLaunch()
                     .detectLeakedRegistrationObjects()
                     .penaltyLog()
-                    .penaltyDeath()
+                    .penaltyListener(Executors.newSingleThreadExecutor()) { violation ->
+                        val shouldSkip = violation.stackTrace.any {
+                            // We ignore an issue in the webview client that use the wrong context when
+                            // configuration change (rotation).
+                            it.fileName.startsWith("chromium-TrichromeWebViewGoogle") &&
+                                it.methodName == "onConfigurationChanged"
+                        }
+                        if (!shouldSkip) {
+                            FailFast.failWith(violation)
+                        } else {
+                            Timber.w(violation, "Ignoring unexpected violation")
+                        }
+                    }
                     .build(),
             )
 
@@ -307,7 +323,12 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
         ioScope.launch {
             // 0 is used for storing app level settings
             val settings = settingDao.get(0)
-            if (settings != null && (settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING || settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_ALWAYS)) {
+            if (settings != null &&
+                (
+                    settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING ||
+                        settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_ALWAYS
+                    )
+            ) {
                 ContextCompat.registerReceiver(
                     this@HomeAssistantApplication,
                     sensorReceiver,
@@ -339,19 +360,28 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
 
             ContextCompat.registerReceiver(this, buttonWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
             ContextCompat.registerReceiver(this, entityWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
-            ContextCompat.registerReceiver(this, mediaPlayerWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
-            ContextCompat.registerReceiver(this, templateWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            ContextCompat.registerReceiver(
+                this,
+                mediaPlayerWidget,
+                screenIntentFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+            ContextCompat.registerReceiver(
+                this,
+                templateWidget,
+                screenIntentFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
         }
     }
 
-    override fun newImageLoader(context: PlatformContext): ImageLoader =
-        ImageLoader.Builder(context)
-            .components {
-                add(
-                    OkHttpNetworkFetcherFactory(
-                        callFactory = okHttpClient,
-                    ),
-                )
-            }
-            .build()
+    override fun newImageLoader(context: PlatformContext): ImageLoader = ImageLoader.Builder(context)
+        .components {
+            add(
+                OkHttpNetworkFetcherFactory(
+                    callFactory = okHttpClient,
+                ),
+            )
+        }
+        .build()
 }
