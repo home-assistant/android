@@ -8,10 +8,8 @@ import android.widget.Filter
 import android.widget.TextView
 import java.util.Comparator
 
-class SingleItemArrayAdapter<T>(
-    context: Context,
-    private val createText: (T?) -> String,
-) : ArrayAdapter<T>(context, android.R.layout.simple_list_item_1) {
+class SingleItemArrayAdapter<T>(context: Context, private val createText: (T?) -> String) :
+    ArrayAdapter<T>(context, android.R.layout.simple_list_item_1) {
 
     private var filterItems = ArrayList<T>()
 

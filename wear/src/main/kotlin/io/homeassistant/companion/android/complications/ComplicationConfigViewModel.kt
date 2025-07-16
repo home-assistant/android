@@ -161,16 +161,16 @@ class ComplicationConfigViewModel @Inject constructor(
 
     fun addEntityStateComplication(id: Int, entity: SimplifiedEntity) {
         viewModelScope.launch {
-            entityStateComplicationsDao.add(EntityStateComplications(id, entity.entityId, entityShowTitle, entityShowUnit))
+            entityStateComplicationsDao.add(
+                EntityStateComplications(id, entity.entityId, entityShowTitle, entityShowUnit),
+            )
         }
     }
 
     /**
      * Convert a Flow into a State object that updates until the view model is cleared.
      */
-    private fun <T> Flow<T>.collectAsState(
-        initial: T,
-    ): State<T> {
+    private fun <T> Flow<T>.collectAsState(initial: T): State<T> {
         val state = mutableStateOf(initial)
         viewModelScope.launch {
             collect { state.value = it }

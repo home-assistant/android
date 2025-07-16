@@ -44,6 +44,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.St
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.UnknownTypeSocketResponse
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import java.io.IOException
@@ -56,8 +57,10 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.consumeEach
@@ -128,10 +131,14 @@ internal class WebSocketCoreImpl(
     private val okHttpClient: OkHttpClient,
     private val serverManager: ServerManager,
     private val serverId: Int,
-    private val wsScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job() + CoroutineExceptionHandler { ctx, err -> Timber.e(err, "Uncaught exception in WebSocketCoreImpl") }),
+    private val wsScope: CoroutineScope = CoroutineScope(
+        Dispatchers.IO + SupervisorJob() +
+            CoroutineExceptionHandler { ctx, err -> Timber.e(err, "Uncaught exception in WebSocketCoreImpl") },
+    ),
     // We need a dedicated scope in test to control job that are in background
     private val backgroundScope: CoroutineScope = wsScope,
-) : WebSocketCore, WebSocketListener() {
+) : WebSocketListener(),
+    WebSocketCore {
 
     /**
      * Tracks active WebSocket requests by their unique IDs.
@@ -190,7 +197,9 @@ internal class WebSocketCoreImpl(
                         kotlinJsonMapper.encodeToString(
                             mapOf(
                                 "type" to "auth",
-                                "access_token" to serverManager.authenticationRepository(serverId).retrieveAccessToken(),
+                                "access_token" to serverManager.authenticationRepository(
+                                    serverId,
+                                ).retrieveAccessToken(),
                             ),
                         ),
                     )
@@ -260,7 +269,9 @@ internal class WebSocketCoreImpl(
                                 activeMessages[requestId] = request.apply {
                                     onResponse = cont
                                 }
-                                val result = connection?.send(kotlinJsonMapper.encodeToString(MapAnySerializer, outbound))
+                                val result = connection?.send(
+                                    kotlinJsonMapper.encodeToString(MapAnySerializer, outbound),
+                                )
                                 if (result == false) {
                                     // Something got wrong when sending the message we won't get any answer let's stop there
                                     cont.resumeWithException(IOException("Error sending message"))
@@ -326,6 +337,7 @@ internal class WebSocketCoreImpl(
         Timber.d("Websocket: onOpen")
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     override fun onMessage(webSocket: WebSocket, text: String) {
         Timber.d("Websocket: onMessage (${if (BuildConfig.DEBUG) "text: $text" else "text"})")
         val jsonElement = kotlinJsonMapper.decodeFromString<JsonElement>(text)
@@ -338,18 +350,29 @@ internal class WebSocketCoreImpl(
         // Send messages to the queue to ensure they are handled in order and don't block the function
         messages.forEach { message ->
             Timber.d("Message id ${message.maybeId()} received")
-            val success = messageQueue.trySend(
+            val result = messageQueue.trySend(
                 wsScope.launch(start = CoroutineStart.LAZY) {
                     when (message) {
                         is AuthRequiredSocketResponse -> Timber.d("Auth Requested")
-                        is AuthOkSocketResponse, is AuthInvalidSocketResponse -> handleAuthComplete(message is AuthOkSocketResponse, message.haVersion)
+                        is AuthOkSocketResponse, is AuthInvalidSocketResponse -> handleAuthComplete(
+                            message is AuthOkSocketResponse,
+                            message.haVersion,
+                        )
+
                         is EventSocketResponse -> handleEvent(message)
                         is MessageSocketResponse, is PongSocketResponse -> handleMessage(message)
                         is UnknownTypeSocketResponse -> Timber.w("Unknown message received: $message")
                     }
                 },
             )
-            if (!success.isSuccess) Timber.w("Message id ${message.maybeId()} not being processed")
+
+            FailFast.failWhen(!result.isSuccess) {
+                "Failed to process message (ID: ${message.maybeId()}). " +
+                    "IsFailure? ${result.isFailure}. " +
+                    "Is wsScope active? ${wsScope.isActive}. " +
+                    "Queue status: isClosedForSend = ${messageQueue.isClosedForSend}. " +
+                    "Exception: ${result.exceptionOrNull()}"
+            }
         }
     }
 
@@ -497,13 +520,27 @@ internal class WebSocketCoreImpl(
                             return
                         }
                         val eventData = when (eventType.jsonPrimitive.content) {
-                            AssistPipelineEventType.RUN_START -> kotlinJsonMapper.decodeFromJsonElement<AssistPipelineRunStart>(eventDataMap)
-                            AssistPipelineEventType.STT_END -> kotlinJsonMapper.decodeFromJsonElement<AssistPipelineSttEnd>(eventDataMap)
-                            AssistPipelineEventType.INTENT_START -> kotlinJsonMapper.decodeFromJsonElement<AssistPipelineIntentStart>(eventDataMap)
-                            AssistPipelineEventType.INTENT_PROGRESS -> kotlinJsonMapper.decodeFromJsonElement<AssistPipelineIntentProgress>(eventDataMap)
-                            AssistPipelineEventType.INTENT_END -> kotlinJsonMapper.decodeFromJsonElement<AssistPipelineIntentEnd>(eventDataMap)
-                            AssistPipelineEventType.TTS_END -> kotlinJsonMapper.decodeFromJsonElement<AssistPipelineTtsEnd>(eventDataMap)
-                            AssistPipelineEventType.ERROR -> kotlinJsonMapper.decodeFromJsonElement<AssistPipelineError>(eventDataMap)
+                            AssistPipelineEventType.RUN_START ->
+                                kotlinJsonMapper.decodeFromJsonElement<AssistPipelineRunStart>(eventDataMap)
+
+                            AssistPipelineEventType.STT_END ->
+                                kotlinJsonMapper.decodeFromJsonElement<AssistPipelineSttEnd>(eventDataMap)
+
+                            AssistPipelineEventType.INTENT_START ->
+                                kotlinJsonMapper.decodeFromJsonElement<AssistPipelineIntentStart>(eventDataMap)
+
+                            AssistPipelineEventType.INTENT_PROGRESS ->
+                                kotlinJsonMapper.decodeFromJsonElement<AssistPipelineIntentProgress>(eventDataMap)
+
+                            AssistPipelineEventType.INTENT_END ->
+                                kotlinJsonMapper.decodeFromJsonElement<AssistPipelineIntentEnd>(eventDataMap)
+
+                            AssistPipelineEventType.TTS_END ->
+                                kotlinJsonMapper.decodeFromJsonElement<AssistPipelineTtsEnd>(eventDataMap)
+
+                            AssistPipelineEventType.ERROR ->
+                                kotlinJsonMapper.decodeFromJsonElement<AssistPipelineError>(eventDataMap)
+
                             else -> {
                                 Timber.d("Unknown event type ignoring. received data = \n$response")
                                 null
@@ -517,17 +554,29 @@ internal class WebSocketCoreImpl(
                 } else if (eventResponseType != null && (eventResponseType as? JsonPrimitive)?.isString == true) {
                     when (eventResponseType.content) {
                         EVENT_STATE_CHANGED -> {
-                            kotlinJsonMapper.decodeFromJsonElement<EventResponse<StateChangedEvent>>(response.event).data
+                            kotlinJsonMapper.decodeFromJsonElement<EventResponse<StateChangedEvent>>(
+                                response.event,
+                            ).data
                         }
+
                         EVENT_AREA_REGISTRY_UPDATED -> {
-                            kotlinJsonMapper.decodeFromJsonElement<EventResponse<AreaRegistryUpdatedEvent>>(response.event).data
+                            kotlinJsonMapper.decodeFromJsonElement<EventResponse<AreaRegistryUpdatedEvent>>(
+                                response.event,
+                            ).data
                         }
+
                         EVENT_DEVICE_REGISTRY_UPDATED -> {
-                            kotlinJsonMapper.decodeFromJsonElement<EventResponse<DeviceRegistryUpdatedEvent>>(response.event).data
+                            kotlinJsonMapper.decodeFromJsonElement<EventResponse<DeviceRegistryUpdatedEvent>>(
+                                response.event,
+                            ).data
                         }
+
                         EVENT_ENTITY_REGISTRY_UPDATED -> {
-                            kotlinJsonMapper.decodeFromJsonElement<EventResponse<EntityRegistryUpdatedEvent>>(response.event).data
+                            kotlinJsonMapper.decodeFromJsonElement<EventResponse<EntityRegistryUpdatedEvent>>(
+                                response.event,
+                            ).data
                         }
+
                         else -> {
                             Timber.d("Unknown event type received ${response.event}")
                             return

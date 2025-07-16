@@ -61,16 +61,12 @@ object MediaPlayerControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity): Int =
-        DeviceTypes.TYPE_TV
+    override fun getDeviceType(entity: Entity): Int = DeviceTypes.TYPE_TV
 
     override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.media_player)
 
-    override suspend fun performAction(
-        integrationRepository: IntegrationRepository,
-        action: ControlAction,
-    ): Boolean {
+    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
         when (action) {
             is BooleanAction -> {
                 integrationRepository.callAction(

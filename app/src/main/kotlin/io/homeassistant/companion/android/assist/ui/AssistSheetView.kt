@@ -189,7 +189,11 @@ fun AssistSheetHeader(
                     modifier = Modifier.clickable { pipelineShowList = !pipelineShowList },
                 ) {
                     Text(
-                        text = if (pipelineShowServer) "${currentPipeline.serverName}: ${currentPipeline.name}" else currentPipeline.name,
+                        text = if (pipelineShowServer) {
+                            "${currentPipeline.serverName}: ${currentPipeline.name}"
+                        } else {
+                            currentPipeline.name
+                        },
                         color = color,
                         style = MaterialTheme.typography.caption,
                     )
@@ -249,12 +253,16 @@ fun AssistSheetControls(
 
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(inputMode) {
-        if (inputMode == AssistViewModelBase.AssistInputMode.TEXT || inputMode == AssistViewModelBase.AssistInputMode.TEXT_ONLY) {
+        if (inputMode == AssistViewModelBase.AssistInputMode.TEXT ||
+            inputMode == AssistViewModelBase.AssistInputMode.TEXT_ONLY
+        ) {
             focusRequester.requestFocus()
         }
     }
 
-    if (inputMode == AssistViewModelBase.AssistInputMode.TEXT || inputMode == AssistViewModelBase.AssistInputMode.TEXT_ONLY) {
+    if (inputMode == AssistViewModelBase.AssistInputMode.TEXT ||
+        inputMode == AssistViewModelBase.AssistInputMode.TEXT_ONLY
+    ) {
         var text by rememberSaveable(stateSaver = TextFieldValue.Saver) {
             mutableStateOf(TextFieldValue())
         }
@@ -336,7 +344,11 @@ fun AssistSheetControls(
                 Image(
                     asset = CommunityMaterial.Icon3.cmd_microphone,
                     contentDescription = stringResource(
-                        if (inputIsActive) commonR.string.assist_stop_listening else commonR.string.assist_start_listening,
+                        if (inputIsActive) {
+                            commonR.string.assist_stop_listening
+                        } else {
+                            commonR.string.assist_start_listening
+                        },
                     ),
                     colorFilter = ColorFilter.tint(LocalContentColor.current),
                     modifier = Modifier.size(28.dp),

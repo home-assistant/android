@@ -44,11 +44,11 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
             serverManager.updateServer(
                 server.copy(
                     session = ServerSessionInfo(
-                        it.accessToken,
-                        it.refreshToken!!,
-                        System.currentTimeMillis() / 1000 + it.expiresIn,
-                        it.tokenType,
-                        installId,
+                        accessToken = it.accessToken,
+                        refreshToken = it.refreshToken!!,
+                        tokenExpiration = System.currentTimeMillis() / 1000 + it.expiresIn,
+                        tokenType = it.tokenType,
+                        installId = installId,
                     ),
                 ),
             )
@@ -113,7 +113,10 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     }
 
     override fun getSessionState(): SessionState {
-        return if (server.session.isComplete() && server.session.installId == installId && server.connection.getUrl() != null) {
+        return if (server.session.isComplete() &&
+            server.session.installId == installId &&
+            server.connection.getUrl() != null
+        ) {
             SessionState.CONNECTED
         } else {
             SessionState.ANONYMOUS
@@ -159,11 +162,11 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
                 serverManager.updateServer(
                     server.copy(
                         session = ServerSessionInfo(
-                            refreshedToken.accessToken,
-                            refreshToken,
-                            System.currentTimeMillis() / 1000 + refreshedToken.expiresIn,
-                            refreshedToken.tokenType,
-                            installId,
+                            accessToken = refreshedToken.accessToken,
+                            refreshToken = refreshToken,
+                            tokenExpiration = System.currentTimeMillis() / 1000 + refreshedToken.expiresIn,
+                            tokenType = refreshedToken.tokenType,
+                            installId = installId,
                         ),
                     ),
                 )
@@ -173,7 +176,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
             ) {
                 revokeSession()
             }
-            throw AuthorizationException()
+            throw AuthorizationException("Failed to refresh token", it.code(), it.errorBody())
         }
     }
 
@@ -183,8 +186,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     override suspend fun setLockHomeBypassEnabled(enabled: Boolean) =
         localStorage.putBoolean("${serverId}_$PREF_BIOMETRIC_HOME_BYPASS_ENABLED", enabled)
 
-    override suspend fun isLockEnabledRaw(): Boolean =
-        localStorage.getBoolean("${serverId}_$PREF_BIOMETRIC_ENABLED")
+    override suspend fun isLockEnabledRaw(): Boolean = localStorage.getBoolean("${serverId}_$PREF_BIOMETRIC_ENABLED")
 
     override suspend fun isLockHomeBypassEnabled(): Boolean =
         localStorage.getBoolean("${serverId}_$PREF_BIOMETRIC_HOME_BYPASS_ENABLED")

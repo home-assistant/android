@@ -71,7 +71,8 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:enableOnBackInvokedCallback="true"
         android:localeConfig="@xml/locales_config"
-        tools:ignore="GoogleAppIndexingWarning"
+        android:intentMatchingFlags="enforceIntentFilter"
+        tools:ignore="GoogleAppIndexingWarning,UnusedAttribute"
         tools:targetApi="tiramisu">
 
         <!-- Start things like SensorWorker on device boot -->
@@ -306,6 +307,18 @@
                     android:host="navigate" />
             </intent-filter>
         </activity>
+
+        <activity-alias
+            android:name=".launch.LauncherAlias"
+            android:targetActivity=".launch.LaunchActivity"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
 
         <activity android:name=".launch.link.LinkActivity"
             android:exported="true"

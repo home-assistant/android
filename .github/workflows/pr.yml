@@ -2,7 +2,6 @@ name: Pull Request
 
 on: # yamllint disable-line rule:truthy
   pull_request:
-    branches: [main]
 
 # This workflow should cancel previous builds since it means that a new commit has been made to the PR
 concurrency:

@@ -76,11 +76,7 @@ class ButtonWidget : AppWidgetProvider() {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    override fun onUpdate(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray,
-    ) {
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
             mainScope.launch {
@@ -176,10 +172,21 @@ class ButtonWidget : AppWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
-        return RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_button_wrapper_dynamiccolor else R.layout.widget_button_wrapper_default).apply {
+        val useDynamicColors =
+            widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
+        return RemoteViews(
+            context.packageName,
+            if (useDynamicColors) {
+                R.layout.widget_button_wrapper_dynamiccolor
+            } else {
+                R.layout.widget_button_wrapper_default
+            },
+        ).apply {
             // Theming
-            var textColor = context.getAttribute(R.attr.colorWidgetOnBackground, ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel))
+            var textColor = context.getAttribute(
+                R.attr.colorWidgetOnBackground,
+                ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel),
+            )
             if (widget?.backgroundType == WidgetBackgroundType.TRANSPARENT) {
                 widget.textColor?.let { textColor = it.toColorInt() }
                 setTextColor(R.id.widgetLabel, textColor)
@@ -247,6 +254,7 @@ class ButtonWidget : AppWidgetProvider() {
             WidgetBackgroundType.TRANSPARENT -> {
                 views.setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
             }
+
             else -> {
                 views.setInt(R.id.widgetLayout, "setBackgroundResource", R.drawable.widget_button_background)
             }
@@ -362,8 +370,9 @@ class ButtonWidget : AppWidgetProvider() {
         val label: String? = extras.getString(EXTRA_LABEL)
         val requireAuthentication: Boolean = extras.getBoolean(EXTRA_REQUIRE_AUTHENTICATION)
         val icon: String = extras.getString(EXTRA_ICON_NAME) ?: "mdi:flash"
-        val backgroundType = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
-            ?: WidgetBackgroundType.DAYNIGHT
+        val backgroundType =
+            BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
+                ?: WidgetBackgroundType.DAYNIGHT
         val textColor: String? = extras.getString(EXTRA_TEXT_COLOR)
 
         if (serverId == null || domain == null || action == null || actionData == null) {
@@ -381,7 +390,19 @@ class ButtonWidget : AppWidgetProvider() {
                     "label: " + label,
             )
 
-            val widget = ButtonWidgetEntity(appWidgetId, serverId, icon, domain, action, actionData, label, backgroundType, textColor, requireAuthentication)
+            val widget =
+                ButtonWidgetEntity(
+                    appWidgetId,
+                    serverId,
+                    icon,
+                    domain,
+                    action,
+                    actionData,
+                    label,
+                    backgroundType,
+                    textColor,
+                    requireAuthentication,
+                )
             buttonWidgetDao.add(widget)
 
             // It is the responsibility of the configuration activity to update the app widget

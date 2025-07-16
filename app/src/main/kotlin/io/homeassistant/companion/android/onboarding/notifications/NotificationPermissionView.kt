@@ -25,9 +25,7 @@ import io.homeassistant.companion.android.onboarding.OnboardingScreen
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
 @Composable
-fun NotificationPermissionView(
-    onSetNotificationsEnabled: (Boolean) -> Unit,
-) {
+fun NotificationPermissionView(onSetNotificationsEnabled: (Boolean) -> Unit) {
     val scrollState = rememberScrollState()
     OnboardingScreen {
         Column(

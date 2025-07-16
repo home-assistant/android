@@ -14,12 +14,11 @@ data class ServerSessionInfo(
     @ColumnInfo(name = "install_id")
     val installId: String? = null,
 ) {
-    fun isComplete() =
-        accessToken != null &&
-            refreshToken != null &&
-            tokenExpiration != null &&
-            tokenType != null &&
-            installId != null
+    fun isComplete() = accessToken != null &&
+        refreshToken != null &&
+        tokenExpiration != null &&
+        tokenType != null &&
+        installId != null
 
     fun isExpired() = expiresIn()?.let { it < 0 } ?: true
 

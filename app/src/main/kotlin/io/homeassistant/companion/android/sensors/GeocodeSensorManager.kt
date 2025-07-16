@@ -4,8 +4,10 @@ import android.Manifest
 import android.content.Context
 import android.location.Address
 import android.location.Geocoder
+import android.location.Location
 import android.os.Build
 import android.os.Build.VERSION.SDK_INT
+import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
@@ -15,20 +17,31 @@ import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.location.getLastLocation
+import io.homeassistant.companion.android.sensors.GeocodeSensorManager.Companion.LOCATION_OUTDATED_THRESHOLD
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 import timber.log.Timber
 
+private const val DEFAULT_MINIMUM_ACCURACY = 200
+
+/**
+ * Represents the duration of 1024 weeks, used to detect and correct the GPS week rollover bug.
+ * The GPS epoch started on January 6, 1980. The week number is transmitted as a 10-bit value,
+ * causing it to roll over every 1024 weeks (approximately 19.6 years).
+ * For more information, see: https://github.com/home-assistant/android/issues/1511#issuecomment-2946265967
+ */
+private val GPS_ROLLOVER_WEEKS1024 = (7 * 1024).days
+private const val SETTING_ACCURACY = "geocode_minimum_accuracy"
 class GeocodeSensorManager : SensorManager {
 
     companion object {
-        private const val SETTING_ACCURACY = "geocode_minimum_accuracy"
         const val SETTINGS_INCLUDE_LOCATION = "geocode_include_location_updates"
-        private const val DEFAULT_MINIMUM_ACCURACY = 200
         val LOCATION_OUTDATED_THRESHOLD = 5.minutes
         val geocodedLocation = SensorManager.BasicSensor(
             "geocoded_location",
@@ -63,13 +76,10 @@ class GeocodeSensorManager : SensorManager {
         }
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateGeocodedLocation(context)
     }
 
-    @OptIn(ExperimentalTime::class)
     private suspend fun updateGeocodedLocation(context: Context) {
         if (!isEnabled(context, geocodedLocation) || !checkPermission(context, geocodedLocation.id)) {
             return
@@ -87,19 +97,21 @@ class GeocodeSensorManager : SensorManager {
         val minAccuracy = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
             ?: DEFAULT_MINIMUM_ACCURACY
-        sensorDao.add(SensorSetting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER))
+        sensorDao.add(
+            SensorSetting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER),
+        )
 
+        if (!location.isStillValid()) {
+            return
+        }
+
+        // We check first if the location is still valid to avoid a useless call to the Geocoder
         if (location.accuracy <= minAccuracy) {
             address = Geocoder(context)
                 .getFromLocationAwait(location.latitude, location.longitude, 1)
                 .firstOrNull()
         } else {
             Timber.w("Skipping geocoded update as accuracy was not met: ${location.accuracy}")
-            return
-        }
-
-        if (Clock.System.now() - location.instant() > LOCATION_OUTDATED_THRESHOLD) {
-            Timber.w("Skipping geocoded update due to old timestamp ${location.instant()}")
             return
         }
 
@@ -144,7 +156,11 @@ class GeocodeSensorManager : SensorManager {
      * The returned addresses should be localized for the locale provided to this class's constructor.
      * https://developer.android.com/reference/android/location/Geocoder#getFromLocation(double,%20double,%20int)
      */
-    private suspend fun Geocoder.getFromLocationAwait(latitude: Double, longitude: Double, maxResults: Int): List<Address> {
+    private suspend fun Geocoder.getFromLocationAwait(
+        latitude: Double,
+        longitude: Double,
+        maxResults: Int,
+    ): List<Address> {
         return if (SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             suspendCoroutine { cont ->
                 getFromLocation(
@@ -167,4 +183,31 @@ class GeocodeSensorManager : SensorManager {
             getFromLocation(latitude, longitude, maxResults).orEmpty()
         }
     }
+}
+
+/**
+ * Some GPS receivers produce wrong time data due to the 1024 weeks rollover bug.
+ * This function attempts to detect and correct the time difference if it's affected by this bug.
+ *
+ * @return The sanitized time difference, potentially corrected for the rollover bug.
+ */
+private fun Duration.sanitizeGPSTimeDifference(): Duration {
+    return if (this >= GPS_ROLLOVER_WEEKS1024) {
+        Timber.i("GPS 1024 weeks rollover bug detected.")
+        this - GPS_ROLLOVER_WEEKS1024
+    } else {
+        this
+    }
+}
+
+@OptIn(ExperimentalTime::class)
+@VisibleForTesting
+fun Location.isStillValid(): Boolean {
+    val timeDifference = (Clock.System.now() - instant()).sanitizeGPSTimeDifference()
+
+    if (timeDifference > LOCATION_OUTDATED_THRESHOLD) {
+        Timber.w("Skipping geocoded update due to old timestamp ${instant()}")
+        return false
+    }
+    return true
 }

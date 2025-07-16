@@ -7,6 +7,6 @@
     <option name="jvmTarget" value="11" />
   </component>
   <component name="KotlinJpsPluginSettings">
-    <option name="version" value="2.1.21" />
+    <option name="version" value="2.2.0" />
   </component>
 </project>

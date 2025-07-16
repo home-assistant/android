@@ -11,9 +11,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 
-class ThemesManager @Inject constructor(
-    private val themesUseCase: PrefsRepository,
-) {
+class ThemesManager @Inject constructor(private val themesUseCase: PrefsRepository) {
 
     suspend fun getCurrentTheme(): String {
         return run {

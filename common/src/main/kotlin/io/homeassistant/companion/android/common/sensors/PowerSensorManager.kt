@@ -58,9 +58,7 @@ class PowerSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         val powerManager = context.getSystemService<PowerManager>()!!
         updateInteractive(context, powerManager)
         updatePowerSave(context, powerManager)

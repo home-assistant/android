@@ -47,9 +47,7 @@ class LastAppSensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateLastApp(context)
     }
 
@@ -61,14 +59,21 @@ class LastAppSensorManager : SensorManager {
 
         val usageStats = context.getSystemService<UsageStatsManager>()!!
         val current = System.currentTimeMillis()
-        val lastApp = usageStats.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, current - 1000 * 1000, current).maxByOrNull { it.lastTimeUsed }?.packageName ?: "none"
+        val lastApp =
+            usageStats.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, current - 1000 * 1000, current).maxByOrNull {
+                it.lastTimeUsed
+            }?.packageName
+                ?: "none"
 
         var appLabel = STATE_UNKNOWN
 
         try {
             val pm = context.packageManager
             val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                pm.getApplicationInfo(lastApp, PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()))
+                pm.getApplicationInfo(
+                    lastApp,
+                    PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()),
+                )
             } else {
                 @Suppress("DEPRECATION")
                 pm.getApplicationInfo(lastApp, PackageManager.GET_META_DATA)

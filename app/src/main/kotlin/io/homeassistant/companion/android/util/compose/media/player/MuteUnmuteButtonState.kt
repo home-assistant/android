@@ -64,17 +64,16 @@ class MuteUnmuteButtonState(private val player: Player) {
      * * [Player.EVENT_AVAILABLE_COMMANDS_CHANGED] in order to determine whether the button should be
      *   enabled, i.e. respond to user input.
      */
-    suspend fun observe(): Nothing =
-        player.listen { events ->
-            if (
-                events.containsAny(
-                    Player.EVENT_DEVICE_VOLUME_CHANGED,
-                    Player.EVENT_VOLUME_CHANGED,
-                    Player.EVENT_AVAILABLE_COMMANDS_CHANGED,
-                )
-            ) {
-                showMute = shouldShowMuteUnmuteButton(this)
-                isEnabled = shouldEnableMuteUnmuteButton(this)
-            }
+    suspend fun observe(): Nothing = player.listen { events ->
+        if (
+            events.containsAny(
+                Player.EVENT_DEVICE_VOLUME_CHANGED,
+                Player.EVENT_VOLUME_CHANGED,
+                Player.EVENT_AVAILABLE_COMMANDS_CHANGED,
+            )
+        ) {
+            showMute = shouldShowMuteUnmuteButton(this)
+            isEnabled = shouldEnableMuteUnmuteButton(this)
         }
+    }
 }

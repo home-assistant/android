@@ -16,7 +16,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
 
-class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManagerCallback {
+class ImprovRepositoryImpl @Inject constructor() :
+    ImprovRepository,
+    ImprovManagerCallback {
 
     private var manager: ImprovManager? = null
 
@@ -47,10 +49,9 @@ class ImprovRepositoryImpl @Inject constructor() : ImprovRepository, ImprovManag
         return required
     }
 
-    override fun hasPermission(context: Context): Boolean =
-        getRequiredPermissions().all {
-            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-        }
+    override fun hasPermission(context: Context): Boolean = getRequiredPermissions().all {
+        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+    }
 
     override fun startScanning(context: Context) {
         if (!hasPermission(context)) return
