@@ -271,40 +271,40 @@ class MessagingManager @Inject constructor(
         const val THIS_SERVER_ID = "server_id"
     }
 
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
+    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     fun handleMessage(notificationData: Map<String, String>, source: String) {
-        var now = System.currentTimeMillis()
-        var jsonData = notificationData
-        val notificationId: Long
+        mainScope.launch {
+            var now = System.currentTimeMillis()
+            var jsonData = notificationData
+            val notificationId: Long
 
-        if (source.startsWith(SOURCE_REPLY)) {
-            notificationId = source.substringAfter(SOURCE_REPLY).toLong()
-            notificationDao.get(notificationId.toInt())?.let {
-                val dbData: Map<String, String> = kotlinJsonMapper.decodeFromString(it.data)
+            if (source.startsWith(SOURCE_REPLY)) {
+                notificationId = source.substringAfter(SOURCE_REPLY).toLong()
+                notificationDao.get(notificationId.toInt())?.let {
+                    val dbData: Map<String, String> = kotlinJsonMapper.decodeFromString(it.data)
 
-                now = it.received // Allow for updating the existing notification without a tag
-                jsonData = jsonData + dbData // Add the notificationData, this contains the reply text
-            } ?: return
-        } else {
-            val jsonObject = JSONObject(jsonData)
-            val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
-                serverManager.getServer(webhookId = it)?.id
-            }
-            val notificationRow =
-                NotificationItem(
-                    0,
-                    now,
-                    jsonData[NotificationData.MESSAGE].toString(),
-                    jsonObject.toString(),
-                    source,
-                    receivedServer,
-                )
-            notificationId = notificationDao.add(notificationRow)
+                    now = it.received // Allow for updating the existing notification without a tag
+                    jsonData = jsonData + dbData // Add the notificationData, this contains the reply text
+                } ?: return@launch
+            } else {
+                val jsonObject = JSONObject(jsonData)
+                val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
+                    serverManager.getServer(webhookId = it)?.id
+                }
+                val notificationRow =
+                    NotificationItem(
+                        0,
+                        now,
+                        jsonData[NotificationData.MESSAGE].toString(),
+                        jsonObject.toString(),
+                        source,
+                        receivedServer,
+                    )
+                notificationId = notificationDao.add(notificationRow)
 
-            val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
-            if (confirmation) {
-                ioScope.launch {
+                val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
+                if (confirmation) {
                     try {
                         serverManager.integrationRepository(receivedServer ?: ServerManager.SERVER_ID_ACTIVE)
                             .fireEvent("mobile_app_notification_received", jsonData)
@@ -313,18 +313,16 @@ class MessagingManager @Inject constructor(
                     }
                 }
             }
-        }
 
-        val serverId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
-            serverManager.getServer(webhookId = webhookId)?.id
-        } ?: ServerManager.SERVER_ID_ACTIVE
-        if (serverManager.getServer(serverId) == null) {
-            Timber.w("Received notification but no server for it, discarding")
-            return
-        }
-        jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, serverId.toString()) }
+            val serverId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
+                serverManager.getServer(webhookId = webhookId)?.id
+            } ?: ServerManager.SERVER_ID_ACTIVE
+            if (serverManager.getServer(serverId) == null) {
+                Timber.w("Received notification but no server for it, discarding")
+                return@launch
+            }
+            jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, serverId.toString()) }
 
-        ioScope.launch {
             val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
             when {
                 jsonData[NotificationData.MESSAGE] == REQUEST_LOCATION_UPDATE && allowCommands -> {
@@ -801,9 +799,7 @@ class MessagingManager @Inject constructor(
             }
 
             COMMAND_APP_LOCK -> {
-                ioScope.launch {
-                    setAppLock(data)
-                }
+                setAppLock(data)
             }
 
             COMMAND_WEBVIEW -> {
@@ -820,11 +816,9 @@ class MessagingManager @Inject constructor(
 
             COMMAND_SCREEN_ON -> {
                 if (!command.isNullOrEmpty()) {
-                    ioScope.launch {
-                        prefsRepository.setKeepScreenOnEnabled(
-                            command == COMMAND_KEEP_SCREEN_ON,
-                        )
-                    }
+                    prefsRepository.setKeepScreenOnEnabled(
+                        command == COMMAND_KEEP_SCREEN_ON,
+                    )
                 }
 
                 val powerManager = context.getSystemService<PowerManager>()
@@ -873,13 +867,13 @@ class MessagingManager @Inject constructor(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (Settings.System.canWrite(context)) {
                         if (!processScreenCommands(data)) {
-                            ioScope.launch { sendNotification(data) }
+                            sendNotification(data)
                         }
                     } else {
                         notifyMissingPermission(message.toString(), serverId)
                     }
                 } else if (!processScreenCommands(data)) {
-                    ioScope.launch { sendNotification(data) }
+                    sendNotification(data)
                 }
             }
 
@@ -1820,7 +1814,7 @@ class MessagingManager @Inject constructor(
                         ),
                     )
                     if (!success) {
-                        ioScope.launch {
+                        mainScope.launch {
                             Timber.d(
 
                                 "Posting notification as the command was not sent to the session",
@@ -1831,7 +1825,7 @@ class MessagingManager @Inject constructor(
                 }
             }
             if (!hasCorrectPackage) {
-                ioScope.launch {
+                mainScope.launch {
                     Timber.d(
 
                         "Posting notification as the package is not found in the list of media sessions",
@@ -1840,7 +1834,7 @@ class MessagingManager @Inject constructor(
                 }
             }
         } else {
-            ioScope.launch {
+            mainScope.launch {
                 Timber.d("Posting notification as there are no active media sessions")
                 sendNotification(data)
             }
@@ -1913,7 +1907,7 @@ class MessagingManager @Inject constructor(
             } else if (intent.resolveActivity(context.packageManager) != null) {
                 context.startActivity(intent)
             } else {
-                ioScope.launch {
+                mainScope.launch {
                     Timber.d(
 
                         "Posting notification as we do not have enough data to start the activity",
@@ -1964,7 +1958,7 @@ class MessagingManager @Inject constructor(
             }
         } catch (e: Exception) {
             Timber.e(e, "Unable to launch app")
-            ioScope.launch { sendNotification(data) }
+            mainScope.launch { sendNotification(data) }
         }
     }
 
