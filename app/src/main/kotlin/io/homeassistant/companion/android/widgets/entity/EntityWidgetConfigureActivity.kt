@@ -40,15 +40,14 @@ import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import javax.inject.Inject
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 @AndroidEntryPoint
 class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     companion object {
-        @Suppress("ktlint:standard:max-line-length")
-        private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
+        private const val PIN_WIDGET_CALLBACK =
+            "io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
     @Inject
@@ -132,7 +131,77 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             return
         }
 
-        val staticWidget = staticWidgetDao.get(appWidgetId)
+        lifecycleScope.launch {
+            val staticWidget = staticWidgetDao.get(appWidgetId)
+
+            if (staticWidget != null) {
+                binding.widgetTextConfigEntityId.setText(staticWidget.entityId)
+                binding.label.setText(staticWidget.label)
+                binding.textSize.setText(staticWidget.textSize.toInt().toString())
+                binding.stateSeparator.setText(staticWidget.stateSeparator)
+                val entity = try {
+                    serverManager.integrationRepository(staticWidget.serverId).getEntity(staticWidget.entityId)
+                } catch (e: Exception) {
+                    Timber.e(e, "Unable to get entity information")
+                    Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
+                        .show()
+                    null
+                }
+
+                val attributeIds = staticWidget.attributeIds
+                if (!attributeIds.isNullOrEmpty()) {
+                    binding.appendAttributeValueCheckbox.isChecked = true
+                    appendAttributes = true
+                    for (item in attributeIds.split(',')) {
+                        selectedAttributeIds.add(item)
+                    }
+                    binding.widgetTextConfigAttribute.setText(attributeIds.replace(",", ", "))
+                    binding.attributeValueLinearLayout.visibility = VISIBLE
+                    binding.attributeSeparator.setText(staticWidget.attributeSeparator)
+                }
+                if (entity != null) {
+                    selectedEntity = entity
+                    setupAttributes()
+                }
+
+                val toggleable = entity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
+                binding.tapAction.isVisible = toggleable
+                binding.tapActionList.setSelection(
+                    if (toggleable &&
+                        staticWidget.tapAction == WidgetTapAction.TOGGLE
+                    ) {
+                        0
+                    } else {
+                        1
+                    },
+                )
+                binding.textColor.visibility =
+                    if (staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
+                binding.textColorWhite.isChecked =
+                    staticWidget.textColor?.let {
+                        it.toColorInt() == ContextCompat.getColor(
+                            this@EntityWidgetConfigureActivity,
+                            android.R.color.white,
+                        )
+                    }
+                        ?: true
+                binding.textColorBlack.isChecked =
+                    staticWidget.textColor?.let {
+                        it.toColorInt() ==
+                            ContextCompat.getColor(
+                                this@EntityWidgetConfigureActivity,
+                                commonR.color.colorWidgetButtonLabelBlack,
+                            )
+                    }
+                        ?: false
+
+                binding.addButton.setText(commonR.string.update_widget)
+            } else {
+                binding.backgroundType.setSelection(0)
+            }
+
+            setupServerSelect(staticWidget?.serverId)
+        }
 
         val tapActionValues =
             listOf(getString(commonR.string.widget_tap_action_toggle), getString(commonR.string.refresh))
@@ -142,68 +211,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         binding.backgroundType.adapter =
             ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
-        if (staticWidget != null) {
-            binding.widgetTextConfigEntityId.setText(staticWidget.entityId)
-            binding.label.setText(staticWidget.label)
-            binding.textSize.setText(staticWidget.textSize.toInt().toString())
-            binding.stateSeparator.setText(staticWidget.stateSeparator)
-            val entity = runBlocking {
-                try {
-                    serverManager.integrationRepository(staticWidget.serverId).getEntity(staticWidget.entityId)
-                } catch (e: Exception) {
-                    Timber.e(e, "Unable to get entity information")
-                    Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
-                        .show()
-                    null
-                }
-            }
-
-            val attributeIds = staticWidget.attributeIds
-            if (!attributeIds.isNullOrEmpty()) {
-                binding.appendAttributeValueCheckbox.isChecked = true
-                appendAttributes = true
-                for (item in attributeIds.split(',')) {
-                    selectedAttributeIds.add(item)
-                }
-                binding.widgetTextConfigAttribute.setText(attributeIds.replace(",", ", "))
-                binding.attributeValueLinearLayout.visibility = VISIBLE
-                binding.attributeSeparator.setText(staticWidget.attributeSeparator)
-            }
-            if (entity != null) {
-                selectedEntity = entity
-                setupAttributes()
-            }
-
-            val toggleable = entity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
-            binding.tapAction.isVisible = toggleable
-            binding.tapActionList.setSelection(
-                if (toggleable &&
-                    staticWidget.tapAction == WidgetTapAction.TOGGLE
-                ) {
-                    0
-                } else {
-                    1
-                },
-            )
-            binding.textColor.visibility =
-                if (staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
-            binding.textColorWhite.isChecked =
-                staticWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) }
-                    ?: true
-            binding.textColorBlack.isChecked =
-                staticWidget.textColor?.let {
-                    it.toColorInt() ==
-                        ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack)
-                }
-                    ?: false
-
-            binding.addButton.setText(commonR.string.update_widget)
-        } else {
-            binding.backgroundType.setSelection(0)
-        }
         entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
-
-        setupServerSelect(staticWidget?.serverId)
 
         binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
         binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
@@ -311,7 +319,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     }
 
     private fun setupAttributes() {
-        val fetchedAttributes = selectedEntity?.attributes as? Map<String, String>
+        val fetchedAttributes = selectedEntity?.attributes
         val attributesAdapter = ArrayAdapter<String>(this, android.R.layout.simple_dropdown_item_1line)
         binding.widgetTextConfigAttribute.setAdapter(attributesAdapter)
         attributesAdapter.addAll(*fetchedAttributes?.keys.orEmpty().toTypedArray())

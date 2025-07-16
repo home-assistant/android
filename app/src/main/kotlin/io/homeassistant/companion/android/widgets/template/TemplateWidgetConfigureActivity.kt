@@ -37,8 +37,8 @@ import timber.log.Timber
 @AndroidEntryPoint
 class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     companion object {
-        @Suppress("ktlint:standard:max-line-length")
-        private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
+        private const val PIN_WIDGET_CALLBACK =
+            "io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
     @Inject
@@ -86,43 +86,57 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             return
         }
 
-        val templateWidget = templateWidgetDao.get(appWidgetId)
-
         val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
         binding.backgroundType.adapter =
-            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
-
-        setupServerSelect(templateWidget?.serverId)
-
-        if (templateWidget != null) {
-            binding.templateText.setText(templateWidget.template)
-            binding.textSize.setText(templateWidget.textSize.toInt().toString())
-            binding.addButton.setText(commonR.string.update_widget)
-            if (templateWidget.template.isNotEmpty()) {
-                renderTemplateText(templateWidget.template)
-            } else {
-                binding.renderedTemplate.text = getString(commonR.string.empty_template)
-                binding.addButton.isEnabled = false
-            }
-            binding.backgroundType.setSelection(
-                WidgetUtils.getSelectedBackgroundOption(
-                    this,
-                    templateWidget.backgroundType,
-                    backgroundTypeValues,
-                ),
+            ArrayAdapter(
+                this,
+                android.R.layout.simple_spinner_dropdown_item,
+                backgroundTypeValues,
             )
-            binding.textColor.isVisible = templateWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
-            binding.textColorWhite.isChecked =
-                templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) }
-                    ?: true
-            binding.textColorBlack.isChecked =
-                templateWidget.textColor?.let {
-                    it.toColorInt() ==
-                        ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack)
+
+        lifecycleScope.launch {
+            val templateWidget = templateWidgetDao.get(appWidgetId)
+
+            setupServerSelect(templateWidget?.serverId)
+
+            if (templateWidget != null) {
+                binding.templateText.setText(templateWidget.template)
+                binding.textSize.setText(templateWidget.textSize.toInt().toString())
+                binding.addButton.setText(commonR.string.update_widget)
+                if (templateWidget.template.isNotEmpty()) {
+                    renderTemplateText(templateWidget.template)
+                } else {
+                    binding.renderedTemplate.text = getString(commonR.string.empty_template)
+                    binding.addButton.isEnabled = false
                 }
-                    ?: false
-        } else {
-            binding.backgroundType.setSelection(0)
+                binding.backgroundType.setSelection(
+                    WidgetUtils.getSelectedBackgroundOption(
+                        this@TemplateWidgetConfigureActivity,
+                        templateWidget.backgroundType,
+                        backgroundTypeValues,
+                    ),
+                )
+                binding.textColor.isVisible = templateWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
+                binding.textColorWhite.isChecked =
+                    templateWidget.textColor?.let {
+                        it.toColorInt() == ContextCompat.getColor(
+                            this@TemplateWidgetConfigureActivity,
+                            android.R.color.white,
+                        )
+                    }
+                        ?: true
+                binding.textColorBlack.isChecked =
+                    templateWidget.textColor?.let {
+                        it.toColorInt() ==
+                            ContextCompat.getColor(
+                                this@TemplateWidgetConfigureActivity,
+                                commonR.color.colorWidgetButtonLabelBlack,
+                            )
+                    }
+                        ?: false
+            } else {
+                binding.backgroundType.setSelection(0)
+            }
         }
 
         binding.templateText.doAfterTextChanged { renderTemplateText() }
