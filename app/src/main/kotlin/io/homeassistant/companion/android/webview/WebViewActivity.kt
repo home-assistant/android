@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.graphics.Rect
 import android.net.Uri
 import android.net.http.SslError
@@ -44,6 +43,7 @@ import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
@@ -51,6 +51,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -228,6 +229,8 @@ class WebViewActivity :
     private var playerSize = mutableStateOf<DpSize?>(null)
     private var playerTop = mutableStateOf(0.dp)
     private var playerLeft = mutableStateOf(0.dp)
+    private var statusBarColor = mutableStateOf<Color?>(null)
+    private var backgroundColor = mutableStateOf<Color?>(null)
     private var failedConnection = "external"
     private var clearHistory = false
     private var moreInfoEntity = ""
@@ -249,6 +252,7 @@ class WebViewActivity :
         }
 
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         if (intent.extras?.containsKey(EXTRA_SERVER) == true) {
             intent.extras?.getInt(EXTRA_SERVER)?.let {
@@ -267,7 +271,7 @@ class WebViewActivity :
             commonR.color.colorLaunchScreenBackground,
             theme,
         )
-        setStatusBarAndNavigationBarColor(colorLaunchScreenBackground, colorLaunchScreenBackground)
+        setStatusBarAndBackgroundColor(colorLaunchScreenBackground, colorLaunchScreenBackground)
 
         webView = WebView(this)
 
@@ -280,15 +284,19 @@ class WebViewActivity :
             val playerLeft by remember { playerLeft }
             val currentAppLocked by remember { appLocked }
             val customViewFromWebView by remember { customViewFromWebView }
+            val statusBarColor by remember { statusBarColor }
+            val backgroundColor by remember { backgroundColor }
 
             WebViewContentScreen(
                 webView,
                 player,
-                playerSize,
-                playerTop,
-                playerLeft,
+                playerSize = playerSize,
+                playerTop = playerTop,
+                playerLeft = playerLeft,
                 currentAppLocked,
                 customViewFromWebView,
+                statusBarColor = statusBarColor,
+                backgroundColor = backgroundColor,
             ) { isFullScreen ->
                 isExoFullScreen = isFullScreen
                 if (isFullScreen) hideSystemUI() else showSystemUI()
@@ -588,7 +596,7 @@ class WebViewActivity :
 
         // Set WebView background color to transparent, so that the theme of the android activity has control over it.
         // This enables the ability to have the launch screen behind the WebView until the web frontend gets rendered
-        webView.setBackgroundColor(Color.TRANSPARENT)
+        webView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
         themesManager.setThemeForWebView(this, webView.settings)
 
@@ -934,7 +942,7 @@ class WebViewActivity :
         ) { webViewColors ->
             lifecycleScope.launch(Dispatchers.Main) {
                 var statusBarColor = 0
-                var navigationBarColor = 0
+                var backgroundColor = 0
 
                 if (!webViewColors.isNullOrEmpty() && webViewColors != "null") {
                     val trimmedColorString = webViewColors.substring(1, webViewColors.length - 1).trim()
@@ -943,10 +951,10 @@ class WebViewActivity :
                     Timber.d("Color from webview is \"$trimmedColorString\"")
 
                     statusBarColor = presenter.parseWebViewColor(colors[0].trim())
-                    navigationBarColor = presenter.parseWebViewColor(colors[1].trim())
+                    backgroundColor = presenter.parseWebViewColor(colors[1].trim())
                 }
 
-                setStatusBarAndNavigationBarColor(statusBarColor, navigationBarColor)
+                setStatusBarAndBackgroundColor(statusBarColor, backgroundColor)
             }
         }
     }
@@ -1293,28 +1301,26 @@ class WebViewActivity :
         }
     }
 
-    override fun setStatusBarAndNavigationBarColor(statusBarColor: Int, navigationBarColor: Int) {
-        // window.statusBarColor and window.navigationBarColor must both be set before
-        // windowInsetsController sets the foreground colors.
-
+    override fun setStatusBarAndBackgroundColor(statusBarColor: Int, backgroundColor: Int) {
         // Set background colors
         if (statusBarColor != 0) {
-            window.statusBarColor = statusBarColor
+            this.statusBarColor.value = Color(statusBarColor)
         } else {
             Timber.e("Cannot set status bar color. Skipping coloring...")
         }
-        if (navigationBarColor != 0) {
-            window.navigationBarColor = navigationBarColor
+        if (backgroundColor != 0) {
+            this.backgroundColor.value = Color(backgroundColor)
         } else {
-            Timber.e("Cannot set navigation bar color. Skipping coloring...")
+            Timber.e("Cannot set background color. Skipping coloring...")
         }
 
-        // Set foreground colors
+        // Adjust the color of system bar font/icons to ensure proper contrast with
+        // the current Home Assistant theme's background color.
         if (statusBarColor != 0) {
             windowInsetsController.isAppearanceLightStatusBars = !isColorDark(statusBarColor)
         }
-        if (navigationBarColor != 0) {
-            windowInsetsController.isAppearanceLightNavigationBars = !isColorDark(navigationBarColor)
+        if (backgroundColor != 0) {
+            windowInsetsController.isAppearanceLightNavigationBars = !isColorDark(backgroundColor)
         }
     }
 

@@ -22,14 +22,10 @@ class SettingViewModel @Inject constructor(private val settingsDao: SettingsDao,
 
     companion object {
         val DEFAULT_UPDATE_FREQUENCY = SensorUpdateFrequencySetting.NORMAL
-        val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.FLAVOR ==
-            "full"
-        ) {
-            WebsocketSetting.NEVER
-        } else {
-            WebsocketSetting.ALWAYS
-        }
+        val DEFAULT_WEBSOCKET_SETTING =
+            if (BuildConfig.FLAVOR == "full") WebsocketSetting.NEVER else WebsocketSetting.ALWAYS
     }
+
     suspend fun getSetting(id: Int): Setting {
         var setting = settingsDao.get(id)
         if (setting == null) {
