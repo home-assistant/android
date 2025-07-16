@@ -96,8 +96,8 @@ private fun SafeHAWebView(
     statusBarColor: Color?,
     backgroundColor: Color?,
 ) {
-    // We add small spacer all around the WebView based on the `safeDrawing` insets.
-    // This should be disable when the frontend supports edge to edge
+    // We add colored small spacer all around the WebView based on the `safeDrawing` insets.
+    // TODO This should be disable when the frontend supports edge to edge
     // https://github.com/home-assistant/frontend/pull/25566
 
     val insets = WindowInsets.safeDrawing
