@@ -30,7 +30,7 @@ class IntegrationRepositoryImplTest {
 
     @BeforeEach
     fun setUp() {
-        every { serverManager.getServer(serverID) } returns server
+        coEvery { serverManager.getServer(serverID) } returns server
         every { server.connection } returns serverConnection
         every { serverConnection.getApiUrls() } returns listOf(URL("http://homeassistant:8123"))
 

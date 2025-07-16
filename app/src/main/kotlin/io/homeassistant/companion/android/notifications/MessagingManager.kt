@@ -272,37 +272,37 @@ class MessagingManager @Inject constructor(
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     fun handleMessage(notificationData: Map<String, String>, source: String) {
-        var now = System.currentTimeMillis()
-        var jsonData = notificationData
-        val notificationId: Long
+        mainScope.launch {
+            var now = System.currentTimeMillis()
+            var jsonData = notificationData
+            val notificationId: Long
 
-        if (source.startsWith(SOURCE_REPLY)) {
-            notificationId = source.substringAfter(SOURCE_REPLY).toLong()
-            notificationDao.get(notificationId.toInt())?.let {
-                val dbData: Map<String, String> = kotlinJsonMapper.decodeFromString(it.data)
+            if (source.startsWith(SOURCE_REPLY)) {
+                notificationId = source.substringAfter(SOURCE_REPLY).toLong()
+                notificationDao.get(notificationId.toInt())?.let {
+                    val dbData: Map<String, String> = kotlinJsonMapper.decodeFromString(it.data)
 
-                now = it.received // Allow for updating the existing notification without a tag
-                jsonData = jsonData + dbData // Add the notificationData, this contains the reply text
-            } ?: return
-        } else {
-            val jsonObject = JSONObject(jsonData)
-            val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
-                serverManager.getServer(webhookId = it)?.id
-            }
-            val notificationRow =
-                NotificationItem(
-                    0,
-                    now,
-                    jsonData[NotificationData.MESSAGE].toString(),
-                    jsonObject.toString(),
-                    source,
-                    receivedServer,
-                )
-            notificationId = notificationDao.add(notificationRow)
+                    now = it.received // Allow for updating the existing notification without a tag
+                    jsonData = jsonData + dbData // Add the notificationData, this contains the reply text
+                } ?: return@launch
+            } else {
+                val jsonObject = JSONObject(jsonData)
+                val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
+                    serverManager.getServer(webhookId = it)?.id
+                }
+                val notificationRow =
+                    NotificationItem(
+                        0,
+                        now,
+                        jsonData[NotificationData.MESSAGE].toString(),
+                        jsonObject.toString(),
+                        source,
+                        receivedServer,
+                    )
+                notificationId = notificationDao.add(notificationRow)
 
-            val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
-            if (confirmation) {
-                mainScope.launch {
+                val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
+                if (confirmation) {
                     try {
                         serverManager.integrationRepository(receivedServer ?: ServerManager.SERVER_ID_ACTIVE)
                             .fireEvent("mobile_app_notification_received", jsonData)
@@ -311,18 +311,18 @@ class MessagingManager @Inject constructor(
                     }
                 }
             }
-        }
 
-        val serverId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
-            serverManager.getServer(webhookId = webhookId)?.id
-        } ?: ServerManager.SERVER_ID_ACTIVE
-        if (serverManager.getServer(serverId) == null) {
-            Timber.w("Received notification but no server for it, discarding")
-            return
-        }
-        jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, serverId.toString()) }
+            val serverId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
+                serverManager.getServer(webhookId = webhookId)?.id
+            } ?: ServerManager.SERVER_ID_ACTIVE
 
-        mainScope.launch {
+            if (serverManager.getServer(serverId) == null) {
+                Timber.w("Received notification but no server for it, discarding")
+                return@launch
+            }
+
+            jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, serverId.toString()) }
+
             val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
             when {
                 jsonData[NotificationData.MESSAGE] == REQUEST_LOCATION_UPDATE && allowCommands -> {
@@ -552,7 +552,7 @@ class MessagingManager @Inject constructor(
                         }
 
                         COMMAND_PERSISTENT_CONNECTION -> {
-                            val validPersistentTypes = WebsocketSetting.values().map { setting -> setting.name }
+                            val validPersistentTypes = WebsocketSetting.entries.map { setting -> setting.name }
 
                             when {
                                 jsonData[PERSISTENT].isNullOrEmpty() -> {
@@ -656,7 +656,6 @@ class MessagingManager @Inject constructor(
                             DND_ALL -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_ALL,
                             )
-
                             DND_NONE -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_NONE,
                             )
@@ -1293,7 +1292,7 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun handleServer(builder: NotificationCompat.Builder, data: Map<String, String>) {
+    private suspend fun handleServer(builder: NotificationCompat.Builder, data: Map<String, String>) {
         data[NotificationData.WEBHOOK_ID]?.let { webhookId ->
             if (serverManager.defaultServers.size > 1) {
                 serverManager.getServer(webhookId = webhookId)?.let {

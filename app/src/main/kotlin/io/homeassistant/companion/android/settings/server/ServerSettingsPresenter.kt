@@ -17,5 +17,5 @@ interface ServerSettingsPresenter {
 
     fun setAppActive(active: Boolean)
 
-    fun serverURL(): String?
+    suspend fun serverURL(): String?
 }

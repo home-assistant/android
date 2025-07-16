@@ -70,7 +70,7 @@ class ManageShortcutsViewModel @Inject constructor(
     var entities = mutableStateMapOf<Int, List<Entity>>()
         private set
 
-    private val currentServerId = serverManager.getServer()?.id ?: 0
+    private suspend fun currentServerId() = serverManager.getServer()?.id ?: 0
 
     private val iconIdToName: Map<Int, String> by lazy { IconDialogCompat(app.assets).loadAllIcons() }
 
@@ -101,6 +101,20 @@ class ManageShortcutsViewModel @Inject constructor(
                     }
                 }
             }
+            for (i in 0..5) {
+                shortcuts.add(
+                    Shortcut(
+                        mutableStateOf(""),
+                        mutableStateOf(currentServerId()),
+                        mutableStateOf(null),
+                        mutableStateOf(""),
+                        mutableStateOf(""),
+                        mutableStateOf(""),
+                        mutableStateOf("lovelace"),
+                        mutableStateOf(false),
+                    ),
+                )
+            }
         }
         updateDynamicShortcuts()
         Timber.d("We have ${dynamicShortcuts.size} dynamic shortcuts")
@@ -108,21 +122,6 @@ class ManageShortcutsViewModel @Inject constructor(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Timber.d("Can we pin shortcuts: ${ShortcutManagerCompat.isRequestPinShortcutSupported(app)}")
             Timber.d("We have ${pinnedShortcuts.size} pinned shortcuts")
-        }
-
-        for (i in 0..5) {
-            shortcuts.add(
-                Shortcut(
-                    mutableStateOf(""),
-                    mutableStateOf(currentServerId),
-                    mutableStateOf(null),
-                    mutableStateOf(""),
-                    mutableStateOf(""),
-                    mutableStateOf(""),
-                    mutableStateOf("lovelace"),
-                    mutableStateOf(false),
-                ),
-            )
         }
 
         if (dynamicShortcuts.size > 0) {
@@ -253,6 +252,7 @@ class ManageShortcutsViewModel @Inject constructor(
     }
 
     private suspend fun Shortcut.setData(item: ShortcutInfoCompat) {
+        val currentServerId = currentServerId()
         serverId.value = item.intent.extras?.getInt("server", currentServerId) ?: currentServerId
         label.value = item.shortLabel.toString()
         desc.value = item.longLabel.toString()

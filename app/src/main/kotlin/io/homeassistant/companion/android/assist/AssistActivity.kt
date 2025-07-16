@@ -16,6 +16,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.assist.ui.AssistSheetView
@@ -24,6 +25,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class AssistActivity : BaseActivity() {
@@ -67,10 +69,11 @@ class AssistActivity : BaseActivity() {
         updateShowWhenLocked()
 
         if (savedInstanceState == null) {
-            if (!viewModel.isRegistered()) {
-                startActivity(Intent(this, LaunchActivity::class.java))
-                finish()
-                return
+            lifecycleScope.launch {
+                if (!viewModel.isRegistered()) {
+                    startActivity(Intent(this@AssistActivity, LaunchActivity::class.java))
+                    finish()
+                }
             }
 
             viewModel.onCreate(
@@ -108,7 +111,7 @@ class AssistActivity : BaseActivity() {
                     currentPipeline = viewModel.currentPipeline,
                     onSelectPipeline = viewModel::changePipeline,
                     onManagePipelines =
-                    if (fromFrontend && viewModel.userCanManagePipelines()) {
+                    if (fromFrontend && viewModel.userCanManagePipelines) {
                         {
                             startActivity(
                                 WebViewActivity.newInstance(
