@@ -38,11 +38,7 @@ class SsidFragment : Fragment() {
 
     private var canReadWifi by mutableStateOf(false)
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -121,7 +117,9 @@ class SsidFragment : Fragment() {
     private fun checkPermission(permissions: Array<String>?): Boolean {
         if (!permissions.isNullOrEmpty()) {
             for (permission in permissions) {
-                if (ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_DENIED) {
+                if (ContextCompat.checkSelfPermission(requireContext(), permission) ==
+                    PackageManager.PERMISSION_DENIED
+                ) {
                     return false
                 }
             }

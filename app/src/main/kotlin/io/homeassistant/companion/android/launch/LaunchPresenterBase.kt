@@ -8,10 +8,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-abstract class LaunchPresenterBase(
-    private val view: LaunchView,
-    internal val serverManager: ServerManager,
-) : LaunchPresenter {
+abstract class LaunchPresenterBase(private val view: LaunchView, internal val serverManager: ServerManager) :
+    LaunchPresenter {
 
     internal val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     internal val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)

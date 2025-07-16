@@ -19,10 +19,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-abstract class SensorWorkerBase(
-    val appContext: Context,
-    workerParams: WorkerParameters,
-) : CoroutineWorker(appContext, workerParams) {
+abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerParameters) :
+    CoroutineWorker(appContext, workerParams) {
 
     protected abstract val serverManager: ServerManager
     protected abstract val sensorReceiver: SensorReceiverBase

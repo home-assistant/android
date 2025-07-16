@@ -46,7 +46,9 @@ import timber.log.Timber
 private const val EXTRA_SERVER_URL_TO_ONBOARD = "extra_server_url_to_onboard"
 
 @AndroidEntryPoint
-class LaunchActivity : AppCompatActivity(), LaunchView {
+class LaunchActivity :
+    AppCompatActivity(),
+    LaunchView {
 
     companion object {
         fun newInstance(context: Context, serverUrlToOnboard: String): Intent {

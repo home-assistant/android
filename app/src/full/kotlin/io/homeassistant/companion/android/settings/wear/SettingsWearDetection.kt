@@ -20,7 +20,10 @@ object SettingsWearDetection {
             val nodeClient = Wearable.getNodeClient(context)
             nodeClient.connectedNodes.await().any()
         } catch (e: Exception) {
-            if (e is ApiException && e.statusCode == CommonStatusCodes.API_NOT_CONNECTED && e.message?.contains("API_UNAVAILABLE") == true) {
+            if (e is ApiException &&
+                e.statusCode == CommonStatusCodes.API_NOT_CONNECTED &&
+                e.message?.contains("API_UNAVAILABLE") == true
+            ) {
                 // Wearable.API is not available on this device.
                 Timber.d("API unavailable for discovering nodes (no Wear)")
             } else {

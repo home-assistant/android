@@ -36,7 +36,11 @@ class TilePreferenceActivity : BaseActivity() {
         var tileId = "-1"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             intent.extras?.let { extras ->
-                BundleCompat.getParcelable(extras, Intent.EXTRA_COMPONENT_NAME, ComponentName::class.java)?.let { component ->
+                BundleCompat.getParcelable(
+                    extras,
+                    Intent.EXTRA_COMPONENT_NAME,
+                    ComponentName::class.java,
+                )?.let { component ->
                     try {
                         val tileClass = Class.forName(component.className)
                         val tileMap = ManageTilesViewModel.idToTileService

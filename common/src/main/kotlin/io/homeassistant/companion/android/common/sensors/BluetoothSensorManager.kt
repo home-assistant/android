@@ -62,7 +62,19 @@ class BluetoothSensorManager : SensorManager {
         private const val DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS = "10"
         private const val DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER = "1.05"
 
-        private var bleTransmitterDevice = IBeaconTransmitter("", "", "", transmitPowerSetting = "", measuredPowerSetting = 0, advertiseModeSetting = "", onlyTransmitOnHomeWifiSetting = false, transmitting = false, state = "", restartRequired = false)
+        private var bleTransmitterDevice =
+            IBeaconTransmitter(
+                uuid = "",
+                major = "",
+                minor = "",
+                transmitPowerSetting = "",
+                measuredPowerSetting = 0,
+                advertiseModeSetting = "",
+                onlyTransmitOnHomeWifiSetting = false,
+                transmitting = false,
+                state = "",
+                restartRequired = false,
+            )
         private var beaconMonitoringDevice = IBeaconMonitor()
         val bluetoothConnection = SensorManager.BasicSensor(
             "bluetooth_connection",
@@ -113,7 +125,14 @@ class BluetoothSensorManager : SensorManager {
                 return
             }
 
-            sensorDao.add(SensorSetting(bleTransmitter.id, SETTING_BLE_TRANSMIT_ENABLED, transmitEnabled.toString(), SensorSettingType.TOGGLE))
+            sensorDao.add(
+                SensorSetting(
+                    bleTransmitter.id,
+                    SETTING_BLE_TRANSMIT_ENABLED,
+                    transmitEnabled.toString(),
+                    SensorSettingType.TOGGLE,
+                ),
+            )
         }
 
         fun enableDisableBeaconMonitor(context: Context, monitorEnabled: Boolean) {
@@ -128,7 +147,14 @@ class BluetoothSensorManager : SensorManager {
             } else {
                 monitoringManager.stopMonitoring(context, beaconMonitoringDevice)
             }
-            sensorDao.add(SensorSetting(beaconMonitor.id, SETTING_BEACON_MONITOR_ENABLED, monitorEnabled.toString(), SensorSettingType.TOGGLE))
+            sensorDao.add(
+                SensorSetting(
+                    beaconMonitor.id,
+                    SETTING_BEACON_MONITOR_ENABLED,
+                    monitorEnabled.toString(),
+                    SensorSettingType.TOGGLE,
+                ),
+            )
             SensorUpdateReceiver.updateSensors(context)
         }
     }
@@ -138,8 +164,10 @@ class BluetoothSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#bluetooth-sensors"
     }
+
     override val name: Int
         get() = commonR.string.sensor_name_bluetooth
+
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(bluetoothConnection, bluetoothState, bleTransmitter, beaconMonitor)
     }
@@ -153,6 +181,7 @@ class BluetoothSensorManager : SensorManager {
                     Manifest.permission.BLUETOOTH_CONNECT,
                 )
             }
+
             (sensorId == beaconMonitor.id && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) -> {
                 arrayOf(
                     Manifest.permission.BLUETOOTH,
@@ -161,6 +190,7 @@ class BluetoothSensorManager : SensorManager {
                     Manifest.permission.ACCESS_COARSE_LOCATION,
                 )
             }
+
             (sensorId == beaconMonitor.id && Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) -> {
                 arrayOf(
                     Manifest.permission.BLUETOOTH,
@@ -170,6 +200,7 @@ class BluetoothSensorManager : SensorManager {
                     Manifest.permission.ACCESS_COARSE_LOCATION,
                 )
             }
+
             (sensorId == beaconMonitor.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
                 arrayOf(
                     Manifest.permission.BLUETOOTH_CONNECT,
@@ -179,18 +210,18 @@ class BluetoothSensorManager : SensorManager {
                     Manifest.permission.ACCESS_COARSE_LOCATION,
                 )
             }
+
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
                 arrayOf(
                     Manifest.permission.BLUETOOTH_CONNECT,
                 )
             }
+
             else -> arrayOf(Manifest.permission.BLUETOOTH)
         }
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateBluetoothConnectionSensor(context)
         updateBluetoothState(context)
         updateBLESensor(context)
@@ -211,8 +242,10 @@ class BluetoothSensorManager : SensorManager {
         if (checkPermission(context, bluetoothConnection.id)) {
             val bluetoothDevices = BluetoothUtils.getBluetoothDevices(context)
             pairedDevices = bluetoothDevices.filter { b -> b.paired }.map { checkNameAddress(it) }
-            connectedPairedDevices = bluetoothDevices.filter { b -> b.paired && b.connected }.map { checkNameAddress(it) }
-            connectedNotPairedDevices = bluetoothDevices.filter { b -> !b.paired && b.connected }.map { checkNameAddress(it) }
+            connectedPairedDevices =
+                bluetoothDevices.filter { b -> b.paired && b.connected }.map { checkNameAddress(it) }
+            connectedNotPairedDevices =
+                bluetoothDevices.filter { b -> !b.paired && b.connected }.map { checkNameAddress(it) }
             totalConnectedDevices = bluetoothDevices.count { b -> b.connected }
         }
         onSensorUpdated(
@@ -250,14 +283,31 @@ class BluetoothSensorManager : SensorManager {
         )
     }
 
-    private fun isPermittedOnThisNetwork(context: Context) = serverManager(context).defaultServers.any { it.connection.isInternal(requiresUrl = false) }
+    private fun isPermittedOnThisNetwork(context: Context) = serverManager(context).defaultServers.any {
+        it.connection.isInternal(requiresUrl = false)
+    }
 
     private suspend fun updateBLEDevice(context: Context) {
         val transmitActive = getToggleSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_ENABLED, default = true)
-        val uuid = getSetting(context, bleTransmitter, SETTING_BLE_ID1, SensorSettingType.STRING, default = UUID.randomUUID().toString())
-        val major = getSetting(context, bleTransmitter, SETTING_BLE_ID2, SensorSettingType.STRING, default = DEFAULT_BLE_MAJOR)
-        val minor = getSetting(context, bleTransmitter, SETTING_BLE_ID3, SensorSettingType.STRING, default = DEFAULT_BLE_MINOR)
-        val measuredPower = getNumberSetting(context, bleTransmitter, SETTING_BLE_MEASURED_POWER, default = DEFAULT_MEASURED_POWER_AT_1M)
+        val uuid =
+            getSetting(
+                context,
+                bleTransmitter,
+                SETTING_BLE_ID1,
+                SensorSettingType.STRING,
+                default = UUID.randomUUID().toString(),
+            )
+        val major =
+            getSetting(context, bleTransmitter, SETTING_BLE_ID2, SensorSettingType.STRING, default = DEFAULT_BLE_MAJOR)
+        val minor =
+            getSetting(context, bleTransmitter, SETTING_BLE_ID3, SensorSettingType.STRING, default = DEFAULT_BLE_MINOR)
+        val measuredPower =
+            getNumberSetting(
+                context,
+                bleTransmitter,
+                SETTING_BLE_MEASURED_POWER,
+                default = DEFAULT_MEASURED_POWER_AT_1M,
+            )
         val transmitPower = getSetting(
             context = context,
             sensor = bleTransmitter,
@@ -286,10 +336,14 @@ class BluetoothSensorManager : SensorManager {
         val homeWifiOnly = getToggleSetting(context, bleTransmitter, SETTING_BLE_HOME_WIFI_ONLY, default = false)
 
         bleTransmitterDevice.restartRequired = false
-        if (bleTransmitterDevice.uuid != uuid || bleTransmitterDevice.major != major ||
-            bleTransmitterDevice.minor != minor || bleTransmitterDevice.transmitPowerSetting != transmitPower ||
-            bleTransmitterDevice.advertiseModeSetting != advertiseMode || bleTransmitterDevice.transmitRequested != transmitActive ||
-            bleTransmitterDevice.measuredPowerSetting != measuredPower || priorBluetoothStateEnabled != isBtOn(context) ||
+        if (bleTransmitterDevice.uuid != uuid ||
+            bleTransmitterDevice.major != major ||
+            bleTransmitterDevice.minor != minor ||
+            bleTransmitterDevice.transmitPowerSetting != transmitPower ||
+            bleTransmitterDevice.advertiseModeSetting != advertiseMode ||
+            bleTransmitterDevice.transmitRequested != transmitActive ||
+            bleTransmitterDevice.measuredPowerSetting != measuredPower ||
+            priorBluetoothStateEnabled != isBtOn(context) ||
             bleTransmitterDevice.onlyTransmitOnHomeWifiSetting != homeWifiOnly
         ) {
             bleTransmitterDevice.restartRequired = true
@@ -314,19 +368,76 @@ class BluetoothSensorManager : SensorManager {
 
         beaconMonitoringDevice.sensorManager = this
 
-        val monitoringActive = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_ENABLED, SensorSettingType.TOGGLE, "true").toBoolean()
-        val scanPeriod = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_SCAN_PERIOD, SensorSettingType.NUMBER, DEFAULT_BEACON_MONITOR_SCAN_PERIOD).toLongOrNull() ?: DEFAULT_BEACON_MONITOR_SCAN_PERIOD.toLong()
-        val scanInterval = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_SCAN_INTERVAL, SensorSettingType.NUMBER, DEFAULT_BEACON_MONITOR_SCAN_INTERVAL).toLongOrNull() ?: DEFAULT_BEACON_MONITOR_SCAN_INTERVAL.toLong()
-        KalmanFilter.maxIterations = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_FILTER_ITERATIONS, SensorSettingType.NUMBER, DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS).toIntOrNull() ?: DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS.toInt()
-        KalmanFilter.rssiMultiplier = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER, SensorSettingType.NUMBER, DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER).toDoubleOrNull() ?: DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER.toDouble()
+        val monitoringActive = getSetting(
+            context,
+            beaconMonitor,
+            SETTING_BEACON_MONITOR_ENABLED,
+            SensorSettingType.TOGGLE,
+            "true",
+        ).toBoolean()
+        val scanPeriod =
+            getSetting(
+                context,
+                beaconMonitor,
+                SETTING_BEACON_MONITOR_SCAN_PERIOD,
+                SensorSettingType.NUMBER,
+                DEFAULT_BEACON_MONITOR_SCAN_PERIOD,
+            ).toLongOrNull()
+                ?: DEFAULT_BEACON_MONITOR_SCAN_PERIOD.toLong()
+        val scanInterval =
+            getSetting(
+                context,
+                beaconMonitor,
+                SETTING_BEACON_MONITOR_SCAN_INTERVAL,
+                SensorSettingType.NUMBER,
+                DEFAULT_BEACON_MONITOR_SCAN_INTERVAL,
+            ).toLongOrNull()
+                ?: DEFAULT_BEACON_MONITOR_SCAN_INTERVAL.toLong()
+        KalmanFilter.maxIterations =
+            getSetting(
+                context,
+                beaconMonitor,
+                SETTING_BEACON_MONITOR_FILTER_ITERATIONS,
+                SensorSettingType.NUMBER,
+                DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS,
+            ).toIntOrNull()
+                ?: DEFAULT_BEACON_MONITOR_FILTER_ITERATIONS.toInt()
+        KalmanFilter.rssiMultiplier =
+            getSetting(
+                context,
+                beaconMonitor,
+                SETTING_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER,
+                SensorSettingType.NUMBER,
+                DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER,
+            ).toDoubleOrNull()
+                ?: DEFAULT_BEACON_MONITOR_FILTER_RSSI_MULTIPLIER.toDouble()
 
-        val uuidFilter = getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_UUID_FILTER, SensorSettingType.LIST_BEACONS, "").split(", ").filter { it.isNotEmpty() }
+        val uuidFilter = getSetting(
+            context,
+            beaconMonitor,
+            SETTING_BEACON_MONITOR_UUID_FILTER,
+            SensorSettingType.LIST_BEACONS,
+            "",
+        ).split(", ").filter {
+            it.isNotEmpty()
+        }
         beaconMonitoringDevice.setUUIDFilter(
             uuidFilter,
-            getSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_UUID_FILTER_EXCLUDE, SensorSettingType.TOGGLE, "false").toBoolean(),
+            getSetting(
+                context,
+                beaconMonitor,
+                SETTING_BEACON_MONITOR_UUID_FILTER_EXCLUDE,
+                SensorSettingType.TOGGLE,
+                "false",
+            ).toBoolean(),
         )
         ioScope.launch {
-            enableDisableSetting(context, beaconMonitor, SETTING_BEACON_MONITOR_UUID_FILTER_EXCLUDE, uuidFilter.isNotEmpty())
+            enableDisableSetting(
+                context,
+                beaconMonitor,
+                SETTING_BEACON_MONITOR_UUID_FILTER_EXCLUDE,
+                uuidFilter.isNotEmpty(),
+            )
         }
 
         val restart = monitoringManager.isMonitoring() &&
@@ -352,7 +463,8 @@ class BluetoothSensorManager : SensorManager {
         }
         // transmit when BT is on, if we are not already transmitting, or details have changed, and we're permitted on this wifi network
         if (isBtOn(context)) {
-            if (bleTransmitterDevice.transmitRequested && (!bleTransmitterDevice.transmitting || bleTransmitterDevice.restartRequired) &&
+            if (bleTransmitterDevice.transmitRequested &&
+                (!bleTransmitterDevice.transmitting || bleTransmitterDevice.restartRequired) &&
                 (!bleTransmitterDevice.onlyTransmitOnHomeWifiSetting || isPermittedOnThisNetwork(context))
             ) {
                 TransmitterManager.startTransmitting(context, bleTransmitterDevice)
@@ -360,11 +472,15 @@ class BluetoothSensorManager : SensorManager {
         }
 
         // BT off, or TransmitToggled off, or not permitted on this network - stop transmitting if we have been
-        if (!isBtOn(context) || !bleTransmitterDevice.transmitRequested || (bleTransmitterDevice.onlyTransmitOnHomeWifiSetting && !isPermittedOnThisNetwork(context))) {
+        if (!isBtOn(context) ||
+            !bleTransmitterDevice.transmitRequested ||
+            (bleTransmitterDevice.onlyTransmitOnHomeWifiSetting && !isPermittedOnThisNetwork(context))
+        ) {
             TransmitterManager.stopTransmitting(bleTransmitterDevice)
         }
 
-        val lastState = AppDatabase.getInstance(context).sensorDao().get(bleTransmitter.id).firstOrNull()?.state ?: STATE_UNKNOWN
+        val lastState =
+            AppDatabase.getInstance(context).sensorDao().get(bleTransmitter.id).firstOrNull()?.state ?: STATE_UNKNOWN
         val state = if (isBtOn(context)) bleTransmitterDevice.state else "Bluetooth is turned off"
         val icon = if (bleTransmitterDevice.transmitting) "mdi:bluetooth" else "mdi:bluetooth-off"
         onSensorUpdated(
@@ -392,7 +508,16 @@ class BluetoothSensorManager : SensorManager {
 
             val icon = if (monitoringManager.isMonitoring()) "mdi:bluetooth" else "mdi:bluetooth-off"
 
-            val state = if (!BluetoothUtils.isOn(context)) "Bluetooth is turned off" else if (monitoringManager.isMonitoring()) "Monitoring" else "Stopped"
+            val state = if (!BluetoothUtils.isOn(
+                    context,
+                )
+            ) {
+                "Bluetooth is turned off"
+            } else if (monitoringManager.isMonitoring()) {
+                "Monitoring"
+            } else {
+                "Stopped"
+            }
 
             val attr = mutableMapOf<String, Any?>()
             if (BluetoothUtils.isOn(context) && monitoringManager.isMonitoring()) {

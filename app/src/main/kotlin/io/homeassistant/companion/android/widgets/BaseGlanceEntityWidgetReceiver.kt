@@ -24,7 +24,8 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 private fun newCoroutineScopeProvider(): () -> CoroutineScope {
-    val exceptionHandler = CoroutineExceptionHandler { _, throwable -> Timber.e(throwable, "Unhandled error in widget scope") }
+    val exceptionHandler =
+        CoroutineExceptionHandler { _, throwable -> Timber.e(throwable, "Unhandled error in widget scope") }
     // Use SupervisorJob to avoid cancelling all jobs when one fails since the scope is used across all the widgets
     return { CoroutineScope(Dispatchers.Main + SupervisorJob() + exceptionHandler) }
 }
@@ -190,7 +191,9 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
                 }
                 if (entityUpdatesFlow != null) {
                     widgetJobs[appWidgetId] = widgetScope.launch {
-                        Timber.tag(widgetClassName).d("Watching updates of entities($entitiesId) for widget $appWidgetId")
+                        Timber.tag(
+                            widgetClassName,
+                        ).d("Watching updates of entities($entitiesId) for widget $appWidgetId")
                         entityUpdatesFlow.collect {
                             onEntityUpdate(context, appWidgetId, it)
                             updateView(context, appWidgetId)
@@ -214,9 +217,7 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
         widgetJobs.remove(appWidgetId)?.cancel()
     }
 
-    private suspend fun cleanupOrphansWidgetAndGetEntitiesByServer(
-        context: Context,
-    ): Map<Int, EntitiesPerServer> {
+    private suspend fun cleanupOrphansWidgetAndGetEntitiesByServer(context: Context): Map<Int, EntitiesPerServer> {
         val manager = glanceManagerProvider(context)
         val glanceIds = manager.getGlanceIds(glanceAppWidget.javaClass)
 
@@ -248,10 +249,7 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
      * update your data source from elsewhere in the app, make sure to call `update` in case a
      * Worker for this widget is not currently running.
      */
-    private suspend fun updateView(
-        context: Context,
-        appWidgetId: Int,
-    ) {
+    private suspend fun updateView(context: Context, appWidgetId: Int) {
         val manager = glanceManagerProvider(context)
         if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
             val glanceId = manager.getGlanceIdBy(appWidgetId)

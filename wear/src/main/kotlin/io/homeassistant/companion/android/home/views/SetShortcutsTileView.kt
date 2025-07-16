@@ -32,10 +32,7 @@ import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 
 @Composable
-fun SetShortcutsTileView(
-    shortcutEntities: List<SimplifiedEntity>,
-    onShortcutEntitySelectionChange: (Int) -> Unit,
-) {
+fun SetShortcutsTileView(shortcutEntities: List<SimplifiedEntity>, onShortcutEntitySelectionChange: (Int) -> Unit) {
     WearAppTheme {
         ThemeLazyColumn {
             item {
@@ -77,13 +74,17 @@ fun SetShortcutsTileView(
             if (shortcutEntities.size < 7) {
                 item {
                     FilledIconButton(
-                        modifier = Modifier.padding(top = 16.dp).touchTargetAwareSize(IconButtonDefaults.SmallButtonSize),
+                        modifier = Modifier.padding(
+                            top = 16.dp,
+                        ).touchTargetAwareSize(IconButtonDefaults.SmallButtonSize),
                         onClick = { onShortcutEntitySelectionChange(shortcutEntities.size) },
                     ) {
                         Icon(
                             Icons.Filled.Add,
                             contentDescription = stringResource(id = commonR.string.add_shortcut),
-                            modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize)),
+                            modifier = Modifier.size(
+                                IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize),
+                            ),
                         )
                     }
                 }

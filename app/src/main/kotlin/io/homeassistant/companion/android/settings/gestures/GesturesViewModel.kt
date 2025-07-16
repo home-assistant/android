@@ -11,9 +11,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 @HiltViewModel
-class GesturesViewModel @Inject constructor(
-    private val prefsRepository: PrefsRepository,
-) : ViewModel() {
+class GesturesViewModel @Inject constructor(private val prefsRepository: PrefsRepository) : ViewModel() {
 
     val gestureActions = mutableStateMapOf<HAGesture, GestureAction>()
 

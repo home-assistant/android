@@ -38,21 +38,21 @@ object VacuumControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity): Int =
-        DeviceTypes.TYPE_VACUUM
+    override fun getDeviceType(entity: Entity): Int = DeviceTypes.TYPE_VACUUM
 
     override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.domain_vacuum)
 
-    override suspend fun performAction(
-        integrationRepository: IntegrationRepository,
-        action: ControlAction,
-    ): Boolean {
+    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
         integrationRepository.callAction(
             action.templateId.split(".")[0],
             if (entitySupportedFeatures and SUPPORT_TURN_ON == SUPPORT_TURN_ON) {
                 if ((action as? BooleanAction)?.newState == true) "turn_on" else "turn_off"
-            } else if ((action as? BooleanAction)?.newState == true) "start" else "return_to_base",
+            } else if ((action as? BooleanAction)?.newState == true) {
+                "start"
+            } else {
+                "return_to_base"
+            },
             hashMapOf(
                 "entity_id" to action.templateId,
             ),

@@ -114,11 +114,7 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -131,7 +127,8 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
                             startScanning()
                         },
                         onDismiss = {
-                            val domain = improvRepository.getResultState().firstOrNull()?.toHttpUrlOrNull()?.queryParameter("domain")
+                            val domain = improvRepository.getResultState().firstOrNull()?.toHttpUrlOrNull()
+                                ?.queryParameter("domain")
                             setFragmentResult(RESULT_KEY, bundleOf(RESULT_DOMAIN to domain))
                             improvRepository.clearStatesForDevice()
                             dismiss()

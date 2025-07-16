@@ -58,11 +58,7 @@ class AuthenticationFragment : Fragment() {
     lateinit var keyChainRepository: KeyChainRepository
 
     @SuppressLint("SetJavaScriptEnabled")
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -75,10 +71,7 @@ class AuthenticationFragment : Fragment() {
                                 settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
                             webViewClient = object : TLSWebViewClient(keyChainRepository) {
                                 @Deprecated("Deprecated in Java")
-                                override fun shouldOverrideUrlLoading(
-                                    view: WebView?,
-                                    url: String,
-                                ): Boolean {
+                                override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
                                     return onRedirect(url)
                                 }
 
@@ -220,7 +213,9 @@ class AuthenticationFragment : Fragment() {
             .setTitle(commonR.string.error_connection_failed)
             .setMessage(
                 when (sslError?.primaryError) {
-                    SslError.SSL_DATE_INVALID -> requireContext().getString(commonR.string.webview_error_SSL_DATE_INVALID)
+                    SslError.SSL_DATE_INVALID -> requireContext().getString(
+                        commonR.string.webview_error_SSL_DATE_INVALID,
+                    )
                     SslError.SSL_EXPIRED -> requireContext().getString(commonR.string.webview_error_SSL_EXPIRED)
                     SslError.SSL_IDMISMATCH -> requireContext().getString(commonR.string.webview_error_SSL_IDMISMATCH)
                     SslError.SSL_INVALID -> requireContext().getString(commonR.string.webview_error_SSL_INVALID)
@@ -231,10 +226,18 @@ class AuthenticationFragment : Fragment() {
                             when (error?.errorCode) {
                                 WebViewClient.ERROR_FAILED_SSL_HANDSHAKE ->
                                     requireContext().getString(commonR.string.webview_error_FAILED_SSL_HANDSHAKE)
-                                WebViewClient.ERROR_AUTHENTICATION -> requireContext().getString(commonR.string.webview_error_AUTHENTICATION)
-                                WebViewClient.ERROR_PROXY_AUTHENTICATION -> requireContext().getString(commonR.string.webview_error_PROXY_AUTHENTICATION)
-                                WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME -> requireContext().getString(commonR.string.webview_error_AUTH_SCHEME)
-                                WebViewClient.ERROR_HOST_LOOKUP -> requireContext().getString(commonR.string.webview_error_HOST_LOOKUP)
+                                WebViewClient.ERROR_AUTHENTICATION -> requireContext().getString(
+                                    commonR.string.webview_error_AUTHENTICATION,
+                                )
+                                WebViewClient.ERROR_PROXY_AUTHENTICATION -> requireContext().getString(
+                                    commonR.string.webview_error_PROXY_AUTHENTICATION,
+                                )
+                                WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME -> requireContext().getString(
+                                    commonR.string.webview_error_AUTH_SCHEME,
+                                )
+                                WebViewClient.ERROR_HOST_LOOKUP -> requireContext().getString(
+                                    commonR.string.webview_error_HOST_LOOKUP,
+                                )
                                 else -> message
                             }
                         } else {

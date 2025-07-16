@@ -48,9 +48,7 @@ private val haDarkColors = darkColors(
  * (now deprecated) [com.google.accompanist.themeadapter.material.MdcTheme].
  */
 @Composable
-fun HomeAssistantAppTheme(
-    content: @Composable () -> Unit,
-) {
+fun HomeAssistantAppTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colors = if (isSystemInDarkTheme()) haDarkColors else haLightColors,
     ) {
@@ -77,22 +75,46 @@ fun HomeAssistantGlanceTheme(
 object HomeAssistantGlanceTypography {
     val titleLarge: TextStyle
         @Composable
-        get() = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = HomeAssistantGlanceTheme.colors.onSurface)
+        get() = TextStyle(
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = HomeAssistantGlanceTheme.colors.onSurface,
+        )
     val titleMedium: TextStyle
         @Composable
-        get() = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Medium, color = HomeAssistantGlanceTheme.colors.onSurface)
+        get() = TextStyle(
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Medium,
+            color = HomeAssistantGlanceTheme.colors.onSurface,
+        )
     val titleSmall: TextStyle
         @Composable
-        get() = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Normal, color = HomeAssistantGlanceTheme.colors.onSurface)
+        get() = TextStyle(
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Normal,
+            color = HomeAssistantGlanceTheme.colors.onSurface,
+        )
     val bodyLarge: TextStyle
         @Composable
-        get() = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold, color = HomeAssistantGlanceTheme.colors.onSurface)
+        get() = TextStyle(
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = HomeAssistantGlanceTheme.colors.onSurface,
+        )
     val bodyMedium: TextStyle
         @Composable
-        get() = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium, color = HomeAssistantGlanceTheme.colors.onSurface)
+        get() = TextStyle(
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            color = HomeAssistantGlanceTheme.colors.onSurface,
+        )
     val bodySmall: TextStyle
         @Composable
-        get() = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Normal, color = HomeAssistantGlanceTheme.colors.onSurface)
+        get() = TextStyle(
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Normal,
+            color = HomeAssistantGlanceTheme.colors.onSurface,
+        )
 }
 
 object HomeAssistantGlanceDimensions {

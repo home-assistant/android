@@ -6,10 +6,7 @@ import androidx.activity.result.contract.ActivityResultContract
 
 class WriteNfcTag : ActivityResultContract<WriteNfcTag.Input, Int>() {
 
-    data class Input(
-        val tagId: String? = null,
-        val messageId: Int = -1,
-    )
+    data class Input(val tagId: String? = null, val messageId: Int = -1)
 
     override fun createIntent(context: Context, input: Input): Intent {
         return Intent(context, NfcSetupActivity::class.java).apply {

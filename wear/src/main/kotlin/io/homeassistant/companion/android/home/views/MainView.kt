@@ -53,7 +53,11 @@ fun MainView(
     onEntityLongClicked: (String) -> Unit,
     onRetryLoadEntitiesClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
-    onNavigationClicked: (entityLists: Map<String, List<Entity>>, listOrder: List<String>, filter: (Entity) -> Boolean) -> Unit,
+    onNavigationClicked: (
+        entityLists: Map<String, List<Entity>>,
+        listOrder: List<String>,
+        filter: (Entity) -> Boolean,
+    ) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
 ) {
@@ -96,7 +100,13 @@ fun MainView(
                                 },
                                 onClick = {
                                     onEntityClicked(favoriteEntityID, STATE_UNKNOWN)
-                                    onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, favoriteEntityID, haptic)
+                                    onEntityClickedFeedback(
+                                        isToastEnabled,
+                                        isHapticEnabled,
+                                        context,
+                                        favoriteEntityID,
+                                        haptic,
+                                    )
                                 },
                                 colors = getFilledTonalButtonColors(),
                             )
@@ -196,10 +206,11 @@ fun MainView(
 
                         if (
                             mainViewModel.entitiesByArea.values.any {
-                                it.isNotEmpty() && it.any { entity ->
-                                    mainViewModel.getCategoryForEntity(entity.entityId) == null &&
-                                        mainViewModel.getHiddenByForEntity(entity.entityId) == null
-                                }
+                                it.isNotEmpty() &&
+                                    it.any { entity ->
+                                        mainViewModel.getCategoryForEntity(entity.entityId) == null &&
+                                            mainViewModel.getHiddenByForEntity(entity.entityId) == null
+                                    }
                             }
                         ) {
                             item {

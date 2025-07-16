@@ -20,11 +20,7 @@ import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @Composable
-fun NfcWelcomeView(
-    isNfcEnabled: Boolean,
-    onReadClicked: () -> Unit,
-    onWriteClicked: () -> Unit,
-) {
+fun NfcWelcomeView(isNfcEnabled: Boolean, onReadClicked: () -> Unit, onWriteClicked: () -> Unit) {
     LazyColumn(
         contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(),
     ) {

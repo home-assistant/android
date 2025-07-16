@@ -56,16 +56,12 @@ object LightControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity): Int =
-        DeviceTypes.TYPE_LIGHT
+    override fun getDeviceType(entity: Entity): Int = DeviceTypes.TYPE_LIGHT
 
     override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.domain_light)
 
-    override suspend fun performAction(
-        integrationRepository: IntegrationRepository,
-        action: ControlAction,
-    ): Boolean {
+    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
         return when (action) {
             is BooleanAction -> {
                 integrationRepository.callAction(

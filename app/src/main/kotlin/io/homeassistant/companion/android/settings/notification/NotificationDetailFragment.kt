@@ -41,11 +41,7 @@ class NotificationDetailFragment : Fragment() {
         super.onCreate(savedInstanceState)
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -96,7 +92,8 @@ class NotificationDetailFragment : Fragment() {
 
         builder.setNegativeButton(
             commonR.string.confirm_negative,
-        ) { dialog, _ -> // Do nothing
+        ) { dialog, _ ->
+            // Do nothing
             dialog.dismiss()
         }
 

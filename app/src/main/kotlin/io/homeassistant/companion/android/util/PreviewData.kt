@@ -34,8 +34,34 @@ val previewEntityList = mapOf(
 
 val previewFavoritesList = listOf("light.test")
 
-val homeAssistantInstance1 = HomeAssistantInstance(name = "Home", url = URL("https://google.com"), version = HomeAssistantVersion(year = 2024, month = 1, release = 1))
-val homeAssistantInstance2 = HomeAssistantInstance(name = "Vacation Home", url = URL("http://localhost"), version = HomeAssistantVersion(year = 2024, month = 1, release = 1))
+val homeAssistantInstance1 =
+    HomeAssistantInstance(
+        name = "Home",
+        url = URL("https://google.com"),
+        version = HomeAssistantVersion(year = 2024, month = 1, release = 1),
+    )
+val homeAssistantInstance2 =
+    HomeAssistantInstance(
+        name = "Vacation Home",
+        url = URL("http://localhost"),
+        version = HomeAssistantVersion(year = 2024, month = 1, release = 1),
+    )
 
-val previewServer1 = Server(id = 0, _name = "Home", listOrder = -1, connection = ServerConnectionInfo(externalUrl = ""), session = ServerSessionInfo(), user = ServerUserInfo())
-val previewServer2 = Server(id = 1, _name = "Friends home", listOrder = -1, connection = ServerConnectionInfo(externalUrl = ""), session = ServerSessionInfo(), user = ServerUserInfo())
+val previewServer1 =
+    Server(
+        id = 0,
+        _name = "Home",
+        listOrder = -1,
+        connection = ServerConnectionInfo(externalUrl = ""),
+        session = ServerSessionInfo(),
+        user = ServerUserInfo(),
+    )
+val previewServer2 =
+    Server(
+        id = 1,
+        _name = "Friends home",
+        listOrder = -1,
+        connection = ServerConnectionInfo(externalUrl = ""),
+        session = ServerSessionInfo(),
+        user = ServerUserInfo(),
+    )

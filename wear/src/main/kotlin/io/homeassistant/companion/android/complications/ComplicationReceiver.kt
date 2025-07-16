@@ -72,10 +72,7 @@ class ComplicationReceiver : BroadcastReceiver() {
          * Returns a pending intent, suitable for use as a tap intent, that causes a complication to be
          * toggled and updated.
          */
-        fun getComplicationToggleIntent(
-            context: Context,
-            complicationInstanceId: Int,
-        ): PendingIntent {
+        fun getComplicationToggleIntent(context: Context, complicationInstanceId: Int): PendingIntent {
             val intent = Intent(context, ComplicationReceiver::class.java).apply {
                 action = UPDATE_COMPLICATION
                 putExtra(EXTRA_ID, complicationInstanceId)
@@ -91,10 +88,7 @@ class ComplicationReceiver : BroadcastReceiver() {
             )
         }
 
-        fun getComplicationConfigureIntent(
-            context: Context,
-            complicationInstanceId: Int,
-        ): PendingIntent {
+        fun getComplicationConfigureIntent(context: Context, complicationInstanceId: Int): PendingIntent {
             return PendingIntent.getActivity(
                 context,
                 complicationInstanceId,

@@ -65,9 +65,7 @@ const val DEEPLINK_PREFIX_SET_SHORTCUT_TILE = "ha_wear://$SCREEN_SET_SHORTCUTS_T
 const val DEEPLINK_PREFIX_SET_TEMPLATE_TILE = "ha_wear://$SCREEN_SET_TILE_TEMPLATE"
 
 @Composable
-fun LoadHomePage(
-    mainViewModel: MainViewModel,
-) {
+fun LoadHomePage(mainViewModel: MainViewModel) {
     val context = LocalContext.current
 
     WearAppTheme {
@@ -146,9 +144,10 @@ fun LoadHomePage(
                 )
             }
             composable(SCREEN_SETTINGS) {
-                val notificationLaunch = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                    mainViewModel.refreshNotificationPermission()
-                }
+                val notificationLaunch =
+                    rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                        mainViewModel.refreshNotificationPermission()
+                    }
                 SettingsView(
                     loadingState = mainViewModel.loadingState.value,
                     favorites = mainViewModel.favoriteEntityIds.value,
@@ -234,10 +233,14 @@ fun LoadHomePage(
                     tile = mainViewModel.cameraTiles.value.firstOrNull { it.id == tileId },
                     entities = mainViewModel.cameraEntitiesMap["camera"],
                     onSelectEntity = {
-                        swipeDismissableNavController.navigate("$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_ENTITY")
+                        swipeDismissableNavController.navigate(
+                            "$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_ENTITY",
+                        )
                     },
                     onSelectRefreshInterval = {
-                        swipeDismissableNavController.navigate("$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL")
+                        swipeDismissableNavController.navigate(
+                            "$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL",
+                        )
                     },
                 )
             }
@@ -293,7 +296,9 @@ fun LoadHomePage(
                 SelectThermostatTileView(
                     tiles = mainViewModel.thermostatTiles.value,
                     onSelectTile = { tileId ->
-                        swipeDismissableNavController.navigate("$ROUTE_THERMOSTAT_TILE/$tileId/$SCREEN_SET_THERMOSTAT_TILE")
+                        swipeDismissableNavController.navigate(
+                            "$ROUTE_THERMOSTAT_TILE/$tileId/$SCREEN_SET_THERMOSTAT_TILE",
+                        )
                     },
                 )
             }
@@ -305,7 +310,9 @@ fun LoadHomePage(
                     },
                 ),
                 deepLinks = listOf(
-                    navDeepLink { uriPattern = "$DEEPLINK_PREFIX_SET_THERMOSTAT_TILE/{$ARG_SCREEN_THERMOSTAT_TILE_ID}" },
+                    navDeepLink {
+                        uriPattern = "$DEEPLINK_PREFIX_SET_THERMOSTAT_TILE/{$ARG_SCREEN_THERMOSTAT_TILE_ID}"
+                    },
                 ),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_THERMOSTAT_TILE_ID)
@@ -313,10 +320,14 @@ fun LoadHomePage(
                     tile = mainViewModel.thermostatTiles.value.firstOrNull { it.id == tileId },
                     entities = mainViewModel.climateEntitiesMap["climate"],
                     onSelectEntity = {
-                        swipeDismissableNavController.navigate("$ROUTE_THERMOSTAT_TILE/$tileId/$SCREEN_SET_THERMOSTAT_TILE_ENTITY")
+                        swipeDismissableNavController.navigate(
+                            "$ROUTE_THERMOSTAT_TILE/$tileId/$SCREEN_SET_THERMOSTAT_TILE_ENTITY",
+                        )
                     },
                     onSelectRefreshInterval = {
-                        swipeDismissableNavController.navigate("$ROUTE_THERMOSTAT_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL")
+                        swipeDismissableNavController.navigate(
+                            "$ROUTE_THERMOSTAT_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL",
+                        )
                     },
                     onNameEnabled = { tileIdToggle, showName ->
                         mainViewModel.setThermostatTileShowName(tileIdToggle, showName)
@@ -333,7 +344,8 @@ fun LoadHomePage(
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_THERMOSTAT_TILE_ID)
                 val climateDomains = remember { mutableStateListOf("climate") }
-                val climateFavorites = remember { mutableStateOf(emptyList<String>()) } // There are no climate favorites
+                // There are no climate favorites
+                val climateFavorites = remember { mutableStateOf(emptyList<String>()) }
                 ChooseEntityView(
                     entitiesByDomainOrder = climateDomains,
                     entitiesByDomain = mainViewModel.climateEntitiesMap,
@@ -350,7 +362,8 @@ fun LoadHomePage(
                 )
             }
             composable(
-                route = "$ROUTE_THERMOSTAT_TILE/{$ARG_SCREEN_THERMOSTAT_TILE_ID}/$SCREEN_SET_THERMOSTAT_TILE_REFRESH_INTERVAL",
+                route = "$ROUTE_THERMOSTAT_TILE/{$ARG_SCREEN_THERMOSTAT_TILE_ID}/" +
+                    SCREEN_SET_THERMOSTAT_TILE_REFRESH_INTERVAL,
                 arguments = listOf(
                     navArgument(name = ARG_SCREEN_THERMOSTAT_TILE_ID) {
                         type = NavType.IntType
@@ -373,9 +386,13 @@ fun LoadHomePage(
             }
             composable("$ROUTE_SHORTCUTS_TILE/$SCREEN_SELECT_SHORTCUTS_TILE") {
                 SelectShortcutsTileView(
-                    shortcutTileEntitiesCountById = mainViewModel.shortcutEntitiesMap.mapValues { (_, entities) -> entities.size },
+                    shortcutTileEntitiesCountById = mainViewModel.shortcutEntitiesMap.mapValues { (_, entities) ->
+                        entities.size
+                    },
                     onSelectShortcutsTile = { tileId ->
-                        swipeDismissableNavController.navigate("$ROUTE_SHORTCUTS_TILE/$tileId/$SCREEN_SET_SHORTCUTS_TILE")
+                        swipeDismissableNavController.navigate(
+                            "$ROUTE_SHORTCUTS_TILE/$tileId/$SCREEN_SET_SHORTCUTS_TILE",
+                        )
                     },
                     isShowShortcutTextEnabled = mainViewModel.isShowShortcutTextEnabled.value,
                     onShowShortcutTextEnabled = {
@@ -399,12 +416,15 @@ fun LoadHomePage(
                 SetShortcutsTileView(
                     shortcutEntities = mainViewModel.shortcutEntitiesMap[tileId] ?: emptyList(),
                     onShortcutEntitySelectionChange = { entityIndex ->
-                        swipeDismissableNavController.navigate("$ROUTE_SHORTCUTS_TILE/$tileId/$SCREEN_SHORTCUTS_TILE_CHOOSE_ENTITY/$entityIndex")
+                        swipeDismissableNavController.navigate(
+                            "$ROUTE_SHORTCUTS_TILE/$tileId/$SCREEN_SHORTCUTS_TILE_CHOOSE_ENTITY/$entityIndex",
+                        )
                     },
                 )
             }
             composable(
-                route = "$ROUTE_SHORTCUTS_TILE/{$ARG_SCREEN_SHORTCUTS_TILE_ID}/$SCREEN_SHORTCUTS_TILE_CHOOSE_ENTITY/{$ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX}",
+                route = "$ROUTE_SHORTCUTS_TILE/{$ARG_SCREEN_SHORTCUTS_TILE_ID}/$SCREEN_SHORTCUTS_TILE_CHOOSE_ENTITY/" +
+                    "{$ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX}",
                 arguments = listOf(
                     navArgument(name = ARG_SCREEN_SHORTCUTS_TILE_ID) {
                         type = NavType.StringType
@@ -463,7 +483,8 @@ fun LoadHomePage(
                 }
             }
             composable(
-                route = "$ROUTE_TEMPLATE_TILE/{$ARG_SCREEN_TEMPLATE_TILE_ID}/$SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL",
+                route = "$ROUTE_TEMPLATE_TILE/{$ARG_SCREEN_TEMPLATE_TILE_ID}/" +
+                    SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL,
                 arguments = listOf(
                     navArgument(name = ARG_SCREEN_TEMPLATE_TILE_ID) {
                         type = NavType.StringType

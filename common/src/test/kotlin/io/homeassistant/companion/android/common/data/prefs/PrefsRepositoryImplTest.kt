@@ -46,25 +46,23 @@ class PrefsRepositoryImplTest {
     }
 
     @Test
-    fun `Given user customized gesture action when getting pref then user action is returned`() =
-        runTest {
-            coEvery { localStorage.getString("gesture_action_SWIPE_LEFT_THREE") } returns "QUICKBAR_DEFAULT"
+    fun `Given user customized gesture action when getting pref then user action is returned`() = runTest {
+        coEvery { localStorage.getString("gesture_action_SWIPE_LEFT_THREE") } returns "QUICKBAR_DEFAULT"
 
-            val result = repository.getGestureAction(HAGesture.valueOf("SWIPE_LEFT_THREE"))
+        val result = repository.getGestureAction(HAGesture.valueOf("SWIPE_LEFT_THREE"))
 
-            assertEquals(GestureAction.QUICKBAR_DEFAULT, result)
-        }
+        assertEquals(GestureAction.QUICKBAR_DEFAULT, result)
+    }
 
     @ParameterizedTest
     @ValueSource(strings = ["SWIPE_UP_TWO", "SWIPE_DOWN_TWO", "SWIPE_LEFT_TWO", "SWIPE_RIGHT_TWO"])
     fun `Given gesture with no default action when getting pref then none action is returned`(
         gestureName: String,
-    ) =
-        runTest {
-            coEvery { localStorage.getString("gesture_action_$gestureName") } returns null
+    ) = runTest {
+        coEvery { localStorage.getString("gesture_action_$gestureName") } returns null
 
-            val result = repository.getGestureAction(HAGesture.valueOf(gestureName))
+        val result = repository.getGestureAction(HAGesture.valueOf(gestureName))
 
-            assertEquals(GestureAction.NONE, result)
-        }
+        assertEquals(GestureAction.NONE, result)
+    }
 }

@@ -1,9 +1,6 @@
 package io.homeassistant.companion.android.barcode
 
-data class BarcodeScannerAction(
-    val type: BarcodeActionType,
-    val message: String? = null,
-)
+data class BarcodeScannerAction(val type: BarcodeActionType, val message: String? = null)
 
 enum class BarcodeActionType(val externalBusType: String) {
     NOTIFY("bar_code/notify"),

@@ -37,9 +37,7 @@ import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun NotificationChannelView(
-    notificationViewModel: NotificationViewModel,
-) {
+fun NotificationChannelView(notificationViewModel: NotificationViewModel) {
     val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -97,7 +95,10 @@ fun NotificationChannelView(
                                         scope.launch {
                                             scaffoldState.snackbarHostState
                                                 .showSnackbar(
-                                                    context.getString(R.string.notification_channel_deleted, channel.name),
+                                                    context.getString(
+                                                        R.string.notification_channel_deleted,
+                                                        channel.name,
+                                                    ),
                                                     context.getString(R.string.undo),
                                                 )
                                                 .let {

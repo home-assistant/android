@@ -40,10 +40,9 @@ class AssistDataSourceService : ComplicationDataSourceService() {
         }.toBitmap()
     }
 
-    override fun getPreviewData(type: ComplicationType): ComplicationData =
-        MonochromaticImageComplicationData.Builder(
-            monochromaticImage = MonochromaticImage.Builder(Icon.createWithBitmap(getAssistIcon())).build(),
-            contentDescription = PlainComplicationText.Builder(getText(R.string.assist)).build(),
-        )
-            .build()
+    override fun getPreviewData(type: ComplicationType): ComplicationData = MonochromaticImageComplicationData.Builder(
+        monochromaticImage = MonochromaticImage.Builder(Icon.createWithBitmap(getAssistIcon())).build(),
+        contentDescription = PlainComplicationText.Builder(getText(R.string.assist)).build(),
+    )
+        .build()
 }

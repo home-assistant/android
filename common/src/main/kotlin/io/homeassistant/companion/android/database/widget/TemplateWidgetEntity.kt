@@ -20,4 +20,5 @@ data class TemplateWidgetEntity(
     override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
     @ColumnInfo(name = "text_color")
     override val textColor: String? = null,
-) : WidgetEntity, ThemeableWidgetEntity
+) : WidgetEntity,
+    ThemeableWidgetEntity

@@ -68,9 +68,7 @@ class DisplaySensorManager : SensorManager {
         return "https://companion.home-assistant.io/docs/core/sensors#display-sensors"
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateScreenBrightness(context)
         updateScreenTimeout(context)
         updateScreenOrientation(context)

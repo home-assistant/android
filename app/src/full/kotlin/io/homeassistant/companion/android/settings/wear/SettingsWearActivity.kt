@@ -32,7 +32,9 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityChangedListener {
+class SettingsWearActivity :
+    AppCompatActivity(),
+    CapabilityClient.OnCapabilityChangedListener {
 
     private lateinit var binding: ActivitySettingsWearBinding
 
@@ -179,12 +181,16 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
             }
             wearNodesWithApp.size < allConnectedNodes.size -> {
                 Timber.d("Installed on some devices")
-                startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp, getAuthIntentUrl()))
+                startActivity(
+                    SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp, getAuthIntentUrl()),
+                )
                 finish()
             }
             else -> {
                 Timber.d("Installed on all devices")
-                startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp, getAuthIntentUrl()))
+                startActivity(
+                    SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp, getAuthIntentUrl()),
+                )
                 finish()
             }
         }

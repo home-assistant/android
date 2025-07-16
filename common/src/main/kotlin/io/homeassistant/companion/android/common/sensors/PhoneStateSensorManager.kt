@@ -126,9 +126,23 @@ class PhoneStateSensorManager : SensorManager {
     }
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return when {
-            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)) ->
-                listOf(phoneState, sim_1, sim_2, sim1SignalStrength, sim2SignalStrength, sim1DataNetworkType, sim2DataNetworkType)
-            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)) ->
+            (
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                    context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
+                ) ->
+                listOf(
+                    phoneState,
+                    sim_1,
+                    sim_2,
+                    sim1SignalStrength,
+                    sim2SignalStrength,
+                    sim1DataNetworkType,
+                    sim2DataNetworkType,
+                )
+            (
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                    context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
+                ) ->
                 listOf(phoneState, sim_1, sim_2, sim1DataNetworkType, sim2DataNetworkType)
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 -> {
                 listOf(phoneState, sim_1, sim_2)
@@ -143,9 +157,7 @@ class PhoneStateSensorManager : SensorManager {
         return arrayOf(Manifest.permission.READ_PHONE_STATE)
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         checkPhoneState(context)
         updateSimSensor(context, 0)
         updateSimSensor(context, 1)
@@ -229,7 +241,8 @@ class PhoneStateSensorManager : SensorManager {
                             attrs["mcc"] = info.mccString.toString()
                             attrs["mnc"] = info.mncString.toString()
                             attrs["is opportunistic"] = info.isOpportunistic
-                            attrs["data roaming"] = if (info.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) "enable" else "disable"
+                            attrs["data roaming"] =
+                                if (info.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) "enable" else "disable"
                         }
                     } catch (e: Exception) {
                         Timber.e(e, "Unable to get SIM data")

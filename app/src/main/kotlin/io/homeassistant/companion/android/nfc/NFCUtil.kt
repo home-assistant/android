@@ -21,7 +21,11 @@ object NFCUtil {
             return null
         }
 
-        val rawMessages = IntentCompat.getParcelableArrayExtra(intent, NfcAdapter.EXTRA_NDEF_MESSAGES, NdefMessage::class.java)
+        val rawMessages = IntentCompat.getParcelableArrayExtra(
+            intent,
+            NfcAdapter.EXTRA_NDEF_MESSAGES,
+            NdefMessage::class.java,
+        )
         val ndefMessage = rawMessages?.get(0) as NdefMessage?
         return ndefMessage?.records?.get(0)?.toUri()
     }
@@ -62,11 +66,7 @@ object NFCUtil {
     }
 
     @Throws(Exception::class)
-    private fun writeMessageToTag(
-        nfcMessage: NdefMessage,
-        fallbackMessage: NdefMessage,
-        tag: Tag?,
-    ): Boolean {
+    private fun writeMessageToTag(nfcMessage: NdefMessage, fallbackMessage: NdefMessage, tag: Tag?): Boolean {
         val nDefTag = Ndef.get(tag)
 
         nDefTag?.let {

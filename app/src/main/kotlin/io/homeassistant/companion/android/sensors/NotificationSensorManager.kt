@@ -23,7 +23,9 @@ import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class NotificationSensorManager : NotificationListenerService(), SensorManager {
+class NotificationSensorManager :
+    NotificationListenerService(),
+    SensorManager {
     companion object {
         private const val SETTING_ALLOW_LIST = "notification_allow_list"
         private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
@@ -247,7 +249,13 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
 
             try {
                 val attr: MutableMap<String, Any?> = mutableMapOf()
-                val includeContentsAsAttrsSetting = getToggleSetting(applicationContext, activeNotificationCount, SETTING_INCLUDE_CONTENTS_AS_ATTRS, default = true)
+                val includeContentsAsAttrsSetting =
+                    getToggleSetting(
+                        applicationContext,
+                        activeNotificationCount,
+                        SETTING_INCLUDE_CONTENTS_AS_ATTRS,
+                        default = true,
+                    )
                 if (includeContentsAsAttrsSetting) {
                     for (item in activeNotifications) {
                         attr += mappedBundle(item.notification.extras, "_${item.packageName}_${item.id}").orEmpty()
@@ -296,9 +304,17 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         }
 
         val mediaSessionManager = context.getSystemService<MediaSessionManager>()!!
-        val mediaList = mediaSessionManager.getActiveSessions(ComponentName(context, NotificationSensorManager::class.java))
+        val mediaList = mediaSessionManager.getActiveSessions(
+            ComponentName(context, NotificationSensorManager::class.java),
+        )
         val sessionCount = mediaList.size
-        val primaryPlaybackState = if (sessionCount > 0) getPlaybackState(mediaList[0].playbackState?.state) else STATE_UNAVAILABLE
+        val primaryPlaybackState = if (sessionCount >
+            0
+        ) {
+            getPlaybackState(mediaList[0].playbackState?.state)
+        } else {
+            STATE_UNAVAILABLE
+        }
         val attr: MutableMap<String, Any?> = mutableMapOf()
         if (mediaList.size > 0) {
             for (item in mediaList) {

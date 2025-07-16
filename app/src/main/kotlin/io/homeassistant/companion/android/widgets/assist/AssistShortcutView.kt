@@ -115,7 +115,9 @@ fun AssistShortcutView(
                         Switch(
                             checked = startListening,
                             onCheckedChange = null,
-                            colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb)),
+                            colors = SwitchDefaults.colors(
+                                uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb),
+                            ),
                         )
                     }
                 } else if (supported == false) {

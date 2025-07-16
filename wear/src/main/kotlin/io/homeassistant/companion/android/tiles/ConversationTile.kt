@@ -36,23 +36,22 @@ class ConversationTile : TileService() {
     @Inject
     lateinit var serverManager: ServerManager
 
-    override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
-        serviceScope.future {
-            Tile.Builder()
-                .setResourcesVersion("1")
-                .setTileTimeline(
-                    if (serverManager.isRegistered()) {
-                        Timeline.fromLayoutElement(boxLayout())
-                    } else {
-                        loggedOutTimeline(
-                            this@ConversationTile,
-                            requestParams,
-                            commonR.string.assist,
-                            commonR.string.assist_log_in,
-                        )
-                    },
-                ).build()
-        }
+    override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> = serviceScope.future {
+        Tile.Builder()
+            .setResourcesVersion("1")
+            .setTileTimeline(
+                if (serverManager.isRegistered()) {
+                    Timeline.fromLayoutElement(boxLayout())
+                } else {
+                    loggedOutTimeline(
+                        this@ConversationTile,
+                        requestParams,
+                        commonR.string.assist,
+                        commonR.string.assist_log_in,
+                    )
+                },
+            ).build()
+    }
 
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {
@@ -63,7 +62,9 @@ class ConversationTile : TileService() {
                     ImageResource.Builder()
                         .setAndroidResourceByResId(
                             ResourceBuilders.AndroidImageResourceByResId.Builder()
-                                .setResourceId(io.homeassistant.companion.android.R.drawable.ic_comment_processing_outline)
+                                .setResourceId(
+                                    io.homeassistant.companion.android.R.drawable.ic_comment_processing_outline,
+                                )
                                 .build(),
                         )
                         .build(),
@@ -77,84 +78,80 @@ class ConversationTile : TileService() {
         serviceJob.cancel()
     }
 
-    private fun boxLayout(): LayoutElementBuilders.LayoutElement =
-        LayoutElementBuilders.Box.Builder()
-            .addContent(rowElement())
-            .setHeight(dp(40f))
-            .setModifiers(
-                ModifiersBuilders.Modifiers.Builder()
-                    .setClickable(
-                        ModifiersBuilders.Clickable.Builder()
-                            .setId("conversation")
-                            .setOnClick(
-                                ActionBuilders.LaunchAction.Builder()
-                                    .setAndroidActivity(
-                                        ActionBuilders.AndroidActivity.Builder()
-                                            .setClassName(ConversationActivity::class.java.name)
-                                            .setPackageName(this.packageName)
-                                            .build(),
-                                    ).build(),
-                            ).build(),
-                    )
-                    .setBackground(
-                        ModifiersBuilders.Background.Builder()
-                            .setColor(argb(ContextCompat.getColor(baseContext, R.color.colorAccent)))
-                            .setCorner(
-                                ModifiersBuilders.Corner.Builder()
-                                    .setRadius(dp(20f))
-                                    .build(),
-                            )
-                            .build(),
-                    )
-                    .setPadding(
-                        ModifiersBuilders.Padding.Builder()
-                            .setStart(dp(16f))
-                            .setEnd(dp(24f))
-                            .build(),
-                    )
-                    .build(),
-            )
-            .build()
+    private fun boxLayout(): LayoutElementBuilders.LayoutElement = LayoutElementBuilders.Box.Builder()
+        .addContent(rowElement())
+        .setHeight(dp(40f))
+        .setModifiers(
+            ModifiersBuilders.Modifiers.Builder()
+                .setClickable(
+                    ModifiersBuilders.Clickable.Builder()
+                        .setId("conversation")
+                        .setOnClick(
+                            ActionBuilders.LaunchAction.Builder()
+                                .setAndroidActivity(
+                                    ActionBuilders.AndroidActivity.Builder()
+                                        .setClassName(ConversationActivity::class.java.name)
+                                        .setPackageName(this.packageName)
+                                        .build(),
+                                ).build(),
+                        ).build(),
+                )
+                .setBackground(
+                    ModifiersBuilders.Background.Builder()
+                        .setColor(argb(ContextCompat.getColor(baseContext, R.color.colorAccent)))
+                        .setCorner(
+                            ModifiersBuilders.Corner.Builder()
+                                .setRadius(dp(20f))
+                                .build(),
+                        )
+                        .build(),
+                )
+                .setPadding(
+                    ModifiersBuilders.Padding.Builder()
+                        .setStart(dp(16f))
+                        .setEnd(dp(24f))
+                        .build(),
+                )
+                .build(),
+        )
+        .build()
 
-    private fun tappableElement(): LayoutElementBuilders.LayoutElement =
-        LayoutElementBuilders.Text.Builder()
-            .setText(getString(R.string.assist))
-            .setFontStyle(
-                LayoutElementBuilders.FontStyle.Builder()
-                    .setSize(sp(24f))
-                    .build(),
-            )
-            .setModifiers(
-                ModifiersBuilders.Modifiers.Builder()
-                    .setPadding(
-                        ModifiersBuilders.Padding.Builder()
-                            .setStart(dp(8f))
-                            .build(),
-                    )
-                    .build(),
-            )
-            .build()
+    private fun tappableElement(): LayoutElementBuilders.LayoutElement = LayoutElementBuilders.Text.Builder()
+        .setText(getString(R.string.assist))
+        .setFontStyle(
+            LayoutElementBuilders.FontStyle.Builder()
+                .setSize(sp(24f))
+                .build(),
+        )
+        .setModifiers(
+            ModifiersBuilders.Modifiers.Builder()
+                .setPadding(
+                    ModifiersBuilders.Padding.Builder()
+                        .setStart(dp(8f))
+                        .build(),
+                )
+                .build(),
+        )
+        .build()
 
-    private fun imageElement(): LayoutElementBuilders.LayoutElement =
-        LayoutElementBuilders.Image.Builder()
-            .setResourceId("image")
-            .setWidth(dp(24f))
-            .setHeight(dp(24f))
-            .setModifiers(
-                ModifiersBuilders.Modifiers.Builder()
-                    .setPadding(
-                        ModifiersBuilders.Padding.Builder()
-                            .setTop(dp(2f))
-                            .build(),
-                    )
-                    .build(),
-            )
-            .build()
+    private fun imageElement(): LayoutElementBuilders.LayoutElement = LayoutElementBuilders.Image.Builder()
+        .setResourceId("image")
+        .setWidth(dp(24f))
+        .setHeight(dp(24f))
+        .setModifiers(
+            ModifiersBuilders.Modifiers.Builder()
+                .setPadding(
+                    ModifiersBuilders.Padding.Builder()
+                        .setTop(dp(2f))
+                        .build(),
+                )
+                .build(),
+        )
+        .build()
 
-    private fun rowElement(): LayoutElementBuilders.LayoutElement =
-        LayoutElementBuilders.Row.Builder()
-            .addContent(imageElement())
-            .addContent(tappableElement())
-            .setVerticalAlignment(VERTICAL_ALIGN_CENTER)
-            .build()
+    private fun rowElement(): LayoutElementBuilders.LayoutElement = LayoutElementBuilders.Row.Builder()
+        .addContent(imageElement())
+        .addContent(tappableElement())
+        .setVerticalAlignment(VERTICAL_ALIGN_CENTER)
+        .build()
 }

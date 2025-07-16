@@ -147,7 +147,9 @@ fun ManageControlsView(
                         Switch(
                             checked = structureEnabled,
                             onCheckedChange = { onSetStructureEnabled(it) },
-                            colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb)),
+                            colors = SwitchDefaults.colors(
+                                uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb),
+                            ),
                             modifier = Modifier.padding(start = 8.dp),
                         )
                     }
@@ -193,7 +195,9 @@ fun ManageControlsView(
                             )
                         }
                     }
-                    items(entitiesList[selectedServer]?.size ?: 0, key = { "$selectedServer.${entitiesList[selectedServer]?.get(it)?.entityId}" }) { index ->
+                    items(entitiesList[selectedServer]?.size ?: 0, key = {
+                        "$selectedServer.${entitiesList[selectedServer]?.get(it)?.entityId}"
+                    }) { index ->
                         val entity = entitiesList[selectedServer]?.get(index) ?: return@items
                         ManageControlsEntity(
                             entityName = entity.friendlyName,
@@ -265,7 +269,11 @@ fun ManageControlsView(
                     value = panelPath,
                     onValueChange = { panelPath = it },
                     label = { Text(stringResource(id = R.string.lovelace_view_dashboard)) },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, autoCorrectEnabled = false, keyboardType = KeyboardType.Uri),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done,
+                        autoCorrectEnabled = false,
+                        keyboardType = KeyboardType.Uri,
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(all = 16.dp),
@@ -294,12 +302,7 @@ fun ManageControlsView(
 }
 
 @Composable
-fun ManageControlsEntity(
-    entityName: String,
-    entityDomain: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
+fun ManageControlsEntity(entityName: String, entityDomain: String, selected: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .clickable { onClick() }
@@ -328,12 +331,7 @@ fun ManageControlsEntity(
 }
 
 @Composable
-fun ManageControlsModeButton(
-    isPanel: Boolean,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+fun ManageControlsModeButton(isPanel: Boolean, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .height(IntrinsicSize.Max)
@@ -354,14 +352,22 @@ fun ManageControlsModeButton(
                 colorFilter = ColorFilter.tint(LocalContentColor.current),
             )
             Text(
-                text = stringResource(if (isPanel) commonR.string.lovelace else commonR.string.controls_setting_mode_builtin_title),
+                text = stringResource(
+                    if (isPanel) commonR.string.lovelace else commonR.string.controls_setting_mode_builtin_title,
+                ),
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
             Text(
                 // Add newline at the end for spacing
-                text = "${stringResource(if (isPanel) commonR.string.controls_setting_mode_panel_info else commonR.string.controls_setting_mode_builtin_info)}\n",
+                text = "${stringResource(
+                    if (isPanel) {
+                        commonR.string.controls_setting_mode_panel_info
+                    } else {
+                        commonR.string.controls_setting_mode_builtin_info
+                    },
+                )}\n",
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),

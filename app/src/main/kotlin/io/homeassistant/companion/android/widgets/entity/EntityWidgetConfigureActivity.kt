@@ -47,6 +47,7 @@ import timber.log.Timber
 class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     companion object {
+        @Suppress("ktlint:standard:max-line-length")
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
@@ -96,7 +97,10 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                         PendingIntent.getActivity(
                             this,
                             System.currentTimeMillis().toInt(),
-                            Intent(this, EntityWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                            Intent(
+                                this,
+                                EntityWidgetConfigureActivity::class.java,
+                            ).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
                         ),
                     )
@@ -130,10 +134,13 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         val staticWidget = staticWidgetDao.get(appWidgetId)
 
-        val tapActionValues = listOf(getString(commonR.string.widget_tap_action_toggle), getString(commonR.string.refresh))
-        binding.tapActionList.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tapActionValues)
+        val tapActionValues =
+            listOf(getString(commonR.string.widget_tap_action_toggle), getString(commonR.string.refresh))
+        binding.tapActionList.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tapActionValues)
         val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
-        binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
+        binding.backgroundType.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         if (staticWidget != null) {
             binding.widgetTextConfigEntityId.setText(staticWidget.entityId)
@@ -155,8 +162,9 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             if (!attributeIds.isNullOrEmpty()) {
                 binding.appendAttributeValueCheckbox.isChecked = true
                 appendAttributes = true
-                for (item in attributeIds.split(','))
+                for (item in attributeIds.split(',')) {
                     selectedAttributeIds.add(item)
+                }
                 binding.widgetTextConfigAttribute.setText(attributeIds.replace(",", ", "))
                 binding.attributeValueLinearLayout.visibility = VISIBLE
                 binding.attributeSeparator.setText(staticWidget.attributeSeparator)
@@ -168,12 +176,26 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             val toggleable = entity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
             binding.tapAction.isVisible = toggleable
-            binding.tapActionList.setSelection(if (toggleable && staticWidget.tapAction == WidgetTapAction.TOGGLE) 0 else 1)
-            binding.textColor.visibility = if (staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
+            binding.tapActionList.setSelection(
+                if (toggleable &&
+                    staticWidget.tapAction == WidgetTapAction.TOGGLE
+                ) {
+                    0
+                } else {
+                    1
+                },
+            )
+            binding.textColor.visibility =
+                if (staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
             binding.textColorWhite.isChecked =
-                staticWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
+                staticWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) }
+                    ?: true
             binding.textColorBlack.isChecked =
-                staticWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
+                staticWidget.textColor?.let {
+                    it.toColorInt() ==
+                        ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack)
+                }
+                    ?: false
 
             binding.addButton.setText(commonR.string.update_widget)
         } else {
@@ -202,7 +224,9 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 binding.textColor.visibility =
-                    if (parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)) {
+                    if (parent?.adapter?.getItem(position) ==
+                        getString(commonR.string.widget_background_type_transparent)
+                    ) {
                         View.VISIBLE
                     } else {
                         View.GONE
@@ -385,8 +409,16 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             intent.putExtra(
                 EntityWidget.EXTRA_TEXT_COLOR,
-                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent)) {
-                    getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
+                if (binding.backgroundType.selectedItem as String? ==
+                    getString(commonR.string.widget_background_type_transparent)
+                ) {
+                    getHexForColor(
+                        if (binding.textColorWhite.isChecked) {
+                            android.R.color.white
+                        } else {
+                            commonR.color.colorWidgetButtonLabelBlack
+                        },
+                    )
                 } else {
                     null
                 },

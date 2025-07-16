@@ -35,6 +35,7 @@ import timber.log.Timber
 class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     companion object {
+        @Suppress("ktlint:standard:max-line-length")
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
@@ -77,7 +78,10 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                         PendingIntent.getActivity(
                             this,
                             System.currentTimeMillis().toInt(),
-                            Intent(this, CameraWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                            Intent(
+                                this,
+                                CameraWidgetConfigureActivity::class.java,
+                            ).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
                         ),
                     )
@@ -225,7 +229,8 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     }
 
     private fun initTapActionsSpinner() {
-        val tapActionValues = listOf(getString(commonR.string.refresh), getString(commonR.string.widget_tap_action_open))
+        val tapActionValues =
+            listOf(getString(commonR.string.refresh), getString(commonR.string.widget_tap_action_open))
         binding.tapActionList.adapter = ArrayAdapter(this, R.layout.simple_spinner_dropdown_item, tapActionValues)
     }
 

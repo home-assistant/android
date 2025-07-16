@@ -19,11 +19,7 @@ class IconDialogFragment(callback: (IIcon) -> Unit) : DialogFragment() {
 
     private val onSelect = callback
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).also {
             it.clipToPadding = true
         }

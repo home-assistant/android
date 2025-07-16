@@ -252,8 +252,13 @@ class AudioSensorManager : SensorManager {
             icon,
             mapOf(
                 "options" to listOf(
-                    "normal", "ringing", "in_call", "in_communication", "call_screening",
-                    "call_redirect", "communication_redirect",
+                    "normal",
+                    "ringing",
+                    "in_call",
+                    "in_communication",
+                    "call_screening",
+                    "call_redirect",
+                    "communication_redirect",
                 ),
             ),
         )
@@ -268,7 +273,10 @@ class AudioSensorManager : SensorManager {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val audioDevices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
             for (deviceInfo in audioDevices) {
-                if (deviceInfo.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES || deviceInfo.type == AudioDeviceInfo.TYPE_WIRED_HEADSET || deviceInfo.type == AudioDeviceInfo.TYPE_USB_HEADSET) {
+                if (deviceInfo.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
+                    deviceInfo.type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
+                    deviceInfo.type == AudioDeviceInfo.TYPE_USB_HEADSET
+                ) {
                     isHeadphones = true
                 }
             }

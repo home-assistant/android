@@ -61,9 +61,7 @@ class KeyguardSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         val km = context.getSystemService<KeyguardManager>()!!
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             updateDeviceLocked(context, km)

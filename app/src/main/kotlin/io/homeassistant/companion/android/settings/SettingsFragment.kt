@@ -61,18 +61,19 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
-class SettingsFragment(
-    private val presenter: SettingsPresenter,
-    private val langProvider: LanguagesProvider,
-) : SettingsView, PreferenceFragmentCompat() {
+class SettingsFragment(private val presenter: SettingsPresenter, private val langProvider: LanguagesProvider) :
+    PreferenceFragmentCompat(),
+    SettingsView {
 
-    private val requestBackgroundAccessResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        updateBackgroundAccessPref()
-    }
+    private val requestBackgroundAccessResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            updateBackgroundAccessPref()
+        }
 
-    private val requestNotificationPermissionResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        updateNotificationChannelPrefs()
-    }
+    private val requestNotificationPermissionResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            updateNotificationChannelPrefs()
+        }
 
     private val requestOnboardingResult = registerForActivityResult(OnboardApp(), this::onOnboardingComplete)
 
@@ -124,7 +125,9 @@ class SettingsFragment(
                                 }
                                 return@setOnPreferenceClickListener true
                             }
-                            it.setOnPreferenceCancelListener { presenter.cancelSuggestion(requireContext(), suggestion.id) }
+                            it.setOnPreferenceCancelListener {
+                                presenter.cancelSuggestion(requireContext(), suggestion.id)
+                            }
                         }
                         it.isVisible = suggestion != null
                     }
@@ -181,7 +184,8 @@ class SettingsFragment(
         }
 
         val isAutomotive =
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
 
         findPreference<PreferenceCategory>("assist")?.isVisible = !isAutomotive
 
@@ -282,14 +286,24 @@ class SettingsFragment(
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             try {
                                 val utcDateTime = Instant.parse(rateLimits.resetsAt)
-                                formattedDate = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).format(utcDateTime.atZone(ZoneId.systemDefault()))
+                                formattedDate =
+                                    DateTimeFormatter.ofLocalizedDateTime(
+                                        FormatStyle.MEDIUM,
+                                    ).format(utcDateTime.atZone(ZoneId.systemDefault()))
                             } catch (e: Exception) {
                                 Timber.d(e, "Cannot parse notification rate limit date \"${rateLimits.resetsAt}\"")
                             }
                         }
                         it.isVisible = true
-                        it.summary = "\n${getString(commonR.string.successful)}: ${rateLimits.successful}       ${getString(commonR.string.errors)}: ${rateLimits.errors}" +
-                            "\n\n${getString(commonR.string.remaining)}/${getString(commonR.string.maximum)}: ${rateLimits.remaining}/${rateLimits.maximum}" +
+                        it.summary =
+                            "\n${getString(
+                                commonR.string.successful,
+                            )}: ${rateLimits.successful}       ${getString(
+                                commonR.string.errors,
+                            )}: ${rateLimits.errors}" +
+                            "\n\n${getString(
+                                commonR.string.remaining,
+                            )}/${getString(commonR.string.maximum)}: ${rateLimits.remaining}/${rateLimits.maximum}" +
                             "\n\n${getString(commonR.string.resets_at)}: $formattedDate"
                     }
                 }
@@ -313,7 +327,10 @@ class SettingsFragment(
             val link = if (BuildConfig.VERSION_NAME.startsWith("LOCAL")) {
                 "https://github.com/home-assistant/android/releases"
             } else {
-                "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace("-full", "").replace("-minimal", "")}"
+                "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace(
+                    "-full",
+                    "",
+                ).replace("-minimal", "")}"
             }
             it.summary = link
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
@@ -350,7 +367,8 @@ class SettingsFragment(
 
         findPreference<PreferenceCategory>("android_auto")?.let {
             it.isVisible =
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && (BuildConfig.FLAVOR == "full" || isAutomotive)
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                (BuildConfig.FLAVOR == "full" || isAutomotive)
             if (isAutomotive) {
                 it.title = getString(commonR.string.android_automotive)
             }
@@ -405,7 +423,8 @@ class SettingsFragment(
         // On Android Q+, this is a workaround as Android doesn't allow requesting the assistant role
         try {
             val openIntent = Intent(Intent.ACTION_MAIN)
-            openIntent.component = ComponentName("com.android.settings", "com.android.settings.Settings\$ManageAssistActivity")
+            openIntent.component =
+                ComponentName("com.android.settings", "com.android.settings.Settings\$ManageAssistActivity")
             openIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             startActivity(openIntent)
         } catch (e: ActivityNotFoundException) {
@@ -463,7 +482,8 @@ class SettingsFragment(
             serverPreference.key = serverKeys[index]
             serverPreference.order = index
             try {
-                serverPreference.icon = AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_stat_ic_notification_blue)
+                serverPreference.icon =
+                    AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_stat_ic_notification_blue)
             } catch (e: Exception) {
                 Timber.e(e, "Unable to set the server icon")
             }
@@ -474,7 +494,10 @@ class SettingsFragment(
                 if (!needsAuth) {
                     onServerLockResult(Authenticator.SUCCESS)
                 } else {
-                    val canAuth = settingsActivity.requestAuthentication(getString(commonR.string.biometric_set_title), ::onServerLockResult)
+                    val canAuth = settingsActivity.requestAuthentication(
+                        getString(commonR.string.biometric_set_title),
+                        ::onServerLockResult,
+                    )
                     if (!canAuth) {
                         onServerLockResult(Authenticator.SUCCESS)
                     }
@@ -619,7 +642,8 @@ class SettingsFragment(
         super.onResume()
         activity?.title = getString(commonR.string.companion_app)
         context?.let { presenter.updateSuggestions(it) }
-        findPreference<Preference>("set_launcher_app")?.summary = getString(commonR.string.default_launcher_prompt_def, getDefaultLauncherInfo())
+        findPreference<Preference>("set_launcher_app")?.summary =
+            getString(commonR.string.default_launcher_prompt_def, getDefaultLauncherInfo())
     }
 
     override fun onDestroy() {

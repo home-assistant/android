@@ -31,7 +31,9 @@ object CameraControl : HaControl {
         entity: Entity,
         info: HaControlInfo,
     ): Control.StatefulBuilder {
-        val image = if (info.baseUrl != null && (entity.attributes["entity_picture"] as? String)?.isNotBlank() == true) {
+        val image = if (info.baseUrl != null &&
+            (entity.attributes["entity_picture"] as? String)?.isNotBlank() == true
+        ) {
             getThumbnail(info.baseUrl + entity.attributes["entity_picture"] as String)
         } else {
             null
@@ -52,16 +54,12 @@ object CameraControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity): Int =
-        DeviceTypes.TYPE_CAMERA
+    override fun getDeviceType(entity: Entity): Int = DeviceTypes.TYPE_CAMERA
 
     override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.domain_camera)
 
-    override suspend fun performAction(
-        integrationRepository: IntegrationRepository,
-        action: ControlAction,
-    ): Boolean {
+    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
         // No action is received, Android immediately invokes long press
         return true
     }

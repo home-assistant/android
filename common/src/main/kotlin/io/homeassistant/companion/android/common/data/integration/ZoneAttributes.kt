@@ -13,5 +13,9 @@ fun Entity.containsWithAccuracy(location: Location): Boolean {
         latitude = (attributes["latitude"] as Number).toDouble()
         longitude = (attributes["longitude"] as Number).toDouble()
     }
-    return (location.distanceTo(zoneCenter) - (attributes["radius"] as Number).toFloat() - location.accuracy.coerceAtLeast(0f)) <= 0
+    return (
+        location.distanceTo(zoneCenter) - (attributes["radius"] as Number).toFloat() -
+            location.accuracy.coerceAtLeast(0f)
+        ) <=
+        0
 }

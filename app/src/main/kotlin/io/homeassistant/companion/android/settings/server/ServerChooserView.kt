@@ -24,10 +24,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.compose.ModalBottomSheet
 
 @Composable
-fun ServerChooserView(
-    servers: List<Server>,
-    onServerSelected: (Int) -> Unit,
-) {
+fun ServerChooserView(servers: List<Server>, onServerSelected: (Int) -> Unit) {
     ModalBottomSheet(title = stringResource(commonR.string.server_select)) {
         servers.forEach {
             ServerChooserRow(server = it, onServerSelected = onServerSelected)
@@ -37,10 +34,7 @@ fun ServerChooserView(
 }
 
 @Composable
-fun ServerChooserRow(
-    server: Server,
-    onServerSelected: (Int) -> Unit,
-) {
+fun ServerChooserRow(server: Server, onServerSelected: (Int) -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,

@@ -24,12 +24,7 @@ import com.mikepenz.iconics.typeface.IIcon
  * A Material 3-style Assist Chip with a transparent background
  */
 @Composable
-fun TransparentChip(
-    modifier: Modifier = Modifier,
-    text: String,
-    icon: IIcon? = null,
-    onClick: () -> Unit,
-) {
+fun TransparentChip(modifier: Modifier = Modifier, text: String, icon: IIcon? = null, onClick: () -> Unit) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),

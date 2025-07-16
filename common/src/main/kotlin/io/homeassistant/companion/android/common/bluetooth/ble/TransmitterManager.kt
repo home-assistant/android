@@ -27,13 +27,23 @@ object TransmitterManager {
     }
 
     private fun shouldStartTransmitting(haTransmitter: IBeaconTransmitter): Boolean {
-        return validateInputs(haTransmitter) && (!this::physicalTransmitter.isInitialized || !physicalTransmitter.isStarted || haTransmitter.restartRequired)
+        return validateInputs(haTransmitter) &&
+            (
+                !this::physicalTransmitter.isInitialized ||
+                    !physicalTransmitter.isStarted ||
+                    haTransmitter.restartRequired
+                )
     }
 
     private fun validateInputs(haTransmitter: IBeaconTransmitter): Boolean {
         try {
             UUID.fromString(haTransmitter.uuid)
-            if (haTransmitter.major.toInt() < 0 || haTransmitter.major.toInt() > 65535 || haTransmitter.minor.toInt() < 0 || haTransmitter.minor.toInt() > 65535 || haTransmitter.measuredPowerSetting >= 0) {
+            if (haTransmitter.major.toInt() < 0 ||
+                haTransmitter.major.toInt() > 65535 ||
+                haTransmitter.minor.toInt() < 0 ||
+                haTransmitter.minor.toInt() > 65535 ||
+                haTransmitter.measuredPowerSetting >= 0
+            ) {
                 throw IllegalArgumentException("Invalid Major or Minor")
             }
         } catch (e: IllegalArgumentException) {
@@ -91,21 +101,20 @@ object TransmitterManager {
         }
     }
 
-    private fun getAdvertiseMode(haTransmitter: IBeaconTransmitter) =
-        when (haTransmitter.advertiseModeSetting) {
-            BluetoothSensorManager.BLE_ADVERTISE_LOW_LATENCY -> AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY
-            BluetoothSensorManager.BLE_ADVERTISE_BALANCED -> AdvertiseSettings.ADVERTISE_MODE_BALANCED
-            BluetoothSensorManager.BLE_ADVERTISE_LOW_POWER -> AdvertiseSettings.ADVERTISE_MODE_LOW_POWER // explicit for code readability
-            else -> AdvertiseSettings.ADVERTISE_MODE_LOW_POWER
-        }
+    private fun getAdvertiseMode(haTransmitter: IBeaconTransmitter) = when (haTransmitter.advertiseModeSetting) {
+        BluetoothSensorManager.BLE_ADVERTISE_LOW_LATENCY -> AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY
+        BluetoothSensorManager.BLE_ADVERTISE_BALANCED -> AdvertiseSettings.ADVERTISE_MODE_BALANCED
+        // explicit for code readability
+        BluetoothSensorManager.BLE_ADVERTISE_LOW_POWER -> AdvertiseSettings.ADVERTISE_MODE_LOW_POWER
+        else -> AdvertiseSettings.ADVERTISE_MODE_LOW_POWER
+    }
 
-    private fun getPowerLevel(haTransmitter: IBeaconTransmitter) =
-        when (haTransmitter.transmitPowerSetting) {
-            BluetoothSensorManager.BLE_TRANSMIT_HIGH -> AdvertiseSettings.ADVERTISE_TX_POWER_HIGH
-            BluetoothSensorManager.BLE_TRANSMIT_MEDIUM -> AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM
-            BluetoothSensorManager.BLE_TRANSMIT_LOW -> AdvertiseSettings.ADVERTISE_TX_POWER_LOW
-            else -> AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW
-        }
+    private fun getPowerLevel(haTransmitter: IBeaconTransmitter) = when (haTransmitter.transmitPowerSetting) {
+        BluetoothSensorManager.BLE_TRANSMIT_HIGH -> AdvertiseSettings.ADVERTISE_TX_POWER_HIGH
+        BluetoothSensorManager.BLE_TRANSMIT_MEDIUM -> AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM
+        BluetoothSensorManager.BLE_TRANSMIT_LOW -> AdvertiseSettings.ADVERTISE_TX_POWER_LOW
+        else -> AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW
+    }
 
     fun stopTransmitting(haTransmitter: IBeaconTransmitter) {
         if (haTransmitter.transmitting && this::physicalTransmitter.isInitialized) {

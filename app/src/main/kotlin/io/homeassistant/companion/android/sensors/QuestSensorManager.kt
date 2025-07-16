@@ -42,9 +42,7 @@ class QuestSensorManager : SensorManager {
         return Build.MODEL == "Quest"
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         val intent = ContextCompat.registerReceiver(
             context,
             null,

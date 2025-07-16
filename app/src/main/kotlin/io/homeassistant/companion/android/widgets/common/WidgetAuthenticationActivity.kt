@@ -48,7 +48,11 @@ class WidgetAuthenticationActivity : AppCompatActivity() {
             }
             else -> {
                 Timber.d("Authentication failed, retry attempts allowed")
-                Toast.makeText(applicationContext, getString(R.string.widget_error_authenticating), Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    applicationContext,
+                    getString(R.string.widget_error_authenticating),
+                    Toast.LENGTH_LONG,
+                ).show()
                 finishAffinity()
             }
         }

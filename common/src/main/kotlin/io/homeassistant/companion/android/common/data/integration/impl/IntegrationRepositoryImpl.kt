@@ -70,9 +70,14 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val OS_NAME = "Android"
         private const val PUSH_URL = BuildConfig.PUSH_URL
 
-        private const val PREF_APP_VERSION = "app_version" // Note: _not_ server-specific
-        private const val PREF_PUSH_TOKEN = "push_token" // Note: _not_ server-specific
-        private const val PREF_ORPHANED_THREAD_BORDER_AGENT_IDS = "orphaned_thread_border_agent_ids" // Note: _not_ server-specific
+        // Note: _not_ server-specific
+        private const val PREF_APP_VERSION = "app_version"
+
+        // Note: _not_ server-specific
+        private const val PREF_PUSH_TOKEN = "push_token"
+
+        // Note: _not_ server-specific
+        private const val PREF_ORPHANED_THREAD_BORDER_AGENT_IDS = "orphaned_thread_border_agent_ids"
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
@@ -188,7 +193,10 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val threadBorderAgentIds = getThreadBorderAgentIds()
         if (threadBorderAgentIds.any()) {
             val orphanedBorderAgentIds = localStorage.getStringSet(PREF_ORPHANED_THREAD_BORDER_AGENT_IDS).orEmpty()
-            localStorage.putStringSet(PREF_ORPHANED_THREAD_BORDER_AGENT_IDS, orphanedBorderAgentIds + threadBorderAgentIds.toSet())
+            localStorage.putStringSet(
+                PREF_ORPHANED_THREAD_BORDER_AGENT_IDS,
+                orphanedBorderAgentIds + threadBorderAgentIds.toSet(),
+            )
         }
         localStorage.remove("${serverId}_$PREF_THREAD_BORDER_AGENT_IDS")
 
@@ -236,11 +244,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         server.callWebhookOnUrls(updateLocationRequest)
     }
 
-    override suspend fun callAction(
-        domain: String,
-        action: String,
-        actionData: Map<String, Any?>,
-    ) {
+    override suspend fun callAction(domain: String, action: String, actionData: Map<String, Any?>) {
         server.callWebhookOnUrls(
             CallServiceIntegrationRequest(
                 ActionRequest(
@@ -297,7 +301,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val sessionExpired = currentMillis > sessionExpireMillis
         val appLocked = lockEnabled && !appActive && sessionExpired
 
-        Timber.d("isAppLocked(): $appLocked. (LockEnabled: $lockEnabled, appActive: $appActive, expireMillis: $sessionExpireMillis, currentMillis: $currentMillis)")
+        Timber.d(
+            "isAppLocked(): $appLocked. (LockEnabled: $lockEnabled, appActive: $appActive, expireMillis: $sessionExpireMillis, currentMillis: $currentMillis)",
+        )
         return appLocked
     }
 
@@ -309,23 +315,18 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         appActive = active
     }
 
-    override suspend fun sessionTimeOut(value: Int) =
-        localStorage.putInt("${serverId}_$PREF_SESSION_TIMEOUT", value)
+    override suspend fun sessionTimeOut(value: Int) = localStorage.putInt("${serverId}_$PREF_SESSION_TIMEOUT", value)
 
-    override suspend fun getSessionTimeOut(): Int =
-        localStorage.getInt("${serverId}_$PREF_SESSION_TIMEOUT") ?: 0
+    override suspend fun getSessionTimeOut(): Int = localStorage.getInt("${serverId}_$PREF_SESSION_TIMEOUT") ?: 0
 
     override suspend fun setSessionExpireMillis(value: Long) =
         localStorage.putLong("${serverId}_$PREF_SESSION_EXPIRE", value)
 
-    private suspend fun getSessionExpireMillis(): Long =
-        localStorage.getLong("${serverId}_$PREF_SESSION_EXPIRE") ?: 0
+    private suspend fun getSessionExpireMillis(): Long = localStorage.getLong("${serverId}_$PREF_SESSION_EXPIRE") ?: 0
 
-    override suspend fun isTrusted(): Boolean =
-        localStorage.getBooleanOrNull("${serverId}_$PREF_TRUSTED") ?: true
+    override suspend fun isTrusted(): Boolean = localStorage.getBooleanOrNull("${serverId}_$PREF_TRUSTED") ?: true
 
-    override suspend fun setTrusted(trusted: Boolean) =
-        localStorage.putBoolean("${serverId}_$PREF_TRUSTED", trusted)
+    override suspend fun setTrusted(trusted: Boolean) = localStorage.putBoolean("${serverId}_$PREF_TRUSTED", trusted)
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse {
         val pushToken = localStorage.getString(PREF_PUSH_TOKEN) ?: ""
@@ -375,11 +376,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun isHomeAssistantVersionAtLeast(
-        year: Int,
-        month: Int,
-        release: Int,
-    ): Boolean {
+    override suspend fun isHomeAssistantVersionAtLeast(year: Int, month: Int, release: Int): Boolean {
         if (!isRegistered()) return false
 
         val version = HomeAssistantVersion.fromString(getHomeAssistantVersion())
@@ -444,7 +441,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }?.toList()
     }
 
-    override suspend fun getAssistResponse(text: String, pipelineId: String?, conversationId: String?): Flow<AssistPipelineEvent>? {
+    override suspend fun getAssistResponse(
+        text: String,
+        pipelineId: String?,
+        conversationId: String?,
+    ): Flow<AssistPipelineEvent>? {
         return if (server.version?.isAtLeast(2023, 5, 0) == true) {
             webSocketRepository.runAssistPipelineForText(text, pipelineId, conversationId)
         } else {
@@ -599,14 +600,19 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 "distance" -> if (canRegisterDeviceClassDistance) sensorRegistration.deviceClass else null
                 "enum" -> if (canRegisterDeviceClassEnum) sensorRegistration.deviceClass else null
                 "energy" -> if (
-                    canRegisterDeviceClassEnergyCalories || sensorRegistration.unitOfMeasurement !in listOf("cal", "kcal")
+                    canRegisterDeviceClassEnergyCalories ||
+                    sensorRegistration.unitOfMeasurement !in listOf("cal", "kcal")
                 ) {
                     sensorRegistration.deviceClass
                 } else {
                     null
                 }
 
-                "blood_glucose_concentration" -> if (canRegisterDeviceClassBloodGlucose) sensorRegistration.deviceClass else null
+                "blood_glucose_concentration" -> if (canRegisterDeviceClassBloodGlucose) {
+                    sensorRegistration.deviceClass
+                } else {
+                    null
+                }
                 else -> sensorRegistration.deviceClass
             },
             sensorRegistration.unitOfMeasurement,
@@ -681,7 +687,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val httpURLs = connection.getApiUrls().mapNotNull { it.toHttpUrlOrNull() }
 
         if (httpURLs.isEmpty()) {
-            throw IntegrationException("No valid url can be found in server connection ${if (BuildConfig.DEBUG) connection.getApiUrls() else ""}")
+            throw IntegrationException(
+                "No valid url can be found in server connection ${if (BuildConfig.DEBUG) connection.getApiUrls() else ""}",
+            )
         }
 
         httpURLs.forEach { url ->

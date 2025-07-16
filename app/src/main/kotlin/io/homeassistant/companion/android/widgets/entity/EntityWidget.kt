@@ -56,10 +56,13 @@ class EntityWidget : BaseWidgetProvider() {
     @Inject
     lateinit var staticWidgetDao: StaticWidgetDao
 
-    override fun getWidgetProvider(context: Context): ComponentName =
-        ComponentName(context, EntityWidget::class.java)
+    override fun getWidgetProvider(context: Context): ComponentName = ComponentName(context, EntityWidget::class.java)
 
-    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity?): RemoteViews {
+    override suspend fun getWidgetRemoteViews(
+        context: Context,
+        appWidgetId: Int,
+        suggestedEntity: Entity?,
+    ): RemoteViews {
         val widget = staticWidgetDao.get(appWidgetId)
 
         val intent = Intent(context, EntityWidget::class.java).apply {
@@ -67,8 +70,16 @@ class EntityWidget : BaseWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
-        val views = RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_static_wrapper_dynamiccolor else R.layout.widget_static_wrapper_default).apply {
+        val useDynamicColors =
+            widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
+        val views = RemoteViews(
+            context.packageName,
+            if (useDynamicColors) {
+                R.layout.widget_static_wrapper_dynamiccolor
+            } else {
+                R.layout.widget_static_wrapper_default
+            },
+        ).apply {
             if (widget != null) {
                 val serverId = widget.serverId
                 val entityId: String = widget.entityId
@@ -80,7 +91,10 @@ class EntityWidget : BaseWidgetProvider() {
 
                 // Theming
                 if (widget.backgroundType == WidgetBackgroundType.TRANSPARENT) {
-                    var textColor = context.getAttribute(R.attr.colorWidgetOnBackground, ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel))
+                    var textColor = context.getAttribute(
+                        R.attr.colorWidgetOnBackground,
+                        ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel),
+                    )
                     widget.textColor?.let { textColor = it.toColorInt() }
 
                     setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
@@ -188,7 +202,10 @@ class EntityWidget : BaseWidgetProvider() {
             val attributeValues =
                 attributeIds.split(",").map { id -> fetchedAttributes[id]?.toString() }
             val lastUpdate =
-                entity?.friendlyState(context, entityOptions).plus(if (attributeValues.isNotEmpty()) stateSeparator else "")
+                entity?.friendlyState(
+                    context,
+                    entityOptions,
+                ).plus(if (attributeValues.isNotEmpty()) stateSeparator else "")
                     .plus(attributeValues.joinToString(attributeSeparator))
             staticWidgetDao.updateWidgetLastUpdate(appWidgetId, lastUpdate)
             return ResolvedText(lastUpdate)
@@ -210,8 +227,9 @@ class EntityWidget : BaseWidgetProvider() {
         val attributeSeparatorSelection: String? = extras.getString(EXTRA_ATTRIBUTE_SEPARATOR)
         val tapActionSelection = BundleCompat.getSerializable(extras, EXTRA_TAP_ACTION, WidgetTapAction::class.java)
             ?: WidgetTapAction.REFRESH
-        val backgroundTypeSelection = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
-            ?: WidgetBackgroundType.DAYNIGHT
+        val backgroundTypeSelection =
+            BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
+                ?: WidgetBackgroundType.DAYNIGHT
         val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
 
         if (serverId == null || entitySelection == null) {

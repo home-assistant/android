@@ -35,20 +35,15 @@ object DefaultSliderControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity): Int =
-        DeviceTypes.TYPE_UNKNOWN
+    override fun getDeviceType(entity: Entity): Int = DeviceTypes.TYPE_UNKNOWN
 
-    override fun getDomainString(context: Context, entity: Entity): String =
-        if (entity.domain == "input_number") {
-            context.getString(commonR.string.domain_input_number)
-        } else {
-            context.getString(commonR.string.domain_number)
-        }
+    override fun getDomainString(context: Context, entity: Entity): String = if (entity.domain == "input_number") {
+        context.getString(commonR.string.domain_input_number)
+    } else {
+        context.getString(commonR.string.domain_number)
+    }
 
-    override suspend fun performAction(
-        integrationRepository: IntegrationRepository,
-        action: ControlAction,
-    ): Boolean {
+    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
         integrationRepository.callAction(
             action.templateId.split(".")[0],
             "set_value",

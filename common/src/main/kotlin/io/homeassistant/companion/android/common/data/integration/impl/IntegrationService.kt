@@ -28,44 +28,23 @@ interface IntegrationService {
     ): RegisterDeviceResponse
 
     @GET
-    suspend fun getState(
-        @Url url: HttpUrl,
-        @Header("Authorization") auth: String,
-    ): EntityResponse
+    suspend fun getState(@Url url: HttpUrl, @Header("Authorization") auth: String): EntityResponse
 
     @POST
-    suspend fun callWebhook(
-        @Url url: HttpUrl,
-        @Body request: IntegrationRequest,
-    ): Response<ResponseBody>
+    suspend fun callWebhook(@Url url: HttpUrl, @Body request: IntegrationRequest): Response<ResponseBody>
 
     @POST
-    suspend fun getTemplate(
-        @Url url: HttpUrl,
-        @Body request: IntegrationRequest,
-    ): JsonObject
+    suspend fun getTemplate(@Url url: HttpUrl, @Body request: IntegrationRequest): JsonObject
 
     @POST
-    suspend fun getZones(
-        @Url url: HttpUrl,
-        @Body request: IntegrationRequest,
-    ): List<EntityResponse>
+    suspend fun getZones(@Url url: HttpUrl, @Body request: IntegrationRequest): List<EntityResponse>
 
     @POST
-    suspend fun getConfig(
-        @Url url: HttpUrl,
-        @Body request: IntegrationRequest,
-    ): GetConfigResponse
+    suspend fun getConfig(@Url url: HttpUrl, @Body request: IntegrationRequest): GetConfigResponse
 
     @POST
-    suspend fun getRateLimit(
-        @Url url: String,
-        @Body request: RateLimitRequest,
-    ): CheckRateLimits
+    suspend fun getRateLimit(@Url url: String, @Body request: RateLimitRequest): CheckRateLimits
 
     @POST
-    suspend fun updateSensors(
-        @Url url: HttpUrl,
-        @Body request: IntegrationRequest,
-    ): Map<String, UpdateSensorResponse>
+    suspend fun updateSensors(@Url url: HttpUrl, @Body request: IntegrationRequest): Map<String, UpdateSensorResponse>
 }

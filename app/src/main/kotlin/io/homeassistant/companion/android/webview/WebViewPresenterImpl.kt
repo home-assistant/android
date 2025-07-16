@@ -98,7 +98,11 @@ class WebViewPresenterImpl @Inject constructor(
             }
 
             try {
-                if (serverManager.authenticationRepository(serverId).getSessionState() == SessionState.ANONYMOUS) return@launch
+                if (serverManager.authenticationRepository(serverId).getSessionState() ==
+                    SessionState.ANONYMOUS
+                ) {
+                    return@launch
+                }
             } catch (e: IllegalArgumentException) {
                 Timber.w("Unable to get server session state, not continuing")
                 return@launch
@@ -106,7 +110,11 @@ class WebViewPresenterImpl @Inject constructor(
 
             val serverConnectionInfo = server?.connection
             url = serverConnectionInfo?.getUrl(
-                serverConnectionInfo.isInternal() || (serverConnectionInfo.prioritizeInternal && !DisabledLocationHandler.isLocationEnabled(view as Context)),
+                serverConnectionInfo.isInternal() ||
+                    (
+                        serverConnectionInfo.prioritizeInternal &&
+                            !DisabledLocationHandler.isLocationEnabled(view as Context)
+                        ),
             )
             urlForServer = server?.id
             val baseUrl = url
@@ -142,12 +150,11 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun getActiveServer(): Int = serverId
 
-    override fun getActiveServerName(): String? =
-        if (serverManager.isRegistered()) {
-            serverManager.getServer(serverId)?.friendlyName
-        } else {
-            null
-        }
+    override fun getActiveServerName(): String? = if (serverManager.isRegistered()) {
+        serverManager.getServer(serverId)?.friendlyName
+    } else {
+        null
+    }
 
     override fun updateActiveServer() {
         if (serverManager.isRegistered()) {
@@ -210,21 +217,45 @@ class WebViewPresenterImpl @Inject constructor(
     override fun onGetExternalAuth(context: Context, callback: String, force: Boolean) {
         mainScope.launch {
             try {
-                view.setExternalAuth("$callback(true, ${serverManager.authenticationRepository(serverId).retrieveExternalAuthentication(force)})")
+                view.setExternalAuth(
+                    "$callback(true, ${serverManager.authenticationRepository(
+                        serverId,
+                    ).retrieveExternalAuthentication(force)})",
+                )
             } catch (e: Exception) {
                 Timber.e(e, "Unable to retrieve external auth")
-                val anonymousSession = serverManager.getServer(serverId) == null || serverManager.authenticationRepository(serverId).getSessionState() == SessionState.ANONYMOUS
+                val anonymousSession =
+                    serverManager.getServer(serverId) == null ||
+                        serverManager.authenticationRepository(serverId).getSessionState() == SessionState.ANONYMOUS
                 view.setExternalAuth("$callback(false)")
                 view.showError(
                     errorType = when {
                         anonymousSession -> WebView.ErrorType.AUTHENTICATION
-                        e is SSLException || (e is SocketTimeoutException && e.suppressed.any { it is SSLException }) -> WebView.ErrorType.SSL
+                        e is SSLException ||
+                            (
+                                e is SocketTimeoutException &&
+                                    e.suppressed.any {
+                                        it is SSLException
+                                    }
+                                ) -> WebView.ErrorType.SSL
                         else -> WebView.ErrorType.TIMEOUT_GENERAL
                     },
                     description = when {
                         anonymousSession -> null
-                        e is SSLHandshakeException || (e is SocketTimeoutException && e.suppressed.any { it is SSLHandshakeException }) -> context.getString(commonR.string.webview_error_FAILED_SSL_HANDSHAKE)
-                        e is SSLException || (e is SocketTimeoutException && e.suppressed.any { it is SSLException }) -> context.getString(commonR.string.webview_error_SSL_INVALID)
+                        e is SSLHandshakeException ||
+                            (
+                                e is SocketTimeoutException &&
+                                    e.suppressed.any {
+                                        it is SSLHandshakeException
+                                    }
+                                ) -> context.getString(commonR.string.webview_error_FAILED_SSL_HANDSHAKE)
+                        e is SSLException ||
+                            (
+                                e is SocketTimeoutException &&
+                                    e.suppressed.any {
+                                        it is SSLException
+                                    }
+                                ) -> context.getString(commonR.string.webview_error_SSL_INVALID)
                         else -> null
                     },
                 )
@@ -418,7 +449,14 @@ class WebViewPresenterImpl @Inject constructor(
 
             mainScope.launch {
                 try {
-                    val result = threadUseCase.syncPreferredDataset(context, serverId, true, CoroutineScope(coroutineContext + SupervisorJob()))
+                    val result = threadUseCase.syncPreferredDataset(
+                        context,
+                        serverId,
+                        true,
+                        CoroutineScope(
+                            coroutineContext + SupervisorJob(),
+                        ),
+                    )
                     Timber.d("Export preferred Thread dataset returned $result")
 
                     when (result) {
@@ -446,8 +484,7 @@ class WebViewPresenterImpl @Inject constructor(
         } // else already waiting for a result, don't send another request
     }
 
-    override fun getMatterThreadStepFlow(): Flow<MatterThreadStep> =
-        mutableMatterThreadStep.asStateFlow()
+    override fun getMatterThreadStepFlow(): Flow<MatterThreadStep> = mutableMatterThreadStep.asStateFlow()
 
     override fun getMatterThreadIntent(): IntentSender? {
         val intent = matterThreadIntentSender
@@ -466,7 +503,9 @@ class WebViewPresenterImpl @Inject constructor(
             MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY -> {
                 mainScope.launch {
                     val sent = threadUseCase.sendThreadDatasetExportResult(result, serverId)
-                    Timber.d("Thread ${if (!sent.isNullOrBlank()) "sent credential for $sent" else "did not send credential"}")
+                    Timber.d(
+                        "Thread ${if (!sent.isNullOrBlank()) "sent credential for $sent" else "did not send credential"}",
+                    )
                     if (sent.isNullOrBlank()) {
                         mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_NONE)
                     } else {

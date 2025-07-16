@@ -34,11 +34,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 @Composable
-fun LoadNfcView(
-    viewModel: NfcViewModel,
-    startDestination: String,
-    pressedUpAtRoot: () -> Unit,
-) {
+fun LoadNfcView(viewModel: NfcViewModel, startDestination: String, pressedUpAtRoot: () -> Unit) {
     val context = LocalContext.current
 
     val navController = rememberNavController()
@@ -93,7 +89,11 @@ fun LoadNfcView(
                 },
                 actions = {
                     IconButton(onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/integrations/universal-links"))
+                        val intent =
+                            Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("https://companion.home-assistant.io/docs/integrations/universal-links"),
+                            )
                         context.startActivity(intent)
                     }) {
                         Icon(

@@ -18,10 +18,7 @@ import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 
 @Composable
-fun SelectCameraTileView(
-    tiles: List<CameraTile>,
-    onSelectTile: (tileId: Int) -> Unit,
-) {
+fun SelectCameraTileView(tiles: List<CameraTile>, onSelectTile: (tileId: Int) -> Unit) {
     WearAppTheme {
         ThemeLazyColumn {
             item {

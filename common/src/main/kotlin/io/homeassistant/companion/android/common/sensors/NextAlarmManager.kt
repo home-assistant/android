@@ -56,9 +56,7 @@ class NextAlarmManager : SensorManager {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateNextAlarm(context)
     }
 
@@ -93,7 +91,9 @@ class NextAlarmManager : SensorManager {
                         return
                     }
                 } else {
-                    sensorDao.add(SensorSetting(nextAlarm.id, SETTING_ALLOW_LIST, allowPackageList, SensorSettingType.LIST_APPS))
+                    sensorDao.add(
+                        SensorSetting(nextAlarm.id, SETTING_ALLOW_LIST, allowPackageList, SensorSettingType.LIST_APPS),
+                    )
                 }
 
                 val cal: Calendar = GregorianCalendar()

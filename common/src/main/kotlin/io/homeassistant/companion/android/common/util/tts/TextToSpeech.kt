@@ -84,10 +84,7 @@ sealed class StreamVolumeAdjustment {
     /**
      * Object that maximizes the volume of a specific [streamId].
      */
-    class Maximize(
-        private val audioManager: AudioManager,
-        private val streamId: Int,
-    ) : StreamVolumeAdjustment() {
+    class Maximize(private val audioManager: AudioManager, private val streamId: Int) : StreamVolumeAdjustment() {
         private val maxVolume: Int = audioManager.getStreamMaxVolume(streamId)
         private var resetVolume: Int? = null
 

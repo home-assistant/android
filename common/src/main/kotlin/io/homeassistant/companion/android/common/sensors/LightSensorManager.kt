@@ -11,7 +11,9 @@ import io.homeassistant.companion.android.common.R as commonR
 import kotlin.math.roundToInt
 import timber.log.Timber
 
-class LightSensorManager : SensorManager, SensorEventListener {
+class LightSensorManager :
+    SensorManager,
+    SensorEventListener {
     companion object {
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
@@ -49,9 +51,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         latestContext = context
         updateLightSensor()
     }

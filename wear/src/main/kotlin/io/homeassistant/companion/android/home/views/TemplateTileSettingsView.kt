@@ -23,11 +23,7 @@ import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 
 @Composable
-fun TemplateTileSettingsView(
-    templateContent: String,
-    refreshInterval: Int,
-    onClickRefreshInterval: () -> Unit,
-) {
+fun TemplateTileSettingsView(templateContent: String, refreshInterval: Int, onClickRefreshInterval: () -> Unit) {
     WearAppTheme {
         ThemeLazyColumn {
             item {
