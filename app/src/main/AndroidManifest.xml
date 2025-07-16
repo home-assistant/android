@@ -269,7 +269,12 @@
         <receiver
             android:name=".sensors.LocationSensorManager"
             android:enabled="true"
-            android:exported="false">
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <!--As discussed in https://github.com/home-assistant/android/pull/5509 we are ok
+            about exposing this receiver since the data are not leaking outside of Home Assistant.
+            And Action would just force the update of the sensor nothing else.
+            -->
             <intent-filter>
                 <action android:name="io.homeassistant.companion.android.background.REQUEST_ACCURATE_UPDATE" />
             </intent-filter>
