@@ -72,6 +72,12 @@ class MainViewModel @Inject constructor(
     private var deviceRegistry: List<DeviceRegistryResponse>? = null
     private var entityRegistry: List<EntityRegistryResponse>? = null
 
+    init {
+        viewModelScope.launch {
+            favoriteCaches.addAll(favoriteCachesDao.getAll())
+        }
+    }
+
     // TODO: This is bad, do this instead: https://stackoverflow.com/questions/46283981/android-viewmodel-additional-arguments
     fun init(homePresenter: HomePresenter) {
         this.homePresenter = homePresenter
@@ -90,7 +96,8 @@ class MainViewModel @Inject constructor(
      * IDs of favorites in the Favorites database.
      */
     val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState()
-    private val favoriteCaches = favoriteCachesDao.getAll()
+    var favoriteCaches = mutableStateListOf<FavoriteCaches>()
+        private set
 
     val shortcutEntitiesMap = mutableStateMapOf<Int?, SnapshotStateList<SimplifiedEntity>>()
 
@@ -547,8 +554,6 @@ class MainViewModel @Inject constructor(
             }
         }
     }
-
-    fun getCachedEntity(entityId: String): FavoriteCaches? = favoriteCaches.find { it.id == entityId }
 
     private fun addCachedFavorite(entityId: String) {
         viewModelScope.launch {
