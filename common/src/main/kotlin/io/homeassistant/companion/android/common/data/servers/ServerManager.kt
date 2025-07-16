@@ -98,10 +98,9 @@ interface ServerManager {
  * @property serverId the ID of the server to retrieve
  */
 class ServerRetriever(val serverManager: ServerManager, val serverId: Int) {
-    @Suppress("ktlint:standard:property-naming")
-    private var _sever: Server? = null
+    private var sever: Server? = null
 
     suspend operator fun invoke(): Server {
-        return _sever ?: checkNotNull(serverManager.getServer(serverId)) { "No server found for id $serverId" }
+        return sever ?: checkNotNull(serverManager.getServer(serverId)) { "No server found for id $serverId" }
     }
 }

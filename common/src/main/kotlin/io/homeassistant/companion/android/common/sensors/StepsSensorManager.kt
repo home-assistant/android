@@ -13,7 +13,9 @@ import io.homeassistant.companion.android.common.R as commonR
 import kotlin.math.roundToInt
 import timber.log.Timber
 
-class StepsSensorManager : SensorManager, SensorEventListener {
+class StepsSensorManager :
+    SensorManager,
+    SensorEventListener {
     companion object {
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
@@ -55,9 +57,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
         return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER)
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         latestContext = context
         updateStepsSensor()
     }

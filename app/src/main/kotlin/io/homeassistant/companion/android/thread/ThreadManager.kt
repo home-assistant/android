@@ -14,7 +14,12 @@ interface ThreadManager {
         object NotConnected : SyncResult()
         class OnlyOnServer(val imported: Boolean) : SyncResult()
         class OnlyOnDevice(val exportIntent: IntentSender?) : SyncResult()
-        class AllHaveCredentials(val matches: Boolean?, val fromApp: Boolean?, val updated: Boolean?, val exportIntent: IntentSender?) : SyncResult()
+        class AllHaveCredentials(
+            val matches: Boolean?,
+            val fromApp: Boolean?,
+            val updated: Boolean?,
+            val exportIntent: IntentSender?,
+        ) : SyncResult()
         object NoneHaveCredentials : SyncResult()
     }
 

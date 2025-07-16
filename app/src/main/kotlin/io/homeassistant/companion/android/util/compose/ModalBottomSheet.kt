@@ -29,11 +29,7 @@ import io.homeassistant.companion.android.util.safeBottomWindowInsets
  * [com.google.android.material.bottomsheet.BottomSheetDialogFragment].
  */
 @Composable
-fun ModalBottomSheet(
-    title: String?,
-    showHandle: Boolean = true,
-    content: @Composable () -> Unit,
-) {
+fun ModalBottomSheet(title: String?, showHandle: Boolean = true, content: @Composable () -> Unit) {
     val sheetCornerRadius = dimensionResource(R.dimen.bottom_sheet_corner_radius)
     Surface(
         shape = RoundedCornerShape(topStart = sheetCornerRadius, topEnd = sheetCornerRadius),

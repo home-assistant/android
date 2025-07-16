@@ -66,7 +66,8 @@ class IBeaconMonitor {
                 if (ignoreBeacon(uuid)) continue // UUID filter (note: no need to check old beacons)
                 requireUpdate = true
             } else {
-                existing.skippedUpdated = 0 // beacon seen, make sure skippedUpdated=0, even if requireUpdate stays false (and beacons list is not replaced)
+                // beacon seen, make sure skippedUpdated=0, even if requireUpdate stays false (and beacons list is not replaced)
+                existing.skippedUpdated = 0
             }
             tmp += beacon.name to beacon
         }
@@ -77,9 +78,10 @@ class IBeaconMonitor {
         }
         for ((i, existingBeacon) in beacons.withIndex()) {
             if (i < sorted.size) {
-                if (sorted[i].name != existingBeacon.name || // the distance order switched
-                    abs(sorted[i].distance - existingBeacon.distance) > 0.5 // the distance difference is greater than 0.5m
+                if (sorted[i].name != existingBeacon.name ||
+                    abs(sorted[i].distance - existingBeacon.distance) > 0.5
                 ) {
+                    // the distance order switched and the distance difference is greater than 0.5m
                     requireUpdate = true
                     break
                 }

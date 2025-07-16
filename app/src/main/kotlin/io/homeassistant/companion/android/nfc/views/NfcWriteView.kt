@@ -35,11 +35,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 
 @Composable
-fun NfcWriteView(
-    isNfcEnabled: Boolean,
-    identifier: String?,
-    onSetIdentifier: ((String) -> Unit)? = null,
-) {
+fun NfcWriteView(isNfcEnabled: Boolean, identifier: String?, onSetIdentifier: ((String) -> Unit)? = null) {
     var identifierDialog by remember { mutableStateOf(false) }
 
     if (identifierDialog && onSetIdentifier != null) {
@@ -92,10 +88,7 @@ fun NfcWriteView(
 }
 
 @Composable
-fun NfcWriteIdentifierDialog(
-    onCancel: () -> Unit,
-    onSubmit: (String) -> Unit,
-) {
+fun NfcWriteIdentifierDialog(onCancel: () -> Unit, onSubmit: (String) -> Unit) {
     val inputValue = remember { mutableStateOf("") }
 
     MdcAlertDialog(

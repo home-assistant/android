@@ -88,17 +88,16 @@ class ServerManagerImpl @Inject constructor(
         }
     }
 
-    override suspend fun isRegistered(): Boolean =
-        mutableServers.values.any {
-            it.type == ServerType.DEFAULT &&
-                it.connection.isRegistered() &&
-                FailFast.failOnCatchSuspend(
-                    message = {
-                        """Failed to get authenticationRepository for ${it.id}. Current repository ids: ${authenticationRepos.keys}."""
-                    },
-                    fallback = false,
-                ) { authenticationRepository(it.id).getSessionState() == SessionState.CONNECTED }
-        }
+    override suspend fun isRegistered(): Boolean = mutableServers.values.any {
+        it.type == ServerType.DEFAULT &&
+            it.connection.isRegistered() &&
+            FailFast.failOnCatchSuspend(
+                message = {
+                    """Failed to get authenticationRepository for ${it.id}. Current repository ids: ${authenticationRepos.keys}."""
+                },
+                fallback = false,
+            ) { authenticationRepository(it.id).getSessionState() == SessionState.CONNECTED }
+    }
 
     override suspend fun addServer(server: Server): Int {
         val newServer = server.copy(

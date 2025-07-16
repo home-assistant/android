@@ -41,7 +41,13 @@ abstract class BaseWidgetConfigureActivity : BaseActivity() {
         lifecycleScope.launch {
             val activeServerId = serverManager.getServer()?.id
             serverSelectList.adapter =
-                ArrayAdapter(this@BaseWidgetConfigureActivity, android.R.layout.simple_spinner_dropdown_item, servers.map { it.friendlyName })
+                ArrayAdapter(
+                    this@BaseWidgetConfigureActivity,
+                    android.R.layout.simple_spinner_dropdown_item,
+                    servers.map {
+                        it.friendlyName
+                    },
+                )
             serverSelectList.setSelection(
                 if (widgetServerId != null) {
                     servers.indexOfFirst { it.id == widgetServerId }

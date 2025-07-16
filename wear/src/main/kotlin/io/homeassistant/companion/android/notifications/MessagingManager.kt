@@ -51,7 +51,14 @@ class MessagingManager @Inject constructor(
                 serverManager.getServer(webhookId = it)?.id
             } ?: ServerManager.SERVER_ID_ACTIVE
             val notificationRow =
-                NotificationItem(0, now, notificationData[NotificationData.MESSAGE].toString(), jsonObject.toString(), source, serverId)
+                NotificationItem(
+                    0,
+                    now,
+                    notificationData[NotificationData.MESSAGE].toString(),
+                    jsonObject.toString(),
+                    source,
+                    serverId,
+                )
             notificationDao.add(notificationRow)
             if (serverManager.getServer(serverId) == null) {
                 Timber.w("Received notification but no server for it, discarding")
@@ -86,7 +93,7 @@ class MessagingManager @Inject constructor(
     private fun sendNotification(data: Map<String, String>, received: Long? = null) {
         val notificationManagerCompat = NotificationManagerCompat.from(context)
 
-        val tag = data["tag"]
+        val tag = data["tag"].takeIf { !it.isNullOrBlank() }
         val messageId = tag?.hashCode() ?: received?.toInt() ?: System.currentTimeMillis().toInt()
 
         var group = data["group"]

@@ -7,10 +7,8 @@ import javax.inject.Inject
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class LaunchPresenterImpl @Inject constructor(
-    view: LaunchView,
-    serverManager: ServerManager,
-) : LaunchPresenterBase(view, serverManager) {
+class LaunchPresenterImpl @Inject constructor(view: LaunchView, serverManager: ServerManager) :
+    LaunchPresenterBase(view, serverManager) {
     override fun resyncRegistration() {
         ioScope.launch {
             if (!serverManager.isRegistered()) return@launch

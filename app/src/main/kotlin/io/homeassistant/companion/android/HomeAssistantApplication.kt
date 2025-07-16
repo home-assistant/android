@@ -45,7 +45,9 @@ import okhttp3.OkHttpClient
 import timber.log.Timber
 
 @HiltAndroidApp
-open class HomeAssistantApplication : Application(), SingletonImageLoader.Factory {
+open class HomeAssistantApplication :
+    Application(),
+    SingletonImageLoader.Factory {
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
@@ -307,7 +309,12 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
         ioScope.launch {
             // 0 is used for storing app level settings
             val settings = settingDao.get(0)
-            if (settings != null && (settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING || settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_ALWAYS)) {
+            if (settings != null &&
+                (
+                    settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING ||
+                        settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_ALWAYS
+                    )
+            ) {
                 ContextCompat.registerReceiver(
                     this@HomeAssistantApplication,
                     sensorReceiver,
@@ -339,19 +346,28 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
 
             ContextCompat.registerReceiver(this, buttonWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
             ContextCompat.registerReceiver(this, entityWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
-            ContextCompat.registerReceiver(this, mediaPlayerWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
-            ContextCompat.registerReceiver(this, templateWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            ContextCompat.registerReceiver(
+                this,
+                mediaPlayerWidget,
+                screenIntentFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+            ContextCompat.registerReceiver(
+                this,
+                templateWidget,
+                screenIntentFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
         }
     }
 
-    override fun newImageLoader(context: PlatformContext): ImageLoader =
-        ImageLoader.Builder(context)
-            .components {
-                add(
-                    OkHttpNetworkFetcherFactory(
-                        callFactory = okHttpClient,
-                    ),
-                )
-            }
-            .build()
+    override fun newImageLoader(context: PlatformContext): ImageLoader = ImageLoader.Builder(context)
+        .components {
+            add(
+                OkHttpNetworkFetcherFactory(
+                    callFactory = okHttpClient,
+                ),
+            )
+        }
+        .build()
 }

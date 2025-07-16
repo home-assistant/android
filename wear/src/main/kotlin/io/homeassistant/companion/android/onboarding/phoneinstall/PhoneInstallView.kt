@@ -21,11 +21,7 @@ import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 
 @Composable
-fun PhoneInstallView(
-    onInstall: () -> Unit,
-    onRefresh: () -> Unit,
-    onAdvanced: () -> Unit,
-) {
+fun PhoneInstallView(onInstall: () -> Unit, onRefresh: () -> Unit, onAdvanced: () -> Unit) {
     ThemeLazyColumn {
         item {
             Image(

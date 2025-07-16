@@ -145,7 +145,10 @@ fun SsidView(
                 usingWifi &&
                     (
                         it == activeSsid ||
-                            (it.startsWith(WifiHelper.BSSID_PREFIX) && it.removePrefix(WifiHelper.BSSID_PREFIX).equals(activeBssid, ignoreCase = true))
+                            (
+                                it.startsWith(WifiHelper.BSSID_PREFIX) &&
+                                    it.removePrefix(WifiHelper.BSSID_PREFIX).equals(activeBssid, ignoreCase = true)
+                                )
                         )
             }
             Row(
@@ -281,16 +284,16 @@ fun SsidSubheader(
             Switch(
                 checked = checked == true,
                 onCheckedChange = null,
-                colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb)),
+                colors = SwitchDefaults.colors(
+                    uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb),
+                ),
             )
         }
     }
 }
 
 @Composable
-fun SsidInput(
-    onSubmit: (String) -> Boolean,
-) {
+fun SsidInput(onSubmit: (String) -> Boolean) {
     val keyboardController = LocalSoftwareKeyboardController.current
     Row(modifier = Modifier.padding(horizontal = 16.dp)) {
         var ssidInput by remember { mutableStateOf("") }
@@ -341,10 +344,7 @@ fun SsidInput(
 }
 
 @Composable
-fun SsidPrioritizeInternal(
-    prioritize: Boolean,
-    onChanged: (Boolean) -> Unit,
-) {
+fun SsidPrioritizeInternal(prioritize: Boolean, onChanged: (Boolean) -> Unit) {
     var prioritizeDropdown by remember { mutableStateOf(false) }
     Box {
         Column(

@@ -32,7 +32,11 @@ class ComplicationConfigActivity : ComponentActivity() {
 
         val id = intent.getIntExtra(EXTRA_CONFIG_COMPLICATION_ID, -1)
         val type = intent.getIntExtra(EXTRA_CONFIG_COMPLICATION_TYPE, -1)
-        val component = IntentCompat.getParcelableExtra(intent, EXTRA_CONFIG_DATA_SOURCE_COMPONENT, ComponentName::class.java)
+        val component = IntentCompat.getParcelableExtra(
+            intent,
+            EXTRA_CONFIG_DATA_SOURCE_COMPONENT,
+            ComponentName::class.java,
+        )
         Timber.i("Config for id $id of type $type for component ${component?.className}")
 
         complicationConfigViewModel.setDataFromIntent(id)

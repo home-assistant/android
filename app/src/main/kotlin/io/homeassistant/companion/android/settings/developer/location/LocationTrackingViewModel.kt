@@ -57,7 +57,10 @@ class LocationTrackingViewModel @Inject constructor(
                 HistoryFilter.SENT ->
                     locationHistoryDao.getAll(listOf(LocationHistoryItemResult.SENT.name))
                 HistoryFilter.SKIPPED -> locationHistoryDao.getAll(
-                    (LocationHistoryItemResult.values().toMutableList() - LocationHistoryItemResult.SENT - LocationHistoryItemResult.FAILED_SEND)
+                    (
+                        LocationHistoryItemResult.values().toMutableList() - LocationHistoryItemResult.SENT -
+                            LocationHistoryItemResult.FAILED_SEND
+                        )
                         .map { it.name },
                 )
                 HistoryFilter.FAILED ->
