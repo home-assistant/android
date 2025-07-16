@@ -9,16 +9,16 @@ import androidx.room.Query
 interface NotificationDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(notification: NotificationItem): Long
+    suspend fun add(notification: NotificationItem): Long
 
     @Query("SELECT * FROM notification_history WHERE id = :id")
-    fun get(id: Int): NotificationItem?
+    suspend fun get(id: Int): NotificationItem?
 
     @Query("SELECT * FROM notification_history ORDER BY received DESC")
-    fun getAll(): Array<NotificationItem>
+    suspend fun getAll(): Array<NotificationItem>
 
     @Query("SELECT * FROM notification_history ORDER BY received DESC LIMIT (:amount)")
-    fun getLastItems(amount: Int): Array<NotificationItem>
+    suspend fun getLastItems(amount: Int): Array<NotificationItem>
 
     @Query("DELETE FROM notification_history WHERE id = :id")
     suspend fun delete(id: Int)
