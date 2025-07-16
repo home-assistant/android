@@ -72,12 +72,6 @@ class MainViewModel @Inject constructor(
     private var deviceRegistry: List<DeviceRegistryResponse>? = null
     private var entityRegistry: List<EntityRegistryResponse>? = null
 
-    init {
-        viewModelScope.launch {
-            favoriteCaches.addAll(favoriteCachesDao.getAll())
-        }
-    }
-
     // TODO: This is bad, do this instead: https://stackoverflow.com/questions/46283981/android-viewmodel-additional-arguments
     fun init(homePresenter: HomePresenter) {
         this.homePresenter = homePresenter
@@ -143,6 +137,12 @@ class MainViewModel @Inject constructor(
         private set
     var areNotificationsAllowed by mutableStateOf(false)
         private set
+
+    init {
+        viewModelScope.launch {
+            favoriteCaches.addAll(favoriteCachesDao.getAll())
+        }
+    }
 
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
