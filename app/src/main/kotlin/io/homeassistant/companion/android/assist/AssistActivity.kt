@@ -134,7 +134,9 @@ class AssistActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.setPermissionInfo(hasRecordingPermission()) { requestPermission.launch(Manifest.permission.RECORD_AUDIO) }
+        viewModel.setPermissionInfo(hasRecordingPermission()) {
+            requestPermission.launch(Manifest.permission.RECORD_AUDIO)
+        }
     }
 
     override fun onPause() {

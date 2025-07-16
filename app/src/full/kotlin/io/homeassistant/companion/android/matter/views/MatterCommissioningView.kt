@@ -106,17 +106,28 @@ fun MatterCommissioningView(
                     } else {
                         Text(
                             text = when (step) {
-                                CommissioningFlowStep.NotRegistered -> stringResource(commonR.string.matter_shared_status_not_registered)
-                                CommissioningFlowStep.SelectServer -> stringResource(commonR.string.matter_shared_status_select_server)
-                                CommissioningFlowStep.NotSupported -> stringResource(commonR.string.matter_shared_status_not_supported)
+                                CommissioningFlowStep.NotRegistered -> stringResource(
+                                    commonR.string.matter_shared_status_not_registered,
+                                )
+                                CommissioningFlowStep.SelectServer -> stringResource(
+                                    commonR.string.matter_shared_status_select_server,
+                                )
+                                CommissioningFlowStep.NotSupported -> stringResource(
+                                    commonR.string.matter_shared_status_not_supported,
+                                )
                                 CommissioningFlowStep.Confirmation -> {
                                     if (deviceName?.isNotBlank() == true) {
-                                        stringResource(commonR.string.matter_shared_status_confirmation_named, deviceName)
+                                        stringResource(
+                                            commonR.string.matter_shared_status_confirmation_named,
+                                            deviceName,
+                                        )
                                     } else {
                                         stringResource(commonR.string.matter_shared_status_confirmation)
                                     }
                                 }
-                                CommissioningFlowStep.Success -> stringResource(commonR.string.matter_shared_status_success)
+                                CommissioningFlowStep.Success -> stringResource(
+                                    commonR.string.matter_shared_status_success,
+                                )
                                 is CommissioningFlowStep.Failure -> {
                                     if (step.errorCode != null) {
                                         stringResource(commonR.string.matter_shared_status_failure_code, step.errorCode)
@@ -228,7 +239,14 @@ fun PreviewMatterCommissioningView(
             step = step,
             deviceName = "Manufacturer Matter Light",
             servers = listOf(
-                Server(id = 0, _name = "Home", listOrder = -1, connection = ServerConnectionInfo(externalUrl = ""), session = ServerSessionInfo(), user = ServerUserInfo()),
+                Server(
+                    id = 0,
+                    _name = "Home",
+                    listOrder = -1,
+                    connection = ServerConnectionInfo(externalUrl = ""),
+                    session = ServerSessionInfo(),
+                    user = ServerUserInfo(),
+                ),
             ),
             onSelectServer = { },
             onConfirmCommissioning = { },

@@ -46,7 +46,9 @@ import timber.log.Timber
 private const val EXTRA_SERVER_URL_TO_ONBOARD = "extra_server_url_to_onboard"
 
 @AndroidEntryPoint
-class LaunchActivity : AppCompatActivity(), LaunchView {
+class LaunchActivity :
+    AppCompatActivity(),
+    LaunchView {
 
     companion object {
         fun newInstance(context: Context, serverUrlToOnboard: String): Intent {
@@ -266,7 +268,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         )
     }
 
-    private fun setNotifications(serverId: Int, enabled: Boolean) {
+    private suspend fun setNotifications(serverId: Int, enabled: Boolean) {
         // Full: this only refers to the system permission on Android 13+ so no changes are necessary.
         // Minimal: change persistent connection setting to reflect preference.
         if (BuildConfig.FLAVOR != "full") {

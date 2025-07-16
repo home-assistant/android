@@ -15,7 +15,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class OnBodySensorManager : SensorManager, SensorEventListener {
+class OnBodySensorManager :
+    SensorManager,
+    SensorEventListener {
     companion object {
         private var isListenerRegistered = false
         private val onBodySensor = SensorManager.BasicSensor(

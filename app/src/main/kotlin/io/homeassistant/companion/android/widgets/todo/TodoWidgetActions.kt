@@ -56,11 +56,7 @@ internal fun actionOpenTodolist(listEntityId: String, serverId: Int): Action {
  * > Widget must let users manually refresh content, if there is an expectation the data refreshes more frequently than the UI.
  */
 class RefreshAction : ActionCallback {
-    override suspend fun onAction(
-        context: Context,
-        glanceId: GlanceId,
-        parameters: ActionParameters,
-    ) {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         TodoGlanceAppWidget().update(context, glanceId)
     }
 }

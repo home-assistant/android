@@ -24,15 +24,21 @@ interface SensorDao {
     fun getAllFlow(): Flow<List<Sensor>>
 
     @Transaction
-    @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id")
+    @Query(
+        "SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id",
+    )
     suspend fun getFull(id: String): Map<Sensor, List<Attribute>>
 
     @Transaction
-    @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id AND sensors.server_id = :serverId")
+    @Query(
+        "SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id AND sensors.server_id = :serverId",
+    )
     suspend fun getFull(id: String, serverId: Int): Map<Sensor, List<Attribute>>
 
     @Transaction
-    @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id")
+    @Query(
+        "SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id",
+    )
     fun getFullFlow(id: String): Flow<Map<Sensor, List<Attribute>>>
 
     @Query("SELECT * FROM Sensors WHERE server_id = :serverId")
@@ -102,7 +108,9 @@ interface SensorDao {
     @Query("UPDATE sensor_settings SET value = :value WHERE sensor_id = :sensorId AND name = :settingName")
     suspend fun updateSettingValue(sensorId: String, settingName: String, value: String)
 
-    @Query("UPDATE sensors SET last_sent_state = :state, last_sent_icon = :icon WHERE id = :sensorId AND server_id = :serverId")
+    @Query(
+        "UPDATE sensors SET last_sent_state = :state, last_sent_icon = :icon WHERE id = :sensorId AND server_id = :serverId",
+    )
     suspend fun updateLastSentStateAndIcon(sensorId: String, serverId: Int, state: String?, icon: String?)
 
     @Query("UPDATE sensors SET last_sent_state = :state, last_sent_icon = :icon WHERE id = :sensorId")
@@ -148,7 +156,12 @@ interface SensorDao {
     }
 
     @Transaction
-    suspend fun getAnyIsEnabled(sensorId: String, servers: List<Int>, permission: Boolean, enabledByDefault: Boolean): Boolean {
+    suspend fun getAnyIsEnabled(
+        sensorId: String,
+        servers: List<Int>,
+        permission: Boolean,
+        enabledByDefault: Boolean,
+    ): Boolean {
         // Create and update entries for all
         var sensorList = get(sensorId)
         var changedList = false

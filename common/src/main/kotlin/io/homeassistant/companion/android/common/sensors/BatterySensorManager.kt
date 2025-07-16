@@ -156,7 +156,12 @@ class BatterySensorManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        val intent = ContextCompat.registerReceiver(context, null, IntentFilter(Intent.ACTION_BATTERY_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED)
+        val intent = ContextCompat.registerReceiver(
+            context,
+            null,
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
         return intent?.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false) == true
     }
 
@@ -164,10 +169,13 @@ class BatterySensorManager : SensorManager {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
-        val intent = ContextCompat.registerReceiver(context, null, IntentFilter(Intent.ACTION_BATTERY_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED)
+    override suspend fun requestSensorUpdate(context: Context) {
+        val intent = ContextCompat.registerReceiver(
+            context,
+            null,
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
         if (intent != null) {
             updateBatteryLevel(context, intent)
             updateBatteryState(context, intent)

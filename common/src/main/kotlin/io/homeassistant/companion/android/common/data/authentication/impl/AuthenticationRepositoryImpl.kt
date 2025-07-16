@@ -113,7 +113,10 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     }
 
     override fun getSessionState(): SessionState {
-        return if (server.session.isComplete() && server.session.installId == installId && server.connection.getUrl() != null) {
+        return if (server.session.isComplete() &&
+            server.session.installId == installId &&
+            server.connection.getUrl() != null
+        ) {
             SessionState.CONNECTED
         } else {
             SessionState.ANONYMOUS
@@ -183,8 +186,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     override suspend fun setLockHomeBypassEnabled(enabled: Boolean) =
         localStorage.putBoolean("${serverId}_$PREF_BIOMETRIC_HOME_BYPASS_ENABLED", enabled)
 
-    override suspend fun isLockEnabledRaw(): Boolean =
-        localStorage.getBoolean("${serverId}_$PREF_BIOMETRIC_ENABLED")
+    override suspend fun isLockEnabledRaw(): Boolean = localStorage.getBoolean("${serverId}_$PREF_BIOMETRIC_ENABLED")
 
     override suspend fun isLockHomeBypassEnabled(): Boolean =
         localStorage.getBoolean("${serverId}_$PREF_BIOMETRIC_HOME_BYPASS_ENABLED")

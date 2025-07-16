@@ -2,11 +2,7 @@ package io.homeassistant.companion.android.common.data
 
 import java.util.regex.Pattern
 
-data class HomeAssistantVersion(
-    val year: Int,
-    val month: Int,
-    val release: Int,
-) {
+data class HomeAssistantVersion(val year: Int, val month: Int, val release: Int) {
 
     companion object {
         private val VERSION_PATTERN = Pattern.compile("([0-9]{4})\\.([0-9]{1,2})\\.([0-9]{1,2}).*")

@@ -47,10 +47,7 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
-fun ManageShortcutsView(
-    viewModel: ManageShortcutsViewModel,
-    showIconDialog: (tag: String) -> Unit,
-) {
+fun ManageShortcutsView(viewModel: ManageShortcutsViewModel, showIconDialog: (tag: String) -> Unit) {
     LazyColumn(
         contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
     ) {
@@ -81,11 +78,7 @@ fun ManageShortcutsView(
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
-private fun CreateShortcutView(
-    i: Int,
-    viewModel: ManageShortcutsViewModel,
-    showIconDialog: (tag: String) -> Unit,
-) {
+private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, showIconDialog: (tag: String) -> Unit) {
     val context = LocalContext.current
     var expandedPinnedShortcuts by remember { mutableStateOf(false) }
 
@@ -131,10 +124,21 @@ private fun CreateShortcutView(
                 )
                 Box {
                     OutlinedButton(onClick = { expandedPinnedShortcuts = true }) {
-                        Text(if (viewModel.shortcuts[i].id.value in pinnedShortCutIds) viewModel.shortcuts[i].id.value ?: "" else "")
+                        Text(
+                            if (viewModel.shortcuts[i].id.value in
+                                pinnedShortCutIds
+                            ) {
+                                viewModel.shortcuts[i].id.value ?: ""
+                            } else {
+                                ""
+                            },
+                        )
                     }
 
-                    DropdownMenu(expanded = expandedPinnedShortcuts, onDismissRequest = { expandedPinnedShortcuts = false }) {
+                    DropdownMenu(expanded = expandedPinnedShortcuts, onDismissRequest = {
+                        expandedPinnedShortcuts =
+                            false
+                    }) {
                         for (item in pinnedShortCutIds) {
                             DropdownMenuItem(onClick = {
                                 viewModel.setPinnedShortcutData(item)
@@ -237,7 +241,11 @@ private fun CreateShortcutView(
             value = viewModel.shortcuts[i].path.value,
             onValueChange = { viewModel.shortcuts[i].path.value = it },
             label = { Text(stringResource(id = R.string.lovelace_view_dashboard)) },
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, autoCorrectEnabled = false, keyboardType = KeyboardType.Uri),
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done,
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Uri,
+            ),
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
         )
     } else {

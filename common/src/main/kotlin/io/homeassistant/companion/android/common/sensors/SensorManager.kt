@@ -172,8 +172,10 @@ interface SensorManager {
     suspend fun enableDisableSetting(context: Context, sensor: BasicSensor, settingName: String, enabled: Boolean) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val settingEnabled = isSettingEnabled(context, sensor, settingName)
-        if (enabled && !settingEnabled ||
-            !enabled && settingEnabled
+        if (enabled &&
+            !settingEnabled ||
+            !enabled &&
+            settingEnabled
         ) {
             sensorDao.updateSettingEnabled(sensor.id, settingName, enabled)
         }
@@ -186,7 +188,14 @@ interface SensorManager {
         default: Boolean,
         enabled: Boolean = true,
     ): Boolean {
-        return getSetting(context, sensor, settingName, SensorSettingType.TOGGLE, default.toString(), enabled).toBoolean()
+        return getSetting(
+            context,
+            sensor,
+            settingName,
+            SensorSettingType.TOGGLE,
+            default.toString(),
+            enabled,
+        ).toBoolean()
     }
 
     suspend fun getNumberSetting(
@@ -196,7 +205,15 @@ interface SensorManager {
         default: Int,
         enabled: Boolean = true,
     ): Int {
-        return getSetting(context, sensor, settingName, SensorSettingType.NUMBER, default.toString(), enabled).toIntOrNull() ?: default
+        return getSetting(
+            context,
+            sensor,
+            settingName,
+            SensorSettingType.NUMBER,
+            default.toString(),
+            enabled,
+        ).toIntOrNull()
+            ?: default
     }
 
     /**
@@ -303,12 +320,11 @@ interface SensorManager {
         fun serverManager(): ServerManager
     }
 
-    fun serverManager(context: Context) =
-        EntryPointAccessors.fromApplication(
-            context.applicationContext,
-            SensorManagerEntryPoint::class.java,
-        )
-            .serverManager()
+    fun serverManager(context: Context) = EntryPointAccessors.fromApplication(
+        context.applicationContext,
+        SensorManagerEntryPoint::class.java,
+    )
+        .serverManager()
 }
 
 fun SensorManager.id(): String {

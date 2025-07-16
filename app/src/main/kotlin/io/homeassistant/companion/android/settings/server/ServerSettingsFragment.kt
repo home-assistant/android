@@ -46,7 +46,9 @@ import timber.log.Timber
 private const val BASE_INVITE_URL = "https://my.home-assistant.io/invite/#"
 
 @AndroidEntryPoint
-class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
+class ServerSettingsFragment :
+    PreferenceFragmentCompat(),
+    ServerSettingsView {
 
     companion object {
         const val TAG = "ServerSettingsFragment"
@@ -111,7 +113,10 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                 findPreference<EditTextPreference>("session_timeout")?.isVisible = false
             } else {
                 val settingsActivity = requireActivity() as SettingsActivity
-                val canAuth = settingsActivity.requestAuthentication(getString(commonR.string.biometric_set_title), ::setLockAuthenticationResult)
+                val canAuth = settingsActivity.requestAuthentication(
+                    getString(commonR.string.biometric_set_title),
+                    ::setLockAuthenticationResult,
+                )
                 isValid = canAuth
 
                 if (!canAuth) {
@@ -232,7 +237,13 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                         val sendIntent: Intent = Intent().apply {
                             action = Intent.ACTION_SEND
                             putExtra(Intent.EXTRA_SUBJECT, getString(commonR.string.join_our_server))
-                            putExtra(Intent.EXTRA_TEXT, "$BASE_INVITE_URL${URLEncoder.encode(presenter.serverURL(), Charsets.UTF_8.toString())}")
+                            putExtra(
+                                Intent.EXTRA_TEXT,
+                                "$BASE_INVITE_URL${URLEncoder.encode(
+                                    presenter.serverURL(),
+                                    Charsets.UTF_8.toString(),
+                                )}",
+                            )
                             type = "text/plain"
                         }
                         startActivity(Intent.createChooser(sendIntent, null))
@@ -254,7 +265,14 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
     }
 
     override fun enableInternalConnection(isEnabled: Boolean) {
-        val iconTint = if (isEnabled) ContextCompat.getColor(requireContext(), commonR.color.colorAccent) else Color.DKGRAY
+        val iconTint = if (isEnabled) {
+            ContextCompat.getColor(
+                requireContext(),
+                commonR.color.colorAccent,
+            )
+        } else {
+            Color.DKGRAY
+        }
 
         findPreference<EditTextPreference>("connection_internal")?.let {
             it.isEnabled = isEnabled

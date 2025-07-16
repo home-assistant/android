@@ -192,9 +192,7 @@ class NetworkSensorManager : SensorManager {
         }
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateHotspotEnabledSensor(context)
         updateWifiConnectionSensor(context)
         updateBSSIDSensor(context)
@@ -210,8 +208,7 @@ class NetworkSensorManager : SensorManager {
         }
     }
 
-    private fun hasWifi(context: Context): Boolean =
-        context.applicationContext.getSystemService<WifiManager>() != null
+    private fun hasWifi(context: Context): Boolean = context.applicationContext.getSystemService<WifiManager>() != null
 
     @SuppressLint("PrivateApi")
     private fun hasHotspot(context: Context): Boolean {
@@ -308,7 +305,9 @@ class NetworkSensorManager : SensorManager {
         val currentSetting = sensorSettings.firstOrNull { it.name == settingName }?.value ?: ""
         if (getCurrentBSSID == "true") {
             if (currentSetting == "") {
-                sensorDao.add(SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE))
+                sensorDao.add(
+                    SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE),
+                )
                 sensorDao.add(SensorSetting(bssidState.id, settingName, bssid, SensorSettingType.STRING))
             }
         } else {
@@ -383,7 +382,8 @@ class NetworkSensorManager : SensorManager {
             if (!ipAddresses.isNullOrEmpty()) {
                 val ip6Addresses = ipAddresses.filter { linkAddress -> linkAddress.address is Inet6Address }
                 if (ip6Addresses.isNotEmpty()) {
-                    ipAddressList = ipAddressList.plus(elements = ip6Addresses.map { linkAddress -> linkAddress.toString() })
+                    ipAddressList =
+                        ipAddressList.plus(elements = ip6Addresses.map { linkAddress -> linkAddress.toString() })
                     totalAddresses += ip6Addresses.size
                 }
             }
@@ -637,7 +637,8 @@ class NetworkSensorManager : SensorManager {
 
                 // If WifiInfo is null default to the deprecated method as a fix for some devices that may return null
                 @Suppress("DEPRECATION")
-                return@let info as? WifiInfo ?: context.applicationContext.getSystemService<WifiManager>()?.connectionInfo
+                return@let info as? WifiInfo
+                    ?: context.applicationContext.getSystemService<WifiManager>()?.connectionInfo
             }
         } else {
             @Suppress("DEPRECATION")

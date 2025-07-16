@@ -56,7 +56,8 @@ class ManageShortcutsViewModel @Inject constructor(
 
     val app = application
 
-    val canPinShortcuts = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && ShortcutManagerCompat.isRequestPinShortcutSupported(app)
+    val canPinShortcuts =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && ShortcutManagerCompat.isRequestPinShortcutSupported(app)
     var pinnedShortcuts = ShortcutManagerCompat.getShortcuts(app, ShortcutManagerCompat.FLAG_MATCH_PINNED)
         .filter { !it.id.startsWith(AssistShortcutActivity.SHORTCUT_PREFIX) }
         .toMutableList()
@@ -125,12 +126,20 @@ class ManageShortcutsViewModel @Inject constructor(
         }
 
         if (dynamicShortcuts.size > 0) {
-            for (i in 0 until dynamicShortcuts.size)
+            for (i in 0 until dynamicShortcuts.size) {
                 setDynamicShortcutData(dynamicShortcuts[i].id, i)
+            }
         }
     }
 
-    fun createShortcut(shortcutId: String, serverId: Int, shortcutLabel: String, shortcutDesc: String, shortcutPath: String, icon: IIcon?) {
+    fun createShortcut(
+        shortcutId: String,
+        serverId: Int,
+        shortcutLabel: String,
+        shortcutDesc: String,
+        shortcutPath: String,
+        icon: IIcon?,
+    ) {
         Timber.d("Attempt to add shortcut $shortcutId")
         val intent = Intent(
             WebViewActivity.newInstance(app, shortcutPath, serverId).addFlags(
@@ -146,7 +155,8 @@ class ManageShortcutsViewModel @Inject constructor(
             .setShortLabel(shortcutLabel)
             .setLongLabel(shortcutDesc)
             .setIcon(
-                icon?.toAdaptiveIcon() ?: // Use launcher icon that is an AdaptiveIcon so it gets themed properly by the system
+                icon?.toAdaptiveIcon()
+                    ?: // Use launcher icon that is an AdaptiveIcon so it gets themed properly by the system
                     IconCompat.createWithResource(app, R.mipmap.ic_launcher),
             )
             .setIntent(intent)
@@ -206,7 +216,11 @@ class ManageShortcutsViewModel @Inject constructor(
             backgroundColor = IconicsColor.colorInt(Color.TRANSPARENT)
         }
 
-        val adaptiveIconSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 108f, app.resources.displayMetrics).toInt()
+        val adaptiveIconSize = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            108f,
+            app.resources.displayMetrics,
+        ).toInt()
         val adaptiveBitmap = createBitmap(adaptiveIconSize, adaptiveIconSize)
         val canvas = Canvas(adaptiveBitmap)
         // Use the same color as the foreground of the launcher as background
@@ -221,7 +235,10 @@ class ManageShortcutsViewModel @Inject constructor(
     }
 
     private fun updateDynamicShortcuts() {
-        dynamicShortcuts = ShortcutManagerCompat.getShortcuts(app, ShortcutManagerCompat.FLAG_MATCH_DYNAMIC).sortedBy { it.id }.toMutableList()
+        dynamicShortcuts =
+            ShortcutManagerCompat.getShortcuts(app, ShortcutManagerCompat.FLAG_MATCH_DYNAMIC).sortedBy {
+                it.id
+            }.toMutableList()
     }
 
     private fun setDynamicShortcutData(shortcutId: String, index: Int) = viewModelScope.launch {

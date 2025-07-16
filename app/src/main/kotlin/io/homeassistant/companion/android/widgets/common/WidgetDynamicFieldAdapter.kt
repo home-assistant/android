@@ -21,9 +21,7 @@ class WidgetDynamicFieldAdapter(
     private val actionFieldList: ArrayList<ActionFieldBinder>,
 ) : RecyclerView.Adapter<WidgetDynamicFieldAdapter.ViewHolder>() {
 
-    class ViewHolder(
-        val binding: WidgetButtonConfigureDynamicFieldBinding,
-    ) : RecyclerView.ViewHolder(binding.root)
+    class ViewHolder(val binding: WidgetButtonConfigureDynamicFieldBinding) : RecyclerView.ViewHolder(binding.root)
 
     private val dropDownOnFocus = View.OnFocusChangeListener { view, hasFocus ->
         if (hasFocus && view is AutoCompleteTextView) {
