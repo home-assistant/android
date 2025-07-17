@@ -42,10 +42,13 @@ jobs:
 
       - name: Create change log update PR
         uses: actions/github-script@v7
+        env:
+          VERSION: ${{ env.VERSION }}
         with:
           script: |
+            const version = process.env.VERSION;
             github.rest.pulls.create({
-              title: 'Bump changelog_master.xml for weekly release $VERSION',
+              title: `Bump changelog_master.xml for weekly release ${version}`,
               owner: context.repo.owner,
               repo: context.repo.repo,
               head: 'weekly_changelog_bump',
@@ -53,7 +56,7 @@ jobs:
               body: [
                 'Automated PR to update changelog_master.xml for weekly release.',
               ].join('\n'),
-            });
+                  });
 
   yamllint:
     runs-on: ubuntu-latest
