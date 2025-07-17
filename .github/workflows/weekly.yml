@@ -43,7 +43,8 @@ jobs:
         run: |
           VERSION=$(cat version.txt | sed 's/-.*//')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          sed -i '' -E '/<release [^>]*version="[^\"]*"/ s/(version=")[^"]*"/\1'"$VERSION"'"/' app/src/main/res/xml/changelog_master.xml
+          # Update the version in changelog_master.xml (the command is only working on GNU sed)
+          sed -i -E '/<release [^>]*version="[^\"]*"/ s/(version=")[^"]*"/\1'"$VERSION"'"/' app/src/main/res/xml/changelog_master.xml
 
       - name: Create Bump changelog PR
         env:
