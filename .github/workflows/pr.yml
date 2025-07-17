@@ -22,6 +22,8 @@ jobs:
 
       - name: Update changelog_master.xml
         run: |
+          pwd
+          ls -lah
           VERSION=$(cat version.txt | sed 's/-.*//')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           sed -i '' -E '/<release [^>]*version="[^\"]*"/ s/(version=")[^"]*"/\1'"$VERSION"'"/' app/src/main/res/xml/changelog_master.xml
@@ -44,7 +46,6 @@ jobs:
             --base main \
             --head weekly_changelog_bump \
             --repo "$GITHUB_REPOSITORY"
-        shell: bash
 
   yamllint:
     runs-on: ubuntu-latest
