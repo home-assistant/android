@@ -47,20 +47,20 @@ jobs:
 
       - name: Create Bump changelog PR
         env:
-            GITHUB_TOKEN: ${{ secrets.TAG_PUSH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TAG_PUSH_TOKEN }}
         run: |
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git fetch origin
-            git checkout -B weekly_changelog_bump
-            git add app/src/main/res/xml/changelog_master.xml
-            git commit -m "Bump changelog_master.xml for weekly release"
-            git push -f origin weekly_changelog_bump
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin
+          git checkout -B weekly_changelog_bump
+          git add app/src/main/res/xml/changelog_master.xml
+          git commit -m "Bump changelog_master.xml for weekly release"
+          git push -f origin weekly_changelog_bump
 
-            gh pr create \
-                --title "Bump changelog_master.xml for weekly release $VERSION" \
-                --body "Automated PR to update changelog_master.xml for weekly release." \
-                --base main \
-                --head weekly_changelog_bump \
-                --repo "$GITHUB_REPOSITORY"
+          gh pr create \
+            --title "Bump changelog_master.xml for weekly release $VERSION" \
+            --body "Automated PR to update changelog_master.xml for weekly release." \
+            --base main \
+            --head weekly_changelog_bump \
+            --repo "$GITHUB_REPOSITORY"
         shell: bash
