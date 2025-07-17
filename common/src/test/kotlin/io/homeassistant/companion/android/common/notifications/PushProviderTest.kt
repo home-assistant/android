@@ -7,7 +7,6 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
-import io.homeassistant.companion.android.database.settings.PushProviderSetting
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
@@ -67,7 +66,7 @@ class PushProviderTest {
     }
 
     private fun TestScope.mockDatabase(
-        setting: PushProviderSetting = PushProviderSetting.NONE,
+        setting: String? = null,
         isValid: Boolean
     ) {
         mockAppDatabase = mockk(relaxed = true)
@@ -93,14 +92,15 @@ class PushProviderTest {
     }
 
     private fun TestScope.getPushProvider(
-        setting: PushProviderSetting = PushProviderSetting.NONE,
         isAvailable: Boolean = false,
         token: String = "",
         onMessage: (Context, Map<String, String>) -> Unit = { _, _ -> }
     ): PushProvider {
         return object : PushProvider {
-            override val setting = setting
             override fun isAvailable(context: Context): Boolean = isAvailable
+            override suspend fun getDistributors(): List<String> = emptyList()
+            override suspend fun getDistributor(): String? = null
+            override suspend fun getUrl(): String = ""
             override suspend fun getToken(): String = token
             override fun onMessage(context: Context, notificationData: Map<String, String>) =
                 onMessage(context, notificationData)
@@ -127,8 +127,8 @@ class PushProviderTest {
     fun `Given a valid server When isEnabled is invoked Then it returns true`() = runTest {
         val context: Context = mockk()
         setupServer(isValid = true)
-        mockDatabase(PushProviderSetting.FCM, isValid = true)
-        val pushProvider = getPushProvider(PushProviderSetting.FCM)
+        mockDatabase("FCM", isValid = true)
+        val pushProvider = getPushProvider()
 
         var result = pushProvider.isEnabled(context)
         assertTrue(result)
@@ -144,8 +144,8 @@ class PushProviderTest {
     fun `Given a valid disabled server When isEnabled is invoked Then it returns false`() = runTest {
         val context: Context = mockk()
         setupServer(isValid = true)
-        mockDatabase(PushProviderSetting.NONE, isValid = true)
-        val pushProvider = getPushProvider(PushProviderSetting.FCM)
+        mockDatabase(null, isValid = true)
+        val pushProvider = getPushProvider()
 
         var result = pushProvider.isEnabled(context)
         assertFalse(result)
@@ -180,8 +180,8 @@ class PushProviderTest {
     fun `Given a valid disabled server When getEnabledServers is invoked Then it returns an empty set`() = runTest {
         val context: Context = mockk()
         setupServer(isValid = true)
-        mockDatabase(PushProviderSetting.NONE, isValid = true)
-        val pushProvider = getPushProvider(PushProviderSetting.FCM)
+        mockDatabase(isValid = true)
+        val pushProvider = getPushProvider()
 
         val result = pushProvider.getEnabledServers(context)
         assertEquals(result, emptySet<Int>())

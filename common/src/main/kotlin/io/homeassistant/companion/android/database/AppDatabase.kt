@@ -49,7 +49,6 @@ import io.homeassistant.companion.android.database.sensor.SensorSettingTypeConve
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerDao
 import io.homeassistant.companion.android.database.settings.LocalNotificationSettingConverter
-import io.homeassistant.companion.android.database.settings.LocalPushProviderSettingConverter
 import io.homeassistant.companion.android.database.settings.LocalSensorSettingConverter
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
@@ -137,7 +136,6 @@ import timber.log.Timber
 @TypeConverters(
     LocalNotificationSettingConverter::class,
     LocalSensorSettingConverter::class,
-    LocalPushProviderSettingConverter::class,
     EntriesTypeConverter::class,
     SensorSettingTypeConverter::class,
     WidgetBackgroundTypeConverter::class,
