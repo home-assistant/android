@@ -22,6 +22,14 @@ class CoroutineDaoFunctionsIssueTest {
         """,
     ).indented()
 
+    private val pagingSource = kotlin(
+        """
+        package androidx.paging
+        
+        interface PagingSource<K, V>
+        """,
+    ).indented()
+
     @Test
     fun `Given a DAO when function is not suspending and does not return a Flow then CoroutineDaoFunction issue is raised`() {
         lint().issues(CoroutineDaoFunctionsIssue.ISSUE)
@@ -43,7 +51,7 @@ class CoroutineDaoFunctionsIssueTest {
             )
             .run()
             .expect(
-                """src/io/homeassistan/companion/android/TestDao.kt:7: Error: DAO functions should suspend or return a Flow. [CoroutineDaoFunction]
+                """src/io/homeassistan/companion/android/TestDao.kt:7: Error: DAO functions should suspend, return a Flow, or return a PagingSource. [CoroutineDaoFunction]
     fun test()
     ~~~~~~~~~~
 1 error""",
@@ -90,6 +98,31 @@ class CoroutineDaoFunctionsIssueTest {
               @Dao
               interface TestDao {
                   fun test(): Flow<Int>
+              }
+                    """,
+                ).indented(),
+            )
+            .run()
+            .expectClean()
+    }
+
+    @Test
+    fun `Given a DAO when function is not suspending and does return a PagingSource then no issues`() {
+        lint().issues(CoroutineDaoFunctionsIssue.ISSUE)
+            .allowMissingSdk()
+            .files(
+                pagingSource,
+                flow,
+                kotlin(
+                    """
+              package io.homeassistan.companion.android
+                
+              import androidx.paging.PagingSource
+              import kotlinx.coroutines.flow.Flow
+               
+              @Dao
+              interface TestDao {
+                  fun test(): PagingSource<Int, String>
               }
                     """,
                 ).indented(),
