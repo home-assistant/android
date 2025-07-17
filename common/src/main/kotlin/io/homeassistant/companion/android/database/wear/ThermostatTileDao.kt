@@ -19,5 +19,5 @@ interface ThermostatTileDao {
     suspend fun add(tile: ThermostatTile)
 
     @Query("DELETE FROM thermostat_tiles where id = :id")
-    fun delete(id: Int)
+    suspend fun delete(id: Int)
 }
