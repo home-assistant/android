@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
+import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarResult
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -28,27 +30,34 @@ import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.appCreatedChannels
 import io.homeassistant.companion.android.settings.notification.NotificationViewModel
+import io.homeassistant.companion.android.util.plus
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun NotificationChannelView(
-    notificationViewModel: NotificationViewModel
-) {
+fun NotificationChannelView(notificationViewModel: NotificationViewModel) {
     val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     Scaffold(
-        scaffoldState = scaffoldState
+        scaffoldState = scaffoldState,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = scaffoldState.snackbarHostState,
+                modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets(applyHorizontal = false)),
+            )
+        },
     ) { contentPadding ->
         LazyColumn(
             modifier = Modifier.padding(contentPadding),
-            contentPadding = PaddingValues(16.dp)
+            contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
         ) {
             item {
                 Text(
                     text = stringResource(id = R.string.notification_channels_description),
-                    modifier = Modifier.padding(bottom = 20.dp)
+                    modifier = Modifier.padding(bottom = 20.dp),
                 )
                 Divider()
             }
@@ -60,20 +69,20 @@ fun NotificationChannelView(
                         .padding(10.dp)
                         .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
-                        text = channel.name.toString().take(30)
+                        text = channel.name.toString().take(30),
                     )
                     Row(
-                        modifier = Modifier.padding(start = 12.dp)
+                        modifier = Modifier.padding(start = 12.dp),
                     ) {
                         Icon(
                             Icons.Filled.Edit,
                             stringResource(id = R.string.edit_channel),
                             modifier = Modifier
                                 .clickable { notificationViewModel.editChannelDetails(channel.id) }
-                                .padding(12.dp)
+                                .padding(12.dp),
                         )
                         if (channel.id !in appCreatedChannels) {
                             Icon(
@@ -86,8 +95,11 @@ fun NotificationChannelView(
                                         scope.launch {
                                             scaffoldState.snackbarHostState
                                                 .showSnackbar(
-                                                    context.getString(R.string.notification_channel_deleted, channel.name),
-                                                    context.getString(R.string.undo)
+                                                    context.getString(
+                                                        R.string.notification_channel_deleted,
+                                                        channel.name,
+                                                    ),
+                                                    context.getString(R.string.undo),
                                                 )
                                                 .let {
                                                     if (it == SnackbarResult.ActionPerformed) {
@@ -97,7 +109,7 @@ fun NotificationChannelView(
                                                 }
                                         }
                                     }
-                                    .padding(12.dp)
+                                    .padding(12.dp),
                             )
                         }
                     }

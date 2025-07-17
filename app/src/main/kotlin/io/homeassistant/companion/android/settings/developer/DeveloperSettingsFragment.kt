@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.developer
 
 import android.content.IntentSender
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,12 +19,15 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.developer.location.LocationTrackingFragment
 import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
+import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
 import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class DeveloperSettingsFragment : DeveloperSettingsView, PreferenceFragmentCompat() {
+class DeveloperSettingsFragment :
+    PreferenceFragmentCompat(),
+    DeveloperSettingsView {
 
     @Inject
     lateinit var presenter: DeveloperSettingsPresenter
@@ -32,9 +36,10 @@ class DeveloperSettingsFragment : DeveloperSettingsView, PreferenceFragmentCompa
     private var threadIntentServer: Int = ServerManager.SERVER_ID_ACTIVE
     private var threadIntentDeviceOnly: Boolean = true
 
-    private val threadPermissionLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        presenter.onThreadPermissionResult(requireContext(), result, threadIntentServer, threadIntentDeviceOnly)
-    }
+    private val threadPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+            presenter.onThreadPermissionResult(requireContext(), result, threadIntentServer, threadIntentDeviceOnly)
+        }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         presenter.init(this)
@@ -66,7 +71,10 @@ class DeveloperSettingsFragment : DeveloperSettingsView, PreferenceFragmentCompa
             it.isVisible = presenter.appSupportsThread()
             it.setOnPreferenceClickListener {
                 if (presenter.hasMultipleServers()) {
-                    parentFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
+                    parentFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) {
+                            _,
+                            bundle,
+                        ->
                         if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
                             startThreadDebug(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
                         }
@@ -94,6 +102,11 @@ class DeveloperSettingsFragment : DeveloperSettingsView, PreferenceFragmentCompa
         }
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        applyBottomSafeDrawingInsets()
+    }
+
     private fun startThreadDebug(serverId: Int) {
         presenter.runThreadDebug(requireContext(), serverId)
         activeTaskDialog = AlertDialog.Builder(requireContext())
@@ -113,7 +126,15 @@ class DeveloperSettingsFragment : DeveloperSettingsView, PreferenceFragmentCompa
         activeTaskDialog?.hide()
         AlertDialog.Builder(requireContext())
             .setTitle(commonR.string.thread_debug)
-            .setMessage("${if (success == true) "✅" else if (success == null) "⚠️" else "⛔"}\n\n$result")
+            .setMessage(
+                "${if (success == true) {
+                    "✅"
+                } else if (success == null) {
+                    "⚠️"
+                } else {
+                    "⛔"
+                }}\n\n$result",
+            )
             .setPositiveButton(commonR.string.ok, null)
             .show()
     }
@@ -125,7 +146,7 @@ class DeveloperSettingsFragment : DeveloperSettingsView, PreferenceFragmentCompa
             Toast.makeText(
                 requireContext(),
                 if (success) commonR.string.clear_webview_cache_success else commonR.string.clear_webview_cache_failed,
-                Toast.LENGTH_SHORT
+                Toast.LENGTH_SHORT,
             ).show()
         }
     }

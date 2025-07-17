@@ -13,7 +13,9 @@ import io.homeassistant.companion.android.common.R as commonR
 import kotlin.math.roundToInt
 import timber.log.Timber
 
-class StepsSensorManager : SensorManager, SensorEventListener {
+class StepsSensorManager :
+    SensorManager,
+    SensorEventListener {
     companion object {
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
@@ -24,7 +26,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
             commonR.string.sensor_description_steps_sensor,
             "mdi:walk",
             unitOfMeasurement = "steps",
-            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
         )
     }
 
@@ -55,9 +57,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
         return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER)
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         latestContext = context
         updateStepsSensor()
     }
@@ -81,7 +81,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
                 mySensorManager.registerListener(
                     this,
                     stepsSensors,
-                    SENSOR_DELAY_NORMAL
+                    SENSOR_DELAY_NORMAL,
                 )
                 Timber.d("Steps sensor listener registered")
                 isListenerRegistered = true
@@ -101,7 +101,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
                 stepsSensor,
                 event.values[0].roundToInt().toString(),
                 stepsSensor.statelessIcon,
-                mapOf()
+                mapOf(),
             )
         }
         mySensorManager.unregisterListener(this)

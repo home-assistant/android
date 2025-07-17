@@ -26,14 +26,14 @@ import timber.log.Timber
 class ManageAndroidAutoViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
 
     val favoritesList = mutableStateListOf<String>()
 
-    var sortedEntities by mutableStateOf<List<Entity<*>>>(emptyList())
+    var sortedEntities by mutableStateOf<List<Entity>>(emptyList())
         private set
-    val entities = mutableMapOf<Int, List<Entity<*>>>()
+    val entities = mutableMapOf<Int, List<Entity>>()
     init {
         viewModelScope.launch {
             favoritesList.addAll(prefsRepository.getAutoFavorites())
@@ -58,7 +58,7 @@ class ManageAndroidAutoViewModel @Inject constructor(
         favoritesList.apply {
             add(
                 favoritesList.indexOfFirst { it == toItem.key },
-                removeAt(favoritesList.indexOfFirst { it == fromItem.key })
+                removeAt(favoritesList.indexOfFirst { it == fromItem.key }),
             )
         }
     }

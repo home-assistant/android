@@ -40,14 +40,14 @@ class TodoWidgetTest {
                 id = 2,
                 serverId = 43,
                 entityId = "403",
-            )
+            ),
         )
         assertEquals(
             mapOf<Int, EntitiesPerServer>(
                 1 to EntitiesPerServer(serverId = 42, listOf("404")),
                 2 to EntitiesPerServer(serverId = 43, listOf("403")),
             ),
-            receiver.getWidgetEntitiesByServer(context)
+            receiver.getWidgetEntitiesByServer(context),
         )
     }
 }

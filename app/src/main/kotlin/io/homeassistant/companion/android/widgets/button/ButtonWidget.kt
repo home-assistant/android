@@ -18,8 +18,6 @@ import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.toColorInt
 import androidx.core.os.BundleCompat
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.IconicsSize
@@ -30,6 +28,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.MapAnySerializer
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -76,11 +76,7 @@ class ButtonWidget : AppWidgetProvider() {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    override fun onUpdate(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray
-    ) {
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
             mainScope.launch {
@@ -141,7 +137,7 @@ class ButtonWidget : AppWidgetProvider() {
         Timber.d(
             "Broadcast received: " + System.lineSeparator() +
                 "Broadcast action: " + action + System.lineSeparator() +
-                "AppWidgetId: " + appWidgetId
+                "AppWidgetId: " + appWidgetId,
         )
 
         super.onReceive(context, intent)
@@ -176,10 +172,21 @@ class ButtonWidget : AppWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
-        return RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_button_wrapper_dynamiccolor else R.layout.widget_button_wrapper_default).apply {
+        val useDynamicColors =
+            widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
+        return RemoteViews(
+            context.packageName,
+            if (useDynamicColors) {
+                R.layout.widget_button_wrapper_dynamiccolor
+            } else {
+                R.layout.widget_button_wrapper_default
+            },
+        ).apply {
             // Theming
-            var textColor = context.getAttribute(R.attr.colorWidgetOnBackground, ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel))
+            var textColor = context.getAttribute(
+                R.attr.colorWidgetOnBackground,
+                ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel),
+            )
             if (widget?.backgroundType == WidgetBackgroundType.TRANSPARENT) {
                 widget.textColor?.let { textColor = it.toColorInt() }
                 setTextColor(R.id.widgetLabel, textColor)
@@ -232,12 +239,12 @@ class ButtonWidget : AppWidgetProvider() {
                     context,
                     appWidgetId,
                     intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                ),
             )
             setTextViewText(
                 R.id.widgetLabel,
-                widget?.label ?: ""
+                widget?.label ?: "",
             )
         }
     }
@@ -247,6 +254,7 @@ class ButtonWidget : AppWidgetProvider() {
             WidgetBackgroundType.TRANSPARENT -> {
                 views.setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
             }
+
             else -> {
                 views.setInt(R.id.widgetLayout, "setBackgroundResource", R.drawable.widget_button_background)
             }
@@ -286,7 +294,7 @@ class ButtonWidget : AppWidgetProvider() {
                 "Action Call Data loaded:" + System.lineSeparator() +
                     "domain: " + domain + System.lineSeparator() +
                     "action: " + action + System.lineSeparator() +
-                    "action_data: " + actionDataJson
+                    "action_data: " + actionDataJson,
             )
 
             if (domain == null || action == null || actionDataJson == null) {
@@ -295,8 +303,10 @@ class ButtonWidget : AppWidgetProvider() {
                 // If everything loaded correctly, package the action data and attempt the call
                 try {
                     // Convert JSON to HashMap
-                    val actionDataMap: HashMap<String, Any> =
-                        jacksonObjectMapper().readValue(actionDataJson)
+                    val actionDataMap = kotlinJsonMapper.decodeFromString<Map<String, Any?>>(
+                        MapAnySerializer,
+                        actionDataJson,
+                    ).toMutableMap()
 
                     if (actionDataMap["entity_id"] != null) {
                         val entityIdWithoutBrackets = Pattern.compile("\\[(.*?)\\]")
@@ -345,7 +355,7 @@ class ButtonWidget : AppWidgetProvider() {
                     setWidgetBackground(views, widget)
                     appWidgetManager.updateAppWidget(appWidgetId, views)
                 },
-                1000
+                1000,
             )
         }
     }
@@ -360,8 +370,9 @@ class ButtonWidget : AppWidgetProvider() {
         val label: String? = extras.getString(EXTRA_LABEL)
         val requireAuthentication: Boolean = extras.getBoolean(EXTRA_REQUIRE_AUTHENTICATION)
         val icon: String = extras.getString(EXTRA_ICON_NAME) ?: "mdi:flash"
-        val backgroundType = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
-            ?: WidgetBackgroundType.DAYNIGHT
+        val backgroundType =
+            BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
+                ?: WidgetBackgroundType.DAYNIGHT
         val textColor: String? = extras.getString(EXTRA_TEXT_COLOR)
 
         if (serverId == null || domain == null || action == null || actionData == null) {
@@ -376,10 +387,22 @@ class ButtonWidget : AppWidgetProvider() {
                     "action: " + action + System.lineSeparator() +
                     "action_data: " + actionData + System.lineSeparator() +
                     "require_authentication: " + requireAuthentication + System.lineSeparator() +
-                    "label: " + label
+                    "label: " + label,
             )
 
-            val widget = ButtonWidgetEntity(appWidgetId, serverId, icon, domain, action, actionData, label, backgroundType, textColor, requireAuthentication)
+            val widget =
+                ButtonWidgetEntity(
+                    appWidgetId,
+                    serverId,
+                    icon,
+                    domain,
+                    action,
+                    actionData,
+                    label,
+                    backgroundType,
+                    textColor,
+                    requireAuthentication,
+                )
             buttonWidgetDao.add(widget)
 
             // It is the responsibility of the configuration activity to update the app widget

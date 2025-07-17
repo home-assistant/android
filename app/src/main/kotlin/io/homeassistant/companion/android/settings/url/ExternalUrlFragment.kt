@@ -21,11 +21,7 @@ class ExternalUrlFragment : Fragment() {
 
     val viewModel by viewModels<ExternalUrlViewModel>()
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -34,7 +30,7 @@ class ExternalUrlFragment : Fragment() {
                         useCloud = viewModel.useCloud,
                         externalUrl = viewModel.externalUrl,
                         onUseCloudToggle = { viewModel.toggleCloud(it) },
-                        onExternalUrlSaved = { viewModel.updateExternalUrl(it) }
+                        onExternalUrlSaved = { viewModel.updateExternalUrl(it) },
                     )
                 }
             }

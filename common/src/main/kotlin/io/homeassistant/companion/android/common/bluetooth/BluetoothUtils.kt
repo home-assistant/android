@@ -28,8 +28,8 @@ object BluetoothUtils {
                             btDev.address,
                             name,
                             btDev.bondState == android.bluetooth.BluetoothDevice.BOND_BONDED,
-                            isConnected(btDev)
-                        )
+                            isConnected(btDev),
+                        ),
                     )
                 }
                 val btConnectedDevices = bluetoothManager.getConnectedDevices(BluetoothProfile.GATT)
@@ -41,8 +41,8 @@ object BluetoothUtils {
                             btDev.address,
                             name,
                             btDev.bondState == android.bluetooth.BluetoothDevice.BOND_BONDED,
-                            isConnected(btDev)
-                        )
+                            isConnected(btDev),
+                        ),
                     )
                 }
             }

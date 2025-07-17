@@ -27,9 +27,9 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                 dependencies {
                     "implementation"(project(":common"))
 
-                    "coreLibraryDesugaring"(libs.tools.desugar.jdk)
-
                     "implementation"(libs.blurView)
+                    "implementation"(libs.haze)
+                    "implementation"(libs.haze.materials)
                     "fullImplementation"(libs.androidx.health.connect.client)
 
                     "implementation"(libs.kotlin.stdlib)
@@ -46,8 +46,8 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "implementation"(libs.material)
                     "implementation"(libs.fragment.ktx)
 
-                    "implementation"(libs.jackson.module.kotlin)
-                    "implementation"(libs.okhttp)
+                    "implementation"(platform(libs.okhttp.bom))
+                    "implementation"(libs.okhttp.android)
 
                     "implementation"(libs.bundles.coil)
 

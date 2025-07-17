@@ -16,7 +16,8 @@ android {
         minSdk = libs.versions.androidSdk.automotive.min.get().toInt()
 
         // We add 3 because the app, wear (+1) and automotive versions need to have different version codes.
-        versionCode = 3 + checkNotNull(versionCode) { "Did you forget to apply the convention plugin that set the version code?" }
+        versionCode =
+            3 + checkNotNull(versionCode) { "Did you forget to apply the convention plugin that set the version code?" }
 
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
         manifestPlaceholders["sentryDsn"] = System.getenv("SENTRY_DSN") ?: ""
@@ -30,6 +31,9 @@ android {
             // We disable the lint tasks for release only for automotive because the baseline cannot be parsed in release builds due to the fact that we share sources between app and automotive.
             // It is not an issue since we still check the :app module and the code is exactly the same.
             checkReleaseBuilds = false
+
+            // Until we fully migrate to Material3 this lint issue is too verbose https://github.com/home-assistant/android/issues/5420
+            disable += listOf("UsingMaterialAndMaterial3Libraries")
         }
     }
 

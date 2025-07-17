@@ -27,11 +27,7 @@ class ManageControlsSettingsFragment : Fragment() {
 
     val viewModel: ManageControlsViewModel by viewModels()
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -50,7 +46,7 @@ class ManageControlsSettingsFragment : Fragment() {
                         onSelectNone = { viewModel.setAuthSetting(ControlsAuthRequiredSetting.ALL) },
                         onSelectEntity = { entityId, serverId -> viewModel.toggleAuthForEntity(entityId, serverId) },
                         onSetPanelSetting = { path, serverId -> viewModel.setPanelConfig(path, serverId) },
-                        onSetStructureEnabled = { enabled -> viewModel.setStructureEnable(enabled) }
+                        onSetStructureEnabled = { enabled -> viewModel.setStructureEnable(enabled) },
                     )
                 }
             }

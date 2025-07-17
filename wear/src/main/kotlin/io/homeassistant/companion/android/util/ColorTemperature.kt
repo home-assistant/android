@@ -26,7 +26,7 @@ fun getColorTemperature(ratio: Double, isKelvin: Boolean): Color {
         0.85 to 0xffffbd4d,
         0.90 to 0xffffb333,
         0.95 to 0xffffaa1a,
-        1.00 to 0xffffa000
+        1.00 to 0xffffa000,
     ) as TreeMap<Double, Long>
 
     val useRatio = if (isKelvin) (1 - ratio) else ratio

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
+import android.view.View
 import android.view.ViewGroup
 import androidx.biometric.BiometricManager
 import androidx.fragment.app.commit
@@ -23,6 +24,7 @@ import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
 import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
+import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
@@ -51,6 +53,9 @@ class SettingsActivity : BaseActivity() {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
+
+        // Delegate bottom insets to the fragments
+        findViewById<View>(R.id.root).applySafeDrawingInsets(applyBottom = false, consumeInsets = false)
 
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -95,7 +100,7 @@ class SettingsActivity : BaseActivity() {
                         }
                     } else {
                         null
-                    }
+                    },
                 )
             }
         }
@@ -212,7 +217,9 @@ class SettingsActivity : BaseActivity() {
     }
 
     fun requestAuthentication(title: String, callback: (Int) -> Boolean): Boolean {
-        return if (BiometricManager.from(this).canAuthenticate(Authenticator.AUTH_TYPES) != BiometricManager.BIOMETRIC_SUCCESS) {
+        return if (BiometricManager.from(this).canAuthenticate(Authenticator.AUTH_TYPES) !=
+            BiometricManager.BIOMETRIC_SUCCESS
+        ) {
             false
         } else {
             externalAuthCallback = callback

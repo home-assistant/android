@@ -11,7 +11,9 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlin.math.roundToInt
 import timber.log.Timber
 
-class OnBodySensorManager : SensorManager, SensorEventListener {
+class OnBodySensorManager :
+    SensorManager,
+    SensorEventListener {
     companion object {
         private var isListenerRegistered = false
         private val onBodySensor = SensorManager.BasicSensor(
@@ -21,7 +23,7 @@ class OnBodySensorManager : SensorManager, SensorEventListener {
             commonR.string.sensor_description_on_body,
             "mdi:account",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
     }
 
@@ -65,7 +67,7 @@ class OnBodySensorManager : SensorManager, SensorEventListener {
             mySensorManager.registerListener(
                 this,
                 onBodySensors,
-                SENSOR_DELAY_NORMAL
+                SENSOR_DELAY_NORMAL,
             )
             Timber.d("On body sensor listener registered")
             isListenerRegistered = true
@@ -85,7 +87,7 @@ class OnBodySensorManager : SensorManager, SensorEventListener {
                 onBodySensor,
                 state,
                 if (state) onBodySensor.statelessIcon else "mdi:account-off",
-                mapOf()
+                mapOf(),
             )
         }
 

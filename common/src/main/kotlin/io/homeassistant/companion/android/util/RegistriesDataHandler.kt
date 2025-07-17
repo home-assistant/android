@@ -9,7 +9,7 @@ object RegistriesDataHandler {
         entityId: String,
         areaRegistry: List<AreaRegistryResponse>?,
         deviceRegistry: List<DeviceRegistryResponse>?,
-        entityRegistry: List<EntityRegistryResponse>?
+        entityRegistry: List<EntityRegistryResponse>?,
     ): AreaRegistryResponse? {
         val rEntity = entityRegistry?.firstOrNull { it.entityId == entityId }
         if (rEntity != null) {
@@ -27,17 +27,11 @@ object RegistriesDataHandler {
         return null
     }
 
-    fun getCategoryForEntity(
-        entityId: String,
-        entityRegistry: List<EntityRegistryResponse>?
-    ): String? {
+    fun getCategoryForEntity(entityId: String, entityRegistry: List<EntityRegistryResponse>?): String? {
         return entityRegistry?.firstOrNull { it.entityId == entityId }?.entityCategory
     }
 
-    fun getHiddenByForEntity(
-        entityId: String,
-        entityRegistry: List<EntityRegistryResponse>?
-    ): String? {
+    fun getHiddenByForEntity(entityId: String, entityRegistry: List<EntityRegistryResponse>?): String? {
         return entityRegistry?.firstOrNull { it.entityId == entityId }?.hiddenBy
     }
 }

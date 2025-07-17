@@ -23,10 +23,7 @@ import timber.log.Timber
  *
  * @param textToSpeechEngine [TextToSpeechEngine] implementation to synthesize and play back a single message
  */
-class TextToSpeechClient(
-    private val applicationContext: Context,
-    private val textToSpeechEngine: TextToSpeechEngine
-) {
+class TextToSpeechClient(private val applicationContext: Context, private val textToSpeechEngine: TextToSpeechEngine) {
     private val utteranceQueue: ArrayDeque<Utterance> = ArrayDeque()
 
     private val mainJob = Job()
@@ -56,8 +53,8 @@ class TextToSpeechClient(
                     id = utteranceId,
                     text = tts,
                     streamVolumeAdjustment = streamVolumeAdjustment,
-                    audioAttributes = audioAttributes
-                )
+                    audioAttributes = audioAttributes,
+                ),
             )
             if (!isPlaying) {
                 play()
@@ -85,7 +82,7 @@ class TextToSpeechClient(
         textToSpeechEngine.initialize().onFailure { throwable ->
             Timber.e(
                 throwable,
-                "Failed to initialize engine."
+                "Failed to initialize engine.",
             )
             handleError(applicationContext.getString(R.string.tts_error_init))
             utteranceQueue.clear()
@@ -95,7 +92,7 @@ class TextToSpeechClient(
                     textToSpeechEngine.play(utterance).onFailure { throwable ->
                         Timber.e(throwable, "Failed to play utterance '${utterance.id}'")
                         handleError(
-                            applicationContext.getString(R.string.tts_error_utterance, utterance.text)
+                            applicationContext.getString(R.string.tts_error_utterance, utterance.text),
                         )
                     }
                 }
@@ -110,16 +107,13 @@ class TextToSpeechClient(
             Toast.makeText(
                 applicationContext,
                 msg,
-                Toast.LENGTH_LONG
+                Toast.LENGTH_LONG,
             ).show()
         }
     }
 
     private companion object {
-        private fun getStreamVolumeAdjustment(
-            context: Context,
-            data: Map<String, String>
-        ): StreamVolumeAdjustment {
+        private fun getStreamVolumeAdjustment(context: Context, data: Map<String, String>): StreamVolumeAdjustment {
             val audioManager = context.getSystemService<AudioManager>()
             return if (
                 audioManager != null &&
@@ -128,7 +122,7 @@ class TextToSpeechClient(
             ) {
                 StreamVolumeAdjustment.Maximize(
                     audioManager = audioManager,
-                    streamId = AudioManager.STREAM_ALARM
+                    streamId = AudioManager.STREAM_ALARM,
                 )
             } else {
                 StreamVolumeAdjustment.None

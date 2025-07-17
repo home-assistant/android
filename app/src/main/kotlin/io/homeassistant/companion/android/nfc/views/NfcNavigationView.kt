@@ -3,9 +3,11 @@ package io.homeassistant.companion.android.nfc.views
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Scaffold
+import androidx.compose.material.SnackbarHost
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
@@ -26,15 +28,13 @@ import androidx.navigation.compose.rememberNavController
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.nfc.NfcViewModel
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
+import io.homeassistant.companion.android.util.safeTopWindowInsets
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 @Composable
-fun LoadNfcView(
-    viewModel: NfcViewModel,
-    startDestination: String,
-    pressedUpAtRoot: () -> Unit
-) {
+fun LoadNfcView(viewModel: NfcViewModel, startDestination: String, pressedUpAtRoot: () -> Unit) {
     val context = LocalContext.current
 
     val navController = rememberNavController()
@@ -64,6 +64,12 @@ fun LoadNfcView(
 
     Scaffold(
         scaffoldState = scaffoldState,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = scaffoldState.snackbarHostState,
+                modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets()),
+            )
+        },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(commonR.string.nfc_title_settings)) },
@@ -77,37 +83,42 @@ fun LoadNfcView(
                     }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = stringResource(commonR.string.navigate_up)
+                            contentDescription = stringResource(commonR.string.navigate_up),
                         )
                     }
                 },
                 actions = {
                     IconButton(onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/integrations/universal-links"))
+                        val intent =
+                            Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("https://companion.home-assistant.io/docs/integrations/universal-links"),
+                            )
                         context.startActivity(intent)
                     }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
                             contentDescription = stringResource(commonR.string.get_help),
-                            tint = colorResource(commonR.color.colorOnBackground)
+                            tint = colorResource(commonR.color.colorOnBackground),
                         )
                     }
                 },
                 backgroundColor = colorResource(commonR.color.colorBackground),
-                contentColor = colorResource(commonR.color.colorOnBackground)
+                contentColor = colorResource(commonR.color.colorOnBackground),
+                windowInsets = safeTopWindowInsets(),
             )
-        }
+        },
     ) { contentPadding ->
         NavHost(
             navController = navController,
             startDestination = startDestination,
-            modifier = Modifier.padding(contentPadding)
+            modifier = Modifier.padding(contentPadding),
         ) {
             composable(NfcSetupActivity.NAV_WELCOME) {
                 NfcWelcomeView(
                     isNfcEnabled = viewModel.isNfcEnabled,
                     onReadClicked = { viewModel.navigator.navigateTo(NfcSetupActivity.NAV_READ) },
-                    onWriteClicked = { viewModel.writeNewTag() }
+                    onWriteClicked = { viewModel.writeNewTag() },
                 )
             }
             composable(NfcSetupActivity.NAV_READ) {
@@ -121,7 +132,7 @@ fun LoadNfcView(
                         { viewModel.setTagIdentifier(it) }
                     } else {
                         null
-                    }
+                    },
                 )
             }
             composable(NfcSetupActivity.NAV_EDIT) {
@@ -129,7 +140,7 @@ fun LoadNfcView(
                     identifier = viewModel.nfcTagIdentifier,
                     showDeviceSample = viewModel.usesAndroidDeviceId,
                     onDuplicateClicked = { viewModel.duplicateNfcTag() },
-                    onFireEventClicked = { viewModel.fireNfcTagEvent() }
+                    onFireEventClicked = { viewModel.fireNfcTagEvent() },
                 )
             }
         }

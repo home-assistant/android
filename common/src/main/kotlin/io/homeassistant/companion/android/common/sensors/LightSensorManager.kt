@@ -11,7 +11,9 @@ import io.homeassistant.companion.android.common.R as commonR
 import kotlin.math.roundToInt
 import timber.log.Timber
 
-class LightSensorManager : SensorManager, SensorEventListener {
+class LightSensorManager :
+    SensorManager,
+    SensorEventListener {
     companion object {
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
@@ -23,7 +25,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
             "mdi:brightness-5",
             deviceClass = "illuminance",
             unitOfMeasurement = "lx",
-            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
         )
     }
 
@@ -49,9 +51,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
 
-    override suspend fun requestSensorUpdate(
-        context: Context
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         latestContext = context
         updateLightSensor()
     }
@@ -74,7 +74,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
             mySensorManager.registerListener(
                 this,
                 lightSensors,
-                SENSOR_DELAY_NORMAL
+                SENSOR_DELAY_NORMAL,
             )
             Timber.d("Light sensor listener registered")
             isListenerRegistered = true
@@ -93,7 +93,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
                 lightSensor,
                 event.values[0].roundToInt().toString(),
                 lightSensor.statelessIcon,
-                mapOf()
+                mapOf(),
             )
         }
         mySensorManager.unregisterListener(this)

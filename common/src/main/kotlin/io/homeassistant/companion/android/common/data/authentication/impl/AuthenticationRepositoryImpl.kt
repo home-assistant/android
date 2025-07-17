@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.data.authentication.impl
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import io.homeassistant.companion.android.common.data.LocalStorage
@@ -8,6 +7,8 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.MapAnySerializer
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import javax.inject.Named
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -18,7 +19,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     private val serverManager: ServerManager,
     @Assisted private val serverId: Int,
     @Named("session") private val localStorage: LocalStorage,
-    @Named("installId") private val installId: String
+    @Named("installId") private val installId: String,
 ) : AuthenticationRepository {
 
     companion object {
@@ -38,18 +39,18 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
             url.newBuilder().addPathSegments("auth/token").build(),
             AuthenticationService.GRANT_TYPE_CODE,
             authorizationCode,
-            AuthenticationService.CLIENT_ID
+            AuthenticationService.CLIENT_ID,
         ).let {
             serverManager.updateServer(
                 server.copy(
                     session = ServerSessionInfo(
-                        it.accessToken,
-                        it.refreshToken!!,
-                        System.currentTimeMillis() / 1000 + it.expiresIn,
-                        it.tokenType,
-                        installId
-                    )
-                )
+                        accessToken = it.accessToken,
+                        refreshToken = it.refreshToken!!,
+                        tokenExpiration = System.currentTimeMillis() / 1000 + it.expiresIn,
+                        tokenType = it.tokenType,
+                        installId = installId,
+                    ),
+                ),
             )
         }
     }
@@ -65,11 +66,12 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun retrieveExternalAuthentication(forceRefresh: Boolean): String {
         ensureValidSession(forceRefresh)
-        return jacksonObjectMapper().writeValueAsString(
+        return kotlinJsonMapper.encodeToString(
+            MapAnySerializer,
             mapOf(
                 "access_token" to server.session.accessToken,
-                "expires_in" to server.session.expiresIn()
-            )
+                "expires_in" to server.session.expiresIn(),
+            ),
         )
     }
 
@@ -87,21 +89,21 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
         if (server.version?.isAtLeast(2022, 9, 0) == true) {
             authenticationService.revokeToken(
                 url.newBuilder().addPathSegments("auth/revoke").build(),
-                server.session.refreshToken!!
+                server.session.refreshToken!!,
             )
         } else {
             authenticationService.revokeTokenLegacy(
                 url.newBuilder().addPathSegments("auth/token").build(),
                 server.session.refreshToken!!,
-                AuthenticationService.REVOKE_ACTION
+                AuthenticationService.REVOKE_ACTION,
             )
         }
         serverManager.updateServer(
             server.copy(
                 session = server.session.copy(
-                    refreshToken = null
-                )
-            )
+                    refreshToken = null,
+                ),
+            ),
         )
     }
 
@@ -111,7 +113,10 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     }
 
     override fun getSessionState(): SessionState {
-        return if (server.session.isComplete() && server.session.installId == installId && server.connection.getUrl() != null) {
+        return if (server.session.isComplete() &&
+            server.session.installId == installId &&
+            server.connection.getUrl() != null
+        ) {
             SessionState.CONNECTED
         } else {
             SessionState.ANONYMOUS
@@ -150,20 +155,20 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
             server.connection.getUrl()?.toHttpUrlOrNull()!!.newBuilder().addPathSegments("auth/token").build(),
             AuthenticationService.GRANT_TYPE_REFRESH,
             refreshToken,
-            AuthenticationService.CLIENT_ID
+            AuthenticationService.CLIENT_ID,
         ).let {
             if (it.isSuccessful) {
                 val refreshedToken = it.body() ?: throw AuthorizationException()
                 serverManager.updateServer(
                     server.copy(
                         session = ServerSessionInfo(
-                            refreshedToken.accessToken,
-                            refreshToken,
-                            System.currentTimeMillis() / 1000 + refreshedToken.expiresIn,
-                            refreshedToken.tokenType,
-                            installId
-                        )
-                    )
+                            accessToken = refreshedToken.accessToken,
+                            refreshToken = refreshToken,
+                            tokenExpiration = System.currentTimeMillis() / 1000 + refreshedToken.expiresIn,
+                            tokenType = refreshedToken.tokenType,
+                            installId = installId,
+                        ),
+                    ),
                 )
                 return@let
             } else if (it.code() == 400 &&
@@ -171,7 +176,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
             ) {
                 revokeSession()
             }
-            throw AuthorizationException()
+            throw AuthorizationException("Failed to refresh token", it.code(), it.errorBody())
         }
     }
 
@@ -181,8 +186,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     override suspend fun setLockHomeBypassEnabled(enabled: Boolean) =
         localStorage.putBoolean("${serverId}_$PREF_BIOMETRIC_HOME_BYPASS_ENABLED", enabled)
 
-    override suspend fun isLockEnabledRaw(): Boolean =
-        localStorage.getBoolean("${serverId}_$PREF_BIOMETRIC_ENABLED")
+    override suspend fun isLockEnabledRaw(): Boolean = localStorage.getBoolean("${serverId}_$PREF_BIOMETRIC_ENABLED")
 
     override suspend fun isLockHomeBypassEnabled(): Boolean =
         localStorage.getBoolean("${serverId}_$PREF_BIOMETRIC_HOME_BYPASS_ENABLED")

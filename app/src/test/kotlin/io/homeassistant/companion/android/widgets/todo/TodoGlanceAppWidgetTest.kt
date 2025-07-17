@@ -77,7 +77,7 @@ class TodoGlanceAppWidgetTest {
                     todoItems = emptyList(),
                     outOfSync = true,
                     showComplete = true,
-                )
+                ),
             )
         }
 
@@ -113,17 +113,17 @@ class TodoGlanceAppWidgetTest {
                         TodoItemState(
                             uid = "",
                             name = "Hello",
-                            done = false
+                            done = false,
                         ),
                         TodoItemState(
                             uid = "",
                             name = "World",
-                            done = true
+                            done = true,
                         ),
                     ),
                     outOfSync = true,
                     showComplete = true,
-                )
+                ),
             )
         }
 
@@ -170,17 +170,17 @@ class TodoGlanceAppWidgetTest {
                         TodoItemState(
                             uid = "",
                             name = "Hello",
-                            done = false
+                            done = false,
                         ),
                         TodoItemState(
                             uid = "",
                             name = "World",
-                            done = false
+                            done = false,
                         ),
                     ),
                     outOfSync = true,
                     showComplete = true,
-                )
+                ),
             )
         }
 
@@ -227,17 +227,17 @@ class TodoGlanceAppWidgetTest {
                         TodoItemState(
                             uid = "",
                             name = "Hello",
-                            done = false
+                            done = false,
                         ),
                         TodoItemState(
                             uid = "",
                             name = "World",
-                            done = true
+                            done = true,
                         ),
                     ),
                     outOfSync = true,
                     showComplete = false,
-                )
+                ),
             )
         }
 

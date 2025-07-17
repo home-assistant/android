@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import kotlinx.serialization.Serializable
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class ConversationSpeechPlainResponse(
-    val plain: Map<String, String?>?
-)
+@Serializable
+data class ConversationSpeechPlainResponse(val plain: Map<String, String?>? = null)

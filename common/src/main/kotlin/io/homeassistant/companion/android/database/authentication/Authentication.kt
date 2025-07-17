@@ -13,5 +13,5 @@ data class Authentication(
     val username: String,
 
     @ColumnInfo(name = "password")
-    val password: String
+    val password: String,
 )

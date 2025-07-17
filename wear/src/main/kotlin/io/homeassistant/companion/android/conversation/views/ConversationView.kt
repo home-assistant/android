@@ -67,15 +67,12 @@ private const val SCREEN_CONVERSATION = "conversation"
 private const val SCREEN_PIPELINES = "pipelines"
 
 @Composable
-fun LoadAssistView(
-    conversationViewModel: ConversationViewModel,
-    onVoiceInputIntent: () -> Unit
-) {
+fun LoadAssistView(conversationViewModel: ConversationViewModel, onVoiceInputIntent: () -> Unit) {
     WearAppTheme {
         val swipeDismissableNavController = rememberSwipeDismissableNavController()
         SwipeDismissableNavHost(
             navController = swipeDismissableNavController,
-            startDestination = SCREEN_CONVERSATION
+            startDestination = SCREEN_CONVERSATION,
         ) {
             composable(SCREEN_CONVERSATION) {
                 ConversationResultView(
@@ -93,7 +90,7 @@ fun LoadAssistView(
                         } else {
                             onVoiceInputIntent()
                         }
-                    }
+                    },
                 )
             }
             composable(SCREEN_PIPELINES) {
@@ -102,7 +99,7 @@ fun LoadAssistView(
                     onSelectPipeline = {
                         conversationViewModel.changePipeline(it)
                         swipeDismissableNavController.navigateUp()
-                    }
+                    },
                 )
             }
         }
@@ -116,12 +113,18 @@ fun ConversationResultView(
     currentPipeline: AssistPipelineResponse?,
     hapticFeedback: Boolean,
     onChangePipeline: () -> Unit,
-    onMicrophoneInput: () -> Unit
+    onMicrophoneInput: () -> Unit,
 ) {
     val scrollState = rememberScalingLazyListState()
     LaunchedEffect(conversation.size) {
         scrollState.scrollToItem(
-            if (inputMode != AssistViewModelBase.AssistInputMode.BLOCKED) (conversation.size + 1) else conversation.size
+            if (inputMode !=
+                AssistViewModelBase.AssistInputMode.BLOCKED
+            ) {
+                (conversation.size + 1)
+            } else {
+                conversation.size
+            },
         )
     }
     if (hapticFeedback) {
@@ -145,22 +148,22 @@ fun ConversationResultView(
                     modifier = Modifier
                         .clickable(
                             onClick = { onChangePipeline() },
-                            onClickLabel = stringResource(R.string.assist_change_pipeline)
+                            onClickLabel = stringResource(R.string.assist_change_pipeline),
                         )
                         .padding(bottom = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = currentPipeline.name,
                         fontSize = 11.sp,
-                        color = textColor
+                        color = textColor,
                     )
                     Image(
                         asset = CommunityMaterial.Icon.cmd_chevron_right,
                         modifier = Modifier
                             .size(16.dp)
                             .padding(start = 4.dp),
-                        colorFilter = ColorFilter.tint(textColor)
+                        colorFilter = ColorFilter.tint(textColor),
                     )
                 }
             } else {
@@ -174,7 +177,7 @@ fun ConversationResultView(
             item {
                 Box(
                     modifier = Modifier.size(64.dp),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     val inputIsActive = inputMode == AssistViewModelBase.AssistInputMode.VOICE_ACTIVE
                     if (inputIsActive) {
@@ -185,9 +188,9 @@ fun ConversationResultView(
                             targetValue = 1.2f,
                             animationSpec = infiniteRepeatable(
                                 animation = tween(600, easing = LinearEasing),
-                                repeatMode = RepeatMode.Reverse
+                                repeatMode = RepeatMode.Reverse,
                             ),
-                            label = "conversationAnimationFloat"
+                            label = "conversationAnimationFloat",
                         )
                         Box(
                             modifier = Modifier
@@ -195,26 +198,34 @@ fun ConversationResultView(
                                 .scale(scale)
                                 .background(
                                     color = colorResource(R.color.colorSpeechText),
-                                    shape = CircleShape
+                                    shape = CircleShape,
                                 )
-                                .clip(CircleShape)
+                                .clip(CircleShape),
                         )
                     }
                     FilledIconButton(
                         onClick = { onMicrophoneInput() },
                         colors =
                         if (inputIsActive) {
-                            IconButtonDefaults.filledIconButtonColors(containerColor = Color.Transparent, contentColor = Color.Black)
+                            IconButtonDefaults.filledIconButtonColors(
+                                containerColor = Color.Transparent,
+                                contentColor = Color.Black,
+                            )
                         } else {
-                            IconButtonDefaults.filledIconButtonColors(containerColor = wearColorScheme.outlineVariant, contentColor = Color.White)
+                            IconButtonDefaults.filledIconButtonColors(
+                                containerColor = wearColorScheme.outlineVariant,
+                                contentColor = Color.White,
+                            )
                         },
-                        modifier = Modifier.touchTargetAwareSize(IconButtonDefaults.SmallButtonSize)
+                        modifier = Modifier.touchTargetAwareSize(IconButtonDefaults.SmallButtonSize),
                     ) {
                         Icon(
                             Icons.Filled.Mic,
                             contentDescription = stringResource(R.string.assist_start_listening),
-                            modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize)),
-                            tint = LocalContentColor.current
+                            modifier = Modifier.size(
+                                IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize),
+                            ),
+                            tint = LocalContentColor.current,
                         )
                     }
                 }
@@ -233,8 +244,8 @@ fun SpeechBubble(text: String, isResponse: Boolean) {
                 start = if (isResponse) 0.dp else 24.dp,
                 end = if (isResponse) 24.dp else 0.dp,
                 top = 4.dp,
-                bottom = 4.dp
-            )
+                bottom = 4.dp,
+            ),
     ) {
         Box(
             modifier = Modifier
@@ -248,10 +259,10 @@ fun SpeechBubble(text: String, isResponse: Boolean) {
                         topLeft = 12.dp,
                         topRight = 12.dp,
                         bottomLeft = if (isResponse) 0.dp else 12.dp,
-                        bottomRight = if (isResponse) 12.dp else 0.dp
-                    )
+                        bottomRight = if (isResponse) 12.dp else 0.dp,
+                    ),
                 )
-                .padding(4.dp)
+                .padding(4.dp),
         ) {
             Text(
                 text = text,
@@ -261,17 +272,14 @@ fun SpeechBubble(text: String, isResponse: Boolean) {
                     Color.Black
                 },
                 modifier = Modifier
-                    .padding(2.dp)
+                    .padding(2.dp),
             )
         }
     }
 }
 
 @Composable
-fun ConversationPipelinesView(
-    pipelines: List<AssistPipelineResponse>,
-    onSelectPipeline: (String) -> Unit
-) {
+fun ConversationPipelinesView(pipelines: List<AssistPipelineResponse>, onSelectPipeline: (String) -> Unit) {
     WearAppTheme {
         ThemeLazyColumn {
             item {
@@ -282,7 +290,7 @@ fun ConversationPipelinesView(
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(it.name) },
                     onClick = { onSelectPipeline(it.id) },
-                    colors = getFilledTonalButtonColors()
+                    colors = getFilledTonalButtonColors(),
                 )
             }
         }

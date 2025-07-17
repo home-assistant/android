@@ -31,12 +31,10 @@ import javax.inject.Singleton
 object DatabaseModule {
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase =
-        AppDatabase.getInstance(context)
+    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase = AppDatabase.getInstance(context)
 
     @Provides
-    fun provideAuthenticationDao(database: AppDatabase): AuthenticationDao =
-        database.authenticationDao()
+    fun provideAuthenticationDao(database: AppDatabase): AuthenticationDao = database.authenticationDao()
 
     @Provides
     fun provideSensorDao(database: AppDatabase): SensorDao = database.sensorDao()
@@ -58,8 +56,7 @@ object DatabaseModule {
     fun provideTodoWidgetDao(database: AppDatabase): TodoWidgetDao = database.todoWidgetDao()
 
     @Provides
-    fun provideTemplateWidgetDao(database: AppDatabase): TemplateWidgetDao =
-        database.templateWidgetDao()
+    fun provideTemplateWidgetDao(database: AppDatabase): TemplateWidgetDao = database.templateWidgetDao()
 
     @Provides
     fun provideLocationHistoryDao(database: AppDatabase): LocationHistoryDao = database.locationHistoryDao()
@@ -89,5 +86,6 @@ object DatabaseModule {
     fun provideThermostatTileDao(database: AppDatabase): ThermostatTileDao = database.thermostatTileDao()
 
     @Provides
-    fun provideEntityStateComplicationsDao(database: AppDatabase): EntityStateComplicationsDao = database.entityStateComplicationsDao()
+    fun provideEntityStateComplicationsDao(database: AppDatabase): EntityStateComplicationsDao =
+        database.entityStateComplicationsDao()
 }

@@ -16,7 +16,7 @@ class RemoteViewsTarget(
     private val context: Context,
     private val appWidgetId: Int,
     private val remoteViews: RemoteViews,
-    @IdRes private val imageViewResId: Int
+    @IdRes private val imageViewResId: Int,
 ) : Target {
 
     override fun onStart(placeholder: Image?) {

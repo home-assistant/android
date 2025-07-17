@@ -59,6 +59,7 @@ import io.homeassistant.companion.android.database.location.LocationHistoryItemR
 import io.homeassistant.companion.android.database.location.LocationHistoryItemTrigger
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.settings.views.EmptyState
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import java.text.DateFormat
 import java.util.TimeZone
 import kotlinx.coroutines.flow.Flow
@@ -68,33 +69,37 @@ fun LocationTrackingView(
     useHistory: Boolean,
     onSetHistory: (Boolean) -> Unit,
     history: Flow<PagingData<LocationHistoryItem>>,
-    serversList: List<Server>
+    serversList: List<Server>,
 ) {
     val historyState = history.collectAsLazyPagingItems()
 
-    LazyColumn {
+    LazyColumn(
+        contentPadding = safeBottomPaddingValues(applyHorizontal = false),
+    ) {
         item("history.use") {
             Box(Modifier.padding(all = 16.dp)) {
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = colorResource(commonR.color.colorSensorTopEnabled)
+                    color = colorResource(commonR.color.colorSensorTopEnabled),
                 ) {
                     Row(
                         modifier = Modifier
                             .clickable { onSetHistory(!useHistory) }
-                            .padding(horizontal = 16.dp, vertical = 20.dp)
+                            .padding(horizontal = 16.dp, vertical = 20.dp),
                     ) {
                         Text(
                             text = stringResource(commonR.string.location_history_use),
                             fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
                         )
                         Switch(
                             checked = useHistory,
                             // Handled by row
                             onCheckedChange = null,
                             modifier = Modifier.padding(start = 16.dp),
-                            colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb))
+                            colors = SwitchDefaults.colors(
+                                uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb),
+                            ),
                         )
                     }
                 }
@@ -109,21 +114,21 @@ fun LocationTrackingView(
                             commonR.string.location_history_empty_title
                         } else {
                             commonR.string.location_history_off_title
-                        }
+                        },
                     ),
                     subtitle = stringResource(
                         if (useHistory) {
                             commonR.string.location_history_empty_summary
                         } else {
                             commonR.string.location_history_off_summary
-                        }
-                    )
+                        },
+                    ),
                 )
             }
         } else {
             items(
                 count = historyState.itemCount,
-                key = historyState.itemKey { "history.${it.id}" }
+                key = historyState.itemKey { "history.${it.id}" },
             ) { index ->
                 LocationTrackingHistoryRow(item = historyState[index], servers = serversList)
             }
@@ -141,7 +146,7 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
                 DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.DEFAULT).apply {
                     timeZone = TimeZone.getDefault()
                 }.format(it)
-            }
+            },
         )
     }
 
@@ -149,19 +154,19 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
         Surface(
             shape = RoundedCornerShape(elevation),
             color = if (opened) MaterialTheme.colors.surface else MaterialTheme.colors.background,
-            elevation = elevation
+            elevation = elevation,
         ) {
             Column(
                 Modifier
                     .fillMaxWidth()
                     .clickable { opened = !opened }
-                    .animateContentSize()
+                    .animateContentSize(),
             ) {
                 ReadOnlyRow(
                     primarySlot = {
                         Text(
                             text = date ?: "",
-                            style = MaterialTheme.typography.body1
+                            style = MaterialTheme.typography.body1,
                         )
                     },
                     secondarySlot = {
@@ -170,9 +175,11 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
                                 val sent = it.result == LocationHistoryItemResult.SENT
                                 val failed = it.result == LocationHistoryItemResult.FAILED_SEND
                                 Text(
-                                    text = "${stringResource(item.trigger.toStringResource())} • ${stringResource(it.result.toStringResource())}",
+                                    text = "${stringResource(
+                                        item.trigger.toStringResource(),
+                                    )} • ${stringResource(it.result.toStringResource())}",
                                     style = MaterialTheme.typography.body2,
-                                    modifier = Modifier.padding(end = 4.dp)
+                                    modifier = Modifier.padding(end = 4.dp),
                                 )
                                 Image(
                                     asset = when {
@@ -180,20 +187,26 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
                                         failed -> CommunityMaterial.Icon.cmd_alert_outline
                                         else -> CommunityMaterial.Icon.cmd_debug_step_over
                                     },
-                                    contentDescription = if (sent || failed) null else stringResource(commonR.string.location_history_skipped),
+                                    contentDescription = if (sent ||
+                                        failed
+                                    ) {
+                                        null
+                                    } else {
+                                        stringResource(commonR.string.location_history_skipped)
+                                    },
                                     colorFilter = ColorFilter.tint(
                                         when {
                                             sent -> colorResource(commonR.color.colorOnAlertSuccess)
                                             failed -> colorResource(commonR.color.colorOnAlertWarning)
                                             else -> LocalContentColor.current
-                                        }
+                                        },
                                     ),
                                     alpha = if (sent || failed) 1.0f else LocalContentAlpha.current,
-                                    modifier = Modifier.size(with(LocalDensity.current) { 16.sp.toDp() })
+                                    modifier = Modifier.size(with(LocalDensity.current) { 16.sp.toDp() }),
                                 )
                             }
                         }
-                    }
+                    },
                 )
                 AnimatedVisibility(visible = opened) {
                     val context = LocalContext.current
@@ -203,28 +216,28 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
                                 servers.firstOrNull { it.id == item.serverId }?.friendlyName
                             } else {
                                 "-"
-                            }
+                            },
                         )
                     }
                     Column {
                         ReadOnlyRow(
                             primaryText = stringResource(commonR.string.location),
-                            secondaryText = (item?.locationName ?: "${item?.latitude}, ${item?.longitude}")
+                            secondaryText = (item?.locationName ?: "${item?.latitude}, ${item?.longitude}"),
                         )
                         ReadOnlyRow(
                             primaryText = stringResource(commonR.string.accuracy),
-                            secondaryText = item?.accuracy.toString()
+                            secondaryText = item?.accuracy.toString(),
                         )
                         if (servers.size > 1 || serverName == null) { // null serverName suggests deleted server
                             ReadOnlyRow(
                                 primaryText = stringResource(commonR.string.server),
-                                secondaryText = serverName ?: stringResource(commonR.string.state_unknown)
+                                secondaryText = serverName ?: stringResource(commonR.string.state_unknown),
                             )
                         }
                         Row(
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
-                                .padding(bottom = 8.dp)
+                                .padding(bottom = 8.dp),
                         ) {
                             if (item?.latitude != null && item.longitude != null) {
                                 IconButton(onClick = {
@@ -232,15 +245,15 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
                                     context.startActivity(
                                         Intent(
                                             Intent.ACTION_VIEW,
-                                            Uri.parse("geo:$latlng?q=$latlng(Home+Assistant)")
-                                        )
+                                            Uri.parse("geo:$latlng?q=$latlng(Home+Assistant)"),
+                                        ),
                                     )
                                 }) {
                                     Image(
                                         asset = CommunityMaterial.Icon3.cmd_map,
                                         contentDescription = stringResource(commonR.string.show_on_map),
                                         modifier = Modifier.size(24.dp),
-                                        colorFilter = ColorFilter.tint(MaterialTheme.colors.primary)
+                                        colorFilter = ColorFilter.tint(MaterialTheme.colors.primary),
                                     )
                                 }
                                 Spacer(Modifier.width(16.dp))
@@ -255,7 +268,7 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
                                     asset = CommunityMaterial.Icon3.cmd_share_variant,
                                     contentDescription = stringResource(commonR.string.share_logs),
                                     modifier = Modifier.size(24.dp),
-                                    colorFilter = ColorFilter.tint(MaterialTheme.colors.primary)
+                                    colorFilter = ColorFilter.tint(MaterialTheme.colors.primary),
                                 )
                             }
                         }
@@ -267,11 +280,7 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
 }
 
 @Composable
-fun ReadOnlyRow(
-    primaryText: String,
-    secondaryText: String,
-    selectingEnabled: Boolean = true
-) = ReadOnlyRow(
+fun ReadOnlyRow(primaryText: String, secondaryText: String, selectingEnabled: Boolean = true) = ReadOnlyRow(
     { Text(text = primaryText, style = MaterialTheme.typography.body1) },
     {
         if (selectingEnabled) {
@@ -279,19 +288,16 @@ fun ReadOnlyRow(
         } else {
             Text(text = secondaryText, style = MaterialTheme.typography.body2)
         }
-    }
+    },
 )
 
 @Composable
-fun ReadOnlyRow(
-    primarySlot: @Composable () -> Unit,
-    secondarySlot: @Composable () -> Unit
-) {
+fun ReadOnlyRow(primarySlot: @Composable () -> Unit, secondarySlot: @Composable () -> Unit) {
     Column(
         modifier = Modifier
             .heightIn(min = 56.dp)
             .padding(all = 16.dp),
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         primarySlot()
         CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {

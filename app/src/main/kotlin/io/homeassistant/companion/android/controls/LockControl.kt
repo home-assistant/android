@@ -19,35 +19,31 @@ object LockControl : HaControl {
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity<Map<String, Any>>,
-        info: HaControlInfo
+        entity: Entity,
+        info: HaControlInfo,
     ): Control.StatefulBuilder {
         control.setControlTemplate(
             ToggleTemplate(
                 entity.entityId,
                 ControlButton(
                     entity.isActive(),
-                    "Description"
-                )
-            )
+                    "Description",
+                ),
+            ),
         )
         return control
     }
 
-    override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
-        DeviceTypes.TYPE_LOCK
+    override fun getDeviceType(entity: Entity): Int = DeviceTypes.TYPE_LOCK
 
-    override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+    override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.domain_lock)
 
-    override suspend fun performAction(
-        integrationRepository: IntegrationRepository,
-        action: ControlAction
-    ): Boolean {
+    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
         integrationRepository.callAction(
             action.templateId.split(".")[0],
             if ((action as? BooleanAction)?.newState == true) "lock" else "unlock",
-            hashMapOf("entity_id" to action.templateId)
+            hashMapOf("entity_id" to action.templateId),
         )
         return true
     }

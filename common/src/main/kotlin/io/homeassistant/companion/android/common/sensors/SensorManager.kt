@@ -8,13 +8,14 @@ import android.os.Build
 import android.os.Process.myPid
 import android.os.Process.myUid
 import androidx.core.content.getSystemService
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.AnySerializer
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.SensorSetting
@@ -52,14 +53,14 @@ interface SensorManager {
         val stateClass: String? = null,
         val entityCategory: String? = null,
         val updateType: UpdateType = UpdateType.WORKER,
-        val enabledByDefault: Boolean = false
+        val enabledByDefault: Boolean = false,
     ) {
         enum class UpdateType {
             INTENT,
             INTENT_ONLY,
             WORKER,
             LOCATION,
-            CUSTOM
+            CUSTOM,
         }
     }
 
@@ -111,7 +112,7 @@ interface SensorManager {
             basicSensor.id,
             serverManager(context).defaultServers.map { it.id },
             permission,
-            basicSensor.enabledByDefault
+            basicSensor.enabledByDefault,
         )
     }
 
@@ -123,7 +124,7 @@ interface SensorManager {
             basicSensor.id,
             serverId,
             permission,
-            basicSensor.enabledByDefault
+            basicSensor.enabledByDefault,
         )?.enabled == true
     }
 
@@ -165,7 +166,7 @@ interface SensorManager {
         settingName: String,
         settingType: SensorSettingType,
         default: String,
-        enabled: Boolean = true
+        enabled: Boolean = true,
     ) {
         getSetting(context, sensor, settingName, settingType, default, enabled)
     }
@@ -181,8 +182,10 @@ interface SensorManager {
     suspend fun enableDisableSetting(context: Context, sensor: BasicSensor, settingName: String, enabled: Boolean) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val settingEnabled = isSettingEnabled(context, sensor, settingName)
-        if (enabled && !settingEnabled ||
-            !enabled && settingEnabled
+        if (enabled &&
+            !settingEnabled ||
+            !enabled &&
+            settingEnabled
         ) {
             sensorDao.updateSettingEnabled(sensor.id, settingName, enabled)
         }
@@ -193,9 +196,16 @@ interface SensorManager {
         sensor: BasicSensor,
         settingName: String,
         default: Boolean,
-        enabled: Boolean = true
+        enabled: Boolean = true,
     ): Boolean {
-        return getSetting(context, sensor, settingName, SensorSettingType.TOGGLE, default.toString(), enabled).toBoolean()
+        return getSetting(
+            context,
+            sensor,
+            settingName,
+            SensorSettingType.TOGGLE,
+            default.toString(),
+            enabled,
+        ).toBoolean()
     }
 
     fun getNumberSetting(
@@ -203,9 +213,17 @@ interface SensorManager {
         sensor: BasicSensor,
         settingName: String,
         default: Int,
-        enabled: Boolean = true
+        enabled: Boolean = true,
     ): Int {
-        return getSetting(context, sensor, settingName, SensorSettingType.NUMBER, default.toString(), enabled).toIntOrNull() ?: default
+        return getSetting(
+            context,
+            sensor,
+            settingName,
+            SensorSettingType.NUMBER,
+            default.toString(),
+            enabled,
+        ).toIntOrNull()
+            ?: default
     }
 
     /**
@@ -219,7 +237,7 @@ interface SensorManager {
         settingType: SensorSettingType,
         default: String,
         enabled: Boolean = true,
-        entries: List<String> = arrayListOf()
+        entries: List<String> = arrayListOf(),
     ): String {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val setting = sensorDao
@@ -239,7 +257,7 @@ interface SensorManager {
         state: Any,
         mdiIcon: String,
         attributes: Map<String, Any?>,
-        forceUpdate: Boolean = false
+        forceUpdate: Boolean = false,
     ) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensors = sensorDao.get(basicSensor.id)
@@ -263,7 +281,7 @@ interface SensorManager {
                 stateClass = basicSensor.stateClass,
                 entityCategory = basicSensor.entityCategory,
                 lastSentState = if (forceUpdate) null else it.lastSentState,
-                lastSentIcon = if (forceUpdate) null else it.lastSentIcon
+                lastSentIcon = if (forceUpdate) null else it.lastSentIcon,
             )
             sensorDao.update(sensor)
         }
@@ -289,9 +307,9 @@ interface SensorManager {
                 val value =
                     when {
                         valueType == "liststring" ->
-                            jacksonObjectMapper().writeValueAsString((item.value as List<*>).map { it.toString() })
+                            kotlinJsonMapper.encodeToString((item.value as List<*>).map { it.toString() })
                         valueType.startsWith("list") ->
-                            jacksonObjectMapper().writeValueAsString(item.value)
+                            kotlinJsonMapper.encodeToString(AnySerializer, item.value)
                         else ->
                             item.value.toString()
                     }
@@ -300,9 +318,9 @@ interface SensorManager {
                     basicSensor.id,
                     item.key,
                     value,
-                    valueType
+                    valueType,
                 )
-            }
+            },
         )
     }
 
@@ -312,12 +330,11 @@ interface SensorManager {
         fun serverManager(): ServerManager
     }
 
-    fun serverManager(context: Context) =
-        EntryPointAccessors.fromApplication(
-            context.applicationContext,
-            SensorManagerEntryPoint::class.java
-        )
-            .serverManager()
+    fun serverManager(context: Context) = EntryPointAccessors.fromApplication(
+        context.applicationContext,
+        SensorManagerEntryPoint::class.java,
+    )
+        .serverManager()
 }
 
 fun SensorManager.id(): String {

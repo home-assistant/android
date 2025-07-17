@@ -23,7 +23,7 @@ class ShareActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
 
         val data = mutableMapOf(
-            "caller" to ActivityCompat.getReferrer(this).toString()
+            "caller" to ActivityCompat.getReferrer(this).toString(),
         )
 
         if (intent?.action == Intent.ACTION_SEND) {
@@ -45,14 +45,14 @@ class ShareActivity : BaseActivity() {
                 Toast.makeText(
                     applicationContext,
                     commonR.string.share_success,
-                    Toast.LENGTH_SHORT
+                    Toast.LENGTH_SHORT,
                 ).show()
             } catch (e: Exception) {
                 Timber.e(e, "Issue sharing with Home Assistant")
                 Toast.makeText(
                     applicationContext,
                     commonR.string.share_failed,
-                    Toast.LENGTH_LONG
+                    Toast.LENGTH_LONG,
                 ).show()
             }
         }

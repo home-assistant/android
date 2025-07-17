@@ -17,13 +17,13 @@ import androidx.core.text.HtmlCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
-import com.fasterxml.jackson.databind.JsonMappingException
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetTemplateConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
@@ -31,11 +31,13 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerializationException
 import timber.log.Timber
 
 @AndroidEntryPoint
 class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     companion object {
+        @Suppress("ktlint:standard:max-line-length")
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
@@ -62,6 +64,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         binding = WidgetTemplateConfigureBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.root.applySafeDrawingInsets()
 
         // Find the widget id from the intent.
         val intent = intent
@@ -69,11 +72,11 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         if (extras != null) {
             appWidgetId = extras.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.INVALID_APPWIDGET_ID,
             )
             requestLauncherSetup = extras.getBoolean(
                 ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
-                false
+                false,
             )
         }
 
@@ -86,7 +89,8 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         val templateWidget = templateWidgetDao.get(appWidgetId)
 
         val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
-        binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
+        binding.backgroundType.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         setupServerSelect(templateWidget?.serverId)
 
@@ -104,14 +108,19 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 WidgetUtils.getSelectedBackgroundOption(
                     this,
                     templateWidget.backgroundType,
-                    backgroundTypeValues
-                )
+                    backgroundTypeValues,
+                ),
             )
             binding.textColor.isVisible = templateWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
             binding.textColorWhite.isChecked =
-                templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
+                templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) }
+                    ?: true
             binding.textColorBlack.isChecked =
-                templateWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
+                templateWidget.textColor?.let {
+                    it.toColorInt() ==
+                        ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack)
+                }
+                    ?: false
         } else {
             binding.backgroundType.setSelection(0)
         }
@@ -138,9 +147,12 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                         PendingIntent.getActivity(
                             this,
                             System.currentTimeMillis().toInt(),
-                            Intent(this, TemplateWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-                        )
+                            Intent(
+                                this,
+                                TemplateWidgetConfigureActivity::class.java,
+                            ).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                        ),
                     )
                 } else {
                     showAddWidgetError() // this shouldn't be possible
@@ -182,22 +194,30 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
                     getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
                     else -> WidgetBackgroundType.DAYNIGHT
-                }
+                },
             )
             putExtra(
                 TemplateWidget.EXTRA_TEXT_COLOR,
-                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent)) {
-                    getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
+                if (binding.backgroundType.selectedItem as String? ==
+                    getString(commonR.string.widget_background_type_transparent)
+                ) {
+                    getHexForColor(
+                        if (binding.textColorWhite.isChecked) {
+                            android.R.color.white
+                        } else {
+                            commonR.color.colorWidgetButtonLabelBlack
+                        },
+                    )
                 } else {
                     null
-                }
+                },
             )
         }
         applicationContext.sendBroadcast(createIntent)
 
         setResult(
             RESULT_OK,
-            Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId),
         )
         finish()
     }
@@ -207,7 +227,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         if (intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.INVALID_APPWIDGET_ID,
             )
             onAddWidget()
         }
@@ -219,22 +239,26 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             var enabled: Boolean
             withContext(Dispatchers.IO) {
                 try {
-                    templateText = serverManager.integrationRepository(selectedServerId!!).renderTemplate(template, mapOf()).toString()
+                    templateText =
+                        serverManager.integrationRepository(
+                            selectedServerId!!,
+                        ).renderTemplate(template, mapOf()).toString()
                     enabled = true
                 } catch (e: Exception) {
                     Timber.e(e, "Exception while rendering template")
-                    // JsonMappingException suggests that template is not a String (= error)
+                    // SerializationException suggests that template is not a String (= error)
                     templateText = getString(
-                        if (e.cause is JsonMappingException) {
+                        if (e.cause is SerializationException) {
                             commonR.string.template_error
                         } else {
                             commonR.string.template_render_error
-                        }
+                        },
                     )
                     enabled = false
                 }
             }
-            binding.renderedTemplate.text = templateText?.let { HtmlCompat.fromHtml(it, HtmlCompat.FROM_HTML_MODE_LEGACY) }
+            binding.renderedTemplate.text =
+                templateText?.let { HtmlCompat.fromHtml(it, HtmlCompat.FROM_HTML_MODE_LEGACY) }
             binding.addButton.isEnabled = enabled && isValidServerId()
         }
     }

@@ -19,7 +19,7 @@ import timber.log.Timber
 class ExternalUrlViewModel @Inject constructor(
     state: SavedStateHandle,
     private val serverManager: ServerManager,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
 
     var canUseCloud by mutableStateOf(false)
@@ -49,9 +49,9 @@ class ExternalUrlViewModel @Inject constructor(
                 serverManager.updateServer(
                     it.copy(
                         connection = it.connection.copy(
-                            useCloud = useCloud
-                        )
-                    )
+                            useCloud = useCloud,
+                        ),
+                    ),
                 )
             }
         }
@@ -65,9 +65,9 @@ class ExternalUrlViewModel @Inject constructor(
                     serverManager.updateServer(
                         it.copy(
                             connection = it.connection.copy(
-                                externalUrl = formatted
-                            )
-                        )
+                                externalUrl = formatted,
+                            ),
+                        ),
                     )
                     externalUrl = formatted
                 } catch (e: MalformedHttpUrlException) {

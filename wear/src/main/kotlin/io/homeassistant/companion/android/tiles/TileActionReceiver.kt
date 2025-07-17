@@ -30,7 +30,7 @@ class TileActionReceiver : BroadcastReceiver() {
                 try {
                     onEntityPressedWithoutState(
                         entityId = entityId,
-                        integrationRepository = serverManager.integrationRepository()
+                        integrationRepository = serverManager.integrationRepository(),
                     )
                 } catch (e: Exception) {
                     Timber.e(e, "Cannot call tile service")

@@ -58,8 +58,8 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
             scanning = false,
             devices = listOf(),
             deviceState = null,
-            errorState = null
-        )
+            errorState = null,
+        ),
     )
 
     private var initialDeviceName: String? = null
@@ -91,8 +91,8 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
                                 ?.let { foundDevice ->
                                     screenState.emit(
                                         screenState.value.copy(
-                                            initialDeviceAddress = foundDevice.address
-                                        )
+                                            initialDeviceAddress = foundDevice.address,
+                                        ),
                                     )
                                     initialDeviceName = null
                                 }
@@ -114,11 +114,7 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -131,11 +127,12 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
                             startScanning()
                         },
                         onDismiss = {
-                            val domain = improvRepository.getResultState().firstOrNull()?.toHttpUrlOrNull()?.queryParameter("domain")
+                            val domain = improvRepository.getResultState().firstOrNull()?.toHttpUrlOrNull()
+                                ?.queryParameter("domain")
                             setFragmentResult(RESULT_KEY, bundleOf(RESULT_DOMAIN to domain))
                             improvRepository.clearStatesForDevice()
                             dismiss()
-                        }
+                        },
                     )
                 }
             }
@@ -171,8 +168,8 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
                 ExternalBusMessage(
                     id = -1,
                     type = "command",
-                    command = "improv/device_setup_done"
-                )
+                    command = "improv/device_setup_done",
+                ),
             )
         }
     }

@@ -27,7 +27,7 @@ class ConversationViewModel @Inject constructor(
     private val audioRecorder: AudioRecorder,
     audioUrlPlayer: AudioUrlPlayer,
     private val wearPrefsRepository: WearPrefsRepository,
-    application: Application
+    application: Application,
 ) : AssistViewModelBase(serverManager, audioRecorder, audioUrlPlayer, application) {
 
     private var useAssistPipeline = false
@@ -48,7 +48,8 @@ class ConversationViewModel @Inject constructor(
     private val _pipelines = mutableStateListOf<AssistPipelineResponse>()
     val pipelines: List<AssistPipelineResponse> = _pipelines
 
-    private val startMessage = AssistMessage(application.getString(commonR.string.assist_how_can_i_assist), isInput = false)
+    private val startMessage =
+        AssistMessage(application.getString(commonR.string.assist_how_can_i_assist), isInput = false)
     private val _conversation = mutableStateListOf(startMessage)
     val conversation: List<AssistMessage> = _conversation
 
@@ -59,7 +60,7 @@ class ConversationViewModel @Inject constructor(
         if (!serverManager.isRegistered()) {
             _conversation.clear()
             _conversation.add(
-                AssistMessage(app.getString(commonR.string.not_registered), isInput = false)
+                AssistMessage(app.getString(commonR.string.not_registered), isInput = false),
             )
             return false
         }
@@ -74,7 +75,7 @@ class ConversationViewModel @Inject constructor(
         if (supported == null) { // Couldn't get config
             _conversation.clear()
             _conversation.add(
-                AssistMessage(app.getString(commonR.string.assist_connnect), isInput = false)
+                AssistMessage(app.getString(commonR.string.assist_connnect), isInput = false),
             )
         } else if (!supported) { // Core too old or missing component
             val usingPipelines = serverManager.getServer()?.version?.isAtLeast(2023, 5) == true
@@ -82,12 +83,20 @@ class ConversationViewModel @Inject constructor(
             _conversation.add(
                 AssistMessage(
                     if (usingPipelines) {
-                        app.getString(commonR.string.no_assist_support, "2023.5", app.getString(commonR.string.no_assist_support_assist_pipeline))
+                        app.getString(
+                            commonR.string.no_assist_support,
+                            "2023.5",
+                            app.getString(commonR.string.no_assist_support_assist_pipeline),
+                        )
                     } else {
-                        app.getString(commonR.string.no_assist_support, "2023.1", app.getString(commonR.string.no_assist_support_conversation))
+                        app.getString(
+                            commonR.string.no_assist_support,
+                            "2023.1",
+                            app.getString(commonR.string.no_assist_support_conversation),
+                        )
                     },
-                    isInput = false
-                )
+                    isInput = false,
+                ),
             )
         } else {
             if (serverManager.getServer()?.version?.isAtLeast(2023, 5) == true) {
@@ -101,7 +110,7 @@ class ConversationViewModel @Inject constructor(
                     serverManager.integrationRepository().getLastUsedPipelineId()
                 } else {
                     null
-                }
+                },
             )
         }
 
@@ -141,7 +150,9 @@ class ConversationViewModel @Inject constructor(
         val onPipelineVersion = serverManager.integrationRepository().isHomeAssistantVersionAtLeast(2023, 5, 0)
 
         useAssistPipeline = onPipelineVersion
-        return if ((onConversationVersion && !onPipelineVersion && config == null) || (onPipelineVersion && config == null)) {
+        return if ((onConversationVersion && !onPipelineVersion && config == null) ||
+            (onPipelineVersion && config == null)
+        ) {
             null // Version OK but couldn't get config (offline)
         } else {
             (onConversationVersion && !onPipelineVersion && config?.components?.contains("conversation") == true) ||
@@ -197,7 +208,7 @@ class ConversationViewModel @Inject constructor(
             inputMode = AssistInputMode.BLOCKED
             _conversation.clear()
             _conversation.add(
-                AssistMessage(app.getString(commonR.string.assist_error), isInput = false)
+                AssistMessage(app.getString(commonR.string.assist_error), isInput = false),
             )
         }
 
@@ -236,7 +247,9 @@ class ConversationViewModel @Inject constructor(
             if (proactive == true) _conversation.add(AssistMessage("…", isInput = true))
             if (proactive != true) runAssistPipeline(null)
         } else {
-            _conversation.add(AssistMessage(app.getString(commonR.string.assist_error), isInput = false, isError = true))
+            _conversation.add(
+                AssistMessage(app.getString(commonR.string.assist_error), isInput = false, isError = true),
+            )
         }
         recorderProactive = recording && proactive == true
     }
@@ -253,7 +266,7 @@ class ConversationViewModel @Inject constructor(
 
         runAssistPipelineInternal(
             text,
-            currentPipeline
+            currentPipeline,
         ) { event ->
             when (event) {
                 is AssistEvent.Message -> {
@@ -263,7 +276,7 @@ class ConversationViewModel @Inject constructor(
                         _conversation[index] = message.copy(
                             message = event.message.trim(),
                             isInput = isInput,
-                            isError = isError
+                            isError = isError,
                         )
                         if (isInput) {
                             _conversation.add(haMessage)
@@ -282,7 +295,8 @@ class ConversationViewModel @Inject constructor(
                         _conversation.add(lastMessage.copy(message = event.chunk))
                     } else {
                         // Replace last message with the updated message with the new chunk append
-                        _conversation[_conversation.lastIndex] = lastMessage.copy(message = lastMessage.message + event.chunk)
+                        _conversation[_conversation.lastIndex] =
+                            lastMessage.copy(message = lastMessage.message + event.chunk)
                     }
                 }
                 is AssistEvent.ContinueConversation -> onMicrophoneInput()

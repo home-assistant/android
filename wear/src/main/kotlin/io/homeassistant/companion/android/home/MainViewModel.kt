@@ -56,13 +56,13 @@ class MainViewModel @Inject constructor(
     private val sensorsDao: SensorDao,
     private val cameraTileDao: CameraTileDao,
     private val thermostatTileDao: ThermostatTileDao,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
 
     enum class LoadingState {
         LOADING,
         READY,
-        ERROR
+        ERROR,
     }
 
     private val app = application
@@ -80,7 +80,7 @@ class MainViewModel @Inject constructor(
     }
 
     // entities
-    var entities = mutableStateMapOf<String, Entity<*>>()
+    var entities = mutableStateMapOf<String, Entity>()
         private set
 
     private val _supportedEntities = MutableStateFlow(emptyList<String>())
@@ -90,24 +90,25 @@ class MainViewModel @Inject constructor(
      * IDs of favorites in the Favorites database.
      */
     val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState()
-    private val favoriteCaches = favoriteCachesDao.getAll()
+    var favoriteCaches = mutableStateListOf<FavoriteCaches>()
+        private set
 
     val shortcutEntitiesMap = mutableStateMapOf<Int?, SnapshotStateList<SimplifiedEntity>>()
 
     val cameraTiles = cameraTileDao.getAllFlow().collectAsState()
-    var cameraEntitiesMap = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
+    var cameraEntitiesMap = mutableStateMapOf<String, SnapshotStateList<Entity>>()
         private set
 
     val thermostatTiles = thermostatTileDao.getAllFlow().collectAsState()
-    var climateEntitiesMap = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
+    var climateEntitiesMap = mutableStateMapOf<String, SnapshotStateList<Entity>>()
         private set
 
     var areas = mutableListOf<AreaRegistryResponse>()
         private set
 
-    var entitiesByArea = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
+    var entitiesByArea = mutableStateMapOf<String, SnapshotStateList<Entity>>()
         private set
-    var entitiesByDomain = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
+    var entitiesByDomain = mutableStateMapOf<String, SnapshotStateList<Entity>>()
         private set
     var entitiesByAreaOrder = mutableStateListOf<String>()
         private set
@@ -115,9 +116,9 @@ class MainViewModel @Inject constructor(
         private set
 
     // Content of EntityListView
-    var entityLists = mutableStateMapOf<String, List<Entity<*>>>()
+    var entityLists = mutableStateMapOf<String, List<Entity>>()
     var entityListsOrder = mutableStateListOf<String>()
-    var entityListFilter: (Entity<*>) -> Boolean = { true }
+    var entityListFilter: (Entity) -> Boolean = { true }
 
     // settings
     var loadingState = mutableStateOf(LoadingState.LOADING)
@@ -136,6 +137,12 @@ class MainViewModel @Inject constructor(
         private set
     var areNotificationsAllowed by mutableStateOf(false)
         private set
+
+    init {
+        viewModelScope.launch {
+            favoriteCaches.addAll(favoriteCachesDao.getAll())
+        }
+    }
 
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
@@ -161,10 +168,11 @@ class MainViewModel @Inject constructor(
 
             val assistantAppComponent = ComponentName(
                 BuildConfig.APPLICATION_ID,
-                "io.homeassistant.companion.android.conversation.AssistantActivity"
+                "io.homeassistant.companion.android.conversation.AssistantActivity",
             )
             isAssistantAppAllowed =
-                app.packageManager.getComponentEnabledSetting(assistantAppComponent) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                app.packageManager.getComponentEnabledSetting(assistantAppComponent) !=
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED
 
             refreshNotificationPermission()
         }
@@ -213,7 +221,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun updateEntityStates(entity: Entity<*>) {
+    private fun updateEntityStates(entity: Entity) {
         if (supportedDomains().contains(entity.domain)) {
             entities[entity.entityId] = entity
             // add to cache if part of favorites
@@ -247,9 +255,9 @@ class MainViewModel @Inject constructor(
 
             // Special lists: camera entities and climate entities
             val cameraEntities = it.filter { entity -> entity.domain == "camera" }
-            cameraEntitiesMap["camera"] = mutableStateListOf<Entity<*>>().apply { addAll(cameraEntities) }
+            cameraEntitiesMap["camera"] = mutableStateListOf<Entity>().apply { addAll(cameraEntities) }
             val climateEntities = it.filter { entity -> entity.domain == "climate" }
-            climateEntitiesMap["climate"] = mutableStateListOf<Entity<*>>().apply { addAll(climateEntities) }
+            climateEntitiesMap["climate"] = mutableStateListOf<Entity>().apply { addAll(climateEntities) }
         }
         if (!isFavoritesOnly) {
             updateEntityDomains()
@@ -303,11 +311,10 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun getSupportedEntities(): List<String> =
-        entityRegistry
-            .orEmpty()
-            .map { it.entityId }
-            .filter { it.split(".")[0] in supportedDomains() }
+    private fun getSupportedEntities(): List<String> = entityRegistry
+        .orEmpty()
+        .map { it.entityId }
+        .filter { it.split(".")[0] in supportedDomains() }
 
     private fun updateEntityDomains() {
         val entitiesList = entities.values.toList().sortedBy { it.entityId }
@@ -316,12 +323,11 @@ class MainViewModel @Inject constructor(
 
         // Create a list with all areas + their entities
         areasList.forEach { area ->
-            val entitiesInArea = mutableStateListOf<Entity<*>>()
+            val entitiesInArea = mutableStateListOf<Entity>()
             entitiesInArea.addAll(
                 entitiesList
                     .filter { getAreaForEntity(it.entityId)?.areaId == area.areaId }
-                    .map { it as Entity<Map<String, Any>> }
-                    .sortedBy { (it.attributes["friendly_name"] ?: it.entityId) as String }
+                    .sortedBy { (it.attributes["friendly_name"] ?: it.entityId) as String },
             )
             entitiesByArea[area.areaId]?.let {
                 it.clear()
@@ -341,7 +347,7 @@ class MainViewModel @Inject constructor(
 
         // Create a list with all discovered domains + their entities
         domainsList.forEach { domain ->
-            val entitiesInDomain = mutableStateListOf<Entity<*>>()
+            val entitiesInDomain = mutableStateListOf<Entity>()
             entitiesInDomain.addAll(entitiesList.filter { it.domain == domain })
             entitiesByDomain[domain]?.let {
                 it.clear()
@@ -394,7 +400,7 @@ class MainViewModel @Inject constructor(
     private suspend fun updateSensorEntity(
         sensorDao: SensorDao,
         basicSensor: SensorManager.BasicSensor,
-        isEnabled: Boolean
+        isEnabled: Boolean,
     ) {
         homePresenter.getServerId()?.let { serverId ->
             sensorDao.setSensorsEnabled(listOf(basicSensor.id), serverId, isEnabled)
@@ -461,7 +467,8 @@ class MainViewModel @Inject constructor(
 
     fun setThermostatTileRefreshInterval(tileId: Int, interval: Long) = viewModelScope.launch {
         val current = thermostatTileDao.get(tileId)
-        val updated = current?.copy(refreshInterval = interval) ?: ThermostatTile(id = tileId, refreshInterval = interval)
+        val updated =
+            current?.copy(refreshInterval = interval) ?: ThermostatTile(id = tileId, refreshInterval = interval)
         thermostatTileDao.add(updated)
     }
 
@@ -548,9 +555,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun getCachedEntity(entityId: String): FavoriteCaches? =
-        favoriteCaches.find { it.id == entityId }
-
     private fun addCachedFavorite(entityId: String) {
         viewModelScope.launch {
             val entity = entities[entityId]
@@ -564,12 +568,16 @@ class MainViewModel @Inject constructor(
     fun setAssistantApp(allowed: Boolean) {
         val assistantAppComponent = ComponentName(
             BuildConfig.APPLICATION_ID,
-            "io.homeassistant.companion.android.conversation.AssistantActivity"
+            "io.homeassistant.companion.android.conversation.AssistantActivity",
         )
         app.packageManager.setComponentEnabledSetting(
             assistantAppComponent,
-            if (allowed) PackageManager.COMPONENT_ENABLED_STATE_DEFAULT else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-            PackageManager.DONT_KILL_APP
+            if (allowed) {
+                PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
+            } else {
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            },
+            PackageManager.DONT_KILL_APP,
         )
         isAssistantAppAllowed = allowed
     }
@@ -594,9 +602,7 @@ class MainViewModel @Inject constructor(
     /**
      * Convert a Flow into a State object that updates until the view model is cleared.
      */
-    private fun <T> Flow<T>.collectAsState(
-        initial: T
-    ): State<T> {
+    private fun <T> Flow<T>.collectAsState(initial: T): State<T> {
         val state = mutableStateOf(initial)
         viewModelScope.launch {
             collect { state.value = it }

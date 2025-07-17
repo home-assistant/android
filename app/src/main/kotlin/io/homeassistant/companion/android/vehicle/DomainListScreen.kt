@@ -30,9 +30,9 @@ class DomainListScreen(
     val serverManager: ServerManager,
     val integrationRepository: IntegrationRepository,
     private val serverId: StateFlow<Int>,
-    private val allEntities: Flow<Map<String, Entity<*>>>,
+    private val allEntities: Flow<Map<String, Entity>>,
     private val prefsRepository: PrefsRepository,
-    private val entityRegistry: List<EntityRegistryResponse>?
+    private val entityRegistry: List<EntityRegistryResponse>?,
 ) : BaseVehicleScreen(carContext) {
 
     private val domains = mutableSetOf<String>()
@@ -70,7 +70,7 @@ class DomainListScreen(
             prefsRepository,
             allEntities,
             entityRegistry,
-            lifecycleScope
+            lifecycleScope,
         )
 
         return GridTemplate.Builder().apply {

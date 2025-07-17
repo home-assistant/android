@@ -20,22 +20,18 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
 
 @Composable
-fun EmptyState(
-    icon: IIcon,
-    title: String?,
-    subtitle: String?
-) {
+fun EmptyState(icon: IIcon, title: String?, subtitle: String?) {
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 64.dp)
+            .padding(top = 64.dp),
     ) {
         Image(
             asset = icon,
             modifier = Modifier.size(48.dp),
-            colorFilter = ColorFilter.tint(LocalContentColor.current)
+            colorFilter = ColorFilter.tint(LocalContentColor.current),
         )
         Spacer(Modifier.height(8.dp))
         if (!title.isNullOrBlank()) {
@@ -43,14 +39,14 @@ fun EmptyState(
                 text = title,
                 style = MaterialTheme.typography.h6,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(0.7f)
+                modifier = Modifier.fillMaxWidth(0.7f),
             )
         }
         if (!subtitle.isNullOrBlank()) {
             Text(
                 text = subtitle,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(0.7f)
+                modifier = Modifier.fillMaxWidth(0.7f),
             )
         }
     }

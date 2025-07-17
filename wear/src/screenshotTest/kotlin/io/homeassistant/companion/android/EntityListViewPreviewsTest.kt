@@ -21,7 +21,7 @@ class EntityListViewPreviewsTest {
             onEntityClicked = { _, _ -> },
             onEntityLongClicked = { },
             isHapticEnabled = false,
-            isToastEnabled = false
+            isToastEnabled = false,
         )
     }
 }

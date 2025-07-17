@@ -32,10 +32,7 @@ import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 
 @Composable
-fun SetShortcutsTileView(
-    shortcutEntities: List<SimplifiedEntity>,
-    onShortcutEntitySelectionChange: (Int) -> Unit
-) {
+fun SetShortcutsTileView(shortcutEntities: List<SimplifiedEntity>, onShortcutEntitySelectionChange: (Int) -> Unit) {
     WearAppTheme {
         ThemeLazyColumn {
             item {
@@ -46,7 +43,7 @@ fun SetShortcutsTileView(
                 val iconBitmap = getIcon(
                     shortcutEntities[index].icon,
                     shortcutEntities[index].domain,
-                    LocalContext.current
+                    LocalContext.current,
                 )
 
                 Button(
@@ -55,35 +52,39 @@ fun SetShortcutsTileView(
                     icon = {
                         Image(
                             iconBitmap,
-                            colorFilter = ColorFilter.tint(Color.White)
+                            colorFilter = ColorFilter.tint(Color.White),
                         )
                     },
                     label = {
                         Text(
-                            text = stringResource(commonR.string.shortcut_n, index + 1)
+                            text = stringResource(commonR.string.shortcut_n, index + 1),
                         )
                     },
                     secondaryLabel = {
                         Text(
                             text = shortcutEntities[index].friendlyName,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
                         )
                     },
                     onClick = { onShortcutEntitySelectionChange(index) },
-                    colors = getFilledTonalButtonColors()
+                    colors = getFilledTonalButtonColors(),
                 )
             }
             if (shortcutEntities.size < 7) {
                 item {
                     FilledIconButton(
-                        modifier = Modifier.padding(top = 16.dp).touchTargetAwareSize(IconButtonDefaults.SmallButtonSize),
-                        onClick = { onShortcutEntitySelectionChange(shortcutEntities.size) }
+                        modifier = Modifier.padding(
+                            top = 16.dp,
+                        ).touchTargetAwareSize(IconButtonDefaults.SmallButtonSize),
+                        onClick = { onShortcutEntitySelectionChange(shortcutEntities.size) },
                     ) {
                         Icon(
                             Icons.Filled.Add,
                             contentDescription = stringResource(id = commonR.string.add_shortcut),
-                            modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize))
+                            modifier = Modifier.size(
+                                IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize),
+                            ),
                         )
                     }
                 }
@@ -97,6 +98,6 @@ fun SetShortcutsTileView(
 private fun PreviewSetTileShortcutsView() {
     SetShortcutsTileView(
         shortcutEntities = mutableListOf(simplifiedEntity),
-        onShortcutEntitySelectionChange = {}
+        onShortcutEntitySelectionChange = {},
     )
 }

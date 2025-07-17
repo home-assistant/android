@@ -46,15 +46,15 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
 
                     versionName = project.version.toString()
                     versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+
+                    val noStrictMode = project.findProperty("noStrictMode")?.toString()?.ifEmpty { "true" }
+                        ?.toBoolean() ?: false
+                    buildConfigField("Boolean", "NO_STRICT_MODE", noStrictMode.toString())
                 }
 
                 buildFeatures {
                     viewBinding = true
                     compose = true
-                }
-
-                compileOptions {
-                    isCoreLibraryDesugaringEnabled = true
                 }
 
                 signingConfigs {

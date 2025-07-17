@@ -59,9 +59,7 @@ object NotificationData {
     const val CLEAR_NOTIFICATION = "clear_notification"
 }
 
-fun createChannelID(
-    channelName: String
-): String {
+fun createChannelID(channelName: String): String {
     return channelName
         .trim()
         .lowercase(Locale.ROOT)
@@ -71,7 +69,7 @@ fun createChannelID(
 fun handleChannel(
     context: Context,
     notificationManagerCompat: NotificationManagerCompat,
-    data: Map<String, String>
+    data: Map<String, String>,
 ): String {
     // Define some values for a default channel
     var channelID = CHANNEL_GENERAL
@@ -87,7 +85,7 @@ fun handleChannel(
         val channel = NotificationChannel(
             channelID,
             channelName,
-            handleImportance(data)
+            handleImportance(data),
         )
 
         if (channelName == NotificationData.ALARM_STREAM) {
@@ -102,9 +100,7 @@ fun handleChannel(
 }
 
 @RequiresApi(Build.VERSION_CODES.N)
-fun handleImportance(
-    data: Map<String, String>
-): Int {
+fun handleImportance(data: Map<String, String>): Int {
     when (data[NotificationData.IMPORTANCE]) {
         "high" -> {
             return NotificationManager.IMPORTANCE_HIGH
@@ -125,10 +121,7 @@ fun handleImportance(
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-fun handleChannelSound(
-    context: Context,
-    channel: NotificationChannel
-) {
+fun handleChannelSound(context: Context, channel: NotificationChannel) {
     val audioAttributes = AudioAttributes.Builder()
         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
         .setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED)
@@ -138,21 +131,17 @@ fun handleChannelSound(
     channel.setSound(
         RingtoneManager.getActualDefaultRingtoneUri(
             context,
-            RingtoneManager.TYPE_ALARM
+            RingtoneManager.TYPE_ALARM,
         )
             ?: RingtoneManager.getActualDefaultRingtoneUri(
                 context,
-                RingtoneManager.TYPE_RINGTONE
+                RingtoneManager.TYPE_RINGTONE,
             ),
-        audioAttributes
+        audioAttributes,
     )
 }
 
-fun setChannelLedColor(
-    context: Context,
-    data: Map<String, String>,
-    channel: NotificationChannel
-) {
+fun setChannelLedColor(context: Context, data: Map<String, String>, channel: NotificationChannel) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         val ledColor = data[NotificationData.LED_COLOR]
         if (!ledColor.isNullOrBlank()) {
@@ -162,10 +151,7 @@ fun setChannelLedColor(
     }
 }
 
-fun setChannelVibrationPattern(
-    data: Map<String, String>,
-    channel: NotificationChannel
-) {
+fun setChannelVibrationPattern(data: Map<String, String>, channel: NotificationChannel) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         val vibrationPattern = data[NotificationData.VIBRATION_PATTERN]
         val arrVibrationPattern = parseVibrationPattern(vibrationPattern)
@@ -175,9 +161,7 @@ fun setChannelVibrationPattern(
     }
 }
 
-fun parseVibrationPattern(
-    vibrationPattern: String?
-): LongArray {
+fun parseVibrationPattern(vibrationPattern: String?): LongArray {
     if (!vibrationPattern.isNullOrBlank()) {
         val pattern = vibrationPattern.split(",").toTypedArray()
         val list = mutableListOf<Long>()
@@ -194,11 +178,7 @@ fun parseVibrationPattern(
     return LongArray(0)
 }
 
-fun parseColor(
-    context: Context,
-    colorString: String?,
-    default: Int
-): Int {
+fun parseColor(context: Context, colorString: String?, default: Int): Int {
     if (!colorString.isNullOrBlank()) {
         try {
             return Color.parseColor(colorString)
@@ -209,18 +189,21 @@ fun parseColor(
     return ContextCompat.getColor(context, default)
 }
 
-fun handleSmallIcon(
-    context: Context,
-    builder: NotificationCompat.Builder,
-    data: Map<String, String>
-) {
+fun handleSmallIcon(context: Context, builder: NotificationCompat.Builder, data: Map<String, String>) {
     val notificationIcon = data[NotificationData.NOTIFICATION_ICON] ?: ""
-    if (notificationIcon.startsWith("mdi:") && notificationIcon.substringAfter("mdi:").isNotBlank() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+    if (notificationIcon.startsWith("mdi:") &&
+        notificationIcon.substringAfter("mdi:").isNotBlank() &&
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+    ) {
         val iconName = notificationIcon.split(":")[1]
         val iconDrawable =
             IconicsDrawable(context, "cmd-$iconName")
         if (iconDrawable.icon != null) {
-            builder.setSmallIcon(iconDrawable.colorFilter { PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN) }.toAndroidIconCompat())
+            builder.setSmallIcon(
+                iconDrawable.colorFilter {
+                    PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                }.toAndroidIconCompat(),
+            )
         } else {
             builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
         }
@@ -233,14 +216,14 @@ fun getGroupNotificationBuilder(
     context: Context,
     channelId: String,
     group: String,
-    data: Map<String, String>
+    data: Map<String, String>,
 ): NotificationCompat.Builder {
     val groupNotificationBuilder = NotificationCompat.Builder(context, channelId)
         .setStyle(
             NotificationCompat.BigTextStyle()
                 .setSummaryText(
-                    prepareText(group.substring(NotificationData.GROUP_PREFIX.length))
-                )
+                    prepareText(group.substring(NotificationData.GROUP_PREFIX.length)),
+                ),
         )
         .setGroup(group)
         .setGroupSummary(true)
@@ -253,29 +236,20 @@ fun getGroupNotificationBuilder(
     return groupNotificationBuilder
 }
 
-fun prepareText(
-    text: String
-): Spanned {
+fun prepareText(text: String): Spanned {
     // Replace control char \r\n, \r, \n and also \r\n, \r, \n as text literals in strings to <br>
     val brText = text.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>")
     val emojiParsedText = EmojiParser.parseToUnicode(brText)
     return HtmlCompat.fromHtml(emojiParsedText, HtmlCompat.FROM_HTML_MODE_LEGACY)
 }
 
-fun handleColor(
-    context: Context,
-    builder: NotificationCompat.Builder,
-    data: Map<String, String>
-) {
+fun handleColor(context: Context, builder: NotificationCompat.Builder, data: Map<String, String>) {
     val colorString = data["color"]
     val color = parseColor(context, colorString, R.color.colorPrimary)
     builder.color = color
 }
 
-fun handleText(
-    builder: NotificationCompat.Builder,
-    data: Map<String, String>
-) {
+fun handleText(builder: NotificationCompat.Builder, data: Map<String, String>) {
     data[NotificationData.TITLE]?.let {
         builder.setContentTitle(prepareText(it))
     }
@@ -300,7 +274,7 @@ fun handleDeleteIntent(
     messageId: Int,
     group: String?,
     groupId: Int,
-    databaseId: Long?
+    databaseId: Long?,
 ) {
     val deleteIntent = Intent(context, NotificationDeleteReceiver::class.java).apply {
         putExtra(NotificationDeleteReceiver.EXTRA_DATA, HashMap(data))
@@ -312,7 +286,7 @@ fun handleDeleteIntent(
         context,
         messageId,
         deleteIntent,
-        PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
     builder.setDeleteIntent(deletePendingIntent)
 }

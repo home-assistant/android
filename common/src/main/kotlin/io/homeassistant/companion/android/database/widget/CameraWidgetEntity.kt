@@ -13,5 +13,5 @@ data class CameraWidgetEntity(
     @ColumnInfo(name = "entity_id")
     val entityId: String,
     @ColumnInfo(name = "tap_action", defaultValue = "REFRESH")
-    val tapAction: WidgetTapAction
+    val tapAction: WidgetTapAction,
 ) : WidgetEntity

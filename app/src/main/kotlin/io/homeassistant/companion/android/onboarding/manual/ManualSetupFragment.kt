@@ -18,11 +18,7 @@ class ManualSetupFragment : Fragment() {
 
     private val viewModel by activityViewModels<OnboardingViewModel>()
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -30,7 +26,7 @@ class ManualSetupFragment : Fragment() {
                         manualUrl = viewModel.manualUrl,
                         onManualUrlUpdated = viewModel::onManualUrlUpdated,
                         manualContinueEnabled = viewModel.manualContinueEnabled,
-                        connectedClicked = { connectClicked() }
+                        connectedClicked = { connectClicked() },
                     )
                 }
             }

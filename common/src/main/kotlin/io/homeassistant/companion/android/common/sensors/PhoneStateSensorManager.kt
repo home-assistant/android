@@ -27,7 +27,7 @@ class PhoneStateSensorManager : SensorManager {
             "mdi:phone",
             deviceClass = "enum",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#phone-state-sensor",
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
         val sim_1 = SensorManager.BasicSensor(
@@ -37,7 +37,7 @@ class PhoneStateSensorManager : SensorManager {
             commonR.string.sensor_description_sim_1,
             "mdi:sim",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
         val sim_2 = SensorManager.BasicSensor(
@@ -47,7 +47,7 @@ class PhoneStateSensorManager : SensorManager {
             commonR.string.sensor_description_sim_2,
             "mdi:sim",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
         val sim1SignalStrength = SensorManager.BasicSensor(
@@ -58,7 +58,7 @@ class PhoneStateSensorManager : SensorManager {
             "mdi:signal",
             unitOfMeasurement = "dBm",
             deviceClass = "signal_strength",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val sim2SignalStrength = SensorManager.BasicSensor(
@@ -69,7 +69,7 @@ class PhoneStateSensorManager : SensorManager {
             "mdi:signal",
             unitOfMeasurement = "dBm",
             deviceClass = "signal_strength",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val sim1DataNetworkType = SensorManager.BasicSensor(
@@ -78,7 +78,7 @@ class PhoneStateSensorManager : SensorManager {
             commonR.string.basic_sensor_name_sim_1_data_network_type,
             commonR.string.sensor_description_data_network_type,
             "mdi:signal",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val sim2DataNetworkType = SensorManager.BasicSensor(
@@ -87,7 +87,7 @@ class PhoneStateSensorManager : SensorManager {
             commonR.string.basic_sensor_name_sim_2_data_network_type,
             commonR.string.sensor_description_data_network_type,
             "mdi:signal",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
     }
 
@@ -113,7 +113,7 @@ class PhoneStateSensorManager : SensorManager {
         TelephonyManager.NETWORK_TYPE_TD_SCDMA to "TD_SCDMA",
         TelephonyManager.NETWORK_TYPE_IWLAN to "IWLAN",
         TelephonyManager.NETWORK_TYPE_NR to "NR (New Radio) 5G",
-        TelephonyManager.NETWORK_TYPE_UNKNOWN to STATE_UNKNOWN
+        TelephonyManager.NETWORK_TYPE_UNKNOWN to STATE_UNKNOWN,
     )
 
     override fun docsLink(): String {
@@ -126,9 +126,23 @@ class PhoneStateSensorManager : SensorManager {
     }
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return when {
-            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)) ->
-                listOf(phoneState, sim_1, sim_2, sim1SignalStrength, sim2SignalStrength, sim1DataNetworkType, sim2DataNetworkType)
-            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)) ->
+            (
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                    context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
+                ) ->
+                listOf(
+                    phoneState,
+                    sim_1,
+                    sim_2,
+                    sim1SignalStrength,
+                    sim2SignalStrength,
+                    sim1DataNetworkType,
+                    sim2DataNetworkType,
+                )
+            (
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                    context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
+                ) ->
                 listOf(phoneState, sim_1, sim_2, sim1DataNetworkType, sim2DataNetworkType)
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 -> {
                 listOf(phoneState, sim_1, sim_2)
@@ -143,9 +157,7 @@ class PhoneStateSensorManager : SensorManager {
         return arrayOf(Manifest.permission.READ_PHONE_STATE)
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         checkPhoneState(context)
         updateSimSensor(context, 0)
         updateSimSensor(context, 1)
@@ -194,8 +206,8 @@ class PhoneStateSensorManager : SensorManager {
             state,
             phoneIcon,
             mapOf(
-                "options" to listOf("idle", "ringing", "offhook")
-            )
+                "options" to listOf("idle", "ringing", "offhook"),
+            ),
         )
     }
 
@@ -229,7 +241,8 @@ class PhoneStateSensorManager : SensorManager {
                             attrs["mcc"] = info.mccString.toString()
                             attrs["mnc"] = info.mncString.toString()
                             attrs["is opportunistic"] = info.isOpportunistic
-                            attrs["data roaming"] = if (info.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) "enable" else "disable"
+                            attrs["data roaming"] =
+                                if (info.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) "enable" else "disable"
                         }
                     } catch (e: Exception) {
                         Timber.e(e, "Unable to get SIM data")
@@ -242,7 +255,7 @@ class PhoneStateSensorManager : SensorManager {
                 basicSimSensor,
                 displayName,
                 basicSimSensor.statelessIcon,
-                attrs
+                attrs,
             )
         }
     }
@@ -279,7 +292,7 @@ class PhoneStateSensorManager : SensorManager {
             state = signal?.dbm?.toString() ?: STATE_UNKNOWN
             attrs = mapOf(
                 "asu" to signal?.asuLevel,
-                "quality" to signalQuality
+                "quality" to signalQuality,
             )
         }
 
@@ -288,7 +301,7 @@ class PhoneStateSensorManager : SensorManager {
             signalStrengthSensor,
             state,
             signalStrengthSensor.statelessIcon,
-            attrs
+            attrs,
         )
     }
 
@@ -322,7 +335,7 @@ class PhoneStateSensorManager : SensorManager {
             dataNetworkTypeSensor,
             state,
             dataNetworkTypeSensor.statelessIcon,
-            attrs
+            attrs,
         )
     }
 }

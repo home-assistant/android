@@ -24,8 +24,8 @@ object FanControl : HaControl {
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity<Map<String, Any>>,
-        info: HaControlInfo
+        entity: Entity,
+        info: HaControlInfo,
     ): Control.StatefulBuilder {
         if (entity.supportsFanSetSpeed()) {
             val position = entity.getFanSpeed()
@@ -40,9 +40,9 @@ object FanControl : HaControl {
                         position?.max ?: 100f,
                         position?.value ?: 0f,
                         1f,
-                        "%.0f%%"
-                    )
-                )
+                        "%.0f%%",
+                    ),
+                ),
             )
         } else {
             control.setControlTemplate(
@@ -50,30 +50,26 @@ object FanControl : HaControl {
                     entity.entityId,
                     ControlButton(
                         entity.isActive(),
-                        ""
-                    )
-                )
+                        "",
+                    ),
+                ),
             )
         }
         return control
     }
 
-    override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
-        DeviceTypes.TYPE_FAN
+    override fun getDeviceType(entity: Entity): Int = DeviceTypes.TYPE_FAN
 
-    override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+    override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.domain_fan)
 
-    override suspend fun performAction(
-        integrationRepository: IntegrationRepository,
-        action: ControlAction
-    ): Boolean {
+    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
         when (action) {
             is BooleanAction -> {
                 integrationRepository.callAction(
                     action.templateId.split(".")[0],
                     if (action.newState) "turn_on" else "turn_off",
-                    hashMapOf("entity_id" to action.templateId)
+                    hashMapOf("entity_id" to action.templateId),
                 )
             }
             is FloatAction -> {
@@ -83,8 +79,8 @@ object FanControl : HaControl {
                     "set_percentage",
                     hashMapOf(
                         "entity_id" to action.templateId,
-                        "percentage" to convertPercentage.toInt()
-                    )
+                        "percentage" to convertPercentage.toInt(),
+                    ),
                 )
             }
         }

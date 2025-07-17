@@ -21,12 +21,13 @@ class MatterManagerImpl @Inject constructor() : MatterManager {
     override fun startNewCommissioningFlow(
         context: Context,
         onSuccess: (IntentSender) -> Unit,
-        onFailure: (Exception) -> Unit
+        onFailure: (Exception) -> Unit,
     ) {
         onFailure(IllegalStateException("Matter commissioning is not supported with the minimal flavor"))
     }
 
     override suspend fun commissionDevice(code: String, serverId: Int): MatterCommissionResponse? = null
 
-    override suspend fun commissionOnNetworkDevice(pin: Long, ip: String, serverId: Int): MatterCommissionResponse? = null
+    override suspend fun commissionOnNetworkDevice(pin: Long, ip: String, serverId: Int): MatterCommissionResponse? =
+        null
 }

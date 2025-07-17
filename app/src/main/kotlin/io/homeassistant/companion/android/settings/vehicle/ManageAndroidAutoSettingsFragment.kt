@@ -27,18 +27,14 @@ class ManageAndroidAutoSettingsFragment : Fragment() {
     val viewModel: ManageAndroidAutoViewModel by viewModels()
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
                     AndroidAutoFavoritesSettings(
                         androidAutoViewModel = viewModel,
                         serversList = serverManager.defaultServers,
-                        defaultServer = serverManager.getServer()?.id ?: 0
+                        defaultServer = serverManager.getServer()?.id ?: 0,
                     )
                 }
             }

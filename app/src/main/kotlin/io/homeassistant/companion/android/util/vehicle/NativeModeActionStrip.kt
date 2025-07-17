@@ -22,10 +22,10 @@ fun startNativeActivity(carContext: CarContext) {
         startActivity(
             Intent(
                 carContext,
-                LaunchActivity::class.java
+                LaunchActivity::class.java,
             ).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
+            },
         )
         if (carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             finishCarApp()

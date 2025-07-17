@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.databinding.WidgetCameraConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import javax.inject.Inject
@@ -34,6 +35,7 @@ import timber.log.Timber
 class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     companion object {
+        @Suppress("ktlint:standard:max-line-length")
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
@@ -47,14 +49,14 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     private var requestLauncherSetup = false
 
-    private var entities = mutableMapOf<Int, List<Entity<Any>>>()
-    private var selectedEntity: Entity<Any>? = null
+    private var entities = mutableMapOf<Int, List<Entity>>()
+    private var selectedEntity: Entity? = null
 
     @Inject
     lateinit var cameraWidgetDao: CameraWidgetDao
     override val dao get() = cameraWidgetDao
 
-    private var entityAdapter: SingleItemArrayAdapter<Entity<Any>>? = null
+    private var entityAdapter: SingleItemArrayAdapter<Entity>? = null
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,6 +67,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         binding = WidgetCameraConfigureBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.root.applySafeDrawingInsets()
 
         binding.addButton.setOnClickListener {
             if (requestLauncherSetup) {
@@ -75,9 +78,12 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                         PendingIntent.getActivity(
                             this,
                             System.currentTimeMillis().toInt(),
-                            Intent(this, CameraWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-                        )
+                            Intent(
+                                this,
+                                CameraWidgetConfigureActivity::class.java,
+                            ).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                        ),
                     )
                 } else {
                     showAddWidgetError()
@@ -93,11 +99,11 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         if (extras != null) {
             appWidgetId = extras.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.INVALID_APPWIDGET_ID,
             )
             requestLauncherSetup = extras.getBoolean(
                 ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
-                false
+                false,
             )
         }
 
@@ -124,7 +130,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 }
             }
             if (entity != null) {
-                selectedEntity = entity as Entity<Any>?
+                selectedEntity = entity as Entity?
             }
         }
 
@@ -177,7 +183,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     private val entityDropDownOnItemClick =
         AdapterView.OnItemClickListener { parent, _, position, _ ->
-            selectedEntity = parent.getItemAtPosition(position) as Entity<Any>?
+            selectedEntity = parent.getItemAtPosition(position) as Entity?
         }
 
     private fun onAddWidget() {
@@ -197,15 +203,15 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             intent.putExtra(
                 CameraWidget.EXTRA_SERVER_ID,
-                selectedServerId!!
+                selectedServerId!!,
             )
             intent.putExtra(
                 CameraWidget.EXTRA_ENTITY_ID,
-                selectedEntity!!.entityId
+                selectedEntity!!.entityId,
             )
             intent.putExtra(
                 CameraWidget.EXTRA_TAP_ACTION,
-                if (binding.tapActionList.selectedItemPosition == 0) WidgetTapAction.REFRESH else WidgetTapAction.OPEN
+                if (binding.tapActionList.selectedItemPosition == 0) WidgetTapAction.REFRESH else WidgetTapAction.OPEN,
             )
 
             context.sendBroadcast(intent)
@@ -213,7 +219,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             // Make sure we pass back the original appWidgetId
             setResult(
                 RESULT_OK,
-                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId),
             )
             finish()
         } catch (e: Exception) {
@@ -223,7 +229,8 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     }
 
     private fun initTapActionsSpinner() {
-        val tapActionValues = listOf(getString(commonR.string.refresh), getString(commonR.string.widget_tap_action_open))
+        val tapActionValues =
+            listOf(getString(commonR.string.refresh), getString(commonR.string.widget_tap_action_open))
         binding.tapActionList.adapter = ArrayAdapter(this, R.layout.simple_spinner_dropdown_item, tapActionValues)
     }
 
@@ -236,7 +243,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         if (intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.INVALID_APPWIDGET_ID,
             )
             onAddWidget()
         }

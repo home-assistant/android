@@ -53,9 +53,13 @@ fun MainView(
     onEntityLongClicked: (String) -> Unit,
     onRetryLoadEntitiesClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
-    onNavigationClicked: (entityLists: Map<String, List<Entity<*>>>, listOrder: List<String>, filter: (Entity<*>) -> Boolean) -> Unit,
+    onNavigationClicked: (
+        entityLists: Map<String, List<Entity>>,
+        listOrder: List<String>,
+        filter: (Entity) -> Boolean,
+    ) -> Unit,
     isHapticEnabled: Boolean,
-    isToastEnabled: Boolean
+    isToastEnabled: Boolean,
 ) {
     var expandedFavorites: Boolean by rememberSaveable { mutableStateOf(true) }
 
@@ -69,7 +73,7 @@ fun MainView(
                     ExpandableListHeader(
                         string = stringResource(commonR.string.favorites),
                         expanded = expandedFavorites,
-                        onExpandChanged = { expandedFavorites = it }
+                        onExpandChanged = { expandedFavorites = it },
                     )
                 }
                 if (expandedFavorites) {
@@ -77,28 +81,34 @@ fun MainView(
                         val favoriteEntityID = favoriteEntityIds[index].split(",")[0]
                         if (mainViewModel.entities.isEmpty()) {
                             // when we don't have the state of the entity, create a Chip from cache as we don't have the state yet
-                            val cached = mainViewModel.getCachedEntity(favoriteEntityID)
+                            val cached = mainViewModel.favoriteCaches.find { it.id == favoriteEntityID }
                             Button(
                                 modifier = Modifier
                                     .fillMaxWidth(),
                                 icon = {
                                     Image(
                                         asset = getIcon(cached?.icon, favoriteEntityID.split(".")[0], context),
-                                        colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
+                                        colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                                     )
                                 },
                                 label = {
                                     Text(
                                         text = cached?.friendlyName ?: favoriteEntityID,
                                         maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis
+                                        overflow = TextOverflow.Ellipsis,
                                     )
                                 },
                                 onClick = {
                                     onEntityClicked(favoriteEntityID, STATE_UNKNOWN)
-                                    onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, favoriteEntityID, haptic)
+                                    onEntityClickedFeedback(
+                                        isToastEnabled,
+                                        isHapticEnabled,
+                                        context,
+                                        favoriteEntityID,
+                                        haptic,
+                                    )
                                 },
-                                colors = getFilledTonalButtonColors()
+                                colors = getFilledTonalButtonColors(),
                             )
                         } else {
                             mainViewModel.entities.values.toList()
@@ -108,7 +118,7 @@ fun MainView(
                                         mainViewModel.entities[favoriteEntityID]!!,
                                         onEntityClicked,
                                         isHapticEnabled,
-                                        isToastEnabled
+                                        isToastEnabled,
                                     ) { entityId -> onEntityLongClicked(entityId) }
                                 }
                         }
@@ -136,7 +146,7 @@ fun MainView(
                                     .fillMaxSize()
                                     .padding(vertical = if (favoriteEntityIds.isEmpty()) 0.dp else 32.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
+                                verticalArrangement = Arrangement.Center,
                             ) {
                                 ListHeader(id = commonR.string.loading)
                                 CircularProgressIndicator()
@@ -148,7 +158,7 @@ fun MainView(
                             Column(
                                 modifier = Modifier.fillMaxSize(),
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
+                                verticalArrangement = Arrangement.Center,
                             ) {
                                 ListHeader(id = commonR.string.error_loading_entities)
                                 Button(
@@ -156,11 +166,11 @@ fun MainView(
                                         Text(
                                             text = stringResource(commonR.string.retry),
                                             textAlign = TextAlign.Center,
-                                            modifier = Modifier.fillMaxWidth()
+                                            modifier = Modifier.fillMaxWidth(),
                                         )
                                     },
                                     onClick = onRetryLoadEntitiesClicked,
-                                    colors = ButtonDefaults.buttonColors()
+                                    colors = ButtonDefaults.buttonColors(),
                                 )
                                 Spacer(modifier = Modifier.height(32.dp))
                             }
@@ -172,7 +182,7 @@ fun MainView(
                                 Column(
                                     modifier = Modifier.fillMaxSize(),
                                     horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
+                                    verticalArrangement = Arrangement.Center,
                                 ) {
                                     Text(
                                         text = stringResource(commonR.string.no_supported_entities),
@@ -180,7 +190,7 @@ fun MainView(
                                         style = MaterialTheme.typography.titleMedium,
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(top = 32.dp)
+                                            .padding(top = 32.dp),
                                     )
                                     Text(
                                         text = stringResource(commonR.string.no_supported_entities_summary),
@@ -188,7 +198,7 @@ fun MainView(
                                         style = MaterialTheme.typography.bodyMedium,
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(top = 8.dp)
+                                            .padding(top = 8.dp),
                                     )
                                 }
                             }
@@ -196,10 +206,11 @@ fun MainView(
 
                         if (
                             mainViewModel.entitiesByArea.values.any {
-                                it.isNotEmpty() && it.any { entity ->
-                                    mainViewModel.getCategoryForEntity(entity.entityId) == null &&
-                                        mainViewModel.getHiddenByForEntity(entity.entityId) == null
-                                }
+                                it.isNotEmpty() &&
+                                    it.any { entity ->
+                                        mainViewModel.getCategoryForEntity(entity.entityId) == null &&
+                                            mainViewModel.getHiddenByForEntity(entity.entityId) == null
+                                    }
                             }
                         ) {
                             item {
@@ -220,22 +231,22 @@ fun MainView(
                                             onClick = {
                                                 onNavigationClicked(
                                                     mapOf(area.name to entities),
-                                                    listOf(area.name)
+                                                    listOf(area.name),
                                                 ) {
                                                     mainViewModel.getCategoryForEntity(it.entityId) == null &&
                                                         mainViewModel.getHiddenByForEntity(
-                                                            it.entityId
+                                                            it.entityId,
                                                         ) == null
                                                 }
                                             },
-                                            colors = getPrimaryButtonColors()
+                                            colors = getPrimaryButtonColors(),
                                         )
                                     }
                                 }
                             }
                         }
 
-                        val domainEntitiesFilter: (entity: Entity<*>) -> Boolean =
+                        val domainEntitiesFilter: (entity: Entity) -> Boolean =
                             {
                                 mainViewModel.getAreaForEntity(it.entityId) == null &&
                                     mainViewModel.getCategoryForEntity(it.entityId) == null &&
@@ -259,20 +270,20 @@ fun MainView(
                                             getIcon(
                                                 "",
                                                 domain,
-                                                context
+                                                context,
                                             ).let { Image(asset = it) }
                                         },
                                         label = { Text(mainViewModel.stringForDomain(domain)!!) },
                                         onClick = {
                                             onNavigationClicked(
                                                 mapOf(
-                                                    mainViewModel.stringForDomain(domain)!! to domainEntities
+                                                    mainViewModel.stringForDomain(domain)!! to domainEntities,
                                                 ),
                                                 listOf(mainViewModel.stringForDomain(domain)!!),
-                                                domainEntitiesFilter
+                                                domainEntitiesFilter,
                                             )
                                         },
-                                        colors = getPrimaryButtonColors()
+                                        colors = getPrimaryButtonColors(),
                                     )
                                 }
                             }
@@ -290,7 +301,7 @@ fun MainView(
                                     icon = {
                                         Image(
                                             asset = CommunityMaterial.Icon.cmd_animation,
-                                            colorFilter = ColorFilter.tint(Color.White)
+                                            colorFilter = ColorFilter.tint(Color.White),
                                         )
                                     },
                                     label = {
@@ -300,17 +311,17 @@ fun MainView(
                                         onNavigationClicked(
                                             mainViewModel.entitiesByDomain.mapKeys {
                                                 mainViewModel.stringForDomain(
-                                                    it.key
+                                                    it.key,
                                                 )!!
                                             },
                                             mainViewModel.entitiesByDomain.keys.map {
                                                 mainViewModel.stringForDomain(
-                                                    it
+                                                    it,
                                                 )!!
-                                            }.sorted()
+                                            }.sorted(),
                                         ) { true }
                                     },
-                                    colors = getFilledTonalButtonColors()
+                                    colors = getFilledTonalButtonColors(),
                                 )
                             }
                         }
@@ -332,12 +343,12 @@ fun MainView(
                     icon = {
                         Image(
                             asset = CommunityMaterial.Icon.cmd_cog,
-                            colorFilter = ColorFilter.tint(Color.White)
+                            colorFilter = ColorFilter.tint(Color.White),
                         )
                     },
                     label = { Text(stringResource(commonR.string.settings)) },
                     onClick = onSettingsClicked,
-                    colors = getFilledTonalButtonColors()
+                    colors = getFilledTonalButtonColors(),
                 )
             }
         }

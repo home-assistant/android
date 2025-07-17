@@ -11,7 +11,7 @@ import io.homeassistant.companion.android.R
 class SettingsSuggestionPreference @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet,
-    defStyleAttr: Int = 0
+    defStyleAttr: Int = 0,
 ) : Preference(context, attrs, defStyleAttr) {
 
     private var onCancelClickListener: View.OnClickListener? = null

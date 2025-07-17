@@ -16,4 +16,6 @@ interface ServerSettingsPresenter {
     fun clearSsids()
 
     fun setAppActive(active: Boolean)
+
+    fun serverURL(): String?
 }

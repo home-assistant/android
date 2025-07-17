@@ -32,6 +32,7 @@ import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.databinding.WidgetStaticConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
@@ -46,6 +47,7 @@ import timber.log.Timber
 class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     companion object {
+        @Suppress("ktlint:standard:max-line-length")
         private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
@@ -53,9 +55,9 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     lateinit var staticWidgetDao: StaticWidgetDao
     override val dao get() = staticWidgetDao
 
-    private var entities = mutableMapOf<Int, List<Entity<Any>>>()
+    private var entities = mutableMapOf<Int, List<Entity>>()
 
-    private var selectedEntity: Entity<Any>? = null
+    private var selectedEntity: Entity? = null
     private var appendAttributes: Boolean = false
     private var selectedAttributeIds: ArrayList<String> = ArrayList()
     private var labelFromEntity = false
@@ -70,7 +72,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     private var requestLauncherSetup = false
 
-    private var entityAdapter: SingleItemArrayAdapter<Entity<Any>>? = null
+    private var entityAdapter: SingleItemArrayAdapter<Entity>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,6 +83,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         binding = WidgetStaticConfigureBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.root.applySafeDrawingInsets()
 
         binding.addButton.setOnClickListener {
             if (requestLauncherSetup) {
@@ -94,9 +97,12 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                         PendingIntent.getActivity(
                             this,
                             System.currentTimeMillis().toInt(),
-                            Intent(this, EntityWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-                        )
+                            Intent(
+                                this,
+                                EntityWidgetConfigureActivity::class.java,
+                            ).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                        ),
                     )
                 } else {
                     showAddWidgetError()
@@ -112,11 +118,11 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         if (extras != null) {
             appWidgetId = extras.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.INVALID_APPWIDGET_ID,
             )
             requestLauncherSetup = extras.getBoolean(
                 ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
-                false
+                false,
             )
         }
 
@@ -128,10 +134,13 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         val staticWidget = staticWidgetDao.get(appWidgetId)
 
-        val tapActionValues = listOf(getString(commonR.string.widget_tap_action_toggle), getString(commonR.string.refresh))
-        binding.tapActionList.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tapActionValues)
+        val tapActionValues =
+            listOf(getString(commonR.string.widget_tap_action_toggle), getString(commonR.string.refresh))
+        binding.tapActionList.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tapActionValues)
         val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
-        binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
+        binding.backgroundType.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         if (staticWidget != null) {
             binding.widgetTextConfigEntityId.setText(staticWidget.entityId)
@@ -153,25 +162,40 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             if (!attributeIds.isNullOrEmpty()) {
                 binding.appendAttributeValueCheckbox.isChecked = true
                 appendAttributes = true
-                for (item in attributeIds.split(','))
+                for (item in attributeIds.split(',')) {
                     selectedAttributeIds.add(item)
+                }
                 binding.widgetTextConfigAttribute.setText(attributeIds.replace(",", ", "))
                 binding.attributeValueLinearLayout.visibility = VISIBLE
                 binding.attributeSeparator.setText(staticWidget.attributeSeparator)
             }
             if (entity != null) {
-                selectedEntity = entity as Entity<Any>?
+                selectedEntity = entity
                 setupAttributes()
             }
 
             val toggleable = entity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
             binding.tapAction.isVisible = toggleable
-            binding.tapActionList.setSelection(if (toggleable && staticWidget.tapAction == WidgetTapAction.TOGGLE) 0 else 1)
-            binding.textColor.visibility = if (staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
+            binding.tapActionList.setSelection(
+                if (toggleable &&
+                    staticWidget.tapAction == WidgetTapAction.TOGGLE
+                ) {
+                    0
+                } else {
+                    1
+                },
+            )
+            binding.textColor.visibility =
+                if (staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
             binding.textColorWhite.isChecked =
-                staticWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
+                staticWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) }
+                    ?: true
             binding.textColorBlack.isChecked =
-                staticWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
+                staticWidget.textColor?.let {
+                    it.toColorInt() ==
+                        ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack)
+                }
+                    ?: false
 
             binding.addButton.setText(commonR.string.update_widget)
         } else {
@@ -200,7 +224,9 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 binding.textColor.visibility =
-                    if (parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)) {
+                    if (parent?.adapter?.getItem(position) ==
+                        getString(commonR.string.widget_background_type_transparent)
+                    ) {
                         View.VISIBLE
                     } else {
                         View.GONE
@@ -253,7 +279,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     private val entityDropDownOnItemClick =
         AdapterView.OnItemClickListener { parent, _, position, _ ->
-            selectedEntity = parent.getItemAtPosition(position) as Entity<Any>?
+            selectedEntity = parent.getItemAtPosition(position) as Entity?
             if (binding.label.text.isNullOrBlank() || labelFromEntity) {
                 selectedEntity?.friendlyName?.takeIf { it != selectedEntity?.entityId }?.let { name ->
                     binding.label.removeTextChangedListener(labelTextChanged)
@@ -315,7 +341,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             intent.putExtra(
                 EntityWidget.EXTRA_SERVER_ID,
-                selectedServerId!!
+                selectedServerId!!,
             )
 
             val entity = if (selectedEntity == null) {
@@ -329,22 +355,22 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             }
             intent.putExtra(
                 EntityWidget.EXTRA_ENTITY_ID,
-                entity
+                entity,
             )
 
             intent.putExtra(
                 EntityWidget.EXTRA_LABEL,
-                binding.label.text.toString()
+                binding.label.text.toString(),
             )
 
             intent.putExtra(
                 EntityWidget.EXTRA_TEXT_SIZE,
-                binding.textSize.text.toString()
+                binding.textSize.text.toString(),
             )
 
             intent.putExtra(
                 EntityWidget.EXTRA_STATE_SEPARATOR,
-                binding.stateSeparator.text.toString()
+                binding.stateSeparator.text.toString(),
             )
 
             if (appendAttributes) {
@@ -355,12 +381,12 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 }
                 intent.putExtra(
                     EntityWidget.EXTRA_ATTRIBUTE_IDS,
-                    attributes
+                    attributes,
                 )
 
                 intent.putExtra(
                     EntityWidget.EXTRA_ATTRIBUTE_SEPARATOR,
-                    binding.attributeSeparator.text.toString()
+                    binding.attributeSeparator.text.toString(),
                 )
             }
 
@@ -369,7 +395,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                 when (binding.tapActionList.selectedItemPosition) {
                     0 -> WidgetTapAction.TOGGLE
                     else -> WidgetTapAction.REFRESH
-                }
+                },
             )
 
             intent.putExtra(
@@ -378,16 +404,24 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
                     getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
                     else -> WidgetBackgroundType.DAYNIGHT
-                }
+                },
             )
 
             intent.putExtra(
                 EntityWidget.EXTRA_TEXT_COLOR,
-                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent)) {
-                    getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
+                if (binding.backgroundType.selectedItem as String? ==
+                    getString(commonR.string.widget_background_type_transparent)
+                ) {
+                    getHexForColor(
+                        if (binding.textColorWhite.isChecked) {
+                            android.R.color.white
+                        } else {
+                            commonR.color.colorWidgetButtonLabelBlack
+                        },
+                    )
                 } else {
                     null
-                }
+                },
             )
 
             context.sendBroadcast(intent)
@@ -395,7 +429,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             // Make sure we pass back the original appWidgetId
             setResult(
                 RESULT_OK,
-                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId),
             )
             finish()
         } catch (e: Exception) {
@@ -409,7 +443,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         if (intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
             appWidgetId = intent.extras!!.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.INVALID_APPWIDGET_ID,
             )
             onAddWidget()
         }

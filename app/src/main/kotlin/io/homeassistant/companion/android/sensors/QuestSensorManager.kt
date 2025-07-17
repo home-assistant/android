@@ -17,7 +17,7 @@ class QuestSensorManager : SensorManager {
             commonR.string.sensor_description_headset_mounted,
             "mdi:virtual-reality",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
     }
 
@@ -30,7 +30,7 @@ class QuestSensorManager : SensorManager {
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(
-            headsetMounted
+            headsetMounted,
         )
     }
 
@@ -42,14 +42,12 @@ class QuestSensorManager : SensorManager {
         return Build.MODEL == "Quest"
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         val intent = ContextCompat.registerReceiver(
             context,
             null,
             IntentFilter("com.oculus.intent.action.MOUNT_STATE_CHANGED"),
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
         if (intent != null) {
             updateHeadsetMount(context, intent)
@@ -72,7 +70,7 @@ class QuestSensorManager : SensorManager {
             headsetMounted,
             state,
             headsetMounted.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 }

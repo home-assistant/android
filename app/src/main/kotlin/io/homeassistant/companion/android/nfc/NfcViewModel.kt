@@ -21,10 +21,8 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @HiltViewModel
-class NfcViewModel @Inject constructor(
-    private val serverManager: ServerManager,
-    application: Application
-) : AndroidViewModel(application) {
+class NfcViewModel @Inject constructor(private val serverManager: ServerManager, application: Application) :
+    AndroidViewModel(application) {
 
     var isNfcEnabled by mutableStateOf(false)
         private set
@@ -78,8 +76,8 @@ class NfcViewModel @Inject constructor(
         navigator.navigateTo(
             Navigator.NavigatorItem(
                 id = NfcSetupActivity.NAV_EDIT,
-                popBackstackTo = NfcSetupActivity.NAV_WELCOME
-            )
+                popBackstackTo = NfcSetupActivity.NAV_WELCOME,
+            ),
         )
     }
 
@@ -92,8 +90,8 @@ class NfcViewModel @Inject constructor(
         navigator.navigateTo(
             Navigator.NavigatorItem(
                 id = NfcSetupActivity.NAV_EDIT,
-                popBackstackTo = NfcSetupActivity.NAV_WELCOME
-            )
+                popBackstackTo = NfcSetupActivity.NAV_WELCOME,
+            ),
         )
     }
 

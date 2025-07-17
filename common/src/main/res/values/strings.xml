@@ -285,7 +285,7 @@
     <string name="filter_sensors_enabled">Enabled sensors</string>
     <string name="filter_sensors_disabled">Disabled sensors</string>
     <string name="filter_updates">Filter updates</string>
-    <string name="firebase_error_message">This means you will be unable to receive cloud notifications.\n\nLocal notifications will still be available via persistent connection settings in companion app settings</string>
+    <string name="firebase_error_message">This means you will be unable to receive cloud notifications.\n\nLocal notifications will still be available via persistent connection settings in Companion app settings</string>
     <string name="firebase_error_title">Firebase error</string>
     <string name="fullscreen_def">Put application in full screen</string>
     <string name="fullscreen">Fullscreen</string>
@@ -293,6 +293,18 @@
     <string name="screen_orientation_option_label_system">Follow system settings</string>
     <string name="screen_orientation_option_label_portrait">Portrait</string>
     <string name="screen_orientation_option_label_landscape">Landscape</string>
+    <string name="gestures">Gestures</string>
+    <string name="gestures_action_quickbar_default">Search entities</string>
+    <string name="gestures_action_server_list">Server list</string>
+    <string name="gestures_action_server_next">Next server</string>
+    <string name="gestures_action_server_previous">Previous server</string>
+    <string name="gestures_description">Set up gestures for quick actions whenever you are using the main Home Assistant UI.\n\nNote: if your device has gestures that work in any app, they may override Home Assistant gestures.</string>
+    <string name="gestures_direction_down">Swipe down</string>
+    <string name="gestures_direction_left">Swipe left</string>
+    <string name="gestures_direction_right">Swipe right</string>
+    <string name="gestures_direction_up">Swipe up</string>
+    <string name="gestures_pointers_two">Using two fingers</string>
+    <string name="gestures_pointers_three">Using three fingers</string>
     <string name="get_help">Get help</string>
     <string name="grant_permission">Grant permission</string>
     <string name="help">Help</string>
@@ -343,6 +355,7 @@
     <string name="improv_permission_location">Precise location</string>
     <string name="improv_wifi_title">Connect to Wi-Fi</string>
     <string name="improv_wifi_ssid">Network name</string>
+    <string name="join_our_server">Join our smart home</string>
     <string name="keep_screen_on_def">Do not lock screen when dashboard is active</string>
     <string name="keep_screen_on">Keep screen on</string>
     <string name="page_zoom_default">%1$d%% (default)</string>
@@ -467,6 +480,8 @@
     <string name="message_no_connected_nodes">No connected Wear devices, please make sure Bluetooth is on and your watch is paired.</string>
     <string name="missing_command_permission">Please open the Home Assistant app and send the command again to grant the proper permissions. You will be taken to a page to either grant the Home Assistant app the permission, or you will need to select Permissions from the details page and then grant the missing permission. For command_bluetooth the name of the permission is Nearby devices. If you are attempting to use command_activity to make a phone call you will also need to grant Phone permissions.</string>
     <string name="mute_unmute">Mute/Unmute</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
     <string name="areas">Areas</string>
     <string name="more_entities">More entities</string>
     <string name="need_help">Need help?</string>
@@ -777,7 +792,7 @@
     <string name="server_settings">Server settings</string>
     <string name="servers_devices_category">Servers &amp; devices</string>
     <string name="server_activate">Activate</string>
-    <string name="server_activate_swipe_hint">Tip: quickly activate using a three-finger swipe left, right, or up when viewing a server.</string>
+    <string name="server_activate_gesture_hint">Tip: you can quickly activate and switch servers by using gestures.</string>
     <string name="server_add">Add server</string>
     <string name="server_add_success">Server added</string>
     <string name="server_add_failed">Couldn\'t add server</string>
@@ -799,6 +814,7 @@
     <string name="share_failed">Sharing with Home Assistant failed!</string>
     <string name="share_logs_sens_message">Please note: by sharing the log, you could share sensitive data like location data or your Home Assistant URL.\n\nDo you want to continue?</string>
     <string name="share_logs">Share logs</string>
+    <string name="share_server">Share server</string>
     <string name="share_success">Shared with Home Assistant</string>
     <string name="shopping_list">Shopping list</string>
     <string name="shortcut_icon">Select an icon for this shortcut</string>
@@ -1380,4 +1396,10 @@
     <string name="thermostat_tile">Thermostat tile</string>
     <string name="climate_heating">Heating</string>
     <string name="climate_cooling">Cooling</string>
+    <string name="launcher">Device home screen</string>
+    <string name="launcher_option_title">Allow as home app</string>
+    <string name="launcher_option_summary">Include Home Assistant in the list of available home apps/launchers that can replace your device\'s home screen</string>
+    <string name="default_launcher_prompt">Change home app</string>
+    <string name="default_launcher_prompt_def">Open settings to choose your default home app. Currently set to %s.</string>
+    <string name="unknown_launcher_label">unknown app</string>
 </resources>

@@ -30,7 +30,7 @@ class NextAlarmManager : SensorManager {
             commonR.string.sensor_description_next_alarm,
             "mdi:alarm",
             deviceClass = "timestamp",
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
     }
 
@@ -56,9 +56,7 @@ class NextAlarmManager : SensorManager {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateNextAlarm(context)
     }
 
@@ -93,7 +91,9 @@ class NextAlarmManager : SensorManager {
                         return
                     }
                 } else {
-                    sensorDao.add(SensorSetting(nextAlarm.id, SETTING_ALLOW_LIST, allowPackageList, SensorSettingType.LIST_APPS))
+                    sensorDao.add(
+                        SensorSetting(nextAlarm.id, SETTING_ALLOW_LIST, allowPackageList, SensorSettingType.LIST_APPS),
+                    )
                 }
 
                 val cal: Calendar = GregorianCalendar()
@@ -119,8 +119,8 @@ class NextAlarmManager : SensorManager {
             mapOf(
                 "Local Time" to local,
                 "Time in Milliseconds" to triggerTime,
-                "Package" to pendingIntent
-            )
+                "Package" to pendingIntent,
+            ),
         )
     }
 }

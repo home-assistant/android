@@ -41,11 +41,7 @@ class NotificationDetailFragment : Fragment() {
         super.onCreate(savedInstanceState)
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -74,7 +70,7 @@ class NotificationDetailFragment : Fragment() {
                 }
             },
             viewLifecycleOwner,
-            Lifecycle.State.RESUMED
+            Lifecycle.State.RESUMED,
         )
     }
 
@@ -85,7 +81,7 @@ class NotificationDetailFragment : Fragment() {
         builder.setMessage(commonR.string.confirm_delete_this_notification_message)
 
         builder.setPositiveButton(
-            commonR.string.confirm_positive
+            commonR.string.confirm_positive,
         ) { dialog, _ ->
             lifecycleScope.launch {
                 notificationDao.delete(notification.id)
@@ -95,8 +91,9 @@ class NotificationDetailFragment : Fragment() {
         }
 
         builder.setNegativeButton(
-            commonR.string.confirm_negative
-        ) { dialog, _ -> // Do nothing
+            commonR.string.confirm_negative,
+        ) { dialog, _ ->
+            // Do nothing
             dialog.dismiss()
         }
 

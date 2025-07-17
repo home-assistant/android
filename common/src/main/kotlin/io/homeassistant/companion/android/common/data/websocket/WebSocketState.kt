@@ -4,5 +4,5 @@ enum class WebSocketState {
     AUTHENTICATING,
     ACTIVE,
     CLOSED_AUTH,
-    CLOSED_OTHER
+    CLOSED_OTHER,
 }

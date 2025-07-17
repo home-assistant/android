@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 class ChangeServerScreen(
     carContext: CarContext,
     private val serverManager: ServerManager,
-    private val serverId: StateFlow<Int>
+    private val serverId: StateFlow<Int>,
 ) : Screen(carContext) {
     override fun onGetTemplate(): Template {
         val listBuilder = ItemList.Builder()
@@ -27,7 +27,7 @@ class ChangeServerScreen(
                         setResult(server.id)
                         finish()
                     }
-                    .build()
+                    .build(),
             )
         }
 

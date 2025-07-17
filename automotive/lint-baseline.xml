@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.10.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.10.0)" variant="all" version="8.10.0">
+<issues format="6" by="lint 8.10.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.10.1)" variant="all" version="8.10.1">
 
     <issue
         id="MissingPermission"
@@ -8,7 +8,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="228"
+            line="231"
             column="13"/>
     </issue>
 
@@ -19,7 +19,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="233"
+            line="236"
             column="17"/>
     </issue>
 
@@ -30,7 +30,7 @@
         errorLine2="                        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="251"
+            line="256"
             column="25"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="                        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="259"
+            line="264"
             column="25"/>
     </issue>
 
@@ -52,7 +52,7 @@
         errorLine2="                        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="267"
+            line="272"
             column="25"/>
     </issue>
 
@@ -63,7 +63,7 @@
         errorLine2="        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/DataUriDownloadManager.kt"
-            line="68"
+            line="64"
             column="9"/>
     </issue>
 
@@ -74,7 +74,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="108"
+            line="109"
             column="17"/>
     </issue>
 
@@ -85,7 +85,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="995"
+            line="1104"
             column="17"/>
     </issue>
 
@@ -107,7 +107,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="891"
+            line="913"
             column="27"/>
     </issue>
 
@@ -129,7 +129,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="95"
+            line="96"
             column="26"/>
     </issue>
 
@@ -140,7 +140,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="96"
+            line="97"
             column="25"/>
     </issue>
 
@@ -151,7 +151,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/ForegroundServiceLauncher.kt"
-            line="48"
+            line="52"
             column="33"/>
     </issue>
 
@@ -332,46 +332,24 @@
     </issue>
 
     <issue
-        id="AppLinkUrlError"
-        message="`http(s)` scheme is missing, but is required for Android App Links"
-        errorLine1="            &lt;intent-filter android:autoVerify=&quot;true&quot;>"
-        errorLine2="             ~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="271"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="AppLinkUrlError"
-        message="Android App Links&apos; `host` attributes must be valid web domains"
-        errorLine1="                    android:host=&quot;navigate&quot; />"
-        errorLine2="                                  ~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="278"
-            column="35"/>
-    </issue>
-
-    <issue
         id="BatteryLife"
         message="Use of `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` violates the Play Store Content Policy regarding acceptable use cases, as described in https://developer.android.com/training/monitoring-device-state/doze-standby.html"
         errorLine1="                                        Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,"
         errorLine2="                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/websocket/WebsocketSettingFragment.kt"
-            line="76"
+            line="75"
             column="50"/>
     </issue>
 
     <issue
         id="CustomSplashScreen"
         message="The application should not provide its own launch screen"
-        errorLine1="class LaunchActivity : AppCompatActivity(), LaunchView {"
+        errorLine1="class LaunchActivity :"
         errorLine2="      ~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/launch/LaunchActivity.kt"
-            line="46"
+            line="49"
             column="7"/>
     </issue>
 
@@ -393,7 +371,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="408"
+            line="430"
             column="13"/>
     </issue>
 
@@ -409,152 +387,13 @@
     </issue>
 
     <issue
-        id="PrivateResource"
-        message="Overriding `@layout/exo_player_control_view` which is marked as private in androidx.media3:media3-ui:1.7.1. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name.">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@color/exo_black_opacity_60` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:background=&quot;@color/exo_black_opacity_60&quot;/>"
-        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="26"
-            column="29"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_height` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:layout_height=&quot;@dimen/exo_styled_bottom_bar_height&quot;"
-        errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="30"
-            column="32"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_margin_top` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:layout_marginTop=&quot;@dimen/exo_styled_bottom_bar_margin_top&quot;"
-        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="31"
-            column="35"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@color/exo_bottom_bar_background` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:background=&quot;@color/exo_bottom_bar_background&quot;"
-        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="33"
-            column="29"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="            android:paddingStart=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
-        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="39"
-            column="35"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="            android:paddingEnd=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
-        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="40"
-            column="33"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="            android:paddingLeft=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
-        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="41"
-            column="34"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_bottom_bar_time_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="            android:paddingRight=&quot;@dimen/exo_styled_bottom_bar_time_padding&quot;"
-        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="42"
-            column="35"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_progress_layout_height` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:layout_height=&quot;@dimen/exo_styled_progress_layout_height&quot;"
-        errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="98"
-            column="32"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_progress_margin_bottom` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:layout_marginBottom=&quot;@dimen/exo_styled_progress_margin_bottom&quot;/>"
-        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="100"
-            column="38"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_minimal_controls_margin_bottom` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:layout_marginBottom=&quot;@dimen/exo_styled_minimal_controls_margin_bottom&quot;"
-        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="106"
-            column="38"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@dimen/exo_styled_controls_padding` is marked as private in androidx.media3:media3-ui:1.7.1"
-        errorLine1="        android:padding=&quot;@dimen/exo_styled_controls_padding&quot;"
-        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="123"
-            column="26"/>
-    </issue>
-
-    <issue
         id="DiscouragedApi"
         message="Use of this function is discouraged because resource reflection makes it harder to perform build optimizations and compile-time verification of code. It is much more efficient to retrieve resources by identifier (e.g. `R.foo.bar`) than by name (e.g. `getIdentifier(&quot;bar&quot;, &quot;foo&quot;, null)`)."
         errorLine1="        val stringId = app.resources.getIdentifier(identifierString, &quot;string&quot;, app.packageName)"
         errorLine2="                                     ~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/SensorDetailViewModel.kt"
-            line="332"
+            line="337"
             column="38"/>
     </issue>
 
@@ -642,7 +481,7 @@
         errorLine2="         ~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="885"
+            line="907"
             column="10"/>
     </issue>
 
@@ -653,7 +492,7 @@
         errorLine2="         ~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="890"
+            line="912"
             column="10"/>
     </issue>
 
@@ -686,7 +525,7 @@
         errorLine2="         ~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="395"
+            line="417"
             column="10"/>
     </issue>
 
@@ -708,7 +547,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="206"
+            line="209"
             column="20"/>
     </issue>
 
@@ -719,7 +558,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="216"
+            line="219"
             column="20"/>
     </issue>
 
@@ -730,7 +569,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/vehicle/views/AndroidAutoFavoritesView.kt"
-            line="36"
+            line="38"
             column="1"/>
     </issue>
 
@@ -741,7 +580,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/AndroidAutoSensorManager.kt"
-            line="30"
+            line="32"
             column="20"/>
     </issue>
 
@@ -752,7 +591,7 @@
         errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/AndroidAutoSensorManager.kt"
-            line="38"
+            line="40"
             column="16"/>
     </issue>
 
@@ -763,7 +602,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/assist/AssistActivity.kt"
-            line="165"
+            line="167"
             column="17"/>
     </issue>
 
@@ -774,7 +613,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/assist/AssistActivity.kt"
-            line="173"
+            line="175"
             column="17"/>
     </issue>
 
@@ -785,7 +624,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/onboarding/authentication/AuthenticationFragment.kt"
-            line="81"
+            line="97"
             column="33"/>
     </issue>
 
@@ -796,7 +635,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/onboarding/authentication/AuthenticationFragment.kt"
-            line="81"
+            line="97"
             column="33"/>
     </issue>
 
@@ -807,7 +646,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/onboarding/authentication/AuthenticationFragment.kt"
-            line="226"
+            line="244"
             column="29"/>
     </issue>
 
@@ -818,7 +657,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
-            line="307"
+            line="332"
             column="21"/>
     </issue>
 
@@ -829,7 +668,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/camera/CameraWidgetConfigureActivity.kt"
-            line="71"
+            line="74"
             column="21"/>
     </issue>
 
@@ -851,7 +690,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/sensors/CarSensorManager.kt"
-            line="262"
+            line="268"
             column="20"/>
     </issue>
 
@@ -862,7 +701,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/sensors/CarSensorManager.kt"
-            line="273"
+            line="279"
             column="33"/>
     </issue>
 
@@ -873,7 +712,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/sensors/CarSensorManager.kt"
-            line="303"
+            line="309"
             column="13"/>
     </issue>
 
@@ -891,12 +730,12 @@
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 29"
-        errorLine1="            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/DataUriDownloadManager.kt"
-            line="91"
-            column="17"/>
+            line="87"
+            column="21"/>
     </issue>
 
     <issue
@@ -906,7 +745,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/DataUriDownloadManager.kt"
-            line="143"
+            line="141"
             column="13"/>
     </issue>
 
@@ -939,7 +778,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/entity/EntityWidgetConfigureActivity.kt"
-            line="88"
+            line="91"
             column="21"/>
     </issue>
 
@@ -950,7 +789,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/FlashlightHelper.kt"
-            line="37"
+            line="35"
             column="21"/>
     </issue>
 
@@ -961,7 +800,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/FlashlightHelper.kt"
-            line="51"
+            line="49"
             column="21"/>
     </issue>
 
@@ -972,7 +811,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/sensors/GeocodeSensorManager.kt"
-            line="52"
+            line="69"
             column="20"/>
     </issue>
 
@@ -1027,7 +866,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="113"
+            line="114"
             column="17"/>
     </issue>
 
@@ -1038,7 +877,7 @@
         errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="150"
+            line="156"
             column="24"/>
     </issue>
 
@@ -1049,7 +888,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="140"
+            line="180"
             column="13"/>
     </issue>
 
@@ -1060,7 +899,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="203"
+            line="243"
             column="13"/>
     </issue>
 
@@ -1071,7 +910,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="213"
+            line="253"
             column="13"/>
     </issue>
 
@@ -1082,7 +921,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="223"
+            line="263"
             column="13"/>
     </issue>
 
@@ -1093,7 +932,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="269"
+            line="309"
             column="13"/>
     </issue>
 
@@ -1148,29 +987,29 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/sensors/LastAppSensorManager.kt"
-            line="56"
+            line="54"
             column="5"/>
     </issue>
 
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 29"
-        errorLine1="                    &quot;vertical_accuracy&quot; to if (Build.VERSION.SDK_INT >= 26) geofencingEvent.triggeringLocation!!.verticalAccuracyMeters.toInt() else 0,"
-        errorLine2="                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                        if (Build.VERSION.SDK_INT >="
+        errorLine2="                            ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/LocationSensorManager.kt"
-            line="784"
-            column="48"/>
+            line="855"
+            column="29"/>
     </issue>
 
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 29"
-        errorLine1="                verticalAccuracy = if (Build.VERSION.SDK_INT >= 26) location.verticalAccuracyMeters.toInt() else 0"
+        errorLine1="                verticalAccuracy = if (Build.VERSION.SDK_INT >= 26) location.verticalAccuracyMeters.toInt() else 0,"
         errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/LocationSensorManager.kt"
-            line="864"
+            line="951"
             column="40"/>
     </issue>
 
@@ -1181,7 +1020,7 @@
         errorLine2="             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/LocationSensorManager.kt"
-            line="1212"
+            line="1346"
             column="14"/>
     </issue>
 
@@ -1192,7 +1031,7 @@
         errorLine2="                                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/log/LogFragment.kt"
-            line="191"
+            line="200"
             column="60"/>
     </issue>
 
@@ -1247,7 +1086,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsSettingsFragment.kt"
-            line="65"
+            line="61"
             column="5"/>
     </issue>
 
@@ -1258,7 +1097,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="46"
+            line="48"
             column="1"/>
     </issue>
 
@@ -1269,18 +1108,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="78"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; `SDK_INT` is always >= 25"
-        errorLine1="@RequiresApi(Build.VERSION_CODES.N_MR1)"
-        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="317"
+            line="79"
             column="1"/>
     </issue>
 
@@ -1301,20 +1129,31 @@
         errorLine1="@RequiresApi(Build.VERSION_CODES.N_MR1)"
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
+            line="341"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 25"
+        errorLine1="@RequiresApi(Build.VERSION_CODES.N_MR1)"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="44"
+            line="50"
             column="1"/>
     </issue>
 
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 29"
-        errorLine1="    val canPinShortcuts = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &amp;&amp; shortcutManager.isRequestPinShortcutSupported"
-        errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &amp;&amp; ShortcutManagerCompat.isRequestPinShortcutSupported(app)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="53"
-            column="27"/>
+            line="60"
+            column="9"/>
     </issue>
 
     <issue
@@ -1324,7 +1163,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="101"
+            line="108"
             column="13"/>
     </issue>
 
@@ -1335,7 +1174,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="173"
+            line="181"
             column="21"/>
     </issue>
 
@@ -1346,7 +1185,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/qs/views/ManageTilesView.kt"
-            line="106"
+            line="119"
             column="21"/>
     </issue>
 
@@ -1375,12 +1214,12 @@
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 29"
-        errorLine1="        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 &amp;&amp; !packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="    override fun appSupportsCommissioning(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 &amp;&amp;"
+        errorLine2="                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/matter/MatterManagerImpl.kt"
-            line="21"
-            column="9"/>
+            line="20"
+            column="56"/>
     </issue>
 
     <issue
@@ -1390,7 +1229,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/mediaplayer/MediaPlayerControlsWidgetConfigureActivity.kt"
-            line="73"
+            line="76"
             column="21"/>
     </issue>
 
@@ -1401,7 +1240,7 @@
         errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="342"
+            line="354"
             column="37"/>
     </issue>
 
@@ -1412,19 +1251,19 @@
         errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="476"
+            line="523"
             column="37"/>
     </issue>
 
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 29"
-        errorLine1="                            if (command in DeviceCommandData.ENABLE_COMMANDS &amp;&amp; Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {"
-        errorLine2="                                                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="542"
-            column="81"/>
+            line="601"
+            column="33"/>
     </issue>
 
     <issue
@@ -1434,7 +1273,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="572"
+            line="634"
             column="13"/>
     </issue>
 
@@ -1445,7 +1284,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="583"
+            line="645"
             column="21"/>
     </issue>
 
@@ -1456,7 +1295,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="607"
+            line="676"
             column="21"/>
     </issue>
 
@@ -1467,7 +1306,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="648"
+            line="719"
             column="21"/>
     </issue>
 
@@ -1478,7 +1317,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="700"
+            line="778"
             column="21"/>
     </issue>
 
@@ -1489,7 +1328,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="725"
+            line="808"
             column="21"/>
     </issue>
 
@@ -1500,7 +1339,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="755"
+            line="840"
             column="21"/>
     </issue>
 
@@ -1511,7 +1350,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="766"
+            line="852"
             column="21"/>
     </issue>
 
@@ -1522,7 +1361,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="780"
+            line="871"
             column="21"/>
     </issue>
 
@@ -1533,7 +1372,7 @@
         errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="798"
+            line="892"
             column="28"/>
     </issue>
 
@@ -1544,7 +1383,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="927"
+            line="1036"
             column="17"/>
     </issue>
 
@@ -1555,7 +1394,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="982"
+            line="1091"
             column="13"/>
     </issue>
 
@@ -1566,7 +1405,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1030"
+            line="1137"
             column="21"/>
     </issue>
 
@@ -1577,7 +1416,7 @@
         errorLine2="                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1063"
+            line="1168"
             column="50"/>
     </issue>
 
@@ -1588,7 +1427,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1635"
+            line="1729"
             column="13"/>
     </issue>
 
@@ -1599,7 +1438,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1647"
+            line="1741"
             column="5"/>
     </issue>
 
@@ -1610,7 +1449,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1655"
+            line="1749"
             column="5"/>
     </issue>
 
@@ -1621,7 +1460,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1665"
+            line="1759"
             column="5"/>
     </issue>
 
@@ -1632,7 +1471,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1681"
+            line="1775"
             column="5"/>
     </issue>
 
@@ -1643,7 +1482,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1689"
+            line="1783"
             column="5"/>
     </issue>
 
@@ -1654,29 +1493,29 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1694"
+            line="1788"
             column="5"/>
     </issue>
 
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 29"
-        errorLine1="                            COMMAND_WEBVIEW, COMMAND_ACTIVITY, COMMAND_LAUNCH_APP -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {"
-        errorLine2="                                                                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                            COMMAND_WEBVIEW, COMMAND_ACTIVITY, COMMAND_LAUNCH_APP -> if (Build.VERSION.SDK_INT >="
+        errorLine2="                                                                                         ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1978"
+            line="2081"
             column="90"/>
     </issue>
 
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 29"
-        errorLine1="                            COMMAND_RINGER_MODE, COMMAND_DND, COMMAND_VOLUME_LEVEL -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {"
-        errorLine2="                                                                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                            COMMAND_RINGER_MODE, COMMAND_DND, COMMAND_VOLUME_LEVEL -> if (Build.VERSION.SDK_INT >="
+        errorLine2="                                                                                          ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1981"
+            line="2087"
             column="91"/>
     </issue>
 
@@ -1687,7 +1526,7 @@
         errorLine2="                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1984"
+            line="2093"
             column="50"/>
     </issue>
 
@@ -1698,7 +1537,7 @@
         errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1998"
+            line="2112"
             column="37"/>
     </issue>
 
@@ -1709,7 +1548,7 @@
         errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/onboarding/integration/MobileAppIntegrationFragment.kt"
-            line="181"
+            line="178"
             column="16"/>
     </issue>
 
@@ -1731,7 +1570,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/notification/views/NotificationChannelView.kt"
-            line="33"
+            line="38"
             column="1"/>
     </issue>
 
@@ -1742,7 +1581,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/sensors/NotificationSensorManager.kt"
-            line="159"
+            line="161"
             column="17"/>
     </issue>
 
@@ -1753,7 +1592,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/sensors/NotificationSensorManager.kt"
-            line="221"
+            line="223"
             column="17"/>
     </issue>
 
@@ -1764,7 +1603,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/sensors/NotificationSensorManager.kt"
-            line="260"
+            line="268"
             column="29"/>
     </issue>
 
@@ -1819,18 +1658,18 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/views/SensorUpdateFrequencyView.kt"
-            line="50"
+            line="55"
             column="17"/>
     </issue>
 
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 29"
-        errorLine1="            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &amp;&amp; requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)"
+        errorLine1="            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &amp;&amp;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="173"
+            line="187"
             column="13"/>
     </issue>
 
@@ -1841,7 +1680,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="187"
+            line="202"
             column="17"/>
     </issue>
 
@@ -1852,7 +1691,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="200"
+            line="215"
             column="17"/>
     </issue>
 
@@ -1863,7 +1702,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="233"
+            line="248"
             column="13"/>
     </issue>
 
@@ -1874,29 +1713,29 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="271"
+            line="286"
             column="29"/>
     </issue>
 
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 29"
-        errorLine1="                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &amp;&amp; (BuildConfig.FLAVOR == &quot;full&quot; || isAutomotive)"
+        errorLine1="                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &amp;&amp;"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="342"
+            line="370"
             column="17"/>
     </issue>
 
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 29"
-        errorLine1="                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &amp;&amp; (BuildConfig.FLAVOR == &quot;full&quot; || isAutomotive)"
+        errorLine1="                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &amp;&amp;"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="342"
+            line="370"
             column="17"/>
     </issue>
 
@@ -1907,7 +1746,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="363"
+            line="403"
             column="13"/>
     </issue>
 
@@ -1918,7 +1757,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="468"
+            line="513"
             column="13"/>
     </issue>
 
@@ -1929,7 +1768,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="478"
+            line="523"
             column="17"/>
     </issue>
 
@@ -1940,7 +1779,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="478"
+            line="523"
             column="17"/>
     </issue>
 
@@ -1951,7 +1790,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="518"
+            line="563"
             column="13"/>
     </issue>
 
@@ -1962,7 +1801,7 @@
         errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="528"
+            line="573"
             column="16"/>
     </issue>
 
@@ -1973,7 +1812,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsPresenterImpl.kt"
-            line="258"
+            line="274"
             column="13"/>
     </issue>
 
@@ -1984,7 +1823,7 @@
         errorLine2="                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsPresenterImpl.kt"
-            line="262"
+            line="278"
             column="43"/>
     </issue>
 
@@ -1995,18 +1834,18 @@
         errorLine2="                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsPresenterImpl.kt"
-            line="265"
+            line="282"
             column="43"/>
     </issue>
 
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 29"
-        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &amp;&amp; !NotificationManagerCompat.from(context).areNotificationsEnabled()) {"
+        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &amp;&amp;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsPresenterImpl.kt"
-            line="281"
+            line="298"
             column="13"/>
     </issue>
 
@@ -2017,7 +1856,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/ssid/SsidFragment.kt"
-            line="87"
+            line="83"
             column="38"/>
     </issue>
 
@@ -2028,7 +1867,7 @@
         errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/ssid/SsidFragment.kt"
-            line="96"
+            line="92"
             column="53"/>
     </issue>
 
@@ -2039,7 +1878,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/ssid/SsidFragment.kt"
-            line="135"
+            line="133"
             column="20"/>
     </issue>
 
@@ -2050,7 +1889,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/TLSWebViewClient.kt"
-            line="51"
+            line="46"
             column="5"/>
     </issue>
 
@@ -2061,7 +1900,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/TLSWebViewClient.kt"
-            line="56"
+            line="52"
             column="13"/>
     </issue>
 
@@ -2072,7 +1911,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/TLSWebViewClient.kt"
-            line="85"
+            line="83"
             column="5"/>
     </issue>
 
@@ -2083,7 +1922,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/template/TemplateWidgetConfigureActivity.kt"
-            line="134"
+            line="143"
             column="21"/>
     </issue>
 
@@ -2094,19 +1933,19 @@
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/themes/ThemesManager.kt"
-            line="22"
+            line="20"
             column="38"/>
     </issue>
 
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 29"
-        errorLine1="        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 &amp;&amp; !packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="    override fun appSupportsThread(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 &amp;&amp;"
+        errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/thread/ThreadManagerImpl.kt"
-            line="36"
-            column="9"/>
+            line="35"
+            column="49"/>
     </issue>
 
     <issue
@@ -2567,7 +2406,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/TileExtensions.kt"
-            line="147"
+            line="149"
             column="21"/>
     </issue>
 
@@ -2578,7 +2417,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/TileExtensions.kt"
-            line="194"
+            line="196"
             column="21"/>
     </issue>
 
@@ -2589,7 +2428,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/TileExtensions.kt"
-            line="217"
+            line="215"
             column="21"/>
     </issue>
 
@@ -2600,7 +2439,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/TileExtensions.kt"
-            line="284"
+            line="282"
             column="17"/>
     </issue>
 
@@ -2622,7 +2461,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="246"
+            line="248"
             column="13"/>
     </issue>
 
@@ -2633,7 +2472,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="500"
+            line="495"
             column="21"/>
     </issue>
 
@@ -2644,7 +2483,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="501"
+            line="496"
             column="21"/>
     </issue>
 
@@ -2655,7 +2494,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="536"
+            line="526"
             column="25"/>
     </issue>
 
@@ -2666,7 +2505,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="536"
+            line="526"
             column="25"/>
     </issue>
 
@@ -2677,7 +2516,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="636"
+            line="619"
             column="13"/>
     </issue>
 
@@ -2688,19 +2527,8 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1104"
+            line="1147"
             column="21"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; `SDK_INT` is always >= 26"
-        errorLine1="    @RequiresApi(Build.VERSION_CODES.O)"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1199"
-            column="5"/>
     </issue>
 
     <issue
@@ -2710,7 +2538,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1221"
+            line="1260"
             column="17"/>
     </issue>
 
@@ -2721,7 +2549,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/websocket/WebsocketManager.kt"
-            line="217"
+            line="223"
             column="13"/>
     </issue>
 
@@ -2732,7 +2560,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/websocket/WebsocketManager.kt"
-            line="273"
+            line="279"
             column="17"/>
     </issue>
 
@@ -2743,7 +2571,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/websocket/WebsocketSettingFragment.kt"
-            line="73"
+            line="72"
             column="33"/>
     </issue>
 
@@ -2754,19 +2582,19 @@
         errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/websocket/WebsocketSettingFragment.kt"
-            line="99"
+            line="98"
             column="42"/>
     </issue>
 
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 29"
-        errorLine1="            if (websocketSetting != WebsocketSetting.NEVER &amp;&amp; Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &amp;&amp; uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION) {"
-        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &amp;&amp;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/websocket/views/WebsocketSettingView.kt"
-            line="77"
-            column="63"/>
+            line="115"
+            column="17"/>
     </issue>
 
     <issue
@@ -2776,7 +2604,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/onboarding/welcome/WelcomeFragment.kt"
-            line="34"
+            line="30"
             column="13"/>
     </issue>
 
@@ -2822,7 +2650,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="33"
+            line="34"
             column="9"/>
     </issue>
 
@@ -2833,7 +2661,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="35"
+            line="36"
             column="9"/>
     </issue>
 
@@ -2851,12 +2679,12 @@
     <issue
         id="VectorPath"
         message="Very long vector path (901 characters), which is bad for performance. Considering reducing precision, removing minor details or rasterizing vector."
-        errorLine1="  &lt;path android:fillColor=&quot;#F2F2F2&quot; android:pathData=&quot;M296.22,200.98L223.78,128.54C219.51,124.26 212.5,124.26 208.23,128.54L135.78,200.98C131.51,205.25 128,213.71 128,219.76V285.76C128,291.81 132.95,296.76 139,296.76H206.66L176.87,266.96C175.34,267.49 173.7,267.79 172,267.79C163.71,267.79 156.97,261.05 156.97,252.76C156.97,244.47 163.71,237.73 172,237.73C180.29,237.73 187.03,244.47 187.03,252.76C187.03,254.47 186.73,256.1 186.21,257.64L209.4,280.83V195.85C204.41,193.4 200.97,188.29 200.97,182.37C200.97,174.08 207.71,167.33 216,167.33C224.29,167.33 231.03,174.08 231.03,182.37C231.03,188.29 227.59,193.4 222.6,195.85V255.45L245.67,232.38C245.22,230.94 244.97,229.42 244.97,227.83C244.97,219.55 251.71,212.8 260,212.8C268.29,212.8 275.03,219.55 275.03,227.83C275.03,236.12 268.29,242.87 260,242.87C258.17,242.87 256.42,242.52 254.8,241.92L222.6,274.12V296.77H293C299.05,296.77 304,291.82 304,285.77V219.77C304,213.72 300.5,205.27 296.22,200.99V200.98Z&quot;/>"
-        errorLine2="                                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  &lt;path android:fillColor=&quot;@color/ic_launcher_foreground&quot; android:pathData=&quot;M296.22,200.98L223.78,128.54C219.51,124.26 212.5,124.26 208.23,128.54L135.78,200.98C131.51,205.25 128,213.71 128,219.76V285.76C128,291.81 132.95,296.76 139,296.76H206.66L176.87,266.96C175.34,267.49 173.7,267.79 172,267.79C163.71,267.79 156.97,261.05 156.97,252.76C156.97,244.47 163.71,237.73 172,237.73C180.29,237.73 187.03,244.47 187.03,252.76C187.03,254.47 186.73,256.1 186.21,257.64L209.4,280.83V195.85C204.41,193.4 200.97,188.29 200.97,182.37C200.97,174.08 207.71,167.33 216,167.33C224.29,167.33 231.03,174.08 231.03,182.37C231.03,188.29 227.59,193.4 222.6,195.85V255.45L245.67,232.38C245.22,230.94 244.97,229.42 244.97,227.83C244.97,219.55 251.71,212.8 260,212.8C268.29,212.8 275.03,219.55 275.03,227.83C275.03,236.12 268.29,242.87 260,242.87C258.17,242.87 256.42,242.52 254.8,241.92L222.6,274.12V296.77H293C299.05,296.77 304,291.82 304,285.77V219.77C304,213.72 300.5,205.27 296.22,200.99V200.98Z&quot;/>"
+        errorLine2="                                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/drawable/ic_launcher_foreground.xml"
             line="3"
-            column="55"/>
+            column="77"/>
     </issue>
 
     <issue
@@ -2910,7 +2738,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/assist/AssistShortcutViewModel.kt"
-            line="21"
+            line="19"
             column="21"/>
     </issue>
 
@@ -2921,7 +2749,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="110"
+            line="117"
             column="21"/>
     </issue>
 
@@ -3000,17 +2828,6 @@
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/values/dimens.xml"
             line="3"
             column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.layout.exo_player_control_view` appears to be unused"
-        errorLine1="&lt;merge xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
-        errorLine2="^">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="21"
-            column="1"/>
     </issue>
 
     <issue
@@ -3098,17 +2915,6 @@
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/values/styles.xml"
             line="61"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.style.ExoStyledControls_Button_Bottom_HaMute` appears to be unused"
-        errorLine1="    &lt;style name=&quot;ExoStyledControls.Button.Bottom.HaMute&quot;>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/values/styles.xml"
-            line="135"
             column="12"/>
     </issue>
 
@@ -3214,25 +3020,47 @@
     </issue>
 
     <issue
-        id="ReportShortcutUsage"
-        message="Calling this method indicates use of dynamic shortcuts, but there are no calls to methods that track shortcut usage, such as `pushDynamicShortcut` or `reportShortcutUsed`. Calling these methods is recommended, as they track shortcut usage and allow launchers to adjust which shortcuts appear based on activation history. Please see https://developer.android.com/develop/ui/views/launch/shortcuts/managing-shortcuts#track-usage"
-        errorLine1="            shortcutManager.addDynamicShortcuts(listOf(shortcut))"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="AvoidAnySerializer"
+        message="Prefer polymorphic serializer over AnySerializer."
+        errorLine1="                        MapAnySerializer,"
+        errorLine2="                        ~~~~~~~~~~~~~~~~">
         <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="158"
-            column="13"/>
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/button/ButtonWidget.kt"
+            line="307"
+            column="25"/>
     </issue>
 
     <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="        val code = Uri.parse(url).getQueryParameter(&quot;code&quot;)"
-        errorLine2="                   ~~~~~~~~~~~~~~">
+        id="AvoidAnySerializer"
+        message="Prefer polymorphic serializer over AnySerializer."
+        errorLine1="                            MapAnySerializer,"
+        errorLine2="                            ~~~~~~~~~~~~~~~~">
         <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/onboarding/authentication/AuthenticationFragment.kt"
-            line="194"
-            column="20"/>
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
+            line="157"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="AvoidAnySerializer"
+        message="Prefer polymorphic serializer over AnySerializer."
+        errorLine1="                kotlinJsonMapper.encodeToString(MapAnySerializer, actionDataMap),"
+        errorLine2="                                                ~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
+            line="491"
+            column="49"/>
+    </issue>
+
+    <issue
+        id="ReportShortcutUsage"
+        message="Calling this method indicates use of dynamic shortcuts, but there are no calls to methods that track shortcut usage, such as `pushDynamicShortcut` or `reportShortcutUsed`. Calling these methods is recommended, as they track shortcut usage and allow launchers to adjust which shortcuts appear based on activation history. Please see https://developer.android.com/develop/ui/views/launch/shortcuts/managing-shortcuts#track-usage"
+        errorLine1="            ShortcutManagerCompat.addDynamicShortcuts(app, listOf(shortcut))"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
+            line="166"
+            column="13"/>
     </issue>
 
     <issue
@@ -3242,14 +3070,14 @@
         errorLine2="                                                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/barcode/BarcodeScannerActivity.kt"
-            line="143"
+            line="138"
             column="80"/>
     </issue>
 
     <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                                Uri.parse(&quot;geo:$lat,$lon&quot;)"
+        errorLine1="                                                Uri.parse(&quot;geo:$lat,$lon&quot;),"
         errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/vehicle/EntityGridVehicleScreen.kt"
@@ -3264,29 +3092,29 @@
         errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/settings/sensor/HealthConnectPermissionActivity.kt"
-            line="15"
+            line="18"
             column="40"/>
     </issue>
 
     <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                            Uri.parse(&quot;geo:$latlng?q=$latlng(Home+Assistant)&quot;)"
+        errorLine1="                                            Uri.parse(&quot;geo:$latlng?q=$latlng(Home+Assistant)&quot;),"
         errorLine2="                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/developer/location/views/LocationTrackingView.kt"
-            line="235"
+            line="248"
             column="45"/>
     </issue>
 
     <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                Uri.parse(&quot;geo:${pair.second[0]},${pair.second[1]}&quot;)"
+        errorLine1="                                Uri.parse(&quot;geo:${pair.second[0]},${pair.second[1]}&quot;),"
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/vehicle/MapVehicleScreen.kt"
-            line="131"
+            line="134"
             column="33"/>
     </issue>
 
@@ -3297,7 +3125,7 @@
         errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1454"
+            line="1539"
             column="16"/>
     </issue>
 
@@ -3308,7 +3136,7 @@
         errorLine2="                                ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1584"
+            line="1669"
             column="33"/>
     </issue>
 
@@ -3319,51 +3147,51 @@
         errorLine2="                                ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1584"
+            line="1669"
             column="33"/>
     </issue>
 
     <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                    marketIntent.data = Uri.parse(MARKET_PREFIX + if (uri.startsWith(INTENT_PREFIX)) intent.`package`.toString() else uri.removePrefix(APP_PREFIX))"
-        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                        Uri.parse("
+        errorLine2="                        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1619"
-            column="41"/>
+            line="1706"
+            column="25"/>
     </issue>
 
     <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                    marketIntent.data = Uri.parse(MARKET_PREFIX + if (uri.startsWith(INTENT_PREFIX)) intent.`package`.toString() else uri.removePrefix(APP_PREFIX))"
-        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                        Uri.parse("
+        errorLine2="                        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1619"
-            column="41"/>
+            line="1706"
+            column="25"/>
     </issue>
 
     <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            Uri.parse(&quot;package:${context.packageName}&quot;)"
+        errorLine1="            Uri.parse(&quot;package:${context.packageName}&quot;),"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1659"
+            line="1753"
             column="13"/>
     </issue>
 
     <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            Uri.parse(&quot;package:${context.packageName}&quot;)"
+        errorLine1="            Uri.parse(&quot;package:${context.packageName}&quot;),"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1675"
+            line="1769"
             column="13"/>
     </issue>
 
@@ -3374,7 +3202,7 @@
         errorLine2="                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1684"
+            line="1778"
             column="23"/>
     </issue>
 
@@ -3385,7 +3213,7 @@
         errorLine2="                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1684"
+            line="1778"
             column="23"/>
     </issue>
 
@@ -3396,7 +3224,7 @@
         errorLine2="                                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1802"
+            line="1901"
             column="68"/>
     </issue>
 
@@ -3407,7 +3235,7 @@
         errorLine2="                                    ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1871"
+            line="1967"
             column="37"/>
     </issue>
 
@@ -3418,18 +3246,18 @@
         errorLine2="                                    ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1871"
+            line="1967"
             column="37"/>
     </issue>
 
     <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                    Uri.parse(&quot;package:${activity?.packageName}&quot;)"
+        errorLine1="                    Uri.parse(&quot;package:${activity?.packageName}&quot;),"
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/onboarding/integration/MobileAppIntegrationFragment.kt"
-            line="174"
+            line="171"
             column="21"/>
     </issue>
 
@@ -3440,30 +3268,30 @@
         errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/onboarding/integration/MobileAppIntegrationFragment.kt"
-            line="201"
+            line="198"
             column="49"/>
     </issue>
 
     <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(&quot;https://companion.home-assistant.io/docs/integrations/universal-links&quot;))"
-        errorLine2="                                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                                Uri.parse(&quot;https://companion.home-assistant.io/docs/integrations/universal-links&quot;),"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/nfc/views/NfcNavigationView.kt"
-            line="86"
-            column="65"/>
+            line="95"
+            column="33"/>
     </issue>
 
     <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                            context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse(&quot;package:${context.packageName}&quot;)))"
-        errorLine2="                                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                                    Uri.parse(&quot;package:${context.packageName}&quot;),"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="119"
-            column="104"/>
+            line="126"
+            column="37"/>
     </issue>
 
     <issue
@@ -3473,7 +3301,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="308"
+            line="336"
             column="52"/>
     </issue>
 
@@ -3484,7 +3312,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="308"
+            line="336"
             column="52"/>
     </issue>
 
@@ -3495,7 +3323,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="329"
+            line="357"
             column="52"/>
     </issue>
 
@@ -3506,18 +3334,18 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="329"
+            line="357"
             column="52"/>
     </issue>
 
     <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                    Uri.parse(&quot;package:${activity?.packageName}&quot;)"
+        errorLine1="                    Uri.parse(&quot;package:${activity?.packageName}&quot;),"
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="511"
+            line="556"
             column="21"/>
     </issue>
 
@@ -3528,7 +3356,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/settings/wear/SettingsWearActivity.kt"
-            line="198"
+            line="209"
             column="22"/>
     </issue>
 
@@ -3546,176 +3374,11 @@
     <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                    marketIntent.data = Uri.parse("
-        errorLine2="                                                        ^">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="448"
-            column="57"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                    marketIntent.data = Uri.parse("
-        errorLine2="                                                        ^">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="448"
-            column="57"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                    marketIntent.data = Uri.parse("
-        errorLine2="                                                        ^">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="448"
-            column="57"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                    marketIntent.data = Uri.parse("
-        errorLine2="                                                        ^">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="448"
-            column="57"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                        Uri.parse(MARKET_PREFIX + intent.`package`.toString())"
-        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="467"
-            column="41"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                        Uri.parse(MARKET_PREFIX + intent.`package`.toString())"
-        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="467"
-            column="41"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                        Uri.parse(MARKET_PREFIX + intent.`package`.toString())"
-        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="467"
-            column="41"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                        Uri.parse(MARKET_PREFIX + intent.`package`.toString())"
-        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="467"
-            column="41"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="        val uri = Uri.parse(payload.getString(&quot;url&quot;))"
-        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="969"
-            column="19"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))"
-        errorLine2="                                                               ~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1249"
-            column="64"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                intent.data = Uri.parse(&quot;https://www.home-assistant.io/latest-security-alert/&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1400"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                intent.data = Uri.parse(&quot;https://www.home-assistant.io/latest-security-alert/&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1400"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                    Uri.parse(base.toString())"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1422"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="        val uri = Uri.parse(url)"
-        errorLine2="                  ~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1575"
-            column="19"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                        Uri.parse(base.toString())"
-        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1725"
-            column="25"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
         errorLine1="                    url = Uri.parse(url.toString())"
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewPresenterImpl.kt"
-            line="128"
+            line="139"
             column="27"/>
     </issue>
 
@@ -3726,85 +3389,8 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewPresenterImpl.kt"
-            line="372"
+            line="411"
             column="13"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                        Uri.parse(&quot;package:${activity?.packageName}&quot;)"
-        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/websocket/WebsocketSettingFragment.kt"
-            line="77"
-            column="41"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="            &lt;ImageButton android:id=&quot;@+id/exo_ha_mute&quot;"
-        errorLine2="             ~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="65"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="            &lt;ImageButton android:id=&quot;@id/exo_fullscreen&quot;"
-        errorLine2="             ~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="68"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="            &lt;ImageButton android:id=&quot;@id/exo_overflow_show&quot;"
-        errorLine2="             ~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="71"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="                &lt;ImageButton android:id=&quot;@id/exo_overflow_hide&quot;"
-        errorLine2="                 ~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="87"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageButton android:id=&quot;@id/exo_minimal_fullscreen&quot;"
-        errorLine2="         ~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="111"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageButton android:id=&quot;@id/exo_play_pause&quot;"
-        errorLine2="         ~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/exo_player_control_view.xml"
-            line="129"
-            column="10"/>
     </issue>
 
     <issue
@@ -3836,7 +3422,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/entity/EntityWidgetConfigureActivity.kt"
-            line="139"
+            line="148"
             column="38"/>
     </issue>
 
@@ -3847,7 +3433,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/template/TemplateWidgetConfigureActivity.kt"
-            line="95"
+            line="99"
             column="38"/>
     </issue>
 

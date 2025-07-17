@@ -19,16 +19,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @HiltViewModel
-class SensorSettingsViewModel @Inject constructor(
-    sensorDao: SensorDao,
-    application: Application
-) :
+class SensorSettingsViewModel @Inject constructor(sensorDao: SensorDao, application: Application) :
     AndroidViewModel(application) {
 
     enum class SensorFilter(@IdRes val menuItemId: Int) {
         ALL(R.id.action_show_sensors_all),
         ENABLED(R.id.action_show_sensors_enabled),
-        DISABLED(R.id.action_show_sensors_disabled);
+        DISABLED(R.id.action_show_sensors_disabled),
+        ;
 
         companion object {
             val menuItemIdToFilter = values().associateBy { it.menuItemId }
@@ -91,8 +89,14 @@ class SensorSettingsViewModel @Inject constructor(
                             ) &&
                             (
                                 sensorFilter == SensorFilter.ALL ||
-                                    (sensorFilter == SensorFilter.ENABLED && manager.isEnabled(app.applicationContext, sensor)) ||
-                                    (sensorFilter == SensorFilter.DISABLED && !manager.isEnabled(app.applicationContext, sensor))
+                                    (
+                                        sensorFilter == SensorFilter.ENABLED &&
+                                            manager.isEnabled(app.applicationContext, sensor)
+                                        ) ||
+                                    (
+                                        sensorFilter == SensorFilter.DISABLED &&
+                                            !manager.isEnabled(app.applicationContext, sensor)
+                                        )
                                 )
                     }
                     .mapNotNull { sensor ->

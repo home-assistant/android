@@ -18,7 +18,9 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
-class MatterCommissioningService : Service(), CommissioningService.Callback {
+class MatterCommissioningService :
+    Service(),
+    CommissioningService.Callback {
 
     @Inject
     lateinit var serverManager: ServerManager
@@ -54,12 +56,18 @@ class MatterCommissioningService : Service(), CommissioningService.Callback {
                 commissioningServiceDelegate.sendCommissioningError(CommissioningError.OTHER)
                 return@launch
             }
-            val result = matterManager.commissionOnNetworkDevice(metadata.passcode, metadata.networkLocation.formattedIpAddress, serverId)
-            Timber.d("Server commissioning was ${if (result?.success == true) "successful" else "not successful (${result?.errorCode})"}")
+            val result = matterManager.commissionOnNetworkDevice(
+                metadata.passcode,
+                metadata.networkLocation.formattedIpAddress,
+                serverId,
+            )
+            Timber.d(
+                "Server commissioning was ${if (result?.success == true) "successful" else "not successful (${result?.errorCode})"}",
+            )
 
             if (result?.success == true) {
                 commissioningServiceDelegate.sendCommissioningComplete(
-                    CommissioningCompleteMetadata.Builder().build()
+                    CommissioningCompleteMetadata.Builder().build(),
                 )
             } else {
                 commissioningServiceDelegate.sendCommissioningError(CommissioningError.OTHER)

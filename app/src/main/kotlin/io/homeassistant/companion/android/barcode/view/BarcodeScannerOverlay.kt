@@ -19,10 +19,7 @@ import androidx.compose.ui.unit.dp
  * Based on https://stackoverflow.com/a/73533699/4214819.
  */
 @Composable
-fun BarcodeScannerOverlay(
-    modifier: Modifier,
-    cutout: Dp
-) {
+fun BarcodeScannerOverlay(modifier: Modifier, cutout: Dp) {
     val widthInPx: Float
     val heightInPx: Float
     val cornerInPx: Float
@@ -51,16 +48,16 @@ fun BarcodeScannerOverlay(
                     } else {
                         (canvasWidth - widthInPx) / 2
                     },
-                    y = (canvasHeight - heightInPx) / 2
+                    y = (canvasHeight - heightInPx) / 2,
                 ),
                 size = Size(widthInPx, heightInPx),
                 cornerRadius = CornerRadius(cornerInPx, cornerInPx),
                 color = Color.Transparent,
-                blendMode = BlendMode.Clear
+                blendMode = BlendMode.Clear,
             )
             restoreToCount(checkPoint)
         }
     }
 }
 
-val barcodeScannerOverlayColor = Color(0xAA000000)
+private val barcodeScannerOverlayColor = Color(0xAA000000)

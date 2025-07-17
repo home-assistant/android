@@ -24,8 +24,8 @@ object CoverControl : HaControl {
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity<Map<String, Any>>,
-        info: HaControlInfo
+        entity: Entity,
+        info: HaControlInfo,
     ): Control.StatefulBuilder {
         val position = entity.getCoverPosition()
         control.setControlTemplate(
@@ -40,50 +40,46 @@ object CoverControl : HaControl {
                         position?.max ?: 100f,
                         position?.value ?: 0f,
                         1f,
-                        "%.0f%%"
-                    )
+                        "%.0f%%",
+                    ),
                 )
             } else {
                 ToggleTemplate(
                     entity.entityId,
                     ControlButton(
                         entity.isActive(),
-                        "Description"
-                    )
+                        "Description",
+                    ),
                 )
-            }
+            },
         )
         return control
     }
 
-    override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
-        when (entity.attributes["device_class"]) {
-            "awning" -> DeviceTypes.TYPE_AWNING
-            "blind" -> DeviceTypes.TYPE_BLINDS
-            "curtain" -> DeviceTypes.TYPE_CURTAIN
-            "door" -> DeviceTypes.TYPE_DOOR
-            "garage" -> DeviceTypes.TYPE_GARAGE
-            "gate" -> DeviceTypes.TYPE_GATE
-            "shutter" -> DeviceTypes.TYPE_SHUTTER
-            "window" -> DeviceTypes.TYPE_WINDOW
-            else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
-        }
+    override fun getDeviceType(entity: Entity): Int = when (entity.attributes["device_class"]) {
+        "awning" -> DeviceTypes.TYPE_AWNING
+        "blind" -> DeviceTypes.TYPE_BLINDS
+        "curtain" -> DeviceTypes.TYPE_CURTAIN
+        "door" -> DeviceTypes.TYPE_DOOR
+        "garage" -> DeviceTypes.TYPE_GARAGE
+        "gate" -> DeviceTypes.TYPE_GATE
+        "shutter" -> DeviceTypes.TYPE_SHUTTER
+        "window" -> DeviceTypes.TYPE_WINDOW
+        else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
+    }
 
-    override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+    override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.domain_cover)
 
-    override suspend fun performAction(
-        integrationRepository: IntegrationRepository,
-        action: ControlAction
-    ): Boolean {
+    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
         return when (action) {
             is BooleanAction -> {
                 integrationRepository.callAction(
                     action.templateId.split(".")[0],
                     if ((action as? BooleanAction)?.newState == true) "open_cover" else "close_cover",
                     hashMapOf(
-                        "entity_id" to action.templateId
-                    )
+                        "entity_id" to action.templateId,
+                    ),
                 )
                 true
             }
@@ -94,8 +90,8 @@ object CoverControl : HaControl {
                     "set_cover_position",
                     hashMapOf(
                         "entity_id" to action.templateId,
-                        "position" to convertPosition.toInt()
-                    )
+                        "position" to convertPosition.toInt(),
+                    ),
                 )
                 true
             }

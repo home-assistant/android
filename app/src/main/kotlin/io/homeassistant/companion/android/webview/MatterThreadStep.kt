@@ -10,5 +10,5 @@ enum class MatterThreadStep {
     THREAD_NONE,
     ERROR_MATTER,
     ERROR_THREAD_LOCAL_NETWORK,
-    ERROR_THREAD_OTHER
+    ERROR_THREAD_OTHER,
 }

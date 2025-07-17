@@ -28,10 +28,10 @@ import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.util.CHANNEL_DATABASE
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.location.LocationHistoryDao
@@ -101,7 +101,7 @@ import timber.log.Timber
         ThermostatTile::class,
         EntityStateComplications::class,
         Server::class,
-        Setting::class
+        Setting::class,
     ],
     version = 51,
     autoMigrations = [
@@ -131,7 +131,7 @@ import timber.log.Timber
         AutoMigration(from = 48, to = 49),
         AutoMigration(from = 49, to = 50),
         AutoMigration(from = 50, to = 51),
-    ]
+    ],
 )
 @TypeConverters(
     LocalNotificationSettingConverter::class,
@@ -139,7 +139,7 @@ import timber.log.Timber
     EntriesTypeConverter::class,
     SensorSettingTypeConverter::class,
     WidgetBackgroundTypeConverter::class,
-    WidgetTapActionConverter::class
+    WidgetTapActionConverter::class,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
@@ -207,7 +207,7 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_21_22,
                     MIGRATION_22_23,
                     MIGRATION_23_24,
-                    Migration40to41(context.assets)
+                    Migration40to41(context.assets),
                 )
                 .build()
         }
@@ -227,15 +227,19 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
-                    "CREATE TABLE IF NOT EXISTS `sensors` (`unique_id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, PRIMARY KEY(`unique_id`))"
+                    "CREATE TABLE IF NOT EXISTS `sensors` (`unique_id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, PRIMARY KEY(`unique_id`))",
                 )
             }
         }
 
         private val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE IF NOT EXISTS `button_widgets` (`id` INTEGER NOT NULL, `icon_id` INTEGER NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, PRIMARY KEY(`id`))")
-                db.execSQL("CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_id` TEXT, `label` TEXT, PRIMARY KEY(`id`))")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `button_widgets` (`id` INTEGER NOT NULL, `icon_id` INTEGER NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, PRIMARY KEY(`id`))",
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_id` TEXT, `label` TEXT, PRIMARY KEY(`id`))",
+                )
             }
         }
 
@@ -248,7 +252,9 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE IF NOT EXISTS `template_widgets` (`id` INTEGER NOT NULL, `template` TEXT NOT NULL, PRIMARY KEY(`id`))")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `template_widgets` (`id` INTEGER NOT NULL, `template` TEXT NOT NULL, PRIMARY KEY(`id`))",
+                )
             }
         }
 
@@ -271,13 +277,17 @@ abstract class AppDatabase : RoomDatabase() {
                                 }
                             }
                             db.execSQL("DROP TABLE IF EXISTS `static_widget`")
-                            db.execSQL("CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `text_size` FLOAT NOT NULL DEFAULT '30', `state_separator` TEXT NOT NULL DEFAULT '', `attribute_separator` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`id`))")
+                            db.execSQL(
+                                "CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `text_size` FLOAT NOT NULL DEFAULT '30', `state_separator` TEXT NOT NULL DEFAULT '', `attribute_separator` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`id`))",
+                            )
                             for (cv in contentValues) {
                                 db.insert("static_widget", 0, cv)
                             }
                         } else {
                             db.execSQL("DROP TABLE IF EXISTS `static_widget`")
-                            db.execSQL("CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `text_size` FLOAT NOT NULL DEFAULT '30', `state_separator` TEXT NOT NULL DEFAULT '', `attribute_separator` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`id`))")
+                            db.execSQL(
+                                "CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `text_size` FLOAT NOT NULL DEFAULT '30', `state_separator` TEXT NOT NULL DEFAULT '', `attribute_separator` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`id`))",
+                            )
                         }
                     }
                     widgets.close()
@@ -299,7 +309,7 @@ abstract class AppDatabase : RoomDatabase() {
                                 it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
                                 it.put(
                                     "registered",
-                                    cursor.getInt(cursor.getColumnIndex("registered"))
+                                    cursor.getInt(cursor.getColumnIndex("registered")),
                                 )
                                 it.put("state", "")
                                 it.put("state_type", "")
@@ -316,7 +326,9 @@ abstract class AppDatabase : RoomDatabase() {
                     null
                 }
                 db.execSQL("DROP TABLE IF EXISTS `sensors`")
-                db.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))",
+                )
 
                 sensors?.forEach {
                     db.insert("sensors", OnConflictStrategy.REPLACE, it)
@@ -325,7 +337,9 @@ abstract class AppDatabase : RoomDatabase() {
                     notifyMigrationFailed()
                 }
 
-                db.execSQL("CREATE TABLE IF NOT EXISTS `sensor_attributes` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, PRIMARY KEY(`sensor_id`, `name`))")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `sensor_attributes` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, PRIMARY KEY(`sensor_id`, `name`))",
+                )
             }
         }
 
@@ -353,7 +367,7 @@ abstract class AppDatabase : RoomDatabase() {
                                 it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
                                 it.put(
                                     "registered",
-                                    cursor.getInt(cursor.getColumnIndex("registered"))
+                                    cursor.getInt(cursor.getColumnIndex("registered")),
                                 )
                                 it.put("state", "")
                                 it.put("last_sent_state", "")
@@ -370,7 +384,9 @@ abstract class AppDatabase : RoomDatabase() {
                     null
                 }
                 db.execSQL("DROP TABLE IF EXISTS `sensors`")
-                db.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `last_sent_state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `last_sent_state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))",
+                )
 
                 sensors?.forEach {
                     db.insert("sensors", OnConflictStrategy.REPLACE, it)
@@ -383,19 +399,25 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE IF NOT EXISTS `sensor_settings` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, `value_type` TEXT NOT NULL DEFAULT 'string', PRIMARY KEY(`sensor_id`, `name`))")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `sensor_settings` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, `value_type` TEXT NOT NULL DEFAULT 'string', PRIMARY KEY(`sensor_id`, `name`))",
+                )
             }
         }
 
         private val MIGRATION_11_12 = object : Migration(11, 12) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE IF NOT EXISTS `mediaplayctrls_widgets` (`id` INTEGER NOT NULL, `entityId` TEXT NOT NULL, `label` TEXT, `showSkip` INTEGER NOT NULL, `showSeek` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `mediaplayctrls_widgets` (`id` INTEGER NOT NULL, `entityId` TEXT NOT NULL, `label` TEXT, `showSkip` INTEGER NOT NULL, `showSeek` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+                )
             }
         }
 
         private val MIGRATION_12_13 = object : Migration(12, 13) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE IF NOT EXISTS `notification_history` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `received` INTEGER NOT NULL, `message` TEXT NOT NULL, `data` TEXT NOT NULL)")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `notification_history` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `received` INTEGER NOT NULL, `message` TEXT NOT NULL, `data` TEXT NOT NULL)",
+                )
             }
         }
 
@@ -414,7 +436,9 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_15_16 = object : Migration(15, 16) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE IF NOT EXISTS `camera_widgets` (`id` INTEGER NOT NULL, `entityId` TEXT NOT NULL, PRIMARY KEY(`id`))")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `camera_widgets` (`id` INTEGER NOT NULL, `entityId` TEXT NOT NULL, PRIMARY KEY(`id`))",
+                )
             }
         }
 
@@ -436,49 +460,103 @@ abstract class AppDatabase : RoomDatabase() {
 
                                     if (currentSensorId == "next_alarm" && currentSensorSettingName == "Allow List") {
                                         newSensorSettingName = "nextalarm_allow_list"
-                                    } else if ((currentSensorId == "last_removed_notification" || currentSensorId == "last_notification") && currentSensorSettingName == "Allow List") {
+                                    } else if ((
+                                            currentSensorId == "last_removed_notification" ||
+                                                currentSensorId == "last_notification"
+                                            ) &&
+                                        currentSensorSettingName == "Allow List"
+                                    ) {
                                         newSensorSettingName = "notification_allow_list"
-                                    } else if (currentSensorId == "geocoded_location" && currentSensorSettingName == "Minimum Accuracy") {
+                                    } else if (currentSensorId == "geocoded_location" &&
+                                        currentSensorSettingName == "Minimum Accuracy"
+                                    ) {
                                         newSensorSettingName = "geocode_minimum_accuracy"
-                                    } else if ((currentSensorId == "zone_background" || currentSensorId == "accurate_location" || currentSensorId == "location_background") && currentSensorSettingName == "Minimum Accuracy") {
+                                    } else if ((
+                                            currentSensorId == "zone_background" ||
+                                                currentSensorId == "accurate_location" ||
+                                                currentSensorId == "location_background"
+                                            ) &&
+                                        currentSensorSettingName == "Minimum Accuracy"
+                                    ) {
                                         newSensorSettingName = "location_minimum_accuracy"
-                                    } else if (currentSensorId == "accurate_location" && currentSensorSettingName == "Minimum time between updates") {
+                                    } else if (currentSensorId == "accurate_location" &&
+                                        currentSensorSettingName == "Minimum time between updates"
+                                    ) {
                                         newSensorSettingName = "location_minimum_time_updates"
-                                    } else if (currentSensorId == "accurate_location" && currentSensorSettingName == "Include in sensor update") {
+                                    } else if (currentSensorId == "accurate_location" &&
+                                        currentSensorSettingName == "Include in sensor update"
+                                    ) {
                                         newSensorSettingName = "location_include_sensor_update"
-                                    } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode (May drain battery fast)") {
+                                    } else if (currentSensorId == "location_background" &&
+                                        currentSensorSettingName == "High accuracy mode (May drain battery fast)"
+                                    ) {
                                         newSensorSettingName = "location_ham_enabled"
-                                    } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode update interval (seconds)") {
+                                    } else if (currentSensorId == "location_background" &&
+                                        currentSensorSettingName == "High accuracy mode update interval (seconds)"
+                                    ) {
                                         newSensorSettingName = "location_ham_update_interval"
-                                    } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode only when connected to BT devices") {
+                                    } else if (currentSensorId == "location_background" &&
+                                        currentSensorSettingName ==
+                                        "High accuracy mode only when connected to BT devices"
+                                    ) {
                                         newSensorSettingName = "location_ham_only_bt_dev"
-                                    } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode only when entering zone") {
+                                    } else if (currentSensorId == "location_background" &&
+                                        currentSensorSettingName == "High accuracy mode only when entering zone"
+                                    ) {
                                         newSensorSettingName = "location_ham_only_enter_zone"
-                                    } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode trigger range for zone (meters)") {
+                                    } else if (currentSensorId == "location_background" &&
+                                        currentSensorSettingName == "High accuracy mode trigger range for zone (meters)"
+                                    ) {
                                         newSensorSettingName = "location_ham_trigger_range"
                                     } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "UUID") {
                                         newSensorSettingName = "ble_uuid"
-                                    } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Major") {
+                                    } else if (currentSensorId == "ble_emitter" &&
+                                        currentSensorSettingName == "Major"
+                                    ) {
                                         newSensorSettingName = "ble_major"
-                                    } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Minor") {
+                                    } else if (currentSensorId == "ble_emitter" &&
+                                        currentSensorSettingName == "Minor"
+                                    ) {
                                         newSensorSettingName = "ble_minor"
-                                    } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "transmit_power") {
+                                    } else if (currentSensorId == "ble_emitter" &&
+                                        currentSensorSettingName == "transmit_power"
+                                    ) {
                                         newSensorSettingName = "ble_transmit_power"
                                         entries = "ultraLow|low|medium|high"
-                                    } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Enable Transmitter") {
+                                    } else if (currentSensorId == "ble_emitter" &&
+                                        currentSensorSettingName == "Enable Transmitter"
+                                    ) {
                                         newSensorSettingName = "ble_transmit_enabled"
-                                    } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Include when enabling all sensors") {
+                                    } else if (currentSensorId == "ble_emitter" &&
+                                        currentSensorSettingName == "Include when enabling all sensors"
+                                    ) {
                                         newSensorSettingName = "ble_enable_toggle_all"
-                                    } else if (currentSensorId == "last_reboot" && currentSensorSettingName == "deadband") {
+                                    } else if (currentSensorId == "last_reboot" &&
+                                        currentSensorSettingName == "deadband"
+                                    ) {
                                         newSensorSettingName = "lastreboot_deadband"
-                                    } else if (currentSensorId == "last_update" && currentSensorSettingName == "Add New Intent") {
+                                    } else if (currentSensorId == "last_update" &&
+                                        currentSensorSettingName == "Add New Intent"
+                                    ) {
                                         newSensorSettingName = "lastupdate_add_new_intent"
-                                    } else if (currentSensorId == "last_update" && currentSensorSettingName.startsWith("intent")) {
-                                        newSensorSettingName = "lastupdate_intent_var1:" + currentSensorSettingName.substringAfter("intent") + ":"
-                                    } else if (currentSensorId == "wifi_bssid" && currentSensorSettingName == "get_current_bssid") {
+                                    } else if (currentSensorId == "last_update" &&
+                                        currentSensorSettingName.startsWith("intent")
+                                    ) {
+                                        newSensorSettingName =
+                                            "lastupdate_intent_var1:" +
+                                            currentSensorSettingName.substringAfter("intent") +
+                                            ":"
+                                    } else if (currentSensorId == "wifi_bssid" &&
+                                        currentSensorSettingName == "get_current_bssid"
+                                    ) {
                                         newSensorSettingName = "network_get_current_bssid"
-                                    } else if (currentSensorId == "wifi_bssid" && currentSensorSettingName.startsWith("replace_")) {
-                                        newSensorSettingName = "network_replace_mac_var1:" + currentSensorSettingName.substringAfter("replace_") + ":"
+                                    } else if (currentSensorId == "wifi_bssid" &&
+                                        currentSensorSettingName.startsWith("replace_")
+                                    ) {
+                                        newSensorSettingName =
+                                            "network_replace_mac_var1:" +
+                                            currentSensorSettingName.substringAfter("replace_") +
+                                            ":"
                                     }
                                     it.put("sensor_id", cursor.getString(cursor.getColumnIndex("sensor_id")))
                                     it.put("name", newSensorSettingName)
@@ -486,7 +564,7 @@ abstract class AppDatabase : RoomDatabase() {
                                     it.put("value_type", cursor.getString(cursor.getColumnIndex("value_type")))
                                     it.put("entries", entries)
                                     it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                                }
+                                },
                             )
                         }
                     }
@@ -495,7 +573,9 @@ abstract class AppDatabase : RoomDatabase() {
                     Timber.e(e, "Unable to migrate, proceeding with recreating the table")
                 }
                 db.execSQL("DROP TABLE IF EXISTS `sensor_settings`")
-                db.execSQL("CREATE TABLE IF NOT EXISTS `sensor_settings` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, `value_type` TEXT NOT NULL DEFAULT 'string', `entries` TEXT NOT NULL, `enabled` INTEGER NOT NULL DEFAULT '1', PRIMARY KEY(`sensor_id`, `name`))")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `sensor_settings` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, `value_type` TEXT NOT NULL DEFAULT 'string', `entries` TEXT NOT NULL, `enabled` INTEGER NOT NULL DEFAULT '1', PRIMARY KEY(`sensor_id`, `name`))",
+                )
 
                 sensorSettings.forEach {
                     db.insert("sensor_settings", OnConflictStrategy.REPLACE, it)
@@ -508,7 +588,9 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_17_18 = object : Migration(17, 18) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE IF NOT EXISTS `qs_tiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tileId` TEXT NOT NULL, `icon_id` INTEGER, `entityId` TEXT NOT NULL, `label` TEXT NOT NULL, `subtitle` TEXT)")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `qs_tiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tileId` TEXT NOT NULL, `icon_id` INTEGER, `entityId` TEXT NOT NULL, `label` TEXT NOT NULL, `subtitle` TEXT)",
+                )
             }
         }
 
@@ -523,13 +605,17 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_19_20 = object : Migration(19, 20) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE IF NOT EXISTS `favorites` (`id` TEXT PRIMARY KEY NOT NULL, `position` INTEGER)")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `favorites` (`id` TEXT PRIMARY KEY NOT NULL, `position` INTEGER)",
+                )
             }
         }
 
         private val MIGRATION_20_21 = object : Migration(20, 21) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE IF NOT EXISTS `settings` (`id` INTEGER NOT NULL, `websocketSetting` TEXT NOT NULL, PRIMARY KEY(`id`))")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `settings` (`id` INTEGER NOT NULL, `websocketSetting` TEXT NOT NULL, PRIMARY KEY(`id`))",
+                )
             }
         }
 
@@ -563,92 +649,92 @@ abstract class AppDatabase : RoomDatabase() {
             RenameColumn(
                 tableName = "Authentication_List",
                 fromColumnName = "Username",
-                toColumnName = "username"
+                toColumnName = "username",
             ),
             RenameColumn(
                 tableName = "Authentication_List",
                 fromColumnName = "Password",
-                toColumnName = "password"
+                toColumnName = "password",
             ),
             RenameColumn(
                 tableName = "qs_tiles",
                 fromColumnName = "tileId",
-                toColumnName = "tile_id"
+                toColumnName = "tile_id",
             ),
             RenameColumn(
                 tableName = "qs_tiles",
                 fromColumnName = "entityId",
-                toColumnName = "entity_id"
+                toColumnName = "entity_id",
             ),
             RenameColumn(
                 tableName = "qs_tiles",
                 fromColumnName = "shouldVibrate",
-                toColumnName = "should_vibrate"
+                toColumnName = "should_vibrate",
             ),
             RenameColumn(
                 tableName = "qs_tiles",
                 fromColumnName = "authRequired",
-                toColumnName = "auth_required"
+                toColumnName = "auth_required",
             ),
             RenameColumn(
                 tableName = "settings",
                 fromColumnName = "websocketSetting",
-                toColumnName = "websocket_setting"
+                toColumnName = "websocket_setting",
             ),
             RenameColumn(
                 tableName = "settings",
                 fromColumnName = "sensorUpdateFrequency",
-                toColumnName = "sensor_update_frequency"
+                toColumnName = "sensor_update_frequency",
             ),
             RenameColumn(
                 tableName = "camera_widgets",
                 fromColumnName = "entityId",
-                toColumnName = "entity_id"
+                toColumnName = "entity_id",
             ),
             RenameColumn(
                 tableName = "entityStateComplications",
                 fromColumnName = "entityId",
-                toColumnName = "entity_id"
+                toColumnName = "entity_id",
             ),
             RenameColumn(
                 tableName = "mediaplayctrls_widgets",
                 fromColumnName = "entityId",
-                toColumnName = "entity_id"
+                toColumnName = "entity_id",
             ),
             RenameColumn(
                 tableName = "mediaplayctrls_widgets",
                 fromColumnName = "showSkip",
-                toColumnName = "show_skip"
+                toColumnName = "show_skip",
             ),
             RenameColumn(
                 tableName = "mediaplayctrls_widgets",
                 fromColumnName = "showSeek",
-                toColumnName = "show_seek"
+                toColumnName = "show_seek",
             ),
             RenameColumn(
                 tableName = "mediaplayctrls_widgets",
                 fromColumnName = "showVolume",
-                toColumnName = "show_volume"
+                toColumnName = "show_volume",
             ),
             RenameColumn(
                 tableName = "mediaplayctrls_widgets",
                 fromColumnName = "showSource",
-                toColumnName = "show_source"
-            )
+                toColumnName = "show_source",
+            ),
         )
         @RenameTable.Entries(
             RenameTable(
                 fromTableName = "Authentication_List",
-                toTableName = "authentication_list"
+                toTableName = "authentication_list",
             ),
             RenameTable(
                 fromTableName = "entityStateComplications",
-                toTableName = "entity_state_complications"
+                toTableName = "entity_state_complications",
             ),
             RenameTable(
                 fromTableName = "mediaplayctrls_widgets",
-                toTableName = "media_player_controls_widgets"
-            )
+                toTableName = "media_player_controls_widgets",
+            ),
         )
         class Migration36to37 : AutoMigrationSpec
 
@@ -674,7 +760,14 @@ abstract class AppDatabase : RoomDatabase() {
                 val authStorage = appContext.getSharedPreferences("session_0", Context.MODE_PRIVATE)
                 val authAccessToken = authStorage.getString("access_token", null)
                 val authRefreshToken = authStorage.getString("refresh_token", null)
-                val authTokenExpiration = if (authStorage.contains("expires_date")) authStorage.getLong("expires_date", 0) else null
+                val authTokenExpiration = if (authStorage.contains(
+                        "expires_date",
+                    )
+                ) {
+                    authStorage.getLong("expires_date", 0)
+                } else {
+                    null
+                }
                 val authTokenType = authStorage.getString("token_type", null)
                 val authInstallId = if (authStorage.contains("install_id")) {
                     authStorage.getString("install_id", "")
@@ -702,7 +795,7 @@ abstract class AppDatabase : RoomDatabase() {
                     integrationSecret?.let { put("secret", it) } ?: run { putNull("secret") }
                     urlCloudhook?.let { put("cloudhook_url", it) } ?: run { putNull("cloudhook_url") }
                     put("use_cloud", urlUseCloud)
-                    put("internal_ssids", jacksonObjectMapper().writeValueAsString(urlInternalSsids))
+                    put("internal_ssids", kotlinJsonMapper.encodeToString(urlInternalSsids))
                     put("prioritize_internal", urlPrioritizeInternal)
                     authAccessToken?.let { put("access_token", it) } ?: run { putNull("access_token") }
                     authRefreshToken?.let { put("refresh_token", it) } ?: run { putNull("refresh_token") }
@@ -804,7 +897,9 @@ abstract class AppDatabase : RoomDatabase() {
                     }
                 }
 
-                val existingZones = db.query("SELECT * FROM `sensor_settings` WHERE `sensor_id` = 'location_background' AND `name` = 'location_ham_only_enter_zone'")
+                val existingZones = db.query(
+                    "SELECT * FROM `sensor_settings` WHERE `sensor_id` = 'location_background' AND `name` = 'location_ham_only_enter_zone'",
+                )
                 existingZones.use {
                     if (existingZones.count > 0) {
                         if (it.moveToFirst()) {
@@ -815,7 +910,7 @@ abstract class AppDatabase : RoomDatabase() {
                                         .joinToString { zone -> "${serverId}_$zone" }
                                     db.execSQL(
                                         "UPDATE `sensor_settings` SET `value` = '$newSetting' " +
-                                            "WHERE `sensor_id` = 'location_background' AND `name` = 'location_ham_only_enter_zone'"
+                                            "WHERE `sensor_id` = 'location_background' AND `name` = 'location_ham_only_enter_zone'",
                                     )
                                 }
                             }
@@ -848,7 +943,10 @@ abstract class AppDatabase : RoomDatabase() {
                                 put("label", cursor.getStringOrNull(cursor.getColumnIndex("label")))
                                 put("background_type", cursor.getString(cursor.getColumnIndex("background_type")))
                                 put("text_color", cursor.getStringOrNull(cursor.getColumnIndex("text_color")))
-                                put("require_authentication", cursor.getInt(cursor.getColumnIndex("require_authentication")))
+                                put(
+                                    "require_authentication",
+                                    cursor.getInt(cursor.getColumnIndex("require_authentication")),
+                                )
 
                                 put("icon_name", cursor.getIconName(cursor.getColumnIndex("icon_id")))
                             }
@@ -860,7 +958,9 @@ abstract class AppDatabase : RoomDatabase() {
                     null
                 }
                 db.execSQL("DROP TABLE IF EXISTS `button_widgets`")
-                db.execSQL("CREATE TABLE IF NOT EXISTS `button_widgets` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `icon_name` TEXT NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `require_authentication` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `button_widgets` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `icon_name` TEXT NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `require_authentication` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))",
+                )
                 widgets?.forEach {
                     db.insert("button_widgets", OnConflictStrategy.REPLACE, it)
                 }
@@ -893,7 +993,9 @@ abstract class AppDatabase : RoomDatabase() {
                     null
                 }
                 db.execSQL("DROP TABLE IF EXISTS `qs_tiles`")
-                db.execSQL("CREATE TABLE IF NOT EXISTS `qs_tiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tile_id` TEXT NOT NULL, `added` INTEGER NOT NULL DEFAULT 1, `server_id` INTEGER NOT NULL DEFAULT 0, `icon_name` TEXT, `entity_id` TEXT NOT NULL, `label` TEXT NOT NULL, `subtitle` TEXT, `should_vibrate` INTEGER NOT NULL DEFAULT 0, `auth_required` INTEGER NOT NULL DEFAULT 0)")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `qs_tiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tile_id` TEXT NOT NULL, `added` INTEGER NOT NULL DEFAULT 1, `server_id` INTEGER NOT NULL DEFAULT 0, `icon_name` TEXT, `entity_id` TEXT NOT NULL, `label` TEXT NOT NULL, `subtitle` TEXT, `should_vibrate` INTEGER NOT NULL DEFAULT 0, `auth_required` INTEGER NOT NULL DEFAULT 0)",
+                )
                 tiles?.forEach {
                     db.insert("qs_tiles", OnConflictStrategy.REPLACE, it)
                 }
@@ -915,7 +1017,7 @@ abstract class AppDatabase : RoomDatabase() {
                     notificationChannel = NotificationChannel(
                         CHANNEL_DATABASE,
                         TAG,
-                        NotificationManager.IMPORTANCE_HIGH
+                        NotificationManager.IMPORTANCE_HIGH,
                     )
                     notificationManager.createNotificationChannel(notificationChannel)
                 }
@@ -942,7 +1044,7 @@ abstract class AppDatabase : RoomDatabase() {
                         Toast.makeText(
                             appContext,
                             commonR.string.database_event_failure,
-                            Toast.LENGTH_LONG
+                            Toast.LENGTH_LONG,
                         ).show()
                     }
                 }

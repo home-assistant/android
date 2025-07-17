@@ -27,7 +27,7 @@ import timber.log.Timber
 
 class ManualSetupPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
-    private val serverManager: ServerManager
+    private val serverManager: ServerManager,
 ) : ManualSetupPresenter {
 
     private val view = context as ManualSetupView
@@ -43,7 +43,7 @@ class ManualSetupPresenterImpl @Inject constructor(
             try {
                 request = OAuthRequest.Builder(context)
                     .setAuthProviderUrl(
-                        Uri.parse(UrlUtil.buildAuthenticationUrl(url))
+                        Uri.parse(UrlUtil.buildAuthenticationUrl(url)),
                     )
                     .setCodeChallenge(CodeChallenge(codeVerifier))
                     .build()
@@ -67,21 +67,18 @@ class ManualSetupPresenterImpl @Inject constructor(
                                     RemoteAuthClient.ERROR_UNSUPPORTED -> commonR.string.failed_unsupported
                                     RemoteAuthClient.ERROR_PHONE_UNAVAILABLE -> commonR.string.failed_phone_connection
                                     else -> commonR.string.failed_connection
-                                }
+                                },
                             )
                         }
 
-                        override fun onAuthorizationResponse(
-                            request: OAuthRequest,
-                            response: OAuthResponse
-                        ) {
+                        override fun onAuthorizationResponse(request: OAuthRequest, response: OAuthResponse) {
                             response.responseUrl?.getQueryParameter("code")?.let { code ->
                                 register(url, code)
                             } ?: run {
                                 view.showError(commonR.string.failed_registration)
                             }
                         }
-                    }
+                    },
                 )
             }
         }
@@ -98,10 +95,10 @@ class ManualSetupPresenterImpl @Inject constructor(
                     _name = "",
                     type = ServerType.TEMPORARY,
                     connection = ServerConnectionInfo(
-                        externalUrl = formattedUrl
+                        externalUrl = formattedUrl,
                     ),
                     session = ServerSessionInfo(),
-                    user = ServerUserInfo()
+                    user = ServerUserInfo(),
                 )
                 serverId = serverManager.addServer(server)
                 serverManager.authenticationRepository(serverId).registerAuthorizationCode(code)

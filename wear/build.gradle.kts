@@ -11,15 +11,14 @@ android {
 
         versionName = project.version.toString()
         // We add 1 because the app and wear versions need to have different version codes.
-        versionCode = 1 + checkNotNull(versionCode) { "Did you forget to apply the convention plugin that set the version code?" }
+        versionCode =
+            1 + checkNotNull(versionCode) { "Did you forget to apply the convention plugin that set the version code?" }
     }
 
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
 
-    testOptions {
-        screenshotTests {
-            imageDifferenceThreshold = 0.00025f // 0.025%
-        }
+    screenshotTests {
+        imageDifferenceThreshold = 0.00025f // 0.025%
     }
 }
 
@@ -43,8 +42,8 @@ dependencies {
     implementation(libs.wear.remote.interactions)
     implementation(libs.wear.phone.interactions)
 
-    implementation(libs.jackson.module.kotlin)
-    implementation(libs.okhttp)
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp.android)
 
     implementation(libs.iconics.core)
     implementation(libs.appcompat)

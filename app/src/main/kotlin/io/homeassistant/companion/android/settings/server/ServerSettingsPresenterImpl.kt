@@ -14,8 +14,9 @@ import timber.log.Timber
 
 class ServerSettingsPresenterImpl @Inject constructor(
     private val serverManager: ServerManager,
-    private val wifiHelper: WifiHelper
-) : ServerSettingsPresenter, PreferenceDataStore() {
+    private val wifiHelper: WifiHelper,
+) : PreferenceDataStore(),
+    ServerSettingsPresenter {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     private lateinit var view: ServerSettingsView
@@ -42,7 +43,9 @@ class ServerSettingsPresenterImpl @Inject constructor(
             when (key) {
                 "trust_server" -> serverManager.integrationRepository(serverId).setTrusted(value)
                 "app_lock" -> serverManager.authenticationRepository(serverId).setLockEnabled(value)
-                "app_lock_home_bypass" -> serverManager.authenticationRepository(serverId).setLockHomeBypassEnabled(value)
+                "app_lock_home_bypass" -> serverManager.authenticationRepository(
+                    serverId,
+                ).setLockHomeBypassEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -52,7 +55,10 @@ class ServerSettingsPresenterImpl @Inject constructor(
         when (key) {
             "server_name" -> serverManager.getServer(serverId)?.nameOverride
             "registration_name" -> serverManager.getServer(serverId)?.deviceName
-            "connection_internal" -> (serverManager.getServer(serverId)?.connection?.getUrl(isInternal = true, force = true) ?: "").toString()
+            "connection_internal" -> (
+                serverManager.getServer(serverId)?.connection?.getUrl(isInternal = true, force = true)
+                    ?: ""
+                ).toString()
             "session_timeout" -> serverManager.integrationRepository(serverId).getSessionTimeOut().toString()
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
@@ -65,8 +71,8 @@ class ServerSettingsPresenterImpl @Inject constructor(
                     serverManager.getServer(serverId)?.let {
                         serverManager.updateServer(
                             it.copy(
-                                nameOverride = value?.ifBlank { null }
-                            )
+                                nameOverride = value?.ifBlank { null },
+                            ),
                         )
                     }
                     view.updateServerName(serverManager.getServer(serverId)?.friendlyName ?: "")
@@ -75,8 +81,8 @@ class ServerSettingsPresenterImpl @Inject constructor(
                     serverManager.getServer(serverId)?.let {
                         serverManager.updateServer(
                             it.copy(
-                                deviceName = value?.ifBlank { null }
-                            )
+                                deviceName = value?.ifBlank { null },
+                            ),
                         )
                     }
                 }
@@ -85,9 +91,9 @@ class ServerSettingsPresenterImpl @Inject constructor(
                         serverManager.updateServer(
                             it.copy(
                                 connection = it.connection.copy(
-                                    internalUrl = value
-                                )
-                            )
+                                    internalUrl = value,
+                                ),
+                            ),
                         )
                     }
                 }
@@ -114,7 +120,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
             serverManager.removeServer(serverId)
             view.onRemovedServer(
                 success = true,
-                hasAnyRemaining = serverManager.defaultServers.any { it.id != serverId }
+                hasAnyRemaining = serverManager.defaultServers.any { it.id != serverId },
             )
         } ?: run {
             view.onRemovedServer(success = false, hasAnyRemaining = true)
@@ -130,22 +136,23 @@ class ServerSettingsPresenterImpl @Inject constructor(
 
     override fun hasMultipleServers(): Boolean = serverManager.defaultServers.size > 1
 
-    override fun updateServerName() =
-        view.updateServerName(serverManager.getServer(serverId)?.friendlyName ?: "")
+    override fun updateServerName() = view.updateServerName(serverManager.getServer(serverId)?.friendlyName ?: "")
 
     override fun updateUrlStatus() {
         mainScope.launch {
             serverManager.getServer(serverId)?.let {
                 view.updateExternalUrl(
                     it.connection.getUrl(false)?.toString() ?: "",
-                    it.connection.useCloud && it.connection.canUseCloud()
+                    it.connection.useCloud && it.connection.canUseCloud(),
                 )
             }
         }
         mainScope.launch {
             val connection = serverManager.getServer(serverId)?.connection
             val ssids = connection?.internalSsids.orEmpty()
-            view.enableInternalConnection(ssids.isNotEmpty() || connection?.internalEthernet == true || connection?.internalVpn == true)
+            view.enableInternalConnection(
+                ssids.isNotEmpty() || connection?.internalEthernet == true || connection?.internalVpn == true,
+            )
             view.updateHomeNetwork(ssids, connection?.internalEthernet, connection?.internalVpn)
         }
     }
@@ -162,9 +169,9 @@ class ServerSettingsPresenterImpl @Inject constructor(
                 serverManager.updateServer(
                     it.copy(
                         connection = it.connection.copy(
-                            internalSsids = emptyList()
-                        )
-                    )
+                            internalSsids = emptyList(),
+                        ),
+                    ),
                 )
             }
             updateUrlStatus()
@@ -178,5 +185,9 @@ class ServerSettingsPresenterImpl @Inject constructor(
             Timber.w("Cannot set app active $active for server $serverId")
             Unit
         }
+    }
+
+    override fun serverURL(): String? {
+        return serverManager.getServer(serverId)?.connection?.getUrl()?.toString()
     }
 }

@@ -19,7 +19,7 @@ class MatterCommissioningViewModel @Inject constructor(
     private val matterManager: MatterManager,
     private val threadManager: ThreadManager,
     private val serverManager: ServerManager,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
 
     sealed class CommissioningFlowStep {

@@ -31,7 +31,7 @@ fun initCrashSaving(context: Context) {
                 """|Timestamp: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(Date())}
                     |Thread: ${thread.name}
                     |Exception: ${exception.stackTraceToString()}
-                """.trimMargin()
+                """.trimMargin(),
             )
         } catch (e: Exception) {
             Timber.i(e, "Tried saving fatal crash but encountered exception")

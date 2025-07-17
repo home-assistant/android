@@ -16,7 +16,7 @@ class TheaterModeSensorManager : SensorManager {
             commonR.string.sensor_description_theater_mode,
             "mdi:movie-open",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.WORKER
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER,
         )
     }
 
@@ -44,7 +44,17 @@ class TheaterModeSensorManager : SensorManager {
         }
 
         val state = try {
-            Settings.Global.getInt(context.contentResolver, if (Build.MANUFACTURER == "samsung") "setting_theater_mode_on" else "theater_mode_on") == 1
+            Settings.Global.getInt(
+                context.contentResolver,
+                if (Build.MANUFACTURER ==
+                    "samsung"
+                ) {
+                    "setting_theater_mode_on"
+                } else {
+                    "theater_mode_on"
+                },
+            ) ==
+                1
         } catch (e: Exception) {
             Timber.e(e, "Unable to update theater mode sensor")
             false
@@ -55,7 +65,7 @@ class TheaterModeSensorManager : SensorManager {
             theaterMode,
             state,
             if (!state) "mdi:movie-open-off" else theaterMode.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 }

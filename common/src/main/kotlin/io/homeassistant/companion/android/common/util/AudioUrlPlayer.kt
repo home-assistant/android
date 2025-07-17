@@ -20,7 +20,10 @@ import timber.log.Timber
 /**
  * Simple interface for playing short streaming audio (from URLs).
  */
-class AudioUrlPlayer @VisibleForTesting constructor(private val audioManager: AudioManager?, private val mediaPlayerCreator: () -> MediaPlayer) {
+class AudioUrlPlayer @VisibleForTesting constructor(
+    private val audioManager: AudioManager?,
+    private val mediaPlayerCreator: () -> MediaPlayer,
+) {
 
     constructor(audioManager: AudioManager?) : this(audioManager, { MediaPlayer() })
 
@@ -47,16 +50,20 @@ class AudioUrlPlayer @VisibleForTesting constructor(private val audioManager: Au
                     setAudioAttributes(
                         AudioAttributes.Builder()
                             .setContentType(
-                                if (isAssistant) AudioAttributes.CONTENT_TYPE_SPEECH else AudioAttributes.CONTENT_TYPE_MUSIC
+                                if (isAssistant) {
+                                    AudioAttributes.CONTENT_TYPE_SPEECH
+                                } else {
+                                    AudioAttributes.CONTENT_TYPE_MUSIC
+                                },
                             )
                             .setUsage(
                                 if (isAssistant && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                                     AudioAttributes.USAGE_ASSISTANT
                                 } else {
                                     AudioAttributes.USAGE_MEDIA
-                                }
+                                },
                             )
-                            .build()
+                            .build(),
                     )
                     setOnPreparedListener {
                         if (isActive) {
@@ -129,7 +136,7 @@ class AudioUrlPlayer @VisibleForTesting constructor(private val audioManager: Au
                             setContentType(AudioAttributesCompat.CONTENT_TYPE_MUSIC)
                         }
                         build()
-                    }
+                    },
                 )
                 setOnAudioFocusChangeListener(focusListener)
                 build()

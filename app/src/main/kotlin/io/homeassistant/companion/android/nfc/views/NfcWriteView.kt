@@ -4,9 +4,12 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -32,11 +35,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 
 @Composable
-fun NfcWriteView(
-    isNfcEnabled: Boolean,
-    identifier: String?,
-    onSetIdentifier: ((String) -> Unit)? = null
-) {
+fun NfcWriteView(isNfcEnabled: Boolean, identifier: String?, onSetIdentifier: ((String) -> Unit)? = null) {
     var identifierDialog by remember { mutableStateOf(false) }
 
     if (identifierDialog && onSetIdentifier != null) {
@@ -45,20 +44,21 @@ fun NfcWriteView(
             onSubmit = {
                 onSetIdentifier(it)
                 identifierDialog = false
-            }
+            },
         )
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(all = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Image(
             asset = CommunityMaterial.Icon3.cmd_nfc_tap,
-            colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface)
+            colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
         )
         Text(
             text =
@@ -70,7 +70,7 @@ fun NfcWriteView(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth(0.75f)
-                .padding(top = 16.dp)
+                .padding(top = 16.dp),
         )
         if (!isNfcEnabled) {
             val context = LocalContext.current
@@ -88,10 +88,7 @@ fun NfcWriteView(
 }
 
 @Composable
-fun NfcWriteIdentifierDialog(
-    onCancel: () -> Unit,
-    onSubmit: (String) -> Unit
-) {
+fun NfcWriteIdentifierDialog(onCancel: () -> Unit, onSubmit: (String) -> Unit) {
     val inputValue = remember { mutableStateOf("") }
 
     MdcAlertDialog(
@@ -101,13 +98,13 @@ fun NfcWriteIdentifierDialog(
             TextField(
                 value = inputValue.value,
                 keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Done
+                    imeAction = ImeAction.Done,
                 ),
-                onValueChange = { input -> inputValue.value = input }
+                onValueChange = { input -> inputValue.value = input },
             )
         },
         onCancel = onCancel,
-        onSave = { onSubmit(inputValue.value) }
+        onSave = { onSubmit(inputValue.value) },
     )
 }
 

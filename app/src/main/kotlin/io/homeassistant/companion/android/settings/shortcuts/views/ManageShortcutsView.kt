@@ -42,19 +42,20 @@ import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSett
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsViewModel
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
+import io.homeassistant.companion.android.util.plus
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
-fun ManageShortcutsView(
-    viewModel: ManageShortcutsViewModel,
-    showIconDialog: (tag: String) -> Unit
-) {
-    LazyColumn(contentPadding = PaddingValues(16.dp)) {
+fun ManageShortcutsView(viewModel: ManageShortcutsViewModel, showIconDialog: (tag: String) -> Unit) {
+    LazyColumn(
+        contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
+    ) {
         item {
             Text(
                 text = stringResource(id = R.string.shortcut_instruction_desc),
                 fontSize = 14.sp,
-                modifier = Modifier.padding(bottom = 10.dp)
+                modifier = Modifier.padding(bottom = 10.dp),
             )
             Divider()
         }
@@ -69,7 +70,7 @@ fun ManageShortcutsView(
             CreateShortcutView(
                 i = i,
                 viewModel = viewModel,
-                showIconDialog = showIconDialog
+                showIconDialog = showIconDialog,
             )
         }
     }
@@ -77,11 +78,7 @@ fun ManageShortcutsView(
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
-private fun CreateShortcutView(
-    i: Int,
-    viewModel: ManageShortcutsViewModel,
-    showIconDialog: (tag: String) -> Unit
-) {
+private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, showIconDialog: (tag: String) -> Unit) {
     val context = LocalContext.current
     var expandedPinnedShortcuts by remember { mutableStateOf(false) }
 
@@ -94,18 +91,18 @@ private fun CreateShortcutView(
             stringResource(id = R.string.shortcut) + " $index"
         } else {
             stringResource(
-                id = R.string.shortcut_pinned
+                id = R.string.shortcut_pinned,
             )
         },
         fontSize = 20.sp,
         color = colorResource(id = R.color.colorAccent),
-        modifier = Modifier.padding(top = 20.dp)
+        modifier = Modifier.padding(top = 20.dp),
     )
 
     if (index == 5) {
         Text(
             text = stringResource(id = R.string.shortcut5_note),
-            fontSize = 14.sp
+            fontSize = 14.sp,
         )
     }
 
@@ -113,7 +110,7 @@ private fun CreateShortcutView(
         Text(
             text = stringResource(id = R.string.shortcut_pinned_note),
             fontSize = 14.sp,
-            modifier = Modifier.padding(top = 10.dp, bottom = 10.dp)
+            modifier = Modifier.padding(top = 10.dp, bottom = 10.dp),
         )
 
         val pinnedShortCutIds = viewModel.pinnedShortcuts.asSequence().map { it.id }.toList()
@@ -123,14 +120,25 @@ private fun CreateShortcutView(
                 Text(
                     text = stringResource(id = R.string.shortcut_pinned_list),
                     fontSize = 15.sp,
-                    modifier = Modifier.padding(end = 10.dp)
+                    modifier = Modifier.padding(end = 10.dp),
                 )
                 Box {
                     OutlinedButton(onClick = { expandedPinnedShortcuts = true }) {
-                        Text(if (viewModel.shortcuts[i].id.value in pinnedShortCutIds) viewModel.shortcuts[i].id.value ?: "" else "")
+                        Text(
+                            if (viewModel.shortcuts[i].id.value in
+                                pinnedShortCutIds
+                            ) {
+                                viewModel.shortcuts[i].id.value ?: ""
+                            } else {
+                                ""
+                            },
+                        )
                     }
 
-                    DropdownMenu(expanded = expandedPinnedShortcuts, onDismissRequest = { expandedPinnedShortcuts = false }) {
+                    DropdownMenu(expanded = expandedPinnedShortcuts, onDismissRequest = {
+                        expandedPinnedShortcuts =
+                            false
+                    }) {
                         for (item in pinnedShortCutIds) {
                             DropdownMenuItem(onClick = {
                                 viewModel.setPinnedShortcutData(item)
@@ -149,7 +157,7 @@ private fun CreateShortcutView(
             label = {
                 Text(stringResource(id = R.string.shortcut_pinned_id))
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 
@@ -157,7 +165,7 @@ private fun CreateShortcutView(
         Text(
             text = stringResource(id = R.string.shortcut_icon),
             fontSize = 15.sp,
-            modifier = Modifier.padding(end = 10.dp)
+            modifier = Modifier.padding(end = 10.dp),
         )
         OutlinedButton(onClick = {
             showIconDialog(shortcutId)
@@ -173,7 +181,7 @@ private fun CreateShortcutView(
                 painter = painter,
                 contentDescription = stringResource(id = R.string.shortcut_icon),
                 modifier = Modifier.size(24.dp),
-                colorFilter = ColorFilter.tint(colorResource(R.color.colorAccent))
+                colorFilter = ColorFilter.tint(colorResource(R.color.colorAccent)),
             )
         }
     }
@@ -187,10 +195,10 @@ private fun CreateShortcutView(
                     "${stringResource(id = R.string.shortcut)} $index ${stringResource(id = R.string.label)}"
                 } else {
                     stringResource(id = R.string.shortcut_pinned_label)
-                }
+                },
             )
         },
-        modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
     )
 
     TextField(
@@ -202,10 +210,10 @@ private fun CreateShortcutView(
                     "${stringResource(id = R.string.shortcut)} $index ${stringResource(id = R.string.description)}"
                 } else {
                     stringResource(id = R.string.shortcut_pinned_desc)
-                }
+                },
             )
         },
-        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
     )
 
     if (viewModel.servers.size > 1 || viewModel.servers.none { it.id == shortcut.serverId.value }) {
@@ -213,14 +221,14 @@ private fun CreateShortcutView(
             ServerExposedDropdownMenu(
                 servers = viewModel.servers,
                 current = shortcut.serverId.value,
-                onSelected = { viewModel.shortcuts[i].serverId.value = it }
+                onSelected = { viewModel.shortcuts[i].serverId.value = it },
             )
         }
     }
 
     Text(
         text = stringResource(id = R.string.shortcut_type),
-        modifier = Modifier.padding(top = 16.dp)
+        modifier = Modifier.padding(top = 16.dp),
     )
 
     Row {
@@ -233,8 +241,12 @@ private fun CreateShortcutView(
             value = viewModel.shortcuts[i].path.value,
             onValueChange = { viewModel.shortcuts[i].path.value = it },
             label = { Text(stringResource(id = R.string.lovelace_view_dashboard)) },
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, autoCorrectEnabled = false, keyboardType = KeyboardType.Uri),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done,
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Uri,
+            ),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
         )
     } else {
         SingleEntityPicker(
@@ -247,7 +259,7 @@ private fun CreateShortcutView(
                 viewModel.shortcuts[i].path.value = "entityId:$it"
                 return@SingleEntityPicker true
             },
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 16.dp),
         )
     }
     for (item in viewModel.dynamicShortcuts) {
@@ -269,7 +281,7 @@ private fun CreateShortcutView(
                 shortcut.label.value,
                 shortcut.desc.value,
                 shortcut.path.value,
-                shortcut.selectedIcon.value
+                shortcut.selectedIcon.value,
             )
         },
         enabled =
@@ -277,7 +289,7 @@ private fun CreateShortcutView(
             shortcut.label.value.isNotEmpty() &&
             shortcut.desc.value.isNotEmpty() &&
             shortcut.path.value.isNotEmpty() &&
-            viewModel.servers.any { it.id == shortcut.serverId.value }
+            viewModel.servers.any { it.id == shortcut.serverId.value },
     ) {
         Text(
             text = stringResource(
@@ -303,8 +315,8 @@ private fun CreateShortcutView(
                     R.string.update_shortcut
                 } else {
                     R.string.add_shortcut
-                }
-            )
+                },
+            ),
         )
     }
 
@@ -320,7 +332,7 @@ private fun ShortcutRadioButtonRow(viewModel: ManageShortcutsViewModel, type: St
     Row(verticalAlignment = Alignment.CenterVertically) {
         RadioButton(
             selected = viewModel.shortcuts[index].type.value == type,
-            onClick = { viewModel.shortcuts[index].type.value = type }
+            onClick = { viewModel.shortcuts[index].type.value = type },
         )
         Text(stringResource(id = if (type == "lovelace") R.string.lovelace else R.string.entity))
     }
@@ -333,7 +345,7 @@ private fun AddDeleteButton(viewModel: ManageShortcutsViewModel, shortcutId: Str
         onClick = {
             viewModel.deleteShortcut(shortcutId)
             viewModel.shortcuts[index].delete.value = false
-        }
+        },
     ) {
         Text(stringResource(id = R.string.delete_shortcut))
     }

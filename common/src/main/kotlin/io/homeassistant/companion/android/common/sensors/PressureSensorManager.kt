@@ -11,7 +11,9 @@ import io.homeassistant.companion.android.common.R as commonR
 import java.math.RoundingMode
 import timber.log.Timber
 
-class PressureSensorManager : SensorManager, SensorEventListener {
+class PressureSensorManager :
+    SensorManager,
+    SensorEventListener {
     companion object {
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
@@ -23,7 +25,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
             "mdi:gauge",
             deviceClass = "pressure",
             unitOfMeasurement = "hPa",
-            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
         )
     }
 
@@ -74,7 +76,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
             mySensorManager.registerListener(
                 this,
                 pressureSensors,
-                SENSOR_DELAY_NORMAL
+                SENSOR_DELAY_NORMAL,
             )
             Timber.d("Pressure sensor listener registered")
             isListenerRegistered = true
@@ -94,7 +96,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
                     pressureSensor,
                     event.values[0].toBigDecimal().setScale(1, RoundingMode.HALF_EVEN).toString(),
                     pressureSensor.statelessIcon,
-                    mapOf()
+                    mapOf(),
                 )
             }
         }

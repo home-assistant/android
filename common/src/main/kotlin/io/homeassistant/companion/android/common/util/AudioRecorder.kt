@@ -41,7 +41,7 @@ class AudioRecorder(private val audioManager: AudioManager?) {
 
     private val _audioBytes = MutableSharedFlow<ByteArray>(
         extraBufferCapacity = 10,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
     /** Flow emitting audio recording bytes as they come in */
@@ -81,7 +81,7 @@ class AudioRecorder(private val audioManager: AudioManager?) {
                                 val last = ((it.toInt() and 0xFF00) shr 8).toByte()
                                 listOf(first, last)
                             }
-                            .toByteArray()
+                            .toByteArray(),
                     )
                 }
             }
@@ -121,7 +121,7 @@ class AudioRecorder(private val audioManager: AudioManager?) {
                         setUsage(AudioAttributesCompat.USAGE_ASSISTANT)
                         setContentType(AudioAttributesCompat.CONTENT_TYPE_SPEECH)
                         build()
-                    }
+                    },
                 )
                 setOnAudioFocusChangeListener(focusListener)
                 build()

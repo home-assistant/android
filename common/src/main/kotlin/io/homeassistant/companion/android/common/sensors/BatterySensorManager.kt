@@ -31,7 +31,7 @@ class BatterySensorManager : SensorManager {
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            enabledByDefault = true
+            enabledByDefault = true,
         )
         private val batteryState = SensorManager.BasicSensor(
             "battery_state",
@@ -42,7 +42,7 @@ class BatterySensorManager : SensorManager {
             deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
-            enabledByDefault = true
+            enabledByDefault = true,
         )
         val isChargingState = SensorManager.BasicSensor(
             "is_charging",
@@ -52,7 +52,7 @@ class BatterySensorManager : SensorManager {
             "mdi:power-plug",
             deviceClass = "plug",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         private val chargerTypeState = SensorManager.BasicSensor(
             "charger_type",
@@ -63,7 +63,7 @@ class BatterySensorManager : SensorManager {
             deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
-            enabledByDefault = true
+            enabledByDefault = true,
         )
         private val batteryHealthState = SensorManager.BasicSensor(
             "battery_health",
@@ -72,7 +72,7 @@ class BatterySensorManager : SensorManager {
             commonR.string.sensor_description_battery_health,
             "mdi:battery-heart-variant",
             deviceClass = "enum",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         private val batteryTemperature = SensorManager.BasicSensor(
@@ -84,7 +84,7 @@ class BatterySensorManager : SensorManager {
             deviceClass = "temperature",
             unitOfMeasurement = "°C",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         private val batteryPower = SensorManager.BasicSensor(
@@ -96,7 +96,7 @@ class BatterySensorManager : SensorManager {
             "power",
             unitOfMeasurement = "W",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         private val remainingChargeTime = SensorManager.BasicSensor(
@@ -107,7 +107,7 @@ class BatterySensorManager : SensorManager {
             "mdi:battery-clock",
             "duration",
             unitOfMeasurement = "min",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         private val batteryCycles = SensorManager.BasicSensor(
@@ -117,7 +117,7 @@ class BatterySensorManager : SensorManager {
             commonR.string.sensor_description_battery_cycles,
             "mdi:battery-sync",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         fun getIsCharging(intent: Intent): Boolean {
@@ -142,7 +142,7 @@ class BatterySensorManager : SensorManager {
         chargerTypeState,
         batteryHealthState,
         batteryTemperature,
-        batteryPower
+        batteryPower,
     )
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
@@ -156,7 +156,12 @@ class BatterySensorManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        val intent = ContextCompat.registerReceiver(context, null, IntentFilter(Intent.ACTION_BATTERY_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED)
+        val intent = ContextCompat.registerReceiver(
+            context,
+            null,
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
         return intent?.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false) == true
     }
 
@@ -164,10 +169,13 @@ class BatterySensorManager : SensorManager {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context
-    ) {
-        val intent = ContextCompat.registerReceiver(context, null, IntentFilter(Intent.ACTION_BATTERY_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED)
+    override suspend fun requestSensorUpdate(context: Context) {
+        val intent = ContextCompat.registerReceiver(
+            context,
+            null,
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
         if (intent != null) {
             updateBatteryLevel(context, intent)
             updateBatteryState(context, intent)
@@ -219,7 +227,7 @@ class BatterySensorManager : SensorManager {
             batteryLevel,
             percentage,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -243,8 +251,8 @@ class BatterySensorManager : SensorManager {
             chargingStatus,
             icon,
             mapOf(
-                "options" to listOf("charging", "discharging", "full", "not_charging")
-            )
+                "options" to listOf("charging", "discharging", "full", "not_charging"),
+            ),
         )
     }
 
@@ -261,7 +269,7 @@ class BatterySensorManager : SensorManager {
             isChargingState,
             isCharging,
             icon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -284,8 +292,8 @@ class BatterySensorManager : SensorManager {
             chargerType,
             icon,
             mapOf(
-                "options" to listOf("ac", "usb", "wireless", "dock", "none")
-            )
+                "options" to listOf("ac", "usb", "wireless", "dock", "none"),
+            ),
         )
     }
 
@@ -306,8 +314,8 @@ class BatterySensorManager : SensorManager {
             batteryHealth,
             icon,
             mapOf(
-                "options" to listOf("cold", "dead", "good", "overheated", "over_voltage", "failed")
-            )
+                "options" to listOf("cold", "dead", "good", "overheated", "over_voltage", "failed"),
+            ),
         )
     }
 
@@ -323,7 +331,7 @@ class BatterySensorManager : SensorManager {
             batteryTemperature,
             batteryTemp,
             batteryTemperature.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -351,8 +359,8 @@ class BatterySensorManager : SensorManager {
             icon,
             mapOf(
                 "current" to current,
-                "voltage" to voltage
-            )
+                "voltage" to voltage,
+            ),
         )
     }
 
@@ -379,7 +387,7 @@ class BatterySensorManager : SensorManager {
                 remainingCharge
             },
             remainingChargeTime.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -396,7 +404,7 @@ class BatterySensorManager : SensorManager {
             batteryCycles,
             if (cycles != -1) cycles else STATE_UNAVAILABLE,
             batteryCycles.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -446,7 +454,7 @@ class BatterySensorManager : SensorManager {
                 context,
                 batteryPower,
                 SETTING_BATTERY_CURRENT_DIVISOR,
-                DEFAULT_BATTERY_CURRENT_DIVISOR
+                DEFAULT_BATTERY_CURRENT_DIVISOR,
             )
             current / dividerSetting.toFloat()
         } else {
@@ -461,7 +469,7 @@ class BatterySensorManager : SensorManager {
                 context,
                 batteryPower,
                 SETTING_BATTERY_VOLTAGE_DIVISOR,
-                DEFAULT_BATTERY_VOLTAGE_DIVISOR
+                DEFAULT_BATTERY_VOLTAGE_DIVISOR,
             )
             voltage / dividerSetting.toFloat()
         } else {

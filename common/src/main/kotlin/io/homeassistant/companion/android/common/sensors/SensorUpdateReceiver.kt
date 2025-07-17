@@ -30,7 +30,7 @@ class SensorUpdateReceiver : SensorReceiverBase() {
         context: Context,
         sensorId: String,
         sensorManagerId: String,
-        notificationId: Int
+        notificationId: Int,
     ): PendingIntent? {
         return null
     }

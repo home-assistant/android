@@ -46,7 +46,7 @@ class HaCarAppService : CarAppService() {
     lateinit var prefsRepository: PrefsRepository
 
     private val serverId = MutableStateFlow(0)
-    private val allEntities = MutableStateFlow<Map<String, Entity<*>>>(emptyMap())
+    private val allEntities = MutableStateFlow<Map<String, Entity>>(emptyMap())
     private var allEntitiesJob: Job? = null
 
     override fun createHostValidator(): HostValidator {
@@ -71,7 +71,7 @@ class HaCarAppService : CarAppService() {
             val entityFlow = allEntities.shareIn(
                 lifecycleScope,
                 SharingStarted.WhileSubscribed(10_000),
-                1
+                1,
             )
 
             override fun onCreateScreen(intent: Intent): Screen {
@@ -88,15 +88,15 @@ class HaCarAppService : CarAppService() {
                                     entityFlow,
                                     prefsRepository,
                                     { loadEntities(lifecycleScope, it) },
-                                    { loadEntities(lifecycleScope, serverId.value) }
-                                )
+                                    { loadEntities(lifecycleScope, serverId.value) },
+                                ),
                             )
 
                             push(
                                 LoginScreen(
                                     carContext,
-                                    serverManager
-                                )
+                                    serverManager,
+                                ),
                             )
                         }
                     return SwitchToDrivingOptimizedScreen(carContext)
@@ -111,13 +111,13 @@ class HaCarAppService : CarAppService() {
                                     entityFlow,
                                     prefsRepository,
                                     { loadEntities(lifecycleScope, it) },
-                                    { loadEntities(lifecycleScope, serverId.value) }
-                                )
+                                    { loadEntities(lifecycleScope, serverId.value) },
+                                ),
                             )
                         }
                     return LoginScreen(
                         carContext,
-                        serverManager
+                        serverManager,
                     )
                 }
             }
@@ -133,7 +133,7 @@ class HaCarAppService : CarAppService() {
         allEntitiesJob?.cancel()
         allEntitiesJob = scope.launch {
             serverId.value = id
-            val entities: MutableMap<String, Entity<*>>? =
+            val entities: MutableMap<String, Entity>? =
                 if (serverManager.getServer(id) != null) {
                     serverManager.integrationRepository(id).getEntities()
                         ?.associate { it.entityId to it }

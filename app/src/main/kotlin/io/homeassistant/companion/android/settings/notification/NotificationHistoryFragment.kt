@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
+import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
 import java.util.Calendar
 import java.util.GregorianCalendar
 import javax.inject.Inject
@@ -102,8 +103,9 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                 }
             },
             viewLifecycleOwner,
-            Lifecycle.State.RESUMED
+            Lifecycle.State.RESUMED,
         )
+        applyBottomSafeDrawingInsets()
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -137,7 +139,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         builder.setMessage(commonR.string.confirm_delete_all_notification_message)
 
         builder.setPositiveButton(
-            commonR.string.confirm_positive
+            commonR.string.confirm_positive,
         ) { dialog, _ ->
             lifecycleScope.launch {
                 notificationDao.deleteAll()
@@ -147,8 +149,9 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         }
 
         builder.setNegativeButton(
-            commonR.string.confirm_negative
-        ) { dialog, _ -> // Do nothing
+            commonR.string.confirm_negative,
+        ) { dialog, _ ->
+            // Do nothing
             dialog.dismiss()
         }
 
@@ -181,7 +184,11 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         }
     }
 
-    private fun filterNotifications(filterValue: Int, notificationDao: NotificationDao, prefCategory: PreferenceCategory?) {
+    private fun filterNotifications(
+        filterValue: Int,
+        notificationDao: NotificationDao,
+        prefCategory: PreferenceCategory?,
+    ) {
         val notificationList = notificationDao.getLastItems(filterValue)
         reloadNotifications(notificationList, prefCategory)
     }

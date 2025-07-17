@@ -22,11 +22,13 @@ import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositor
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
+import io.homeassistant.companion.android.common.util.HAStrictMode
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.util.LifecycleHandler
+import io.homeassistant.companion.android.util.ignoredViolationRules
 import io.homeassistant.companion.android.util.initCrashSaving
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
@@ -44,7 +46,9 @@ import okhttp3.OkHttpClient
 import timber.log.Timber
 
 @HiltAndroidApp
-open class HomeAssistantApplication : Application(), SingletonImageLoader.Factory {
+open class HomeAssistantApplication :
+    Application(),
+    SingletonImageLoader.Factory {
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
@@ -63,6 +67,14 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
 
     override fun onCreate() {
         super.onCreate()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            BuildConfig.DEBUG &&
+            !BuildConfig.NO_STRICT_MODE
+        ) {
+            HAStrictMode.enable(ignoredViolationRules)
+        }
+
         // We should initialize the logger as early as possible in the lifecycle of the application
         Timber.plant(Timber.DebugTree())
 
@@ -71,7 +83,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
         ioScope.launch {
             initCrashReporting(
                 applicationContext,
-                prefsRepository.isCrashReporting()
+                prefsRepository.isCrashReporting(),
             )
             initCrashSaving(applicationContext)
         }
@@ -89,7 +101,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
                 addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION)
                 addAction(WifiManager.WIFI_STATE_CHANGED_ACTION)
             },
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         ioScope.launch {
@@ -109,7 +121,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
                 addAction(Intent.ACTION_POWER_CONNECTED)
                 addAction(Intent.ACTION_POWER_DISCONNECTED)
             },
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // This will cause interactive and power save to update upon a state change
@@ -121,7 +133,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
                 addAction(Intent.ACTION_SCREEN_ON)
                 addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
             },
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // Update Quest only sensors when the device is a Quest
@@ -132,7 +144,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
                 IntentFilter().apply {
                     addAction("com.oculus.intent.action.MOUNT_STATE_CHANGED")
                 },
-                ContextCompat.RECEIVER_EXPORTED
+                ContextCompat.RECEIVER_EXPORTED,
             )
         }
 
@@ -144,7 +156,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
                 IntentFilter().apply {
                     addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
                 },
-                ContextCompat.RECEIVER_EXPORTED
+                ContextCompat.RECEIVER_EXPORTED,
             )
         }
 
@@ -157,7 +169,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
                 addAction(WifiManager.WIFI_STATE_CHANGED_ACTION)
                 addAction("android.net.wifi.WIFI_AP_STATE_CHANGED")
             },
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // This will cause the phone state sensor to be updated every time the OS broadcasts that a call triggered.
@@ -167,7 +179,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
             IntentFilter().apply {
                 addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED)
             },
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // Listen for bluetooth state changes
@@ -175,7 +187,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
             this,
             sensorReceiver,
             IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED),
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // Listen for NFC state changes
@@ -183,7 +195,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
             this,
             sensorReceiver,
             IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED),
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // Listen to changes to the audio input/output on the device
@@ -196,7 +208,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
                 addAction(AudioManager.RINGER_MODE_CHANGED_ACTION)
                 addAction(AudioSensorManager.VOLUME_CHANGED_ACTION)
             },
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // Listen for microphone mute changes
@@ -205,7 +217,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
                 this,
                 sensorReceiver,
                 IntentFilter(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED),
-                ContextCompat.RECEIVER_EXPORTED
+                ContextCompat.RECEIVER_EXPORTED,
             )
         }
 
@@ -215,7 +227,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
                 this,
                 sensorReceiver,
                 IntentFilter(AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED),
-                ContextCompat.RECEIVER_EXPORTED
+                ContextCompat.RECEIVER_EXPORTED,
             )
         }
 
@@ -225,7 +237,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
                 this,
                 sensorReceiver,
                 IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED),
-                ContextCompat.RECEIVER_EXPORTED
+                ContextCompat.RECEIVER_EXPORTED,
             )
         }
 
@@ -233,7 +245,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
             this,
             sensorReceiver,
             IntentFilter("androidx.car.app.connection.action.CAR_CONNECTION_UPDATED"),
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // Add a receiver for the shutdown event to attempt to send 1 final sensor update
@@ -241,7 +253,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
             this,
             sensorReceiver,
             IntentFilter(Intent.ACTION_SHUTDOWN),
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         // Register for all saved user intents
@@ -260,7 +272,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
                             categories.forEach { addCategory(it) }
                         }
                     },
-                    ContextCompat.RECEIVER_EXPORTED
+                    ContextCompat.RECEIVER_EXPORTED,
                 )
             }
         }
@@ -274,19 +286,28 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
                     addAction(Intent.ACTION_MANAGED_PROFILE_AVAILABLE)
                     addAction(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE)
                 },
-                ContextCompat.RECEIVER_EXPORTED
+                ContextCompat.RECEIVER_EXPORTED,
             )
         }
 
         // Register for faster sensor updates if enabled
-        val settingDao = AppDatabase.getInstance(applicationContext).settingsDao().get(0)
-        if (settingDao != null && (settingDao.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING || settingDao.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_ALWAYS)) {
-            ContextCompat.registerReceiver(
-                this,
-                sensorReceiver,
-                IntentFilter(Intent.ACTION_TIME_TICK),
-                ContextCompat.RECEIVER_EXPORTED
-            )
+        val settingDao = AppDatabase.getInstance(applicationContext).settingsDao()
+        ioScope.launch {
+            // 0 is used for storing app level settings
+            val settings = settingDao.get(0)
+            if (settings != null &&
+                (
+                    settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING ||
+                        settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_ALWAYS
+                    )
+            ) {
+                ContextCompat.registerReceiver(
+                    this@HomeAssistantApplication,
+                    sensorReceiver,
+                    IntentFilter(Intent.ACTION_TIME_TICK),
+                    ContextCompat.RECEIVER_EXPORTED,
+                )
+            }
         }
 
         // Register for changes to the configuration
@@ -294,7 +315,7 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
             this,
             sensorReceiver,
             IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED),
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED,
         )
 
         if (!this.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
@@ -311,19 +332,28 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
 
             ContextCompat.registerReceiver(this, buttonWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
             ContextCompat.registerReceiver(this, entityWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
-            ContextCompat.registerReceiver(this, mediaPlayerWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
-            ContextCompat.registerReceiver(this, templateWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            ContextCompat.registerReceiver(
+                this,
+                mediaPlayerWidget,
+                screenIntentFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+            ContextCompat.registerReceiver(
+                this,
+                templateWidget,
+                screenIntentFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
         }
     }
 
-    override fun newImageLoader(context: PlatformContext): ImageLoader =
-        ImageLoader.Builder(context)
-            .components {
-                add(
-                    OkHttpNetworkFetcherFactory(
-                        callFactory = okHttpClient
-                    )
-                )
-            }
-            .build()
+    override fun newImageLoader(context: PlatformContext): ImageLoader = ImageLoader.Builder(context)
+        .components {
+            add(
+                OkHttpNetworkFetcherFactory(
+                    callFactory = okHttpClient,
+                ),
+            )
+        }
+        .build()
 }

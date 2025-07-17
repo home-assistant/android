@@ -21,17 +21,13 @@ import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 
 @Composable
-fun PhoneInstallView(
-    onInstall: () -> Unit,
-    onRefresh: () -> Unit,
-    onAdvanced: () -> Unit
-) {
+fun PhoneInstallView(onInstall: () -> Unit, onRefresh: () -> Unit, onAdvanced: () -> Unit) {
     ThemeLazyColumn {
         item {
             Image(
                 painter = painterResource(R.drawable.launcher_icon_round),
                 contentDescription = null,
-                modifier = Modifier.size(width = 48.dp, height = 72.dp).padding(top = 24.dp)
+                modifier = Modifier.size(width = 48.dp, height = 72.dp).padding(top = 24.dp),
             )
         }
         item {
@@ -41,7 +37,7 @@ fun PhoneInstallView(
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp)
+                    .padding(vertical = 16.dp),
             )
         }
         item {
@@ -52,9 +48,9 @@ fun PhoneInstallView(
                     Text(
                         stringResource(commonR.string.install),
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                }
+                },
             )
         }
         item {
@@ -66,9 +62,9 @@ fun PhoneInstallView(
                     Text(
                         stringResource(commonR.string.refresh),
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                }
+                },
             )
         }
         item {
@@ -82,9 +78,9 @@ fun PhoneInstallView(
                     Text(
                         stringResource(commonR.string.advanced),
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                }
+                },
             )
         }
     }
@@ -96,6 +92,6 @@ fun PhoneInstallViewPreview() {
     PhoneInstallView(
         onInstall = { },
         onRefresh = { },
-        onAdvanced = { }
+        onAdvanced = { },
     )
 }

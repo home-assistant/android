@@ -18,5 +18,5 @@ data class NotificationItem(
     @ColumnInfo(name = "source")
     val source: String,
     @ColumnInfo(name = "server_id")
-    val serverId: Int?
+    val serverId: Int?,
 ) : Serializable

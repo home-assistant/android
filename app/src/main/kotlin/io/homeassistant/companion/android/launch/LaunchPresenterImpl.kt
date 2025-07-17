@@ -22,7 +22,7 @@ class LaunchPresenterImpl @Inject constructor(
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
-    override fun onViewReady() {
+    override fun onViewReady(serverUrlToOnboard: String?) {
         mainScope.launch {
             // Remove any invalid servers (incomplete, partly migrated from another device)
             serverManager.defaultServers
@@ -30,7 +30,9 @@ class LaunchPresenterImpl @Inject constructor(
                 .forEach { serverManager.removeServer(it.id) }
 
             try {
-                if (
+                if (serverUrlToOnboard != null) {
+                    view.displayOnBoarding(false, serverUrlToOnboard)
+                } else if (
                     serverManager.isRegistered() &&
                     serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
                 ) {

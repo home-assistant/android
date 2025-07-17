@@ -51,10 +51,10 @@ class LoginScreen(context: CarContext, val serverManager: ServerManager) : Scree
                     .setOnClickListener(
                         ParkedOnlyOnClickListener.create {
                             startNativeActivity()
-                        }
+                        },
                     )
                     .setFlags(Action.FLAG_PRIMARY)
-                    .build()
+                    .build(),
             )
             .build()
     }
@@ -66,10 +66,10 @@ class LoginScreen(context: CarContext, val serverManager: ServerManager) : Scree
             startActivity(
                 Intent(
                     carContext,
-                    LaunchActivity::class.java
+                    LaunchActivity::class.java,
                 ).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                }
+                },
             )
             if (isAutomotive) {
                 finishCarApp()

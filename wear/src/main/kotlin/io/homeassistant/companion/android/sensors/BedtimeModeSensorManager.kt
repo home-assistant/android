@@ -16,7 +16,7 @@ class BedtimeModeSensorManager : SensorManager {
             commonR.string.sensor_description_bedtime_mode,
             "mdi:sleep",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.WORKER
+            updateType = SensorManager.BasicSensor.UpdateType.WORKER,
         )
     }
 
@@ -48,7 +48,17 @@ class BedtimeModeSensorManager : SensorManager {
         }
 
         val state = try {
-            Settings.Global.getInt(context.contentResolver, if (Build.MANUFACTURER == "samsung") "setting_bedtime_mode_running_state" else "bedtime_mode") == 1
+            Settings.Global.getInt(
+                context.contentResolver,
+                if (Build.MANUFACTURER ==
+                    "samsung"
+                ) {
+                    "setting_bedtime_mode_running_state"
+                } else {
+                    "bedtime_mode"
+                },
+            ) ==
+                1
         } catch (e: Exception) {
             Timber.e(e, "Unable to update bedtime mode sensor")
             false
@@ -59,7 +69,7 @@ class BedtimeModeSensorManager : SensorManager {
             bedtimeMode,
             state,
             if (!state) "mdi:sleep-off" else bedtimeMode.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 }

@@ -27,6 +27,8 @@ import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoView
 import io.homeassistant.companion.android.util.compose.FavoriteEntityRow
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
+import io.homeassistant.companion.android.util.plus
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -38,7 +40,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 fun AndroidAutoFavoritesSettings(
     androidAutoViewModel: ManageAndroidAutoViewModel,
     serversList: List<Server>,
-    defaultServer: Int
+    defaultServer: Int,
 ) {
     val lazyListState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -49,7 +51,7 @@ fun AndroidAutoFavoritesSettings(
     var selectedServer by remember { mutableIntStateOf(defaultServer) }
 
     val favoriteEntities = androidAutoViewModel.favoritesList.toList()
-    var validEntities by remember { mutableStateOf<List<Entity<*>>>(emptyList()) }
+    var validEntities by remember { mutableStateOf<List<Entity>>(emptyList()) }
     LaunchedEffect(favoriteEntities.size, androidAutoViewModel.sortedEntities.size, selectedServer) {
         validEntities = withContext(Dispatchers.IO) {
             androidAutoViewModel.sortedEntities
@@ -63,13 +65,13 @@ fun AndroidAutoFavoritesSettings(
 
     LazyColumn(
         state = lazyListState,
-        contentPadding = PaddingValues(vertical = 16.dp),
+        contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
     ) {
         item {
             Text(
                 text = stringResource(commonR.string.aa_set_favorites),
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
             )
         }
 
@@ -82,7 +84,7 @@ fun AndroidAutoFavoritesSettings(
                         androidAutoViewModel.loadEntities(it)
                         selectedServer = it
                     },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 16.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 16.dp),
                 )
             }
         }
@@ -96,14 +98,17 @@ fun AndroidAutoFavoritesSettings(
                     return@SingleEntityPicker false // Clear input
                 },
                 modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
-                label = { Text(stringResource(commonR.string.add_favorite)) }
+                label = { Text(stringResource(commonR.string.add_favorite)) },
             )
         }
         if (favoriteEntities.isNotEmpty() && androidAutoViewModel.sortedEntities.isNotEmpty()) {
             items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
                 val favoriteEntity =
                     favoriteEntities[index].split("-")
-                androidAutoViewModel.sortedEntities.firstOrNull { it.entityId == favoriteEntity[1] && favoriteEntity[0].toInt() == selectedServer }?.let {
+                androidAutoViewModel.sortedEntities.firstOrNull {
+                    it.entityId == favoriteEntity[1] &&
+                        favoriteEntity[0].toInt() == selectedServer
+                }?.let {
                     ReorderableItem(
                         state = reorderState,
                         key = favoriteEntities[index],
@@ -115,7 +120,7 @@ fun AndroidAutoFavoritesSettings(
                                 androidAutoViewModel.onEntitySelected(
                                     false,
                                     it.entityId,
-                                    selectedServer
+                                    selectedServer,
                                 )
                             },
                             checked = true,

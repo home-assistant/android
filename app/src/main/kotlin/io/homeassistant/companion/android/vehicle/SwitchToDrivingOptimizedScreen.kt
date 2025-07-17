@@ -20,7 +20,7 @@ class SwitchToDrivingOptimizedScreen(carContext: CarContext) : Screen(carContext
                     .setOnClickListener {
                         screenManager.pop()
                     }
-                    .build()
+                    .build(),
             ).build()
     }
 }

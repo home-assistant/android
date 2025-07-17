@@ -18,7 +18,7 @@ class DisplaySensorManager : SensorManager {
             commonR.string.basic_sensor_name_screen_brightness,
             commonR.string.sensor_description_screen_brightness,
             statelessIcon = "mdi:brightness-6",
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-brightness-sensor"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-brightness-sensor",
         )
 
         val screenOffTimeout = SensorManager.BasicSensor(
@@ -29,7 +29,7 @@ class DisplaySensorManager : SensorManager {
             "mdi:cellphone-off",
             unitOfMeasurement = "ms",
             deviceClass = "duration",
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-off-timeout-sensor"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-off-timeout-sensor",
         )
 
         val screenOrientation = SensorManager.BasicSensor(
@@ -39,7 +39,7 @@ class DisplaySensorManager : SensorManager {
             commonR.string.sensor_description_screen_orientation,
             "mdi:screen-rotation",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-orientation-sensor",
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
         val screenRotation = SensorManager.BasicSensor(
@@ -49,7 +49,7 @@ class DisplaySensorManager : SensorManager {
             commonR.string.sensor_description_screen_rotation,
             "mdi:screen-rotation",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-rotation-sensor",
-            unitOfMeasurement = "°"
+            unitOfMeasurement = "°",
         )
     }
 
@@ -68,9 +68,7 @@ class DisplaySensorManager : SensorManager {
         return "https://companion.home-assistant.io/docs/core/sensors#display-sensors"
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateScreenBrightness(context)
         updateScreenTimeout(context)
         updateScreenOrientation(context)
@@ -90,7 +88,7 @@ class DisplaySensorManager : SensorManager {
                 Settings.System.getInt(context.contentResolver, Settings.System.SCREEN_BRIGHTNESS)
             auto = Settings.System.getInt(
                 context.contentResolver,
-                Settings.System.SCREEN_BRIGHTNESS_MODE
+                Settings.System.SCREEN_BRIGHTNESS_MODE,
             ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
         } catch (e: Exception) {
             Timber.e(e, "Unable to get screen brightness settings")
@@ -103,8 +101,8 @@ class DisplaySensorManager : SensorManager {
             brightness,
             icon,
             mapOf(
-                "automatic" to auto
-            )
+                "automatic" to auto,
+            ),
         )
     }
 
@@ -127,7 +125,7 @@ class DisplaySensorManager : SensorManager {
             screenOffTimeout,
             timeout,
             screenOffTimeout.statelessIcon,
-            mapOf()
+            mapOf(),
         )
     }
 
@@ -158,8 +156,8 @@ class DisplaySensorManager : SensorManager {
             orientation,
             icon,
             mapOf(
-                "options" to listOf("portrait", "landscape", "square", STATE_UNKNOWN)
-            )
+                "options" to listOf("portrait", "landscape", "square", STATE_UNKNOWN),
+            ),
         )
     }
 
@@ -184,7 +182,7 @@ class DisplaySensorManager : SensorManager {
             screenRotation,
             display,
             screenRotation.statelessIcon,
-            attrs
+            attrs,
         )
     }
 

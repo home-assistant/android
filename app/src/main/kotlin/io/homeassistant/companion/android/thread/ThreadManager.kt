@@ -14,7 +14,12 @@ interface ThreadManager {
         object NotConnected : SyncResult()
         class OnlyOnServer(val imported: Boolean) : SyncResult()
         class OnlyOnDevice(val exportIntent: IntentSender?) : SyncResult()
-        class AllHaveCredentials(val matches: Boolean?, val fromApp: Boolean?, val updated: Boolean?, val exportIntent: IntentSender?) : SyncResult()
+        class AllHaveCredentials(
+            val matches: Boolean?,
+            val fromApp: Boolean?,
+            val updated: Boolean?,
+            val exportIntent: IntentSender?,
+        ) : SyncResult()
         object NoneHaveCredentials : SyncResult()
     }
 
@@ -44,7 +49,7 @@ interface ThreadManager {
         context: Context,
         serverId: Int,
         exportOnly: Boolean,
-        scope: CoroutineScope
+        scope: CoroutineScope,
     ): SyncResult
 
     /**
@@ -63,7 +68,7 @@ interface ThreadManager {
         context: Context,
         datasetId: String,
         preferredBorderAgentId: String?,
-        serverId: Int
+        serverId: Int,
     )
 
     /**

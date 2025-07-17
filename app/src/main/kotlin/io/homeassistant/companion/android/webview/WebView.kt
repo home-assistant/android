@@ -13,12 +13,12 @@ interface WebView {
         TIMEOUT_GENERAL,
 
         /** Timeout due to no 'connection-status: connected' event on the external bus */
-        TIMEOUT_EXTERNAL_BUS
+        TIMEOUT_EXTERNAL_BUS,
     }
 
     fun loadUrl(url: String, keepHistory: Boolean, openInApp: Boolean)
 
-    fun setStatusBarAndNavigationBarColor(statusBarColor: Int, navigationBarColor: Int)
+    fun setStatusBarAndBackgroundColor(statusBarColor: Int, backgroundColor: Int)
 
     fun setExternalAuth(script: String)
 
@@ -28,5 +28,9 @@ interface WebView {
 
     fun unlockAppIfNeeded()
 
-    fun showError(errorType: ErrorType = ErrorType.TIMEOUT_GENERAL, error: SslError? = null, description: String? = null)
+    fun showError(
+        errorType: ErrorType = ErrorType.TIMEOUT_GENERAL,
+        error: SslError? = null,
+        description: String? = null,
+    )
 }

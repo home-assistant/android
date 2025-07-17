@@ -53,11 +53,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    override fun onUpdate(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray
-    ) {
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
             widgetScope?.launch {
@@ -78,7 +74,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 saveEntityConfiguration(
                     context,
                     intent.extras,
-                    appWidgetId
+                    appWidgetId,
                 )
                 onScreenOn(context)
             }
@@ -100,7 +96,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     context.applicationContext,
                     this@BaseWidgetProvider,
                     IntentFilter(Intent.ACTION_SCREEN_OFF),
-                    ContextCompat.RECEIVER_NOT_EXPORTED
+                    ContextCompat.RECEIVER_NOT_EXPORTED,
                 )
 
                 widgetsWithDifferentEntities.forEach { (id, pair) ->
@@ -138,9 +134,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    private suspend fun updateAllWidgets(
-        context: Context
-    ) {
+    private suspend fun updateAllWidgets(context: Context) {
         val widgetProvider = getWidgetProvider(context)
         val appWidgetManager = AppWidgetManager.getInstance(context) ?: return
         val systemWidgetIds = appWidgetManager.getAppWidgetIds(widgetProvider).toSet()
@@ -149,7 +143,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val invalidWidgetIds = dbWidgetIds.minus(systemWidgetIds)
         if (invalidWidgetIds.isNotEmpty()) {
             Timber.tag(widgetProvider.shortClassName).i(
-                "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted"
+                "Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted",
             )
             onDeleted(context, invalidWidgetIds.toIntArray())
         }
@@ -162,7 +156,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     private fun updateView(
         context: Context,
         appWidgetId: Int,
-        appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
+        appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context),
     ) {
         widgetScope?.launch {
             val views = getWidgetRemoteViews(context, appWidgetId)
@@ -177,10 +171,14 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     abstract fun getWidgetProvider(context: Context): ComponentName
-    abstract suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>? = null): RemoteViews
+    abstract suspend fun getWidgetRemoteViews(
+        context: Context,
+        appWidgetId: Int,
+        suggestedEntity: Entity? = null,
+    ): RemoteViews
 
     // A map of widget IDs to [server ID, list of entity IDs]
     abstract suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>>
     abstract fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int)
-    abstract suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity<*>)
+    abstract suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity)
 }

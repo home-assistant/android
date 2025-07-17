@@ -1,23 +1,15 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import kotlinx.serialization.Serializable
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class GetTodosResponse(
-    val response: Map<String, TodoResponse>
-) {
+@Serializable
+data class GetTodosResponse(val response: Map<String, TodoResponse>) {
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    data class TodoResponse(
-        val items: List<TodoItem>
-    )
+    @Serializable
+    data class TodoResponse(val items: List<TodoItem>)
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    data class TodoItem(
-        val uid: String?,
-        val summary: String?,
-        val status: String?
-    ) {
+    @Serializable
+    data class TodoItem(val uid: String? = null, val summary: String? = null, val status: String? = null) {
 
         companion object {
             const val COMPLETED_STATUS = "completed"

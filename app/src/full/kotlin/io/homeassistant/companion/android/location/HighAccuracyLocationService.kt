@@ -21,6 +21,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.CHANNEL_HIGH_ACCURACY
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.ForegroundServiceLauncher
 import kotlin.math.abs
@@ -111,7 +112,12 @@ class HighAccuracyLocationService : Service() {
 
         private fun createNotificationBuilder(context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(CHANNEL_HIGH_ACCURACY, context.getString(commonR.string.high_accuracy_mode_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
+                val channel =
+                    NotificationChannel(
+                        CHANNEL_HIGH_ACCURACY,
+                        context.getString(commonR.string.high_accuracy_mode_channel_name),
+                        NotificationManager.IMPORTANCE_DEFAULT,
+                    )
                 notificationManagerCompat.createNotificationChannel(channel)
             }
 
@@ -148,7 +154,11 @@ class HighAccuracyLocationService : Service() {
         notification = notificationBuilder.build()
 
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) FOREGROUND_SERVICE_TYPE_LOCATION else 0
-        LAUNCHER.onServiceCreated(this, notificationId, notification, type)
+        FailFast.failOnCatch {
+            // Sometimes the service cannot be started as foreground due to the app being in a state where
+            // this is not allowed. We haven't identified how to avoid starting the service in this state yet.
+            LAUNCHER.onServiceCreated(this, notificationId, notification, type)
+        }
 
         Timber.d("High accuracy location service created -> onCreate")
     }
@@ -156,7 +166,8 @@ class HighAccuracyLocationService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        val intervalInSeconds = intent?.getIntExtra("intervalInSeconds", DEFAULT_UPDATE_INTERVAL_SECONDS) ?: DEFAULT_UPDATE_INTERVAL_SECONDS
+        val intervalInSeconds =
+            intent?.getIntExtra("intervalInSeconds", DEFAULT_UPDATE_INTERVAL_SECONDS) ?: DEFAULT_UPDATE_INTERVAL_SECONDS
         requestLocationUpdates(intervalInSeconds)
 
         Timber.d("High accuracy location service (Interval: ${intervalInSeconds}s) started -> onStartCommand")
@@ -183,7 +194,12 @@ class HighAccuracyLocationService : Service() {
     private fun getLocationUpdateIntent(): PendingIntent {
         val intent = Intent(this, LocationSensorManager::class.java)
         intent.action = LocationSensorManager.ACTION_PROCESS_HIGH_ACCURACY_LOCATION
-        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
+        return PendingIntent.getBroadcast(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+        )
     }
 
     @SuppressLint("MissingPermission")

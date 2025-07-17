@@ -1,19 +1,23 @@
 package io.homeassistant.companion.android.common.data.prefs
 
+import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
+import io.homeassistant.companion.android.common.util.GestureAction
+import io.homeassistant.companion.android.common.util.HAGesture
 import javax.inject.Inject
 import javax.inject.Named
 import kotlinx.coroutines.runBlocking
 
 class PrefsRepositoryImpl @Inject constructor(
     @Named("themes") private val localStorage: LocalStorage,
-    @Named("integration") private val integrationStorage: LocalStorage
+    @Named("integration") private val integrationStorage: LocalStorage,
 ) : PrefsRepository {
 
     companion object {
-        private const val MIGRATION_PREF = "migration"
-        private const val MIGRATION_VERSION = 1
+        @VisibleForTesting const val MIGRATION_PREF = "migration"
+
+        @VisibleForTesting const val MIGRATION_VERSION = 1
 
         private const val PREF_VER = "version"
         private const val PREF_THEME = "theme"
@@ -38,6 +42,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_AUTO_FAVORITES = "auto_favorites"
         private const val PREF_LOCATION_HISTORY_DISABLED = "location_history"
         private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displayed"
+        private const val PREF_GESTURE_ACTION_PREFIX = "gesture_action"
     }
 
     init {
@@ -141,15 +146,13 @@ class PrefsRepositoryImpl @Inject constructor(
         localStorage.putStringSet(PREF_CONTROLS_AUTH_ENTITIES, entities.toSet())
     }
 
-    override suspend fun getControlsPanelServer(): Int? =
-        localStorage.getInt(CONTROLS_PANEL_SERVER)
+    override suspend fun getControlsPanelServer(): Int? = localStorage.getInt(CONTROLS_PANEL_SERVER)
 
     override suspend fun setControlsPanelServer(serverId: Int) {
         localStorage.putInt(CONTROLS_PANEL_SERVER, serverId)
     }
 
-    override suspend fun getControlsPanelPath(): String? =
-        localStorage.getString(CONTROLS_PANEL_PATH)
+    override suspend fun getControlsPanelPath(): String? = localStorage.getString(CONTROLS_PANEL_PATH)
 
     override suspend fun setControlsPanelPath(path: String?) {
         if (path.isNullOrBlank()) {
@@ -175,8 +178,7 @@ class PrefsRepositoryImpl @Inject constructor(
         localStorage.putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, enabled)
     }
 
-    override suspend fun getPageZoomLevel(): Int =
-        localStorage.getInt(PREF_PAGE_ZOOM_LEVEL) ?: 100
+    override suspend fun getPageZoomLevel(): Int = localStorage.getInt(PREF_PAGE_ZOOM_LEVEL) ?: 100
 
     override suspend fun setPageZoomLevel(level: Int?) {
         localStorage.putInt(PREF_PAGE_ZOOM_LEVEL, level)
@@ -239,15 +241,17 @@ class PrefsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getAutoFavorites(): List<String> {
-        return localStorage.getString(PREF_AUTO_FAVORITES)?.removeSurrounding("[", "]")?.split(", ")?.filter { it.isNotBlank() } ?: emptyList()
+        return localStorage.getString(PREF_AUTO_FAVORITES)?.removeSurrounding("[", "]")?.split(", ")?.filter {
+            it.isNotBlank()
+        }
+            ?: emptyList()
     }
 
     override suspend fun setAutoFavorites(favorites: List<String>) {
         localStorage.putString(PREF_AUTO_FAVORITES, favorites.toString())
     }
 
-    override suspend fun isLocationHistoryEnabled(): Boolean =
-        !localStorage.getBoolean(PREF_LOCATION_HISTORY_DISABLED)
+    override suspend fun isLocationHistoryEnabled(): Boolean = !localStorage.getBoolean(PREF_LOCATION_HISTORY_DISABLED)
 
     override suspend fun setLocationHistoryEnabled(enabled: Boolean) {
         localStorage.putBoolean(PREF_LOCATION_HISTORY_DISABLED, !enabled)
@@ -258,6 +262,26 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun addImprovPermissionDisplayedCount() {
         localStorage.putInt(PREF_IMPROV_PERMISSION_DISPLAYED, getImprovPermissionDisplayedCount() + 1)
+    }
+
+    override suspend fun getGestureAction(gesture: HAGesture): GestureAction {
+        val current = localStorage.getString("${PREF_GESTURE_ACTION_PREFIX}_${gesture.name}")
+        val action = GestureAction.entries.firstOrNull { it.name == current }
+        return when {
+            // User preference
+            action != null -> action
+            // Defaults
+            gesture == HAGesture.SWIPE_UP_THREE -> GestureAction.SERVER_LIST
+            gesture == HAGesture.SWIPE_DOWN_THREE -> GestureAction.QUICKBAR_DEFAULT
+            gesture == HAGesture.SWIPE_LEFT_THREE -> GestureAction.SERVER_PREVIOUS
+            gesture == HAGesture.SWIPE_RIGHT_THREE -> GestureAction.SERVER_NEXT
+            // No user preference and not default
+            else -> GestureAction.NONE
+        }
+    }
+
+    override suspend fun setGestureAction(gesture: HAGesture, action: GestureAction) {
+        localStorage.putString("${PREF_GESTURE_ACTION_PREFIX}_${gesture.name}", action.name)
     }
 
     override suspend fun removeServer(serverId: Int) {

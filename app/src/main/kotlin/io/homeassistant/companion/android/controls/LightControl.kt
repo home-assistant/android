@@ -24,8 +24,8 @@ object LightControl : HaControl {
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity<Map<String, Any>>,
-        info: HaControlInfo
+        entity: Entity,
+        info: HaControlInfo,
     ): Control.StatefulBuilder {
         val position = entity.getLightBrightness()
         control.setControlTemplate(
@@ -40,40 +40,36 @@ object LightControl : HaControl {
                         position?.max ?: 100f,
                         position?.value ?: 0f,
                         1f,
-                        "%.0f%%"
-                    )
+                        "%.0f%%",
+                    ),
                 )
             } else {
                 ToggleTemplate(
                     entity.entityId,
                     ControlButton(
                         entity.isActive(),
-                        "Description"
-                    )
+                        "Description",
+                    ),
                 )
-            }
+            },
         )
         return control
     }
 
-    override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
-        DeviceTypes.TYPE_LIGHT
+    override fun getDeviceType(entity: Entity): Int = DeviceTypes.TYPE_LIGHT
 
-    override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+    override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.domain_light)
 
-    override suspend fun performAction(
-        integrationRepository: IntegrationRepository,
-        action: ControlAction
-    ): Boolean {
+    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
         return when (action) {
             is BooleanAction -> {
                 integrationRepository.callAction(
                     action.templateId.split(".")[0],
                     if (action.newState) "turn_on" else "turn_off",
                     hashMapOf(
-                        "entity_id" to action.templateId
-                    )
+                        "entity_id" to action.templateId,
+                    ),
                 )
                 true
             }
@@ -84,8 +80,8 @@ object LightControl : HaControl {
                     "turn_on",
                     hashMapOf(
                         "entity_id" to action.templateId,
-                        "brightness" to convertBrightness.toInt()
-                    )
+                        "brightness" to convertBrightness.toInt(),
+                    ),
                 )
                 true
             }

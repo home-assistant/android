@@ -3,9 +3,11 @@ package io.homeassistant.companion.android.settings.wear.views
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Scaffold
+import androidx.compose.material.SnackbarHost
 import androidx.compose.material.Text
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
@@ -24,6 +26,9 @@ import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import io.homeassistant.companion.android.util.compose.FavoriteEntityRow
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
+import io.homeassistant.companion.android.util.plus
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.launchIn
@@ -36,7 +41,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 fun LoadWearFavoritesSettings(
     settingsWearViewModel: SettingsWearViewModel,
     onBackClicked: () -> Unit,
-    events: SharedFlow<String>
+    events: SharedFlow<String>,
 ) {
     val lazyListState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -45,7 +50,7 @@ fun LoadWearFavoritesSettings(
     }
 
     val favoriteEntities = settingsWearViewModel.favoriteEntityIds
-    var validEntities by remember { mutableStateOf<List<Entity<*>>>(emptyList()) }
+    var validEntities by remember { mutableStateOf<List<Entity>>(emptyList()) }
     LaunchedEffect(favoriteEntities.size) {
         validEntities = withContext(Dispatchers.IO) {
             settingsWearViewModel.entities
@@ -68,25 +73,31 @@ fun LoadWearFavoritesSettings(
 
     Scaffold(
         scaffoldState = scaffoldState,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = scaffoldState.snackbarHostState,
+                modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets()),
+            )
+        },
         topBar = {
             SettingsWearTopAppBar(
                 title = { Text(stringResource(commonR.string.wear_favorite_entities)) },
                 onBackClicked = onBackClicked,
-                docsLink = WEAR_DOCS_LINK
+                docsLink = WEAR_DOCS_LINK,
             )
-        }
+        },
     ) { contentPadding ->
         LazyColumn(
             state = lazyListState,
             verticalArrangement = Arrangement.Center,
-            contentPadding = PaddingValues(vertical = 16.dp),
+            contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(),
             modifier = Modifier.padding(contentPadding),
         ) {
             item {
                 Text(
                     text = stringResource(commonR.string.wear_set_favorites),
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
             item {
@@ -99,7 +110,7 @@ fun LoadWearFavoritesSettings(
                         return@SingleEntityPicker false // Clear input
                     },
                     modifier = Modifier.padding(all = 16.dp),
-                    label = { Text(stringResource(commonR.string.add_favorite)) }
+                    label = { Text(stringResource(commonR.string.add_favorite)) },
                 )
             }
             items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
@@ -107,7 +118,7 @@ fun LoadWearFavoritesSettings(
                 settingsWearViewModel.entities[favoriteEntityID]?.let {
                     ReorderableItem(
                         state = reorderState,
-                        key = favoriteEntities[index]
+                        key = favoriteEntities[index],
                     ) { isDragging ->
                         FavoriteEntityRow(
                             entityName = it.friendlyName,
@@ -115,7 +126,7 @@ fun LoadWearFavoritesSettings(
                             onClick = {
                                 settingsWearViewModel.onEntitySelected(
                                     false,
-                                    favoriteEntities[index]
+                                    favoriteEntities[index],
                                 )
                             },
                             checked = favoriteEntities.contains(favoriteEntities[index]),
