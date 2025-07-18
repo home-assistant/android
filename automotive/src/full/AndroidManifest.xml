@@ -30,7 +30,7 @@
 
         <receiver android:name=".location.HighAccuracyLocationReceiver"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="false" />
 
         <service
             android:name=".notifications.FirebaseCloudMessagingService"
@@ -43,12 +43,20 @@
         <service
             android:name=".location.HighAccuracyLocationService"
             android:enabled="true"
-            android:exported="true"
+            android:exported="false"
             android:foregroundServiceType="location"/>
 
         <service
             android:name=".matter.MatterCommissioningService"
-            android:exported="true" />
+            android:exported="true"
+            tools:ignore="ExportedService">
+            <!--This service is used by Google to commission devices; it needs to be exposed so that
+            Google Home Matter commissioning can forward us the commissioning request.
+            This is not described by Google documentation, but it seems that GMS is doing
+            some signature verification to avoid malicious intent coming from any other app.
+            https://github.com/home-assistant/android/pull/5509#discussion_r2214145170
+            -->
+        </service>
 
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"

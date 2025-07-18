@@ -519,28 +519,6 @@
     </issue>
 
     <issue
-        id="ExportedReceiver"
-        message="Exported receiver does not require permission"
-        errorLine1="        &lt;receiver android:name=&quot;.sensors.SensorUpdateReceiver&quot;"
-        errorLine2="         ~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="9"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ExportedReceiver"
-        message="Exported receiver does not require permission"
-        errorLine1="        &lt;receiver"
-        errorLine2="         ~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="16"
-            column="10"/>
-    </issue>
-
-    <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 31"
         errorLine1="            (sensorId == bleTransmitter.id &amp;&amp; Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {"

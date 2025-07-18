@@ -107,7 +107,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/AndroidManifest.xml"
-            line="126"
+            line="130"
             column="27"/>
     </issue>
 
@@ -153,17 +153,6 @@
             file="src/main/kotlin/io/homeassistant/companion/android/vehicle/LoginScreen.kt"
             line="62"
             column="81"/>
-    </issue>
-
-    <issue
-        id="NewApi"
-        message="`&lt;io.homeassistant.companion.android.vehicle.HaCarAppService>` requires API level 26 (current min is 21)"
-        errorLine1="        &lt;service"
-        errorLine2="        ^">
-        <location
-            file="src/full/AndroidManifest.xml"
-            line="116"
-            column="9"/>
     </issue>
 
     <issue
@@ -516,83 +505,6 @@
             file="src/main/res/xml/network_security_config.xml"
             line="10"
             column="13"/>
-    </issue>
-
-    <issue
-        id="ExportedReceiver"
-        message="Exported receiver does not require permission"
-        errorLine1="        &lt;receiver android:name=&quot;.location.HighAccuracyLocationReceiver&quot;"
-        errorLine2="         ~~~~~~~~">
-        <location
-            file="src/full/AndroidManifest.xml"
-            line="81"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ExportedReceiver"
-        message="Exported receiver does not require permission"
-        errorLine1="        &lt;receiver"
-        errorLine2="         ~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="269"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ExportedReceiver"
-        message="Exported receiver does not require permission"
-        errorLine1="        &lt;receiver"
-        errorLine2="         ~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="278"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ExportedReceiver"
-        message="Exported receiver does not require permission"
-        errorLine1="        &lt;receiver"
-        errorLine2="         ~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="948"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ExportedService"
-        message="Exported service does not require permission"
-        errorLine1="        &lt;service"
-        errorLine2="         ~~~~~~~">
-        <location
-            file="src/full/AndroidManifest.xml"
-            line="93"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ExportedService"
-        message="Exported service does not require permission"
-        errorLine1="        &lt;service"
-        errorLine2="         ~~~~~~~">
-        <location
-            file="src/full/AndroidManifest.xml"
-            line="99"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ExportedService"
-        message="Exported service does not require permission"
-        errorLine1="        &lt;service"
-        errorLine2="         ~~~~~~~">
-        <location
-            file="src/full/AndroidManifest.xml"
-            line="116"
-            column="10"/>
     </issue>
 
     <issue
