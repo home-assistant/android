@@ -49,7 +49,8 @@ fun SensorUi(
         var allGranted = true
         isGranted.forEach {
             if (
-                it.key == Manifest.permission.ACCESS_FINE_LOCATION && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                it.key == Manifest.permission.ACCESS_FINE_LOCATION &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
                 manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
                 manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
             ) {
@@ -57,7 +58,8 @@ fun SensorUi(
                 return@forEach
             }
             if (
-                it.key == Manifest.permission.BODY_SENSORS && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                it.key == Manifest.permission.BODY_SENSORS &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.BODY_SENSORS) &&
                 manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.BODY_SENSORS_BACKGROUND)
             ) {
@@ -112,7 +114,15 @@ fun SensorUi(
         secondaryLabel = {
             if (sensor?.enabled == true) {
                 sensor.state.let {
-                    Text(if (basicSensor.unitOfMeasurement.isNullOrBlank() || sensor.state.toDoubleOrNull() == null) it else "$it ${sensor.unitOfMeasurement}")
+                    Text(
+                        if (basicSensor.unitOfMeasurement.isNullOrBlank() ||
+                            sensor.state.toDoubleOrNull() == null
+                        ) {
+                            it
+                        } else {
+                            "$it ${sensor.unitOfMeasurement}"
+                        },
+                    )
                 }
             }
         },

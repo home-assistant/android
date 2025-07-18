@@ -22,11 +22,7 @@ import io.homeassistant.companion.android.common.R
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun InfoNotification(
-    infoString: Int,
-    channelId: String,
-    buttonString: Int,
-) {
+fun InfoNotification(infoString: Int, channelId: String, buttonString: Int) {
     val context = LocalContext.current
     Icon(
         Icons.Outlined.Info,

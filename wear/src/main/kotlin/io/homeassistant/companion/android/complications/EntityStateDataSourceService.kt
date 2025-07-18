@@ -35,7 +35,9 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
     lateinit var entityStateComplicationsDao: EntityStateComplicationsDao
 
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData? {
-        if (request.complicationType != ComplicationType.SHORT_TEXT && request.complicationType != ComplicationType.LONG_TEXT) {
+        if (request.complicationType != ComplicationType.SHORT_TEXT &&
+            request.complicationType != ComplicationType.LONG_TEXT
+        ) {
             return null
         }
 
@@ -83,7 +85,9 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             ),
         ).build()
 
-        val contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description)).build()
+        val contentDescription = PlainComplicationText.Builder(
+            getText(R.string.complication_entity_state_content_description),
+        ).build()
         val monochromaticImage = MonochromaticImage.Builder(Icon.createWithBitmap(iconBitmap)).build()
         val tapAction = ComplicationReceiver.getComplicationToggleIntent(this, request.complicationInstanceId)
 
@@ -114,7 +118,9 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
 
     override fun getPreviewData(type: ComplicationType): ComplicationData? {
         val text = PlainComplicationText.Builder(getText(R.string.complication_entity_state_preview)).build()
-        val contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description)).build()
+        val contentDescription = PlainComplicationText.Builder(
+            getText(R.string.complication_entity_state_content_description),
+        ).build()
         val title = PlainComplicationText.Builder(getText(R.string.entity)).build()
         val monochromaticImage = MonochromaticImage.Builder(
             Icon.createWithResource(
@@ -165,7 +171,9 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
                 getText(textRes)
             },
         ).build()
-        val contentDescription = PlainComplicationText.Builder(getText(R.string.complication_entity_state_content_description)).build()
+        val contentDescription = PlainComplicationText.Builder(
+            getText(R.string.complication_entity_state_content_description),
+        ).build()
         val tapAction = if (setTapAction) {
             ComplicationReceiver.getComplicationConfigureIntent(this, request.complicationInstanceId)
         } else {

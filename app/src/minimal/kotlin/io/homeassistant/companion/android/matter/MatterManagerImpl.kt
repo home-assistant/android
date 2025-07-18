@@ -28,5 +28,6 @@ class MatterManagerImpl @Inject constructor() : MatterManager {
 
     override suspend fun commissionDevice(code: String, serverId: Int): MatterCommissionResponse? = null
 
-    override suspend fun commissionOnNetworkDevice(pin: Long, ip: String, serverId: Int): MatterCommissionResponse? = null
+    override suspend fun commissionOnNetworkDevice(pin: Long, ip: String, serverId: Int): MatterCommissionResponse? =
+        null
 }

@@ -47,10 +47,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 @Composable
-fun ManageTilesView(
-    viewModel: ManageTilesViewModel,
-    onShowIconDialog: (tag: String?) -> Unit,
-) {
+fun ManageTilesView(viewModel: ManageTilesViewModel, onShowIconDialog: (tag: String?) -> Unit) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     var expandedTile by remember { mutableStateOf(false) }
@@ -192,7 +189,9 @@ fun ManageTilesView(
                     Switch(
                         checked = viewModel.selectedShouldVibrate,
                         onCheckedChange = { viewModel.selectedShouldVibrate = it },
-                        colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb)),
+                        colors = SwitchDefaults.colors(
+                            uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb),
+                        ),
                     )
                 }
 
@@ -204,7 +203,9 @@ fun ManageTilesView(
                     Switch(
                         checked = viewModel.tileAuthRequired,
                         onCheckedChange = { viewModel.tileAuthRequired = it },
-                        colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb)),
+                        colors = SwitchDefaults.colors(
+                            uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb),
+                        ),
                     )
                 }
 

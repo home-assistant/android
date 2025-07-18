@@ -28,10 +28,7 @@ import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @Composable
-fun GesturesView(
-    gestureActions: Map<HAGesture, GestureAction>,
-    onSetAction: (HAGesture, GestureAction) -> Unit,
-) {
+fun GesturesView(gestureActions: Map<HAGesture, GestureAction>, onSetAction: (HAGesture, GestureAction) -> Unit) {
     LazyColumn(
         contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
     ) {
@@ -62,11 +59,7 @@ fun GesturesView(
 }
 
 @Composable
-private fun GestureSettingRow(
-    gesture: HAGesture,
-    action: GestureAction?,
-    onSetAction: (GestureAction) -> Unit,
-) {
+private fun GestureSettingRow(gesture: HAGesture, action: GestureAction?, onSetAction: (GestureAction) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
 
     Box {

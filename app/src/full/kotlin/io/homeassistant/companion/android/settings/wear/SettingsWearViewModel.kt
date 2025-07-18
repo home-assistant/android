@@ -45,10 +45,7 @@ import timber.log.Timber
 
 @HiltViewModel
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
-class SettingsWearViewModel @Inject constructor(
-    private val serverManager: ServerManager,
-    application: Application,
-) :
+class SettingsWearViewModel @Inject constructor(private val serverManager: ServerManager, application: Application) :
     AndroidViewModel(application),
     DataClient.OnDataChangedListener {
 
@@ -225,7 +222,9 @@ class SettingsWearViewModel @Inject constructor(
 
     private fun readUriData(uri: String): ByteArray {
         if (uri.isEmpty()) return ByteArray(0)
-        return getApplication<HomeAssistantApplication>().contentResolver.openInputStream(uri.toUri())!!.buffered().use {
+        return getApplication<HomeAssistantApplication>().contentResolver.openInputStream(
+            uri.toUri(),
+        )!!.buffered().use {
             it.readBytes()
         }
     }
@@ -272,7 +271,10 @@ class SettingsWearViewModel @Inject constructor(
 
     fun sendTemplateTileInfo() {
         val putDataRequest = PutDataMapRequest.create("/updateTemplateTiles").run {
-            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILES, kotlinJsonMapper.encodeToString(templateTiles.toMap()))
+            dataMap.putString(
+                WearDataMessages.CONFIG_TEMPLATE_TILES,
+                kotlinJsonMapper.encodeToString(templateTiles.toMap()),
+            )
             setUrgent()
             asPutDataRequest()
         }
@@ -315,7 +317,12 @@ class SettingsWearViewModel @Inject constructor(
         }
 
         val supportedDomainsList: List<String> =
-            kotlinJsonMapper.decodeFromString(data.getString(WearDataMessages.CONFIG_SUPPORTED_DOMAINS, "[\"input_boolean\", \"light\", \"lock\", \"switch\", \"script\", \"scene\"]"))
+            kotlinJsonMapper.decodeFromString(
+                data.getString(
+                    WearDataMessages.CONFIG_SUPPORTED_DOMAINS,
+                    "[\"input_boolean\", \"light\", \"lock\", \"switch\", \"script\", \"scene\"]",
+                ),
+            )
         supportedDomains.clear()
         supportedDomains.addAll(supportedDomainsList)
         val favoriteEntityIdList: List<String> =

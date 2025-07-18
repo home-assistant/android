@@ -56,26 +56,22 @@ object CoverControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity): Int =
-        when (entity.attributes["device_class"]) {
-            "awning" -> DeviceTypes.TYPE_AWNING
-            "blind" -> DeviceTypes.TYPE_BLINDS
-            "curtain" -> DeviceTypes.TYPE_CURTAIN
-            "door" -> DeviceTypes.TYPE_DOOR
-            "garage" -> DeviceTypes.TYPE_GARAGE
-            "gate" -> DeviceTypes.TYPE_GATE
-            "shutter" -> DeviceTypes.TYPE_SHUTTER
-            "window" -> DeviceTypes.TYPE_WINDOW
-            else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
-        }
+    override fun getDeviceType(entity: Entity): Int = when (entity.attributes["device_class"]) {
+        "awning" -> DeviceTypes.TYPE_AWNING
+        "blind" -> DeviceTypes.TYPE_BLINDS
+        "curtain" -> DeviceTypes.TYPE_CURTAIN
+        "door" -> DeviceTypes.TYPE_DOOR
+        "garage" -> DeviceTypes.TYPE_GARAGE
+        "gate" -> DeviceTypes.TYPE_GATE
+        "shutter" -> DeviceTypes.TYPE_SHUTTER
+        "window" -> DeviceTypes.TYPE_WINDOW
+        else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
+    }
 
     override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.domain_cover)
 
-    override suspend fun performAction(
-        integrationRepository: IntegrationRepository,
-        action: ControlAction,
-    ): Boolean {
+    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
         return when (action) {
             is BooleanAction -> {
                 integrationRepository.callAction(

@@ -19,8 +19,10 @@ object CoroutineDaoFunctionsIssue {
     @JvmField
     val ISSUE = Issue.Companion.create(
         id = "CoroutineDaoFunction",
-        briefDescription = "DAO functions should suspend or return a Flow",
-        explanation = "All functions in a DAO should suspend or return a Flow to ensure they can be executed properly in coroutines",
+        briefDescription = "DAO functions should suspend, return a Flow, or return a PagingSource",
+        explanation = """All functions in a DAO should suspend, return a Flow, or return a PagingSource 
+            |to ensure they can be executed properly in coroutines
+        """.trimMargin(),
         category = Category.Companion.CORRECTNESS,
         severity = Severity.ERROR,
         priority = 10,
@@ -30,7 +32,9 @@ object CoroutineDaoFunctionsIssue {
         ),
     )
 
-    class IssueDetector : Detector(), SourceCodeScanner {
+    class IssueDetector :
+        Detector(),
+        SourceCodeScanner {
         override fun getApplicableUastTypes() = listOf(UClass::class.java)
 
         override fun createUastHandler(context: JavaContext): UElementHandler {
@@ -46,12 +50,12 @@ object CoroutineDaoFunctionsIssue {
         }
 
         private fun checkMethod(context: JavaContext, method: UMethod) {
-            if (!method.isSuspend() && !method.isReturningFlow()) {
+            if (!method.isSuspend() && !method.isReturningFlow() && !method.isPagingSource()) {
                 context.report(
                     ISSUE,
                     method,
                     context.getLocation(method),
-                    "DAO functions should suspend or return a Flow.",
+                    "DAO functions should suspend, return a Flow, or return a PagingSource.",
                 )
             }
         }
@@ -68,4 +72,7 @@ private fun UMethod.isSuspend(): Boolean {
 
 private fun UMethod.isReturningFlow(): Boolean {
     return returnType?.canonicalText?.startsWith("kotlinx.coroutines.flow.Flow") == true
+}
+private fun UMethod.isPagingSource(): Boolean {
+    return returnType?.canonicalText?.startsWith("androidx.paging.PagingSource") == true
 }

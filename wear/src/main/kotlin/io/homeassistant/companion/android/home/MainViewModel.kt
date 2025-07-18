@@ -90,7 +90,8 @@ class MainViewModel @Inject constructor(
      * IDs of favorites in the Favorites database.
      */
     val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState()
-    private val favoriteCaches = favoriteCachesDao.getAll()
+    var favoriteCaches = mutableStateListOf<FavoriteCaches>()
+        private set
 
     val shortcutEntitiesMap = mutableStateMapOf<Int?, SnapshotStateList<SimplifiedEntity>>()
 
@@ -137,6 +138,12 @@ class MainViewModel @Inject constructor(
     var areNotificationsAllowed by mutableStateOf(false)
         private set
 
+    init {
+        viewModelScope.launch {
+            favoriteCaches.addAll(favoriteCachesDao.getAll())
+        }
+    }
+
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
     fun stringForDomain(domain: String): String? =
@@ -164,7 +171,8 @@ class MainViewModel @Inject constructor(
                 "io.homeassistant.companion.android.conversation.AssistantActivity",
             )
             isAssistantAppAllowed =
-                app.packageManager.getComponentEnabledSetting(assistantAppComponent) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                app.packageManager.getComponentEnabledSetting(assistantAppComponent) !=
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED
 
             refreshNotificationPermission()
         }
@@ -303,11 +311,10 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun getSupportedEntities(): List<String> =
-        entityRegistry
-            .orEmpty()
-            .map { it.entityId }
-            .filter { it.split(".")[0] in supportedDomains() }
+    private fun getSupportedEntities(): List<String> = entityRegistry
+        .orEmpty()
+        .map { it.entityId }
+        .filter { it.split(".")[0] in supportedDomains() }
 
     private fun updateEntityDomains() {
         val entitiesList = entities.values.toList().sortedBy { it.entityId }
@@ -460,7 +467,8 @@ class MainViewModel @Inject constructor(
 
     fun setThermostatTileRefreshInterval(tileId: Int, interval: Long) = viewModelScope.launch {
         val current = thermostatTileDao.get(tileId)
-        val updated = current?.copy(refreshInterval = interval) ?: ThermostatTile(id = tileId, refreshInterval = interval)
+        val updated =
+            current?.copy(refreshInterval = interval) ?: ThermostatTile(id = tileId, refreshInterval = interval)
         thermostatTileDao.add(updated)
     }
 
@@ -547,9 +555,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun getCachedEntity(entityId: String): FavoriteCaches? =
-        favoriteCaches.find { it.id == entityId }
-
     private fun addCachedFavorite(entityId: String) {
         viewModelScope.launch {
             val entity = entities[entityId]
@@ -567,7 +572,11 @@ class MainViewModel @Inject constructor(
         )
         app.packageManager.setComponentEnabledSetting(
             assistantAppComponent,
-            if (allowed) PackageManager.COMPONENT_ENABLED_STATE_DEFAULT else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            if (allowed) {
+                PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
+            } else {
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            },
             PackageManager.DONT_KILL_APP,
         )
         isAssistantAppAllowed = allowed
@@ -593,9 +602,7 @@ class MainViewModel @Inject constructor(
     /**
      * Convert a Flow into a State object that updates until the view model is cleared.
      */
-    private fun <T> Flow<T>.collectAsState(
-        initial: T,
-    ): State<T> {
+    private fun <T> Flow<T>.collectAsState(initial: T): State<T> {
         val state = mutableStateOf(initial)
         viewModelScope.launch {
             collect { state.value = it }

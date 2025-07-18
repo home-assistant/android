@@ -50,13 +50,15 @@ import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
 class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     companion object {
-        private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
+        private const val PIN_WIDGET_CALLBACK =
+            "io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
     @Inject
@@ -93,7 +95,12 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             .setView(fieldKeyInput)
             .setNegativeButton(android.R.string.cancel) { _, _ -> }
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                if (dynamicFields.any { it.field == binding.widgetTextConfigService.text.toString() }) return@setPositiveButton
+                if (dynamicFields.any {
+                        it.field == binding.widgetTextConfigService.text.toString()
+                    }
+                ) {
+                    return@setPositiveButton
+                }
 
                 val position = dynamicFields.size
                 dynamicFields.add(
@@ -117,70 +124,88 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     private val actionTextWatcher: TextWatcher = (
         object : TextWatcher {
+            private var ongoingJob: Job? = null
+
             @SuppressLint("NotifyDataSetChanged")
             override fun afterTextChanged(p0: Editable?) {
                 val actionText: String = p0.toString()
+                // To make sure only one job at the time is updating the data we keep a reference to the job and cancel
+                // it if it gets call again.
+                ongoingJob?.cancel()
+                ongoingJob = lifecycleScope.launch {
+                    if (actions[selectedServerId].orEmpty().keys.contains(actionText)) {
+                        Timber.d("Valid domain and action--processing dynamic fields")
 
-                if (actions[selectedServerId].orEmpty().keys.contains(actionText)) {
-                    Timber.d("Valid domain and action--processing dynamic fields")
-
-                    // Make sure there are not already any dynamic fields created
-                    // This can happen if selecting the drop-down twice or pasting
-                    dynamicFields.clear()
-
-                    // We only call this if servicesAvailable was fetched and is not null,
-                    // so we can safely assume that it is not null here
-                    val actionData = actions[selectedServerId]!![actionText]!!.actionData
-                    val target = actionData.target
-                    val fields = actionData.fields
-
-                    val fieldKeys = fields.keys
-                    Timber.d("Fields applicable to this action: $fields")
-
-                    val existingActionData = mutableMapOf<String, Any?>()
-                    val addedFields = mutableListOf<String>()
-                    buttonWidgetDao.get(appWidgetId)?.let { buttonWidget ->
-                        if (
-                            buttonWidget.serverId != selectedServerId ||
-                            "${buttonWidget.domain}.${buttonWidget.service}" != actionText
-                        ) {
-                            return@let
-                        }
-
-                        val dbMap: Map<String, Any?> = kotlinJsonMapper.decodeFromString(MapAnySerializer, buttonWidget.serviceData)
-                        for (item in dbMap) {
-                            val value = item.value.toString().replace("[", "").replace("]", "") + if (item.key == "entity_id") ", " else ""
-                            existingActionData[item.key] = value.ifEmpty { null }
-                            addedFields.add(item.key)
-                        }
-                    }
-
-                    if (target != false) {
-                        dynamicFields.add(0, ActionFieldBinder(actionText, "entity_id", existingActionData["entity_id"]))
-                    }
-
-                    fieldKeys.sorted().forEach { fieldKey ->
-                        Timber.d("Creating a text input box for $fieldKey")
-
-                        // Insert a dynamic layout
-                        // IDs get priority and go at the top, since the other fields
-                        // are usually optional but the ID is required
-                        if (fieldKey.contains("_id")) {
-                            dynamicFields.add(0, ActionFieldBinder(actionText, fieldKey, existingActionData[fieldKey]))
-                        } else {
-                            dynamicFields.add(ActionFieldBinder(actionText, fieldKey, existingActionData[fieldKey]))
-                        }
-                    }
-                    addedFields.minus("entity_id").minus(fieldKeys).forEach { extraFieldKey ->
-                        Timber.d("Creating a text input box for extra $extraFieldKey")
-                        dynamicFields.add(ActionFieldBinder(actionText, extraFieldKey, existingActionData[extraFieldKey]))
-                    }
-
-                    dynamicFieldAdapter.notifyDataSetChanged()
-                } else {
-                    if (dynamicFields.size > 0) {
+                        // Make sure there are not already any dynamic fields created
+                        // This can happen if selecting the drop-down twice or pasting
                         dynamicFields.clear()
+
+                        // We only call this if servicesAvailable was fetched and is not null,
+                        // so we can safely assume that it is not null here
+                        val actionData = actions[selectedServerId]!![actionText]!!.actionData
+                        val target = actionData.target
+                        val fields = actionData.fields
+
+                        val fieldKeys = fields.keys
+                        Timber.d("Fields applicable to this action: $fields")
+
+                        val existingActionData = mutableMapOf<String, Any?>()
+                        val addedFields = mutableListOf<String>()
+                        buttonWidgetDao.get(appWidgetId)?.let { buttonWidget ->
+                            if (
+                                buttonWidget.serverId != selectedServerId ||
+                                "${buttonWidget.domain}.${buttonWidget.service}" != actionText
+                            ) {
+                                return@let
+                            }
+
+                            val dbMap: Map<String, Any?> = kotlinJsonMapper.decodeFromString(
+                                MapAnySerializer,
+                                buttonWidget.serviceData,
+                            )
+                            for (item in dbMap) {
+                                val value =
+                                    item.value.toString().replace("[", "").replace("]", "") +
+                                        if (item.key == "entity_id") ", " else ""
+                                existingActionData[item.key] = value.ifEmpty { null }
+                                addedFields.add(item.key)
+                            }
+                        }
+
+                        if (target != false) {
+                            dynamicFields.add(
+                                0,
+                                ActionFieldBinder(actionText, "entity_id", existingActionData["entity_id"]),
+                            )
+                        }
+
+                        fieldKeys.sorted().forEach { fieldKey ->
+                            Timber.d("Creating a text input box for $fieldKey")
+
+                            // Insert a dynamic layout
+                            // IDs get priority and go at the top, since the other fields
+                            // are usually optional but the ID is required
+                            if (fieldKey.contains("_id")) {
+                                dynamicFields.add(
+                                    0,
+                                    ActionFieldBinder(actionText, fieldKey, existingActionData[fieldKey]),
+                                )
+                            } else {
+                                dynamicFields.add(ActionFieldBinder(actionText, fieldKey, existingActionData[fieldKey]))
+                            }
+                        }
+                        addedFields.minus("entity_id").minus(fieldKeys).forEach { extraFieldKey ->
+                            Timber.d("Creating a text input box for extra $extraFieldKey")
+                            dynamicFields.add(
+                                ActionFieldBinder(actionText, extraFieldKey, existingActionData[extraFieldKey]),
+                            )
+                        }
                         dynamicFieldAdapter.notifyDataSetChanged()
+                    } else {
+                        if (dynamicFields.isNotEmpty()) {
+                            dynamicFields.clear()
+                            dynamicFieldAdapter.notifyDataSetChanged()
+                        }
                     }
                 }
             }
@@ -225,35 +250,71 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             return
         }
 
-        val buttonWidget = buttonWidgetDao.get(appWidgetId)
         val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
-        binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
+        binding.backgroundType.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
-        if (buttonWidget != null) {
-            val actionText = "${buttonWidget.domain}.${buttonWidget.service}"
-            binding.widgetTextConfigService.setText(actionText)
-            binding.label.setText(buttonWidget.label)
-            binding.backgroundType.setSelection(
-                WidgetUtils.getSelectedBackgroundOption(
-                    this,
-                    buttonWidget.backgroundType,
-                    backgroundTypeValues,
-                ),
-            )
-            binding.textColor.isVisible = buttonWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
-            binding.textColorWhite.isChecked =
-                buttonWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
-            binding.textColorBlack.isChecked =
-                buttonWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
+        lifecycleScope.launch {
+            val buttonWidget = buttonWidgetDao.get(appWidgetId)
+            if (buttonWidget != null) {
+                val actionText = "${buttonWidget.domain}.${buttonWidget.service}"
+                binding.widgetTextConfigService.setText(actionText)
+                binding.label.setText(buttonWidget.label)
+                binding.backgroundType.setSelection(
+                    WidgetUtils.getSelectedBackgroundOption(
+                        this@ButtonWidgetConfigureActivity,
+                        buttonWidget.backgroundType,
+                        backgroundTypeValues,
+                    ),
+                )
+                binding.textColor.isVisible = buttonWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
+                binding.textColorWhite.isChecked =
+                    buttonWidget.textColor?.let {
+                        it.toColorInt() == ContextCompat.getColor(
+                            this@ButtonWidgetConfigureActivity,
+                            android.R.color.white,
+                        )
+                    }
+                        ?: true
+                binding.textColorBlack.isChecked =
+                    buttonWidget.textColor?.let {
+                        it.toColorInt() ==
+                            ContextCompat.getColor(
+                                this@ButtonWidgetConfigureActivity,
+                                commonR.color.colorWidgetButtonLabelBlack,
+                            )
+                    }
+                        ?: false
 
-            binding.addButton.setText(commonR.string.update_widget)
+                binding.addButton.setText(commonR.string.update_widget)
 
-            binding.widgetCheckboxRequireAuthentication.isChecked = buttonWidget.requireAuthentication
-        } else {
-            binding.backgroundType.setSelection(0)
+                binding.widgetCheckboxRequireAuthentication.isChecked = buttonWidget.requireAuthentication
+            } else {
+                binding.backgroundType.setSelection(0)
+            }
+
+            setupServerSelect(buttonWidget?.serverId)
+
+            // Do this off the main thread, takes a second or two...
+            runOnUiThread {
+                // Create an icon pack and load all drawables.
+                val iconName = buttonWidget?.iconName ?: "mdi:flash"
+                val icon = CommunityMaterial.getIconByMdiName(iconName) ?: CommunityMaterial.Icon2.cmd_flash
+                onIconDialogIconsSelected(icon)
+                binding.widgetConfigIconSelector.setOnClickListener {
+                    var alertDialog: DialogFragment? = null
+
+                    alertDialog = IconDialogFragment(
+                        callback = {
+                            onIconDialogIconsSelected(it)
+                            alertDialog?.dismiss()
+                        },
+                    )
+
+                    alertDialog.show(supportFragmentManager, IconDialogFragment.TAG)
+                }
+            }
         }
-
-        setupServerSelect(buttonWidget?.serverId)
 
         actionAdapter = SingleItemArrayAdapter(this) {
             if (it != null) getActionString(it) else ""
@@ -294,7 +355,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
         binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                binding.textColor.isVisible = parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)
+                binding.textColor.isVisible =
+                    parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -319,7 +381,10 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                         PendingIntent.getActivity(
                             this,
                             System.currentTimeMillis().toInt(),
-                            Intent(this, ButtonWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                            Intent(
+                                this,
+                                ButtonWidgetConfigureActivity::class.java,
+                            ).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
                         ),
                     )
@@ -334,26 +399,6 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         dynamicFieldAdapter = WidgetDynamicFieldAdapter(HashMap(), HashMap(), dynamicFields)
         binding.widgetConfigFieldsLayout.adapter = dynamicFieldAdapter
         binding.widgetConfigFieldsLayout.layoutManager = LinearLayoutManager(this)
-
-        // Do this off the main thread, takes a second or two...
-        runOnUiThread {
-            // Create an icon pack and load all drawables.
-            val iconName = buttonWidget?.iconName ?: "mdi:flash"
-            val icon = CommunityMaterial.getIconByMdiName(iconName) ?: CommunityMaterial.Icon2.cmd_flash
-            onIconDialogIconsSelected(icon)
-            binding.widgetConfigIconSelector.setOnClickListener {
-                var alertDialog: DialogFragment? = null
-
-                alertDialog = IconDialogFragment(
-                    callback = {
-                        onIconDialogIconsSelected(it)
-                        alertDialog?.dismiss()
-                    },
-                )
-
-                alertDialog.show(supportFragmentManager, IconDialogFragment.TAG)
-            }
-        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -396,7 +441,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     private fun onIconDialogIconsSelected(selectedIcon: IIcon) {
         binding.widgetConfigIconSelector.tag = selectedIcon.mdiName
         val iconDrawable = IconicsDrawable(this, selectedIcon)
-        iconDrawable.colorFilter = PorterDuffColorFilter(ContextCompat.getColor(this, commonR.color.colorIcon), PorterDuff.Mode.SRC_IN)
+        iconDrawable.colorFilter =
+            PorterDuffColorFilter(ContextCompat.getColor(this, commonR.color.colorIcon), PorterDuff.Mode.SRC_IN)
 
         binding.widgetConfigIconSelector.setImageBitmap(iconDrawable.toBitmap())
     }
@@ -475,14 +521,25 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
             intent.putExtra(
                 ButtonWidget.EXTRA_TEXT_COLOR,
-                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent)) {
-                    getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
+                if (binding.backgroundType.selectedItem as String? ==
+                    getString(commonR.string.widget_background_type_transparent)
+                ) {
+                    getHexForColor(
+                        if (binding.textColorWhite.isChecked) {
+                            android.R.color.white
+                        } else {
+                            commonR.color.colorWidgetButtonLabelBlack
+                        },
+                    )
                 } else {
                     null
                 },
             )
 
-            intent.putExtra(ButtonWidget.EXTRA_REQUIRE_AUTHENTICATION, binding.widgetCheckboxRequireAuthentication.isChecked)
+            intent.putExtra(
+                ButtonWidget.EXTRA_REQUIRE_AUTHENTICATION,
+                binding.widgetCheckboxRequireAuthentication.isChecked,
+            )
 
             context.sendBroadcast(intent)
 

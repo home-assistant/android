@@ -113,7 +113,9 @@ abstract class TileExtensions : TileService() {
                     tileData.entityId.split('.')[0] in toggleDomainsWithLock &&
                     serverManager.getServer(tileData.serverId) != null
                 ) {
-                    serverManager.integrationRepository(tileData.serverId).getEntityUpdates(listOf(tileData.entityId))?.collect {
+                    serverManager.integrationRepository(
+                        tileData.serverId,
+                    ).getEntityUpdates(listOf(tileData.entityId))?.collect {
                         tile.state =
                             if (it.isActive()) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
                         getTileIcon(tileData.iconName, it, applicationContext)?.let { icon ->
@@ -203,11 +205,7 @@ abstract class TileExtensions : TileService() {
         }
     }
 
-    private suspend fun tileClicked(
-        tileId: String,
-        tile: Tile,
-        isUnlock: Boolean,
-    ) {
+    private suspend fun tileClicked(tileId: String, tile: Tile, isUnlock: Boolean) {
         Timber.d("Click detected for tile ID: $tileId")
         val context = applicationContext
         val tileData = tileDao.get(tileId)
