@@ -56,6 +56,16 @@ class GeocodeSensorManagerTest {
     }
 
     @Test
+    fun `Given location time in the future when invoking isStillValid then it returns true`() {
+        val now = Clock.System.now()
+        val location = mockk<Location>()
+        val validTime = now + 5.seconds
+        every { location.time } returns validTime.toEpochMilliseconds()
+
+        assertTrue(location.isStillValid())
+    }
+
+    @Test
     fun `Given location time in the future below inaccuracy factor with the 1024 weeks bug when invoking isStillValid then it returns true`() {
         val now = Clock.System.now()
         val location = mockk<Location>()
