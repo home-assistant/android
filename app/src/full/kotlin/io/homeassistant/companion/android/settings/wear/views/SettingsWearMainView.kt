@@ -77,17 +77,23 @@ class SettingsWearMainView : AppCompatActivity() {
                 notificationsPossible = false,
                 isWatch = true,
                 discoveryOptions = OnboardApp.DiscoveryOptions.ADD_EXISTING_EXTERNAL,
-                mayRequireTlsClientCertificate = (application as HomeAssistantApplication).keyChainRepository.getPrivateKey() != null,
+                mayRequireTlsClientCertificate =
+                (application as HomeAssistantApplication).keyChainRepository.getPrivateKey() != null,
             ),
         )
     }
 
     private fun onOnboardingComplete(result: OnboardApp.Output?) {
-        if (result != null) {
-            val (url, authCode, deviceName, deviceTrackingEnabled, _, tlsCertificateUri, tlsCertificatePassword) = result
-            settingsWearViewModel.sendAuthToWear(url, authCode, deviceName, deviceTrackingEnabled, true, tlsCertificateUri, tlsCertificatePassword)
-        } else {
-            Timber.e("onOnboardingComplete: Activity result returned null intent data")
-        }
+        result?.apply {
+            settingsWearViewModel.sendAuthToWear(
+                url,
+                authCode,
+                deviceName,
+                deviceTrackingEnabled,
+                true,
+                tlsClientCertificateUri,
+                tlsClientCertificatePassword,
+            )
+        } ?: Timber.e("onOnboardingComplete: Activity result returned null intent data")
     }
 }

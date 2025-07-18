@@ -158,9 +158,11 @@ object WearToggleChip {
 
                     // Painters that match ToggleChipDefaults
                     checkedBackgroundPaint = WearBrushPainter(Brush.linearGradient(checkedBackgroundColors))
-                    disabledCheckedBackgroundPaint = WearBrushPainter(Brush.linearGradient(disabledCheckedBackgroundColors))
+                    disabledCheckedBackgroundPaint =
+                        WearBrushPainter(Brush.linearGradient(disabledCheckedBackgroundColors))
                     uncheckedBackgroundPaint = WearBrushPainter(Brush.linearGradient(uncheckedBackgroundColors))
-                    disabledUncheckedBackgroundPaint = WearBrushPainter(Brush.linearGradient(disabledUncheckedBackgroundColors))
+                    disabledUncheckedBackgroundPaint =
+                        WearBrushPainter(Brush.linearGradient(disabledUncheckedBackgroundColors))
                 }
 
                 defaultChipColors(

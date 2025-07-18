@@ -31,9 +31,7 @@ import io.homeassistant.companion.android.onboarding.OnboardingScreen
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
 @Composable
-fun WelcomeView(
-    onContinue: () -> Unit,
-) {
+fun WelcomeView(onContinue: () -> Unit) {
     OnboardingScreen(Modifier.verticalScroll(rememberScrollState())) {
         Image(
             painter = painterResource(id = R.drawable.app_icon_launch),

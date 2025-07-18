@@ -97,7 +97,9 @@ fun LocationTrackingView(
                             // Handled by row
                             onCheckedChange = null,
                             modifier = Modifier.padding(start = 16.dp),
-                            colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb)),
+                            colors = SwitchDefaults.colors(
+                                uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb),
+                            ),
                         )
                     }
                 }
@@ -173,7 +175,9 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
                                 val sent = it.result == LocationHistoryItemResult.SENT
                                 val failed = it.result == LocationHistoryItemResult.FAILED_SEND
                                 Text(
-                                    text = "${stringResource(item.trigger.toStringResource())} • ${stringResource(it.result.toStringResource())}",
+                                    text = "${stringResource(
+                                        item.trigger.toStringResource(),
+                                    )} • ${stringResource(it.result.toStringResource())}",
                                     style = MaterialTheme.typography.body2,
                                     modifier = Modifier.padding(end = 4.dp),
                                 )
@@ -183,7 +187,13 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
                                         failed -> CommunityMaterial.Icon.cmd_alert_outline
                                         else -> CommunityMaterial.Icon.cmd_debug_step_over
                                     },
-                                    contentDescription = if (sent || failed) null else stringResource(commonR.string.location_history_skipped),
+                                    contentDescription = if (sent ||
+                                        failed
+                                    ) {
+                                        null
+                                    } else {
+                                        stringResource(commonR.string.location_history_skipped)
+                                    },
                                     colorFilter = ColorFilter.tint(
                                         when {
                                             sent -> colorResource(commonR.color.colorOnAlertSuccess)
@@ -270,11 +280,7 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
 }
 
 @Composable
-fun ReadOnlyRow(
-    primaryText: String,
-    secondaryText: String,
-    selectingEnabled: Boolean = true,
-) = ReadOnlyRow(
+fun ReadOnlyRow(primaryText: String, secondaryText: String, selectingEnabled: Boolean = true) = ReadOnlyRow(
     { Text(text = primaryText, style = MaterialTheme.typography.body1) },
     {
         if (selectingEnabled) {
@@ -286,10 +292,7 @@ fun ReadOnlyRow(
 )
 
 @Composable
-fun ReadOnlyRow(
-    primarySlot: @Composable () -> Unit,
-    secondarySlot: @Composable () -> Unit,
-) {
+fun ReadOnlyRow(primarySlot: @Composable () -> Unit, secondarySlot: @Composable () -> Unit) {
     Column(
         modifier = Modifier
             .heightIn(min = 56.dp)

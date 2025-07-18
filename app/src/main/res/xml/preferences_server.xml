@@ -8,7 +8,7 @@
         app:isPreferenceVisible="false"/>
     <Preference
         android:key="activate_server_hint"
-        android:summary="@string/server_activate_swipe_hint"
+        android:summary="@string/server_activate_gesture_hint"
         app:isPreferenceVisible="false"/>
     <PreferenceCategory
         android:title="@string/device_registration">

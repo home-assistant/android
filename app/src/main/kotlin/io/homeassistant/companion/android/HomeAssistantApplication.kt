@@ -22,11 +22,13 @@ import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositor
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
+import io.homeassistant.companion.android.common.util.HAStrictMode
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.util.LifecycleHandler
+import io.homeassistant.companion.android.util.ignoredViolationRules
 import io.homeassistant.companion.android.util.initCrashSaving
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
@@ -44,7 +46,9 @@ import okhttp3.OkHttpClient
 import timber.log.Timber
 
 @HiltAndroidApp
-open class HomeAssistantApplication : Application(), SingletonImageLoader.Factory {
+open class HomeAssistantApplication :
+    Application(),
+    SingletonImageLoader.Factory {
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
@@ -63,6 +67,14 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
 
     override fun onCreate() {
         super.onCreate()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            BuildConfig.DEBUG &&
+            !BuildConfig.NO_STRICT_MODE
+        ) {
+            HAStrictMode.enable(ignoredViolationRules)
+        }
+
         // We should initialize the logger as early as possible in the lifecycle of the application
         Timber.plant(Timber.DebugTree())
 
@@ -279,14 +291,23 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
         }
 
         // Register for faster sensor updates if enabled
-        val settingDao = AppDatabase.getInstance(applicationContext).settingsDao().get(0)
-        if (settingDao != null && (settingDao.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING || settingDao.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_ALWAYS)) {
-            ContextCompat.registerReceiver(
-                this,
-                sensorReceiver,
-                IntentFilter(Intent.ACTION_TIME_TICK),
-                ContextCompat.RECEIVER_EXPORTED,
-            )
+        val settingDao = AppDatabase.getInstance(applicationContext).settingsDao()
+        ioScope.launch {
+            // 0 is used for storing app level settings
+            val settings = settingDao.get(0)
+            if (settings != null &&
+                (
+                    settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING ||
+                        settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_ALWAYS
+                    )
+            ) {
+                ContextCompat.registerReceiver(
+                    this@HomeAssistantApplication,
+                    sensorReceiver,
+                    IntentFilter(Intent.ACTION_TIME_TICK),
+                    ContextCompat.RECEIVER_EXPORTED,
+                )
+            }
         }
 
         // Register for changes to the configuration
@@ -311,19 +332,28 @@ open class HomeAssistantApplication : Application(), SingletonImageLoader.Factor
 
             ContextCompat.registerReceiver(this, buttonWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
             ContextCompat.registerReceiver(this, entityWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
-            ContextCompat.registerReceiver(this, mediaPlayerWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
-            ContextCompat.registerReceiver(this, templateWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            ContextCompat.registerReceiver(
+                this,
+                mediaPlayerWidget,
+                screenIntentFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+            ContextCompat.registerReceiver(
+                this,
+                templateWidget,
+                screenIntentFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
         }
     }
 
-    override fun newImageLoader(context: PlatformContext): ImageLoader =
-        ImageLoader.Builder(context)
-            .components {
-                add(
-                    OkHttpNetworkFetcherFactory(
-                        callFactory = okHttpClient,
-                    ),
-                )
-            }
-            .build()
+    override fun newImageLoader(context: PlatformContext): ImageLoader = ImageLoader.Builder(context)
+        .components {
+            add(
+                OkHttpNetworkFetcherFactory(
+                    callFactory = okHttpClient,
+                ),
+            )
+        }
+        .build()
 }

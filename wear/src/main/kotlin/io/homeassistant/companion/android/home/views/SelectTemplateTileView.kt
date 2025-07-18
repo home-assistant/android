@@ -18,10 +18,7 @@ import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 
 @Composable
-fun SelectTemplateTileView(
-    templateTiles: Map<Int, TemplateTileConfig>,
-    onSelectTemplateTile: (tileId: Int) -> Unit,
-) {
+fun SelectTemplateTileView(templateTiles: Map<Int, TemplateTileConfig>, onSelectTemplateTile: (tileId: Int) -> Unit) {
     WearAppTheme {
         ThemeLazyColumn {
             item {

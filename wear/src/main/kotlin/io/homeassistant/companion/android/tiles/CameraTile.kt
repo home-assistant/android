@@ -117,17 +117,26 @@ class CameraTile : TileService() {
                     val url = UrlUtil.handle(serverManager.getServer()?.connection?.getUrl(), picture ?: "")
                     if (picture != null && url != null) {
                         var byteArray: ByteArray?
-                        val maxWidth = requestParams.deviceConfiguration.screenWidthDp * requestParams.deviceConfiguration.screenDensity
-                        val maxHeight = requestParams.deviceConfiguration.screenHeightDp * requestParams.deviceConfiguration.screenDensity
+                        val maxWidth =
+                            requestParams.deviceConfiguration.screenWidthDp *
+                                requestParams.deviceConfiguration.screenDensity
+                        val maxHeight =
+                            requestParams.deviceConfiguration.screenHeightDp *
+                                requestParams.deviceConfiguration.screenDensity
                         withContext(Dispatchers.IO) {
                             val response = okHttpClient.newCall(Request.Builder().url(url).build()).execute()
                             byteArray = response.body.byteStream().readBytes()
                             byteArray?.let {
                                 var bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
                                 if (bitmap.width > maxWidth || bitmap.height > maxHeight) {
-                                    Timber.d("Scaling camera snapshot to fit screen (${bitmap.width}x${bitmap.height} to ${maxWidth.toInt()}x${maxHeight.toInt()} max)")
+                                    Timber.d(
+                                        "Scaling camera snapshot to fit screen (${bitmap.width}x${bitmap.height} to ${maxWidth.toInt()}x${maxHeight.toInt()} max)",
+                                    )
                                     val currentRatio = (bitmap.width.toFloat() / bitmap.height.toFloat())
-                                    val screenRatio = (requestParams.deviceConfiguration.screenWidthDp.toFloat() / requestParams.deviceConfiguration.screenHeightDp.toFloat())
+                                    val screenRatio = (
+                                        requestParams.deviceConfiguration.screenWidthDp.toFloat() /
+                                            requestParams.deviceConfiguration.screenHeightDp.toFloat()
+                                        )
                                     imageWidth = maxWidth.toInt()
                                     imageHeight = maxHeight.toInt()
                                     if (currentRatio > screenRatio) {

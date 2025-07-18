@@ -2,8 +2,9 @@ include(":common", ":app", ":wear", ":automotive", ":testing-unit", ":lint", ":o
 
 rootProject.name = "home-assistant-android"
 
+includeBuild("build-logic")
+
 pluginManagement {
-    includeBuild("build-logic")
     repositories {
         google {
             content {

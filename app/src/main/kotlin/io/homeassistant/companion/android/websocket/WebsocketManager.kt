@@ -32,7 +32,6 @@ import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.webview.WebViewActivity
-import java.lang.IllegalStateException
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -44,17 +43,21 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-class WebsocketManager(
-    appContext: Context,
-    workerParams: WorkerParameters,
-) : CoroutineWorker(appContext, workerParams) {
+class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
+    CoroutineWorker(appContext, workerParams) {
 
     companion object {
         private const val TAG = "WebSockManager"
         private const val SOURCE = "Websocket"
         private const val NOTIFICATION_ID = 65423
         private const val NOTIFICATION_RESTRICTED_ID = 65424
-        private val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.FLAVOR == "full") WebsocketSetting.NEVER else WebsocketSetting.ALWAYS
+        private val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.FLAVOR ==
+            "full"
+        ) {
+            WebsocketSetting.NEVER
+        } else {
+            WebsocketSetting.ALWAYS
+        }
 
         fun start(context: Context) {
             val websocketNotifications =
@@ -124,9 +127,9 @@ class WebsocketManager(
         return@withContext Result.success()
     }
 
-    private fun shouldWeRun(): Boolean = serverManager.defaultServers.any { shouldRunForServer(it.id) }
+    private suspend fun shouldWeRun(): Boolean = serverManager.defaultServers.any { shouldRunForServer(it.id) }
 
-    private fun shouldRunForServer(serverId: Int): Boolean {
+    private suspend fun shouldRunForServer(serverId: Int): Boolean {
         val server = serverManager.getServer(serverId) ?: return false
         val setting = settingsDao.get(serverId)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
         val isHome = server.connection.isInternal(requiresUrl = false)
@@ -187,7 +190,10 @@ class WebsocketManager(
                                 flattened["action_${i + 1}_key"] = action["action"].toString()
                                 flattened["action_${i + 1}_title"] = action["title"].toString()
                                 action["uri"]?.let { uri -> flattened["action_${i + 1}_uri"] = uri.toString() }
-                                action["behavior"]?.let { behavior -> flattened["action_${i + 1}_behavior"] = behavior.toString() }
+                                action["behavior"]?.let { behavior ->
+                                    flattened["action_${i + 1}_behavior"] =
+                                        behavior.toString()
+                                }
                             }
                         }
                     } else {

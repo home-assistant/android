@@ -23,7 +23,11 @@ import androidx.media3.common.util.UnstableApi
 import kotlin.time.Duration
 
 @OptIn(UnstableApi::class)
-internal class FakePlayer(val currentPosition: Duration = Duration.ZERO, val muted: Boolean = false, val playing: Boolean = false) : Player {
+internal class FakePlayer(
+    val currentPosition: Duration = Duration.ZERO,
+    val muted: Boolean = false,
+    val playing: Boolean = false,
+) : Player {
     override fun getApplicationLooper(): Looper {
         TODO("Not yet implemented")
     }

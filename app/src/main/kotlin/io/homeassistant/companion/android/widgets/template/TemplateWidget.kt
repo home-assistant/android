@@ -73,11 +73,7 @@ class TemplateWidget : AppWidgetProvider() {
         }
     }
 
-    override fun onUpdate(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray,
-    ) {
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
             widgetScope?.launch {
@@ -114,6 +110,7 @@ class TemplateWidget : AppWidgetProvider() {
                 )
                 onScreenOn(context)
             }
+
             Intent.ACTION_SCREEN_ON -> onScreenOn(context)
             Intent.ACTION_SCREEN_OFF -> onScreenOff()
         }
@@ -171,11 +168,11 @@ class TemplateWidget : AppWidgetProvider() {
         }
     }
 
-    private suspend fun updateAllWidgets(
-        context: Context,
-    ) {
+    private suspend fun updateAllWidgets(context: Context) {
         val appWidgetManager = AppWidgetManager.getInstance(context) ?: return
-        val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, TemplateWidget::class.java)).toSet()
+        val systemWidgetIds = appWidgetManager.getAppWidgetIds(
+            ComponentName(context, TemplateWidget::class.java),
+        ).toSet()
         val dbWidgetIds = templateWidgetDao.getAll().map { it.id }
 
         val invalidWidgetIds = dbWidgetIds.minus(systemWidgetIds)
@@ -200,7 +197,11 @@ class TemplateWidget : AppWidgetProvider() {
         }
     }
 
-    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedTemplate: String? = null): RemoteViews {
+    private suspend fun getWidgetRemoteViews(
+        context: Context,
+        appWidgetId: Int,
+        suggestedTemplate: String? = null,
+    ): RemoteViews {
         // Every time AppWidgetManager.updateAppWidget(...) is called, the button listener
         // and label need to be re-assigned, or the next time the layout updates
         // (e.g home screen rotation) the widget will fall back on its default layout
@@ -213,8 +214,16 @@ class TemplateWidget : AppWidgetProvider() {
 
         val widget = templateWidgetDao.get(appWidgetId)
 
-        val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
-        return RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_template_wrapper_dynamiccolor else R.layout.widget_template_wrapper_default).apply {
+        val useDynamicColors =
+            widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
+        return RemoteViews(
+            context.packageName,
+            if (useDynamicColors) {
+                R.layout.widget_template_wrapper_dynamiccolor
+            } else {
+                R.layout.widget_template_wrapper_default
+            },
+        ).apply {
             setOnClickPendingIntent(
                 R.id.widgetLayout,
                 PendingIntent.getBroadcast(
@@ -227,7 +236,10 @@ class TemplateWidget : AppWidgetProvider() {
             if (widget != null) {
                 // Theming
                 if (widget.backgroundType == WidgetBackgroundType.TRANSPARENT) {
-                    var textColor = context.getAttribute(R.attr.colorWidgetOnBackground, ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel))
+                    var textColor = context.getAttribute(
+                        R.attr.colorWidgetOnBackground,
+                        ContextCompat.getColor(context, commonR.color.colorWidgetButtonLabel),
+                    )
                     widget.textColor?.let { textColor = it.toColorInt() }
 
                     setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
@@ -235,9 +247,14 @@ class TemplateWidget : AppWidgetProvider() {
                 }
 
                 // Content
-                var renderedTemplate: String? = templateWidgetDao.get(appWidgetId)?.lastUpdate ?: context.getString(commonR.string.loading)
+                var renderedTemplate: String? =
+                    templateWidgetDao.get(appWidgetId)?.lastUpdate ?: context.getString(commonR.string.loading)
                 try {
-                    renderedTemplate = suggestedTemplate ?: serverManager.integrationRepository(widget.serverId).renderTemplate(widget.template, mapOf()).toString()
+                    renderedTemplate =
+                        suggestedTemplate
+                            ?: serverManager.integrationRepository(
+                                widget.serverId,
+                            ).renderTemplate(widget.template, mapOf()).toString()
                     templateWidgetDao.updateTemplateWidgetLastUpdate(
                         appWidgetId,
                         renderedTemplate,
@@ -249,7 +266,9 @@ class TemplateWidget : AppWidgetProvider() {
                 }
                 setTextViewText(
                     R.id.widgetTemplateText,
-                    renderedTemplate?.let { HtmlCompat.fromHtml(it, HtmlCompat.FROM_HTML_MODE_LEGACY) },
+                    renderedTemplate?.let {
+                        HtmlCompat.fromHtml(it, HtmlCompat.FROM_HTML_MODE_LEGACY)
+                    },
                 )
                 setTextViewTextSize(
                     R.id.widgetTemplateText,
@@ -268,8 +287,9 @@ class TemplateWidget : AppWidgetProvider() {
         val serverId = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
         val template: String? = extras.getString(EXTRA_TEMPLATE)
         val textSize: Float = extras.getFloat(EXTRA_TEXT_SIZE)
-        val backgroundTypeSelection = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
-            ?: WidgetBackgroundType.DAYNIGHT
+        val backgroundTypeSelection =
+            BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
+                ?: WidgetBackgroundType.DAYNIGHT
         val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
 
         if (serverId == null || template == null) {

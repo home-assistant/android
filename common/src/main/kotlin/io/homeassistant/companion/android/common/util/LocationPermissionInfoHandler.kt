@@ -7,7 +7,12 @@ import io.homeassistant.companion.android.common.R as commonR
 
 object LocationPermissionInfoHandler {
 
-    fun showLocationPermInfoDialogIfNeeded(context: Context, permissions: Array<String>, continueYesCallback: () -> Unit, continueNoCallback: (() -> Unit)? = null) {
+    fun showLocationPermInfoDialogIfNeeded(
+        context: Context,
+        permissions: Array<String>,
+        continueYesCallback: () -> Unit,
+        continueNoCallback: (() -> Unit)? = null,
+    ) {
         if (permissions.any {
                 it == Manifest.permission.ACCESS_FINE_LOCATION || it == Manifest.permission.ACCESS_BACKGROUND_LOCATION
             }

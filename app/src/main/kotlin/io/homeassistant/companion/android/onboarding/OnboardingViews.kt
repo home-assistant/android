@@ -5,12 +5,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -31,14 +34,12 @@ import kotlin.math.min
  * Base layout for onboarding views which centers content and limits the container width if needed.
  */
 @Composable
-fun OnboardingScreen(
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
-) {
+fun OnboardingScreen(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Box(Modifier.fillMaxSize()) {
         val screenWidth = screenWidth()
         Column(
             modifier = modifier
+                .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(all = 16.dp)
                 .width(min(screenWidth.value, STEP_SCREEN_MAX_WIDTH_DP).dp)
                 .align(Alignment.Center),
@@ -50,10 +51,7 @@ fun OnboardingScreen(
 }
 
 @Composable
-fun OnboardingHeaderView(
-    icon: IIcon,
-    title: String,
-) {
+fun OnboardingHeaderView(icon: IIcon, title: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Spacer(modifier = Modifier.height(32.dp))
         Image(
@@ -76,10 +74,7 @@ fun OnboardingHeaderView(
 }
 
 @Composable
-fun OnboardingPermissionBullet(
-    icon: IIcon,
-    text: String,
-) {
+fun OnboardingPermissionBullet(icon: IIcon, text: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(vertical = 12.dp),

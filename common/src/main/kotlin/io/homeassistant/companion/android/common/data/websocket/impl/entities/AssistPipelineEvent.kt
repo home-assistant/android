@@ -4,10 +4,7 @@ import io.homeassistant.companion.android.common.util.MapAnySerializer
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 
-data class AssistPipelineEvent(
-    val type: String,
-    val data: AssistPipelineEventData?,
-)
+data class AssistPipelineEvent(val type: String, val data: AssistPipelineEventData?)
 
 object AssistPipelineEventType {
     const val RUN_START = "run-start"
@@ -41,32 +38,20 @@ data class AssistPipelineSttEnd(
 ) : AssistPipelineEventData
 
 @Serializable
-data class AssistPipelineIntentStart(
-    val engine: String,
-    val language: String,
-    val intentInput: String,
-) : AssistPipelineEventData
+data class AssistPipelineIntentStart(val engine: String, val language: String, val intentInput: String) :
+    AssistPipelineEventData
 
 @Serializable
-data class AssistPipelineIntentProgress(
-    val chatLogDelta: AssistChatLogDelta?,
-) : AssistPipelineEventData
+data class AssistPipelineIntentProgress(val chatLogDelta: AssistChatLogDelta?) : AssistPipelineEventData
 
 @Serializable
 data class AssistChatLogDelta(val content: String? = null)
 
 @Serializable
-data class AssistPipelineIntentEnd(
-    val intentOutput: ConversationResponse,
-) : AssistPipelineEventData
+data class AssistPipelineIntentEnd(val intentOutput: ConversationResponse) : AssistPipelineEventData
 
 @Serializable
-data class AssistPipelineTtsEnd(
-    val ttsOutput: TtsOutputResponse,
-) : AssistPipelineEventData
+data class AssistPipelineTtsEnd(val ttsOutput: TtsOutputResponse) : AssistPipelineEventData
 
 @Serializable
-data class AssistPipelineError(
-    val code: String? = null,
-    val message: String? = null,
-) : AssistPipelineEventData
+data class AssistPipelineError(val code: String? = null, val message: String? = null) : AssistPipelineEventData

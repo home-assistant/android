@@ -26,11 +26,7 @@ interface MatterManager {
      * @param onSuccess Callback that receives an intent to launch the commissioning flow
      * @param onFailure Callback for an exception if the commissioning flow cannot be started
      */
-    fun startNewCommissioningFlow(
-        context: Context,
-        onSuccess: (IntentSender) -> Unit,
-        onFailure: (Exception) -> Unit,
-    )
+    fun startNewCommissioningFlow(context: Context, onSuccess: (IntentSender) -> Unit, onFailure: (Exception) -> Unit)
 
     /**
      * Send a request to the server to add a Matter device to the network and commission it

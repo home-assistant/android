@@ -23,10 +23,7 @@ import timber.log.Timber
  *
  * @param textToSpeechEngine [TextToSpeechEngine] implementation to synthesize and play back a single message
  */
-class TextToSpeechClient(
-    private val applicationContext: Context,
-    private val textToSpeechEngine: TextToSpeechEngine,
-) {
+class TextToSpeechClient(private val applicationContext: Context, private val textToSpeechEngine: TextToSpeechEngine) {
     private val utteranceQueue: ArrayDeque<Utterance> = ArrayDeque()
 
     private val mainJob = Job()
@@ -116,10 +113,7 @@ class TextToSpeechClient(
     }
 
     private companion object {
-        private fun getStreamVolumeAdjustment(
-            context: Context,
-            data: Map<String, String>,
-        ): StreamVolumeAdjustment {
+        private fun getStreamVolumeAdjustment(context: Context, data: Map<String, String>): StreamVolumeAdjustment {
             val audioManager = context.getSystemService<AudioManager>()
             return if (
                 audioManager != null &&

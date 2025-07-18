@@ -112,7 +112,12 @@ class HighAccuracyLocationService : Service() {
 
         private fun createNotificationBuilder(context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(CHANNEL_HIGH_ACCURACY, context.getString(commonR.string.high_accuracy_mode_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
+                val channel =
+                    NotificationChannel(
+                        CHANNEL_HIGH_ACCURACY,
+                        context.getString(commonR.string.high_accuracy_mode_channel_name),
+                        NotificationManager.IMPORTANCE_DEFAULT,
+                    )
                 notificationManagerCompat.createNotificationChannel(channel)
             }
 
@@ -161,7 +166,8 @@ class HighAccuracyLocationService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        val intervalInSeconds = intent?.getIntExtra("intervalInSeconds", DEFAULT_UPDATE_INTERVAL_SECONDS) ?: DEFAULT_UPDATE_INTERVAL_SECONDS
+        val intervalInSeconds =
+            intent?.getIntExtra("intervalInSeconds", DEFAULT_UPDATE_INTERVAL_SECONDS) ?: DEFAULT_UPDATE_INTERVAL_SECONDS
         requestLocationUpdates(intervalInSeconds)
 
         Timber.d("High accuracy location service (Interval: ${intervalInSeconds}s) started -> onStartCommand")
@@ -188,7 +194,12 @@ class HighAccuracyLocationService : Service() {
     private fun getLocationUpdateIntent(): PendingIntent {
         val intent = Intent(this, LocationSensorManager::class.java)
         intent.action = LocationSensorManager.ACTION_PROCESS_HIGH_ACCURACY_LOCATION
-        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
+        return PendingIntent.getBroadcast(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+        )
     }
 
     @SuppressLint("MissingPermission")

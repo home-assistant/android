@@ -15,6 +15,7 @@ import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositoryImpl
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
+import io.homeassistant.companion.android.common.util.HAStrictMode
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import javax.inject.Inject
@@ -35,6 +36,14 @@ open class HomeAssistantApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            BuildConfig.DEBUG &&
+            !BuildConfig.NO_STRICT_MODE
+        ) {
+            HAStrictMode.enable()
+        }
+
         // We should initialize the logger as early as possible in the lifecycle of the application
         Timber.plant(Timber.DebugTree())
 
@@ -164,6 +173,11 @@ open class HomeAssistantApplication : Application() {
         val screenIntentFilter = IntentFilter()
         screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)
 
-        ContextCompat.registerReceiver(this, complicationReceiver, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        ContextCompat.registerReceiver(
+            this,
+            complicationReceiver,
+            screenIntentFilter,
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
     }
 }

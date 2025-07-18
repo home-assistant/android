@@ -22,12 +22,7 @@ import io.homeassistant.companion.android.onboarding.OnboardingPermissionBullet
 import io.homeassistant.companion.android.util.compose.ModalBottomSheet
 
 @Composable
-fun ImprovPermissionView(
-    needsBluetooth: Boolean,
-    needsLocation: Boolean,
-    onContinue: () -> Unit,
-    onSkip: () -> Unit,
-) {
+fun ImprovPermissionView(needsBluetooth: Boolean, needsLocation: Boolean, onContinue: () -> Unit, onSkip: () -> Unit) {
     ModalBottomSheet(title = null) {
         Column(
             modifier = Modifier

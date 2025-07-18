@@ -37,6 +37,10 @@
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/other_settings">
+        <Preference
+            android:key="gestures"
+            android:icon="@drawable/ic_gestures"
+            android:title="@string/gestures"/>
         <SwitchPreference
             android:key="fullscreen"
             android:icon="@drawable/ic_fullscreen"

@@ -7,10 +7,7 @@ import android.content.res.Resources
 import io.homeassistant.companion.android.R as commonR
 import kotlin.math.min
 
-data class TileSlot(
-    val id: String,
-    val name: String,
-)
+data class TileSlot(val id: String, val name: String)
 
 /**
  * Loads the list of tile slots.

@@ -101,20 +101,16 @@ object ClimateControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity): Int =
-        if (entityShouldBePresentedAsThermostat(entity)) {
-            DeviceTypes.TYPE_THERMOSTAT
-        } else {
-            DeviceTypes.TYPE_AC_HEATER
-        }
+    override fun getDeviceType(entity: Entity): Int = if (entityShouldBePresentedAsThermostat(entity)) {
+        DeviceTypes.TYPE_THERMOSTAT
+    } else {
+        DeviceTypes.TYPE_AC_HEATER
+    }
 
     override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.domain_climate)
 
-    override suspend fun performAction(
-        integrationRepository: IntegrationRepository,
-        action: ControlAction,
-    ): Boolean {
+    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
         val entityStr: String = if (action.templateId.split(".").size > 2) {
             action.templateId.split(".", limit = 2)[1]
         } else {
@@ -177,8 +173,14 @@ object ClimateControl : HaControl {
                 modes.any { it == entity.state } &&
                 modes.all { temperatureControlModes.containsKey(it) } &&
                 (
-                    ((entity.attributes["supported_features"] as Int) and SUPPORT_TARGET_TEMPERATURE == SUPPORT_TARGET_TEMPERATURE) ||
-                        ((entity.attributes["supported_features"] as Int) and SUPPORT_TARGET_TEMPERATURE_RANGE == SUPPORT_TARGET_TEMPERATURE_RANGE)
+                    (
+                        (entity.attributes["supported_features"] as Int) and SUPPORT_TARGET_TEMPERATURE ==
+                            SUPPORT_TARGET_TEMPERATURE
+                        ) ||
+                        (
+                            (entity.attributes["supported_features"] as Int) and SUPPORT_TARGET_TEMPERATURE_RANGE ==
+                                SUPPORT_TARGET_TEMPERATURE_RANGE
+                            )
                     )
         }
 }
