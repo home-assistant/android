@@ -40,7 +40,7 @@ jobs:
           git fetch origin
           git checkout -B weekly_changelog_bump
           git add app/src/main/res/xml/changelog_master.xml
-          git commit -m "Bump changelog_master.xml for weekly release"
+          git commit -m "Bump changelog_master.xml for weekly release ${VERSION}"
           git push -f origin weekly_changelog_bump
 
       - name: Create change log update PR
