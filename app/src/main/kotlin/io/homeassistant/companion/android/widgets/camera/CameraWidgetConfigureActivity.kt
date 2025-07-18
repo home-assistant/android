@@ -28,15 +28,14 @@ import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import javax.inject.Inject
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 @AndroidEntryPoint
 class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     companion object {
-        @Suppress("ktlint:standard:max-line-length")
-        private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
+        private const val PIN_WIDGET_CALLBACK =
+            "io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
     private lateinit var binding: WidgetCameraConfigureBinding
@@ -114,13 +113,13 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
         initTapActionsSpinner()
 
-        val cameraWidget = cameraWidgetDao.get(appWidgetId)
-        if (cameraWidget != null) {
-            setCurrentTapAction(tapAction = cameraWidget.tapAction)
-            binding.widgetTextConfigEntityId.setText(cameraWidget.entityId)
-            binding.addButton.setText(commonR.string.update_widget)
-            val entity = runBlocking {
-                try {
+        lifecycleScope.launch {
+            val cameraWidget = cameraWidgetDao.get(appWidgetId)
+            if (cameraWidget != null) {
+                setCurrentTapAction(tapAction = cameraWidget.tapAction)
+                binding.widgetTextConfigEntityId.setText(cameraWidget.entityId)
+                binding.addButton.setText(commonR.string.update_widget)
+                val entity = try {
                     serverManager.integrationRepository(cameraWidget.serverId).getEntity(cameraWidget.entityId)
                 } catch (e: Exception) {
                     Timber.e(e, "Unable to get entity information")
@@ -128,13 +127,14 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                         .show()
                     null
                 }
-            }
-            if (entity != null) {
-                selectedEntity = entity as Entity?
-            }
-        }
 
-        setupServerSelect(cameraWidget?.serverId)
+                if (entity != null) {
+                    selectedEntity = entity as Entity?
+                }
+            }
+
+            setupServerSelect(cameraWidget?.serverId)
+        }
 
         entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
 

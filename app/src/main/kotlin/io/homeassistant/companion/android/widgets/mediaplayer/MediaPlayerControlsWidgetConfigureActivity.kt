@@ -37,7 +37,8 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
 
     companion object {
         @Suppress("ktlint:standard:max-line-length")
-        private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
+        private const val PIN_WIDGET_CALLBACK =
+            "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
     private var requestLauncherSetup = false
@@ -120,45 +121,48 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
             return
         }
 
-        val mediaPlayerWidget = mediaPlayerControlsWidgetDao.get(appWidgetId)
-
         val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
         binding.backgroundType.adapter =
             ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
-        if (mediaPlayerWidget != null) {
-            binding.label.setText(mediaPlayerWidget.label)
-            binding.widgetTextConfigEntityId.setText(mediaPlayerWidget.entityId)
-            binding.widgetShowVolumeButtonCheckbox.isChecked = mediaPlayerWidget.showVolume
-            binding.widgetShowSeekButtonsCheckbox.isChecked = mediaPlayerWidget.showSeek
-            binding.widgetShowSkipButtonsCheckbox.isChecked = mediaPlayerWidget.showSkip
-            binding.widgetShowMediaPlayerSource.isChecked = mediaPlayerWidget.showSource
-            binding.backgroundType.setSelection(
-                WidgetUtils.getSelectedBackgroundOption(
-                    this,
-                    mediaPlayerWidget.backgroundType,
-                    backgroundTypeValues,
-                ),
-            )
-            val entities = runBlocking {
-                try {
-                    mediaPlayerWidget.entityId.split(",").map { s ->
-                        serverManager.integrationRepository(mediaPlayerWidget.serverId).getEntity(s.trim())
-                    }
-                } catch (e: Exception) {
-                    Timber.e(e, "Unable to get entity information")
-                    Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
-                        .show()
-                    null
-                }
-            }
-            if (entities != null) {
-                selectedEntities.addAll(entities)
-            }
-            binding.addButton.setText(commonR.string.update_widget)
-        }
-        entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
 
-        setupServerSelect(mediaPlayerWidget?.serverId)
+        lifecycleScope.launch {
+            val mediaPlayerWidget = mediaPlayerControlsWidgetDao.get(appWidgetId)
+
+            if (mediaPlayerWidget != null) {
+                binding.label.setText(mediaPlayerWidget.label)
+                binding.widgetTextConfigEntityId.setText(mediaPlayerWidget.entityId)
+                binding.widgetShowVolumeButtonCheckbox.isChecked = mediaPlayerWidget.showVolume
+                binding.widgetShowSeekButtonsCheckbox.isChecked = mediaPlayerWidget.showSeek
+                binding.widgetShowSkipButtonsCheckbox.isChecked = mediaPlayerWidget.showSkip
+                binding.widgetShowMediaPlayerSource.isChecked = mediaPlayerWidget.showSource
+                binding.backgroundType.setSelection(
+                    WidgetUtils.getSelectedBackgroundOption(
+                        this@MediaPlayerControlsWidgetConfigureActivity,
+                        mediaPlayerWidget.backgroundType,
+                        backgroundTypeValues,
+                    ),
+                )
+                val entities = runBlocking {
+                    try {
+                        mediaPlayerWidget.entityId.split(",").map { s ->
+                            serverManager.integrationRepository(mediaPlayerWidget.serverId).getEntity(s.trim())
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e, "Unable to get entity information")
+                        Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
+                            .show()
+                        null
+                    }
+                }
+                if (entities != null) {
+                    selectedEntities.addAll(entities)
+                }
+                binding.addButton.setText(commonR.string.update_widget)
+            }
+            setupServerSelect(mediaPlayerWidget?.serverId)
+        }
+
+        entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
 
         binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
         binding.widgetTextConfigEntityId.setTokenizer(MultiAutoCompleteTextView.CommaTokenizer())
