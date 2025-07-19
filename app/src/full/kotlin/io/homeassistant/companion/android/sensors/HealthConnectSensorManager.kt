@@ -714,7 +714,7 @@ class HealthConnectSensorManager : SensorManager {
                 "date" to response.records.last().samples.last().time,
                 "source" to response.records.last().metadata.dataOrigin.packageName,
                 "state_class" to "measurement",
-                "device_class" to "heart_rate"
+                "device_class" to "heart_rate",
             ),
         )
     }
