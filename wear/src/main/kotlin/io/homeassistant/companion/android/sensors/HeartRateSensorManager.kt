@@ -127,7 +127,7 @@ class HeartRateSensorManager :
                 mapOf(
                     "accuracy" to getAccuracy(event.accuracy),
                     "state_class" to "measurement",
-                    "device_class" to "heart_rate"
+                    "device_class" to "heart_rate",
                 ),
             )
         }
