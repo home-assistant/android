@@ -25,8 +25,8 @@ import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
+import io.homeassistant.companion.android.notifications.PushManager
 import io.homeassistant.companion.android.onboarding.OnboardApp
-import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.settings.SettingViewModel
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
@@ -66,6 +66,9 @@ class LaunchActivity :
 
     @Inject
     lateinit var sensorDao: SensorDao
+
+    @Inject
+    lateinit var pushManager: PushManager
 
     private val mainScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -151,7 +154,9 @@ class LaunchActivity :
         mainScope.launch {
             if (result != null) {
                 val (url, authCode, deviceName, deviceTrackingEnabled, notificationsEnabled) = result
-                val messagingToken = getMessagingToken()
+                val pushProvider = pushManager.defaultProvider
+                val messagingToken = pushProvider?.getToken().orEmpty()
+                val pushUrl = pushProvider?.getUrl().orEmpty()
                 if (messagingToken.isBlank() && BuildConfig.FLAVOR == "full") {
                     AlertDialog.Builder(this@LaunchActivity)
                         .setTitle(commonR.string.firebase_error_title)
@@ -163,6 +168,7 @@ class LaunchActivity :
                                     authCode,
                                     deviceName,
                                     messagingToken,
+                                    pushUrl,
                                     deviceTrackingEnabled,
                                     notificationsEnabled,
                                 )
@@ -175,6 +181,7 @@ class LaunchActivity :
                         authCode,
                         deviceName,
                         messagingToken,
+                        pushUrl,
                         deviceTrackingEnabled,
                         notificationsEnabled,
                     )
@@ -190,6 +197,7 @@ class LaunchActivity :
         authCode: String,
         deviceName: String,
         messagingToken: String,
+        pushUrl: String,
         deviceTrackingEnabled: Boolean,
         notificationsEnabled: Boolean,
     ) {
@@ -209,9 +217,10 @@ class LaunchActivity :
             serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
             serverManager.integrationRepository(serverId).registerDevice(
                 DeviceRegistration(
-                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                    deviceName,
-                    messagingToken,
+                    appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    deviceName = deviceName,
+                    pushToken = messagingToken,
+                    pushUrl = pushUrl,
                 ),
             )
             serverId = serverManager.convertTemporaryServer(serverId)

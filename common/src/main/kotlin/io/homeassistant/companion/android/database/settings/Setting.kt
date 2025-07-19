@@ -13,4 +13,6 @@ data class Setting(
     var websocketSetting: WebsocketSetting,
     @ColumnInfo(name = "sensor_update_frequency")
     var sensorUpdateFrequency: SensorUpdateFrequencySetting,
+    @ColumnInfo(name = "push_provider", defaultValue = "NULL")
+    var pushProvider: String?,
 )

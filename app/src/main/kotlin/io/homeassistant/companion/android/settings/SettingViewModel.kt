@@ -26,22 +26,27 @@ class SettingViewModel @Inject constructor(private val settingsDao: SettingsDao,
             if (BuildConfig.FLAVOR == "full") WebsocketSetting.NEVER else WebsocketSetting.ALWAYS
     }
 
-    suspend fun getSetting(id: Int): Setting {
-        var setting = settingsDao.get(id)
+    suspend fun getSetting(serverId: Int): Setting {
+        var setting = settingsDao.get(serverId)
         if (setting == null) {
-            setting = Setting(id, DEFAULT_WEBSOCKET_SETTING, DEFAULT_UPDATE_FREQUENCY)
+            setting = Setting(
+                serverId,
+                DEFAULT_WEBSOCKET_SETTING,
+                DEFAULT_UPDATE_FREQUENCY,
+                null,
+            )
             settingsDao.insert(setting)
         }
         return setting
     }
 
-    fun getSettingFlow(id: Int): Flow<Setting> = settingsDao.getFlow(id).onStart {
-        emit(getSetting(id))
+    fun getSettingFlow(serverId: Int): Flow<Setting> = settingsDao.getFlow(serverId).onStart {
+        emit(getSetting(serverId))
     }.distinctUntilChanged()
 
-    fun updateWebsocketSetting(id: Int, setting: WebsocketSetting) {
+    fun updateWebsocketSetting(serverId: Int, setting: WebsocketSetting) {
         viewModelScope.launch {
-            settingsDao.get(id)?.let {
+            settingsDao.get(serverId)?.let {
                 it.websocketSetting = setting
                 settingsDao.update(it)
             }
@@ -49,9 +54,9 @@ class SettingViewModel @Inject constructor(private val settingsDao: SettingsDao,
         }
     }
 
-    fun updateSensorSetting(id: Int, setting: SensorUpdateFrequencySetting) {
+    fun updateSensorSetting(serverId: Int, setting: SensorUpdateFrequencySetting) {
         viewModelScope.launch {
-            settingsDao.get(id)?.let {
+            settingsDao.get(serverId)?.let {
                 it.sensorUpdateFrequency = setting
                 settingsDao.update(it)
             }

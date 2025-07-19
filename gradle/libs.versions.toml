@@ -173,6 +173,7 @@ guava = { module = "com.google.guava:guava", version.ref = "guava" }
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
+hilt-android-test = { module = "com.google.dagger:hilt-android-testing", version.ref = "hilt" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 iconics-compose = { module = "com.mikepenz:iconics-compose", version.ref = "iconics" }
 iconics-core = { module = "com.mikepenz:iconics-core", version.ref = "iconics" }
