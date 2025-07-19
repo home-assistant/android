@@ -1,15 +1,15 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <style name="Theme.HomeAssistant" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="colorSecondary">@color/colorAccent</item>
-        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorOnSecondary">@android:color/white</item>
         <item name="colorButtonNormal">@color/colorPrimary</item>
         <item name="colorSurface">@color/colorOverlay</item>
         <item name="colorOnSurface">@color/colorAccent</item>
         <item name="android:colorBackground">@color/colorActivityBackground</item>
         <item name="android:textSize">16sp</item>
-        <item name="android:textColor">@color/white</item>
+        <item name="android:textColor">@android:color/white</item>
         <item name="android:fontFamily">sans-serif</item>
 
         <item name="editTextStyle">@style/editText</item>
@@ -17,7 +17,7 @@
 
     <style name="editText" parent="@android:style/Widget.EditText">
         <item name="android:textSize">14sp</item>
-        <item name="android:textColor">@color/white</item>
+        <item name="android:textColor">@android:color/white</item>
         <item name="android:textColorHint">@color/colorHint</item>
         <item name="android:backgroundTint">@color/colorAccent</item>
         <item name="android:paddingTop">4dp</item>

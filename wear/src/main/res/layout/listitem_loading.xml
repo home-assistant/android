@@ -19,7 +19,6 @@
         android:layout_centerVertical="true"
         android:ellipsize="marquee"
         android:maxLines="1"
-        android:textColor="@color/white"
         tools:text="@string/loading" />
 
 </RelativeLayout>
