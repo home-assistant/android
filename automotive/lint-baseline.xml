@@ -107,7 +107,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="913"
+            line="917"
             column="27"/>
     </issue>
 
@@ -371,7 +371,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="430"
+            line="434"
             column="13"/>
     </issue>
 
@@ -439,94 +439,6 @@
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/xml/network_security_config.xml"
             line="10"
             column="13"/>
-    </issue>
-
-    <issue
-        id="ExportedReceiver"
-        message="Exported receiver does not require permission"
-        errorLine1="        &lt;receiver android:name=&quot;.location.HighAccuracyLocationReceiver&quot;"
-        errorLine2="         ~~~~~~~~">
-        <location
-            file="src/full/AndroidManifest.xml"
-            line="31"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ExportedReceiver"
-        message="Exported receiver does not require permission"
-        errorLine1="        &lt;receiver"
-        errorLine2="         ~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="250"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ExportedReceiver"
-        message="Exported receiver does not require permission"
-        errorLine1="        &lt;receiver"
-        errorLine2="         ~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="259"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ExportedReceiver"
-        message="Exported receiver does not require permission"
-        errorLine1="        &lt;receiver"
-        errorLine2="         ~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="907"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ExportedReceiver"
-        message="Exported receiver does not require permission"
-        errorLine1="        &lt;receiver"
-        errorLine2="         ~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="912"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ExportedService"
-        message="Exported service does not require permission"
-        errorLine1="        &lt;service"
-        errorLine2="         ~~~~~~~">
-        <location
-            file="src/full/AndroidManifest.xml"
-            line="43"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ExportedService"
-        message="Exported service does not require permission"
-        errorLine1="        &lt;service"
-        errorLine2="         ~~~~~~~">
-        <location
-            file="src/full/AndroidManifest.xml"
-            line="49"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="ExportedService"
-        message="Exported service does not require permission"
-        errorLine1="        &lt;service"
-        errorLine2="         ~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="417"
-            column="10"/>
     </issue>
 
     <issue
