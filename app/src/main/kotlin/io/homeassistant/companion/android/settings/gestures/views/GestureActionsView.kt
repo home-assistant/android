@@ -22,6 +22,13 @@ import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.settings.views.SettingsSubheader
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
+/**
+ * View showing all actions for a gesture, grouped by category, and the
+ * currently configured action. Select to update the configured action.
+ *
+ * @param selectedAction The current action
+ * @param onActionSelected Called when an action is selected
+ */
 @Composable
 fun GestureActionsView(selectedAction: GestureAction, onActionSelected: (GestureAction) -> Unit) {
     val actionsGrouped = GestureAction.entries.minus(GestureAction.NONE).groupBy { it.category }
@@ -74,7 +81,7 @@ fun GestureActionItem(action: GestureAction, checked: Boolean, onClick: () -> Un
         Text(
             text = stringResource(action.description),
             style = MaterialTheme.typography.body1.merge(),
-            modifier = Modifier.padding(start = 16.dp),
+            modifier = Modifier.padding(start = 32.dp),
         )
     }
 }

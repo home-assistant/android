@@ -9,7 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.settings.gestures.views.GesturesView
+import io.homeassistant.companion.android.settings.gestures.views.GesturesScreen
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import kotlin.getValue
 
@@ -22,17 +22,15 @@ class GesturesFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
-                    GesturesView(
+                    GesturesScreen(
                         gestureActions = viewModel.gestureActions,
                         onSetAction = viewModel::setGestureAction,
+                        setToolbarTitleFor = { gesture ->
+                            activity?.title = getString(gesture?.fullDescription ?: commonR.string.gestures)
+                        },
                     )
                 }
             }
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        activity?.title = getString(commonR.string.gestures)
     }
 }
