@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.util
 
+import androidx.annotation.Keep
 import androidx.annotation.StringRes
 import io.homeassistant.companion.android.common.R
 import kotlin.math.abs
@@ -61,6 +62,7 @@ enum class GesturePointers(val asInt: Int, @StringRes val description: Int) {
  * Enum with all supported gestures by the app. Currently, a gesture
  * is always a combination of swipe + a direction and pointer count.
  */
+@Keep
 enum class HAGesture(
     @StringRes val fullDescription: Int,
     val direction: GestureDirection,
