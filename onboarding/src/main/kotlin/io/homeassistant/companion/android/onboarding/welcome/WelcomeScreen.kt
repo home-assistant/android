@@ -4,22 +4,16 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,12 +23,12 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import io.homeassistant.companion.android.compose.HAPreviews
+import io.homeassistant.companion.android.compose.composable.HAButton
+import io.homeassistant.companion.android.compose.composable.HATextButton
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.onboarding.theme.HARadius
 import io.homeassistant.companion.android.onboarding.theme.HASpacing
 import io.homeassistant.companion.android.onboarding.theme.HATextStyle
 import io.homeassistant.companion.android.onboarding.theme.HATheme
-import io.homeassistant.companion.android.onboarding.theme.MaxButtonWidth
 
 @Composable
 fun WelcomeScreen(
@@ -84,37 +78,17 @@ private fun ColumnScope.WelcomeText() {
 }
 
 @Composable
-private fun ColumnScope.BottomButtons(
-    onConnectClick: () -> Unit,
-    onLearnMoreClick: () -> Unit,
-) {
-    val buttonModifier = Modifier
-        .widthIn(max = MaxButtonWidth)
-        .fillMaxWidth()
-
-    Button(
+private fun ColumnScope.BottomButtons(onConnectClick: () -> Unit, onLearnMoreClick: () -> Unit) {
+    HAButton(
+        text = stringResource(R.string.welcome_connect_to_ha),
         onClick = onConnectClick,
-        modifier = buttonModifier.padding(bottom = HASpacing.XS),
-        contentPadding = PaddingValues(horizontal = HASpacing.XL, vertical = HASpacing.M),
-        shape = RoundedCornerShape(size = HARadius.XL),
-    ) {
-        Text(
-            text = stringResource(R.string.welcome_connect_to_ha),
-            style = HATextStyle.Button,
-        )
-    }
+    )
 
-    TextButton(
+    HATextButton(
+        text = stringResource(R.string.welcome_learn_more),
         onClick = onLearnMoreClick,
-        modifier = buttonModifier.padding(bottom = HASpacing.XL),
-        contentPadding = PaddingValues(horizontal = HASpacing.XL, vertical = HASpacing.M),
-        shape = RoundedCornerShape(size = HARadius.XL),
-    ) {
-        Text(
-            text = stringResource(R.string.welcome_learn_more),
-            style = HATextStyle.Button,
-        )
-    }
+        modifier = Modifier.padding(bottom = HASpacing.XL),
+    )
 }
 
 @HAPreviews

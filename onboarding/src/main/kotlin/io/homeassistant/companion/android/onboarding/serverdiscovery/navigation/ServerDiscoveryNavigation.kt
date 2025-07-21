@@ -16,7 +16,7 @@ fun NavController.navigateToServerDiscovery(navOptions: NavOptions? = null) {
     navigate(route = ServerDiscoveryRoute, navOptions)
 }
 
-fun NavController.navigateToHelp() {
+fun NavController.navigateToServerDiscoveryHelp() {
     // TODO not sure it's the best way to do this or even the place to do this
     AndroidUriHandler(context).openUri("https://home-assistant.io")
 }

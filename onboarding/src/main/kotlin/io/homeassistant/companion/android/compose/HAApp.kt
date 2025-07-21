@@ -21,19 +21,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
 @Composable
-fun HAApp(
-    state: HAAppState,
-    modifier: Modifier = Modifier,
-) {
+fun HAApp(state: HAAppState, modifier: Modifier = Modifier) {
     val snackbarHostState = remember { SnackbarHostState() }
 
     val currentDestination = state.currentDestination
 
     Scaffold(
         modifier = modifier,
-        // TODO check this values
         containerColor = Color.Transparent,
         contentColor = MaterialTheme.colorScheme.onBackground,
+        // Delegate the insets handling to the nav controller
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = {
             SnackbarHost(
@@ -45,7 +42,6 @@ fun HAApp(
         Column(
             Modifier
                 .fillMaxSize()
-                // TODO double check the paddings they could only be used by the snackbar
                 .padding(padding)
                 .consumeWindowInsets(padding)
                 .windowInsetsPadding(
@@ -57,7 +53,8 @@ fun HAApp(
             HANavHost(
                 state,
                 onShowSnackbar = { message, action ->
-                    snackbarHostState.showSnackbar(message, action, duration = SnackbarDuration.Short) == ActionPerformed
+                    snackbarHostState.showSnackbar(message, action, duration = SnackbarDuration.Short) ==
+                        ActionPerformed
                 },
             )
         }

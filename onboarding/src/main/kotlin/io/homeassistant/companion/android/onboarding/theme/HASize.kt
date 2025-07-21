@@ -116,4 +116,4 @@ object HAFontSize {
     val X5L = 40.sp
 }
 
-val MaxButtonWidth = 320.dp
+val MaxButtonWidth = 380.dp

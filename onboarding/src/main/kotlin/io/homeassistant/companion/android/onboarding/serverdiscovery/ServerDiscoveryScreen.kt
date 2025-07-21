@@ -21,19 +21,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.HelpOutline
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Storage
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -49,6 +43,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.compose.HAPreviews
+import io.homeassistant.companion.android.compose.composable.HAButton
+import io.homeassistant.companion.android.compose.composable.HATextButton
+import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.onboarding.theme.HAColors
 import io.homeassistant.companion.android.onboarding.theme.HARadius
@@ -93,14 +90,18 @@ internal fun ServerDiscoveryScreen(
         // The content will be scrollable behind the top bar
         modifier = modifier,
         topBar = {
-            TopBar(onBackClick = onBackClick, onHelpClick = onHelpClick)
+            HATopBar(onBackClick = onBackClick, onHelpClick = onHelpClick)
         },
     ) { contentPadding ->
         // TODO this could depends on the state too
         ScreenContent(contentPadding, onManualSetupClick)
 
         when (discoveryState) {
-            is ServerDiscovered -> OneServerFound(discoveryState, onDismiss = onDismissOneServerFound, onConnectClick = onConnectClick)
+            is ServerDiscovered -> OneServerFound(
+                discoveryState,
+                onDismiss = onDismissOneServerFound,
+                onConnectClick = onConnectClick,
+            )
             // MultipleServersFound(serverDiscovered as ServersDiscovered)
             is ServersDiscovered -> {}
             NoServerFound -> {}
@@ -113,34 +114,11 @@ internal fun ServerDiscoveryScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(
-    onHelpClick: () -> Unit,
-    onBackClick: () -> Unit,
+private fun OneServerFound(
+    serverDiscovered: ServerDiscovered,
+    onDismiss: () -> Unit,
+    onConnectClick: (serverUrl: URL) -> Unit,
 ) {
-    TopAppBar(
-        title = {},
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = stringResource(commonR.string.navigate_up),
-                )
-            }
-        },
-        actions = {
-            IconButton(onClick = onHelpClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-                    contentDescription = stringResource(commonR.string.get_help),
-                )
-            }
-        },
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun OneServerFound(serverDiscovered: ServerDiscovered, onDismiss: () -> Unit, onConnectClick: (serverUrl: URL) -> Unit) {
     val bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = false, initialValue = SheetValue.Expanded)
 
     ModalBottomSheet(
@@ -172,19 +150,13 @@ private fun OneServerFound(serverDiscovered: ServerDiscovered, onDismiss: () -> 
                 style = HATextStyle.Body,
                 modifier = Modifier.padding(vertical = HASpacing.S),
             )
-            Button(
+            HAButton(
+                text = stringResource(R.string.welcome_connect_to_ha),
                 onClick = {
                     onConnectClick(serverDiscovered.url)
                 },
                 modifier = Modifier.padding(vertical = HASpacing.S),
-                contentPadding = PaddingValues(horizontal = HASpacing.XL, vertical = HASpacing.M),
-                shape = RoundedCornerShape(size = HARadius.XL),
-            ) {
-                Text(
-                    text = stringResource(R.string.welcome_connect_to_ha),
-                    style = HATextStyle.Button,
-                )
-            }
+            )
         }
     }
 }
@@ -209,17 +181,11 @@ private fun ScreenContent(contentPadding: PaddingValues, onManualSetupClick: () 
         AnimatedIcon()
         Spacer(modifier = Modifier.weight(1f - positionPercentage))
 
-        TextButton(
+        HATextButton(
+            text = stringResource(commonR.string.manual_setup),
             onClick = onManualSetupClick,
             modifier = Modifier.padding(bottom = HASpacing.XL),
-            contentPadding = PaddingValues(horizontal = HASpacing.XL, vertical = HASpacing.M),
-            shape = RoundedCornerShape(size = HARadius.XL),
-        ) {
-            Text(
-                text = stringResource(commonR.string.manual_setup),
-                style = HATextStyle.Button,
-            )
-        }
+        )
     }
 }
 

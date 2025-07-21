@@ -22,7 +22,11 @@ object HATextStyle {
         lineHeight = HAFontSize.X2L,
         fontWeight = FontWeight.Normal,
         textAlign = TextAlign.Center,
-        letterSpacing = 0.5.sp,
+        letterSpacing = 0.sp,
+    )
+
+    val UserInput = Body.copy(
+        textAlign = TextAlign.Start,
     )
 
     val Button = TextStyle(
