@@ -1,15 +1,23 @@
 package io.homeassistant.companion.android.launch
 
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.authentication.SessionState
+import io.homeassistant.companion.android.common.data.network.NetworkState
+import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
-abstract class LaunchPresenterBase(private val view: LaunchView, internal val serverManager: ServerManager) :
-    LaunchPresenter {
+abstract class LaunchPresenterBase(
+    private val view: LaunchView,
+    internal val serverManager: ServerManager,
+    internal val networkStatusMonitor: NetworkStatusMonitor,
+) : LaunchPresenter {
 
     internal val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     internal val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
@@ -24,18 +32,45 @@ abstract class LaunchPresenterBase(private val view: LaunchView, internal val se
             try {
                 if (serverUrlToOnboard != null) {
                     view.displayOnBoarding(false, serverUrlToOnboard)
-                } else if (
+                    return@launch
+                }
+
+                val activeServer = serverManager.getServer(ServerManager.SERVER_ID_ACTIVE)
+                if (
                     serverManager.isRegistered() &&
-                    serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
+                    serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED &&
+                    activeServer != null
                 ) {
-                    resyncRegistration()
-                    view.displayWebview()
+                    networkStatusMonitor.observeNetworkStatus(activeServer.connection)
+                        .distinctUntilChanged()
+                        .collectLatest { state ->
+                            if (handleNetworkState(state)) cancel()
+                        }
                 } else {
                     view.displayOnBoarding(false)
                 }
             } catch (e: IllegalArgumentException) { // Server was just removed, nothing is added
                 view.displayOnBoarding(false)
             }
+        }
+    }
+
+    private fun handleNetworkState(state: NetworkState): Boolean = when (state) {
+        NetworkState.READY_LOCAL, NetworkState.READY_REMOTE -> {
+            view.dismissDialog()
+            resyncRegistration()
+            view.displayWebView()
+            true
+        }
+
+        NetworkState.CONNECTING -> {
+            view.dismissDialog()
+            false
+        }
+
+        NetworkState.UNAVAILABLE -> {
+            view.displayAlertMessageDialog(R.string.error_connection_failed_no_network)
+            false
         }
     }
 

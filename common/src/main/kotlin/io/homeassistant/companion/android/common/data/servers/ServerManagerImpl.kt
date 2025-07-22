@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepositoryFactory
+import io.homeassistant.companion.android.common.data.network.NetworkHelper
 import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
@@ -38,6 +39,7 @@ class ServerManagerImpl @Inject constructor(
     private val sensorDao: SensorDao,
     private val settingsDao: SettingsDao,
     private val wifiHelper: WifiHelper,
+    private val networkHelper: NetworkHelper,
     @Named("session") private val localStorage: LocalStorage,
 ) : ServerManager {
 
@@ -63,7 +65,10 @@ class ServerManagerImpl @Inject constructor(
     init {
         // Initial (blocking) load
         serverDao.getAll().forEach {
-            mutableServers[it.id] = it.apply { connection.wifiHelper = wifiHelper }
+            mutableServers[it.id] = it.apply {
+                connection.wifiHelper = wifiHelper
+                connection.networkHelper = networkHelper
+            }
         }
 
         // Listen for updates and update flow
@@ -79,7 +84,10 @@ class ServerManagerImpl @Inject constructor(
                         removeServerFromManager(it.key)
                     }
                 servers.forEach {
-                    mutableServers[it.id] = it.apply { connection.wifiHelper = wifiHelper }
+                    mutableServers[it.id] = it.apply {
+                        connection.wifiHelper = wifiHelper
+                        connection.networkHelper = networkHelper
+                    }
                 }
                 mutableDefaultServersFlow.emit(defaultServers)
             }
@@ -107,7 +115,10 @@ class ServerManagerImpl @Inject constructor(
         return if (server.type == ServerType.DEFAULT) {
             serverDao.add(newServer).toInt()
         } else {
-            mutableServers[newServer.id] = newServer.apply { connection.wifiHelper = wifiHelper }
+            mutableServers[newServer.id] = newServer.apply {
+                connection.wifiHelper = wifiHelper
+                connection.networkHelper = networkHelper
+            }
             newServer.id
         }
     }
@@ -126,13 +137,19 @@ class ServerManagerImpl @Inject constructor(
         val serverId = if (id == SERVER_ID_ACTIVE) activeServerId() else id
         return serverId?.let {
             mutableServers[serverId]
-                ?: serverDao.get(serverId)?.apply { connection.wifiHelper = wifiHelper }
+                ?: serverDao.get(serverId)?.apply {
+                    connection.wifiHelper = wifiHelper
+                    connection.networkHelper = networkHelper
+                }
         }
     }
 
     override fun getServer(webhookId: String): Server? =
         mutableServers.values.firstOrNull { it.connection.webhookId == webhookId }
-            ?: serverDao.get(webhookId)?.apply { connection.wifiHelper = wifiHelper }
+            ?: serverDao.get(webhookId)?.apply {
+                connection.wifiHelper = wifiHelper
+                connection.networkHelper = networkHelper
+            }
 
     override fun activateServer(id: Int) {
         if (id != SERVER_ID_ACTIVE && mutableServers[id] != null && mutableServers[id]?.type == ServerType.DEFAULT) {
@@ -141,7 +158,10 @@ class ServerManagerImpl @Inject constructor(
     }
 
     override fun updateServer(server: Server) {
-        mutableServers[server.id] = server.apply { connection.wifiHelper = wifiHelper }
+        mutableServers[server.id] = server.apply {
+            connection.wifiHelper = wifiHelper
+            connection.networkHelper = networkHelper
+        }
         if (server.type == ServerType.DEFAULT) {
             ioScope.launch { serverDao.update(server) }
         }
