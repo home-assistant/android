@@ -20,10 +20,7 @@ fun NavController.navigateToLearnMore() {
     AndroidUriHandler(context).openUri("https://home-assistant.io")
 }
 
-fun NavGraphBuilder.welcomeScreen(
-    onConnectClick: () -> Unit = {},
-    onLearnMoreClick: () -> Unit = {},
-) {
+fun NavGraphBuilder.welcomeScreen(onConnectClick: () -> Unit, onLearnMoreClick: () -> Unit) {
     composable<WelcomeRoute> {
         WelcomeScreen(
             onConnectClick = onConnectClick,

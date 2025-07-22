@@ -7,6 +7,8 @@ import androidx.navigation.navOptions
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.onboarding.connection.navigation.connectionScreen
 import io.homeassistant.companion.android.onboarding.connection.navigation.navigateToConnection
+import io.homeassistant.companion.android.onboarding.locationsharing.navigation.locationSharingScreen
+import io.homeassistant.companion.android.onboarding.locationsharing.navigation.navigateToLocationSharing
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.manualServerScreen
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.navigateToManualServer
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.navigateToManualServerHelp
@@ -63,6 +65,8 @@ fun HANavHost(
         nameYourDeviceScreen(
             onBackClick = navController::popBackStack,
             onHelpClick = navController::navigateToNameYourDeviceHelp,
+            onDeviceNamed = navController::navigateToLocationSharing,
         )
+        locationSharingScreen()
     }
 }

@@ -22,10 +22,10 @@ fun NavController.navigateToServerDiscoveryHelp() {
 }
 
 fun NavGraphBuilder.serverDiscoveryScreen(
-    onConnectClick: (server: URL) -> Unit = {},
-    onHelpClick: () -> Unit = {},
-    onBackClick: () -> Unit = {},
-    onManualSetupClick: () -> Unit = {},
+    onConnectClick: (server: URL) -> Unit,
+    onHelpClick: () -> Unit,
+    onBackClick: () -> Unit,
+    onManualSetupClick: () -> Unit,
 ) {
     composable<ServerDiscoveryRoute> {
         ServerDiscoveryScreen(

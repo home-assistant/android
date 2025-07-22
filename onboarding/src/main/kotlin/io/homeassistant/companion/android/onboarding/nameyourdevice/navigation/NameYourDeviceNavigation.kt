@@ -1,11 +1,15 @@
 package io.homeassistant.companion.android.onboarding.nameyourdevice.navigation
 
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.AndroidUriHandler
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
+import io.homeassistant.companion.android.onboarding.nameyourdevice.NameYourDeviceNavigationEvent
 import io.homeassistant.companion.android.onboarding.nameyourdevice.NameYourDeviceScreen
+import io.homeassistant.companion.android.onboarding.nameyourdevice.NameYourDeviceViewModel
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -20,9 +24,20 @@ fun NavController.navigateToNameYourDeviceHelp() {
     AndroidUriHandler(context).openUri("https://home-assistant.io")
 }
 
-fun NavGraphBuilder.nameYourDeviceScreen(onHelpClick: () -> Unit = {}, onBackClick: () -> Unit = {}) {
+fun NavGraphBuilder.nameYourDeviceScreen(onHelpClick: () -> Unit, onBackClick: () -> Unit, onDeviceNamed: () -> Unit) {
     composable<NameYourDeviceRoute> {
+        val viewModel: NameYourDeviceViewModel = hiltViewModel()
+
+        LaunchedEffect(viewModel) {
+            viewModel.navigationEvents.collect {
+                when (it) {
+                    NameYourDeviceNavigationEvent.DeviceNameSaved -> onDeviceNamed()
+                }
+            }
+        }
+
         NameYourDeviceScreen(
+            viewModel = viewModel,
             onHelpClick = onHelpClick,
             onBackClick = onBackClick,
         )

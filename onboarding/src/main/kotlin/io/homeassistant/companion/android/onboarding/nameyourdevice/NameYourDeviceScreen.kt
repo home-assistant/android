@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.ImeAction
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.compose.HAPreviews
 import io.homeassistant.companion.android.compose.composable.HAButton
@@ -47,8 +46,8 @@ import io.homeassistant.companion.android.onboarding.theme.HATheme
 fun NameYourDeviceScreen(
     onHelpClick: () -> Unit,
     onBackClick: () -> Unit,
+    viewModel: NameYourDeviceViewModel,
     modifier: Modifier = Modifier,
-    viewModel: NameYourDeviceViewModel = hiltViewModel(),
 ) {
     val deviceName by viewModel.deviceNameFlow.collectAsStateWithLifecycle()
     val saveClickable by viewModel.isValidNameFlow.collectAsStateWithLifecycle()
@@ -107,7 +106,7 @@ private fun NameYourDeviceContent(
     ) {
         Image(
             modifier = Modifier.padding(top = HASpacing.XL),
-            imageVector = ImageVector.vectorResource(R.drawable.name_tag),
+            imageVector = ImageVector.vectorResource(R.drawable.ic_name_tag),
             contentDescription = null,
         )
         Text(
