@@ -599,7 +599,7 @@
     <string name="select_file">Select file</string>
     <string name="select_instance">Select your Home Assistant server</string>
     <string name="sensor_description_active_calories_burned">Last recorded active calories burned from Health Connect</string>
-    <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications. Attributes will include the contents of all notifications if the corresponding setting is enabled. It\'s enabled by default.</string>
+    <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the sensor updates notifications. Attributes will include the contents of all notifications if the corresponding setting is enabled. It\'s enabled by default.</string>
     <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be</string>
     <string name="sensor_description_android_auto">If the phone is currently connected to an Android Auto head unit</string>
     <string name="sensor_description_android_os_version">Android OS version</string>
@@ -1124,7 +1124,7 @@
     <string name="sensor_update_frequency_fast_charging">Fast while charging\n\nSensors will update every minute while the device is charging. When not charging sensors will update every 15 minutes.</string>
     <string name="sensor_update_frequency_fast_always">Fast always\n\nSensors will update every minute, always.</string>
     <string name="sensor_update_notification">In order for the app to send sensor updates in the background a notification will be created during the update. You may use the button below to manage the appearance of this notification. It is recommended to minimize the notification to hide the icon.</string>
-    <string name="sensor_worker_notification_channel">Manage sensor worker notification</string>
+    <string name="sensor_worker_notification_channel">Manage sensor updates channel</string>
     <string name="sensor_worker_sync_missing_permissions">To enable this sensor, turn it on in the app settings</string>
     <string name="sensor_update_frequency_summary">Change the frequency of updates for sensors that do not update instantly.</string>
     <string name="sensor_update_type_chip_intent">Updates instantly</string>
