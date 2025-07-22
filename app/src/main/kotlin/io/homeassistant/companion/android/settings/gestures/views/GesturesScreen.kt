@@ -5,18 +5,20 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
 import kotlinx.serialization.Serializable
 
-@Serializable object GesturesRoute
+@Serializable private data object GesturesRoute
 
-@Serializable data class ActionsRoute(val gesture: HAGesture)
+@Serializable private data class ActionsRoute(val gesture: HAGesture)
 
 /**
  * Main Composable for gesture settings, allowing navigation to:
@@ -25,15 +27,16 @@ import kotlinx.serialization.Serializable
  *
  *  @param gestureActions User settings (gestures and the current action)
  *  @param onSetAction Called when the action for a gesture should be changed
- *  @param setToolbarTitleFor Called when the screen changes, to update the
- *         Activity's Toolbar title to the main title (`null`) or a gesture's title
+ *  @param onToolbarTitleChanged Called when the screen changes, to update the
+ *         Activity's Toolbar title
  */
 @Composable
 fun GesturesScreen(
     gestureActions: Map<HAGesture, GestureAction>,
     onSetAction: (HAGesture, GestureAction) -> Unit,
-    setToolbarTitleFor: (HAGesture?) -> Unit,
+    onToolbarTitleChanged: (String) -> Unit,
 ) {
+    val context = LocalContext.current
     val navController = rememberNavController()
     NavHost(
         navController = navController,
@@ -48,7 +51,7 @@ fun GesturesScreen(
         composable<GesturesRoute> {
             GesturesListView(
                 gestureActions = gestureActions,
-                onSelected = { gesture ->
+                onGestureClicked = { gesture ->
                     navController.navigate(ActionsRoute(gesture))
                 },
             )
@@ -57,7 +60,7 @@ fun GesturesScreen(
             val action: ActionsRoute = backStackEntry.toRoute()
             GestureActionsView(
                 selectedAction = gestureActions.getOrDefault(action.gesture, GestureAction.NONE),
-                onActionSelected = { newAction ->
+                onActionClicked = { newAction ->
                     onSetAction(action.gesture, newAction)
                     navController.popBackStack(route = GesturesRoute, inclusive = false)
                 },
@@ -67,10 +70,10 @@ fun GesturesScreen(
     LaunchedEffect(Unit) {
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
             if (backStackEntry.destination.hasRoute(route = GesturesRoute::class)) {
-                setToolbarTitleFor(null)
+                onToolbarTitleChanged(context.getString(R.string.gestures))
             } else if (backStackEntry.destination.hasRoute(ActionsRoute::class)) {
                 val action: ActionsRoute = backStackEntry.toRoute()
-                setToolbarTitleFor(action.gesture)
+                onToolbarTitleChanged(context.getString(action.gesture.fullDescription))
             }
         }
     }

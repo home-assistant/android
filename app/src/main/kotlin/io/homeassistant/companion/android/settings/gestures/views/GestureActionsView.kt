@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.gestures.views
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,20 +21,21 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.settings.views.SettingsSubheader
+import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 /**
- * View showing all actions for a gesture, grouped by category, and the
- * currently configured action. Select to update the configured action.
+ * View showing all actions for a gesture, grouped by category, and the currently
+ * configured action. Clicking on an action calls [onActionClicked] with the action.
  *
  * @param selectedAction The current action
- * @param onActionSelected Called when an action is selected
+ * @param onActionClicked Called when an action is selected
  */
 @Composable
-fun GestureActionsView(selectedAction: GestureAction, onActionSelected: (GestureAction) -> Unit) {
+fun GestureActionsView(selectedAction: GestureAction, onActionClicked: (GestureAction) -> Unit) {
     val actionsGrouped = GestureAction.entries.minus(GestureAction.NONE).groupBy { it.category }
     LazyColumn(
-        contentPadding = safeBottomPaddingValues(applyHorizontal = false),
+        contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
         modifier = Modifier.selectableGroup(),
     ) {
         item {
@@ -41,7 +43,7 @@ fun GestureActionsView(selectedAction: GestureAction, onActionSelected: (Gesture
             GestureActionItem(
                 action = GestureAction.NONE,
                 checked = selectedAction == GestureAction.NONE,
-                onClick = { onActionSelected(GestureAction.NONE) },
+                onClick = { onActionClicked(GestureAction.NONE) },
             )
         }
         actionsGrouped.forEach { (category, actions) ->
@@ -52,7 +54,7 @@ fun GestureActionsView(selectedAction: GestureAction, onActionSelected: (Gesture
                 GestureActionItem(
                     action = action,
                     checked = selectedAction == action,
-                    onClick = { onActionSelected(action) },
+                    onClick = { onActionClicked(action) },
                 )
             }
         }
@@ -60,7 +62,7 @@ fun GestureActionsView(selectedAction: GestureAction, onActionSelected: (Gesture
 }
 
 @Composable
-fun GestureActionItem(action: GestureAction, checked: Boolean, onClick: () -> Unit) {
+private fun GestureActionItem(action: GestureAction, checked: Boolean, onClick: () -> Unit) {
     // Based on androidx.compose.material.samples.RadioGroupSample
     Row(
         Modifier
@@ -80,7 +82,7 @@ fun GestureActionItem(action: GestureAction, checked: Boolean, onClick: () -> Un
         )
         Text(
             text = stringResource(action.description),
-            style = MaterialTheme.typography.body1.merge(),
+            style = MaterialTheme.typography.body1,
             modifier = Modifier.padding(start = 32.dp),
         )
     }
@@ -88,9 +90,9 @@ fun GestureActionItem(action: GestureAction, checked: Boolean, onClick: () -> Un
 
 @Preview
 @Composable
-fun PreviewGestureActionsView() {
+private fun PreviewGestureActionsView() {
     GestureActionsView(
         selectedAction = GestureAction.QUICKBAR_DEFAULT,
-        onActionSelected = {},
+        onActionClicked = {},
     )
 }

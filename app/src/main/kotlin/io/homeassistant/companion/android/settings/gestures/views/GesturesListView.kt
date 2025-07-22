@@ -19,14 +19,14 @@ import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 /**
- * Shows all gestures with the configured action for it. Select a gesture
- * to change the configured action.
+ * Shows all gestures with the configured action for it. Clicking on a
+ * gesture calls [onGestureClicked] with the gesture.
  *
  * @param gestureActions User settings (gestures and the current action)
- * @param onSelected Called when a gesture is selected
+ * @param onGestureClicked Called when a gesture is selected
  */
 @Composable
-fun GesturesListView(gestureActions: Map<HAGesture, GestureAction>, onSelected: (HAGesture) -> Unit) {
+fun GesturesListView(gestureActions: Map<HAGesture, GestureAction>, onGestureClicked: (HAGesture) -> Unit) {
     LazyColumn(
         contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
     ) {
@@ -48,7 +48,7 @@ fun GesturesListView(gestureActions: Map<HAGesture, GestureAction>, onSelected: 
                     primaryText = stringResource(gesture.pointers.description),
                     secondaryText = action?.let { stringResource(it.description) } ?: "",
                     icon = null,
-                    onClicked = { onSelected(gesture) },
+                    onClicked = { onGestureClicked(gesture) },
                 )
             }
         }
@@ -60,6 +60,6 @@ fun GesturesListView(gestureActions: Map<HAGesture, GestureAction>, onSelected: 
 private fun PreviewGesturesListView() {
     GesturesListView(
         gestureActions = HAGesture.entries.associateWith { GestureAction.NONE },
-        onSelected = { _ -> },
+        onGestureClicked = { _ -> },
     )
 }
