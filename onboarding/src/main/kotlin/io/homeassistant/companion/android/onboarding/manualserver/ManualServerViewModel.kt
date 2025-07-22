@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.manualserver
 
+import android.webkit.URLUtil
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -20,13 +21,10 @@ class ManualServerViewModel @Inject constructor() : ViewModel() {
         validateServerUrl(url)
     }
 
-    fun onConnectClick() {
-    }
-
     private fun validateServerUrl(url: String) {
         isServerUrlValidMutableFlow.update {
-            // TODO validate URL
-            url.isNotBlank()
+            // TODO add more validation because valid url is only http://
+            URLUtil.isValidUrl(url)
         }
     }
 }

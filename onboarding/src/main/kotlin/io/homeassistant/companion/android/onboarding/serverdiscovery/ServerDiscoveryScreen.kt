@@ -1,27 +1,38 @@
 package io.homeassistant.companion.android.onboarding.serverdiscovery
 
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
@@ -31,15 +42,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.compose.HAPreviews
@@ -47,6 +60,7 @@ import io.homeassistant.companion.android.compose.composable.HAButton
 import io.homeassistant.companion.android.compose.composable.HATextButton
 import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
+import io.homeassistant.companion.android.onboarding.theme.HABorderWidth
 import io.homeassistant.companion.android.onboarding.theme.HAColors
 import io.homeassistant.companion.android.onboarding.theme.HARadius
 import io.homeassistant.companion.android.onboarding.theme.HASpacing
@@ -63,7 +77,7 @@ fun ServerDiscoveryScreen(
     onBackClick: () -> Unit = {},
     viewModel: ServerDiscoveryViewModel = hiltViewModel(),
 ) {
-    val discoveryState by remember { viewModel.discoveryState }
+    val discoveryState by viewModel.discoveryStateFlow.collectAsStateWithLifecycle()
 
     ServerDiscoveryScreen(
         modifier = modifier,
@@ -83,7 +97,7 @@ internal fun ServerDiscoveryScreen(
     onHelpClick: () -> Unit,
     onBackClick: () -> Unit,
     onDismissOneServerFound: () -> Unit,
-    discoveryState: DiscoveryState?,
+    discoveryState: DiscoveryState,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -93,21 +107,19 @@ internal fun ServerDiscoveryScreen(
             HATopBar(onBackClick = onBackClick, onHelpClick = onHelpClick)
         },
     ) { contentPadding ->
-        // TODO this could depends on the state too
-        ScreenContent(contentPadding, onManualSetupClick)
+        ScreenContent(
+            contentPadding = contentPadding,
+            onManualSetupClick = onManualSetupClick,
+            discoveryState = discoveryState,
+            onConnectClick = onConnectClick,
+        )
 
-        when (discoveryState) {
-            is ServerDiscovered -> OneServerFound(
-                discoveryState,
+        if (discoveryState is ServerDiscovered) {
+            OneServerFound(
+                serverDiscovered = discoveryState,
                 onDismiss = onDismissOneServerFound,
                 onConnectClick = onConnectClick,
             )
-            // MultipleServersFound(serverDiscovered as ServersDiscovered)
-            is ServersDiscovered -> {}
-            NoServerFound -> {}
-            null -> {
-                /* Nothing to do */
-            }
         }
     }
 }
@@ -162,7 +174,12 @@ private fun OneServerFound(
 }
 
 @Composable
-private fun ScreenContent(contentPadding: PaddingValues, onManualSetupClick: () -> Unit) {
+private fun ScreenContent(
+    contentPadding: PaddingValues,
+    onManualSetupClick: () -> Unit,
+    discoveryState: DiscoveryState,
+    onConnectClick: (URL) -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -173,13 +190,13 @@ private fun ScreenContent(contentPadding: PaddingValues, onManualSetupClick: () 
         Text(
             text = stringResource(R.string.searching_home_network),
             style = HATextStyle.Headline,
+            modifier = Modifier.padding(top = HASpacing.XL),
         )
 
-        // We use spacer to position the image where we want when there is remaining space in the column using percentage
-        val positionPercentage = 0.2f
-        Spacer(modifier = Modifier.weight(positionPercentage))
-        AnimatedIcon()
-        Spacer(modifier = Modifier.weight(1f - positionPercentage))
+        when (discoveryState) {
+            is Scanning, NoServerFound, is ServerDiscovered -> ScanningForServer(discoveryState)
+            is ServersDiscovered -> ServersDiscoveredContent(discoveryState, onConnectClick)
+        }
 
         HATextButton(
             text = stringResource(commonR.string.manual_setup),
@@ -187,6 +204,106 @@ private fun ScreenContent(contentPadding: PaddingValues, onManualSetupClick: () 
             modifier = Modifier.padding(bottom = HASpacing.XL),
         )
     }
+}
+
+@Composable
+private fun ColumnScope.ServersDiscoveredContent(state: ServersDiscovered, onConnectClick: (URL) -> Unit) {
+    LazyColumn(
+        modifier = Modifier
+            .weight(1f)
+            .padding(top = HASpacing.X2L)
+            .padding(horizontal = HASpacing.M),
+    ) {
+        items(state.servers) { server ->
+            ServerItemContent(server, onConnectClick)
+        }
+        item {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(HASpacing.X2L),
+            ) {
+                CircularProgressIndicator()
+            }
+        }
+    }
+}
+
+@Composable
+private fun ServerItemContent(server: ServerDiscovered, onConnectClick: (URL) -> Unit, modifier: Modifier = Modifier) {
+    val rowShape = RoundedCornerShape(size = HARadius.XL)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = HASpacing.XS)
+            .border(
+                border = BorderStroke(HABorderWidth.S, HAColors.Neutral80),
+                shape = rowShape,
+            )
+            .clip(rowShape)
+            .clickable(
+                onClick = {
+                    onConnectClick(server.url)
+                },
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(
+            imageVector = ImageVector.vectorResource(R.drawable.ic_home_assistant_branding),
+            contentDescription = null,
+            modifier = Modifier
+                .size(64.dp) // TODO variable?
+                .padding(vertical = HASpacing.XS, horizontal = HASpacing.M),
+        )
+        Column(
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .padding(vertical = HASpacing.XS)
+                .padding(end = HASpacing.M),
+        ) {
+            Text(
+                text = server.name,
+                style = HATextStyle.Body,
+            )
+            Text(
+                text = server.url.toString(),
+                style = HATextStyle.BodyMedium,
+                // TODO color
+            )
+        }
+    }
+}
+
+@Composable
+private fun ColumnScope.ScanningForServer(discoveryState: DiscoveryState) {
+    // We use spacer to position the image where we want when there is remaining space in the column using percentage
+    val positionPercentage = 0.2f
+    Spacer(modifier = Modifier.weight(positionPercentage))
+    AnimatedIcon()
+    Spacer(modifier = Modifier.weight(positionPercentage))
+
+    val alpha: Float by animateFloatAsState(
+        targetValue = if (discoveryState == NoServerFound) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = 2000,
+            easing = FastOutSlowInEasing,
+        ),
+    )
+
+    Text(
+        text = stringResource(R.string.server_discovery_no_server_info),
+        style = HATextStyle.Body,
+        modifier = Modifier
+            .padding(
+                // minimal padding that we want with the animation
+                vertical = HASpacing.S,
+                horizontal = HASpacing.M,
+            )
+            .alpha(alpha),
+    )
+
+    Spacer(modifier = Modifier.weight(1f - 2f * positionPercentage))
 }
 
 @Composable
@@ -238,13 +355,56 @@ private fun ServerDiscoveryScreenPreview() {
 
 @HAPreviews
 @Composable
-private fun ServerDiscoveryScreen_with_one_server_Preview() {
+private fun ServerDiscoveryScreenPreview_no_server_found() {
+    HATheme {
+        ServerDiscoveryScreen(
+            discoveryState = NoServerFound,
+            onConnectClick = {},
+            onManualSetupClick = {},
+            onHelpClick = {},
+            onBackClick = {},
+            onDismissOneServerFound = {},
+        )
+    }
+}
+
+@HAPreviews
+@Composable
+private fun ServerDiscoveryScreenPreview_with_one_server() {
     HATheme {
         ServerDiscoveryScreen(
             discoveryState = ServerDiscovered(
                 "hello",
                 URL("http://my.homeassistant.io"),
                 HomeAssistantVersion(2042, 1, 42),
+            ),
+            onConnectClick = {},
+            onManualSetupClick = {},
+            onHelpClick = {},
+            onBackClick = {},
+            onDismissOneServerFound = {},
+        )
+    }
+}
+
+@HAPreviews
+@Composable
+private fun ServerDiscoveryScreenPreview_with_multiple_servers() {
+    HATheme {
+        ServerDiscoveryScreen(
+            discoveryState = ServersDiscovered(
+                listOf(
+                    ServerDiscovered(
+                        "hello",
+                        URL("http://my.homeassistant.io"),
+                        HomeAssistantVersion(2042, 1, 42),
+                    ),
+                    ServerDiscovered(
+                        "world",
+                        URL("http://my.homeassistant.io"),
+                        HomeAssistantVersion(2042, 1, 42),
+                    ),
+                ),
             ),
             onConnectClick = {},
             onManualSetupClick = {},

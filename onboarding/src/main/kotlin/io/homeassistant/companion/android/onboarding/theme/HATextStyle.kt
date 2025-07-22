@@ -25,6 +25,11 @@ object HATextStyle {
         letterSpacing = 0.sp,
     )
 
+    val BodyMedium = Body.copy(
+        fontSize = HAFontSize.M,
+        lineHeight = HAFontSize.XL,
+    )
+
     val UserInput = Body.copy(
         textAlign = TextAlign.Start,
     )

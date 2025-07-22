@@ -43,11 +43,13 @@ import io.homeassistant.companion.android.onboarding.theme.HAColors
 import io.homeassistant.companion.android.onboarding.theme.HASpacing
 import io.homeassistant.companion.android.onboarding.theme.HATextStyle
 import io.homeassistant.companion.android.onboarding.theme.HATheme
+import java.net.URL
 
 @Composable
 fun ManualServerScreen(
     onHelpClick: () -> Unit,
     onBackClick: () -> Unit,
+    onConnectTo: (URL) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ManualServerViewModel = hiltViewModel(),
 ) {
@@ -55,7 +57,10 @@ fun ManualServerScreen(
     val isServerUrlValid by viewModel.isServerUrlValidFlow.collectAsStateWithLifecycle()
 
     ManualServerScreen(
-        onConnectClick = viewModel::onConnectClick,
+        onConnectClick = {
+            val url = URL(serverUrl)
+            onConnectTo(url)
+        },
         onHelpClick = onHelpClick,
         onBackClick = onBackClick,
         serverUrl = serverUrl,

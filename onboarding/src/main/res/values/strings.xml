@@ -1,6 +1,7 @@
 <resources>
     <string name="home_assistant_branding_icon_content_description">Home\u00A0Assistant branding icon</string>
     <string name="searching_home_network">Searching on\nhome network</string>
+    <string name="server_discovery_no_server_info">Check that your Home\u00A0Assistant is powered on and you\'re connected to the same network. You can enter the address manually if you know it.</string>
     <string name="welcome_home_assistant_title">Home\u00A0Assistant\nCompanion app</string>
     <string name="welcome_details">Allows you to access your Home\u00A0Assistant server on the go. It runs locally in your home via a device like the Home\u00A0Assistant\u00A0Green or Raspberry\u00A0Pi.</string>
     <string name="welcome_connect_to_ha">Connect to my Home\u00A0Assistant server</string>
@@ -9,7 +10,7 @@
     <string name="name_your_device_body">This is used to identify your device in your Home\u00A0Assistant.</string>
     <string name="name_your_device_save">Save</string>
     <string name="name_your_device_clear_name">Clear device name</string>
-    <string name="manual_server_title">What is your address?</string>
+    <string name="manual_server_title">What is your Home\u00A0Assistant address?</string>
     <string name="manual_server_connect">Connect</string>
     <string name="manual_server_clear_url">Clear server url</string>
 </resources>

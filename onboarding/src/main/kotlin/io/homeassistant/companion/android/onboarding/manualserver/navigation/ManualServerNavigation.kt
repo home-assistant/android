@@ -26,6 +26,7 @@ fun NavGraphBuilder.manualServerScreen(onHelpClick: () -> Unit, onBackClick: () 
         ManualServerScreen(
             onHelpClick = onHelpClick,
             onBackClick = onBackClick,
+            onConnectTo = onConnectTo,
         )
     }
 }
