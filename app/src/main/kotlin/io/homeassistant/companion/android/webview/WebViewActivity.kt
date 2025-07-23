@@ -405,7 +405,7 @@ class WebViewActivity :
                     if (System.currentTimeMillis() <= (firstAuthTime + 500)) {
                         authError = true
                     }
-                    authenticationDialog(handler, host, realm, authError)
+                    authenticationDialog(handler, host, resourceURL, realm, authError)
                 }
 
                 override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
@@ -1486,15 +1486,21 @@ class WebViewActivity :
     }
 
     @SuppressLint("InflateParams")
-    fun authenticationDialog(handler: HttpAuthHandler, host: String, realm: String, authError: Boolean) {
-        val httpAuth = authenticationDao.get((resourceURL + realm))
+    private fun authenticationDialog(
+        handler: HttpAuthHandler,
+        host: String,
+        resource: String,
+        realm: String,
+        authError: Boolean,
+    ) {
+        val hostKey = resource + realm
+        val httpAuth = authenticationDao.get(hostKey)
 
         val dialogLayout = DialogAuthenticationBinding.inflate(layoutInflater)
         val username = dialogLayout.username
         val password = dialogLayout.password
         val remember = dialogLayout.checkBox
         val viewPassword = dialogLayout.viewPassword
-        var autoAuth = false
 
         viewPassword.setOnClickListener {
             if (password.transformationMethod == PasswordTransformationMethod.getInstance()) {
@@ -1508,70 +1514,59 @@ class WebViewActivity :
             }
         }
 
-        if (!httpAuth?.host.isNullOrBlank()) {
-            if (!authError) {
-                handler.proceed(httpAuth.username, httpAuth.password)
-                autoAuth = true
-                firstAuthTime = System.currentTimeMillis()
-            }
+        if (!httpAuth?.host.isNullOrBlank() && !authError) {
+            handler.proceed(httpAuth.username, httpAuth.password)
+            firstAuthTime = System.currentTimeMillis()
+            return
         }
 
         var message = host + " " + getString(commonR.string.required_fields)
-        if (resourceURL.length >= 5) {
-            message = if (resourceURL.subSequence(0, 5).toString() == "http:") {
+        if (resource.length >= 5) {
+            message = if (resource.subSequence(0, 5).toString() == "http:") {
                 "http://" + message + " " + getString(commonR.string.not_private)
             } else {
                 "https://$message"
             }
         }
-        if (!autoAuth || authError) {
-            isShowingError = true
-            AlertDialog.Builder(this, R.style.Authentication_Dialog)
-                .setTitle(commonR.string.auth_request)
-                .setMessage(message)
-                .setView(dialogLayout.root)
-                .setPositiveButton(android.R.string.ok) { _, _ ->
-                    if (username.text.toString() != "" && password.text.toString() != "") {
-                        if (remember.isChecked) {
-                            if (authError) {
-                                authenticationDao.update(
-                                    Authentication(
-                                        (resourceURL + realm),
-                                        username.text.toString(),
-                                        password.text.toString(),
-                                    ),
-                                )
-                            } else {
-                                authenticationDao.insert(
-                                    Authentication(
-                                        (resourceURL + realm),
-                                        username.text.toString(),
-                                        password.text.toString(),
-                                    ),
-                                )
-                            }
+        isShowingError = true
+        AlertDialog.Builder(this, R.style.Authentication_Dialog)
+            .setTitle(commonR.string.auth_request)
+            .setMessage(message)
+            .setView(dialogLayout.root)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                if (username.text.toString() != "" && password.text.toString() != "") {
+                    if (remember.isChecked) {
+                        val auth = Authentication(
+                            hostKey,
+                            username.text.toString(),
+                            password.text.toString(),
+                        )
+                        if (authError) {
+                            authenticationDao.update(auth)
+                        } else {
+                            authenticationDao.insert(auth)
                         }
-                        handler.proceed(username.text.toString(), password.text.toString())
-                    } else {
-                        AlertDialog.Builder(this)
-                            .setTitle(commonR.string.auth_cancel)
-                            .setMessage(commonR.string.auth_error_message)
-                            .setPositiveButton(android.R.string.ok) { _, _ ->
-                                authenticationDialog(handler, host, realm, authError)
-                            }
-                            .show()
                     }
-                }
-                .setNeutralButton(android.R.string.cancel) { _, _ ->
-                    Toast.makeText(applicationContext, commonR.string.auth_cancel, Toast.LENGTH_SHORT)
+                    handler.proceed(username.text.toString(), password.text.toString())
+                } else {
+                    AlertDialog.Builder(this)
+                        .setTitle(commonR.string.auth_cancel)
+                        .setMessage(commonR.string.auth_error_message)
+                        .setPositiveButton(android.R.string.ok) { _, _ ->
+                            authenticationDialog(handler, host, resource, realm, authError)
+                        }
                         .show()
                 }
-                .setOnDismissListener {
-                    isShowingError = false
-                    waitForConnection()
-                }
-                .show()
-        }
+            }
+            .setNeutralButton(android.R.string.cancel) { _, _ ->
+                Toast.makeText(applicationContext, commonR.string.auth_cancel, Toast.LENGTH_SHORT)
+                    .show()
+            }
+            .setOnDismissListener {
+                isShowingError = false
+                waitForConnection()
+            }
+            .show()
     }
 
     private fun waitForConnection() {
