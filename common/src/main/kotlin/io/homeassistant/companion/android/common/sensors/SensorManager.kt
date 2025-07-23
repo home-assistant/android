@@ -38,7 +38,7 @@ interface SensorManager {
 
     val name: Int
 
-    // TODO any reason to use mainScope here and not iO?
+    // TODO any reason to use mainScope here and not iO? https://github.com/home-assistant/android/issues/5585
     val sensorWorkerScope: CoroutineScope
         get() = CoroutineScope(Dispatchers.Main + Job())
 
