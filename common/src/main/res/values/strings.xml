@@ -303,7 +303,7 @@
     <string name="gestures_action_quickbar_commands">Search commands</string>
     <string name="gestures_action_quickbar_default">Search entities</string>
     <string name="gestures_action_quickbar_devices">Search devices</string>
-    <string name="gestures_action_server_list">Server list</string>
+    <string name="gestures_action_server_list">Servers list</string>
     <string name="gestures_action_server_next">Next server</string>
     <string name="gestures_action_server_previous">Previous server</string>
     <string name="gestures_action_show_sidebar">Show sidebar</string>
