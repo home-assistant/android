@@ -89,18 +89,3 @@ interface ServerManager {
      */
     fun webSocketRepository(serverId: Int = SERVER_ID_ACTIVE): WebSocketRepository
 }
-
-/**
- * Helper class to retrieve a [Server] using [ServerManager.getServer]. This class will cache the
- * server after the first retrieval. Note that this class does **not** observe any server changes.
- *
- * @property serverManager the [ServerManager] instance to use
- * @property serverId the ID of the server to retrieve
- */
-class ServerRetriever(val serverManager: ServerManager, val serverId: Int) {
-    private var sever: Server? = null
-
-    suspend operator fun invoke(): Server {
-        return sever ?: checkNotNull(serverManager.getServer(serverId)) { "No server found for id $serverId" }
-    }
-}

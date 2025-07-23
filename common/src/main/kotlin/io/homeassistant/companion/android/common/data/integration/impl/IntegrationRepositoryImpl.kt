@@ -34,7 +34,6 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateSensorStatesIntegrationRequest
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.servers.ServerRetriever
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
@@ -93,10 +92,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val APPLOCK_TIMEOUT_GRACE_MS = 1000
     }
 
-    // We use an object to avoid calling serverManager on every call to server()
-    private val serverRetriever = ServerRetriever(serverManager, serverId)
     private suspend fun server(): Server {
-        return serverRetriever()
+        return checkNotNull(serverManager.getServer(serverId)) { "No server found for id $serverId" }
     }
 
     private val webSocketRepository get() = serverManager.webSocketRepository(serverId)

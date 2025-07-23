@@ -7,7 +7,6 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.servers.ServerRetriever
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
@@ -29,10 +28,8 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
         private const val PREF_BIOMETRIC_HOME_BYPASS_ENABLED = "biometric_home_bypass_enabled"
     }
 
-    // We use an object to avoid calling serverManager on every call to server()
-    private val serverRetriever = ServerRetriever(serverManager, serverId)
     private suspend fun server(): Server {
-        return serverRetriever()
+        return checkNotNull(serverManager.getServer(serverId)) { "No server found for id $serverId" }
     }
 
     override suspend fun registerAuthorizationCode(authorizationCode: String) {
