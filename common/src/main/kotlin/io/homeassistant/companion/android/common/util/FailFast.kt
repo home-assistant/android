@@ -129,4 +129,13 @@ object FailFast {
             fallback
         }
     }
+
+    suspend fun <T> failOnCatchSuspend(message: () -> String? = { null }, fallback: T, block: suspend () -> T): T {
+        return try {
+            block()
+        } catch (e: Throwable) {
+            handler.handleException(FailFastException(e), message())
+            fallback
+        }
+    }
 }

@@ -19,7 +19,6 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import java.util.Collections
-import java.util.LinkedHashMap
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -62,8 +61,10 @@ class HaCarAppService : CarAppService() {
     override fun onCreateSession(sessionInfo: SessionInfo): Session {
         return object : Session() {
             init {
-                serverManager.getServer()?.let {
-                    loadEntities(lifecycleScope, it.id)
+                lifecycleScope.launch {
+                    serverManager.getServer()?.let {
+                        loadEntities(this, it.id)
+                    }
                 }
             }
 

@@ -317,10 +317,12 @@ class MessagingManager @Inject constructor(
             val serverId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
                 serverManager.getServer(webhookId = webhookId)?.id
             } ?: ServerManager.SERVER_ID_ACTIVE
+
             if (serverManager.getServer(serverId) == null) {
                 Timber.w("Received notification but no server for it, discarding")
                 return@launch
             }
+
             jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, serverId.toString()) }
 
             val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
@@ -552,7 +554,7 @@ class MessagingManager @Inject constructor(
                         }
 
                         COMMAND_PERSISTENT_CONNECTION -> {
-                            val validPersistentTypes = WebsocketSetting.values().map { setting -> setting.name }
+                            val validPersistentTypes = WebsocketSetting.entries.map { setting -> setting.name }
 
                             when {
                                 jsonData[PERSISTENT].isNullOrEmpty() -> {
@@ -656,7 +658,6 @@ class MessagingManager @Inject constructor(
                             DND_ALL -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_ALL,
                             )
-
                             DND_NONE -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_NONE,
                             )
@@ -1289,7 +1290,7 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun handleServer(builder: NotificationCompat.Builder, data: Map<String, String>) {
+    private suspend fun handleServer(builder: NotificationCompat.Builder, data: Map<String, String>) {
         data[NotificationData.WEBHOOK_ID]?.let { webhookId ->
             if (serverManager.defaultServers.size > 1) {
                 serverManager.getServer(webhookId = webhookId)?.let {
