@@ -41,30 +41,30 @@ class MessagingManager @Inject constructor(
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     fun handleMessage(notificationData: Map<String, String>, source: String) {
-        val notificationDao = AppDatabase.getInstance(context).notificationDao()
-        val now = System.currentTimeMillis()
-
-        val jsonData = notificationData as Map<String, String>?
-        val jsonObject = jsonData?.let { JSONObject(it) }
-        val serverId = jsonData?.get(NotificationData.WEBHOOK_ID)?.let {
-            serverManager.getServer(webhookId = it)?.id
-        } ?: ServerManager.SERVER_ID_ACTIVE
-        val notificationRow =
-            NotificationItem(
-                0,
-                now,
-                notificationData[NotificationData.MESSAGE].toString(),
-                jsonObject.toString(),
-                source,
-                serverId,
-            )
-        notificationDao.add(notificationRow)
-        if (serverManager.getServer(serverId) == null) {
-            Timber.w("Received notification but no server for it, discarding")
-            return
-        }
-
         mainScope.launch {
+            val notificationDao = AppDatabase.getInstance(context).notificationDao()
+            val now = System.currentTimeMillis()
+
+            val jsonData = notificationData as Map<String, String>?
+            val jsonObject = jsonData?.let { JSONObject(it) }
+            val serverId = jsonData?.get(NotificationData.WEBHOOK_ID)?.let {
+                serverManager.getServer(webhookId = it)?.id
+            } ?: ServerManager.SERVER_ID_ACTIVE
+            val notificationRow =
+                NotificationItem(
+                    0,
+                    now,
+                    notificationData[NotificationData.MESSAGE].toString(),
+                    jsonObject.toString(),
+                    source,
+                    serverId,
+                )
+            notificationDao.add(notificationRow)
+            if (serverManager.getServer(serverId) == null) {
+                Timber.w("Received notification but no server for it, discarding")
+                return@launch
+            }
+
             val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
             val message = notificationData[NotificationData.MESSAGE]
             when {
@@ -77,7 +77,7 @@ class MessagingManager @Inject constructor(
                     }
                 }
                 message == DeviceCommandData.COMMAND_BLE_TRANSMITTER && allowCommands -> {
-                    if (!commandBleTransmitter(context, notificationData, sensorDao, mainScope)) {
+                    if (!commandBleTransmitter(context, notificationData, sensorDao)) {
                         sendNotification(notificationData)
                     }
                 }

@@ -258,22 +258,24 @@ open class HomeAssistantApplication :
 
         // Register for all saved user intents
         val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
-        val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
-        for (setting in allSettings) {
-            if (setting.value != "" && setting.value != "SensorWorker") {
-                val settingSplit = setting.value.split(',')
-                ContextCompat.registerReceiver(
-                    this,
-                    sensorReceiver,
-                    IntentFilter().apply {
-                        addAction(settingSplit[0])
-                        if (settingSplit.size > 1) {
-                            val categories = settingSplit.minus(settingSplit[0])
-                            categories.forEach { addCategory(it) }
-                        }
-                    },
-                    ContextCompat.RECEIVER_EXPORTED,
-                )
+        ioScope.launch {
+            val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
+            for (setting in allSettings) {
+                if (setting.value != "" && setting.value != "SensorWorker") {
+                    val settingSplit = setting.value.split(',')
+                    ContextCompat.registerReceiver(
+                        this@HomeAssistantApplication,
+                        sensorReceiver,
+                        IntentFilter().apply {
+                            addAction(settingSplit[0])
+                            if (settingSplit.size > 1) {
+                                val categories = settingSplit.minus(settingSplit[0])
+                                categories.forEach { addCategory(it) }
+                            }
+                        },
+                        ContextCompat.RECEIVER_EXPORTED,
+                    )
+                }
             }
         }
 
