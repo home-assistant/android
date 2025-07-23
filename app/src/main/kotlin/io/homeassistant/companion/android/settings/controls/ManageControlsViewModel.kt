@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +53,10 @@ class ManageControlsViewModel @Inject constructor(
     var structureEnabled by mutableStateOf(false)
         private set
 
+    val defaultServers = serverManager.defaultServers
+
+    var defaultServerId by mutableIntStateOf(0)
+
     init {
         viewModelScope.launch {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -74,13 +79,15 @@ class ManageControlsViewModel @Inject constructor(
 
             structureEnabled = prefsRepository.getControlsEnableStructure()
 
+            defaultServerId = serverManager.getServer()?.id ?: 0
+
             serverManager.defaultServers.map { server ->
                 async {
                     val entities = serverManager.integrationRepository(server.id).getEntities()
                         ?.filter { it.domain in HaControlsProviderService.getSupportedDomains() }
                         ?.sortedWith(
                             compareBy(String.CASE_INSENSITIVE_ORDER) {
-                                (it.attributes as Map<String, Any>)["friendly_name"].toString()
+                                it.attributes["friendly_name"].toString()
                             },
                         )
                     if (entities != null) {
@@ -162,7 +169,9 @@ class ManageControlsViewModel @Inject constructor(
         )
         panelEnabled = enabled
         if (panelSetting?.second == null) {
-            serverManager.getServer()?.id?.let { setPanelConfig("", it) }
+            viewModelScope.launch {
+                serverManager.getServer()?.id?.let { setPanelConfig("", it) }
+            }
         }
     }
 

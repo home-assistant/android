@@ -47,9 +47,10 @@ class HaControlsPanelActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setShowWhenLocked(true)
-        if (!serverManager.isRegistered()) {
-            finish()
-            return
+        lifecycleScope.launch {
+            if (!serverManager.isRegistered()) {
+                finish()
+            }
         }
 
         val disallowLocked =

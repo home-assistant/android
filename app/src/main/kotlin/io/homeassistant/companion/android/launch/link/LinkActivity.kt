@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
@@ -27,6 +28,7 @@ import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class LinkActivity : BaseActivity() {
@@ -61,15 +63,17 @@ class LinkActivity : BaseActivity() {
         if (dataUri == null) {
             FailFast.fail { "Missing data in caller Intent" }
         } else {
-            when (val destination = linkHandler.handleLink(dataUri)) {
-                LinkDestination.NoDestination -> finish()
-                is LinkDestination.Onboarding -> {
-                    startActivity(LaunchActivity.newInstance(this, destination.serverUrl))
-                    finish()
-                }
+            lifecycleScope.launch {
+                when (val destination = linkHandler.handleLink(dataUri)) {
+                    LinkDestination.NoDestination -> finish()
+                    is LinkDestination.Onboarding -> {
+                        startActivity(LaunchActivity.newInstance(this@LinkActivity, destination.serverUrl))
+                        finish()
+                    }
 
-                is LinkDestination.Webview -> {
-                    navigateTo(destination.path)
+                    is LinkDestination.Webview -> {
+                        navigateTo(destination.path)
+                    }
                 }
             }
         }

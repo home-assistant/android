@@ -65,7 +65,7 @@ abstract class AssistViewModelBase(
     private var conversationId: String? = null
     private var continueConversation = AtomicBoolean(false)
 
-    fun isRegistered(): Boolean = serverManager.isRegistered()
+    suspend fun isRegistered(): Boolean = serverManager.isRegistered()
 
     abstract fun getInput(): AssistInputMode?
     abstract fun setInput(inputMode: AssistInputMode)

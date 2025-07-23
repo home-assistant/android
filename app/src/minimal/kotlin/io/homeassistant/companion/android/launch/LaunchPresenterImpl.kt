@@ -10,9 +10,9 @@ import timber.log.Timber
 class LaunchPresenterImpl @Inject constructor(view: LaunchView, serverManager: ServerManager) :
     LaunchPresenterBase(view, serverManager) {
     override fun resyncRegistration() {
-        if (!serverManager.isRegistered()) return
-        serverManager.defaultServers.forEach {
-            ioScope.launch {
+        ioScope.launch {
+            if (!serverManager.isRegistered()) return@launch
+            serverManager.defaultServers.forEach {
                 try {
                     serverManager.integrationRepository(it.id).updateRegistration(
                         DeviceRegistration(
