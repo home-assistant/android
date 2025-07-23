@@ -90,7 +90,8 @@ class MainViewModel @Inject constructor(
      * IDs of favorites in the Favorites database.
      */
     val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState()
-    private val favoriteCaches = favoriteCachesDao.getAll()
+    var favoriteCaches = mutableStateListOf<FavoriteCaches>()
+        private set
 
     val shortcutEntitiesMap = mutableStateMapOf<Int?, SnapshotStateList<SimplifiedEntity>>()
 
@@ -136,6 +137,12 @@ class MainViewModel @Inject constructor(
         private set
     var areNotificationsAllowed by mutableStateOf(false)
         private set
+
+    init {
+        viewModelScope.launch {
+            favoriteCaches.addAll(favoriteCachesDao.getAll())
+        }
+    }
 
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
@@ -550,8 +557,6 @@ class MainViewModel @Inject constructor(
             }
         }
     }
-
-    fun getCachedEntity(entityId: String): FavoriteCaches? = favoriteCaches.find { it.id == entityId }
 
     private fun addCachedFavorite(entityId: String) {
         viewModelScope.launch {

@@ -77,7 +77,7 @@ class MessagingManager @Inject constructor(
                     }
                 }
                 message == DeviceCommandData.COMMAND_BLE_TRANSMITTER && allowCommands -> {
-                    if (!commandBleTransmitter(context, notificationData, sensorDao, mainScope)) {
+                    if (!commandBleTransmitter(context, notificationData, sensorDao)) {
                         sendNotification(notificationData)
                     }
                 }

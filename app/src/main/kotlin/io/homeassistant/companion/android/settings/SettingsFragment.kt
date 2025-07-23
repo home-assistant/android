@@ -422,7 +422,7 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
     private fun updateAssistantApp() {
         // On Android Q+, this is a workaround as Android doesn't allow requesting the assistant role
         try {
-            val openIntent = Intent(Intent.ACTION_MAIN)
+            val openIntent = Intent("android.settings.VOICE_INPUT_SETTINGS")
             openIntent.component =
                 ComponentName("com.android.settings", "com.android.settings.Settings\$ManageAssistActivity")
             openIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK

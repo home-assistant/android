@@ -158,7 +158,7 @@ class ButtonWidget : AppWidgetProvider() {
         context.startActivity(intent)
     }
 
-    private fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
+    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
         // Every time AppWidgetManager.updateAppWidget(...) is called, the button listener
         // and label need to be re-assigned, or the next time the layout updates
         // (e.g home screen rotation) the widget will fall back on its default layout
@@ -278,9 +278,8 @@ class ButtonWidget : AppWidgetProvider() {
         loadingViews.setViewVisibility(R.id.widgetImageButtonLayout, View.GONE)
         appWidgetManager.partiallyUpdateAppWidget(appWidgetId, loadingViews)
 
-        val widget = buttonWidgetDao.get(appWidgetId)
-
         mainScope.launch {
+            val widget = buttonWidgetDao.get(appWidgetId)
             // Set default feedback as negative
             var feedbackColor = R.drawable.widget_button_background_red
             var feedbackIcon = R.drawable.ic_clear_black

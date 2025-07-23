@@ -25,6 +25,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import timber.log.Timber
 
@@ -37,6 +38,13 @@ private const val DEFAULT_MINIMUM_ACCURACY = 200
  * For more information, see: https://github.com/home-assistant/android/issues/1511#issuecomment-2946265967
  */
 private val GPS_ROLLOVER_WEEKS1024 = (7 * 1024).days
+
+/**
+ * Sometimes the GPS timestamp is a few seconds in the future from the devices clock.
+ * To still catch these cases that are affected by this and the GPS rollover
+ * this value is subtracted from GPS_ROLLOVER_WEEKS1024.
+ */
+private val TIME_INACCURACY_FACTOR = 10.seconds
 private const val SETTING_ACCURACY = "geocode_minimum_accuracy"
 class GeocodeSensorManager : SensorManager {
 
@@ -192,7 +200,7 @@ class GeocodeSensorManager : SensorManager {
  * @return The sanitized time difference, potentially corrected for the rollover bug.
  */
 private fun Duration.sanitizeGPSTimeDifference(): Duration {
-    return if (this >= GPS_ROLLOVER_WEEKS1024) {
+    return if (this >= GPS_ROLLOVER_WEEKS1024 - TIME_INACCURACY_FACTOR) {
         Timber.i("GPS 1024 weeks rollover bug detected.")
         this - GPS_ROLLOVER_WEEKS1024
     } else {

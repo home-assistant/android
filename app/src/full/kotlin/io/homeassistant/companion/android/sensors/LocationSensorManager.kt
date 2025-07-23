@@ -50,6 +50,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
@@ -182,7 +183,7 @@ class LocationSensorManager :
             SINGLE_ACCURATE_LOCATION,
         }
 
-        fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
+        suspend fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
             sensorDao.add(
                 SensorSetting(
@@ -194,7 +195,7 @@ class LocationSensorManager :
             )
         }
 
-        fun getHighAccuracyModeIntervalSetting(context: Context): Int {
+        suspend fun getHighAccuracyModeIntervalSetting(context: Context): Int {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
             val sensorSettings = sensorDao.getSettings(backgroundLocation.id)
             return sensorSettings.firstOrNull {
@@ -203,7 +204,7 @@ class LocationSensorManager :
                 ?: DEFAULT_UPDATE_INTERVAL_HA_SECONDS
         }
 
-        fun setHighAccuracyModeIntervalSetting(context: Context, updateInterval: Int) {
+        suspend fun setHighAccuracyModeIntervalSetting(context: Context, updateInterval: Int) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
             sensorDao.add(
                 SensorSetting(
@@ -219,7 +220,7 @@ class LocationSensorManager :
     @Inject
     lateinit var prefsRepository: PrefsRepository
 
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     lateinit var latestContext: Context
 
@@ -422,7 +423,7 @@ class LocationSensorManager :
         }
     }
 
-    private fun restartHighAccuracyService(intervalInSeconds: Int) {
+    private suspend fun restartHighAccuracyService(intervalInSeconds: Int) {
         onSensorUpdated(
             latestContext,
             highAccuracyUpdateInterval,
@@ -434,7 +435,7 @@ class LocationSensorManager :
         HighAccuracyLocationService.restartService(latestContext, intervalInSeconds)
     }
 
-    private fun startHighAccuracyService(intervalInSeconds: Int) {
+    private suspend fun startHighAccuracyService(intervalInSeconds: Int) {
         onSensorUpdated(
             latestContext,
             highAccuracyMode,
@@ -453,7 +454,7 @@ class LocationSensorManager :
         HighAccuracyLocationService.startService(latestContext, intervalInSeconds)
     }
 
-    private fun stopHighAccuracyService() {
+    private suspend fun stopHighAccuracyService() {
         onSensorUpdated(
             latestContext,
             highAccuracyMode,
@@ -465,7 +466,7 @@ class LocationSensorManager :
         HighAccuracyLocationService.stopService(latestContext)
     }
 
-    private fun getHighAccuracyModeUpdateInterval(): Int {
+    private suspend fun getHighAccuracyModeUpdateInterval(): Int {
         val updateIntervalHighAccuracySeconds = getSetting(
             latestContext,
             backgroundLocation,
@@ -629,7 +630,7 @@ class LocationSensorManager :
         }
     }
 
-    private fun getHighAccuracyModeSetting(): Boolean {
+    private suspend fun getHighAccuracyModeSetting(): Boolean {
         return getSetting(
             latestContext,
             backgroundLocation,
@@ -639,7 +640,7 @@ class LocationSensorManager :
         ).toBoolean()
     }
 
-    private fun getHighAccuracyBTZoneCombinedSetting(): Boolean {
+    private suspend fun getHighAccuracyBTZoneCombinedSetting(): Boolean {
         return getSetting(
             latestContext,
             backgroundLocation,
