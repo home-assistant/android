@@ -897,6 +897,31 @@ class WebViewActivity :
     private fun handleWebViewGesture(direction: GestureDirection, pointerCount: Int) {
         lifecycleScope.launch {
             when (presenter.getGestureAction(direction, pointerCount)) {
+                GestureAction.NONE -> {
+                    // Do nothing
+                }
+
+                GestureAction.QUICKBAR_DEFAULT -> {
+                    webView.dispatchKeyDownEventToDocument("e", "KeyE", 69)
+                }
+
+                GestureAction.QUICKBAR_DEVICES -> {
+                    webView.dispatchKeyDownEventToDocument("d", "KeyD", 68)
+                }
+
+                GestureAction.QUICKBAR_COMMANDS -> {
+                    webView.dispatchKeyDownEventToDocument("c", "KeyC", 67)
+                }
+
+                GestureAction.SHOW_SIDEBAR -> sendExternalBusMessage(ShowSidebar)
+
+                GestureAction.OPEN_ASSIST -> startActivity(
+                    AssistActivity.newInstance(
+                        this@WebViewActivity,
+                        serverId = presenter.getActiveServer(),
+                    ),
+                )
+
                 GestureAction.NAVIGATE_FORWARD -> {
                     if (webView.canGoForward()) webView.goForward()
                 }
@@ -906,20 +931,6 @@ class WebViewActivity :
                 GestureAction.NAVIGATE_RELOAD -> {
                     webView.reload()
                 }
-
-                GestureAction.QUICKBAR_DEVICES -> {
-                    webView.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_D))
-                }
-
-                GestureAction.QUICKBAR_DEFAULT -> {
-                    webView.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
-                }
-
-                GestureAction.QUICKBAR_COMMANDS -> {
-                    webView.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_C))
-                }
-
-                GestureAction.SHOW_SIDEBAR -> sendExternalBusMessage(ShowSidebar)
 
                 GestureAction.SERVER_LIST -> {
                     val serverChooser = ServerChooserFragment()
@@ -942,13 +953,6 @@ class WebViewActivity :
 
                 GestureAction.SERVER_PREVIOUS -> presenter.previousServer()
 
-                GestureAction.OPEN_ASSIST -> startActivity(
-                    AssistActivity.newInstance(
-                        this@WebViewActivity,
-                        serverId = presenter.getActiveServer(),
-                    ),
-                )
-
                 GestureAction.OPEN_APP_SETTINGS -> startActivity(SettingsActivity.newInstance(this@WebViewActivity))
 
                 GestureAction.OPEN_APP_DEVELOPER -> startActivity(
@@ -957,10 +961,6 @@ class WebViewActivity :
                         screen = SettingsActivity.SCREEN_DEVELOPER,
                     ),
                 )
-
-                GestureAction.NONE -> {
-                    // Do nothing
-                }
             }
         }
     }
@@ -1710,6 +1710,26 @@ class WebViewActivity :
         })();
         """.trimIndent()
         webView.evaluateJavascript(jsCode, null)
+    }
+
+    /**
+     * Send a key event to the webview's document root, to trigger frontend actions. Unlike the default
+     * [WebView.dispatchKeyEvent] function, this does not used the focused element (to avoid text inputs).
+     * The parameters should provide a JavaScript KeyboardEvent's properties.
+     */
+    private fun WebView.dispatchKeyDownEventToDocument(key: String, code: String, keyCode: Int) {
+        val eventCode = """
+        var event = new KeyboardEvent('keydown', {
+            key: '$key',
+            code: '$code',
+            keyCode: $keyCode,
+            which: $keyCode,
+            bubbles: true,
+            cancelable: true
+        });
+        document.dispatchEvent(event);
+        """.trimIndent()
+        evaluateJavascript(eventCode, null)
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {

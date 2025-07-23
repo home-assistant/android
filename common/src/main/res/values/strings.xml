@@ -307,6 +307,8 @@
     <string name="gestures_action_server_next">Next server</string>
     <string name="gestures_action_server_previous">Previous server</string>
     <string name="gestures_action_show_sidebar">Show sidebar</string>
+    <string name="gestures_category_app">App</string>
+    <string name="gestures_category_navigation">Navigation</string>
     <string name="gestures_category_servers">Servers</string>
     <string name="gestures_description">Set up gestures for quick actions whenever you are using the main Home Assistant UI.\n\nNote: if your device has gestures that work in any app, they may override Home Assistant gestures.</string>
     <string name="gestures_direction_down">Swipe down</string>
