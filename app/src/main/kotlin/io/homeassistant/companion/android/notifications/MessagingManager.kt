@@ -1655,7 +1655,7 @@ class MessagingManager @Inject constructor(
 
             uri.startsWith(SETTINGS_PREFIX) -> {
                 if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY) {
-                    SettingsActivity.newInstance(context)
+                    SettingsActivity.newInstance(context, SettingsActivity.Deeplink.NOTIFICATION_HISTORY)
                 } else {
                     WebViewActivity.newInstance(context, null, serverId)
                 }
@@ -1675,10 +1675,6 @@ class MessagingManager @Inject constructor(
                 WebViewActivity.newInstance(context, uri, serverId)
             }
         } ?: WebViewActivity.newInstance(context, null, serverId)
-
-        if (uri.startsWith(SETTINGS_PREFIX) && uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY) {
-            intent.putExtra("fragment", NOTIFICATION_HISTORY)
-        }
 
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (!otherApp) {
