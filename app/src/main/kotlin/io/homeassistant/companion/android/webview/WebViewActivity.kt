@@ -1493,80 +1493,84 @@ class WebViewActivity :
         realm: String,
         authError: Boolean,
     ) {
-        val hostKey = resource + realm
-        val httpAuth = authenticationDao.get(hostKey)
+        lifecycleScope.launch {
+            val hostKey = resource + realm
+            val httpAuth = authenticationDao.get(hostKey)
 
-        val dialogLayout = DialogAuthenticationBinding.inflate(layoutInflater)
-        val username = dialogLayout.username
-        val password = dialogLayout.password
-        val remember = dialogLayout.checkBox
-        val viewPassword = dialogLayout.viewPassword
+            val dialogLayout = DialogAuthenticationBinding.inflate(layoutInflater)
+            val username = dialogLayout.username
+            val password = dialogLayout.password
+            val remember = dialogLayout.checkBox
+            val viewPassword = dialogLayout.viewPassword
 
-        viewPassword.setOnClickListener {
-            if (password.transformationMethod == PasswordTransformationMethod.getInstance()) {
-                password.transformationMethod = HideReturnsTransformationMethod.getInstance()
-                viewPassword.setImageResource(R.drawable.ic_visibility_off)
-                password.text?.let { it1 -> password.setSelection(it1.length) }
-            } else {
-                password.transformationMethod = PasswordTransformationMethod.getInstance()
-                viewPassword.setImageResource(R.drawable.ic_visibility)
-                password.text?.let { it1 -> password.setSelection(it1.length) }
-            }
-        }
-
-        if (!httpAuth?.host.isNullOrBlank() && !authError) {
-            handler.proceed(httpAuth.username, httpAuth.password)
-            firstAuthTime = System.currentTimeMillis()
-            return
-        }
-
-        var message = host + " " + getString(commonR.string.required_fields)
-        if (resource.length >= 5) {
-            message = if (resource.subSequence(0, 5).toString() == "http:") {
-                "http://" + message + " " + getString(commonR.string.not_private)
-            } else {
-                "https://$message"
-            }
-        }
-        isShowingError = true
-        AlertDialog.Builder(this, R.style.Authentication_Dialog)
-            .setTitle(commonR.string.auth_request)
-            .setMessage(message)
-            .setView(dialogLayout.root)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                if (username.text.toString() != "" && password.text.toString() != "") {
-                    if (remember.isChecked) {
-                        val auth = Authentication(
-                            hostKey,
-                            username.text.toString(),
-                            password.text.toString(),
-                        )
-                        if (authError) {
-                            authenticationDao.update(auth)
-                        } else {
-                            authenticationDao.insert(auth)
-                        }
-                    }
-                    handler.proceed(username.text.toString(), password.text.toString())
+            viewPassword.setOnClickListener {
+                if (password.transformationMethod == PasswordTransformationMethod.getInstance()) {
+                    password.transformationMethod = HideReturnsTransformationMethod.getInstance()
+                    viewPassword.setImageResource(R.drawable.ic_visibility_off)
+                    password.text?.let { it1 -> password.setSelection(it1.length) }
                 } else {
-                    AlertDialog.Builder(this)
-                        .setTitle(commonR.string.auth_cancel)
-                        .setMessage(commonR.string.auth_error_message)
-                        .setPositiveButton(android.R.string.ok) { _, _ ->
-                            authenticationDialog(handler, host, resource, realm, authError)
-                        }
-                        .show()
+                    password.transformationMethod = PasswordTransformationMethod.getInstance()
+                    viewPassword.setImageResource(R.drawable.ic_visibility)
+                    password.text?.let { it1 -> password.setSelection(it1.length) }
                 }
             }
-            .setNeutralButton(android.R.string.cancel) { _, _ ->
-                Toast.makeText(applicationContext, commonR.string.auth_cancel, Toast.LENGTH_SHORT)
-                    .show()
+
+            if (!httpAuth?.host.isNullOrBlank() && !authError) {
+                handler.proceed(httpAuth.username, httpAuth.password)
+                firstAuthTime = System.currentTimeMillis()
+                return@launch
             }
-            .setOnDismissListener {
-                isShowingError = false
-                waitForConnection()
+
+            var message = host + " " + getString(commonR.string.required_fields)
+            if (resource.length >= 5) {
+                message = if (resource.subSequence(0, 5).toString() == "http:") {
+                    "http://" + message + " " + getString(commonR.string.not_private)
+                } else {
+                    "https://$message"
+                }
             }
-            .show()
+            isShowingError = true
+            AlertDialog.Builder(this@WebViewActivity, R.style.Authentication_Dialog)
+                .setTitle(commonR.string.auth_request)
+                .setMessage(message)
+                .setView(dialogLayout.root)
+                .setPositiveButton(android.R.string.ok) { _, _ ->
+                    if (username.text.toString() != "" && password.text.toString() != "") {
+                        if (remember.isChecked) {
+                            val auth = Authentication(
+                                hostKey,
+                                username.text.toString(),
+                                password.text.toString(),
+                            )
+                            lifecycleScope.launch {
+                                if (authError) {
+                                    authenticationDao.update(auth)
+                                } else {
+                                    authenticationDao.insert(auth)
+                                }
+                            }
+                        }
+                        handler.proceed(username.text.toString(), password.text.toString())
+                    } else {
+                        AlertDialog.Builder(this@WebViewActivity)
+                            .setTitle(commonR.string.auth_cancel)
+                            .setMessage(commonR.string.auth_error_message)
+                            .setPositiveButton(android.R.string.ok) { _, _ ->
+                                authenticationDialog(handler, host, resource, realm, authError)
+                            }
+                            .show()
+                    }
+                }
+                .setNeutralButton(android.R.string.cancel) { _, _ ->
+                    Toast.makeText(applicationContext, commonR.string.auth_cancel, Toast.LENGTH_SHORT)
+                        .show()
+                }
+                .setOnDismissListener {
+                    isShowingError = false
+                    waitForConnection()
+                }
+                .show()
+        }
     }
 
     private fun waitForConnection() {
