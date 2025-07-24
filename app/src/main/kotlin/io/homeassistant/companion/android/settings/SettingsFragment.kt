@@ -347,9 +347,11 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
         }
 
         findPreference<ListPreference>("languages")?.let {
-            val languages = langProvider.getSupportedLanguages(requireContext())
-            it.entries = languages.keys.toTypedArray()
-            it.entryValues = languages.values.toTypedArray()
+            lifecycleScope.launch {
+                val languages = langProvider.getSupportedLanguages(requireContext())
+                it.entries = languages.keys.toTypedArray()
+                it.entryValues = languages.values.toTypedArray()
+            }
         }
 
         findPreference<Preference>("privacy")?.let {

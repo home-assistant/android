@@ -111,6 +111,9 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        // This cause StrictMode to trigger since it loads the XML from the disk
+        // we could put this in IO thread but with the risk that following
+        // findPreference return null and cause the UI to be wrong.
         setPreferencesFromResource(R.xml.notifications, rootKey)
     }
 

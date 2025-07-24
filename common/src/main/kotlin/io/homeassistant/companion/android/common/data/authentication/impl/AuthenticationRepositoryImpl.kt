@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.common.data.authentication.Authorizati
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.MapAnySerializer
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
@@ -20,7 +21,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     private val serverManager: ServerManager,
     @Assisted private val serverId: Int,
     @Named("session") private val localStorage: LocalStorage,
-    @Named("installId") private val installId: String,
+    @Named("installId") private val installId: SuspendProvider<String>,
 ) : AuthenticationRepository {
 
     companion object {
@@ -52,7 +53,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
                         refreshToken = it.refreshToken!!,
                         tokenExpiration = System.currentTimeMillis() / 1000 + it.expiresIn,
                         tokenType = it.tokenType,
-                        installId = installId,
+                        installId = installId(),
                     ),
                 ),
             )
@@ -121,7 +122,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     override suspend fun getSessionState(): SessionState {
         val server = server()
         return if (server.session.isComplete() &&
-            server.session.installId == installId &&
+            server.session.installId == installId() &&
             server.connection.getUrl() != null
         ) {
             SessionState.CONNECTED
@@ -148,7 +149,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     private suspend fun ensureValidSession(forceRefresh: Boolean = false) {
         val server = server()
         val url = server.connection.getUrl()?.toHttpUrlOrNull()
-        if (!server.session.isComplete() || server.session.installId != installId || url == null) {
+        if (!server.session.isComplete() || server.session.installId != installId() || url == null) {
             Timber.e("Unable to ensure valid session.")
             throw AuthorizationException()
         }
@@ -175,7 +176,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
                             refreshToken = refreshToken,
                             tokenExpiration = System.currentTimeMillis() / 1000 + refreshedToken.expiresIn,
                             tokenType = refreshedToken.tokenType,
-                            installId = installId,
+                            installId = installId(),
                         ),
                     ),
                 )
