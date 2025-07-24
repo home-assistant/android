@@ -90,9 +90,8 @@ open class HomeAssistantApplication :
                 prefsRepository.isCrashReporting(),
             )
             initCrashSaving(applicationContext)
+            languagesManager.applyCurrentLang()
         }
-
-        languagesManager.applyCurrentLang()
 
         // This will make sure we start/stop when we actually need too.
         ContextCompat.registerReceiver(

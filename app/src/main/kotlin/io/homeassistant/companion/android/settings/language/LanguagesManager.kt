@@ -7,7 +7,8 @@ import androidx.core.os.LocaleListCompat
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import javax.inject.Inject
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParser
 import timber.log.Timber
 
@@ -18,24 +19,22 @@ class LanguagesManager @Inject constructor(private var prefs: PrefsRepository) {
     }
 
     suspend fun getCurrentLang(): String {
-        return run {
-            val lang = prefs.getCurrentLang()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                migrateLangSetting()
-                AppCompatDelegate.getApplicationLocales().toLanguageTags().ifEmpty { DEF_LOCALE }
+        val lang = prefs.getCurrentLang()
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            migrateLangSetting()
+            AppCompatDelegate.getApplicationLocales().toLanguageTags().ifEmpty { DEF_LOCALE }
+        } else {
+            if (lang.isNullOrEmpty()) {
+                prefs.saveLang(DEF_LOCALE)
+                DEF_LOCALE
             } else {
-                if (lang.isNullOrEmpty()) {
-                    prefs.saveLang(DEF_LOCALE)
-                    DEF_LOCALE
-                } else {
-                    lang
-                }
+                lang
             }
         }
     }
 
     suspend fun saveLang(lang: String?) {
-        return run {
+        withContext(Dispatchers.IO) {
             if (!lang.isNullOrEmpty()) {
                 val currentLang = getCurrentLang()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -54,7 +53,7 @@ class LanguagesManager @Inject constructor(private var prefs: PrefsRepository) {
         }
     }
 
-    fun applyCurrentLang() = runBlocking {
+    suspend fun applyCurrentLang() {
         migrateLangSetting()
 
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU) {
@@ -85,8 +84,8 @@ class LanguagesManager @Inject constructor(private var prefs: PrefsRepository) {
         prefs.saveLang(SYSTEM_MANAGES_LOCALE)
     }
 
-    fun getLocaleTags(context: Context): List<String> {
-        return runBlocking {
+    suspend fun getLocaleTags(context: Context): List<String> {
+        return withContext(Dispatchers.IO) {
             val languagesList = mutableListOf<String>()
             try {
                 context.resources.getXml(commonR.xml.locales_config).use {
