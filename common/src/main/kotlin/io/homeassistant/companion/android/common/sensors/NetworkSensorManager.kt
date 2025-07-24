@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.lang.reflect.Method
 import java.net.Inet6Address
+import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -543,29 +544,37 @@ class NetworkSensorManager : SensorManager {
         val client = OkHttpClient()
         val request = Request.Builder().url("https://api.ipify.org?format=json").build()
 
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                Timber.e(e, "Error getting response from external service")
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                if (!response.isSuccessful) throw IOException("Unexpected response code $response")
-                try {
-                    val jsonObject = JSONObject(response.body.string())
-                    ip = jsonObject.getString("ip")
-                } catch (e: JSONException) {
-                    Timber.e(e, "Unable to parse ip address from response")
+        suspendCancellableCoroutine { continuation ->
+            client.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    Timber.e(e, "Error getting response from external service")
+                    continuation.resume(Unit) { cause, _, _ ->
+                        // no-op
+                    }
                 }
 
-                onSensorUpdated(
-                    context,
-                    publicIp,
-                    ip,
-                    publicIp.statelessIcon,
-                    mapOf(),
-                )
-            }
-        })
+                override fun onResponse(call: Call, response: Response) {
+                    if (!response.isSuccessful) throw IOException("Unexpected response code $response")
+                    try {
+                        val jsonObject = JSONObject(response.body.string())
+                        ip = jsonObject.getString("ip")
+                    } catch (e: JSONException) {
+                        Timber.e(e, "Unable to parse ip address from response")
+                    }
+
+                    continuation.resume(Unit) { cause, _, _ ->
+                        // no-op
+                    }
+                }
+            })
+        }
+        onSensorUpdated(
+            context,
+            publicIp,
+            ip,
+            publicIp.statelessIcon,
+            mapOf(),
+        )
     }
 
     @SuppressLint("MissingPermission")

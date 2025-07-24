@@ -10,7 +10,7 @@ import androidx.room.Query
 interface LocationHistoryDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(item: LocationHistoryItem): Long
+    suspend fun add(item: LocationHistoryItem): Long
 
     @Query("SELECT * FROM location_history ORDER BY id DESC")
     fun getAll(): PagingSource<Int, LocationHistoryItem>

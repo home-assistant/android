@@ -92,7 +92,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val APPLOCK_TIMEOUT_GRACE_MS = 1000
     }
 
-    private val server get() = serverManager.getServer(serverId)!!
+    private suspend fun server(): Server {
+        return checkNotNull(serverManager.getServer(serverId)) { "No server found for id $serverId" }
+    }
 
     private val webSocketRepository get() = serverManager.webSocketRepository(serverId)
 
@@ -106,7 +108,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         request.supportsEncryption = false
         request.deviceId = deviceId
 
-        val url = server.connection.getUrl()?.toHttpUrlOrNull()
+        val url = server().connection.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
             Timber.e("Unable to register device due to missing URL")
             return
@@ -120,8 +122,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         try {
             persistDeviceRegistration(deviceRegistration)
             serverManager.updateServer(
-                server.copy(
-                    connection = server.connection.copy(
+                server().copy(
+                    connection = server().connection.copy(
                         webhookId = response.webhookId,
                         cloudhookUrl = response.cloudhookUrl,
                         cloudUrl = response.remoteUiUrl,
@@ -139,7 +141,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration, allowReregistration: Boolean) {
         val request = RegisterDeviceIntegrationRequest(createUpdateRegistrationRequest(deviceRegistration))
-        server.callWebhookOnUrls(request, onSuccess = { response ->
+        server().callWebhookOnUrls(request, onSuccess = { response ->
             // The server should return a body with the registration, but might return:
             // 200 with empty body for broken direct webhook
             if (response.code() == 200 && response.body()?.contentLength() == 0L) {
@@ -163,7 +165,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     override suspend fun getRegistration(): DeviceRegistration {
         return DeviceRegistration(
             localStorage.getString(PREF_APP_VERSION),
-            server.deviceName,
+            server().deviceName,
             localStorage.getString(PREF_PUSH_TOKEN),
         )
     }
@@ -173,7 +175,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             localStorage.putString(PREF_APP_VERSION, deviceRegistration.appVersion)
         }
         if (deviceRegistration.deviceName != null) {
-            serverManager.updateServer(server.copy(deviceName = deviceRegistration.deviceName))
+            serverManager.updateServer(server().copy(deviceName = deviceRegistration.deviceName))
         }
         if (deviceRegistration.pushToken != null) {
             localStorage.putString(PREF_PUSH_TOKEN, deviceRegistration.pushToken)
@@ -203,13 +205,13 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         // app version and push token is device-specific
     }
 
-    private fun isRegistered(): Boolean {
-        return server.connection.getApiUrls().isNotEmpty()
+    private suspend fun isRegistered(): Boolean {
+        return server().connection.getApiUrls().isNotEmpty()
     }
 
     override suspend fun renderTemplate(template: String, variables: Map<String, String>): String? {
         var causeException: Exception? = null
-        for (it in server.connection.getApiUrls()) {
+        for (it in server().connection.getApiUrls()) {
             try {
                 val templateResult = integrationService.getTemplate(
                     it.toHttpUrlOrNull()!!,
@@ -241,11 +243,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun updateLocation(updateLocation: UpdateLocation) {
         val updateLocationRequest = createUpdateLocation(updateLocation)
-        server.callWebhookOnUrls(updateLocationRequest)
+        server().callWebhookOnUrls(updateLocationRequest)
     }
 
     override suspend fun callAction(domain: String, action: String, actionData: Map<String, Any?>) {
-        server.callWebhookOnUrls(
+        server().callWebhookOnUrls(
             CallServiceIntegrationRequest(
                 ActionRequest(
                     domain,
@@ -257,11 +259,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun scanTag(data: Map<String, String>) {
-        server.callWebhookOnUrls(ScanTagIntegrationRequest(data))
+        server().callWebhookOnUrls(ScanTagIntegrationRequest(data))
     }
 
     override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>) {
-        server.callWebhookOnUrls(
+        server().callWebhookOnUrls(
             FireEventIntegrationRequest(
                 FireEventRequest(
                     eventType,
@@ -274,7 +276,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     override suspend fun getZones(): List<Entity> {
         var causeException: Exception? = null
         var zones: List<EntityResponse>? = null
-        for (it in server.connection.getApiUrls()) {
+        for (it in server().connection.getApiUrls()) {
             try {
                 zones = integrationService.getZones(it.toHttpUrlOrNull()!!, GetZonesIntegrationRequest)
             } catch (e: Exception) {
@@ -357,7 +359,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val current = System.currentTimeMillis()
         val next = localStorage.getLong("${serverId}_$PREF_CHECK_SENSOR_REGISTRATION_NEXT") ?: 0
         if (current <= next) {
-            return server._version
+            return server()._version
                 ?: "" // Skip checking HA version as it has not been 4 hours yet
         }
 
@@ -372,7 +374,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             }
         } catch (e: Exception) {
             Timber.e(e, "Issue getting new version from core.")
-            server._version ?: ""
+            server()._version ?: ""
         }
     }
 
@@ -387,7 +389,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         var response: GetConfigResponse? = null
         var causeException: Exception? = null
 
-        for (it in server.connection.getApiUrls()) {
+        for (it in server().connection.getApiUrls()) {
             try {
                 response = integrationService.getConfig(it.toHttpUrlOrNull()!!, GetConfigIntegrationRequest)
             } catch (e: Exception) {
@@ -417,13 +419,13 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
      * Update this repository's [server] with information from a [GetConfigResponse] like original
      * name and core version.
      */
-    private fun updateServerWithConfig(config: GetConfigResponse) {
+    private suspend fun updateServerWithConfig(config: GetConfigResponse) {
         serverManager.updateServer(
-            server.copy(
+            server().copy(
                 _name = config.locationName,
                 _version = config.version,
-                deviceRegistryId = config.hassDeviceId ?: server.deviceRegistryId,
-                connection = server.connection.copy(
+                deviceRegistryId = config.hassDeviceId ?: server().deviceRegistryId,
+                connection = server().connection.copy(
                     cloudUrl = config.remoteUiUrl,
                     cloudhookUrl = config.cloudhookUrl,
                 ),
@@ -446,7 +448,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         pipelineId: String?,
         conversationId: String?,
     ): Flow<AssistPipelineEvent>? {
-        return if (server.version?.isAtLeast(2023, 5, 0) == true) {
+        return if (server().version?.isAtLeast(2023, 5, 0) == true) {
             webSocketRepository.runAssistPipelineForText(text, pipelineId, conversationId)
         } else {
             flow {
@@ -510,7 +512,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun getEntity(entityId: String): Entity? {
-        val url = server.connection.getUrl()?.toHttpUrlOrNull()
+        val url = server().connection.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
             Timber.e("Unable to register device due to missing URL")
             return null
@@ -544,7 +546,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>? {
-        return if (server.user.isAdmin == true) {
+        return if (server().user.isAdmin == true) {
             webSocketRepository.getStateChanges(entityIds)
                 ?.filter { it.toState != null }
                 ?.map {
@@ -575,13 +577,13 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         // Version is read from server variable (cached) to prevent multiple failed requests in a
         // row and very long suspend if server is offline for a longer period of time. This function
         // will only be called from other places which already refresh the config + version.
-        val canRegisterCategoryStateClass = server.version?.isAtLeast(2021, 11, 0) == true
-        val canRegisterEntityDisabledState = server.version?.isAtLeast(2022, 6, 0) == true
-        val canRegisterDeviceClassDistance = server.version?.isAtLeast(2022, 10, 0) == true
-        val canRegisterNullProperties = server.version?.isAtLeast(2023, 2, 0) == true
-        val canRegisterDeviceClassEnum = server.version?.isAtLeast(2023, 1, 0) == true
-        val canRegisterDeviceClassEnergyCalories = server.version?.isAtLeast(2024, 10, 0) == true
-        val canRegisterDeviceClassBloodGlucose = server.version?.isAtLeast(2024, 12, 0) == true
+        val canRegisterCategoryStateClass = server().version?.isAtLeast(2021, 11, 0) == true
+        val canRegisterEntityDisabledState = server().version?.isAtLeast(2022, 6, 0) == true
+        val canRegisterDeviceClassDistance = server().version?.isAtLeast(2022, 10, 0) == true
+        val canRegisterNullProperties = server().version?.isAtLeast(2023, 2, 0) == true
+        val canRegisterDeviceClassEnum = server().version?.isAtLeast(2023, 1, 0) == true
+        val canRegisterDeviceClassEnergyCalories = server().version?.isAtLeast(2024, 10, 0) == true
+        val canRegisterDeviceClassBloodGlucose = server().version?.isAtLeast(2024, 12, 0) == true
 
         val registrationData = SensorRegistrationRequest(
             sensorRegistration.uniqueId,
@@ -624,7 +626,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         val integrationRequest = RegisterSensorIntegrationRequest(registrationData)
 
-        server.callWebhookOnUrls(integrationRequest) { response ->
+        server().callWebhookOnUrls(integrationRequest) { response ->
             // If we created sensor or it already exists
             response.isSuccessful || response.code() == 409
         }
@@ -644,7 +646,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         )
 
         var causeException: Exception? = null
-        for (it in server.connection.getApiUrls()) {
+        for (it in server().connection.getApiUrls()) {
             try {
                 integrationService.updateSensors(it.toHttpUrlOrNull()!!, integrationRequest).let {
                     it.forEach { (_, response) ->

@@ -11,7 +11,6 @@ import android.net.wifi.WifiManager
 import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
-import android.os.StrictMode
 import android.telephony.TelephonyManager
 import androidx.core.content.ContextCompat
 import coil3.ImageLoader
@@ -23,12 +22,13 @@ import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositor
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
-import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.util.HAStrictMode
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.util.LifecycleHandler
+import io.homeassistant.companion.android.util.ignoredViolationRules
 import io.homeassistant.companion.android.util.initCrashSaving
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
@@ -36,7 +36,6 @@ import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidget
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
 import io.homeassistant.companion.android.widgets.todo.TodoWidget
-import java.util.concurrent.Executors
 import javax.inject.Inject
 import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
@@ -73,34 +72,7 @@ open class HomeAssistantApplication :
             BuildConfig.DEBUG &&
             !BuildConfig.NO_STRICT_MODE
         ) {
-            StrictMode.setVmPolicy(
-                StrictMode.VmPolicy.Builder()
-                    .detectIncorrectContextUse()
-                    .detectUnsafeIntentLaunch()
-                    .detectLeakedRegistrationObjects()
-                    .penaltyLog()
-                    .penaltyListener(Executors.newSingleThreadExecutor()) { violation ->
-                        val shouldSkip = violation.stackTrace.any {
-                            // We ignore an issue in the webview client that use the wrong context when
-                            // configuration change (rotation).
-                            it.fileName.startsWith("chromium-TrichromeWebViewGoogle") &&
-                                it.methodName == "onConfigurationChanged"
-                        }
-                        if (!shouldSkip) {
-                            FailFast.failWith(violation)
-                        } else {
-                            Timber.w(violation, "Ignoring unexpected violation")
-                        }
-                    }
-                    .build(),
-            )
-
-            StrictMode.setThreadPolicy(
-                StrictMode.ThreadPolicy.Builder()
-                    .detectAll()
-                    .penaltyLog()
-                    .build(),
-            )
+            HAStrictMode.enable(ignoredViolationRules)
         }
 
         // We should initialize the logger as early as possible in the lifecycle of the application
@@ -286,22 +258,24 @@ open class HomeAssistantApplication :
 
         // Register for all saved user intents
         val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
-        val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
-        for (setting in allSettings) {
-            if (setting.value != "" && setting.value != "SensorWorker") {
-                val settingSplit = setting.value.split(',')
-                ContextCompat.registerReceiver(
-                    this,
-                    sensorReceiver,
-                    IntentFilter().apply {
-                        addAction(settingSplit[0])
-                        if (settingSplit.size > 1) {
-                            val categories = settingSplit.minus(settingSplit[0])
-                            categories.forEach { addCategory(it) }
-                        }
-                    },
-                    ContextCompat.RECEIVER_EXPORTED,
-                )
+        ioScope.launch {
+            val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
+            for (setting in allSettings) {
+                if (setting.value != "" && setting.value != "SensorWorker") {
+                    val settingSplit = setting.value.split(',')
+                    ContextCompat.registerReceiver(
+                        this@HomeAssistantApplication,
+                        sensorReceiver,
+                        IntentFilter().apply {
+                            addAction(settingSplit[0])
+                            if (settingSplit.size > 1) {
+                                val categories = settingSplit.minus(settingSplit[0])
+                                categories.forEach { addCategory(it) }
+                            }
+                        },
+                        ContextCompat.RECEIVER_EXPORTED,
+                    )
+                }
             }
         }
 

@@ -1,0 +1,62 @@
+name: Prepare next release
+#  This workflow prepares the next release by updating the changelog and creating a pull request.
+#  It is triggered manually or when a tag that matches the version format is pushed.
+
+on: # yamllint disable-line rule:truthy
+  workflow_dispatch:
+  push:
+    tags:
+      - '20[2-9][0-9].[0-9]+.[0-9]+' # Simple matching for CalVer, even if it's not perfect it is enough for detecting that it is a version tag.
+
+jobs:
+  tag:
+    name: Prepare next release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: Generate version.txt
+        run: ./gradlew versionFile
+
+      - name: Update changelog_master.xml
+        run: |
+          VERSION=$(cat version.txt | sed 's/-.*//')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          # Update the version in changelog_master.xml (the command is only working on GNU sed)
+          sed -i -E '/<release [^>]*version="[^"]+"/ s/(version=")[^ -]+/\1'"$VERSION"'/' app/src/main/res/xml/changelog_master.xml
+
+      - name: Create changelog update branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.TAG_PUSH_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin
+          git checkout -B weekly_changelog_bump
+          git add app/src/main/res/xml/changelog_master.xml
+          git commit -m "Bump changelog_master.xml for weekly release ${VERSION}"
+          git push -f origin weekly_changelog_bump
+
+      - name: Create change log update PR
+        uses: actions/github-script@v7
+        env:
+          VERSION: ${{ env.VERSION }}
+        with:
+          script: |
+            const version = process.env.VERSION;
+            github.rest.pulls.create({
+              title: `Bump changelog_master.xml for weekly release ${version}`,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: 'weekly_changelog_bump',
+              base: 'main',
+              body: [
+                'Automated PR to update changelog_master.xml for weekly release.',
+              ].join('\n'),
+                  });

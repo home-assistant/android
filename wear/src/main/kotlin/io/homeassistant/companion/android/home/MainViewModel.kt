@@ -90,7 +90,8 @@ class MainViewModel @Inject constructor(
      * IDs of favorites in the Favorites database.
      */
     val favoriteEntityIds = favoritesDao.getAllFlow().collectAsState()
-    private val favoriteCaches = favoriteCachesDao.getAll()
+    var favoriteCaches = mutableStateListOf<FavoriteCaches>()
+        private set
 
     val shortcutEntitiesMap = mutableStateMapOf<Int?, SnapshotStateList<SimplifiedEntity>>()
 
@@ -136,6 +137,12 @@ class MainViewModel @Inject constructor(
         private set
     var areNotificationsAllowed by mutableStateOf(false)
         private set
+
+    init {
+        viewModelScope.launch {
+            favoriteCaches.addAll(favoriteCachesDao.getAll())
+        }
+    }
 
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
@@ -189,8 +196,8 @@ class MainViewModel @Inject constructor(
     }
 
     fun loadEntities() {
-        if (!homePresenter.isConnected()) return
         viewModelScope.launch {
+            if (!homePresenter.isConnected()) return@launch
             try {
                 // Load initial state
                 loadingState.value = LoadingState.LOADING
@@ -358,16 +365,19 @@ class MainViewModel @Inject constructor(
             homePresenter.onEntityClicked(entityId, state)
         }
     }
+
     fun setFanSpeed(entityId: String, speed: Float) {
         viewModelScope.launch {
             homePresenter.onFanSpeedChanged(entityId, speed)
         }
     }
+
     fun setBrightness(entityId: String, brightness: Float) {
         viewModelScope.launch {
             homePresenter.onBrightnessChanged(entityId, brightness)
         }
     }
+
     fun setColorTemp(entityId: String, colorTemp: Float, isKelvin: Boolean) {
         viewModelScope.launch {
             homePresenter.onColorTempChanged(entityId, colorTemp, isKelvin)
@@ -548,8 +558,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun getCachedEntity(entityId: String): FavoriteCaches? = favoriteCaches.find { it.id == entityId }
-
     private fun addCachedFavorite(entityId: String) {
         viewModelScope.launch {
             val entity = entities[entityId]
@@ -604,5 +612,6 @@ class MainViewModel @Inject constructor(
         }
         return state
     }
+
     private fun <T> Flow<List<T>>.collectAsState(): State<List<T>> = collectAsState(initial = emptyList())
 }

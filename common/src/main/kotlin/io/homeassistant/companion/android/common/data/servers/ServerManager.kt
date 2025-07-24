@@ -27,7 +27,7 @@ interface ServerManager {
     /**
      * @return `true` if the app is registered with any server
      */
-    fun isRegistered(): Boolean
+    suspend fun isRegistered(): Boolean
 
     /**
      * Add a new server to the manager, and if the [ServerType] is not temporary also to the database.
@@ -39,13 +39,13 @@ interface ServerManager {
      * Get the server for the provided ID.
      * @return [Server] or `null` if there is no server for the ID
      */
-    fun getServer(id: Int = SERVER_ID_ACTIVE): Server?
+    suspend fun getServer(id: Int = SERVER_ID_ACTIVE): Server?
 
     /**
      * Get the server for the provided webhook ID.
      * @return [Server] or `null` if there is no server for the webhook ID
      */
-    fun getServer(webhookId: String): Server?
+    suspend fun getServer(webhookId: String): Server?
 
     /**
      * Mark the server for the provided ID as 'active', the default to use when no specific ID is
