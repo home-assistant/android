@@ -5,9 +5,13 @@ import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Named
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 class PrefsRepositoryImpl @Inject constructor(
     @Named("themes") private val localStorage: LocalStorage,
@@ -15,9 +19,11 @@ class PrefsRepositoryImpl @Inject constructor(
 ) : PrefsRepository {
 
     companion object {
-        @VisibleForTesting const val MIGRATION_PREF = "migration"
+        @VisibleForTesting
+        const val MIGRATION_PREF = "migration"
 
-        @VisibleForTesting const val MIGRATION_VERSION = 1
+        @VisibleForTesting
+        const val MIGRATION_VERSION = 1
 
         private const val PREF_VER = "version"
         private const val PREF_THEME = "theme"
@@ -45,246 +51,395 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_GESTURE_ACTION_PREFIX = "gesture_action"
     }
 
-    init {
-        runBlocking {
-            val currentVersion = localStorage.getInt(MIGRATION_PREF)
-            if (currentVersion == null || currentVersion < 1) {
-                integrationStorage.getString(PREF_CONTROLS_AUTH_REQUIRED)?.let {
-                    localStorage.putString(PREF_CONTROLS_AUTH_REQUIRED, it)
-                }
-                integrationStorage.getStringSet(PREF_CONTROLS_AUTH_ENTITIES)?.let {
-                    localStorage.putStringSet(PREF_CONTROLS_AUTH_ENTITIES, it)
-                }
-                integrationStorage.getBooleanOrNull(PREF_FULLSCREEN_ENABLED)?.let {
-                    localStorage.putBoolean(PREF_FULLSCREEN_ENABLED, it)
-                }
-                integrationStorage.getBooleanOrNull(PREF_KEEP_SCREEN_ON_ENABLED)?.let {
-                    localStorage.putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, it)
-                }
-                integrationStorage.getBooleanOrNull(PREF_PINCH_TO_ZOOM_ENABLED)?.let {
-                    localStorage.putBoolean(PREF_PINCH_TO_ZOOM_ENABLED, it)
-                }
-                integrationStorage.getBooleanOrNull(PREF_AUTOPLAY_VIDEO)?.let {
-                    localStorage.putBoolean(PREF_AUTOPLAY_VIDEO, it)
-                }
-                integrationStorage.getBooleanOrNull(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START)?.let {
-                    localStorage.putBoolean(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START, it)
-                }
-                integrationStorage.getBooleanOrNull(PREF_WEBVIEW_DEBUG_ENABLED)?.let {
-                    localStorage.putBoolean(PREF_WEBVIEW_DEBUG_ENABLED, it)
-                }
+    private val migrationChecked = AtomicBoolean(false)
+    private val migrationMutex = Mutex()
+    private suspend fun checkMigration() {
+        migrationMutex.withLock {
+            if (migrationChecked.get()) {
+                withContext(Dispatchers.IO) {
+                    val currentVersion = localStorage.getInt(MIGRATION_PREF)
+                    if (currentVersion == null || currentVersion < 1) {
+                        listOf(
+                            PREF_CONTROLS_AUTH_REQUIRED,
+                            PREF_CONTROLS_AUTH_ENTITIES,
+                            PREF_FULLSCREEN_ENABLED,
+                            PREF_KEEP_SCREEN_ON_ENABLED,
+                            PREF_PINCH_TO_ZOOM_ENABLED,
+                            PREF_AUTOPLAY_VIDEO,
+                            PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START,
+                            PREF_WEBVIEW_DEBUG_ENABLED,
+                        ).forEach { key ->
+                            integrationStorage.getString(key)?.let {
+                                localStorage.putString(key, it)
+                            }
+                        }
 
-                localStorage.putInt(MIGRATION_PREF, MIGRATION_VERSION)
+                        localStorage.putInt(MIGRATION_PREF, MIGRATION_VERSION)
+                        migrationChecked.set(true)
+                    }
+                }
             }
         }
     }
 
     override suspend fun getAppVersion(): String? {
-        return localStorage.getString(PREF_VER)
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getString(PREF_VER)
+        }
     }
 
     override suspend fun saveAppVersion(ver: String) {
-        localStorage.putString(PREF_VER, ver)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putString(PREF_VER, ver)
+        }
     }
 
     override suspend fun getCurrentTheme(): String? {
-        return localStorage.getString(PREF_THEME)
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getString(PREF_THEME)
+        }
     }
 
     override suspend fun saveTheme(theme: String) {
-        localStorage.putString(PREF_THEME, theme)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putString(PREF_THEME, theme)
+        }
     }
 
     override suspend fun getCurrentLang(): String? {
-        return localStorage.getString(PREF_LANG)
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getString(PREF_LANG)
+        }
     }
 
     override suspend fun saveLang(lang: String) {
-        localStorage.putString(PREF_LANG, lang)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putString(PREF_LANG, lang)
+        }
     }
 
     override suspend fun getLocales(): String? {
-        return localStorage.getString(PREF_LOCALES)
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getString(PREF_LOCALES)
+        }
     }
 
     override suspend fun saveLocales(lang: String) {
-        localStorage.putString(PREF_LOCALES, lang)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putString(PREF_LOCALES, lang)
+        }
     }
 
     override suspend fun getScreenOrientation(): String? {
-        return localStorage.getString(PREF_SCREEN_ORIENTATION)
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getString(PREF_SCREEN_ORIENTATION)
+        }
     }
 
     override suspend fun saveScreenOrientation(orientation: String?) {
-        localStorage.putString(PREF_SCREEN_ORIENTATION, orientation)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putString(PREF_SCREEN_ORIENTATION, orientation)
+        }
     }
 
     override suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting {
-        val current = localStorage.getString(PREF_CONTROLS_AUTH_REQUIRED)
-        return ControlsAuthRequiredSetting.values().firstOrNull {
-            it.name == current
-        } ?: ControlsAuthRequiredSetting.NONE
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            val current = localStorage.getString(PREF_CONTROLS_AUTH_REQUIRED)
+            ControlsAuthRequiredSetting.values().firstOrNull {
+                it.name == current
+            } ?: ControlsAuthRequiredSetting.NONE
+        }
     }
 
     override suspend fun setControlsAuthRequired(setting: ControlsAuthRequiredSetting) {
-        localStorage.putString(PREF_CONTROLS_AUTH_REQUIRED, setting.name)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putString(PREF_CONTROLS_AUTH_REQUIRED, setting.name)
+        }
     }
 
     override suspend fun getControlsEnableStructure(): Boolean {
-        return localStorage.getBooleanOrNull(PREF_CONTROLS_ENABLE_STRUCTURE) ?: false
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getBooleanOrNull(PREF_CONTROLS_ENABLE_STRUCTURE) ?: false
+        }
     }
 
     override suspend fun setControlsEnableStructure(enabled: Boolean) {
-        localStorage.putBoolean(PREF_CONTROLS_ENABLE_STRUCTURE, enabled)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putBoolean(PREF_CONTROLS_ENABLE_STRUCTURE, enabled)
+        }
     }
 
     override suspend fun getControlsAuthEntities(): List<String> {
-        return localStorage.getStringSet(PREF_CONTROLS_AUTH_ENTITIES)?.toList() ?: emptyList()
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getStringSet(PREF_CONTROLS_AUTH_ENTITIES)?.toList() ?: emptyList()
+        }
     }
 
     override suspend fun setControlsAuthEntities(entities: List<String>) {
-        localStorage.putStringSet(PREF_CONTROLS_AUTH_ENTITIES, entities.toSet())
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putStringSet(PREF_CONTROLS_AUTH_ENTITIES, entities.toSet())
+        }
     }
 
-    override suspend fun getControlsPanelServer(): Int? = localStorage.getInt(CONTROLS_PANEL_SERVER)
+    override suspend fun getControlsPanelServer(): Int? {
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getInt(CONTROLS_PANEL_SERVER)
+        }
+    }
 
     override suspend fun setControlsPanelServer(serverId: Int) {
-        localStorage.putInt(CONTROLS_PANEL_SERVER, serverId)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putInt(CONTROLS_PANEL_SERVER, serverId)
+        }
     }
 
-    override suspend fun getControlsPanelPath(): String? = localStorage.getString(CONTROLS_PANEL_PATH)
+    override suspend fun getControlsPanelPath(): String? {
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getString(CONTROLS_PANEL_PATH)
+        }
+    }
 
     override suspend fun setControlsPanelPath(path: String?) {
-        if (path.isNullOrBlank()) {
-            localStorage.remove(CONTROLS_PANEL_PATH)
-        } else {
-            localStorage.putString(CONTROLS_PANEL_PATH, path)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            if (path.isNullOrBlank()) {
+                localStorage.remove(CONTROLS_PANEL_PATH)
+            } else {
+                localStorage.putString(CONTROLS_PANEL_PATH, path)
+            }
         }
     }
 
     override suspend fun isFullScreenEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_FULLSCREEN_ENABLED)
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getBoolean(PREF_FULLSCREEN_ENABLED)
+        }
     }
 
     override suspend fun setFullScreenEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_FULLSCREEN_ENABLED, enabled)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putBoolean(PREF_FULLSCREEN_ENABLED, enabled)
+        }
     }
 
     override suspend fun isKeepScreenOnEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_KEEP_SCREEN_ON_ENABLED)
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getBoolean(PREF_KEEP_SCREEN_ON_ENABLED)
+        }
     }
 
     override suspend fun setKeepScreenOnEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, enabled)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, enabled)
+        }
     }
 
-    override suspend fun getPageZoomLevel(): Int = localStorage.getInt(PREF_PAGE_ZOOM_LEVEL) ?: 100
+    override suspend fun getPageZoomLevel(): Int {
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getInt(PREF_PAGE_ZOOM_LEVEL) ?: 100
+        }
+    }
 
     override suspend fun setPageZoomLevel(level: Int?) {
-        localStorage.putInt(PREF_PAGE_ZOOM_LEVEL, level)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putInt(PREF_PAGE_ZOOM_LEVEL, level)
+        }
     }
 
     override suspend fun isPinchToZoomEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_PINCH_TO_ZOOM_ENABLED)
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getBoolean(PREF_PINCH_TO_ZOOM_ENABLED)
+        }
     }
 
     override suspend fun setPinchToZoomEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_PINCH_TO_ZOOM_ENABLED, enabled)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putBoolean(PREF_PINCH_TO_ZOOM_ENABLED, enabled)
+        }
     }
 
     override suspend fun isAutoPlayVideoEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_AUTOPLAY_VIDEO)
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getBoolean(PREF_AUTOPLAY_VIDEO)
+        }
     }
 
     override suspend fun setAutoPlayVideo(enabled: Boolean) {
-        localStorage.putBoolean(PREF_AUTOPLAY_VIDEO, enabled)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putBoolean(PREF_AUTOPLAY_VIDEO, enabled)
+        }
     }
 
     override suspend fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START)
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getBoolean(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START)
+        }
     }
 
     override suspend fun setAlwaysShowFirstViewOnAppStart(enabled: Boolean) {
-        localStorage.putBoolean(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START, enabled)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putBoolean(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START, enabled)
+        }
     }
 
     override suspend fun isWebViewDebugEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_WEBVIEW_DEBUG_ENABLED)
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getBoolean(PREF_WEBVIEW_DEBUG_ENABLED)
+        }
     }
 
     override suspend fun setWebViewDebugEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_WEBVIEW_DEBUG_ENABLED, enabled)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putBoolean(PREF_WEBVIEW_DEBUG_ENABLED, enabled)
+        }
     }
 
     override suspend fun isCrashReporting(): Boolean {
-        return !localStorage.getBoolean(PREF_CRASH_REPORTING_DISABLED)
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            !localStorage.getBoolean(PREF_CRASH_REPORTING_DISABLED)
+        }
     }
 
     override suspend fun setCrashReporting(crashReportingEnabled: Boolean) {
-        localStorage.putBoolean(PREF_CRASH_REPORTING_DISABLED, !crashReportingEnabled)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putBoolean(PREF_CRASH_REPORTING_DISABLED, !crashReportingEnabled)
+        }
     }
 
     override suspend fun saveKeyAlias(alias: String) {
-        localStorage.putString(PREF_KEY_ALIAS, alias)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putString(PREF_KEY_ALIAS, alias)
+        }
     }
 
     override suspend fun getKeyAlias(): String? {
-        return localStorage.getString(PREF_KEY_ALIAS)
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getString(PREF_KEY_ALIAS)
+        }
     }
 
     override suspend fun getIgnoredSuggestions(): List<String> {
-        return localStorage.getStringSet(PREF_IGNORED_SUGGESTIONS)?.toList() ?: emptyList()
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getStringSet(PREF_IGNORED_SUGGESTIONS)?.toList() ?: emptyList()
+        }
     }
 
     override suspend fun setIgnoredSuggestions(ignored: List<String>) {
-        localStorage.putStringSet(PREF_IGNORED_SUGGESTIONS, ignored.toSet())
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putStringSet(PREF_IGNORED_SUGGESTIONS, ignored.toSet())
+        }
     }
 
     override suspend fun getAutoFavorites(): List<String> {
-        return localStorage.getString(PREF_AUTO_FAVORITES)?.removeSurrounding("[", "]")?.split(", ")?.filter {
-            it.isNotBlank()
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getString(PREF_AUTO_FAVORITES)?.removeSurrounding("[", "]")?.split(", ")?.filter {
+                it.isNotBlank()
+            }
+                ?: emptyList()
         }
-            ?: emptyList()
     }
 
     override suspend fun setAutoFavorites(favorites: List<String>) {
-        localStorage.putString(PREF_AUTO_FAVORITES, favorites.toString())
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putString(PREF_AUTO_FAVORITES, favorites.toString())
+        }
     }
 
-    override suspend fun isLocationHistoryEnabled(): Boolean = !localStorage.getBoolean(PREF_LOCATION_HISTORY_DISABLED)
+    override suspend fun isLocationHistoryEnabled(): Boolean {
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            !localStorage.getBoolean(PREF_LOCATION_HISTORY_DISABLED)
+        }
+    }
 
     override suspend fun setLocationHistoryEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_LOCATION_HISTORY_DISABLED, !enabled)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putBoolean(PREF_LOCATION_HISTORY_DISABLED, !enabled)
+        }
     }
 
-    override suspend fun getImprovPermissionDisplayedCount(): Int =
-        localStorage.getInt(PREF_IMPROV_PERMISSION_DISPLAYED) ?: 0
+    override suspend fun getImprovPermissionDisplayedCount(): Int {
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.getInt(PREF_IMPROV_PERMISSION_DISPLAYED) ?: 0
+        }
+    }
 
     override suspend fun addImprovPermissionDisplayedCount() {
-        localStorage.putInt(PREF_IMPROV_PERMISSION_DISPLAYED, getImprovPermissionDisplayedCount() + 1)
+        withContext(Dispatchers.IO) {
+            checkMigration()
+            localStorage.putInt(PREF_IMPROV_PERMISSION_DISPLAYED, getImprovPermissionDisplayedCount() + 1)
+        }
     }
 
     override suspend fun getGestureAction(gesture: HAGesture): GestureAction {
-        val current = localStorage.getString("${PREF_GESTURE_ACTION_PREFIX}_${gesture.name}")
-        val action = GestureAction.entries.firstOrNull { it.name == current }
-        return when {
-            // User preference
-            action != null -> action
-            // Defaults
-            gesture == HAGesture.SWIPE_UP_THREE -> GestureAction.SERVER_LIST
-            gesture == HAGesture.SWIPE_DOWN_THREE -> GestureAction.QUICKBAR_DEFAULT
-            gesture == HAGesture.SWIPE_LEFT_THREE -> GestureAction.SERVER_PREVIOUS
-            gesture == HAGesture.SWIPE_RIGHT_THREE -> GestureAction.SERVER_NEXT
-            // No user preference and not default
-            else -> GestureAction.NONE
+        return withContext(Dispatchers.IO) {
+            checkMigration()
+            val current = localStorage.getString("${PREF_GESTURE_ACTION_PREFIX}_${gesture.name}")
+            val action = GestureAction.entries.firstOrNull { it.name == current }
+            when {
+                // User preference
+                action != null -> action
+                // Defaults
+                gesture == HAGesture.SWIPE_UP_THREE -> GestureAction.SERVER_LIST
+                gesture == HAGesture.SWIPE_DOWN_THREE -> GestureAction.QUICKBAR_DEFAULT
+                gesture == HAGesture.SWIPE_LEFT_THREE -> GestureAction.SERVER_PREVIOUS
+                gesture == HAGesture.SWIPE_RIGHT_THREE -> GestureAction.SERVER_NEXT
+                // No user preference and not default
+                else -> GestureAction.NONE
+            }
         }
     }
 
     override suspend fun setGestureAction(gesture: HAGesture, action: GestureAction) {
+        checkMigration()
         localStorage.putString("${PREF_GESTURE_ACTION_PREFIX}_${gesture.name}", action.name)
     }
 
     override suspend fun removeServer(serverId: Int) {
+        checkMigration()
         val controlsAuthEntities = getControlsAuthEntities().filter { it.split(".")[0].toIntOrNull() != serverId }
         setControlsAuthEntities(controlsAuthEntities)
 

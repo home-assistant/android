@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManagerImpl
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import io.homeassistant.companion.android.common.data.wifi.WifiHelperImpl
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
+import io.homeassistant.companion.android.common.util.getSharedPreferencesSuspend
 import io.homeassistant.companion.android.common.util.tts.AndroidTextToSpeechEngine
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import java.util.UUID
@@ -58,40 +59,28 @@ abstract class DataModule {
         @Named("session")
         @Singleton
         fun provideSessionLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
-            appContext.getSharedPreferences(
-                "session_0",
-                Context.MODE_PRIVATE,
-            )
+            appContext.getSharedPreferencesSuspend("session_0")
         }
 
         @Provides
         @Named("integration")
         @Singleton
         fun provideIntegrationLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
-            appContext.getSharedPreferences(
-                "integration_0",
-                Context.MODE_PRIVATE,
-            )
+            appContext.getSharedPreferencesSuspend("integration_0")
         }
 
         @Provides
         @Named("themes")
         @Singleton
         fun providePrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
-            appContext.getSharedPreferences(
-                "themes_0",
-                Context.MODE_PRIVATE,
-            )
+            appContext.getSharedPreferencesSuspend("themes_0")
         }
 
         @Provides
         @Named("wear")
         @Singleton
         fun provideWearPrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
-            appContext.getSharedPreferences(
-                "wear_0",
-                Context.MODE_PRIVATE,
-            )
+            appContext.getSharedPreferencesSuspend("wear_0")
         }
 
         @Provides
