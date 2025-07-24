@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 abstract class LaunchPresenterBase(private val view: LaunchView, internal val serverManager: ServerManager) :
     LaunchPresenter {
@@ -16,10 +17,14 @@ abstract class LaunchPresenterBase(private val view: LaunchView, internal val se
 
     override fun onViewReady(serverUrlToOnboard: String?) {
         mainScope.launch {
-            // Remove any invalid servers (incomplete, partly migrated from another device)
-            serverManager.defaultServers
-                .filter { serverManager.authenticationRepository(it.id).getSessionState() == SessionState.ANONYMOUS }
-                .forEach { serverManager.removeServer(it.id) }
+            withContext(Dispatchers.IO) {
+                // Remove any invalid servers (incomplete, partly migrated from another device)
+                serverManager.defaultServers
+                    .filter {
+                        serverManager.authenticationRepository(it.id).getSessionState() == SessionState.ANONYMOUS
+                    }
+                    .forEach { serverManager.removeServer(it.id) }
+            }
 
             try {
                 if (serverUrlToOnboard != null) {

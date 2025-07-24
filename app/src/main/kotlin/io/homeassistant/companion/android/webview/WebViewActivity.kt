@@ -273,7 +273,9 @@ class WebViewActivity :
 
         webView = WebView(this)
 
-        appLocked.value = presenter.isAppLocked()
+        lifecycleScope.launch {
+            appLocked.value = presenter.isAppLocked()
+        }
 
         setContent {
             val player by remember { exoPlayer }
@@ -969,10 +971,9 @@ class WebViewActivity :
         }
 
         lifecycleScope.launch {
+            appLocked.value = presenter.isAppLocked()
             presenter.updateActiveServer()
         }
-
-        appLocked.value = presenter.isAppLocked()
 
         setWebViewZoom()
 
@@ -1209,8 +1210,8 @@ class WebViewActivity :
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus && !isFinishing) {
-            unlockAppIfNeeded()
             lifecycleScope.launch {
+                unlockAppIfNeeded()
                 var path = intent.getStringExtra(EXTRA_PATH)
                 if (path?.startsWith("entityId:") == true) {
                     // Get the entity ID from a string formatted "entityId:domain.entity"
@@ -1238,7 +1239,7 @@ class WebViewActivity :
         }
     }
 
-    override fun unlockAppIfNeeded() {
+    override suspend fun unlockAppIfNeeded() {
         appLocked.value = presenter.isAppLocked()
         if (appLocked.value) {
             if (!unlockingApp) {

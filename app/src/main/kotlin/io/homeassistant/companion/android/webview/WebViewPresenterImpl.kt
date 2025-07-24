@@ -302,17 +302,17 @@ class WebViewPresenterImpl @Inject constructor(
         prefsRepository.isWebViewDebugEnabled()
     }
 
-    override fun isAppLocked(): Boolean = runBlocking {
-        if (serverManager.isRegistered()) {
-            try {
+    override suspend fun isAppLocked(): Boolean = if (serverManager.isRegistered()) {
+        try {
+            withContext(Dispatchers.IO) {
                 serverManager.integrationRepository(serverId).isAppLocked()
-            } catch (e: IllegalArgumentException) {
-                Timber.w("Cannot determine app locked state")
-                false
             }
-        } else {
+        } catch (e: IllegalArgumentException) {
+            Timber.w(e, "Cannot determine app locked state")
             false
         }
+    } else {
+        false
     }
 
     override fun setAppActive(active: Boolean) = runBlocking {
