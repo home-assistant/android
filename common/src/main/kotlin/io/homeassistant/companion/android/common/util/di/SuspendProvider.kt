@@ -6,18 +6,18 @@ package io.homeassistant.companion.android.common.util.di
  *
  * Example usage:
  * ```
- * class MyRepository(private val slowDiskService: SuspendableProvider<DiskService>) {
+ * class MyRepository(private val slowDiskService: SuspendProvider<DiskService>) {
  *     suspend fun fetchData(): Data {
  *         return slowDiskService().getData()
  *     }
  * }
  * ```
- * In this example, `slowDiskService` is a `SuspendableProvider` that provides an instance of `ApiService`.
+ * In this example, `slowDiskService` is a `SuspendProvider` that provides an instance of `ApiService`.
  * The `invoke()` operator is called to get the `DiskService` instance, which involve
  * asynchronous initialization, to read from the disk.
  *
  * @param T The type of the instance provided.
  */
-fun interface SuspendableProvider<T> {
+fun interface SuspendProvider<T> {
     suspend operator fun invoke(): T
 }

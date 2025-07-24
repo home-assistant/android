@@ -8,7 +8,7 @@ import io.homeassistant.companion.android.common.data.authentication.Authorizati
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.MapAnySerializer
-import io.homeassistant.companion.android.common.util.di.SuspendableProvider
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
@@ -21,7 +21,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     private val serverManager: ServerManager,
     @Assisted private val serverId: Int,
     @Named("session") private val localStorage: LocalStorage,
-    @Named("installId") private val installId: SuspendableProvider<String>,
+    @Named("installId") private val installId: SuspendProvider<String>,
 ) : AuthenticationRepository {
 
     companion object {

@@ -27,7 +27,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.ServerManagerImpl
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import io.homeassistant.companion.android.common.data.wifi.WifiHelperImpl
-import io.homeassistant.companion.android.common.util.di.SuspendableProvider
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.tts.AndroidTextToSpeechEngine
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import java.util.UUID
@@ -121,7 +121,7 @@ abstract class DataModule {
         @Provides
         @Named("installId")
         @Singleton
-        fun provideInstallId(@ApplicationContext appContext: Context) = SuspendableProvider {
+        fun provideInstallId(@ApplicationContext appContext: Context) = SuspendProvider {
             val storage = provideSessionLocalStorage(appContext)
             storage.getString("install_id") ?: run {
                 val uuid = UUID.randomUUID().toString()
