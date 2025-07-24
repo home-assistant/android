@@ -41,7 +41,7 @@ object HAStrictMode {
                     if (!vmPolicyIgnoredViolationRules.any { it.shouldIgnore(violation) }) {
                         FailFast.failWith(violation)
                     } else {
-                        Timber.w(violation, "Ignoring unexpected violation")
+                        Timber.w(violation, "Ignoring unexpected violation ($violation)")
                     }
                 }
                 .build(),
@@ -54,7 +54,7 @@ object HAStrictMode {
                     if (!threadPolicyIgnoredViolationRules.any { it.shouldIgnore(violation) }) {
                         FailFast.failWith(violation)
                     } else {
-                        Timber.w(violation, "Ignoring unexpected violation")
+                        Timber.w(violation, "Ignoring unexpected violation ($violation)")
                     }
                 }
                 .build(),

@@ -26,7 +26,7 @@ val threadPolicyIgnoredViolationRules = listOf(
  *
  * It doesn't seem to be tracked anywhere.
  */
-private object IgnoreChromiumTrichomeWrongContextUsage : IgnoreViolationRule {
+private data object IgnoreChromiumTrichomeWrongContextUsage : IgnoreViolationRule {
     @RequiresApi(Build.VERSION_CODES.S)
     override fun shouldIgnore(violation: Violation): Boolean {
         if (violation !is IncorrectContextUseViolation) return false
@@ -48,7 +48,7 @@ private object IgnoreChromiumTrichomeWrongContextUsage : IgnoreViolationRule {
  * - https://github.com/journeyapps/zxing-android-embedded/issues/762
  * - https://github.com/journeyapps/zxing-android-embedded/blob/d09b7c76c3124fbfbd096a65d60b1997f37ff90f/zxing-android-embedded/src/com/journeyapps/barcodescanner/RotationListener.java#L31
  */
-private object IgnoreBarcodeScannerRotationListenerWrongContextUsage : IgnoreViolationRule {
+private data object IgnoreBarcodeScannerRotationListenerWrongContextUsage : IgnoreViolationRule {
     @RequiresApi(Build.VERSION_CODES.S)
     override fun shouldIgnore(violation: Violation): Boolean {
         if (violation !is IncorrectContextUseViolation) return false
@@ -64,7 +64,7 @@ private object IgnoreBarcodeScannerRotationListenerWrongContextUsage : IgnoreVio
  * Ignore a DiskReadViolation inside https://github.com/AppDevNext/ChangeLog while
  * loading default shared preferences.
  */
-private object IgnoreChangelogDiskRead : IgnoreViolationRule {
+private data object IgnoreChangelogDiskRead : IgnoreViolationRule {
     @RequiresApi(Build.VERSION_CODES.P)
     override fun shouldIgnore(violation: Violation): Boolean {
         if (violation !is DiskReadViolation) return false
@@ -78,7 +78,7 @@ private object IgnoreChangelogDiskRead : IgnoreViolationRule {
  * Ignore a DiskReadViolation inside [NotificationHistoryFragment] while loading the XML that contains the
  * preferences used to make the UI of the screen. See the class for more details.
  */
-private object IgnoreNotificationHistoryFragmentLoadSharedPrefDiskRead : IgnoreViolationRule {
+private data object IgnoreNotificationHistoryFragmentLoadSharedPrefDiskRead : IgnoreViolationRule {
     @RequiresApi(Build.VERSION_CODES.P)
     override fun shouldIgnore(violation: Violation): Boolean {
         if (violation !is DiskReadViolation) return false
