@@ -4,132 +4,11 @@
     <issue
         id="CoroutineDaoFunction"
         message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Insert"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/authentication/AuthenticationDao.kt"
-            line="11"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Update"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/authentication/AuthenticationDao.kt"
-            line="14"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;SELECT * from authentication_list WHERE Host = :key&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/authentication/AuthenticationDao.kt"
-            line="17"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;SELECT * FROM button_widgets WHERE id = :id&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/widget/ButtonWidgetDao.kt"
-            line="12"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
         errorLine1="    @Query(&quot;DELETE FROM camera_tiles where id = :id&quot;)"
         errorLine2="    ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/database/wear/CameraTileDao.kt"
             line="21"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;SELECT * FROM camera_widgets WHERE id = :id&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/widget/CameraWidgetDao.kt"
-            line="12"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;SELECT * FROM favorite_cache where id = :id&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/wear/FavoriteCachesDao.kt"
-            line="11"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;SELECT * FROM favorite_cache ORDER BY id ASC&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/wear/FavoriteCachesDao.kt"
-            line="14"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Insert(onConflict = OnConflictStrategy.REPLACE)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/wear/FavoriteCachesDao.kt"
-            line="17"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;DELETE FROM favorite_cache where id = :id&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/wear/FavoriteCachesDao.kt"
-            line="20"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;DELETE FROM favorite_cache&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/wear/FavoriteCachesDao.kt"
-            line="23"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;SELECT * FROM media_player_controls_widgets WHERE id = :id&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/widget/MediaPlayerControlsWidgetDao.kt"
-            line="12"
             column="5"/>
     </issue>
 
@@ -178,259 +57,6 @@
     </issue>
 
     <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;SELECT * FROM Sensors WHERE id = :id&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="17"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;SELECT * FROM Sensors WHERE id = :id AND server_id = :serverId&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="20"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Transaction"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="26"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Transaction"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="32"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Transaction"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="50"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Insert(onConflict = OnConflictStrategy.IGNORE)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="58"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Insert(onConflict = OnConflictStrategy.REPLACE)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="61"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Insert(onConflict = OnConflictStrategy.REPLACE)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="64"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Insert(onConflict = OnConflictStrategy.REPLACE)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="67"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;DELETE FROM sensor_settings WHERE sensor_id = :sensorId AND name = :settingName&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="87"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;DELETE FROM sensor_settings WHERE sensor_id = :sensorId AND name IN (:settingNames)&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="90"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Update"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="93"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;DELETE FROM sensor_attributes WHERE sensor_id = :sensorId&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="96"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Transaction"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="99"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;UPDATE sensor_settings SET value = :value WHERE sensor_id = :sensorId AND name = :settingName&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="108"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Transaction"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="145"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Transaction"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/sensor/SensorDao.kt"
-            line="158"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;SELECT * FROM servers WHERE id = :id&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/server/ServerDao.kt"
-            line="13"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;SELECT * FROM servers WHERE webhook_id = :webhookId&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/server/ServerDao.kt"
-            line="16"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;SELECT * FROM servers ORDER BY `list_order` ASC&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/server/ServerDao.kt"
-            line="19"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;SELECT * FROM static_widget WHERE id = :id&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/widget/StaticWidgetDao.kt"
-            line="12"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;SELECT * FROM template_widgets WHERE id = :id&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/widget/TemplateWidgetDao.kt"
-            line="12"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;DELETE FROM thermostat_tiles where id = :id&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/wear/ThermostatTileDao.kt"
-            line="21"
-            column="5"/>
-    </issue>
-
-    <issue
         id="MissingPermission"
         message="Missing permissions required by NotificationManagerCompat.notify: android.permission.POST_NOTIFICATIONS"
         errorLine1="                notify(NOTIFICATION_ID, notification)"
@@ -470,7 +96,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorReceiverBase.kt"
-            line="398"
+            line="396"
             column="9"/>
     </issue>
 
@@ -503,7 +129,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="380"
+            line="389"
             column="5"/>
     </issue>
 
@@ -514,7 +140,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="441"
+            line="450"
             column="5"/>
     </issue>
 
@@ -657,7 +283,7 @@
         errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="619"
+            line="628"
             column="61"/>
     </issue>
 
@@ -668,7 +294,7 @@
         errorLine2="                                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="620"
+            line="629"
             column="68"/>
     </issue>
 
@@ -679,7 +305,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/authentication/impl/AuthenticationRepositoryImpl.kt"
-            line="70"
+            line="75"
             column="13"/>
     </issue>
 
@@ -690,7 +316,7 @@
         errorLine2="                                                            ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorManager.kt"
-            line="312"
+            line="302"
             column="61"/>
     </issue>
 
