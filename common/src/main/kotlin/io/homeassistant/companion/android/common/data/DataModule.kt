@@ -57,42 +57,42 @@ abstract class DataModule {
         @Provides
         @Named("session")
         @Singleton
-        fun provideSessionLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl(
+        fun provideSessionLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferences(
                 "session_0",
                 Context.MODE_PRIVATE,
-            ),
-        )
+            )
+        }
 
         @Provides
         @Named("integration")
         @Singleton
-        fun provideIntegrationLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl(
+        fun provideIntegrationLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferences(
                 "integration_0",
                 Context.MODE_PRIVATE,
-            ),
-        )
+            )
+        }
 
         @Provides
         @Named("themes")
         @Singleton
-        fun providePrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl(
+        fun providePrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferences(
                 "themes_0",
                 Context.MODE_PRIVATE,
-            ),
-        )
+            )
+        }
 
         @Provides
         @Named("wear")
         @Singleton
-        fun provideWearPrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl(
+        fun provideWearPrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferences(
                 "wear_0",
                 Context.MODE_PRIVATE,
-            ),
-        )
+            )
+        }
 
         @Provides
         @Named("manufacturer")
