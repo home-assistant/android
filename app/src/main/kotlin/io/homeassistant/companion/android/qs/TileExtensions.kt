@@ -255,8 +255,11 @@ abstract class TileExtensions : TileService() {
             }
         } else {
             Timber.d("No tile data found for tile ID: $tileId")
-            val tileSettingIntent = SettingsActivity.newInstance(context).apply {
-                putExtra("fragment", "tiles/$tileId")
+            val tileSettingIntent = SettingsActivity.newInstance(
+                context,
+                SettingsActivity.Deeplink.QS_TILE,
+                tileId,
+            ).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
             }

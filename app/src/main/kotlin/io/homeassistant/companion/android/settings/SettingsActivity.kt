@@ -7,6 +7,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.biometric.BiometricManager
+import androidx.core.content.IntentCompat
 import androidx.fragment.app.commit
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -19,6 +20,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
@@ -28,6 +30,9 @@ import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
+
+private const val EXTRA_FRAGMENT = "fragment"
+private const val EXTRA_FRAGMENT_ITEM = "fragment_item_id"
 
 @AndroidEntryPoint
 class SettingsActivity : BaseActivity() {
@@ -42,9 +47,24 @@ class SettingsActivity : BaseActivity() {
     private var externalAuthCallback: ((Int) -> Boolean)? = null
 
     companion object {
-        fun newInstance(context: Context): Intent {
-            return Intent(context, SettingsActivity::class.java)
+        fun newInstance(context: Context, screen: Deeplink? = null, screenItemId: String? = null): Intent {
+            return Intent(context, SettingsActivity::class.java).apply {
+                if (screen != null) {
+                    putExtra(EXTRA_FRAGMENT, screen)
+                    if (!screenItemId.isNullOrBlank()) {
+                        putExtra(EXTRA_FRAGMENT_ITEM, screenItemId)
+                    }
+                }
+            }
         }
+    }
+
+    enum class Deeplink {
+        DEVELOPER,
+        NOTIFICATION_HISTORY,
+        QS_TILE,
+        SENSOR,
+        WEBSOCKET,
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,30 +88,29 @@ class SettingsActivity : BaseActivity() {
         authenticator = Authenticator(this, this, ::settingsActivityAuthenticationResult)
 
         if (savedInstanceState == null) {
-            val settingsNavigation = intent.getStringExtra("fragment")
+            val settingsNavigation = IntentCompat.getSerializableExtra(intent, EXTRA_FRAGMENT, Deeplink::class.java)
             supportFragmentManager.commit {
                 replace(
                     R.id.content,
-                    when {
-                        settingsNavigation == "websocket" ->
-                            if (serverManager.defaultServers.size == 1) {
-                                WebsocketSettingFragment::class.java
-                            } else {
-                                SettingsFragment::class.java
-                            }
-
-                        settingsNavigation == "notification_history" -> NotificationHistoryFragment::class.java
-                        settingsNavigation?.startsWith("sensors/") == true -> SensorDetailFragment::class.java
-                        settingsNavigation?.startsWith("tiles/") == true -> ManageTilesFragment::class.java
+                    when (settingsNavigation) {
+                        Deeplink.WEBSOCKET -> if (serverManager.defaultServers.size == 1) {
+                            WebsocketSettingFragment::class.java
+                        } else {
+                            SettingsFragment::class.java
+                        }
+                        Deeplink.DEVELOPER -> DeveloperSettingsFragment::class.java
+                        Deeplink.NOTIFICATION_HISTORY -> NotificationHistoryFragment::class.java
+                        Deeplink.SENSOR -> SensorDetailFragment::class.java
+                        Deeplink.QS_TILE -> ManageTilesFragment::class.java
                         else -> SettingsFragment::class.java
                     },
-                    if (settingsNavigation?.startsWith("sensors/") == true) {
-                        val sensorId = settingsNavigation.split("/")[1]
+                    if (settingsNavigation == Deeplink.SENSOR) {
+                        val sensorId = intent.getStringExtra(EXTRA_FRAGMENT_ITEM) ?: ""
                         SensorDetailFragment.newInstance(sensorId).arguments
-                    } else if (settingsNavigation?.startsWith("tiles/") == true) {
-                        val tileId = settingsNavigation.split("/")[1]
+                    } else if (settingsNavigation == Deeplink.QS_TILE) {
+                        val tileId = intent.getStringExtra(EXTRA_FRAGMENT_ITEM) ?: ""
                         Bundle().apply { putString("id", tileId) }
-                    } else if (settingsNavigation == "websocket") {
+                    } else if (settingsNavigation == Deeplink.WEBSOCKET) {
                         val servers = serverManager.defaultServers
                         if (servers.size == 1) {
                             Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, servers[0].id) }

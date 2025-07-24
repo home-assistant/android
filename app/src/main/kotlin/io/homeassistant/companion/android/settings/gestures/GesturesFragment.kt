@@ -8,6 +8,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.gestures.views.GesturesScreen
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import kotlin.getValue
@@ -31,5 +32,9 @@ class GesturesFragment : Fragment() {
                 }
             }
         }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        addHelpMenuProvider("https://companion.home-assistant.io/docs/integrations/gestures")
     }
 }
