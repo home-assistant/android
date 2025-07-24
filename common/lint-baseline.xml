@@ -2,61 +2,6 @@
 <issues format="6" by="lint 8.10.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.10.1)" variant="all" version="8.10.1">
 
     <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;DELETE FROM camera_tiles where id = :id&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/wear/CameraTileDao.kt"
-            line="21"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Insert(onConflict = OnConflictStrategy.REPLACE)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/notification/NotificationDao.kt"
-            line="11"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;SELECT * FROM notification_history WHERE id = :id&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/notification/NotificationDao.kt"
-            line="14"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;SELECT * FROM notification_history ORDER BY received DESC&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/notification/NotificationDao.kt"
-            line="17"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="CoroutineDaoFunction"
-        message="DAO functions should suspend, return a Flow, or return a PagingSource."
-        errorLine1="    @Query(&quot;SELECT * FROM notification_history ORDER BY received DESC LIMIT (:amount)&quot;)"
-        errorLine2="    ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/notification/NotificationDao.kt"
-            line="20"
-            column="5"/>
-    </issue>
-
-    <issue
         id="MissingPermission"
         message="Missing permissions required by NotificationManagerCompat.notify: android.permission.POST_NOTIFICATIONS"
         errorLine1="                notify(NOTIFICATION_ID, notification)"
@@ -305,7 +250,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/authentication/impl/AuthenticationRepositoryImpl.kt"
-            line="75"
+            line="80"
             column="13"/>
     </issue>
 
@@ -340,94 +285,6 @@
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/websocket/impl/WebSocketCoreImpl.kt"
             line="273"
             column="69"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="        sharedPreferences.edit().putString(key, value).apply()"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/LocalStorageImpl.kt"
-            line="9"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            sharedPreferences.edit().remove(key).apply()"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/LocalStorageImpl.kt"
-            line="18"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            sharedPreferences.edit().putLong(key, value).apply()"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/LocalStorageImpl.kt"
-            line="20"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            sharedPreferences.edit().remove(key).apply()"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/LocalStorageImpl.kt"
-            line="34"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            sharedPreferences.edit().putInt(key, value).apply()"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/LocalStorageImpl.kt"
-            line="36"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="        sharedPreferences.edit().putBoolean(key, value).apply()"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/LocalStorageImpl.kt"
-            line="49"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="        sharedPreferences.edit().putStringSet(key, value).apply()"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/LocalStorageImpl.kt"
-            line="63"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="        sharedPreferences.edit().remove(key).apply()"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/LocalStorageImpl.kt"
-            line="71"
-            column="9"/>
     </issue>
 
     <issue
