@@ -9,11 +9,11 @@ import androidx.room.Update
 interface AuthenticationDao {
 
     @Insert
-    fun insert(authentication: Authentication)
+    suspend fun insert(authentication: Authentication)
 
     @Update
-    fun update(authentication: Authentication)
+    suspend fun update(authentication: Authentication)
 
     @Query("SELECT * from authentication_list WHERE Host = :key")
-    fun get(key: String): Authentication?
+    suspend fun get(key: String): Authentication?
 }
