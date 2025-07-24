@@ -12,8 +12,9 @@ val vmPolicyIgnoredViolationRules = listOf(
     IgnoreBarcodeScannerRotationListenerWrongContextUsage,
 )
 
-val threadPolicyIgnoredViolationRules = listOf<IgnoreViolationRule>(
+val threadPolicyIgnoredViolationRules = listOf(
     IgnoreChangelogDiskRead,
+    IgnoreNotificationHistoryFragmentLoadSharedPrefDiskRead,
 )
 
 /**
@@ -59,12 +60,31 @@ private object IgnoreBarcodeScannerRotationListenerWrongContextUsage : IgnoreVio
     }
 }
 
+/**
+ * Ignore a DiskReadViolation inside https://github.com/AppDevNext/ChangeLog while
+ * loading default shared preferences.
+ */
 private object IgnoreChangelogDiskRead : IgnoreViolationRule {
     @RequiresApi(Build.VERSION_CODES.P)
     override fun shouldIgnore(violation: Violation): Boolean {
         if (violation !is DiskReadViolation) return false
         return violation.stackTrace.any {
             it.className == "info.hannes.changelog.ChangeLog"
+        }
+    }
+}
+
+/**
+ * Ignore a DiskReadViolation inside [NotificationHistoryFragment] while loading the XML that contains the
+ * preferences used to make the UI of the screen. See the class for more details.
+ */
+private object IgnoreNotificationHistoryFragmentLoadSharedPrefDiskRead : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskReadViolation) return false
+        return violation.stackTrace.any {
+            it.className == "io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment" &&
+                it.methodName == "onCreatePreferences"
         }
     }
 }
