@@ -28,8 +28,9 @@ import io.homeassistant.companion.android.database.settings.SensorUpdateFrequenc
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.util.LifecycleHandler
-import io.homeassistant.companion.android.util.ignoredViolationRules
 import io.homeassistant.companion.android.util.initCrashSaving
+import io.homeassistant.companion.android.util.threadPolicyIgnoredViolationRules
+import io.homeassistant.companion.android.util.vmPolicyIgnoredViolationRules
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
@@ -72,7 +73,10 @@ open class HomeAssistantApplication :
             BuildConfig.DEBUG &&
             !BuildConfig.NO_STRICT_MODE
         ) {
-            HAStrictMode.enable(ignoredViolationRules)
+            HAStrictMode.enable(
+                vmPolicyIgnoredViolationRules = vmPolicyIgnoredViolationRules,
+                threadPolicyIgnoredViolationRules = threadPolicyIgnoredViolationRules,
+            )
         }
 
         // We should initialize the logger as early as possible in the lifecycle of the application

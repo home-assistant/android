@@ -1,14 +1,19 @@
 package io.homeassistant.companion.android.util
 
 import android.os.Build
+import android.os.strictmode.DiskReadViolation
 import android.os.strictmode.IncorrectContextUseViolation
 import android.os.strictmode.Violation
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.util.IgnoreViolationRule
 
-val ignoredViolationRules = listOf(
+val vmPolicyIgnoredViolationRules = listOf(
     IgnoreChromiumTrichomeWrongContextUsage,
     IgnoreBarcodeScannerRotationListenerWrongContextUsage,
+)
+
+val threadPolicyIgnoredViolationRules = listOf<IgnoreViolationRule>(
+    IgnoreChangelogDiskRead,
 )
 
 /**
@@ -50,6 +55,16 @@ private object IgnoreBarcodeScannerRotationListenerWrongContextUsage : IgnoreVio
         return violation.stackTrace.any {
             it.className == "com.journeyapps.barcodescanner.RotationListener" &&
                 it.methodName == "listen"
+        }
+    }
+}
+
+private object IgnoreChangelogDiskRead : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskReadViolation) return false
+        return violation.stackTrace.any {
+            it.className == "info.hannes.changelog.ChangeLog"
         }
     }
 }
