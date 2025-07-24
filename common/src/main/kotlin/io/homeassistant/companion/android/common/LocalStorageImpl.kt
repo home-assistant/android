@@ -24,6 +24,13 @@ private class SharedPreferenceRetriever(private val sharedPreferencesProvider: s
     }
 }
 
+/**
+ * Even if it most of the time ok to invoke [SharedPreferences] functions from the main thread, we should avoid
+ * especially on the first call, since the system will need to read the data from the disk before loading it in RAM.
+ *
+ * This class makes sure that all the function are made from an IO coroutine context, and that we only get the
+ * [SharedPreferences] only once in the lifecycle of this class.
+ */
 class LocalStorageImpl(sharedPreferences: suspend () -> SharedPreferences) : LocalStorage {
     private val sharedPreferences = SharedPreferenceRetriever(sharedPreferences)
 

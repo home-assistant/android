@@ -304,9 +304,7 @@ class WebViewPresenterImpl @Inject constructor(
 
     override suspend fun isAppLocked(): Boolean = if (serverManager.isRegistered()) {
         try {
-            withContext(Dispatchers.IO) {
-                serverManager.integrationRepository(serverId).isAppLocked()
-            }
+            serverManager.integrationRepository(serverId).isAppLocked()
         } catch (e: IllegalArgumentException) {
             Timber.w(e, "Cannot determine app locked state")
             false

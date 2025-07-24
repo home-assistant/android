@@ -34,6 +34,8 @@ class LanguagesManager @Inject constructor(private var prefs: PrefsRepository) {
     }
 
     suspend fun saveLang(lang: String?) {
+        // We use a IO scope here to avoid blocking the main thread while invoking `setApplicationLocales`
+        // that behind the scene use SharedPreferences.
         withContext(Dispatchers.IO) {
             if (!lang.isNullOrEmpty()) {
                 val currentLang = getCurrentLang()
@@ -85,6 +87,7 @@ class LanguagesManager @Inject constructor(private var prefs: PrefsRepository) {
     }
 
     suspend fun getLocaleTags(context: Context): List<String> {
+        // We use a IO scope here to avoid blocking the main thread while reading the xml file from the disk
         return withContext(Dispatchers.IO) {
             val languagesList = mutableListOf<String>()
             try {
