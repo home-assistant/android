@@ -20,10 +20,15 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -141,20 +146,20 @@ private fun OneServerFound(
         Column(
             modifier = Modifier
                 .padding(horizontal = HASpacing.XL)
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(HASpacing.XL),
         ) {
             Text(
                 text = serverDiscovered.name,
                 style = HATextStyle.Headline,
-                modifier = Modifier.padding(vertical = HASpacing.S),
             )
             Icon(
                 imageVector = Icons.Default.Storage,
                 contentDescription = null,
                 modifier = Modifier
-                    .size(64.dp) // TODO define the right size to use
-                    .padding(vertical = HASpacing.S),
+                    .size(64.dp), // TODO define the right size to use
                 tint = HAColors.Brand.Blue,
             )
             Text(
@@ -167,7 +172,7 @@ private fun OneServerFound(
                 onClick = {
                     onConnectClick(serverDiscovered.url)
                 },
-                modifier = Modifier.padding(vertical = HASpacing.S),
+                modifier = Modifier.padding(bottom = HASpacing.XL),
             )
         }
     }
