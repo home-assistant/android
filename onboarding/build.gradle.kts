@@ -44,4 +44,10 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
 
     lintChecks(libs.compose.lint.checks)
+
+    kspTest(libs.hilt.android.compiler)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.bundles.androidx.compose.ui.test)
+    testImplementation(libs.navigation.test)
+    testImplementation(libs.hilt.android.testing)
 }
