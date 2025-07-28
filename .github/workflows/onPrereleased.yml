@@ -4,9 +4,8 @@ name: Prepare next release
 
 on: # yamllint disable-line rule:truthy
   workflow_dispatch:
-  push:
-    tags:
-      - '20[2-9][0-9]\.(?:1[0-2]|[1-9])\.[0-9]{1,2}' # Matches starting with 2020.1.0 up to 2099.12.99
+  release:
+    types: [prereleased]
 
 jobs:
   tag:

@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -34,8 +35,14 @@ class ManageAndroidAutoViewModel @Inject constructor(
     var sortedEntities by mutableStateOf<List<Entity>>(emptyList())
         private set
     val entities = mutableMapOf<Int, List<Entity>>()
+
+    val defaultServers = serverManager.defaultServers
+
+    var defaultServerId by mutableIntStateOf(0)
+
     init {
         viewModelScope.launch {
+            defaultServerId = serverManager.getServer()?.id ?: 0
             favoritesList.addAll(prefsRepository.getAutoFavorites())
             serverManager.defaultServers.map {
                 async {

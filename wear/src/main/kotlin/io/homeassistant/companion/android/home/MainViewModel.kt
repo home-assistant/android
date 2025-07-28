@@ -196,8 +196,8 @@ class MainViewModel @Inject constructor(
     }
 
     fun loadEntities() {
-        if (!homePresenter.isConnected()) return
         viewModelScope.launch {
+            if (!homePresenter.isConnected()) return@launch
             try {
                 // Load initial state
                 loadingState.value = LoadingState.LOADING
@@ -365,16 +365,19 @@ class MainViewModel @Inject constructor(
             homePresenter.onEntityClicked(entityId, state)
         }
     }
+
     fun setFanSpeed(entityId: String, speed: Float) {
         viewModelScope.launch {
             homePresenter.onFanSpeedChanged(entityId, speed)
         }
     }
+
     fun setBrightness(entityId: String, brightness: Float) {
         viewModelScope.launch {
             homePresenter.onBrightnessChanged(entityId, brightness)
         }
     }
+
     fun setColorTemp(entityId: String, colorTemp: Float, isKelvin: Boolean) {
         viewModelScope.launch {
             homePresenter.onColorTempChanged(entityId, colorTemp, isKelvin)
@@ -609,5 +612,6 @@ class MainViewModel @Inject constructor(
         }
         return state
     }
+
     private fun <T> Flow<List<T>>.collectAsState(): State<List<T>> = collectAsState(initial = emptyList())
 }

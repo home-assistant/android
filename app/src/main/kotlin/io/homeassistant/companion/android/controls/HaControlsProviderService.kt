@@ -185,9 +185,9 @@ class HaControlsProviderService : ControlsProviderService() {
             subscriber.onSubscribe(object : Flow.Subscription {
                 val webSocketScope = CoroutineScope(Dispatchers.IO)
                 override fun request(n: Long) {
-                    if (!serverManager.isRegistered()) return else Timber.d("request $n")
-
                     ioScope.launch {
+                        if (!serverManager.isRegistered()) return@launch else Timber.d("request $n")
+
                         controlIds
                             .groupBy {
                                 // Controls added before multiserver don't have a server ID, assume the first
@@ -214,21 +214,20 @@ class HaControlsProviderService : ControlsProviderService() {
     }
 
     override fun performControlAction(controlId: String, action: ControlAction, consumer: Consumer<Int>) {
-        Timber.d("Control: $controlId, action: $action")
-        if (!serverManager.isRegistered()) return consumer.accept(ControlAction.RESPONSE_FAIL)
-
-        var server = 0
-        var domain = ""
-        controlId.split(".")[0].toIntOrNull()?.let {
-            server = it
-            domain = controlId.split(".")[1]
-        } ?: run {
-            server = serverManager.defaultServers.firstOrNull()!!.id
-            domain = controlId.split(".")[0]
-        }
-        val haControl = domainToHaControl[domain]
-
         ioScope.launch {
+            Timber.d("Control: $controlId, action: $action")
+            if (!serverManager.isRegistered()) return@launch consumer.accept(ControlAction.RESPONSE_FAIL)
+
+            var server = 0
+            var domain = ""
+            controlId.split(".")[0].toIntOrNull()?.let {
+                server = it
+                domain = controlId.split(".")[1]
+            } ?: run {
+                server = serverManager.defaultServers.firstOrNull()!!.id
+                domain = controlId.split(".")[0]
+            }
+            val haControl = domainToHaControl[domain]
             var actionSuccess = false
             if (haControl != null) {
                 try {
