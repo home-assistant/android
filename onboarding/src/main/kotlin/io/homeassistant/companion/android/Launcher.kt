@@ -8,7 +8,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.compose.HAApp
 import io.homeassistant.companion.android.compose.rememberHAAppState
-import io.homeassistant.companion.android.onboarding.theme.HATheme
+import io.homeassistant.companion.android.theme.HATheme
 
 @AndroidEntryPoint
 class Launcher : AppCompatActivity() {

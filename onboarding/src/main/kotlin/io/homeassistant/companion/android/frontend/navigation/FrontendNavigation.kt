@@ -10,11 +10,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 data object FrontendRoute
 
-fun NavController.navigateToFrontend(navOptions: NavOptions? = null) {
+internal fun NavController.navigateToFrontend(navOptions: NavOptions? = null) {
     navigate(FrontendRoute, navOptions)
 }
 
-fun NavGraphBuilder.frontendScreen() {
+internal fun NavGraphBuilder.frontendScreen() {
     composable<FrontendRoute> {
         FrontendScreen()
     }

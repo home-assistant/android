@@ -8,13 +8,13 @@ import io.homeassistant.companion.android.onboarding.localfirst.LocalFirstScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object LocalFirstRoute
+internal data object LocalFirstRoute
 
-fun NavController.navigateToLocalFirst(navOptions: NavOptions? = null) {
+internal fun NavController.navigateToLocalFirst(navOptions: NavOptions? = null) {
     navigate(LocalFirstRoute, navOptions = navOptions)
 }
 
-fun NavGraphBuilder.localFirstScreen(onBackClick: () -> Unit, onNextClick: () -> Unit) {
+internal fun NavGraphBuilder.localFirstScreen(onBackClick: () -> Unit, onNextClick: () -> Unit) {
     composable<LocalFirstRoute> {
         LocalFirstScreen(
             onBackClick = onBackClick,

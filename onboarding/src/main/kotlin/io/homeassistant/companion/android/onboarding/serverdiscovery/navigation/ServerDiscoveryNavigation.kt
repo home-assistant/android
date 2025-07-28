@@ -11,18 +11,18 @@ import java.net.URL
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object ServerDiscoveryRoute
+internal data object ServerDiscoveryRoute
 
-fun NavController.navigateToServerDiscovery(navOptions: NavOptions? = null) {
+internal fun NavController.navigateToServerDiscovery(navOptions: NavOptions? = null) {
     navigate(route = ServerDiscoveryRoute, navOptions)
 }
 
-fun NavController.navigateToServerDiscoveryHelp() {
+internal fun NavController.navigateToServerDiscoveryHelp() {
     // TODO not sure it's the best way to do this or even the place to do this
     AndroidUriHandler(context).openUri("https://home-assistant.io")
 }
 
-fun NavGraphBuilder.serverDiscoveryScreen(
+internal fun NavGraphBuilder.serverDiscoveryScreen(
     onConnectClick: (server: URL) -> Unit,
     onBackClick: () -> Unit,
     onHelpClick: () -> Unit,

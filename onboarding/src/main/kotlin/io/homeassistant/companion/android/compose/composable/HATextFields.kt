@@ -8,9 +8,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import io.homeassistant.companion.android.onboarding.theme.HARadius
-import io.homeassistant.companion.android.onboarding.theme.HATextStyle
-import io.homeassistant.companion.android.onboarding.theme.MaxButtonWidth
+import io.homeassistant.companion.android.theme.HARadius
+import io.homeassistant.companion.android.theme.HATextStyle
+import io.homeassistant.companion.android.theme.MaxButtonWidth
 
 @Composable
 fun HAOutlinedTextField(

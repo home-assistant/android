@@ -38,14 +38,14 @@ import io.homeassistant.companion.android.compose.composable.HAButton
 import io.homeassistant.companion.android.compose.composable.HAOutlinedTextField
 import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.onboarding.theme.HAColors
-import io.homeassistant.companion.android.onboarding.theme.HASpacing
-import io.homeassistant.companion.android.onboarding.theme.HATextStyle
-import io.homeassistant.companion.android.onboarding.theme.HATheme
+import io.homeassistant.companion.android.theme.HAColors
+import io.homeassistant.companion.android.theme.HASpacing
+import io.homeassistant.companion.android.theme.HATextStyle
+import io.homeassistant.companion.android.theme.HATheme
 import java.net.URL
 
 @Composable
-fun ManualServerScreen(
+internal fun ManualServerScreen(
     onBackClick: () -> Unit,
     onConnectTo: (URL) -> Unit,
     onHelpClick: () -> Unit,
@@ -70,7 +70,7 @@ fun ManualServerScreen(
 }
 
 @Composable
-fun ManualServerScreen(
+internal fun ManualServerScreen(
     isServerUrlValid: Boolean,
     onBackClick: () -> Unit,
     onConnectClick: () -> Unit,

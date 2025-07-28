@@ -23,12 +23,12 @@ import io.homeassistant.companion.android.compose.HAPreviews
 import io.homeassistant.companion.android.compose.composable.HAButton
 import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.onboarding.theme.HASpacing
-import io.homeassistant.companion.android.onboarding.theme.HATextStyle
-import io.homeassistant.companion.android.onboarding.theme.HATheme
+import io.homeassistant.companion.android.theme.HASpacing
+import io.homeassistant.companion.android.theme.HATextStyle
+import io.homeassistant.companion.android.theme.HATheme
 
 @Composable
-fun LocationSharingScreen(
+internal fun LocationSharingScreen(
     onBackClick: () -> Unit,
     onHelpClick: () -> Unit,
     viewModel: LocationSharingViewModel,
@@ -43,7 +43,7 @@ fun LocationSharingScreen(
 }
 
 @Composable
-fun LocationSharingScreen(
+internal fun LocationSharingScreen(
     onBackClick: () -> Unit,
     onHelpClick: () -> Unit,
     onGoToNextScreen: () -> Unit,

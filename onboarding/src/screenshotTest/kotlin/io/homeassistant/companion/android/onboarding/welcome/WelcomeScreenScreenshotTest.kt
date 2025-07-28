@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.onboarding.welcome
 
 import androidx.compose.runtime.Composable
 import io.homeassistant.companion.android.compose.HAPreviews
-import io.homeassistant.companion.android.onboarding.theme.HATheme
+import io.homeassistant.companion.android.theme.HATheme
 
 class WelcomeScreenScreenshotTest {
     @HAPreviews

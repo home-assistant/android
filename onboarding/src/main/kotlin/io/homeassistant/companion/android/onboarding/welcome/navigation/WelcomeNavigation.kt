@@ -10,18 +10,18 @@ import io.homeassistant.companion.android.onboarding.welcome.WelcomeScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object WelcomeRoute
+internal data object WelcomeRoute
 
-fun NavController.navigateToWelcome(navOptions: NavOptions) {
+internal fun NavController.navigateToWelcome(navOptions: NavOptions) {
     navigate(route = WelcomeRoute, navOptions)
 }
 
-fun NavController.navigateToLearnMore() {
+internal fun NavController.navigateToLearnMore() {
     // TODO not sure it's the best way to do this or even the place to do this
     AndroidUriHandler(context).openUri("https://home-assistant.io")
 }
 
-fun NavGraphBuilder.welcomeScreen(onConnectClick: () -> Unit, onLearnMoreClick: () -> Unit) {
+internal fun NavGraphBuilder.welcomeScreen(onConnectClick: () -> Unit, onLearnMoreClick: () -> Unit) {
     composable<WelcomeRoute> {
         WelcomeScreen(
             onConnectClick = onConnectClick,

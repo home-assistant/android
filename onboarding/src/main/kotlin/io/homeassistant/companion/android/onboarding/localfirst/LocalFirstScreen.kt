@@ -20,12 +20,12 @@ import io.homeassistant.companion.android.compose.HAPreviews
 import io.homeassistant.companion.android.compose.composable.HAButton
 import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.onboarding.theme.HASpacing
-import io.homeassistant.companion.android.onboarding.theme.HATextStyle
-import io.homeassistant.companion.android.onboarding.theme.HATheme
+import io.homeassistant.companion.android.theme.HASpacing
+import io.homeassistant.companion.android.theme.HATextStyle
+import io.homeassistant.companion.android.theme.HATheme
 
 @Composable
-fun LocalFirstScreen(onBackClick: () -> Unit, onNextClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun LocalFirstScreen(onBackClick: () -> Unit, onNextClick: () -> Unit, modifier: Modifier = Modifier) {
     Scaffold(
         modifier = modifier,
         topBar = { HATopBar(onBackClick = onBackClick) },

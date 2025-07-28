@@ -12,13 +12,13 @@ import io.homeassistant.companion.android.onboarding.connection.ConnectionViewMo
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ConnectionRoute(val url: String)
+internal data class ConnectionRoute(val url: String)
 
-fun NavController.navigateToConnection(url: String, navOptions: NavOptions? = null) {
+internal fun NavController.navigateToConnection(url: String, navOptions: NavOptions? = null) {
     navigate(route = ConnectionRoute(url), navOptions)
 }
 
-fun NavGraphBuilder.connectionScreen(onAuthenticated: () -> Unit) {
+internal fun NavGraphBuilder.connectionScreen(onAuthenticated: () -> Unit) {
     composable<ConnectionRoute> {
         val viewModel: ConnectionViewModel = hiltViewModel()
         LaunchedEffect(viewModel) {

@@ -11,12 +11,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-sealed interface NameYourDeviceNavigationEvent {
+internal sealed interface NameYourDeviceNavigationEvent {
     data object DeviceNameSaved : NameYourDeviceNavigationEvent
 }
 
 @HiltViewModel
-class NameYourDeviceViewModel @Inject constructor() : ViewModel() {
+internal class NameYourDeviceViewModel @Inject constructor() : ViewModel() {
     private val navigationEventsMutableFlow = MutableSharedFlow<NameYourDeviceNavigationEvent>()
     val navigationEventsFlow: Flow<NameYourDeviceNavigationEvent> = navigationEventsMutableFlow
 

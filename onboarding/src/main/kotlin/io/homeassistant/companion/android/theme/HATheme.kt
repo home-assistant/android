@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.onboarding.theme
+package io.homeassistant.companion.android.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

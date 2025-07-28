@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 @Composable
-fun ConnectionScreen(viewModel: ConnectionViewModel, modifier: Modifier = Modifier) {
+internal fun ConnectionScreen(viewModel: ConnectionViewModel, modifier: Modifier = Modifier) {
     Column(modifier) {
         Text(viewModel.url)
         Button(onClick = {

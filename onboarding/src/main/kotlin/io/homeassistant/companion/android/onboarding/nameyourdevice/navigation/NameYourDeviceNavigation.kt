@@ -13,18 +13,22 @@ import io.homeassistant.companion.android.onboarding.nameyourdevice.NameYourDevi
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object NameYourDeviceRoute
+internal data object NameYourDeviceRoute
 
-fun NavController.navigateToNameYourDevice(navOptions: NavOptions? = null) {
+internal fun NavController.navigateToNameYourDevice(navOptions: NavOptions? = null) {
     navigate(route = NameYourDeviceRoute, navOptions)
 }
 
-fun NavController.navigateToNameYourDeviceHelp() {
+internal fun NavController.navigateToNameYourDeviceHelp() {
     // TODO not sure it's the best way to do this or even the place to do this
     AndroidUriHandler(context).openUri("https://home-assistant.io")
 }
 
-fun NavGraphBuilder.nameYourDeviceScreen(onBackClick: () -> Unit, onDeviceNamed: () -> Unit, onHelpClick: () -> Unit) {
+internal fun NavGraphBuilder.nameYourDeviceScreen(
+    onBackClick: () -> Unit,
+    onDeviceNamed: () -> Unit,
+    onHelpClick: () -> Unit,
+) {
     composable<NameYourDeviceRoute> {
         val viewModel: NameYourDeviceViewModel = hiltViewModel()
 

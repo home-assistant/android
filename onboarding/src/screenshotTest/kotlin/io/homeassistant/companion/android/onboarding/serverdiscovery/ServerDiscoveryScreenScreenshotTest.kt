@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.onboarding.serverdiscovery
 import androidx.compose.runtime.Composable
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.compose.HAPreviews
-import io.homeassistant.companion.android.onboarding.theme.HATheme
+import io.homeassistant.companion.android.theme.HATheme
 import java.net.URL
 
 class ServerDiscoveryScreenScreenshotTest {

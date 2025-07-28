@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 
 @HiltViewModel
-class ManualServerViewModel @Inject constructor() : ViewModel() {
+internal class ManualServerViewModel @Inject constructor() : ViewModel() {
     private val serverUrlMutableFlow = MutableStateFlow("")
     val serverUrlFlow: StateFlow<String> = serverUrlMutableFlow
 

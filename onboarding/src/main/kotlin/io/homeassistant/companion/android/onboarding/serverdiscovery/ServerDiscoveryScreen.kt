@@ -64,16 +64,16 @@ import io.homeassistant.companion.android.compose.composable.HAButton
 import io.homeassistant.companion.android.compose.composable.HATextButton
 import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.onboarding.theme.HABorderWidth
-import io.homeassistant.companion.android.onboarding.theme.HAColors
-import io.homeassistant.companion.android.onboarding.theme.HARadius
-import io.homeassistant.companion.android.onboarding.theme.HASpacing
-import io.homeassistant.companion.android.onboarding.theme.HATextStyle
-import io.homeassistant.companion.android.onboarding.theme.HATheme
+import io.homeassistant.companion.android.theme.HABorderWidth
+import io.homeassistant.companion.android.theme.HAColors
+import io.homeassistant.companion.android.theme.HARadius
+import io.homeassistant.companion.android.theme.HASpacing
+import io.homeassistant.companion.android.theme.HATextStyle
+import io.homeassistant.companion.android.theme.HATheme
 import java.net.URL
 
 @Composable
-fun ServerDiscoveryScreen(
+internal fun ServerDiscoveryScreen(
     onBackClick: () -> Unit,
     onConnectClick: (server: URL) -> Unit,
     onHelpClick: () -> Unit,

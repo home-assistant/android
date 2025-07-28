@@ -23,7 +23,7 @@ data class ServerDiscovered(val name: String, val url: URL, val version: HomeAss
 data class ServersDiscovered(val servers: List<ServerDiscovered>) : DiscoveryState
 
 @HiltViewModel
-class ServerDiscoveryViewModel @Inject constructor() : ViewModel() {
+internal class ServerDiscoveryViewModel @Inject constructor() : ViewModel() {
     /**
      * Logic of the screen:
      * We keep the discovery animation for 1s then

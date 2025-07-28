@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.onboarding.theme
+package io.homeassistant.companion.android.theme
 
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle

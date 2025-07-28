@@ -38,12 +38,12 @@ import io.homeassistant.companion.android.compose.composable.HAButton
 import io.homeassistant.companion.android.compose.composable.HAOutlinedTextField
 import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.onboarding.theme.HASpacing
-import io.homeassistant.companion.android.onboarding.theme.HATextStyle
-import io.homeassistant.companion.android.onboarding.theme.HATheme
+import io.homeassistant.companion.android.theme.HASpacing
+import io.homeassistant.companion.android.theme.HATextStyle
+import io.homeassistant.companion.android.theme.HATheme
 
 @Composable
-fun NameYourDeviceScreen(
+internal fun NameYourDeviceScreen(
     onBackClick: () -> Unit,
     onHelpClick: () -> Unit,
     viewModel: NameYourDeviceViewModel,
@@ -64,7 +64,7 @@ fun NameYourDeviceScreen(
 }
 
 @Composable
-fun NameYourDeviceScreen(
+internal fun NameYourDeviceScreen(
     onHelpClick: () -> Unit,
     onBackClick: () -> Unit,
     deviceName: String,

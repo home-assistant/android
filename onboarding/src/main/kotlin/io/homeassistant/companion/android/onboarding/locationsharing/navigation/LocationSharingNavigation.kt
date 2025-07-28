@@ -13,18 +13,18 @@ import io.homeassistant.companion.android.onboarding.locationsharing.LocationSha
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object LocationSharingRoute
+internal data object LocationSharingRoute
 
-fun NavController.navigateToLocationSharing(navOptions: NavOptions? = null) {
+internal fun NavController.navigateToLocationSharing(navOptions: NavOptions? = null) {
     navigate(LocationSharingRoute, navOptions = navOptions)
 }
 
-fun NavController.navigateToLocationSharingHelp() {
+internal fun NavController.navigateToLocationSharingHelp() {
     // TODO not sure it's the best way to do this or even the place to do this
     AndroidUriHandler(context).openUri("https://home-assistant.io")
 }
 
-fun NavGraphBuilder.locationSharingScreen(
+internal fun NavGraphBuilder.locationSharingScreen(
     onBackClick: () -> Unit,
     onHelpClick: () -> Unit,
     onGotoNextScreen: () -> Unit,

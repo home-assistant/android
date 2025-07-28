@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.onboarding.theme
+package io.homeassistant.companion.android.theme
 
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
