@@ -35,15 +35,11 @@ class LocalStorageImpl(sharedPreferences: suspend () -> SharedPreferences) : Loc
     private val sharedPreferences = SharedPreferenceRetriever(sharedPreferences)
 
     override suspend fun putString(key: String, value: String?) {
-        withContext(Dispatchers.IO) {
-            sharedPreferences().edit { putString(key, value) }
-        }
+        withContext(Dispatchers.IO) { sharedPreferences().edit { putString(key, value) } }
     }
 
     override suspend fun getString(key: String): String? {
-        return withContext(Dispatchers.IO) {
-            sharedPreferences().getString(key, null)
-        }
+        return withContext(Dispatchers.IO) { sharedPreferences().getString(key, null) }
     }
 
     override suspend fun putLong(key: String, value: Long?) {
