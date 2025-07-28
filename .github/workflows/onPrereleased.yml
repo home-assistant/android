@@ -4,9 +4,8 @@ name: Prepare next release
 
 on: # yamllint disable-line rule:truthy
   workflow_dispatch:
-  push:
-    tags:
-      - '20[2-9][0-9].[0-9]+.[0-9]+' # Simple matching for CalVer, even if it's not perfect it is enough for detecting that it is a version tag.
+  release:
+    types: [prereleased]
 
 jobs:
   tag:
