@@ -23,13 +23,13 @@ class ConnectionViewModel @Inject constructor(private val savedStateHandle: Save
     private val route = savedStateHandle.toRoute<ConnectionRoute>()
     val url = route.url
 
-    private val _navigationEvents = MutableSharedFlow<ConnectionNavigationEvent>()
-    val navigationEvents: Flow<ConnectionNavigationEvent> = _navigationEvents
+    private val navigationEventsMutableFlow = MutableSharedFlow<ConnectionNavigationEvent>()
+    val navigationEvents: Flow<ConnectionNavigationEvent> = navigationEventsMutableFlow
 
     init {
         viewModelScope.launch {
             delay(1.seconds)
-            _navigationEvents.emit(ConnectionNavigationEvent.Authenticated)
+            navigationEventsMutableFlow.emit(ConnectionNavigationEvent.Authenticated)
         }
     }
 }

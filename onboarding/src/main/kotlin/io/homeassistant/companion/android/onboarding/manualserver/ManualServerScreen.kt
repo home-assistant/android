@@ -32,7 +32,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.compose.HAPreviews
 import io.homeassistant.companion.android.compose.composable.HAButton
@@ -47,11 +46,11 @@ import java.net.URL
 
 @Composable
 fun ManualServerScreen(
-    onHelpClick: () -> Unit,
     onBackClick: () -> Unit,
     onConnectTo: (URL) -> Unit,
+    onHelpClick: () -> Unit,
+    viewModel: ManualServerViewModel,
     modifier: Modifier = Modifier,
-    viewModel: ManualServerViewModel = hiltViewModel(),
 ) {
     val serverUrl by viewModel.serverUrlFlow.collectAsStateWithLifecycle()
     val isServerUrlValid by viewModel.isServerUrlValidFlow.collectAsStateWithLifecycle()
@@ -72,12 +71,12 @@ fun ManualServerScreen(
 
 @Composable
 fun ManualServerScreen(
+    isServerUrlValid: Boolean,
+    onBackClick: () -> Unit,
     onConnectClick: () -> Unit,
     onHelpClick: () -> Unit,
-    onBackClick: () -> Unit,
-    serverUrl: String,
     onServerUrlChange: (String) -> Unit,
-    isServerUrlValid: Boolean,
+    serverUrl: String,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -98,10 +97,10 @@ fun ManualServerScreen(
 
 @Composable
 private fun ManualServerContent(
-    onConnectClick: () -> Unit,
-    serverUrl: String,
-    onServerUrlChange: (String) -> Unit,
     isServerUrlValid: Boolean,
+    onConnectClick: () -> Unit,
+    onServerUrlChange: (String) -> Unit,
+    serverUrl: String,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -148,10 +147,10 @@ private fun ManualServerContent(
 
 @Composable
 private fun ServerUrlTextField(
-    serverUrl: String,
-    onServerUrlChange: (String) -> Unit,
     isServerUrlValid: Boolean,
     onConnectClick: () -> Unit,
+    onServerUrlChange: (String) -> Unit,
+    serverUrl: String,
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }

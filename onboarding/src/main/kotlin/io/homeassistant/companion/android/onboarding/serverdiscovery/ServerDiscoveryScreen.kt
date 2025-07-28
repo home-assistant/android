@@ -56,7 +56,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
@@ -75,34 +74,34 @@ import java.net.URL
 
 @Composable
 fun ServerDiscoveryScreen(
+    onBackClick: () -> Unit,
+    onConnectClick: (server: URL) -> Unit,
+    onHelpClick: () -> Unit,
+    onManualSetupClick: () -> Unit,
+    viewModel: ServerDiscoveryViewModel,
     modifier: Modifier = Modifier,
-    onConnectClick: (server: URL) -> Unit = {},
-    onManualSetupClick: () -> Unit = {},
-    onHelpClick: () -> Unit = {},
-    onBackClick: () -> Unit = {},
-    viewModel: ServerDiscoveryViewModel = hiltViewModel(),
 ) {
     val discoveryState by viewModel.discoveryStateFlow.collectAsStateWithLifecycle()
 
     ServerDiscoveryScreen(
-        modifier = modifier,
-        onConnectClick = onConnectClick,
-        onManualSetupClick = onManualSetupClick,
-        onHelpClick = onHelpClick,
-        onBackClick = onBackClick,
-        onDismissOneServerFound = viewModel::onDismissOneServerFound,
         discoveryState = discoveryState,
+        onBackClick = onBackClick,
+        onConnectClick = onConnectClick,
+        onDismissOneServerFound = viewModel::onDismissOneServerFound,
+        onHelpClick = onHelpClick,
+        onManualSetupClick = onManualSetupClick,
+        modifier = modifier,
     )
 }
 
 @Composable
 internal fun ServerDiscoveryScreen(
-    onConnectClick: (server: URL) -> Unit,
-    onManualSetupClick: () -> Unit,
-    onHelpClick: () -> Unit,
-    onBackClick: () -> Unit,
-    onDismissOneServerFound: () -> Unit,
     discoveryState: DiscoveryState,
+    onBackClick: () -> Unit,
+    onConnectClick: (server: URL) -> Unit,
+    onDismissOneServerFound: () -> Unit,
+    onHelpClick: () -> Unit,
+    onManualSetupClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -114,16 +113,16 @@ internal fun ServerDiscoveryScreen(
     ) { contentPadding ->
         ScreenContent(
             contentPadding = contentPadding,
-            onManualSetupClick = onManualSetupClick,
             discoveryState = discoveryState,
             onConnectClick = onConnectClick,
+            onManualSetupClick = onManualSetupClick,
         )
 
         if (discoveryState is ServerDiscovered) {
             OneServerFound(
-                serverDiscovered = discoveryState,
-                onDismiss = onDismissOneServerFound,
                 onConnectClick = onConnectClick,
+                onDismiss = onDismissOneServerFound,
+                serverDiscovered = discoveryState,
             )
         }
     }
@@ -132,9 +131,9 @@ internal fun ServerDiscoveryScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun OneServerFound(
-    serverDiscovered: ServerDiscovered,
-    onDismiss: () -> Unit,
     onConnectClick: (serverUrl: URL) -> Unit,
+    onDismiss: () -> Unit,
+    serverDiscovered: ServerDiscovered,
 ) {
     val bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = false, initialValue = SheetValue.Expanded)
 
@@ -181,9 +180,9 @@ private fun OneServerFound(
 @Composable
 private fun ScreenContent(
     contentPadding: PaddingValues,
-    onManualSetupClick: () -> Unit,
     discoveryState: DiscoveryState,
     onConnectClick: (URL) -> Unit,
+    onManualSetupClick: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -352,9 +351,16 @@ private fun AnimatedIcon() {
 
 @HAPreviews
 @Composable
-private fun ServerDiscoveryScreenPreview() {
+private fun ServerDiscoveryScreenPreview_scanning() {
     HATheme {
-        ServerDiscoveryScreen()
+        ServerDiscoveryScreen(
+            discoveryState = Scanning,
+            onConnectClick = {},
+            onManualSetupClick = {},
+            onHelpClick = {},
+            onBackClick = {},
+            onDismissOneServerFound = {},
+        )
     }
 }
 

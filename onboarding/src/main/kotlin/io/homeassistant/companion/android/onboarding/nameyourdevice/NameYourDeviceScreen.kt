@@ -44,8 +44,8 @@ import io.homeassistant.companion.android.onboarding.theme.HATheme
 
 @Composable
 fun NameYourDeviceScreen(
-    onHelpClick: () -> Unit,
     onBackClick: () -> Unit,
+    onHelpClick: () -> Unit,
     viewModel: NameYourDeviceViewModel,
     modifier: Modifier = Modifier,
 ) {
@@ -53,13 +53,13 @@ fun NameYourDeviceScreen(
     val saveClickable by viewModel.isValidNameFlow.collectAsStateWithLifecycle()
 
     NameYourDeviceScreen(
-        modifier = modifier,
-        onHelpClick = onHelpClick,
         onBackClick = onBackClick,
+        onHelpClick = onHelpClick,
         deviceName = deviceName,
         onDeviceNameChange = viewModel::onDeviceNameChange,
         saveClickable = saveClickable,
         onSaveClick = viewModel::onSaveClick,
+        modifier = modifier,
     )
 }
 
@@ -78,11 +78,11 @@ fun NameYourDeviceScreen(
         topBar = { HATopBar(onHelpClick = onHelpClick, onBackClick = onBackClick) },
     ) { contentPadding ->
         NameYourDeviceContent(
-            modifier = Modifier.padding(contentPadding),
             deviceName = deviceName,
             onDeviceNameChange = onDeviceNameChange,
             saveClickable = saveClickable,
             onSaveClick = onSaveClick,
+            modifier = Modifier.padding(contentPadding),
         )
     }
 }
@@ -163,13 +163,15 @@ private fun DeviceNameTextField(
             }
         },
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = {
-            if (saveClickable) {
-                onSaveClick()
-            }
-            // This is going to hide the keyboard in any case
-            defaultKeyboardAction(ImeAction.Done)
-        }),
+        keyboardActions = KeyboardActions(
+            onDone = {
+                if (saveClickable) {
+                    onSaveClick()
+                }
+                // This is going to hide the keyboard in any case
+                defaultKeyboardAction(ImeAction.Done)
+            },
+        ),
         modifier = modifier
             .focusRequester(focusRequester),
     )

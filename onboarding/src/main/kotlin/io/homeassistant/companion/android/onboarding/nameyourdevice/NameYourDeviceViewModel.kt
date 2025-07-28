@@ -12,13 +12,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 sealed interface NameYourDeviceNavigationEvent {
-    object DeviceNameSaved : NameYourDeviceNavigationEvent
+    data object DeviceNameSaved : NameYourDeviceNavigationEvent
 }
 
 @HiltViewModel
 class NameYourDeviceViewModel @Inject constructor() : ViewModel() {
-    private val _navigationEvents = MutableSharedFlow<NameYourDeviceNavigationEvent>()
-    val navigationEvents: Flow<NameYourDeviceNavigationEvent> = _navigationEvents
+    private val navigationEventsMutableFlow = MutableSharedFlow<NameYourDeviceNavigationEvent>()
+    val navigationEventsFlow: Flow<NameYourDeviceNavigationEvent> = navigationEventsMutableFlow
 
     private val deviceNameMutableFlow = MutableStateFlow("")
     val deviceNameFlow: StateFlow<String> = deviceNameMutableFlow
@@ -33,7 +33,7 @@ class NameYourDeviceViewModel @Inject constructor() : ViewModel() {
 
     fun onSaveClick() {
         viewModelScope.launch {
-            _navigationEvents.emit(NameYourDeviceNavigationEvent.DeviceNameSaved)
+            navigationEventsMutableFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved)
         }
     }
 

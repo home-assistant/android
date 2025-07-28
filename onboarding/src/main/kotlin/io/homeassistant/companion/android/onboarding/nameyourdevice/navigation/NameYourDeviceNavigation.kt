@@ -24,12 +24,12 @@ fun NavController.navigateToNameYourDeviceHelp() {
     AndroidUriHandler(context).openUri("https://home-assistant.io")
 }
 
-fun NavGraphBuilder.nameYourDeviceScreen(onHelpClick: () -> Unit, onBackClick: () -> Unit, onDeviceNamed: () -> Unit) {
+fun NavGraphBuilder.nameYourDeviceScreen(onBackClick: () -> Unit, onDeviceNamed: () -> Unit, onHelpClick: () -> Unit) {
     composable<NameYourDeviceRoute> {
         val viewModel: NameYourDeviceViewModel = hiltViewModel()
 
         LaunchedEffect(viewModel) {
-            viewModel.navigationEvents.collect {
+            viewModel.navigationEventsFlow.collect {
                 when (it) {
                     NameYourDeviceNavigationEvent.DeviceNameSaved -> onDeviceNamed()
                 }
@@ -37,9 +37,9 @@ fun NavGraphBuilder.nameYourDeviceScreen(onHelpClick: () -> Unit, onBackClick: (
         }
 
         NameYourDeviceScreen(
-            viewModel = viewModel,
-            onHelpClick = onHelpClick,
             onBackClick = onBackClick,
+            onHelpClick = onHelpClick,
+            viewModel = viewModel,
         )
     }
 }

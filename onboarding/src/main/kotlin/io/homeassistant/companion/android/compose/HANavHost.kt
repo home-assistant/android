@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
+import io.homeassistant.companion.android.frontend.navigation.frontendScreen
+import io.homeassistant.companion.android.frontend.navigation.navigateToFrontend
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.onboarding.connection.navigation.connectionScreen
 import io.homeassistant.companion.android.onboarding.connection.navigation.navigateToConnection
@@ -11,6 +13,7 @@ import io.homeassistant.companion.android.onboarding.localfirst.navigation.local
 import io.homeassistant.companion.android.onboarding.localfirst.navigation.navigateToLocalFirst
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.locationSharingScreen
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.navigateToLocationSharing
+import io.homeassistant.companion.android.onboarding.locationsharing.navigation.navigateToLocationSharingHelp
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.manualServerScreen
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.navigateToManualServer
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.navigateToManualServerHelp
@@ -36,23 +39,23 @@ fun HANavHost(
         startDestination = WelcomeRoute,
     ) {
         welcomeScreen(
-            onLearnMoreClick = navController::navigateToLearnMore,
             onConnectClick = navController::navigateToServerDiscovery,
+            onLearnMoreClick = navController::navigateToLearnMore,
         )
         serverDiscoveryScreen(
             onConnectClick = {
                 navController.navigateToConnection(it.toString())
             },
-            onHelpClick = navController::navigateToServerDiscoveryHelp,
             onBackClick = navController::popBackStack,
+            onHelpClick = navController::navigateToServerDiscoveryHelp,
             onManualSetupClick = navController::navigateToManualServer,
         )
         manualServerScreen(
-            onHelpClick = navController::navigateToManualServerHelp,
             onBackClick = navController::popBackStack,
             onConnectTo = {
                 navController.navigateToConnection(it.toString())
             },
+            onHelpClick = navController::navigateToManualServerHelp,
         )
         connectionScreen(
             onAuthenticated = {
@@ -68,17 +71,32 @@ fun HANavHost(
         )
         nameYourDeviceScreen(
             onBackClick = navController::popBackStack,
-            onHelpClick = navController::navigateToNameYourDeviceHelp,
             onDeviceNamed = {
                 // TODO if external URL or cloud URL available go to Location otherwise go to local first
                 navController.navigateToLocalFirst()
             },
+            onHelpClick = navController::navigateToNameYourDeviceHelp,
         )
         localFirstScreen(
             onNextClick = navController::navigateToLocationSharing,
             // TODO verify backstack behavior since iOS is disabling back starting from this screen since we've registered the device
             onBackClick = navController::popBackStack,
         )
-        locationSharingScreen()
+        locationSharingScreen(
+            onBackClick = navController::popBackStack,
+            onHelpClick = navController::navigateToLocationSharingHelp,
+            onGotoNextScreen = {
+                navController.navigateToFrontend(
+                    navOptions {
+                        popUpTo<WelcomeRoute> {
+                            inclusive = true
+                        }
+                    },
+                )
+            },
+        )
+
+        // TODO Whole onboarding could be in a dedicated subgraph
+        frontendScreen()
     }
 }

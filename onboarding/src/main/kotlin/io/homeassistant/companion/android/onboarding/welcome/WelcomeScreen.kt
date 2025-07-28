@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import io.homeassistant.companion.android.compose.HAPreviews
 import io.homeassistant.companion.android.compose.composable.HAButton
 import io.homeassistant.companion.android.compose.composable.HATextButton
@@ -32,11 +31,20 @@ import io.homeassistant.companion.android.onboarding.theme.HATheme
 
 @Composable
 fun WelcomeScreen(
+    onConnectClick: () -> Unit,
+    onLearnMoreClick: () -> Unit,
+    viewModel: WelcomeViewModel,
     modifier: Modifier = Modifier,
-    onConnectClick: () -> Unit = {},
-    onLearnMoreClick: () -> Unit = {},
-    viewModel: WelcomeViewModel = hiltViewModel(),
 ) {
+    WelcomeScreen(
+        onConnectClick = onConnectClick,
+        onLearnMoreClick = onLearnMoreClick,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun WelcomeScreen(onConnectClick: () -> Unit, onLearnMoreClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -95,6 +103,6 @@ private fun ColumnScope.BottomButtons(onConnectClick: () -> Unit, onLearnMoreCli
 @Composable
 private fun WelcomeScreenPreview() {
     HATheme {
-        WelcomeScreen()
+        WelcomeScreen(onConnectClick = {}, onLearnMoreClick = {})
     }
 }

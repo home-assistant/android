@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import io.homeassistant.companion.android.compose.HAPreviews
@@ -30,25 +29,32 @@ import io.homeassistant.companion.android.onboarding.theme.HATheme
 
 @Composable
 fun LocationSharingScreen(
-    onHelpClick: () -> Unit,
     onBackClick: () -> Unit,
+    onHelpClick: () -> Unit,
+    viewModel: LocationSharingViewModel,
     modifier: Modifier = Modifier,
-    viewModel: LocationSharingViewModel = hiltViewModel(),
 ) {
     LocationSharingScreen(
-        onHelpClick = onHelpClick,
         onBackClick = onBackClick,
+        onHelpClick = onHelpClick,
+        onGoToNextScreen = viewModel::onGoToNextScreen,
         modifier = Modifier,
     )
 }
 
 @Composable
-fun LocationSharingScreen(onHelpClick: () -> Unit, onBackClick: () -> Unit, modifier: Modifier = Modifier) {
+fun LocationSharingScreen(
+    onBackClick: () -> Unit,
+    onHelpClick: () -> Unit,
+    onGoToNextScreen: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Scaffold(
         modifier = modifier,
         topBar = { HATopBar(onHelpClick = onHelpClick, onBackClick = onBackClick) },
     ) { contentPadding ->
         LocationSharingContent(
+            onGoToNextScreen = onGoToNextScreen,
             modifier = Modifier.padding(contentPadding),
         )
     }
@@ -56,7 +62,7 @@ fun LocationSharingScreen(onHelpClick: () -> Unit, onBackClick: () -> Unit, modi
 
 @Composable
 @OptIn(ExperimentalPermissionsApi::class)
-private fun LocationSharingContent(modifier: Modifier = Modifier) {
+private fun LocationSharingContent(onGoToNextScreen: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -86,7 +92,10 @@ private fun LocationSharingContent(modifier: Modifier = Modifier) {
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
             ),
-            onPermissionsResult = {},
+            onPermissionsResult = {
+                // TODO handle logic of denying permissions
+                onGoToNextScreen()
+            },
         )
         // rememberLauncherForActivityResult()
 
@@ -117,6 +126,7 @@ private fun LocationSharingScreenPreview() {
         LocationSharingScreen(
             onHelpClick = {},
             onBackClick = {},
+            onGoToNextScreen = {},
             modifier = Modifier,
         )
     }

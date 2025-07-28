@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.onboarding.manualserver.navigation
 
 import androidx.compose.ui.platform.AndroidUriHandler
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -21,12 +22,13 @@ fun NavController.navigateToManualServerHelp() {
     AndroidUriHandler(context).openUri("https://home-assistant.io")
 }
 
-fun NavGraphBuilder.manualServerScreen(onHelpClick: () -> Unit, onBackClick: () -> Unit, onConnectTo: (URL) -> Unit) {
+fun NavGraphBuilder.manualServerScreen(onBackClick: () -> Unit, onConnectTo: (URL) -> Unit, onHelpClick: () -> Unit) {
     composable<ManualServerRoute> {
         ManualServerScreen(
-            onHelpClick = onHelpClick,
             onBackClick = onBackClick,
             onConnectTo = onConnectTo,
+            onHelpClick = onHelpClick,
+            viewModel = hiltViewModel(),
         )
     }
 }

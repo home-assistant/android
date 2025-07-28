@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.onboarding.welcome.navigation
 
 import androidx.compose.ui.platform.AndroidUriHandler
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -25,6 +26,7 @@ fun NavGraphBuilder.welcomeScreen(onConnectClick: () -> Unit, onLearnMoreClick: 
         WelcomeScreen(
             onConnectClick = onConnectClick,
             onLearnMoreClick = onLearnMoreClick,
+            viewModel = hiltViewModel(),
         )
     }
 }

@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.onboarding.serverdiscovery.navigation
 
 import androidx.compose.ui.platform.AndroidUriHandler
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -23,16 +24,17 @@ fun NavController.navigateToServerDiscoveryHelp() {
 
 fun NavGraphBuilder.serverDiscoveryScreen(
     onConnectClick: (server: URL) -> Unit,
-    onHelpClick: () -> Unit,
     onBackClick: () -> Unit,
+    onHelpClick: () -> Unit,
     onManualSetupClick: () -> Unit,
 ) {
     composable<ServerDiscoveryRoute> {
         ServerDiscoveryScreen(
             onConnectClick = onConnectClick,
-            onHelpClick = onHelpClick,
             onBackClick = onBackClick,
+            onHelpClick = onHelpClick,
             onManualSetupClick = onManualSetupClick,
+            viewModel = hiltViewModel(),
         )
     }
 }

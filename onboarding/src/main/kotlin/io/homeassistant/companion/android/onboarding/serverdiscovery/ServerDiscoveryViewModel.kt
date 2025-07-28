@@ -6,8 +6,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import java.net.URL
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -40,9 +38,9 @@ class ServerDiscoveryViewModel @Inject constructor() : ViewModel() {
 
     init {
         viewModelScope.launch {
-            delay(1.seconds)
-            discoveryStateMutableFlow.update { NoServerFound }
-            delay(3.seconds)
+//            delay(1.seconds)
+//            discoveryStateMutableFlow.update { NoServerFound }
+//            delay(3.seconds)
             discoveryStateMutableFlow.update {
                 ServerDiscovered(
                     "Mr Green",
@@ -50,72 +48,72 @@ class ServerDiscoveryViewModel @Inject constructor() : ViewModel() {
                     HomeAssistantVersion(2042, 1, 42),
                 )
             }
-            delay(2.seconds)
-            discoveryStateMutableFlow.update {
-                ServersDiscovered(
-                    listOf(
-                        ServerDiscovered(
-                            "Mr Green",
-                            URL("http://192.168.1.1"),
-                            HomeAssistantVersion(2042, 1, 42),
-                        ),
-                        ServerDiscovered(
-                            "1",
-                            URL("http://ohf.org"),
-                            HomeAssistantVersion(2042, 1, 42),
-                        ),
-                    ),
-                )
-            }
-            delay(1.seconds)
-            discoveryStateMutableFlow.update {
-                ServersDiscovered(
-                    listOf(
-                        ServerDiscovered(
-                            "Mr Green",
-                            URL("http://192.168.1.1"),
-                            HomeAssistantVersion(2042, 1, 42),
-                        ),
-                        ServerDiscovered(
-                            "1",
-                            URL("http://ohf.org"),
-                            HomeAssistantVersion(2042, 1, 42),
-                        ),
-                        ServerDiscovered(
-                            "2",
-                            URL("http://ohf.org"),
-                            HomeAssistantVersion(2042, 1, 42),
-                        ),
-                    ),
-                )
-            }
-            delay(1.seconds)
-            discoveryStateMutableFlow.update {
-                ServersDiscovered(
-                    listOf(
-                        ServerDiscovered(
-                            "Mr Green",
-                            URL("http://192.168.1.1"),
-                            HomeAssistantVersion(2042, 1, 42),
-                        ),
-                        ServerDiscovered(
-                            "1",
-                            URL("http://ohf.org"),
-                            HomeAssistantVersion(2042, 1, 42),
-                        ),
-                        ServerDiscovered(
-                            "2",
-                            URL("http://ohf.org"),
-                            HomeAssistantVersion(2042, 1, 42),
-                        ),
-                        ServerDiscovered(
-                            "3",
-                            URL("http://ohf.org"),
-                            HomeAssistantVersion(2042, 1, 42),
-                        ),
-                    ),
-                )
-            }
+//            delay(2.seconds)
+//            discoveryStateMutableFlow.update {
+//                ServersDiscovered(
+//                    listOf(
+//                        ServerDiscovered(
+//                            "Mr Green",
+//                            URL("http://192.168.1.1"),
+//                            HomeAssistantVersion(2042, 1, 42),
+//                        ),
+//                        ServerDiscovered(
+//                            "1",
+//                            URL("http://ohf.org"),
+//                            HomeAssistantVersion(2042, 1, 42),
+//                        ),
+//                    ),
+//                )
+//            }
+//            delay(1.seconds)
+//            discoveryStateMutableFlow.update {
+//                ServersDiscovered(
+//                    listOf(
+//                        ServerDiscovered(
+//                            "Mr Green",
+//                            URL("http://192.168.1.1"),
+//                            HomeAssistantVersion(2042, 1, 42),
+//                        ),
+//                        ServerDiscovered(
+//                            "1",
+//                            URL("http://ohf.org"),
+//                            HomeAssistantVersion(2042, 1, 42),
+//                        ),
+//                        ServerDiscovered(
+//                            "2",
+//                            URL("http://ohf.org"),
+//                            HomeAssistantVersion(2042, 1, 42),
+//                        ),
+//                    ),
+//                )
+//            }
+//            delay(1.seconds)
+//            discoveryStateMutableFlow.update {
+//                ServersDiscovered(
+//                    listOf(
+//                        ServerDiscovered(
+//                            "Mr Green",
+//                            URL("http://192.168.1.1"),
+//                            HomeAssistantVersion(2042, 1, 42),
+//                        ),
+//                        ServerDiscovered(
+//                            "1",
+//                            URL("http://ohf.org"),
+//                            HomeAssistantVersion(2042, 1, 42),
+//                        ),
+//                        ServerDiscovered(
+//                            "2",
+//                            URL("http://ohf.org"),
+//                            HomeAssistantVersion(2042, 1, 42),
+//                        ),
+//                        ServerDiscovered(
+//                            "3",
+//                            URL("http://ohf.org"),
+//                            HomeAssistantVersion(2042, 1, 42),
+//                        ),
+//                    ),
+//                )
+//            }
         }
     }
 

@@ -25,7 +25,7 @@ import io.homeassistant.companion.android.onboarding.theme.HATextStyle
 import io.homeassistant.companion.android.onboarding.theme.HATheme
 
 @Composable
-fun LocalFirstScreen(onNextClick: () -> Unit, onBackClick: () -> Unit, modifier: Modifier = Modifier) {
+fun LocalFirstScreen(onBackClick: () -> Unit, onNextClick: () -> Unit, modifier: Modifier = Modifier) {
     Scaffold(
         modifier = modifier,
         topBar = { HATopBar(onBackClick = onBackClick) },
