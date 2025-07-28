@@ -7,6 +7,8 @@ import androidx.navigation.navOptions
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.onboarding.connection.navigation.connectionScreen
 import io.homeassistant.companion.android.onboarding.connection.navigation.navigateToConnection
+import io.homeassistant.companion.android.onboarding.localfirst.navigation.localFirstScreen
+import io.homeassistant.companion.android.onboarding.localfirst.navigation.navigateToLocalFirst
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.locationSharingScreen
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.navigateToLocationSharing
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.manualServerScreen
@@ -52,20 +54,30 @@ fun HANavHost(
                 navController.navigateToConnection(it.toString())
             },
         )
-        connectionScreen(onAuthenticated = {
-            navController.navigateToNameYourDevice(
-                navOptions {
-                    // We don't want to come back to the connection screen if we navigate to the name your device screen
-                    popUpTo<ConnectionRoute> {
-                        inclusive = true
-                    }
-                },
-            )
-        })
+        connectionScreen(
+            onAuthenticated = {
+                navController.navigateToNameYourDevice(
+                    navOptions {
+                        // We don't want to come back to the connection screen if we navigate to the name your device screen
+                        popUpTo<ConnectionRoute> {
+                            inclusive = true
+                        }
+                    },
+                )
+            },
+        )
         nameYourDeviceScreen(
             onBackClick = navController::popBackStack,
             onHelpClick = navController::navigateToNameYourDeviceHelp,
-            onDeviceNamed = navController::navigateToLocationSharing,
+            onDeviceNamed = {
+                // TODO if external URL or cloud URL available go to Location otherwise go to local first
+                navController.navigateToLocalFirst()
+            },
+        )
+        localFirstScreen(
+            onNextClick = navController::navigateToLocationSharing,
+            // TODO verify backstack behavior since iOS is disabling back starting from this screen since we've registered the device
+            onBackClick = navController::popBackStack,
         )
         locationSharingScreen()
     }

@@ -22,10 +22,7 @@ fun rememberHAAppState(
 }
 
 @Stable
-data class HAAppState(
-    val navController: NavHostController,
-    val coroutineScope: CoroutineScope,
-) {
+data class HAAppState(val navController: NavHostController, val coroutineScope: CoroutineScope) {
     private val previousDestination = mutableStateOf<NavDestination?>(null)
 
     val currentDestination: NavDestination?

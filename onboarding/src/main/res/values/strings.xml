@@ -7,10 +7,15 @@
     <string name="welcome_connect_to_ha">Connect to my Home\u00A0Assistant server</string>
     <string name="welcome_learn_more">Learn more</string>
     <string name="name_your_device_title">How would you like to name this device?</string>
-    <string name="name_your_device_body">This is used to identify your device in your Home\u00A0Assistant.</string>
+    <string name="name_your_device_content">This is used to identify your device in your Home\u00A0Assistant.</string>
     <string name="name_your_device_save">Save</string>
     <string name="name_your_device_clear_name">Clear device name</string>
     <string name="manual_server_title">What is your Home\u00A0Assistant address?</string>
     <string name="manual_server_connect">Connect</string>
     <string name="manual_server_clear_url">Clear server url</string>
+    <string name="local_first_title">Local by default.\nRemote when you’re ready.</string>
+    <string name="local_first_content">Your Home\u00A0Assistant is only accessible on your home network. To control your smart home from anywhere, you can set up remote access later in your settings.\nFor now, you\'re securely connected to your local network.</string>
+    <string name="local_first_next">Got it</string>
+    <string name="location_sharing_title">Do you want to share your location?</string>
+    <string name="location_sharing_next">Next</string>
 </resources>

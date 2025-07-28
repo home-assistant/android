@@ -2,6 +2,7 @@
 # You need to update the lock if you update or add a dependency
 # you can do that with `./gradlew alldependencies --write-locks`
 [versions]
+accompanist = "0.37.3"
 activity-compose = "1.10.1"
 androidBeaconLibrary = "2.21.1"
 androidGradlePlugin = "8.10.1"
@@ -113,6 +114,7 @@ homeassistant-android-dependencies = { id = "homeassistant.android.dependencies"
 homeassistant-android-flavor = { id = "homeassistant.android.flavor" }
 
 [libraries]
+accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanist" }
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
 activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity-compose" }
 android-beacon-library = { module = "org.altbeacon:android-beacon-library", version.ref = "androidBeaconLibrary" }

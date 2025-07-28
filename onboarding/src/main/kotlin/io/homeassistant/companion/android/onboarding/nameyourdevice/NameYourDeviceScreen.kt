@@ -114,7 +114,7 @@ private fun NameYourDeviceContent(
             style = HATextStyle.Headline,
         )
         Text(
-            text = stringResource(R.string.name_your_device_body),
+            text = stringResource(R.string.name_your_device_content),
             style = HATextStyle.Body,
         )
 

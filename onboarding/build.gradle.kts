@@ -26,6 +26,7 @@ dependencies {
     implementation(libs.core.ktx)
     implementation(libs.appcompat)
     implementation(libs.material)
+    implementation(libs.accompanist.permissions)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.animation)

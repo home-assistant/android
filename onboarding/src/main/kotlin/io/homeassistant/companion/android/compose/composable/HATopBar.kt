@@ -13,23 +13,27 @@ import io.homeassistant.companion.android.common.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun HATopBar(onHelpClick: () -> Unit, onBackClick: () -> Unit) {
+internal fun HATopBar(onHelpClick: (() -> Unit)? = null, onBackClick: (() -> Unit)? = null) {
     TopAppBar(
         title = {},
         navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = stringResource(R.string.navigate_up),
-                )
+            onBackClick?.let {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = stringResource(R.string.navigate_up),
+                    )
+                }
             }
         },
         actions = {
-            IconButton(onClick = onHelpClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-                    contentDescription = stringResource(R.string.get_help),
-                )
+            onHelpClick?.let {
+                IconButton(onClick = onHelpClick) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
+                        contentDescription = stringResource(R.string.get_help),
+                    )
+                }
             }
         },
     )
