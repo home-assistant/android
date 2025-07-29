@@ -58,19 +58,29 @@ private class LocalStorageWithMigration(
             if (!migrationChecked.get()) {
                 val currentVersion = localStorage.getInt(MIGRATION_PREF)
                 if (currentVersion == null || currentVersion < 1) {
-                    listOf(
-                        PREF_CONTROLS_AUTH_REQUIRED,
-                        PREF_CONTROLS_AUTH_ENTITIES,
-                        PREF_FULLSCREEN_ENABLED,
-                        PREF_KEEP_SCREEN_ON_ENABLED,
-                        PREF_PINCH_TO_ZOOM_ENABLED,
-                        PREF_AUTOPLAY_VIDEO,
-                        PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START,
-                        PREF_WEBVIEW_DEBUG_ENABLED,
-                    ).forEach { key ->
-                        integrationStorage.getString(key)?.let {
-                            localStorage.putString(key, it)
-                        }
+                    integrationStorage.getString(PREF_CONTROLS_AUTH_REQUIRED)?.let {
+                        localStorage.putString(PREF_CONTROLS_AUTH_REQUIRED, it)
+                    }
+                    integrationStorage.getStringSet(PREF_CONTROLS_AUTH_ENTITIES)?.let {
+                        localStorage.putStringSet(PREF_CONTROLS_AUTH_ENTITIES, it)
+                    }
+                    integrationStorage.getBooleanOrNull(PREF_FULLSCREEN_ENABLED)?.let {
+                        localStorage.putBoolean(PREF_FULLSCREEN_ENABLED, it)
+                    }
+                    integrationStorage.getBooleanOrNull(PREF_KEEP_SCREEN_ON_ENABLED)?.let {
+                        localStorage.putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, it)
+                    }
+                    integrationStorage.getBooleanOrNull(PREF_PINCH_TO_ZOOM_ENABLED)?.let {
+                        localStorage.putBoolean(PREF_PINCH_TO_ZOOM_ENABLED, it)
+                    }
+                    integrationStorage.getBooleanOrNull(PREF_AUTOPLAY_VIDEO)?.let {
+                        localStorage.putBoolean(PREF_AUTOPLAY_VIDEO, it)
+                    }
+                    integrationStorage.getBooleanOrNull(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START)?.let {
+                        localStorage.putBoolean(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START, it)
+                    }
+                    integrationStorage.getBooleanOrNull(PREF_WEBVIEW_DEBUG_ENABLED)?.let {
+                        localStorage.putBoolean(PREF_WEBVIEW_DEBUG_ENABLED, it)
                     }
 
                     localStorage.putInt(MIGRATION_PREF, MIGRATION_VERSION)
@@ -135,7 +145,7 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting {
         val current = localStorage().getString(PREF_CONTROLS_AUTH_REQUIRED)
-        return ControlsAuthRequiredSetting.values().firstOrNull {
+        return ControlsAuthRequiredSetting.entries.firstOrNull {
             it.name == current
         } ?: ControlsAuthRequiredSetting.NONE
     }
