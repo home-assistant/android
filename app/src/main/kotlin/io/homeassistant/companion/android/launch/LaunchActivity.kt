@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
@@ -90,12 +91,16 @@ class LaunchActivity :
                 }
             }
         }
-        presenter.onViewReady(intent.getStringExtra(EXTRA_SERVER_URL_TO_ONBOARD))
+        presenter.onViewReady(
+            intent.getStringExtra(EXTRA_SERVER_URL_TO_ONBOARD),
+            lifecycleScope,
+        )
     }
 
     override fun displayWebView() {
-        presenter.setSessionExpireMillis(0)
-
+        lifecycleScope.launch {
+            presenter.setSessionExpireMillis(0)
+        }
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) && BuildConfig.FLAVOR == "full") {
             val carIntent = Intent(
                 this,
@@ -162,7 +167,6 @@ class LaunchActivity :
 
     override fun onDestroy() {
         dismissDialog()
-        presenter.onFinish()
         super.onDestroy()
     }
 

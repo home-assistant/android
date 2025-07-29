@@ -7,10 +7,10 @@ import io.homeassistant.companion.android.common.data.network.NetworkStatusMonit
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 abstract class LaunchPresenterBase(
     private val view: LaunchView,
@@ -18,11 +18,8 @@ abstract class LaunchPresenterBase(
     private val networkStatusMonitor: NetworkStatusMonitor,
 ) : LaunchPresenter {
 
-    internal val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-    internal val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
-
-    override fun onViewReady(serverUrlToOnboard: String?) {
-        mainScope.launch {
+    override fun onViewReady(serverUrlToOnboard: String?, coroutineScope: CoroutineScope) {
+        coroutineScope.launch {
             // Remove any invalid servers (incomplete, partly migrated from another device)
             serverManager.defaultServers
                 .filter { serverManager.authenticationRepository(it.id).getSessionState() == SessionState.ANONYMOUS }
@@ -42,7 +39,7 @@ abstract class LaunchPresenterBase(
                 ) {
                     networkStatusMonitor.observeNetworkStatus(activeServer.connection)
                         .collectLatest { state ->
-                            if (handleNetworkState(state)) cancel()
+                            if (handleNetworkState(state)) this.cancel()
                         }
                 } else {
                     view.displayOnBoarding(false)
@@ -72,17 +69,11 @@ abstract class LaunchPresenterBase(
         }
     }
 
-    override fun setSessionExpireMillis(value: Long) {
-        mainScope.launch {
-            if (serverManager.isRegistered()) serverManager.integrationRepository().setSessionExpireMillis(value)
-        }
+    override suspend fun setSessionExpireMillis(value: Long) = withContext(Dispatchers.IO) {
+        if (serverManager.isRegistered()) serverManager.integrationRepository().setSessionExpireMillis(value)
     }
 
     override fun hasMultipleServers(): Boolean = serverManager.defaultServers.size > 1
-
-    override fun onFinish() {
-        mainScope.cancel()
-    }
 
     // TODO: This should probably go in settings?
     internal abstract fun resyncRegistration()
