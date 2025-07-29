@@ -18,9 +18,8 @@ internal sealed interface ConnectionNavigationEvent {
 }
 
 @HiltViewModel
-internal class ConnectionViewModel @Inject constructor(private val savedStateHandle: SavedStateHandle) : ViewModel() {
-
-    private val route = savedStateHandle.toRoute<ConnectionRoute>()
+internal class ConnectionViewModel @Inject constructor(savedStateHandle: SavedStateHandle) : ViewModel() {
+    private val route: ConnectionRoute = savedStateHandle.toRoute()
     val url = route.url
 
     private val navigationEventsMutableFlow = MutableSharedFlow<ConnectionNavigationEvent>()
@@ -29,7 +28,7 @@ internal class ConnectionViewModel @Inject constructor(private val savedStateHan
     init {
         viewModelScope.launch {
             delay(1.seconds)
-            navigationEventsMutableFlow.emit(ConnectionNavigationEvent.Authenticated)
+            // navigationEventsMutableFlow.emit(ConnectionNavigationEvent.Authenticated)
         }
     }
 }

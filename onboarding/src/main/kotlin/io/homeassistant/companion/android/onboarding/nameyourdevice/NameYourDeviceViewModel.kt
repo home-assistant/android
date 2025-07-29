@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.nameyourdevice
 
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,10 +21,10 @@ internal class NameYourDeviceViewModel @Inject constructor() : ViewModel() {
     private val navigationEventsMutableFlow = MutableSharedFlow<NameYourDeviceNavigationEvent>()
     val navigationEventsFlow: Flow<NameYourDeviceNavigationEvent> = navigationEventsMutableFlow
 
-    private val deviceNameMutableFlow = MutableStateFlow("")
+    private val deviceNameMutableFlow = MutableStateFlow(Build.MODEL)
     val deviceNameFlow: StateFlow<String> = deviceNameMutableFlow
 
-    private val isValidNameMutableFlow = MutableStateFlow(false)
+    private val isValidNameMutableFlow = MutableStateFlow(isValidName(deviceNameFlow.value))
     val isValidNameFlow: StateFlow<Boolean> = isValidNameMutableFlow
 
     fun onDeviceNameChange(name: String) {
@@ -38,7 +39,11 @@ internal class NameYourDeviceViewModel @Inject constructor() : ViewModel() {
     }
 
     private fun validateName(name: String) {
+        isValidNameMutableFlow.update { isValidName(name) }
+    }
+
+    private fun isValidName(name: String): Boolean {
         // TODO
-        isValidNameMutableFlow.update { name.isNotEmpty() }
+        return name.isNotEmpty()
     }
 }

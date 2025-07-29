@@ -44,7 +44,7 @@ internal class ServerDiscoveryViewModel @Inject constructor() : ViewModel() {
             discoveryStateMutableFlow.update {
                 ServerDiscovered(
                     "Mr Green",
-                    URL("http://192.168.1.1"),
+                    URL("http://192.168.15.6:8123"),
                     HomeAssistantVersion(2042, 1, 42),
                 )
             }

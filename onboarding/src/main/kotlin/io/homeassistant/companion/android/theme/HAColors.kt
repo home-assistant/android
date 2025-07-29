@@ -1,7 +1,10 @@
 package io.homeassistant.companion.android.theme
 
+import android.annotation.SuppressLint
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 object HAColors {
@@ -159,12 +162,32 @@ object HAColors {
     }
 }
 
+/**
+ * Inspired from [androidx.compose.material3.ColorScheme] to provide
+ * custom color tokens.
+ */
+@Immutable
+class HAColorScheme(val launchScreenBackground: Color)
+
 object HALegacyColors {
     val Blue = Color(0xFF03A9F4)
 }
 
-// TODO
+// TODO fill all tokens from MA with Design team
 val DarkAndroidColorScheme = darkColorScheme()
 val LightAndroidColorScheme = lightColorScheme(
     primary = HALegacyColors.Blue,
 )
+
+val DarkHAColorScheme = HAColorScheme(
+    // TODO validate this color with design team
+    launchScreenBackground = Color(0xFF111111),
+)
+
+val LightHAColorScheme = HAColorScheme(
+    // TODO validate this color with design team
+    launchScreenBackground = Color(0xFFFAFAFA),
+)
+
+@SuppressLint("ComposeCompositionLocalUsage")
+val LocalHAColorScheme = staticCompositionLocalOf { LightHAColorScheme }
