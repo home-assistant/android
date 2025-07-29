@@ -40,6 +40,8 @@ import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.content.getSystemService
+import androidx.core.graphics.scale
+import androidx.core.net.toUri
 import androidx.core.text.isDigitsOnly
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.R
@@ -272,37 +274,37 @@ class MessagingManager @Inject constructor(
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     fun handleMessage(notificationData: Map<String, String>, source: String) {
-        var now = System.currentTimeMillis()
-        var jsonData = notificationData
-        val notificationId: Long
+        mainScope.launch {
+            var now = System.currentTimeMillis()
+            var jsonData = notificationData
+            val notificationId: Long
 
-        if (source.startsWith(SOURCE_REPLY)) {
-            notificationId = source.substringAfter(SOURCE_REPLY).toLong()
-            notificationDao.get(notificationId.toInt())?.let {
-                val dbData: Map<String, String> = kotlinJsonMapper.decodeFromString(it.data)
+            if (source.startsWith(SOURCE_REPLY)) {
+                notificationId = source.substringAfter(SOURCE_REPLY).toLong()
+                notificationDao.get(notificationId.toInt())?.let {
+                    val dbData: Map<String, String> = kotlinJsonMapper.decodeFromString(it.data)
 
-                now = it.received // Allow for updating the existing notification without a tag
-                jsonData = jsonData + dbData // Add the notificationData, this contains the reply text
-            } ?: return
-        } else {
-            val jsonObject = JSONObject(jsonData)
-            val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
-                serverManager.getServer(webhookId = it)?.id
-            }
-            val notificationRow =
-                NotificationItem(
-                    0,
-                    now,
-                    jsonData[NotificationData.MESSAGE].toString(),
-                    jsonObject.toString(),
-                    source,
-                    receivedServer,
-                )
-            notificationId = notificationDao.add(notificationRow)
+                    now = it.received // Allow for updating the existing notification without a tag
+                    jsonData = jsonData + dbData // Add the notificationData, this contains the reply text
+                } ?: return@launch
+            } else {
+                val jsonObject = JSONObject(jsonData)
+                val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
+                    serverManager.getServer(webhookId = it)?.id
+                }
+                val notificationRow =
+                    NotificationItem(
+                        0,
+                        now,
+                        jsonData[NotificationData.MESSAGE].toString(),
+                        jsonObject.toString(),
+                        source,
+                        receivedServer,
+                    )
+                notificationId = notificationDao.add(notificationRow)
 
-            val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
-            if (confirmation) {
-                mainScope.launch {
+                val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
+                if (confirmation) {
                     try {
                         serverManager.integrationRepository(receivedServer ?: ServerManager.SERVER_ID_ACTIVE)
                             .fireEvent("mobile_app_notification_received", jsonData)
@@ -311,18 +313,18 @@ class MessagingManager @Inject constructor(
                     }
                 }
             }
-        }
 
-        val serverId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
-            serverManager.getServer(webhookId = webhookId)?.id
-        } ?: ServerManager.SERVER_ID_ACTIVE
-        if (serverManager.getServer(serverId) == null) {
-            Timber.w("Received notification but no server for it, discarding")
-            return
-        }
-        jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, serverId.toString()) }
+            val serverId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
+                serverManager.getServer(webhookId = webhookId)?.id
+            } ?: ServerManager.SERVER_ID_ACTIVE
 
-        mainScope.launch {
+            if (serverManager.getServer(serverId) == null) {
+                Timber.w("Received notification but no server for it, discarding")
+                return@launch
+            }
+
+            jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, serverId.toString()) }
+
             val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
             when {
                 jsonData[NotificationData.MESSAGE] == REQUEST_LOCATION_UPDATE && allowCommands -> {
@@ -425,7 +427,7 @@ class MessagingManager @Inject constructor(
                         }
 
                         DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
-                            if (!commandBleTransmitter(context, jsonData, sensorDao, mainScope)) {
+                            if (!commandBleTransmitter(context, jsonData, sensorDao)) {
                                 sendNotification(jsonData)
                             }
                         }
@@ -552,7 +554,7 @@ class MessagingManager @Inject constructor(
                         }
 
                         COMMAND_PERSISTENT_CONNECTION -> {
-                            val validPersistentTypes = WebsocketSetting.values().map { setting -> setting.name }
+                            val validPersistentTypes = WebsocketSetting.entries.map { setting -> setting.name }
 
                             when {
                                 jsonData[PERSISTENT].isNullOrEmpty() -> {
@@ -656,7 +658,6 @@ class MessagingManager @Inject constructor(
                             DND_ALL -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_ALL,
                             )
-
                             DND_NONE -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_NONE,
                             )
@@ -799,9 +800,7 @@ class MessagingManager @Inject constructor(
             }
 
             COMMAND_APP_LOCK -> {
-                mainScope.launch {
-                    setAppLock(data)
-                }
+                setAppLock(data)
             }
 
             COMMAND_WEBVIEW -> {
@@ -818,11 +817,9 @@ class MessagingManager @Inject constructor(
 
             COMMAND_SCREEN_ON -> {
                 if (!command.isNullOrEmpty()) {
-                    mainScope.launch {
-                        prefsRepository.setKeepScreenOnEnabled(
-                            command == COMMAND_KEEP_SCREEN_ON,
-                        )
-                    }
+                    prefsRepository.setKeepScreenOnEnabled(
+                        command == COMMAND_KEEP_SCREEN_ON,
+                    )
                 }
 
                 val powerManager = context.getSystemService<PowerManager>()
@@ -871,13 +868,13 @@ class MessagingManager @Inject constructor(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (Settings.System.canWrite(context)) {
                         if (!processScreenCommands(data)) {
-                            mainScope.launch { sendNotification(data) }
+                            sendNotification(data)
                         }
                     } else {
                         notifyMissingPermission(message.toString(), serverId)
                     }
                 } else if (!processScreenCommands(data)) {
-                    mainScope.launch { sendNotification(data) }
+                    sendNotification(data)
                 }
             }
 
@@ -1293,7 +1290,7 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun handleServer(builder: NotificationCompat.Builder, data: Map<String, String>) {
+    private suspend fun handleServer(builder: NotificationCompat.Builder, data: Map<String, String>) {
         data[NotificationData.WEBHOOK_ID]?.let { webhookId ->
             if (serverManager.defaultServers.size > 1) {
                 serverManager.getServer(webhookId = webhookId)?.let {
@@ -1536,7 +1533,7 @@ class MessagingManager @Inject constructor(
             val ratio: Float = (width.toFloat() / height.toFloat())
             newHeight = (newWidth / ratio).toInt()
         }
-        return Bitmap.createScaledBitmap(this, newWidth, newHeight, false)
+        return scale(newWidth, newHeight, false)
     }
 
     private fun handleVisibility(builder: NotificationCompat.Builder, data: Map<String, String>) {
@@ -1658,7 +1655,7 @@ class MessagingManager @Inject constructor(
 
             uri.startsWith(SETTINGS_PREFIX) -> {
                 if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY) {
-                    SettingsActivity.newInstance(context)
+                    SettingsActivity.newInstance(context, SettingsActivity.Deeplink.NOTIFICATION_HISTORY)
                 } else {
                     WebViewActivity.newInstance(context, null, serverId)
                 }
@@ -1666,13 +1663,11 @@ class MessagingManager @Inject constructor(
 
             UrlUtil.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX) -> {
                 Intent(Intent.ACTION_VIEW).apply {
-                    this.data = Uri.parse(
-                        if (uri.startsWith(DEEP_LINK_PREFIX)) {
-                            uri.removePrefix(DEEP_LINK_PREFIX)
-                        } else {
-                            uri
-                        },
-                    )
+                    this.data = if (uri.startsWith(DEEP_LINK_PREFIX)) {
+                        uri.removePrefix(DEEP_LINK_PREFIX)
+                    } else {
+                        uri
+                    }.toUri()
                 }
             }
 
@@ -1680,10 +1675,6 @@ class MessagingManager @Inject constructor(
                 WebViewActivity.newInstance(context, uri, serverId)
             }
         } ?: WebViewActivity.newInstance(context, null, serverId)
-
-        if (uri.startsWith(SETTINGS_PREFIX) && uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY) {
-            intent.putExtra("fragment", NOTIFICATION_HISTORY)
-        }
 
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (!otherApp) {
@@ -1702,18 +1693,13 @@ class MessagingManager @Inject constructor(
                 }
                 if (intentPackage == null && (!intent.`package`.isNullOrEmpty() || uri.startsWith(APP_PREFIX))) {
                     val marketIntent = Intent(Intent.ACTION_VIEW)
-                    marketIntent.data =
-                        Uri.parse(
-                            MARKET_PREFIX +
-                                if (uri.startsWith(
-                                        INTENT_PREFIX,
-                                    )
-                                ) {
-                                    intent.`package`.toString()
-                                } else {
-                                    uri.removePrefix(APP_PREFIX)
-                                },
-                        )
+                    marketIntent.data = (
+                        MARKET_PREFIX + if (uri.startsWith(INTENT_PREFIX)) {
+                            intent.`package`.toString()
+                        } else {
+                            uri.removePrefix(APP_PREFIX)
+                        }
+                        ).toUri()
                     marketIntent
                 } else {
                     intent
@@ -1750,7 +1736,7 @@ class MessagingManager @Inject constructor(
     private fun requestSystemAlertPermission() {
         val intent = Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:${context.packageName}"),
+            "package:${context.packageName}".toUri(),
         )
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
@@ -1766,7 +1752,7 @@ class MessagingManager @Inject constructor(
     private fun navigateAppDetails() {
         val intent = Intent(
             Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            Uri.parse("package:${context.packageName}"),
+            "package:${context.packageName}".toUri(),
         )
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
@@ -1775,7 +1761,7 @@ class MessagingManager @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.M)
     private fun requestWriteSystemPermission() {
         val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
-        intent.data = Uri.parse("package:" + context.packageName)
+        intent.data = ("package:" + context.packageName).toUri()
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
     }
@@ -1812,7 +1798,7 @@ class MessagingManager @Inject constructor(
             ),
         )
         var hasCorrectPackage = false
-        if (mediaList.size > 0) {
+        if (mediaList.isNotEmpty()) {
             for (item in mediaList) {
                 if (item.packageName == data[MEDIA_PACKAGE_NAME]) {
                     hasCorrectPackage = true
@@ -1898,7 +1884,7 @@ class MessagingManager @Inject constructor(
             val packageName = data[INTENT_PACKAGE_NAME]
             val action = data[INTENT_ACTION]
             val className = data[INTENT_CLASS_NAME]
-            val intentUri = if (!data[INTENT_URI].isNullOrEmpty()) Uri.parse(data[INTENT_URI]) else null
+            val intentUri = if (!data[INTENT_URI].isNullOrEmpty()) data[INTENT_URI]?.toUri() else null
             val intent = if (intentUri != null) Intent(action, intentUri) else Intent(action)
             val type = data[INTENT_TYPE]
             if (!type.isNullOrEmpty()) {
@@ -1964,9 +1950,7 @@ class MessagingManager @Inject constructor(
                 Timber.w("No intent to launch app found, opening app store")
                 val marketIntent = Intent(Intent.ACTION_VIEW)
                 marketIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                marketIntent.data = Uri.parse(
-                    MARKET_PREFIX + data[PACKAGE_NAME],
-                )
+                marketIntent.data = (MARKET_PREFIX + data[PACKAGE_NAME]).toUri()
                 context.startActivity(marketIntent)
             }
         } catch (e: Exception) {

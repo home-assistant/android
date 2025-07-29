@@ -97,10 +97,9 @@ class LaunchActivity :
         )
     }
 
-    override fun displayWebView() {
-        lifecycleScope.launch {
-            presenter.setSessionExpireMillis(0)
-        }
+    override suspend fun displayWebView() {
+        presenter.setSessionExpireMillis(0)
+
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) && BuildConfig.FLAVOR == "full") {
             val carIntent = Intent(
                 this,

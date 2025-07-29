@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.launch
 import androidx.annotation.StringRes
 
 interface LaunchView {
-    fun displayWebView()
+    suspend fun displayWebView()
 
     fun displayOnBoarding(sessionConnected: Boolean, serverUrlToOnboard: String? = null)
 
