@@ -5,7 +5,7 @@ import android.os.Build
 import javax.inject.Inject
 import javax.inject.Singleton
 
-internal interface NetworkHelper {
+interface NetworkHelper {
     /** Returns if network is validated for internet access */
     fun isNetworkValidated(): Boolean
 

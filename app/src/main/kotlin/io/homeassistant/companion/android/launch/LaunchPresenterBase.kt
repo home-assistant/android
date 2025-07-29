@@ -50,7 +50,7 @@ abstract class LaunchPresenterBase(
         }
     }
 
-    private fun handleNetworkState(state: NetworkState): Boolean = when (state) {
+    private suspend fun handleNetworkState(state: NetworkState): Boolean = when (state) {
         NetworkState.READY_LOCAL, NetworkState.READY_REMOTE -> {
             view.dismissDialog()
             resyncRegistration()
@@ -77,5 +77,5 @@ abstract class LaunchPresenterBase(
     override fun hasMultipleServers(): Boolean = serverManager.defaultServers.size > 1
 
     // TODO: This should probably go in settings?
-    internal abstract fun resyncRegistration()
+    internal abstract suspend fun resyncRegistration()
 }

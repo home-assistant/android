@@ -9,7 +9,8 @@ import io.homeassistant.companion.android.common.data.network.NetworkStatusMonit
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.onboarding.getMessagingToken
 import javax.inject.Inject
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @ActivityScoped
@@ -18,24 +19,22 @@ class LaunchPresenterImpl @Inject constructor(
     serverManager: ServerManager,
     networkStatusMonitor: NetworkStatusMonitor,
 ) : LaunchPresenterBase(context as LaunchView, serverManager, networkStatusMonitor) {
-    override fun resyncRegistration() {
-        if (!serverManager.isRegistered()) return
+    override suspend fun resyncRegistration() = withContext(Dispatchers.IO) {
+        if (!serverManager.isRegistered()) return@withContext
 
         serverManager.defaultServers.forEach {
-            ioScope.launch {
-                try {
-                    serverManager.integrationRepository(it.id).updateRegistration(
-                        DeviceRegistration(
-                            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                            null,
-                            getMessagingToken(),
-                        ),
-                    )
-                    serverManager.integrationRepository(it.id).getConfig() // Update cached data
-                    serverManager.webSocketRepository(it.id).getCurrentUser() // Update cached data
-                } catch (e: Exception) {
-                    Timber.e(e, "Issue updating Registration")
-                }
+            try {
+                serverManager.integrationRepository(it.id).updateRegistration(
+                    DeviceRegistration(
+                        "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                        null,
+                        getMessagingToken(),
+                    ),
+                )
+                serverManager.integrationRepository(it.id).getConfig() // Update cached data
+                serverManager.webSocketRepository(it.id).getCurrentUser() // Update cached data
+            } catch (e: Exception) {
+                Timber.e(e, "Issue updating Registration")
             }
         }
     }
