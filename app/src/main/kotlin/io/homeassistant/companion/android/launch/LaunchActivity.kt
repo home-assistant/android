@@ -161,6 +161,7 @@ class LaunchActivity :
     }
 
     override fun onDestroy() {
+        dismissDialog()
         presenter.onFinish()
         super.onDestroy()
     }

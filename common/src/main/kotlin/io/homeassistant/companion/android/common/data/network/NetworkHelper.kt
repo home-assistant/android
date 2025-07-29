@@ -5,7 +5,7 @@ import android.os.Build
 import javax.inject.Inject
 import javax.inject.Singleton
 
-interface NetworkHelper {
+internal interface NetworkHelper {
     /** Returns if network is validated for internet access */
     fun isNetworkValidated(): Boolean
 
@@ -20,7 +20,7 @@ interface NetworkHelper {
 }
 
 @Singleton
-class NetworkHelperImpl @Inject constructor(private val capabilitiesChecker: NetworkCapabilitiesChecker) :
+internal class NetworkHelperImpl @Inject constructor(private val capabilitiesChecker: NetworkCapabilitiesChecker) :
     NetworkHelper {
 
     override fun isNetworkValidated(): Boolean = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -34,6 +34,7 @@ class NetworkHelperImpl @Inject constructor(private val capabilitiesChecker: Net
         NetworkCapabilities.TRANSPORT_ETHERNET,
         NetworkCapabilities.TRANSPORT_CELLULAR,
         NetworkCapabilities.TRANSPORT_VPN,
+        NetworkCapabilities.TRANSPORT_BLUETOOTH,
     ).any { capabilitiesChecker.hasTransport(it) }
 
     override fun isUsingEthernet(): Boolean = capabilitiesChecker.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)

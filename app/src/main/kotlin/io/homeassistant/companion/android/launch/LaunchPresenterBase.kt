@@ -10,13 +10,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 abstract class LaunchPresenterBase(
     private val view: LaunchView,
     internal val serverManager: ServerManager,
-    internal val networkStatusMonitor: NetworkStatusMonitor,
+    private val networkStatusMonitor: NetworkStatusMonitor,
 ) : LaunchPresenter {
 
     internal val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -42,7 +41,6 @@ abstract class LaunchPresenterBase(
                     activeServer != null
                 ) {
                     networkStatusMonitor.observeNetworkStatus(activeServer.connection)
-                        .distinctUntilChanged()
                         .collectLatest { state ->
                             if (handleNetworkState(state)) cancel()
                         }

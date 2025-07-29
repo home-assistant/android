@@ -21,11 +21,40 @@ interface NetworkStatusMonitor {
 }
 
 /**
+ * Represents the current network connectivity state, especially relevant to server access.
+ */
+enum class NetworkState {
+    /**
+     * A local network is available and the current connection matches internal criteria (e.g., SSID, Ethernet, VPN).
+     * This typically indicates the server can be reached via its internal URL.
+     */
+    READY_LOCAL,
+
+    /**
+     * Network is available and validated (e.g., internet is reachable),
+     * but we are not considered to be on the internal network.
+     * Server will be accessed through external/cloud URL.
+     */
+    READY_REMOTE,
+
+    /**
+     * Network connection exists but has not yet been validated or identified as internal.
+     * This is a transitional state while we wait for system validation or SSID checks.
+     */
+    CONNECTING,
+
+    /**
+     * No active network connection is currently available.
+     */
+    UNAVAILABLE,
+}
+
+/**
  * Tracks network changes using ConnectivityManager callbacks.
  * Automatically handles callback registration/cleanup.
  */
 @Singleton
-class NetworkStatusMonitorImpl @Inject constructor(
+internal class NetworkStatusMonitorImpl @Inject constructor(
     private val connectivityManager: ConnectivityManager,
     private val networkHelper: NetworkHelper,
 ) : NetworkStatusMonitor {
@@ -55,17 +84,22 @@ class NetworkStatusMonitorImpl @Inject constructor(
         }
     }.distinctUntilChanged()
 
+    /**
+     * Evaluates the current network state relevant to the provided server configuration.
+     *
+     * Priority of checks:
+     * 1. If no active network -> [NetworkState.UNAVAILABLE]
+     * 2. If device is considered internal (SSID, VPN, Ethernet match) -> [NetworkState.READY_LOCAL]
+     * 3. If network is validated (but not internal) -> [NetworkState.READY_REMOTE]
+     * 4. Otherwise -> [NetworkState.CONNECTING]
+     *
+     * Note: Both internal and validated may be true, but internal takes precedence
+     * as it typically represents a faster and preferred path.
+     */
     private fun getCurrentNetworkState(serverConfig: ServerConnectionInfo): NetworkState = when {
         !networkHelper.hasActiveNetwork() -> NetworkState.UNAVAILABLE
         serverConfig.isInternal(requiresUrl = false) -> NetworkState.READY_LOCAL
         networkHelper.isNetworkValidated() -> NetworkState.READY_REMOTE
         else -> NetworkState.CONNECTING
     }
-}
-
-enum class NetworkState {
-    READY_LOCAL,
-    READY_REMOTE,
-    CONNECTING,
-    UNAVAILABLE,
 }
