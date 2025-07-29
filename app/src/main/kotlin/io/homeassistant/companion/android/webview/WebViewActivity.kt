@@ -47,9 +47,11 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -78,8 +80,8 @@ import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.barcode.BarcodeScannerActivity
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.GestureAction
@@ -95,7 +97,7 @@ import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
-import io.homeassistant.companion.android.themes.ThemesManager
+import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.DataUriDownloadManager
 import io.homeassistant.companion.android.util.LifecycleHandler
@@ -190,7 +192,7 @@ class WebViewActivity :
     lateinit var presenter: WebViewPresenter
 
     @Inject
-    lateinit var themesManager: ThemesManager
+    lateinit var nightModeManager: NightModeManager
 
     @Inject
     lateinit var changeLog: ChangeLog
@@ -285,6 +287,11 @@ class WebViewActivity :
             val customViewFromWebView by remember { customViewFromWebView }
             val statusBarColor by remember { statusBarColor }
             val backgroundColor by remember { backgroundColor }
+            var nightModeTheme by remember { mutableStateOf<NightModeTheme?>(null) }
+
+            LaunchedEffect(Unit) {
+                nightModeTheme = nightModeManager.getCurrentNightMode()
+            }
 
             WebViewContentScreen(
                 webView,
@@ -294,6 +301,7 @@ class WebViewActivity :
                 playerLeft = playerLeft,
                 currentAppLocked,
                 customViewFromWebView,
+                nightModeTheme = nightModeTheme,
                 statusBarColor = statusBarColor,
                 backgroundColor = backgroundColor,
             ) { isFullScreen ->
@@ -340,12 +348,7 @@ class WebViewActivity :
                 },
             )
 
-            settings.minimumFontSize = 5
-            settings.javaScriptEnabled = true
-            settings.domStorageEnabled = true
-            settings.displayZoomControls = false
             settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
-            settings.userAgentString = settings.userAgentString + " ${HomeAssistantApis.USER_AGENT_STRING}"
             webViewClient = object : TLSWebViewClient(keyChainRepository) {
                 @Deprecated("Deprecated in Java for SDK >= 23")
                 override fun onReceivedError(
@@ -592,12 +595,6 @@ class WebViewActivity :
 
             webViewAddJavascriptInterface()
         }
-
-        // Set WebView background color to transparent, so that the theme of the android activity has control over it.
-        // This enables the ability to have the launch screen behind the WebView until the web frontend gets rendered
-        webView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
-
-        themesManager.setThemeForWebView(this, webView.settings)
 
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
