@@ -58,6 +58,7 @@ abstract class LaunchPresenterBase(
             true
         }
 
+        // the activity has a CircularProgressIndicator running
         NetworkState.CONNECTING -> {
             view.dismissDialog()
             false

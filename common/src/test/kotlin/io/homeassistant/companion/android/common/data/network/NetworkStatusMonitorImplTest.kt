@@ -52,7 +52,7 @@ class NetworkStatusMonitorImplTest {
     }
 
     @Test
-    fun `given monitoring flow when monitoring is canceled then flow unregisters callback`() = runTest {
+    fun `Given monitoring flow when monitoring is canceled then flow unregisters callback`() = runTest {
         every { networkHelper.hasActiveNetwork() } returns true
         every { networkHelper.isNetworkValidated() } returns true
         val job = launch {
@@ -66,7 +66,7 @@ class NetworkStatusMonitorImplTest {
     }
 
     @Test
-    fun `given no active network when monitoring starts then emit UNAVAILABLE`() = runTest {
+    fun `Given no active network when monitoring starts then state is UNAVAILABLE`() = runTest {
         // Given
         every { networkHelper.hasActiveNetwork() } returns false
 
@@ -78,7 +78,7 @@ class NetworkStatusMonitorImplTest {
     }
 
     @Test
-    fun `given on local setup when active network then emit READY_LOCAL`() = runTest {
+    fun `Given on local setup when active network then state is READY_LOCAL`() = runTest {
         // Given
         every { networkHelper.hasActiveNetwork() } returns true
         every { networkHelper.isNetworkValidated() } returns false
@@ -92,7 +92,7 @@ class NetworkStatusMonitorImplTest {
     }
 
     @Test
-    fun `given on observing network on external setup when validated network then emit READY_REMOTE`() = runTest {
+    fun `Given on observing network on external setup when validated network then state is READY_REMOTE`() = runTest {
         // Given
         every { networkHelper.hasActiveNetwork() } returns true
         every { serverConfig.isInternal(false) } returns false
@@ -106,7 +106,7 @@ class NetworkStatusMonitorImplTest {
     }
 
     @Test
-    fun `given observing network when network exists but not validated then emit CONNECTING`() = runTest {
+    fun `Given observing network when network exists but not validated then state is CONNECTING`() = runTest {
         every { networkHelper.hasActiveNetwork() } returns true
         every { serverConfig.isInternal(false) } returns false
         every { networkHelper.isNetworkValidated() } returns false
@@ -117,7 +117,7 @@ class NetworkStatusMonitorImplTest {
     }
 
     @Test
-    fun `given network becomes ready when callback triggered then state updates from UNAVAILABLE to READY_LOCAL`() = runTest {
+    fun `Given network becomes ready when callback triggered then state updates from UNAVAILABLE to READY_LOCAL`() = runTest {
         every { networkHelper.hasActiveNetwork() } returnsMany listOf(false, true)
         every { serverConfig.isInternal(any()) } returns true
         every { networkHelper.isNetworkValidated() } returns false
@@ -134,7 +134,7 @@ class NetworkStatusMonitorImplTest {
     }
 
     @Test
-    fun `given network becomes ready when callback triggered then state updates from UNAVAILABLE to READY_REMOTE`() = runTest {
+    fun `Given network becomes ready when callback triggered then state updates from UNAVAILABLE to READY_REMOTE`() = runTest {
         every { serverConfig.isInternal(false) } returns false
         every { networkHelper.hasActiveNetwork() } returnsMany listOf(false, true)
 
