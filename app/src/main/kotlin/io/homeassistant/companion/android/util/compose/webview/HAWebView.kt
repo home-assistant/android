@@ -15,6 +15,7 @@ import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
+import timber.log.Timber
 
 /**
  * A composable that displays a WebView specifically configured for Home Assistant.
@@ -55,7 +56,10 @@ fun HAWebView(
                     FrameLayout.LayoutParams.MATCH_PARENT,
                 )
 
-                settings.defaultSettings()
+                settings {
+                    // Use DSL to catch `NoSuchMethodError`
+                    defaultSettings()
+                }
 
                 // Set WebView background color to transparent, so that the theme of the android activity has control over it.
                 // This enables the ability to have the launch screen behind the WebView until the web frontend gets rendered
@@ -74,7 +78,16 @@ fun HAWebView(
 }
 
 fun WebView.settings(configureDsl: WebSettings.() -> Unit) {
-    settings.apply(configureDsl)
+    try {
+        settings.configureDsl()
+    } catch (e: NoSuchMethodError) {
+        // While displaying the WebView within a Preview or while making screenshot test getSettings is throwing
+        // `java.lang.NoSuchMethodError` we catch the error to be able to continue to use Preview and screenshot tests.
+        Timber.e(
+            e,
+            "Failed to configure WebView settings",
+        )
+    }
 }
 
 @SuppressLint("SetJavaScriptEnabled")
