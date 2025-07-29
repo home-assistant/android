@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -30,7 +31,7 @@ import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.settings.language.LanguagesManager
-import io.homeassistant.companion.android.themes.ThemesManager
+import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.UrlUtil
 import javax.inject.Inject
@@ -48,7 +49,7 @@ import timber.log.Timber
 class SettingsPresenterImpl @Inject constructor(
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
-    private val themesManager: ThemesManager,
+    private val nightModeManager: NightModeManager,
     private val langsManager: LanguagesManager,
     private val changeLog: ChangeLog,
     private val settingsDao: SettingsDao,
@@ -120,7 +121,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun getString(key: String, defValue: String?): String? = runBlocking {
         when (key) {
-            "themes" -> themesManager.getCurrentTheme()
+            "themes" -> nightModeManager.getCurrentNightMode().storageValue
             "languages" -> langsManager.getCurrentLang()
             "page_zoom" -> prefsRepository.getPageZoomLevel().toString()
             "screen_orientation" -> prefsRepository.getScreenOrientation()
@@ -131,7 +132,7 @@ class SettingsPresenterImpl @Inject constructor(
     override fun putString(key: String, value: String?) {
         mainScope.launch {
             when (key) {
-                "themes" -> themesManager.saveTheme(value)
+                "themes" -> nightModeManager.saveNightMode(NightModeTheme.fromStorageValue(value))
                 "languages" -> langsManager.saveLang(value)
                 "page_zoom" -> prefsRepository.setPageZoomLevel(value?.toIntOrNull())
                 "screen_orientation" -> prefsRepository.saveScreenOrientation(value)
