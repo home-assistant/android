@@ -1,21 +1,25 @@
 package io.homeassistant.companion.android.launch
 
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.authentication.SessionState
+import io.homeassistant.companion.android.common.data.network.NetworkState
+import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-abstract class LaunchPresenterBase(private val view: LaunchView, internal val serverManager: ServerManager) :
-    LaunchPresenter {
+abstract class LaunchPresenterBase(
+    private val view: LaunchView,
+    internal val serverManager: ServerManager,
+    private val networkStatusMonitor: NetworkStatusMonitor,
+) : LaunchPresenter {
 
-    internal val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-    internal val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
-
-    override fun onViewReady(serverUrlToOnboard: String?) {
-        mainScope.launch {
+    override fun onViewReady(serverUrlToOnboard: String?, coroutineScope: CoroutineScope) {
+        coroutineScope.launch {
             // Remove any invalid servers (incomplete, partly migrated from another device)
             serverManager.defaultServers
                 .filter { serverManager.authenticationRepository(it.id).getSessionState() == SessionState.ANONYMOUS }
@@ -24,12 +28,19 @@ abstract class LaunchPresenterBase(private val view: LaunchView, internal val se
             try {
                 if (serverUrlToOnboard != null) {
                     view.displayOnBoarding(false, serverUrlToOnboard)
-                } else if (
+                    return@launch
+                }
+
+                val activeServer = serverManager.getServer(ServerManager.SERVER_ID_ACTIVE)
+                if (
                     serverManager.isRegistered() &&
-                    serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
+                    serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED &&
+                    activeServer != null
                 ) {
-                    resyncRegistration()
-                    view.displayWebview()
+                    networkStatusMonitor.observeNetworkStatus(activeServer.connection)
+                        .collectLatest { state ->
+                            if (handleNetworkState(state)) this.cancel()
+                        }
                 } else {
                     view.displayOnBoarding(false)
                 }
@@ -39,18 +50,32 @@ abstract class LaunchPresenterBase(private val view: LaunchView, internal val se
         }
     }
 
-    override fun setSessionExpireMillis(value: Long) {
-        mainScope.launch {
-            if (serverManager.isRegistered()) serverManager.integrationRepository().setSessionExpireMillis(value)
+    private suspend fun handleNetworkState(state: NetworkState): Boolean = when (state) {
+        NetworkState.READY_LOCAL, NetworkState.READY_REMOTE -> {
+            view.dismissDialog()
+            resyncRegistration()
+            view.displayWebView()
+            true
         }
+
+        // the activity has a CircularProgressIndicator running
+        NetworkState.CONNECTING -> {
+            view.dismissDialog()
+            false
+        }
+
+        NetworkState.UNAVAILABLE -> {
+            view.displayAlertMessageDialog(R.string.error_connection_failed_no_network)
+            false
+        }
+    }
+
+    override suspend fun setSessionExpireMillis(value: Long) = withContext(Dispatchers.IO) {
+        if (serverManager.isRegistered()) serverManager.integrationRepository().setSessionExpireMillis(value)
     }
 
     override fun hasMultipleServers(): Boolean = serverManager.defaultServers.size > 1
 
-    override fun onFinish() {
-        mainScope.cancel()
-    }
-
     // TODO: This should probably go in settings?
-    internal abstract fun resyncRegistration()
+    internal abstract suspend fun resyncRegistration()
 }

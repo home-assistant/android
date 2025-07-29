@@ -1,12 +1,12 @@
 package io.homeassistant.companion.android.launch
 
+import kotlinx.coroutines.CoroutineScope
+
 interface LaunchPresenter {
 
-    fun onViewReady(serverUrlToOnboard: String? = null)
+    fun onViewReady(serverUrlToOnboard: String? = null, coroutineScope: CoroutineScope)
 
-    fun setSessionExpireMillis(value: Long)
+    suspend fun setSessionExpireMillis(value: Long)
 
     fun hasMultipleServers(): Boolean
-
-    fun onFinish()
 }
