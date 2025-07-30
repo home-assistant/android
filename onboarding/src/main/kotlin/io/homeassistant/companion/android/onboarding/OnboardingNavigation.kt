@@ -30,7 +30,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 data object OnboardingRoute
 
-fun NavGraphBuilder.onboarding(navController: NavController) {
+fun NavGraphBuilder.onboarding(
+    navController: NavController,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+) {
     navigation<OnboardingRoute>(startDestination = WelcomeRoute) {
         welcomeScreen(
             onConnectClick = navController::navigateToServerDiscovery,
@@ -62,6 +65,8 @@ fun NavGraphBuilder.onboarding(navController: NavController) {
                     },
                 )
             },
+            onShowSnackbar = onShowSnackbar,
+            onBack = navController::popBackStack,
         )
         nameYourDeviceScreen(
             onBackClick = navController::popBackStack,

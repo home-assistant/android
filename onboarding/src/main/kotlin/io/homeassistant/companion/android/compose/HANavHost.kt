@@ -39,7 +39,7 @@ fun HANavHost(
             navController = navController,
             startDestination = startDestination,
         ) {
-            onboarding(navController)
+            onboarding(navController, onShowSnackbar)
             frontendScreen()
         }
     }

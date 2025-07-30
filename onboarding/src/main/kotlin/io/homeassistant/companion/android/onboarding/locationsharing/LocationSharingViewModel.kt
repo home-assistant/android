@@ -14,7 +14,7 @@ internal sealed interface LocationSharingNavigationEvent {
 
 @HiltViewModel
 internal class LocationSharingViewModel @Inject constructor() : ViewModel() {
-    private val _navigationEventsFlow = MutableSharedFlow<LocationSharingNavigationEvent>()
+    private val _navigationEventsFlow = MutableSharedFlow<LocationSharingNavigationEvent>(replay = 1)
     val navigationEventsFlow = _navigationEventsFlow.asSharedFlow()
 
     fun onGoToNextScreen() {
