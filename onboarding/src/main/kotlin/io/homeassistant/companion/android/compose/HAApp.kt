@@ -19,11 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavHostController
 
 @Composable
-fun HAApp(modifier: Modifier = Modifier) {
-    val navController = rememberNavController()
+fun HAApp(navController: NavHostController, modifier: Modifier = Modifier) {
     val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
