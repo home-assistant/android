@@ -36,6 +36,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyChainRepository
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
 import io.homeassistant.companion.android.themes.ThemesManager
@@ -44,7 +45,6 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
-import javax.inject.Named
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import timber.log.Timber
@@ -64,7 +64,7 @@ class AuthenticationFragment : Fragment() {
     lateinit var themesManager: ThemesManager
 
     @Inject
-    @Named("keyChainRepository")
+    @NamedKeyChainRepository
     lateinit var keyChainRepository: KeyChainRepository
 
     @SuppressLint("SetJavaScriptEnabled")
