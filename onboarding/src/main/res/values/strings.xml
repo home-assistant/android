@@ -18,4 +18,5 @@
     <string name="local_first_next">Got it</string>
     <string name="location_sharing_title">Do you want to share your location?</string>
     <string name="location_sharing_next">Next</string>
+    <string name="loading_content_description">Loading</string>
 </resources>
