@@ -7,8 +7,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 sealed interface LauncherNavigationEvent {
@@ -22,8 +22,8 @@ class LauncherViewModel @Inject constructor(private val serverManager: ServerMan
     /**
      * Holds the navigation events for the launcher.
      */
-    private val navigationEventsMutableFlow = MutableSharedFlow<LauncherNavigationEvent>(replay = 1)
-    val navigationEventsFlow: Flow<LauncherNavigationEvent> = navigationEventsMutableFlow
+    private val _navigationEventsFlow = MutableSharedFlow<LauncherNavigationEvent>(replay = 1)
+    val navigationEventsFlow = _navigationEventsFlow.asSharedFlow()
 
     private val shouldShowSplashScreen = AtomicBoolean(false)
 
@@ -50,13 +50,13 @@ class LauncherViewModel @Inject constructor(private val serverManager: ServerMan
                         .getSessionState() == SessionState.CONNECTED
                 ) {
                     // resyncRegistration()
-                    navigationEventsMutableFlow.emit(LauncherNavigationEvent.Frontend)
+                    _navigationEventsFlow.emit(LauncherNavigationEvent.Frontend)
                 } else {
-                    navigationEventsMutableFlow.emit(LauncherNavigationEvent.Onboarding)
+                    _navigationEventsFlow.emit(LauncherNavigationEvent.Onboarding)
                 }
             } catch (e: IllegalArgumentException) { // Server was just removed, nothing is added
                 // TODO what can throw here this exception resyncRegistration probably
-                navigationEventsMutableFlow.emit(LauncherNavigationEvent.Onboarding)
+                _navigationEventsFlow.emit(LauncherNavigationEvent.Onboarding)
             }
             shouldShowSplashScreen.set(false)
         }

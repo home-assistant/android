@@ -5,10 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -18,28 +18,28 @@ internal sealed interface NameYourDeviceNavigationEvent {
 
 @HiltViewModel
 internal class NameYourDeviceViewModel @Inject constructor() : ViewModel() {
-    private val navigationEventsMutableFlow = MutableSharedFlow<NameYourDeviceNavigationEvent>()
-    val navigationEventsFlow: Flow<NameYourDeviceNavigationEvent> = navigationEventsMutableFlow
+    private val _navigationEventsFlow = MutableSharedFlow<NameYourDeviceNavigationEvent>()
+    val navigationEventsFlow = _navigationEventsFlow.asSharedFlow()
 
-    private val deviceNameMutableFlow = MutableStateFlow(Build.MODEL)
-    val deviceNameFlow: StateFlow<String> = deviceNameMutableFlow
+    private val _deviceNameFlow = MutableStateFlow(Build.MODEL)
+    val deviceNameFlow = _deviceNameFlow.asStateFlow()
 
-    private val isValidNameMutableFlow = MutableStateFlow(isValidName(deviceNameFlow.value))
-    val isValidNameFlow: StateFlow<Boolean> = isValidNameMutableFlow
+    private val _isValidNameFlow = MutableStateFlow(isValidName(deviceNameFlow.value))
+    val isValidNameFlow = _isValidNameFlow.asStateFlow()
 
     fun onDeviceNameChange(name: String) {
-        deviceNameMutableFlow.update { name }
+        _deviceNameFlow.update { name }
         validateName(name)
     }
 
     fun onSaveClick() {
         viewModelScope.launch {
-            navigationEventsMutableFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved)
+            _navigationEventsFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved)
         }
     }
 
     private fun validateName(name: String) {
-        isValidNameMutableFlow.update { isValidName(name) }
+        _isValidNameFlow.update { isValidName(name) }
     }
 
     private fun isValidName(name: String): Boolean {

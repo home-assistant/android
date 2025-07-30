@@ -33,7 +33,7 @@ internal fun NavGraphBuilder.locationSharingScreen(
         val viewModel: LocationSharingViewModel = hiltViewModel()
 
         LaunchedEffect(viewModel) {
-            viewModel.navigationEventFlow.collect { event ->
+            viewModel.navigationEventsFlow.collect { event ->
                 when (event) {
                     LocationSharingNavigationEvent.GoToNextScreen -> onGotoNextScreen()
                 }

@@ -22,9 +22,10 @@ internal fun NavGraphBuilder.connectionScreen(onAuthenticated: () -> Unit) {
     composable<ConnectionRoute> {
         val viewModel: ConnectionViewModel = hiltViewModel()
         LaunchedEffect(viewModel) {
-            viewModel.navigationEvents.collect {
+            viewModel.navigationEventsFlow.collect {
                 when (it) {
                     ConnectionNavigationEvent.Authenticated -> onAuthenticated()
+                    is ConnectionNavigationEvent.Error -> TODO()
                 }
             }
         }

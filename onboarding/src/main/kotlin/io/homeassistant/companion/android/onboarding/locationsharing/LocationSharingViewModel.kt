@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 internal sealed interface LocationSharingNavigationEvent {
@@ -14,12 +14,12 @@ internal sealed interface LocationSharingNavigationEvent {
 
 @HiltViewModel
 internal class LocationSharingViewModel @Inject constructor() : ViewModel() {
-    private val navigationEventsMutableFlow = MutableSharedFlow<LocationSharingNavigationEvent>()
-    val navigationEventFlow: Flow<LocationSharingNavigationEvent> = navigationEventsMutableFlow
+    private val _navigationEventsFlow = MutableSharedFlow<LocationSharingNavigationEvent>()
+    val navigationEventsFlow = _navigationEventsFlow.asSharedFlow()
 
     fun onGoToNextScreen() {
         viewModelScope.launch {
-            navigationEventsMutableFlow.emit(LocationSharingNavigationEvent.GoToNextScreen)
+            _navigationEventsFlow.emit(LocationSharingNavigationEvent.GoToNextScreen)
         }
     }
 }

@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
+import timber.log.Timber
 
 // TODO remove this in favor of the one in the :app
 
@@ -31,7 +32,9 @@ fun HAWebView(modifier: Modifier = Modifier, configure: WebView.() -> Unit = {},
 }
 
 fun WebView.settings(configureDsl: WebSettings.() -> Unit) {
-    settings.apply(configureDsl)
+    runCatching { settings.configureDsl() }.onFailure {
+        Timber.e(it, "Failed to configure WebView settings")
+    }
 }
 
 @SuppressLint("SetJavaScriptEnabled")
