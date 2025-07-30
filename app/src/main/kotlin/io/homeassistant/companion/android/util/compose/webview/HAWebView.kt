@@ -34,4 +34,5 @@ fun HAWebView(modifier: Modifier = Modifier, configure: WebView.() -> Unit = {},
         },
         modifier = modifier,
     )
+    // TODO add BackHandler only when we use navigation.
 }

@@ -5,19 +5,34 @@ import android.graphics.Color
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.FrameLayout
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import timber.log.Timber
 
-// TODO remove this in favor of the one in the :app
+// TODO remove this in favor of the one in the :app but update the app version to support BackHandler
 
 @Composable
-fun HAWebView(modifier: Modifier = Modifier, configure: WebView.() -> Unit = {}, factory: () -> WebView? = { null }) {
+fun HAWebView(
+    modifier: Modifier = Modifier,
+    configure: WebView.() -> Unit = {},
+    factory: () -> WebView? = { null },
+    // Only used when the backstack of the webView is empty
+    onBackPressed: (() -> Unit)? = null,
+) {
+    var webview by remember { mutableStateOf<WebView?>(null) }
+
     AndroidView(
         factory = { context ->
             (factory() ?: WebView(context)).apply {
+                webview = this
+                Timber.e("Hello set webView $webview")
                 // We want the modifier to determine the size so the WebView should match the parent
                 this.layoutParams = FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
@@ -29,6 +44,14 @@ fun HAWebView(modifier: Modifier = Modifier, configure: WebView.() -> Unit = {},
         },
         modifier = modifier,
     )
+
+    // TODO do this in :app
+    // To avoid checking doUpdateVisitedHistory from the webViewClient we simply delegate the back button handling
+    // to the webView and when the webview backstack is empty we call the callback given in parameter that should be
+    // handle by the navHost.
+    BackHandler(onBackPressed != null) {
+        webview.takeIf { it?.canGoBack() == true }?.goBack() ?: onBackPressed?.invoke()
+    }
 }
 
 fun WebView.settings(configureDsl: WebSettings.() -> Unit) {

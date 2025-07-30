@@ -23,7 +23,7 @@ internal fun NavController.navigateToConnection(url: String, navOptions: NavOpti
 internal fun NavGraphBuilder.connectionScreen(
     onAuthenticated: () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
-    onBack: () -> Unit,
+    onBackPressed: () -> Unit,
 ) {
     composable<ConnectionRoute> {
         val viewModel: ConnectionViewModel = hiltViewModel()
@@ -35,16 +35,19 @@ internal fun NavGraphBuilder.connectionScreen(
                     is ConnectionNavigationEvent.URLMalformed -> {
                         // TODO could change the message for a more explicit one
                         onShowSnackbar(context.getString(R.string.error_connection_failed), null)
-                        onBack()
+                        onBackPressed()
                     }
                     is ConnectionNavigationEvent.Error -> {
                         // TODO make a dialog (move this out of the navigation event) or a full screen
                         onShowSnackbar(context.getString(it.resId, it.formatArgs), null)
-                        onBack()
+                        onBackPressed()
                     }
                 }
             }
         }
-        ConnectionScreen(viewModel = viewModel)
+        ConnectionScreen(
+            viewModel = viewModel,
+            onBackPressed = onBackPressed,
+        )
     }
 }

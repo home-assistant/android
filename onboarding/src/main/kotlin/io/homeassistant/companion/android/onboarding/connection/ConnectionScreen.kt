@@ -22,7 +22,11 @@ import io.homeassistant.companion.android.theme.HATheme
 import io.homeassistant.companion.android.theme.LocalHAColorScheme
 
 @Composable
-internal fun ConnectionScreen(viewModel: ConnectionViewModel, modifier: Modifier = Modifier) {
+internal fun ConnectionScreen(
+    onBackPressed: () -> Unit,
+    viewModel: ConnectionViewModel,
+    modifier: Modifier = Modifier,
+) {
     val url by viewModel.urlFlow.collectAsState()
     val isLoading by viewModel.isLoadingFlow.collectAsState()
 
@@ -30,6 +34,7 @@ internal fun ConnectionScreen(viewModel: ConnectionViewModel, modifier: Modifier
         url = url,
         isLoading = isLoading,
         webViewClient = viewModel.webViewClient,
+        onBackPressed = onBackPressed,
         modifier = modifier,
     )
 }
@@ -39,6 +44,7 @@ internal fun ConnectionScreen(
     url: String?,
     isLoading: Boolean,
     webViewClient: WebViewClient,
+    onBackPressed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier) {
@@ -59,6 +65,7 @@ internal fun ConnectionScreen(
                     this.webViewClient = webViewClient
                     loadUrl(url)
                 },
+                onBackPressed = onBackPressed,
             )
         }
         if (isLoading) {
@@ -75,6 +82,7 @@ private fun ConnectionScreenPreview() {
             url = "https://www.home-assistant.io",
             isLoading = false,
             webViewClient = WebViewClient(),
+            onBackPressed = {},
             modifier = Modifier.fillMaxSize(),
         )
     }
