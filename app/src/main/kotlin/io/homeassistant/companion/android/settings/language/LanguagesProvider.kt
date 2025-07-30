@@ -8,7 +8,7 @@ import javax.inject.Inject
 
 class LanguagesProvider @Inject constructor(private var langManager: LanguagesManager) {
 
-    fun getSupportedLanguages(context: Context): Map<String, String> {
+    suspend fun getSupportedLanguages(context: Context): Map<String, String> {
         val listAppLocales = sortedMapOf<String, String>()
         val resources = context.resources
 

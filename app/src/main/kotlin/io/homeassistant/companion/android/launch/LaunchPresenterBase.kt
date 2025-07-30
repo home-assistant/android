@@ -18,7 +18,9 @@ abstract class LaunchPresenterBase(private val view: LaunchView, internal val se
         mainScope.launch {
             // Remove any invalid servers (incomplete, partly migrated from another device)
             serverManager.defaultServers
-                .filter { serverManager.authenticationRepository(it.id).getSessionState() == SessionState.ANONYMOUS }
+                .filter {
+                    serverManager.authenticationRepository(it.id).getSessionState() == SessionState.ANONYMOUS
+                }
                 .forEach { serverManager.removeServer(it.id) }
 
             try {
