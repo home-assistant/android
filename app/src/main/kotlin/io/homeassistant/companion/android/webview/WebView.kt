@@ -26,7 +26,7 @@ interface WebView {
 
     fun relaunchApp()
 
-    fun unlockAppIfNeeded()
+    suspend fun unlockAppIfNeeded()
 
     fun showError(
         errorType: ErrorType = ErrorType.TIMEOUT_GENERAL,
