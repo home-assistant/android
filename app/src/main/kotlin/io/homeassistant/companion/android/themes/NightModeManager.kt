@@ -10,6 +10,14 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import javax.inject.Inject
 import timber.log.Timber
 
+/**
+ * Manages the night mode theme for the application based on the user selection from the settings.
+ *
+ * This class is responsible for retrieving, saving, and applying the night mode theme.
+ * It interacts with [PrefsRepository] to persist the selected theme.
+ *
+ * @property prefsRepository The repository for accessing and storing application preferences.
+ */
 class NightModeManager @Inject constructor(private val prefsRepository: PrefsRepository) {
 
     suspend fun getCurrentNightMode(): NightModeTheme {
