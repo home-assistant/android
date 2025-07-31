@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.automotive
 
 import android.content.Intent
-import androidx.car.app.activity.CarAppActivity
 import androidx.navigation.ActivityNavigator
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -23,6 +22,6 @@ fun NavController.navigateToCarAppActivity(
 
 fun NavGraphBuilder.carAppActivity() {
     activity<AutomotiveRoute> {
-        activityClass = CarAppActivity::class
+        // activityClass = CarAppActivity::class
     }
 }

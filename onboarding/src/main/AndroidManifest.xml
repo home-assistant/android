@@ -25,7 +25,7 @@
 
                 <data
                     android:scheme="homeassistant"
-                    android:host="navigate2" />
+                    android:host="navigate2" /><!--TODO remove 2-->
             </intent-filter>
 
             <intent-filter>
@@ -35,7 +35,17 @@
 
                 <data
                     android:scheme="homeassistant"
-                    android:host="invite2" />
+                    android:host="invite2" /><!--TODO remove 2-->
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="homeassistant"
+                    android:host="wear-phone-signin2" /><!--TODO remove 2-->
             </intent-filter>
         </activity>
     </application>

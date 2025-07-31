@@ -23,7 +23,7 @@ dependencies {
 
     implementation(libs.core.splashscreen)
 
-    implementation(libs.car.automotive)
+    // implementation(libs.car.automotive)
 
     implementation(libs.core.ktx)
     implementation(libs.appcompat)

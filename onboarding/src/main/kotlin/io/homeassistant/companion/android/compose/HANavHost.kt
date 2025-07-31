@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.first
 
 @Composable
 fun HANavHost(
+    // TODO we could move this into the viewModel
     isAutomotive: Boolean,
     navController: NavHostController,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
@@ -78,6 +79,8 @@ fun HANavHost(
             )
             frontendScreen()
             carAppActivity()
+            // TODO add navigation to deep link wear-phone-signin
+            // It should navigate to the onboarding screen with a parameter that says we are onboarding a wear
         }
     }
 }

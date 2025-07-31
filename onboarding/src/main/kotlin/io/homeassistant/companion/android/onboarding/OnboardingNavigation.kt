@@ -29,6 +29,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 data object OnboardingRoute
 
+// For the watch onboarding
+// - we intercept the deep-link `wear-phone-signin`
+// - navigate to the onboarding with a flag WATCH that adjust the navigation
+// - last screen then navigates to the watch settings
 fun NavGraphBuilder.onboarding(
     navController: NavController,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
@@ -86,5 +90,6 @@ fun NavGraphBuilder.onboarding(
             onHelpClick = navController::navigateToLocationSharingHelp,
             onGotoNextScreen = onOnboardingDone,
         )
+        // TODO watch might need TLS cert and password how to detect this, checking the keystore?
     }
 }
