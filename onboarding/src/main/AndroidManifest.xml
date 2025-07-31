@@ -25,6 +25,16 @@
 
                 <data
                     android:scheme="homeassistant"
+                    android:host="navigate2" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="homeassistant"
                     android:host="invite2" />
             </intent-filter>
         </activity>
