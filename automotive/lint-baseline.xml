@@ -800,7 +800,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="155"
+            line="160"
             column="13"/>
     </issue>
 
@@ -811,7 +811,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="218"
+            line="223"
             column="13"/>
     </issue>
 
@@ -822,7 +822,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="228"
+            line="233"
             column="13"/>
     </issue>
 
@@ -833,7 +833,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="238"
+            line="243"
             column="13"/>
     </issue>
 
@@ -844,7 +844,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="286"
+            line="291"
             column="13"/>
     </issue>
 
@@ -1493,7 +1493,7 @@
         errorLine2="                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/themes/NightModeManager.kt"
-            line="14"
+            line="26"
             column="43"/>
     </issue>
 
@@ -2406,7 +2406,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="497"
+            line="501"
             column="21"/>
     </issue>
 
@@ -2417,7 +2417,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="498"
+            line="502"
             column="21"/>
     </issue>
 
@@ -2428,7 +2428,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="528"
+            line="532"
             column="25"/>
     </issue>
 
@@ -2439,7 +2439,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="528"
+            line="532"
             column="25"/>
     </issue>
 
@@ -2450,7 +2450,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="621"
+            line="619"
             column="13"/>
     </issue>
 
@@ -2461,7 +2461,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1152"
+            line="1188"
             column="21"/>
     </issue>
 
@@ -2472,7 +2472,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1267"
+            line="1303"
             column="17"/>
     </issue>
 
@@ -3191,7 +3191,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewPresenterImpl.kt"
-            line="410"
+            line="408"
             column="13"/>
     </issue>
 
