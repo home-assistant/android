@@ -7,6 +7,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
+import androidx.navigation.navDeepLink
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.onboarding.connection.ConnectionNavigationEvent
 import io.homeassistant.companion.android.onboarding.connection.ConnectionScreen
@@ -25,7 +26,15 @@ internal fun NavGraphBuilder.connectionScreen(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onBackPressed: () -> Unit,
 ) {
-    composable<ConnectionRoute> {
+    composable<ConnectionRoute>(
+        deepLinks = listOf(
+            navDeepLink<ConnectionRoute>(basePath = "homeassistant") {
+                // TODO We have to hack this to make it work for invite
+                // Or manage the parsing of the deep link directly from the Launcher
+                uriPattern = "homeassistant://invite2?url={url}.*" // TODO update host
+            },
+        ),
+    ) {
         val viewModel: ConnectionViewModel = hiltViewModel()
         val context = LocalContext.current
         LaunchedEffect(viewModel) {

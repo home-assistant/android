@@ -148,6 +148,7 @@ internal class ConnectionViewModel @Inject constructor(
     }
 
     private suspend fun buildAuthUrl(base: String) {
+        Timber.d("Build auth url based on $base")
         try {
             val url = base.toHttpUrl()
             val builder = if (url.host.endsWith("ui.nabu.casa", true)) {
@@ -182,6 +183,8 @@ internal class ConnectionViewModel @Inject constructor(
             }
             true
         } else {
+            // TODO we should probably open any links in the external browser
+            // for instance when we click on Help within the login screen
             false
         }
     }

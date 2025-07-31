@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.activity.compose.setContent
@@ -32,6 +33,8 @@ class Launcher : AppCompatActivity() {
             viewModel.shouldShowSplashScreen()
         }
 
+        intent.data = patchUri(intent.data!!)
+
         enableEdgeToEdge()
 
         setContent {
@@ -60,5 +63,17 @@ class Launcher : AppCompatActivity() {
         }
 
         return super.dispatchKeyEvent(event)
+    }
+}
+
+private fun patchUri(data: Uri): Uri {
+    if (data.host == "invite2") { // TODO update host
+        // Create a new URI with the encoded fragment as the encoded query
+        // Very hacky but we should open an issue that when there is an URL in the fragment the uriPattern
+        // doesn't work.
+        val newUri = data.buildUpon().encodedQuery(data.encodedFragment).fragment(null).build()
+        return newUri
+    } else {
+        return data
     }
 }
