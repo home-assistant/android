@@ -8,6 +8,6 @@ import androidx.compose.runtime.Composable
  * navigation it would the equivalent of [WebViewActivity].
  */
 @Composable
-fun FrontendScreen() {
-    Text("Connected to Home Assistant Frontend")
+fun FrontendScreen(url: String?) {
+    Text("Connected to Home Assistant Frontend\n $url")
 }

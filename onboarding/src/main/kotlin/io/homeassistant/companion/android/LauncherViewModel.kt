@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.room.concurrent.AtomicBoolean
@@ -14,7 +15,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 sealed interface LauncherNavigationEvent {
-    data object Frontend : LauncherNavigationEvent
+    data class Frontend(val url: String?) : LauncherNavigationEvent
     data object Onboarding : LauncherNavigationEvent
 }
 
@@ -31,7 +32,7 @@ class LauncherViewModel @Inject constructor(private val serverManager: ServerMan
 
     fun shouldShowSplashScreen(): Boolean = shouldShowSplashScreen.get()
 
-    init {
+    fun onLauncherCreated(uriReceived: Uri?) {
         viewModelScope.launch {
             // TODO move this to a UseCase class that retrieve a server
             // Remove any invalid servers (incomplete, partly migrated from another device)
@@ -52,7 +53,7 @@ class LauncherViewModel @Inject constructor(private val serverManager: ServerMan
                         .getSessionState() == SessionState.CONNECTED
                 ) {
                     resyncRegistration()
-                    _navigationEventsFlow.emit(LauncherNavigationEvent.Frontend)
+                    _navigationEventsFlow.emit(LauncherNavigationEvent.Frontend(uriReceived?.toString()))
                 } else {
                     _navigationEventsFlow.emit(LauncherNavigationEvent.Onboarding)
                 }

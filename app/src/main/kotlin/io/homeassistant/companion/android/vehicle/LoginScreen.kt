@@ -66,7 +66,7 @@ class LoginScreen(context: CarContext, val serverManager: ServerManager) : Scree
             startActivity(
                 Intent(
                     carContext,
-                    LaunchActivity::class.java,
+                    LaunchActivity::class.java, // TODO update this to the new launcher
                 ).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 },

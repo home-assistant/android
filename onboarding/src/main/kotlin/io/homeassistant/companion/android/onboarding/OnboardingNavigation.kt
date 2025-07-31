@@ -4,7 +4,6 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.navOptions
 import androidx.navigation.navigation
-import io.homeassistant.companion.android.frontend.navigation.navigateToFrontend
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.onboarding.connection.navigation.connectionScreen
 import io.homeassistant.companion.android.onboarding.connection.navigation.navigateToConnection
@@ -33,6 +32,7 @@ data object OnboardingRoute
 fun NavGraphBuilder.onboarding(
     navController: NavController,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+    onOnboardingDone: () -> Unit,
 ) {
     navigation<OnboardingRoute>(startDestination = WelcomeRoute) {
         welcomeScreen(
@@ -84,16 +84,7 @@ fun NavGraphBuilder.onboarding(
         locationSharingScreen(
             onBackClick = navController::popBackStack,
             onHelpClick = navController::navigateToLocationSharingHelp,
-            onGotoNextScreen = {
-                // TODO see if we could avoid a reference to the frontend (probably a parameter given to onboarding)
-                navController.navigateToFrontend(
-                    navOptions {
-                        popUpTo<WelcomeRoute> {
-                            inclusive = true
-                        }
-                    },
-                )
-            },
+            onGotoNextScreen = onOnboardingDone,
         )
     }
 }

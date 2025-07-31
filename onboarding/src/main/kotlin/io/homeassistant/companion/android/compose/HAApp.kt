@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavHostController
 
 @Composable
-fun HAApp(navController: NavHostController, modifier: Modifier = Modifier) {
+fun HAApp(isAutomotive: Boolean, navController: NavHostController, modifier: Modifier = Modifier) {
     val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
@@ -50,7 +50,8 @@ fun HAApp(navController: NavHostController, modifier: Modifier = Modifier) {
                 ),
         ) {
             HANavHost(
-                navController,
+                isAutomotive = isAutomotive,
+                navController = navController,
                 onShowSnackbar = { message, action ->
                     snackbarHostState.showSnackbar(message, action, duration = SnackbarDuration.Short) ==
                         ActionPerformed

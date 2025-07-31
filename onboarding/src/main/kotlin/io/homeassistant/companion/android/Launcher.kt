@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android
 
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.view.KeyEvent
@@ -25,6 +27,14 @@ class Launcher : AppCompatActivity() {
 
     private val currentDestination = mutableStateOf<NavDestination?>(null)
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // TODO when a new intent arrives it doesn't trigger onCreate
+        // But we still need to forward it to the navController
+        // This is interesting if we keep the `singleTop` flag for the Launcher
+        Timber.i("Intent received $intent")
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val splashScreen = installSplashScreen()
@@ -33,7 +43,11 @@ class Launcher : AppCompatActivity() {
             viewModel.shouldShowSplashScreen()
         }
 
-        intent.data = patchUri(intent.data!!)
+        intent.data?.let {
+            intent.data = patchUri(it)
+        }
+
+        viewModel.onLauncherCreated(intent.data)
 
         enableEdgeToEdge()
 
@@ -45,7 +59,11 @@ class Launcher : AppCompatActivity() {
                         currentDestination.value = it.destination
                     }
                 }
-                HAApp(navController)
+                HAApp(
+                    isAutomotive =
+                    packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE),
+                    navController,
+                )
             }
         }
     }
