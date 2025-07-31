@@ -103,8 +103,6 @@ private fun WebSettings.defaultSettings() {
 
 @Suppress("DEPRECATION")
 private fun WebSettings.setNightModeTheme(nightModeTheme: NightModeTheme, uiMode: Int) {
-    nightModeTheme.setAsDefaultNightMode()
-
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU &&
         WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK) &&
         WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)

@@ -1,7 +1,11 @@
 package io.homeassistant.companion.android.themes
 
 import android.os.Build
+import androidx.appcompat.app.AppCompatDelegate
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme.ANDROID
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme.DARK
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme.SYSTEM
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import javax.inject.Inject
 import timber.log.Timber
@@ -32,6 +36,25 @@ class NightModeManager @Inject constructor(private val prefsRepository: PrefsRep
             }
         } else {
             Timber.i("Skipping saving night mode theme since nightModeTheme is null")
+        }
+    }
+
+    suspend fun applyCurrentNightMode() {
+        val nightMode = getCurrentNightMode()
+        nightMode.setAsDefaultNightMode()
+    }
+}
+
+private fun NightModeTheme.setAsDefaultNightMode() {
+    when (this) {
+        DARK -> {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        }
+        ANDROID, SYSTEM -> {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        }
+        else -> {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         }
     }
 }

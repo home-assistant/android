@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.data.prefs
 
-import androidx.appcompat.app.AppCompatDelegate
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
@@ -17,20 +16,6 @@ enum class NightModeTheme(val storageValue: String) {
 
     companion object {
         fun fromStorageValue(value: String?): NightModeTheme? = entries.firstOrNull { it.storageValue == value }
-    }
-
-    fun setAsDefaultNightMode() {
-        when (this) {
-            DARK -> {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            }
-            ANDROID, SYSTEM -> {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-            }
-            else -> {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-            }
-        }
     }
 }
 
