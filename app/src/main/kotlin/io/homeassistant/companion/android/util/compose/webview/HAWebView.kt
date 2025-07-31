@@ -83,7 +83,7 @@ fun WebView.settings(configureDsl: WebSettings.() -> Unit) {
     } catch (e: NoSuchMethodError) {
         // While displaying the WebView within a Preview or while making screenshot test getSettings is throwing
         // `java.lang.NoSuchMethodError` we catch the error to be able to continue to use Preview and screenshot tests.
-        Timber.e(
+        Timber.w(
             e,
             "Failed to configure WebView settings",
         )
