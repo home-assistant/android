@@ -40,7 +40,7 @@ import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.response.ReadRecordsResponse
 import androidx.health.connect.client.time.TimeRangeFilter
-import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
@@ -66,8 +66,8 @@ class HealthConnectSensorManager : SensorManager {
         val activeCaloriesBurned = SensorManager.BasicSensor(
             id = "health_connect_active_calories_burned",
             type = "sensor",
-            R.string.basic_sensor_name_active_calories_burned,
-            R.string.sensor_description_active_calories_burned,
+            commonR.string.basic_sensor_name_active_calories_burned,
+            commonR.string.sensor_description_active_calories_burned,
             "mdi:fire",
             "energy",
             unitOfMeasurement = "kcal",
@@ -77,8 +77,8 @@ class HealthConnectSensorManager : SensorManager {
         val basalBodyTemperature = SensorManager.BasicSensor(
             id = "health_connect_basal_body_temperature",
             type = "sensor",
-            R.string.basic_sensor_name_basal_body_temperature,
-            R.string.sensor_description_basal_body_temperature,
+            commonR.string.basic_sensor_name_basal_body_temperature,
+            commonR.string.sensor_description_basal_body_temperature,
             "mdi:thermometer",
             deviceClass = "temperature",
             unitOfMeasurement = "°C",
@@ -88,8 +88,8 @@ class HealthConnectSensorManager : SensorManager {
         val basalMetabolicRate = SensorManager.BasicSensor(
             id = "health_connect_basal_metabolic_rate",
             type = "sensor",
-            R.string.basic_sensor_name_basal_metabolic_rate,
-            R.string.sensor_description_basal_metabolic_rate,
+            commonR.string.basic_sensor_name_basal_metabolic_rate,
+            commonR.string.sensor_description_basal_metabolic_rate,
             "mdi:fire",
             unitOfMeasurement = "kcal/day",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -98,8 +98,8 @@ class HealthConnectSensorManager : SensorManager {
         val bloodGlucose = SensorManager.BasicSensor(
             id = "health_connect_blood_glucose",
             type = "sensor",
-            R.string.basic_sensor_name_blood_glucose,
-            R.string.sensor_description_blood_glucose,
+            commonR.string.basic_sensor_name_blood_glucose,
+            commonR.string.sensor_description_blood_glucose,
             "mdi:diabetes",
             deviceClass = "blood_glucose_concentration",
             unitOfMeasurement = "mg/dL",
@@ -109,8 +109,8 @@ class HealthConnectSensorManager : SensorManager {
         val bodyFat = SensorManager.BasicSensor(
             id = "health_connect_body_fat",
             type = "sensor",
-            R.string.basic_sensor_name_body_fat,
-            R.string.sensor_description_body_fat,
+            commonR.string.basic_sensor_name_body_fat,
+            commonR.string.sensor_description_body_fat,
             "mdi:scale-bathroom",
             unitOfMeasurement = "%",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -119,8 +119,8 @@ class HealthConnectSensorManager : SensorManager {
         val bodyWaterMass = SensorManager.BasicSensor(
             id = "health_connect_body_water_mass",
             type = "sensor",
-            R.string.basic_sensor_name_body_water_mass,
-            R.string.sensor_description_body_water_mass,
+            commonR.string.basic_sensor_name_body_water_mass,
+            commonR.string.sensor_description_body_water_mass,
             "mdi:water",
             deviceClass = "weight",
             unitOfMeasurement = "g",
@@ -130,8 +130,8 @@ class HealthConnectSensorManager : SensorManager {
         val bodyTemperature = SensorManager.BasicSensor(
             id = "health_connect_body_temperature",
             type = "sensor",
-            R.string.basic_sensor_name_body_temperature,
-            R.string.sensor_description_body_temperature,
+            commonR.string.basic_sensor_name_body_temperature,
+            commonR.string.sensor_description_body_temperature,
             "mdi:thermometer",
             deviceClass = "temperature",
             unitOfMeasurement = "°C",
@@ -141,8 +141,8 @@ class HealthConnectSensorManager : SensorManager {
         val boneMass = SensorManager.BasicSensor(
             id = "health_connect_bone_mass",
             type = "sensor",
-            R.string.basic_sensor_name_bone_mass,
-            R.string.sensor_description_bone_mass,
+            commonR.string.basic_sensor_name_bone_mass,
+            commonR.string.sensor_description_bone_mass,
             "mdi:bone",
             deviceClass = "weight",
             unitOfMeasurement = "g",
@@ -152,8 +152,8 @@ class HealthConnectSensorManager : SensorManager {
         val diastolicBloodPressure = SensorManager.BasicSensor(
             id = "health_connect_diastolic_blood_pressure",
             type = "sensor",
-            R.string.basic_sensor_name_diastolic_blood_pressure,
-            R.string.sensor_description_diastolic_blood_pressure,
+            commonR.string.basic_sensor_name_diastolic_blood_pressure,
+            commonR.string.sensor_description_diastolic_blood_pressure,
             "mdi:heart-pulse",
             deviceClass = "pressure",
             unitOfMeasurement = "mmHg",
@@ -163,8 +163,8 @@ class HealthConnectSensorManager : SensorManager {
         val distance = SensorManager.BasicSensor(
             id = "health_connect_distance",
             type = "sensor",
-            R.string.sensor_name_daily_distance,
-            R.string.sensor_description_distance,
+            commonR.string.sensor_name_daily_distance,
+            commonR.string.sensor_description_distance,
             "mdi:map-marker-distance",
             deviceClass = "distance",
             unitOfMeasurement = "m",
@@ -175,8 +175,8 @@ class HealthConnectSensorManager : SensorManager {
         val elevationGained = SensorManager.BasicSensor(
             id = "health_connect_elevation_gained",
             type = "sensor",
-            R.string.basic_sensor_name_daily_elevation_gained,
-            R.string.sensor_description_elevation_gained,
+            commonR.string.basic_sensor_name_daily_elevation_gained,
+            commonR.string.sensor_description_elevation_gained,
             "mdi:elevation-rise",
             deviceClass = "distance",
             unitOfMeasurement = "m",
@@ -187,8 +187,8 @@ class HealthConnectSensorManager : SensorManager {
         val floorsClimbed = SensorManager.BasicSensor(
             id = "health_connect_floors_climbed",
             type = "sensor",
-            R.string.sensor_name_daily_floors,
-            R.string.sensor_description_floors_climbed,
+            commonR.string.sensor_name_daily_floors,
+            commonR.string.sensor_description_floors_climbed,
             "mdi:stairs",
             unitOfMeasurement = "floors",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -198,8 +198,8 @@ class HealthConnectSensorManager : SensorManager {
         val heartRate = SensorManager.BasicSensor(
             id = "health_connect_heart_rate",
             type = "sensor",
-            R.string.sensor_name_heart_rate,
-            R.string.sensor_description_health_connect_heart_rate,
+            commonR.string.sensor_name_heart_rate,
+            commonR.string.sensor_description_health_connect_heart_rate,
             "mdi:heart-pulse",
             unitOfMeasurement = "bpm",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -208,8 +208,8 @@ class HealthConnectSensorManager : SensorManager {
         val heartRateVariability = SensorManager.BasicSensor(
             id = "health_connect_heart_rate_variability",
             type = "sensor",
-            R.string.basic_sensor_name_heart_rate_variability,
-            R.string.sensor_description_heart_rate_variability,
+            commonR.string.basic_sensor_name_heart_rate_variability,
+            commonR.string.sensor_description_heart_rate_variability,
             "mdi:heart-pulse",
             deviceClass = "duration",
             unitOfMeasurement = "ms",
@@ -219,8 +219,8 @@ class HealthConnectSensorManager : SensorManager {
         val height = SensorManager.BasicSensor(
             id = "health_connect_height",
             type = "sensor",
-            R.string.basic_sensor_name_height,
-            R.string.sensor_description_height,
+            commonR.string.basic_sensor_name_height,
+            commonR.string.sensor_description_height,
             "mdi:human-male-height",
             deviceClass = "distance",
             unitOfMeasurement = "m",
@@ -230,8 +230,8 @@ class HealthConnectSensorManager : SensorManager {
         val hydration = SensorManager.BasicSensor(
             id = "health_connect_hydration",
             type = "sensor",
-            R.string.basic_sensor_name_hydration,
-            R.string.sensor_description_hydration,
+            commonR.string.basic_sensor_name_hydration,
+            commonR.string.sensor_description_hydration,
             "mdi:cup-water",
             unitOfMeasurement = "mL",
             deviceClass = "volume",
@@ -242,8 +242,8 @@ class HealthConnectSensorManager : SensorManager {
         val leanBodyMass = SensorManager.BasicSensor(
             id = "health_connect_lean_body_mass",
             type = "sensor",
-            R.string.basic_sensor_name_lean_body_mass,
-            R.string.sensor_description_lean_body_mass,
+            commonR.string.basic_sensor_name_lean_body_mass,
+            commonR.string.sensor_description_lean_body_mass,
             "mdi:scale-bathroom",
             deviceClass = "weight",
             unitOfMeasurement = "g",
@@ -253,8 +253,8 @@ class HealthConnectSensorManager : SensorManager {
         val oxygenSaturation = SensorManager.BasicSensor(
             id = "health_connect_oxygen_saturation",
             type = "sensor",
-            R.string.basic_sensor_name_oxygen_saturation,
-            R.string.sensor_description_oxygen_saturation,
+            commonR.string.basic_sensor_name_oxygen_saturation,
+            commonR.string.sensor_description_oxygen_saturation,
             "mdi:sleep",
             unitOfMeasurement = "%",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -263,8 +263,8 @@ class HealthConnectSensorManager : SensorManager {
         val respiratoryRate = SensorManager.BasicSensor(
             id = "health_connect_respiratory_rate",
             type = "sensor",
-            R.string.basic_sensor_name_respiratory_rate,
-            R.string.sensor_description_respiratory_rate,
+            commonR.string.basic_sensor_name_respiratory_rate,
+            commonR.string.sensor_description_respiratory_rate,
             "mdi:account-voice",
             unitOfMeasurement = "bpm",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -273,8 +273,8 @@ class HealthConnectSensorManager : SensorManager {
         val restingHeartRate = SensorManager.BasicSensor(
             id = "health_connect_resting_heart_rate",
             type = "sensor",
-            R.string.basic_sensor_name_resting_heart_rate,
-            R.string.sensor_description_resting_heart_rate,
+            commonR.string.basic_sensor_name_resting_heart_rate,
+            commonR.string.sensor_description_resting_heart_rate,
             "mdi:heart-pulse",
             unitOfMeasurement = "bpm",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -283,8 +283,8 @@ class HealthConnectSensorManager : SensorManager {
         val sleepDuration = SensorManager.BasicSensor(
             id = "health_connect_sleep_duration",
             type = "sensor",
-            R.string.basic_sensor_name_sleep_duration,
-            R.string.sensor_description_sleep_duration,
+            commonR.string.basic_sensor_name_sleep_duration,
+            commonR.string.sensor_description_sleep_duration,
             "mdi:sleep",
             deviceClass = "duration",
             unitOfMeasurement = "min",
@@ -294,8 +294,8 @@ class HealthConnectSensorManager : SensorManager {
         val steps = SensorManager.BasicSensor(
             id = "health_connect_steps",
             type = "sensor",
-            R.string.sensor_name_daily_steps,
-            R.string.sensor_description_steps,
+            commonR.string.sensor_name_daily_steps,
+            commonR.string.sensor_description_steps,
             "mdi:walk",
             unitOfMeasurement = "steps",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -305,8 +305,8 @@ class HealthConnectSensorManager : SensorManager {
         val systolicBloodPressure = SensorManager.BasicSensor(
             id = "health_connect_systolic_blood_pressure",
             type = "sensor",
-            R.string.basic_sensor_name_systolic_blood_pressure,
-            R.string.sensor_description_systolic_blood_pressure,
+            commonR.string.basic_sensor_name_systolic_blood_pressure,
+            commonR.string.sensor_description_systolic_blood_pressure,
             "mdi:heart-pulse",
             deviceClass = "pressure",
             unitOfMeasurement = "mmHg",
@@ -316,8 +316,8 @@ class HealthConnectSensorManager : SensorManager {
         val totalCaloriesBurned = SensorManager.BasicSensor(
             id = "health_connect_total_calories_burned",
             type = "sensor",
-            R.string.basic_sensor_name_total_calories_burned,
-            R.string.sensor_description_total_calories_burned,
+            commonR.string.basic_sensor_name_total_calories_burned,
+            commonR.string.sensor_description_total_calories_burned,
             "mdi:fire",
             "energy",
             unitOfMeasurement = "kcal",
@@ -328,8 +328,8 @@ class HealthConnectSensorManager : SensorManager {
         val vo2Max = SensorManager.BasicSensor(
             id = "health_connect_vo2_max",
             type = "sensor",
-            R.string.basic_sensor_name_vo2_max,
-            R.string.sensor_description_vo2_max,
+            commonR.string.basic_sensor_name_vo2_max,
+            commonR.string.sensor_description_vo2_max,
             "mdi:heart",
             unitOfMeasurement = "mL/kg/min",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -338,8 +338,8 @@ class HealthConnectSensorManager : SensorManager {
         val weight = SensorManager.BasicSensor(
             id = "health_connect_weight",
             type = "sensor",
-            R.string.basic_sensor_name_weight,
-            R.string.sensor_description_weight,
+            commonR.string.basic_sensor_name_weight,
+            commonR.string.sensor_description_weight,
             "mdi:scale-bathroom",
             unitOfMeasurement = "g",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -377,7 +377,7 @@ class HealthConnectSensorManager : SensorManager {
     }
 
     override val name: Int
-        get() = R.string.sensor_name_health_connect
+        get() = commonR.string.sensor_name_health_connect
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return FailFast.failOnCatch({ "Unable to get required permissions for $sensorId" }, emptyArray<String>()) {
