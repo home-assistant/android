@@ -19,4 +19,8 @@
     <string name="location_sharing_title">Do you want to share your location?</string>
     <string name="location_sharing_next">Next</string>
     <string name="loading_content_description">Loading</string>
+    <string name="allow_notification_title">Allow notifications?</string>
+    <string name="allow_notification_content">Enable notifications and get what\'s happening in your home, from detecting leaks to door left open, you have full control over what it tells you.</string>
+    <string name="allow_notification_button">Allow notifications</string>
+    <string name="allow_notification_not_allow">Do not allow</string>
 </resources>
