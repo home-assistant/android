@@ -686,7 +686,8 @@ class HealthConnectSensorManager : SensorManager {
     private suspend fun updateFloorsClimbedSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val floorsClimbedRequest =
-            healthConnectClient.aggregateOrNull(buildAggregationRequest(FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL)) ?: return
+            healthConnectClient.aggregateOrNull(buildAggregationRequest(FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL))
+                ?: return
         val floors = floorsClimbedRequest[FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL] ?: 0
         onSensorUpdated(
             context,
