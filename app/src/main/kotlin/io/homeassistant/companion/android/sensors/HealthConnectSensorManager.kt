@@ -40,7 +40,7 @@ import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.response.ReadRecordsResponse
 import androidx.health.connect.client.time.TimeRangeFilter
-import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
@@ -58,291 +58,292 @@ import timber.log.Timber
 
 class HealthConnectSensorManager : SensorManager {
     companion object {
-        fun getPermissionIntent(): Intent? = Intent(HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS)
+        fun getPermissionIntent(): Intent? =
+            Intent(HealthConnectClient.Companion.ACTION_HEALTH_CONNECT_SETTINGS)
 
         fun getPermissionResultContract(): ActivityResultContract<Set<String>, Set<String>>? =
-            PermissionController.createRequestPermissionResultContract()
+            PermissionController.Companion.createRequestPermissionResultContract()
 
         val activeCaloriesBurned = SensorManager.BasicSensor(
             id = "health_connect_active_calories_burned",
             type = "sensor",
-            commonR.string.basic_sensor_name_active_calories_burned,
-            commonR.string.sensor_description_active_calories_burned,
+            R.string.basic_sensor_name_active_calories_burned,
+            R.string.sensor_description_active_calories_burned,
             "mdi:fire",
             "energy",
             unitOfMeasurement = "kcal",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val basalBodyTemperature = SensorManager.BasicSensor(
             id = "health_connect_basal_body_temperature",
             type = "sensor",
-            commonR.string.basic_sensor_name_basal_body_temperature,
-            commonR.string.sensor_description_basal_body_temperature,
+            R.string.basic_sensor_name_basal_body_temperature,
+            R.string.sensor_description_basal_body_temperature,
             "mdi:thermometer",
             deviceClass = "temperature",
             unitOfMeasurement = "°C",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val basalMetabolicRate = SensorManager.BasicSensor(
             id = "health_connect_basal_metabolic_rate",
             type = "sensor",
-            commonR.string.basic_sensor_name_basal_metabolic_rate,
-            commonR.string.sensor_description_basal_metabolic_rate,
+            R.string.basic_sensor_name_basal_metabolic_rate,
+            R.string.sensor_description_basal_metabolic_rate,
             "mdi:fire",
             unitOfMeasurement = "kcal/day",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val bloodGlucose = SensorManager.BasicSensor(
             id = "health_connect_blood_glucose",
             type = "sensor",
-            commonR.string.basic_sensor_name_blood_glucose,
-            commonR.string.sensor_description_blood_glucose,
+            R.string.basic_sensor_name_blood_glucose,
+            R.string.sensor_description_blood_glucose,
             "mdi:diabetes",
             deviceClass = "blood_glucose_concentration",
             unitOfMeasurement = "mg/dL",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val bodyFat = SensorManager.BasicSensor(
             id = "health_connect_body_fat",
             type = "sensor",
-            commonR.string.basic_sensor_name_body_fat,
-            commonR.string.sensor_description_body_fat,
+            R.string.basic_sensor_name_body_fat,
+            R.string.sensor_description_body_fat,
             "mdi:scale-bathroom",
             unitOfMeasurement = "%",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val bodyWaterMass = SensorManager.BasicSensor(
             id = "health_connect_body_water_mass",
             type = "sensor",
-            commonR.string.basic_sensor_name_body_water_mass,
-            commonR.string.sensor_description_body_water_mass,
+            R.string.basic_sensor_name_body_water_mass,
+            R.string.sensor_description_body_water_mass,
             "mdi:water",
             deviceClass = "weight",
             unitOfMeasurement = "g",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val bodyTemperature = SensorManager.BasicSensor(
             id = "health_connect_body_temperature",
             type = "sensor",
-            commonR.string.basic_sensor_name_body_temperature,
-            commonR.string.sensor_description_body_temperature,
+            R.string.basic_sensor_name_body_temperature,
+            R.string.sensor_description_body_temperature,
             "mdi:thermometer",
             deviceClass = "temperature",
             unitOfMeasurement = "°C",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val boneMass = SensorManager.BasicSensor(
             id = "health_connect_bone_mass",
             type = "sensor",
-            commonR.string.basic_sensor_name_bone_mass,
-            commonR.string.sensor_description_bone_mass,
+            R.string.basic_sensor_name_bone_mass,
+            R.string.sensor_description_bone_mass,
             "mdi:bone",
             deviceClass = "weight",
             unitOfMeasurement = "g",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val diastolicBloodPressure = SensorManager.BasicSensor(
             id = "health_connect_diastolic_blood_pressure",
             type = "sensor",
-            commonR.string.basic_sensor_name_diastolic_blood_pressure,
-            commonR.string.sensor_description_diastolic_blood_pressure,
+            R.string.basic_sensor_name_diastolic_blood_pressure,
+            R.string.sensor_description_diastolic_blood_pressure,
             "mdi:heart-pulse",
             deviceClass = "pressure",
             unitOfMeasurement = "mmHg",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val distance = SensorManager.BasicSensor(
             id = "health_connect_distance",
             type = "sensor",
-            commonR.string.sensor_name_daily_distance,
-            commonR.string.sensor_description_distance,
+            R.string.sensor_name_daily_distance,
+            R.string.sensor_description_distance,
             "mdi:map-marker-distance",
             deviceClass = "distance",
             unitOfMeasurement = "m",
-            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            stateClass = SensorManager.Companion.STATE_CLASS_TOTAL_INCREASING,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val elevationGained = SensorManager.BasicSensor(
             id = "health_connect_elevation_gained",
             type = "sensor",
-            commonR.string.basic_sensor_name_daily_elevation_gained,
-            commonR.string.sensor_description_elevation_gained,
+            R.string.basic_sensor_name_daily_elevation_gained,
+            R.string.sensor_description_elevation_gained,
             "mdi:elevation-rise",
             deviceClass = "distance",
             unitOfMeasurement = "m",
-            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            stateClass = SensorManager.Companion.STATE_CLASS_TOTAL_INCREASING,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val floorsClimbed = SensorManager.BasicSensor(
             id = "health_connect_floors_climbed",
             type = "sensor",
-            commonR.string.sensor_name_daily_floors,
-            commonR.string.sensor_description_floors_climbed,
+            R.string.sensor_name_daily_floors,
+            R.string.sensor_description_floors_climbed,
             "mdi:stairs",
             unitOfMeasurement = "floors",
-            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            stateClass = SensorManager.Companion.STATE_CLASS_TOTAL_INCREASING,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val heartRate = SensorManager.BasicSensor(
             id = "health_connect_heart_rate",
             type = "sensor",
-            commonR.string.sensor_name_heart_rate,
-            commonR.string.sensor_description_health_connect_heart_rate,
+            R.string.sensor_name_heart_rate,
+            R.string.sensor_description_health_connect_heart_rate,
             "mdi:heart-pulse",
             unitOfMeasurement = "bpm",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val heartRateVariability = SensorManager.BasicSensor(
             id = "health_connect_heart_rate_variability",
             type = "sensor",
-            commonR.string.basic_sensor_name_heart_rate_variability,
-            commonR.string.sensor_description_heart_rate_variability,
+            R.string.basic_sensor_name_heart_rate_variability,
+            R.string.sensor_description_heart_rate_variability,
             "mdi:heart-pulse",
             deviceClass = "duration",
             unitOfMeasurement = "ms",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val height = SensorManager.BasicSensor(
             id = "health_connect_height",
             type = "sensor",
-            commonR.string.basic_sensor_name_height,
-            commonR.string.sensor_description_height,
+            R.string.basic_sensor_name_height,
+            R.string.sensor_description_height,
             "mdi:human-male-height",
             deviceClass = "distance",
             unitOfMeasurement = "m",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val hydration = SensorManager.BasicSensor(
             id = "health_connect_hydration",
             type = "sensor",
-            commonR.string.basic_sensor_name_hydration,
-            commonR.string.sensor_description_hydration,
+            R.string.basic_sensor_name_hydration,
+            R.string.sensor_description_hydration,
             "mdi:cup-water",
             unitOfMeasurement = "mL",
             deviceClass = "volume",
-            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            stateClass = SensorManager.Companion.STATE_CLASS_TOTAL_INCREASING,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val leanBodyMass = SensorManager.BasicSensor(
             id = "health_connect_lean_body_mass",
             type = "sensor",
-            commonR.string.basic_sensor_name_lean_body_mass,
-            commonR.string.sensor_description_lean_body_mass,
+            R.string.basic_sensor_name_lean_body_mass,
+            R.string.sensor_description_lean_body_mass,
             "mdi:scale-bathroom",
             deviceClass = "weight",
             unitOfMeasurement = "g",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val oxygenSaturation = SensorManager.BasicSensor(
             id = "health_connect_oxygen_saturation",
             type = "sensor",
-            commonR.string.basic_sensor_name_oxygen_saturation,
-            commonR.string.sensor_description_oxygen_saturation,
+            R.string.basic_sensor_name_oxygen_saturation,
+            R.string.sensor_description_oxygen_saturation,
             "mdi:sleep",
             unitOfMeasurement = "%",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val respiratoryRate = SensorManager.BasicSensor(
             id = "health_connect_respiratory_rate",
             type = "sensor",
-            commonR.string.basic_sensor_name_respiratory_rate,
-            commonR.string.sensor_description_respiratory_rate,
+            R.string.basic_sensor_name_respiratory_rate,
+            R.string.sensor_description_respiratory_rate,
             "mdi:account-voice",
             unitOfMeasurement = "bpm",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val restingHeartRate = SensorManager.BasicSensor(
             id = "health_connect_resting_heart_rate",
             type = "sensor",
-            commonR.string.basic_sensor_name_resting_heart_rate,
-            commonR.string.sensor_description_resting_heart_rate,
+            R.string.basic_sensor_name_resting_heart_rate,
+            R.string.sensor_description_resting_heart_rate,
             "mdi:heart-pulse",
             unitOfMeasurement = "bpm",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val sleepDuration = SensorManager.BasicSensor(
             id = "health_connect_sleep_duration",
             type = "sensor",
-            commonR.string.basic_sensor_name_sleep_duration,
-            commonR.string.sensor_description_sleep_duration,
+            R.string.basic_sensor_name_sleep_duration,
+            R.string.sensor_description_sleep_duration,
             "mdi:sleep",
             deviceClass = "duration",
             unitOfMeasurement = "min",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val steps = SensorManager.BasicSensor(
             id = "health_connect_steps",
             type = "sensor",
-            commonR.string.sensor_name_daily_steps,
-            commonR.string.sensor_description_steps,
+            R.string.sensor_name_daily_steps,
+            R.string.sensor_description_steps,
             "mdi:walk",
             unitOfMeasurement = "steps",
-            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            stateClass = SensorManager.Companion.STATE_CLASS_TOTAL_INCREASING,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val systolicBloodPressure = SensorManager.BasicSensor(
             id = "health_connect_systolic_blood_pressure",
             type = "sensor",
-            commonR.string.basic_sensor_name_systolic_blood_pressure,
-            commonR.string.sensor_description_systolic_blood_pressure,
+            R.string.basic_sensor_name_systolic_blood_pressure,
+            R.string.sensor_description_systolic_blood_pressure,
             "mdi:heart-pulse",
             deviceClass = "pressure",
             unitOfMeasurement = "mmHg",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val totalCaloriesBurned = SensorManager.BasicSensor(
             id = "health_connect_total_calories_burned",
             type = "sensor",
-            commonR.string.basic_sensor_name_total_calories_burned,
-            commonR.string.sensor_description_total_calories_burned,
+            R.string.basic_sensor_name_total_calories_burned,
+            R.string.sensor_description_total_calories_burned,
             "mdi:fire",
             "energy",
             unitOfMeasurement = "kcal",
-            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            stateClass = SensorManager.Companion.STATE_CLASS_TOTAL_INCREASING,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val vo2Max = SensorManager.BasicSensor(
             id = "health_connect_vo2_max",
             type = "sensor",
-            commonR.string.basic_sensor_name_vo2_max,
-            commonR.string.sensor_description_vo2_max,
+            R.string.basic_sensor_name_vo2_max,
+            R.string.sensor_description_vo2_max,
             "mdi:heart",
             unitOfMeasurement = "mL/kg/min",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         val weight = SensorManager.BasicSensor(
             id = "health_connect_weight",
             type = "sensor",
-            commonR.string.basic_sensor_name_weight,
-            commonR.string.sensor_description_weight,
+            R.string.basic_sensor_name_weight,
+            R.string.sensor_description_weight,
             "mdi:scale-bathroom",
             unitOfMeasurement = "g",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            entityCategory = SensorManager.Companion.ENTITY_CATEGORY_DIAGNOSTIC,
             deviceClass = "weight",
         )
 
@@ -377,13 +378,13 @@ class HealthConnectSensorManager : SensorManager {
     }
 
     override val name: Int
-        get() = commonR.string.sensor_name_health_connect
+        get() = R.string.sensor_name_health_connect
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return FailFast.failOnCatch({ "Unable to get required permissions for $sensorId" }, emptyArray<String>()) {
             val permissions = sensorPermissionMap[sensorId]?.let { recordClass ->
-                val readPermission = HealthPermission.getReadPermission(recordClass)
-                arrayOf(readPermission, HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND)
+                val readPermission = HealthPermission.Companion.getReadPermission(recordClass)
+                arrayOf(readPermission, HealthPermission.Companion.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND)
             }
             FailFast.failWhen(permissions == null) { "Missing sensor mapping for $sensorId" }
             permissions ?: emptyArray()
@@ -657,8 +658,8 @@ class HealthConnectSensorManager : SensorManager {
     private suspend fun updateDistanceSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val distanceRequest =
-            healthConnectClient.aggregateOrNull(buildAggregationRequest(DistanceRecord.DISTANCE_TOTAL)) ?: return
-        val distanceTotal = distanceRequest[DistanceRecord.DISTANCE_TOTAL]?.inMeters ?: 0
+            healthConnectClient.aggregateOrNull(buildAggregationRequest(DistanceRecord.Companion.DISTANCE_TOTAL)) ?: return
+        val distanceTotal = distanceRequest[DistanceRecord.Companion.DISTANCE_TOTAL]?.inMeters ?: 0
         onSensorUpdated(
             context,
             distance,
@@ -671,9 +672,9 @@ class HealthConnectSensorManager : SensorManager {
     private suspend fun updateElevationGainedSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val elevationGainedRequest =
-            healthConnectClient.aggregateOrNull(buildAggregationRequest(ElevationGainedRecord.ELEVATION_GAINED_TOTAL))
+            healthConnectClient.aggregateOrNull(buildAggregationRequest(ElevationGainedRecord.Companion.ELEVATION_GAINED_TOTAL))
                 ?: return
-        val elevationValue = elevationGainedRequest[ElevationGainedRecord.ELEVATION_GAINED_TOTAL]?.inMeters ?: 0
+        val elevationValue = elevationGainedRequest[ElevationGainedRecord.Companion.ELEVATION_GAINED_TOTAL]?.inMeters ?: 0
         onSensorUpdated(
             context,
             elevationGained,
@@ -686,9 +687,9 @@ class HealthConnectSensorManager : SensorManager {
     private suspend fun updateFloorsClimbedSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val floorsClimbedRequest =
-            healthConnectClient.aggregateOrNull(buildAggregationRequest(FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL))
+            healthConnectClient.aggregateOrNull(buildAggregationRequest(FloorsClimbedRecord.Companion.FLOORS_CLIMBED_TOTAL))
                 ?: return
-        val floors = floorsClimbedRequest[FloorsClimbedRecord.FLOORS_CLIMBED_TOTAL] ?: 0
+        val floors = floorsClimbedRequest[FloorsClimbedRecord.Companion.FLOORS_CLIMBED_TOTAL] ?: 0
         onSensorUpdated(
             context,
             floorsClimbed,
@@ -758,8 +759,8 @@ class HealthConnectSensorManager : SensorManager {
     private suspend fun updateHydrationSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val hydrationRequest =
-            healthConnectClient.aggregateOrNull(buildAggregationRequest(HydrationRecord.VOLUME_TOTAL)) ?: return
-        val hydrationTotal = hydrationRequest[HydrationRecord.VOLUME_TOTAL]?.inMilliliters ?: 0
+            healthConnectClient.aggregateOrNull(buildAggregationRequest(HydrationRecord.Companion.VOLUME_TOTAL)) ?: return
+        val hydrationTotal = hydrationRequest[HydrationRecord.Companion.VOLUME_TOTAL]?.inMilliliters ?: 0
         onSensorUpdated(
             context,
             hydration,
@@ -871,8 +872,8 @@ class HealthConnectSensorManager : SensorManager {
     private suspend fun updateStepsSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val stepsRequest =
-            healthConnectClient.aggregateOrNull(buildAggregationRequest(StepsRecord.COUNT_TOTAL)) ?: return
-        val totalSteps = stepsRequest[StepsRecord.COUNT_TOTAL] ?: 0
+            healthConnectClient.aggregateOrNull(buildAggregationRequest(StepsRecord.Companion.COUNT_TOTAL)) ?: return
+        val totalSteps = stepsRequest[StepsRecord.Companion.COUNT_TOTAL] ?: 0
         onSensorUpdated(
             context,
             steps,
@@ -885,9 +886,9 @@ class HealthConnectSensorManager : SensorManager {
     private suspend fun updateTotalCaloriesBurnedSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val totalCaloriesBurnedRequest =
-            healthConnectClient.aggregateOrNull(buildAggregationRequest(TotalCaloriesBurnedRecord.ENERGY_TOTAL))
+            healthConnectClient.aggregateOrNull(buildAggregationRequest(TotalCaloriesBurnedRecord.Companion.ENERGY_TOTAL))
                 ?: return
-        val energy = totalCaloriesBurnedRequest[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories ?: 0.0
+        val energy = totalCaloriesBurnedRequest[TotalCaloriesBurnedRecord.Companion.ENERGY_TOTAL]?.inKilocalories ?: 0.0
         onSensorUpdated(
             context,
             totalCaloriesBurned,
@@ -976,7 +977,7 @@ class HealthConnectSensorManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        return HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
+        return HealthConnectClient.Companion.getSdkStatus(context) == HealthConnectClient.Companion.SDK_AVAILABLE
     }
 
     override suspend fun checkPermission(context: Context, sensorId: String): Boolean {
@@ -986,16 +987,16 @@ class HealthConnectSensorManager : SensorManager {
                 requiredPermissions(sensorId).toSet(),
             )
         } catch (e: Exception) {
-            Timber.e(e, "Unable to check permissions")
+            Timber.Forest.e(e, "Unable to check permissions")
             true // default to true as we still need to check sensor enabled state
         }
     }
 
     private fun getOrCreateHealthConnectClient(context: Context): HealthConnectClient? {
         return try {
-            HealthConnectClient.getOrCreate(context.applicationContext)
+            HealthConnectClient.Companion.getOrCreate(context.applicationContext)
         } catch (e: RuntimeException) {
-            Timber.e(e, "Unable to create Health Connect client")
+            Timber.Forest.e(e, "Unable to create Health Connect client")
             null
         }
     }
@@ -1005,21 +1006,21 @@ class HealthConnectSensorManager : SensorManager {
     ): ReadRecordsResponse<T>? = try {
         readRecords(request)
     } catch (e: Exception) {
-        Timber.e(e, "Could not read records")
+        Timber.Forest.e(e, "Could not read records")
         null
     }
 
     private suspend fun HealthConnectClient.aggregateOrNull(request: AggregateRequest): AggregationResult? = try {
         aggregate(request)
     } catch (e: Exception) {
-        Timber.e(e, "Could not aggregate")
+        Timber.Forest.e(e, "Could not aggregate")
         null
     }
 
     private fun buildAggregationRequest(metric: AggregateMetric<*>): AggregateRequest {
         return AggregateRequest(
             metrics = setOf(metric),
-            timeRangeFilter = TimeRangeFilter.between(
+            timeRangeFilter = TimeRangeFilter.Companion.between(
                 LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
                 LocalDateTime.of(LocalDate.now(), LocalTime.now()),
             ),
@@ -1027,9 +1028,9 @@ class HealthConnectSensorManager : SensorManager {
     }
 
     private fun <T : Record> buildReadRecordsRequest(request: KClass<T>): ReadRecordsRequest<T> {
-        return ReadRecordsRequest(
+        return androidx.health.connect.client.request.ReadRecordsRequest(
             recordType = request,
-            timeRangeFilter = TimeRangeFilter.between(
+            timeRangeFilter = TimeRangeFilter.Companion.between(
                 Instant.now().minus(30, ChronoUnit.DAYS),
                 Instant.now(),
             ),
@@ -1047,24 +1048,24 @@ class HealthConnectSensorManager : SensorManager {
 
     private fun getRelationToMeal(relation: Int): String {
         return when (relation) {
-            BloodGlucoseRecord.RELATION_TO_MEAL_FASTING -> "fasting"
-            BloodGlucoseRecord.RELATION_TO_MEAL_BEFORE_MEAL -> "before_meal"
-            BloodGlucoseRecord.RELATION_TO_MEAL_GENERAL -> "general"
-            BloodGlucoseRecord.RELATION_TO_MEAL_AFTER_MEAL -> "after_meal"
-            BloodGlucoseRecord.RELATION_TO_MEAL_UNKNOWN -> STATE_UNKNOWN
+            BloodGlucoseRecord.Companion.RELATION_TO_MEAL_FASTING -> "fasting"
+            BloodGlucoseRecord.Companion.RELATION_TO_MEAL_BEFORE_MEAL -> "before_meal"
+            BloodGlucoseRecord.Companion.RELATION_TO_MEAL_GENERAL -> "general"
+            BloodGlucoseRecord.Companion.RELATION_TO_MEAL_AFTER_MEAL -> "after_meal"
+            BloodGlucoseRecord.Companion.RELATION_TO_MEAL_UNKNOWN -> STATE_UNKNOWN
             else -> STATE_UNKNOWN
         }
     }
 
     private fun getSpecimenSource(source: Int): String {
         return when (source) {
-            BloodGlucoseRecord.SPECIMEN_SOURCE_CAPILLARY_BLOOD -> "capillary_blood"
-            BloodGlucoseRecord.SPECIMEN_SOURCE_INTERSTITIAL_FLUID -> "interstitial_fluid"
-            BloodGlucoseRecord.SPECIMEN_SOURCE_PLASMA -> "plasma"
-            BloodGlucoseRecord.SPECIMEN_SOURCE_SERUM -> "serum"
-            BloodGlucoseRecord.SPECIMEN_SOURCE_TEARS -> "tears"
-            BloodGlucoseRecord.SPECIMEN_SOURCE_UNKNOWN -> STATE_UNKNOWN
-            BloodGlucoseRecord.SPECIMEN_SOURCE_WHOLE_BLOOD -> "whole_blood"
+            BloodGlucoseRecord.Companion.SPECIMEN_SOURCE_CAPILLARY_BLOOD -> "capillary_blood"
+            BloodGlucoseRecord.Companion.SPECIMEN_SOURCE_INTERSTITIAL_FLUID -> "interstitial_fluid"
+            BloodGlucoseRecord.Companion.SPECIMEN_SOURCE_PLASMA -> "plasma"
+            BloodGlucoseRecord.Companion.SPECIMEN_SOURCE_SERUM -> "serum"
+            BloodGlucoseRecord.Companion.SPECIMEN_SOURCE_TEARS -> "tears"
+            BloodGlucoseRecord.Companion.SPECIMEN_SOURCE_UNKNOWN -> STATE_UNKNOWN
+            BloodGlucoseRecord.Companion.SPECIMEN_SOURCE_WHOLE_BLOOD -> "whole_blood"
             else -> STATE_UNKNOWN
         }
     }
@@ -1082,34 +1083,34 @@ class HealthConnectSensorManager : SensorManager {
 
     private fun getBloodPressureBodyPosition(position: Int): String {
         return when (position) {
-            BloodPressureRecord.BODY_POSITION_LYING_DOWN -> "lying_down"
-            BloodPressureRecord.BODY_POSITION_RECLINING -> "reclining"
-            BloodPressureRecord.BODY_POSITION_SITTING_DOWN -> "sitting_down"
-            BloodPressureRecord.BODY_POSITION_STANDING_UP -> "standing_up"
-            BloodPressureRecord.BODY_POSITION_UNKNOWN -> STATE_UNKNOWN
+            BloodPressureRecord.Companion.BODY_POSITION_LYING_DOWN -> "lying_down"
+            BloodPressureRecord.Companion.BODY_POSITION_RECLINING -> "reclining"
+            BloodPressureRecord.Companion.BODY_POSITION_SITTING_DOWN -> "sitting_down"
+            BloodPressureRecord.Companion.BODY_POSITION_STANDING_UP -> "standing_up"
+            BloodPressureRecord.Companion.BODY_POSITION_UNKNOWN -> STATE_UNKNOWN
             else -> STATE_UNKNOWN
         }
     }
 
     private fun getBloodPressureMeasurementLocation(location: Int): String {
         return when (location) {
-            BloodPressureRecord.MEASUREMENT_LOCATION_LEFT_WRIST -> "left_wrist"
-            BloodPressureRecord.MEASUREMENT_LOCATION_LEFT_UPPER_ARM -> "left_upper_arm"
-            BloodPressureRecord.MEASUREMENT_LOCATION_RIGHT_WRIST -> "right_wrist"
-            BloodPressureRecord.MEASUREMENT_LOCATION_RIGHT_UPPER_ARM -> "right_upper_arm"
-            BloodPressureRecord.MEASUREMENT_LOCATION_UNKNOWN -> STATE_UNKNOWN
+            BloodPressureRecord.Companion.MEASUREMENT_LOCATION_LEFT_WRIST -> "left_wrist"
+            BloodPressureRecord.Companion.MEASUREMENT_LOCATION_LEFT_UPPER_ARM -> "left_upper_arm"
+            BloodPressureRecord.Companion.MEASUREMENT_LOCATION_RIGHT_WRIST -> "right_wrist"
+            BloodPressureRecord.Companion.MEASUREMENT_LOCATION_RIGHT_UPPER_ARM -> "right_upper_arm"
+            BloodPressureRecord.Companion.MEASUREMENT_LOCATION_UNKNOWN -> STATE_UNKNOWN
             else -> STATE_UNKNOWN
         }
     }
 
     private fun getMeasurementMethod(method: Int): String {
         return when (method) {
-            Vo2MaxRecord.MEASUREMENT_METHOD_COOPER_TEST -> "cooper_test"
-            Vo2MaxRecord.MEASUREMENT_METHOD_HEART_RATE_RATIO -> "heart_rate_ratio"
-            Vo2MaxRecord.MEASUREMENT_METHOD_METABOLIC_CART -> "metabolic_cart"
-            Vo2MaxRecord.MEASUREMENT_METHOD_MULTISTAGE_FITNESS_TEST -> "multistage_fitness_test"
-            Vo2MaxRecord.MEASUREMENT_METHOD_OTHER -> "other"
-            Vo2MaxRecord.MEASUREMENT_METHOD_ROCKPORT_FITNESS_TEST -> "rockport_fitness_test"
+            Vo2MaxRecord.Companion.MEASUREMENT_METHOD_COOPER_TEST -> "cooper_test"
+            Vo2MaxRecord.Companion.MEASUREMENT_METHOD_HEART_RATE_RATIO -> "heart_rate_ratio"
+            Vo2MaxRecord.Companion.MEASUREMENT_METHOD_METABOLIC_CART -> "metabolic_cart"
+            Vo2MaxRecord.Companion.MEASUREMENT_METHOD_MULTISTAGE_FITNESS_TEST -> "multistage_fitness_test"
+            Vo2MaxRecord.Companion.MEASUREMENT_METHOD_OTHER -> "other"
+            Vo2MaxRecord.Companion.MEASUREMENT_METHOD_ROCKPORT_FITNESS_TEST -> "rockport_fitness_test"
             else -> STATE_UNKNOWN
         }
     }
