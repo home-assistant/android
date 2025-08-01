@@ -80,6 +80,7 @@ import io.homeassistant.companion.android.barcode.BarcodeScannerActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.GestureAction
@@ -105,6 +106,7 @@ import io.homeassistant.companion.android.util.compose.initializePlayer
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
+import io.homeassistant.companion.android.webview.addto.AddToDialog
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import io.homeassistant.companion.android.webview.externalbus.ExternalConfigResponse
 import io.homeassistant.companion.android.webview.externalbus.NavigateTo
@@ -205,6 +207,9 @@ class WebViewActivity :
     @Inject
     @Named("keyChainRepository")
     lateinit var keyChainRepository: KeyChainRepository
+
+    @Inject
+    lateinit var prefsRepository: PrefsRepository
 
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
@@ -862,6 +867,7 @@ class WebViewActivity :
                                 "exoplayer/resize" -> exoResizeHls(json)
                                 "haptic" -> processHaptic(json.getJSONObject("payload").getString("hapticType"))
                                 "theme-update" -> getAndSetStatusBarNavigationBarColors()
+                                "entity/add_to" -> addEntityTo(json)
                                 else -> presenter.onExternalBusMessage(json)
                             }
                         }
@@ -884,6 +890,12 @@ class WebViewActivity :
                 javascriptInterface,
             )
         }
+    }
+
+    private fun addEntityTo(json: JSONObject) {
+        val entityId = json.getJSONObject("payload").getString("entity_id")
+        val addToDialog = AddToDialog(entityId, serverManager, prefsRepository)
+        addToDialog.show(supportFragmentManager, AddToDialog.TAG)
     }
 
     private fun handleWebViewGesture(direction: GestureDirection, pointerCount: Int) {
