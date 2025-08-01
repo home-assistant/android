@@ -964,7 +964,7 @@ class WebViewActivity :
                 GestureAction.OPEN_APP_DEVELOPER -> startActivity(
                     SettingsActivity.newInstance(
                         context = this@WebViewActivity,
-                        screen = SettingsActivity.Deeplink.DEVELOPER,
+                        screen = SettingsActivity.Deeplink.Developer,
                     ),
                 )
             }

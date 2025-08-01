@@ -240,7 +240,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
             PendingIntent.FLAG_IMMUTABLE,
         )
 
-        val settingIntent = SettingsActivity.newInstance(applicationContext, SettingsActivity.Deeplink.WEBSOCKET)
+        val settingIntent = SettingsActivity.newInstance(applicationContext, SettingsActivity.Deeplink.Websocket)
         settingIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         settingIntent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         settingIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
