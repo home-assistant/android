@@ -91,10 +91,9 @@ class LaunchActivity :
                 }
             }
         }
-        presenter.onViewReady(
-            intent.getStringExtra(EXTRA_SERVER_URL_TO_ONBOARD),
-            lifecycleScope,
-        )
+        lifecycleScope.launch {
+            presenter.onViewReady(intent.getStringExtra(EXTRA_SERVER_URL_TO_ONBOARD))
+        }
     }
 
     override suspend fun displayWebView() {

@@ -1,10 +1,8 @@
 package io.homeassistant.companion.android.launch
 
-import kotlinx.coroutines.CoroutineScope
-
 interface LaunchPresenter {
 
-    fun onViewReady(serverUrlToOnboard: String? = null, coroutineScope: CoroutineScope)
+    suspend fun onViewReady(serverUrlToOnboard: String? = null)
 
     suspend fun setSessionExpireMillis(value: Long)
 

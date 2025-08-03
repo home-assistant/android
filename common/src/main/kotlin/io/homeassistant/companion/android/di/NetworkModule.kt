@@ -26,7 +26,9 @@ internal abstract class NetworkModule {
         @Provides
         @Singleton
         fun provideConnectivityManager(@ApplicationContext appContext: Context) =
-            appContext.getSystemService<ConnectivityManager>()!!
+            checkNotNull(appContext.getSystemService<ConnectivityManager>()) {
+                "ConnectivityManager is not available on this device"
+            }
 
         @Provides
         @Singleton

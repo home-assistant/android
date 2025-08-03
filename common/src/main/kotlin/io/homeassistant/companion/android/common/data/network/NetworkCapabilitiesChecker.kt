@@ -8,11 +8,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * A utility class that provides access to current network transport capabilities.
- * It is primarily a wrapper around [ConnectivityManager] used to determine if the device is connected
- * via specific transport type.
- * It providing both modern checks using [NetworkCapabilities] and fallback logic
- * using [NetworkInfo] for devices running pre-Marshmallow (API < 23).
+ * A utility class providing access to current network transport capabilities.
+ * It wraps [ConnectivityManager] to determine if the device is connected
+ * via a specific transport type.
+ *
+ * It offers checks using [NetworkCapabilities] (for Android Marshmallow/API 23 and above)
+ * and provides fallback logic using [NetworkInfo] for older devices (pre-Marshmallow/API < 23).
  */
 @Singleton
 internal class NetworkCapabilitiesChecker @Inject constructor(private val connectivityManager: ConnectivityManager) {

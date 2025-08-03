@@ -5,11 +5,8 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.network.NetworkState
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 abstract class LaunchPresenterBase(
@@ -18,35 +15,33 @@ abstract class LaunchPresenterBase(
     private val networkStatusMonitor: NetworkStatusMonitor,
 ) : LaunchPresenter {
 
-    override fun onViewReady(serverUrlToOnboard: String?, coroutineScope: CoroutineScope) {
-        coroutineScope.launch {
-            // Remove any invalid servers (incomplete, partly migrated from another device)
-            serverManager.defaultServers
-                .filter { serverManager.authenticationRepository(it.id).getSessionState() == SessionState.ANONYMOUS }
-                .forEach { serverManager.removeServer(it.id) }
+    override suspend fun onViewReady(serverUrlToOnboard: String?) {
+        // Remove any invalid servers (incomplete, partly migrated from another device)
+        serverManager.defaultServers
+            .filter { serverManager.authenticationRepository(it.id).getSessionState() == SessionState.ANONYMOUS }
+            .forEach { serverManager.removeServer(it.id) }
 
-            try {
-                if (serverUrlToOnboard != null) {
-                    view.displayOnBoarding(false, serverUrlToOnboard)
-                    return@launch
-                }
+        try {
+            if (serverUrlToOnboard != null) {
+                view.displayOnBoarding(false, serverUrlToOnboard)
+                return
+            }
 
-                val activeServer = serverManager.getServer(ServerManager.SERVER_ID_ACTIVE)
-                if (
-                    serverManager.isRegistered() &&
-                    serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED &&
-                    activeServer != null
-                ) {
-                    networkStatusMonitor.observeNetworkStatus(activeServer.connection)
-                        .collectLatest { state ->
-                            if (handleNetworkState(state)) this.cancel()
-                        }
-                } else {
-                    view.displayOnBoarding(false)
-                }
-            } catch (e: IllegalArgumentException) { // Server was just removed, nothing is added
+            val activeServer = serverManager.getServer(ServerManager.SERVER_ID_ACTIVE)
+            if (
+                serverManager.isRegistered() &&
+                serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED &&
+                activeServer != null
+            ) {
+                networkStatusMonitor.observeNetworkStatus(activeServer.connection)
+                    .collectLatest { state ->
+                        if (handleNetworkState(state)) return@collectLatest
+                    }
+            } else {
                 view.displayOnBoarding(false)
             }
+        } catch (e: IllegalArgumentException) { // Server was just removed, nothing is added
+            view.displayOnBoarding(false)
         }
     }
 
