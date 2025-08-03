@@ -19,5 +19,5 @@ interface CameraTileDao {
     suspend fun add(tile: CameraTile)
 
     @Query("DELETE FROM camera_tiles where id = :id")
-    fun delete(id: Int)
+    suspend fun delete(id: Int)
 }
