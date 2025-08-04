@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
+import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.initCrashSaving
 import io.homeassistant.companion.android.util.threadPolicyIgnoredViolationRules
@@ -66,6 +67,9 @@ open class HomeAssistantApplication :
     @Inject
     lateinit var languagesManager: LanguagesManager
 
+    @Inject
+    lateinit var nightModeManager: NightModeManager
+
     override fun onCreate() {
         super.onCreate()
 
@@ -91,6 +95,7 @@ open class HomeAssistantApplication :
             )
             initCrashSaving(applicationContext)
             languagesManager.applyCurrentLang()
+            nightModeManager.applyCurrentNightMode()
         }
 
         // This will make sure we start/stop when we actually need too.
