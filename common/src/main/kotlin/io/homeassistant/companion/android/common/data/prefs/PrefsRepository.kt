@@ -8,7 +8,6 @@ enum class NightModeTheme(val storageValue: String) {
     LIGHT("light"),
     DARK("dark"),
 
-    // TODO double check this
     @Deprecated("Kept for backwards compatibility see https://github.com/home-assistant/android/pull/2923")
     ANDROID("android"),
     SYSTEM("system"),
