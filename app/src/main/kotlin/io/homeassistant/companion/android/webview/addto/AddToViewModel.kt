@@ -44,15 +44,6 @@ class AddToViewModel @AssistedInject constructor(
                             // We could check if it already exist but the action won't do anything so we can keep it
                             actions.add(AddToAction.AndroidAutoFavorite)
                         }
-//                        if (isValidTileDomain(entity)) {
-//                            // TODO check if there is a Tile available
-//                            actions.add(AddToAction.Tile)
-//                        }
-
-                        // TODO do watch based on all the watch available
-
-                        // TODO shortcut we need to know if we can add a shortcut or not
-                        // If we already have 5 shortcuts set we probably should not offer this option
 
                         if (entity.domain == MEDIA_PLAYER_DOMAIN) {
                             actions.add(AddToAction.MediaPlayerWidget)
@@ -65,6 +56,16 @@ class AddToViewModel @AssistedInject constructor(
                         if (entity.domain == CAMERA_DOMAIN || entity.domain == IMAGE_DOMAIN) {
                             actions.add(AddToAction.CameraWidget)
                         }
+
+                        // TODO support tile https://github.com/home-assistant/android/issues/5623
+                        // if (isValidTileDomain(entity)) {
+                        //     actions.add(AddToAction.Tile)
+                        // }
+
+                        // TODO support watch favorite https://github.com/home-assistant/android/issues/5624
+
+                        // TODO support shortcut https://github.com/home-assistant/android/issues/5625
+
                         _potentialActions.emit(actions)
                     } ?: FailFast.fail { "Entity is null" }
             }
