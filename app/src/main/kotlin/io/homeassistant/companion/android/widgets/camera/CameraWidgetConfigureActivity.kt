@@ -4,6 +4,7 @@ import android.R
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -18,6 +19,8 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.IMAGE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
@@ -36,6 +39,16 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     companion object {
         private const val PIN_WIDGET_CALLBACK =
             "io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
+
+        private const val FOR_ENTITY = "for_entity"
+
+        fun newInstance(context: Context, entityId: String): Intent {
+            return Intent(context, CameraWidgetConfigureActivity::class.java).apply {
+                putExtra(FOR_ENTITY, entityId)
+                putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+        }
     }
 
     private lateinit var binding: WidgetCameraConfigureBinding
@@ -96,6 +109,10 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         val intent = intent
         val extras = intent.extras
         if (extras != null) {
+            if (extras.containsKey(FOR_ENTITY)) {
+                binding.widgetTextConfigEntityId.setText(extras.getString(FOR_ENTITY))
+            }
+
             appWidgetId = extras.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
                 AppWidgetManager.INVALID_APPWIDGET_ID,
@@ -146,7 +163,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             lifecycleScope.launch {
                 try {
                     val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
-                        .filter { it.domain == "camera" || it.domain == "image" }
+                        .filter { it.domain == CAMERA_DOMAIN || it.domain == IMAGE_DOMAIN }
                     entities[server.id] = fetchedEntities
                     if (server.id == selectedServerId) setAdapterEntities(server.id)
                 } catch (e: Exception) {

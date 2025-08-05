@@ -13,6 +13,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.prefs.AutoFavorite
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
@@ -30,7 +31,7 @@ class ManageAndroidAutoViewModel @Inject constructor(
     application: Application,
 ) : AndroidViewModel(application) {
 
-    val favoritesList = mutableStateListOf<String>()
+    val favoritesList = mutableStateListOf<AutoFavorite>()
 
     var sortedEntities by mutableStateOf<List<Entity>>(emptyList())
         private set
@@ -81,10 +82,11 @@ class ManageAndroidAutoViewModel @Inject constructor(
     }
 
     fun onEntitySelected(checked: Boolean, entityId: String, serverId: Int) {
+        val favorite = AutoFavorite(serverId, entityId)
         if (checked) {
-            favoritesList.add("$serverId-$entityId")
+            favoritesList.add(favorite)
         } else {
-            favoritesList.remove("$serverId-$entityId")
+            favoritesList.remove(favorite)
         }
         viewModelScope.launch { prefsRepository.setAutoFavorites(favoritesList.toList()) }
     }

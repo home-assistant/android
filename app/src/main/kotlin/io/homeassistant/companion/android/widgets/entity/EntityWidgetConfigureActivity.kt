@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.widgets.entity
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -48,6 +49,16 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     companion object {
         private const val PIN_WIDGET_CALLBACK =
             "io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
+
+        private const val FOR_ENTITY = "for_entity"
+
+        fun newInstance(context: Context, entityId: String): Intent {
+            return Intent(context, EntityWidgetConfigureActivity::class.java).apply {
+                putExtra(FOR_ENTITY, entityId)
+                putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+        }
     }
 
     @Inject
@@ -115,6 +126,10 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         val intent = intent
         val extras = intent.extras
         if (extras != null) {
+            if (extras.containsKey(FOR_ENTITY)) {
+                binding.widgetTextConfigEntityId.setText(extras.getString(FOR_ENTITY))
+            }
+
             appWidgetId = extras.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
                 AppWidgetManager.INVALID_APPWIDGET_ID,

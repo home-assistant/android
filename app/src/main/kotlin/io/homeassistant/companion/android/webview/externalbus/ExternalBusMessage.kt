@@ -1,7 +1,13 @@
 package io.homeassistant.companion.android.webview.externalbus
 
 import android.webkit.ValueCallback
+import org.json.JSONObject
+import timber.log.Timber
 
+/**
+ * @see https://developers.home-assistant.io/docs/frontend/external-bus
+ * @see https://github.com/home-assistant/frontend/blob/dev/src/external_app/external_messaging.ts
+ */
 open class ExternalBusMessage(
     val id: Any?,
     val type: String,
@@ -25,8 +31,39 @@ class NavigateTo(path: String, replace: Boolean = false) :
             ),
         ),
     )
+
 object ShowSidebar : ExternalBusMessage(
     id = -1,
     type = "command",
     command = "sidebar/show",
+)
+
+class ExternalConfigResponse(
+    id: Any,
+    hasNfc: Boolean,
+    canCommissionMatter: Boolean,
+    canExportThread: Boolean,
+    hasBarCodeScanner: Int,
+) : ExternalBusMessage(
+    id = id,
+    type = "result",
+    success = true,
+    result = JSONObject(
+        mapOf(
+            "hasSettingsScreen" to true,
+            "canWriteTag" to hasNfc,
+            "hasExoPlayer" to true,
+            "canCommissionMatter" to canCommissionMatter,
+            "canImportThreadCredentials" to canExportThread,
+            "hasAssist" to true,
+            "hasBarCodeScanner" to hasBarCodeScanner,
+            "canSetupImprov" to true,
+            "downloadFileSupported" to true,
+            "canAddEntityToApp" to true,
+        ),
+    ),
+    callback = {
+        Timber.e("Callback from external config (id=$id): $it")
+    },
+
 )

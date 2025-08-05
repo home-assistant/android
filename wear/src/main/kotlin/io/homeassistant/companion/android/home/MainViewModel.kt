@@ -18,6 +18,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
@@ -254,8 +255,8 @@ class MainViewModel @Inject constructor(
             it.forEach { state -> updateEntityStates(state) }
 
             // Special lists: camera entities and climate entities
-            val cameraEntities = it.filter { entity -> entity.domain == "camera" }
-            cameraEntitiesMap["camera"] = mutableStateListOf<Entity>().apply { addAll(cameraEntities) }
+            val cameraEntities = it.filter { entity -> entity.domain == CAMERA_DOMAIN }
+            cameraEntitiesMap[CAMERA_DOMAIN] = mutableStateListOf<Entity>().apply { addAll(cameraEntities) }
             val climateEntities = it.filter { entity -> entity.domain == "climate" }
             climateEntitiesMap["climate"] = mutableStateListOf<Entity>().apply { addAll(climateEntities) }
         }

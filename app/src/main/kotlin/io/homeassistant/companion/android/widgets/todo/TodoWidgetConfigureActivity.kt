@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.widgets.todo
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -38,6 +39,7 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -63,10 +65,28 @@ import timber.log.Timber
 class TodoWidgetConfigureActivity : BaseActivity() {
     companion object {
         @Suppress("ktlint:standard:max-line-length")
-        private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.todo.TodoWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
+        private const val PIN_WIDGET_CALLBACK =
+            "io.homeassistant.companion.android.widgets.todo.TodoWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
+
+        private const val FOR_ENTITY = "for_entity"
+
+        fun newInstance(context: Context, entityId: String): Intent {
+            return Intent(context, TodoWidgetConfigureActivity::class.java).apply {
+                putExtra(FOR_ENTITY, entityId)
+                putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+        }
     }
 
-    private val viewModel: TodoWidgetConfigureViewModel by viewModels()
+    private val viewModel: TodoWidgetConfigureViewModel by viewModels(
+        extrasProducer = {
+            defaultViewModelCreationExtras.withCreationCallback<TodoWidgetConfigureViewModel.Factory> { factory ->
+                factory.create(intent.extras?.getString(FOR_ENTITY, null))
+            }
+        },
+    )
+
     private val supportedTextColors: List<String>
         get() = listOf(
             application.getHexForColor(R.color.colorWidgetButtonLabelBlack),
