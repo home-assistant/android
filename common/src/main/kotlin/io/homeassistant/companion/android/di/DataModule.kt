@@ -1,12 +1,9 @@
-package io.homeassistant.companion.android.common.data
+package io.homeassistant.companion.android.di
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.net.ConnectivityManager
-import android.net.wifi.WifiManager
 import android.os.Build
 import android.provider.Settings
-import androidx.core.content.getSystemService
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -14,6 +11,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.LocalStorageImpl
+import io.homeassistant.companion.android.common.data.HomeAssistantApis
+import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationService
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
@@ -25,8 +24,6 @@ import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepositoryImpl
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.ServerManagerImpl
-import io.homeassistant.companion.android.common.data.wifi.WifiHelper
-import io.homeassistant.companion.android.common.data.wifi.WifiHelperImpl
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.getSharedPreferencesSuspend
 import io.homeassistant.companion.android.common.util.tts.AndroidTextToSpeechEngine
@@ -121,15 +118,6 @@ abstract class DataModule {
 
         @Provides
         @Singleton
-        fun connectivityManager(@ApplicationContext appContext: Context) =
-            appContext.getSystemService<ConnectivityManager>()!!
-
-        @Provides
-        @Singleton
-        fun wifiManager(@ApplicationContext appContext: Context) = appContext.getSystemService<WifiManager>()
-
-        @Provides
-        @Singleton
         fun packageManager(@ApplicationContext appContext: Context) = appContext.packageManager
 
         @Provides
@@ -145,10 +133,6 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindWearPrefsRepository(wearPrefsRepository: WearPrefsRepositoryImpl): WearPrefsRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindWifiRepository(wifiHelper: WifiHelperImpl): WifiHelper
 
     @Binds
     @Singleton
