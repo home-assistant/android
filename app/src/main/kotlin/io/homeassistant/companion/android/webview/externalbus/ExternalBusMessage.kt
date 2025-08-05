@@ -33,6 +33,7 @@ class NavigateTo(path: String, replace: Boolean = false) :
             ),
         ),
     )
+
 object ShowSidebar : ExternalBusMessage(
     id = -1,
     type = "command",
