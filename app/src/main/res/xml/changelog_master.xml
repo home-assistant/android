@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2025.10.4 - Main" versioncode="3">
+        <change>Easily add entities to widgets or favorites via their more-info dialog settings</change>
         <change>Gesture settings for the main Home Assistant UI added, with new gestures and actions</change>
         <change>Health Connect sensors now require permission to access health data in the background</change>
         <change>Downloading snapshots from camera card is now working</change>
