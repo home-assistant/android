@@ -1655,7 +1655,7 @@ class MessagingManager @Inject constructor(
 
             uri.startsWith(SETTINGS_PREFIX) -> {
                 if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY) {
-                    SettingsActivity.newInstance(context, SettingsActivity.Deeplink.NOTIFICATION_HISTORY)
+                    SettingsActivity.newInstance(context, SettingsActivity.Deeplink.NotificationHistory)
                 } else {
                     WebViewActivity.newInstance(context, null, serverId)
                 }
