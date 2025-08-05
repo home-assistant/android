@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.viewModels
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -68,7 +70,8 @@ class AddToDialog(private val entityId: String, serverManager: ServerManager, pr
 }
 
 @Composable
-private fun AddToBottomSheet(potentialActions: List<AddToAction>, onAddSelected: (AddToAction) -> Unit) {
+@VisibleForTesting
+fun AddToBottomSheet(potentialActions: List<AddToAction>, onAddSelected: (AddToAction) -> Unit) {
     // Handle cancel
     ModalBottomSheet(title = null) {
         LazyColumn {
@@ -105,4 +108,22 @@ private fun AddToRow(text: String, icon: @Composable (modifier: Modifier) -> Uni
         Text(text = text, modifier = Modifier.padding(start = 8.dp))
     }
     Divider(modifier = Modifier.padding(horizontal = 16.dp))
+}
+
+@Composable
+@Preview
+private fun AddToBottomSheetPreview() {
+    HomeAssistantAppTheme {
+        AddToBottomSheet(
+            listOf(
+                AddToAction.MediaPlayerWidget,
+                AddToAction.TodoWidget,
+                AddToAction.EntityWidget,
+                AddToAction.CameraWidget,
+                AddToAction.Tile,
+                AddToAction.Shortcut,
+                AddToAction.Watch("Hello"),
+            ),
+        ) {}
+    }
 }

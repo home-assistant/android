@@ -20,7 +20,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// TODO why do we have to use Assisted for all params
+// For some unknown reason hilt is not able to inject anything without @Assisted in the context
+// of this viewModel.
 @HiltViewModel(assistedFactory = AddToViewModel.Factory::class)
 class AddToViewModel @AssistedInject constructor(
     @Assisted val entityId: String,
@@ -37,6 +38,8 @@ class AddToViewModel @AssistedInject constructor(
                     ?.let { entity ->
                         val actions = mutableListOf<AddToAction>()
 
+                        actions.add(AddToAction.EntityWidget)
+
                         if (isVehicleDomain(entity)) {
                             // We could check if it already exist but the action won't do anything so we can keep it
                             actions.add(AddToAction.AndroidAutoFavorite)
@@ -50,8 +53,6 @@ class AddToViewModel @AssistedInject constructor(
 
                         // TODO shortcut we need to know if we can add a shortcut or not
                         // If we already have 5 shortcuts set we probably should not offer this option
-
-                        actions.add(AddToAction.EntityWidget)
 
                         if (entity.domain == MEDIA_PLAYER_DOMAIN) {
                             actions.add(AddToAction.MediaPlayerWidget)
