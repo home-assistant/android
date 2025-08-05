@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.util.vehicle
 
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.supportsAlarmControlPanelArmAway
 
@@ -37,6 +38,10 @@ fun isVehicleDomain(entity: Entity): Boolean {
     return entity.domain in SUPPORTED_DOMAINS ||
         entity.domain in NOT_ACTIONABLE_DOMAINS ||
         canNavigate(entity)
+}
+
+fun isValidTileDomain(entity: Entity): Boolean {
+    return entity.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
 }
 
 fun canNavigate(entity: Entity): Boolean {

@@ -1,6 +1,9 @@
 package io.homeassistant.companion.android.widgets.mediaplayer
 
 import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -13,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
@@ -31,6 +35,19 @@ import timber.log.Timber
 @AndroidEntryPoint
 class MediaPlayerControlsWidgetConfigureActivity :
     BaseWidgetConfigureActivity<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
+
+    companion object {
+        private const val FOR_ENTITY = "for_entity"
+
+        fun newInstance(context: Context, entityId: String): Intent {
+            return Intent(context, MediaPlayerControlsWidgetConfigureActivity::class.java).apply {
+                putExtra(FOR_ENTITY, entityId)
+                putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+        }
+    }
+
     private var requestLauncherSetup = false
 
     private lateinit var binding: WidgetMediaControlsConfigureBinding
@@ -83,6 +100,9 @@ class MediaPlayerControlsWidgetConfigureActivity :
         val intent = intent
         val extras = intent.extras
         if (extras != null) {
+            if (extras.containsKey(FOR_ENTITY)) {
+                binding.widgetTextConfigEntityId.setText(extras.getString(FOR_ENTITY))
+            }
             appWidgetId = extras.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
                 AppWidgetManager.INVALID_APPWIDGET_ID,
@@ -150,7 +170,7 @@ class MediaPlayerControlsWidgetConfigureActivity :
             lifecycleScope.launch {
                 try {
                     val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
-                        .filter { it.domain == "media_player" }
+                        .filter { it.domain == MEDIA_PLAYER_DOMAIN }
                     entities[server.id] = fetchedEntities
                     if (server.id == selectedServerId) setAdapterEntities(server.id)
                 } catch (e: Exception) {
