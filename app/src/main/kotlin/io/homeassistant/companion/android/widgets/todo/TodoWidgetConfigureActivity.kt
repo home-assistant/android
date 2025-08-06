@@ -56,16 +56,12 @@ import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import io.homeassistant.companion.android.util.safeTopWindowInsets
+import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
+import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @AndroidEntryPoint
 class TodoWidgetConfigureActivity : BaseActivity() {
-    companion object {
-        @Suppress("ktlint:standard:max-line-length")
-        private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.todo.TodoWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
-    }
-
     private val viewModel: TodoWidgetConfigureViewModel by viewModels()
     private val supportedTextColors: List<String>
         get() = listOf(
@@ -91,31 +87,14 @@ class TodoWidgetConfigureActivity : BaseActivity() {
             HomeAssistantAppTheme {
                 TodoWidgetConfigureScreen(
                     viewModel = viewModel,
-                    onAddWidget = { onSetupWidget() },
+                    onActionClick = { onActionClick() },
                 )
             }
         }
     }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        val extras = intent.extras
-        if (extras == null) {
-            Timber.d("Received new intent without data")
-            return
-        }
-        val widgetId = extras.getInt(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            AppWidgetManager.INVALID_APPWIDGET_ID,
-        )
-        if (extras.getBoolean(PIN_WIDGET_CALLBACK, false)) {
-            viewModel.onSetup(widgetId, supportedTextColors)
-            onAddWidget()
-        }
-    }
-
     @SuppressLint("ObsoleteSdkInt")
-    private fun onSetupWidget() {
+    private fun onActionClick() {
         lifecycleScope.launch {
             if (intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) == true) {
                 if (
@@ -127,7 +106,7 @@ class TodoWidgetConfigureActivity : BaseActivity() {
                     showAddWidgetError()
                 }
             } else {
-                onAddWidget()
+                onUpdateWidget()
             }
         }
     }
@@ -140,36 +119,43 @@ class TodoWidgetConfigureActivity : BaseActivity() {
             GlanceAppWidgetManager(context)
                 .requestPinGlanceAppWidget(
                     TodoWidget::class.java,
-                    successCallback = PendingIntent.getActivity(
+                    successCallback = PendingIntent.getBroadcast(
                         context,
                         System.currentTimeMillis().toInt(),
-                        Intent(context, TodoWidgetConfigureActivity::class.java)
-                            .putExtra(PIN_WIDGET_CALLBACK, true)
-                            .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                        Intent(context, TodoWidget::class.java).apply {
+                            action = ACTION_APPWIDGET_CREATED
+                            putExtra(EXTRA_WIDGET_ENTITY, viewModel.getPendingDaoEntity())
+                        },
+                        // We need the PendingIntent to be mutable so the system inject the EXTRA_APPWIDGET_ID of the created widget
+                        PendingIntent.FLAG_MUTABLE,
                     ),
                 )
+            finish()
         }
     }
 
-    private fun onAddWidget() {
+    private suspend fun onUpdateWidget() {
         try {
-            viewModel.addWidgetConfiguration()
+            viewModel.updateWidgetConfiguration()
             setResult(RESULT_OK)
-            viewModel.updateWidget(this)
+            viewModel.updateWidget(this@TodoWidgetConfigureActivity)
             finish()
-        } catch (_: IllegalStateException) {
-            showAddWidgetError()
+        } catch (_: Exception) {
+            showUpdateWidgetError()
         }
     }
 
     private fun showAddWidgetError() {
         Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG).show()
     }
+
+    private fun showUpdateWidgetError() {
+        Toast.makeText(applicationContext, R.string.widget_update_error, Toast.LENGTH_LONG).show()
+    }
 }
 
 @Composable
-private fun TodoWidgetConfigureScreen(viewModel: TodoWidgetConfigureViewModel, onAddWidget: () -> Unit) {
+private fun TodoWidgetConfigureScreen(viewModel: TodoWidgetConfigureViewModel, onActionClick: () -> Unit) {
     val servers by viewModel.servers.collectAsStateWithLifecycle()
     val entities by viewModel.entities.collectAsStateWithLifecycle()
 
@@ -187,7 +173,7 @@ private fun TodoWidgetConfigureScreen(viewModel: TodoWidgetConfigureViewModel, o
         textColorIndex = viewModel.textColorIndex,
         onTextColorSelected = { viewModel.textColorIndex = it },
         isUpdateWidget = viewModel.isUpdateWidget,
-        onAddWidget = onAddWidget,
+        onActionClick = onActionClick,
     )
 }
 
@@ -206,7 +192,7 @@ private fun TodoWidgetConfigureView(
     textColorIndex: Int,
     onTextColorSelected: (Int) -> Unit,
     isUpdateWidget: Boolean,
-    onAddWidget: () -> Unit,
+    onActionClick: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -285,7 +271,7 @@ private fun TodoWidgetConfigureView(
 
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { onAddWidget() },
+                onClick = { onActionClick() },
             ) {
                 Text(stringResource(if (isUpdateWidget) R.string.update_widget else R.string.add_widget))
             }
@@ -317,7 +303,7 @@ private fun TodoWidgetConfigureViewPreview() {
             textColorIndex = 0,
             onTextColorSelected = {},
             isUpdateWidget = true,
-            onAddWidget = {},
+            onActionClick = {},
         )
     }
 }

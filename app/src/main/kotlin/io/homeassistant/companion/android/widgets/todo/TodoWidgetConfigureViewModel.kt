@@ -101,49 +101,53 @@ class TodoWidgetConfigureViewModel @Inject constructor(
             selectedEntityId in entities.value.map { it.entityId }
     }
 
-    fun addWidgetConfiguration() {
-        viewModelScope.launch {
-            if (!isValidSelection()) {
-                Timber.d("Widget data is invalid")
-                throw IllegalArgumentException("Widget data is invalid")
-            }
-            if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-                Timber.w("Widget ID is invalid")
-                throw IllegalArgumentException("Widget ID is invalid")
-            }
-
-            val textColor = if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
-                supportedTextColors.getOrNull(textColorIndex) ?: supportedTextColors.first()
-            } else {
-                ""
-            }
-
-            val listEntityId = selectedEntityId!!
-            val integrationRepository = serverManager.integrationRepository(selectedServerId)
-            val webSocketRepository = serverManager.webSocketRepository(selectedServerId)
-            val name = integrationRepository.getEntity(listEntityId)?.friendlyName
-            val todos = webSocketRepository.getTodos(listEntityId)?.response?.get(listEntityId)?.items.orEmpty()
-            todoWidgetDao.add(
-                TodoWidgetEntity(
-                    id = widgetId,
-                    serverId = selectedServerId,
-                    entityId = selectedEntityId!!,
-                    backgroundType = selectedBackgroundType,
-                    textColor = textColor,
-                    showCompleted = showCompletedState,
-                    latestUpdateData = TodoWidgetEntity.LastUpdateData(
-                        entityName = name,
-                        todos = todos.map {
-                            TodoWidgetEntity.TodoItem(
-                                uid = it.uid,
-                                summary = it.summary,
-                                status = it.status,
-                            )
-                        },
-                    ),
-                ),
-            )
+    suspend fun updateWidgetConfiguration() {
+        if (!isValidSelection()) {
+            Timber.d("Widget data is invalid")
+            throw IllegalArgumentException("Widget data is invalid")
         }
+        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+            Timber.w("Widget ID is invalid")
+            throw IllegalArgumentException("Widget ID is invalid")
+        }
+
+        val entity = getPendingDaoEntity()
+        todoWidgetDao.add(entity)
+    }
+
+    /**
+     * Return a [TodoWidgetEntity] with the current selection, but without pushing this to the [todoWidgetDao]
+     */
+    suspend fun getPendingDaoEntity(): TodoWidgetEntity {
+        val textColor = if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
+            supportedTextColors.getOrNull(textColorIndex) ?: supportedTextColors.first()
+        } else {
+            ""
+        }
+        val listEntityId = selectedEntityId!!
+        val integrationRepository = serverManager.integrationRepository(selectedServerId)
+        val webSocketRepository = serverManager.webSocketRepository(selectedServerId)
+        val name = integrationRepository.getEntity(listEntityId)?.friendlyName
+        val todos = webSocketRepository.getTodos(listEntityId)?.response?.get(listEntityId)?.items.orEmpty()
+
+        return TodoWidgetEntity(
+            id = widgetId,
+            serverId = selectedServerId,
+            entityId = selectedEntityId!!,
+            backgroundType = selectedBackgroundType,
+            textColor = textColor,
+            showCompleted = showCompletedState,
+            latestUpdateData = TodoWidgetEntity.LastUpdateData(
+                entityName = name,
+                todos = todos.map {
+                    TodoWidgetEntity.TodoItem(
+                        uid = it.uid,
+                        summary = it.summary,
+                        status = it.status,
+                    )
+                },
+            ),
+        )
     }
 
     fun updateWidget(context: Context) {

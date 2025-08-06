@@ -10,7 +10,9 @@ import androidx.glance.appwidget.updateAll
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.database.widget.WidgetDao
+import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.database.widget.TodoWidgetDao
+import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.mockk.Called
 import io.mockk.coEvery
@@ -42,7 +44,7 @@ private data class FakeGlanceId(val id: Int) : GlanceId
 @OptIn(ExperimentalCoroutinesApi::class)
 class BaseGlanceEntityWidgetReceiverTest {
 
-    val mockedDao: WidgetDao = mockk()
+    val mockedDao: TodoWidgetDao = mockk()
     val mockedServerManager: ServerManager = mockk()
     val mockedWidget: GlanceAppWidget = mockk()
     val glanceManager: GlanceAppWidgetManager = mockk()
@@ -51,8 +53,8 @@ class BaseGlanceEntityWidgetReceiverTest {
         widgetEntitiesByServer: Map<Int, EntitiesPerServer> = emptyMap<Int, EntitiesPerServer>(),
         coroutineScopeProvider: () -> CoroutineScope = { this },
         onEntityUpdateCallback: suspend (Context, Int, Entity) -> Unit = { _, _, _ -> },
-    ): BaseGlanceEntityWidgetReceiver<WidgetDao> {
-        return object : BaseGlanceEntityWidgetReceiver<WidgetDao>(widgetScopeProvider = coroutineScopeProvider, glanceManagerProvider = { glanceManager }) {
+    ): BaseGlanceEntityWidgetReceiver<TodoWidgetEntity, TodoWidgetDao> {
+        return object : BaseGlanceEntityWidgetReceiver<TodoWidgetEntity, TodoWidgetDao>(widgetScopeProvider = coroutineScopeProvider, glanceManagerProvider = { glanceManager }) {
             override suspend fun getWidgetEntitiesByServer(context: Context): Map<Int, EntitiesPerServer> = widgetEntitiesByServer
             override val glanceAppWidget: GlanceAppWidget = mockedWidget
             override suspend fun onEntityUpdate(context: Context, appWidgetId: Int, entity: Entity) {
@@ -241,5 +243,61 @@ class BaseGlanceEntityWidgetReceiverTest {
         receiverScope.advanceUntilIdle()
 
         assertFalse(producer.isActive)
+    }
+
+    @Test
+    fun `Given valid intent with ACTION_APPWIDGET_CREATED when onReceive is called then persist WidgetEntity in DAO`() = runTest {
+        val receiver = getReceiver()
+        val context: Context = mockk()
+        val appWidgetId = 42
+        val intent = mockIntent(ACTION_APPWIDGET_CREATED, appWidgetId)
+        val rawEntity = TodoWidgetEntity(-1, 43, "entity")
+        val updatedEntity = TodoWidgetEntity(42, 43, "entity")
+
+        every { intent.getSerializableExtra(EXTRA_WIDGET_ENTITY) } returns rawEntity
+        coJustRun { mockedDao.add(updatedEntity) }
+
+        receiver.onReceive(context, intent)
+
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { mockedDao.add(updatedEntity) }
+    }
+
+    @Test
+    fun `Given intent with ACTION_APPWIDGET_CREATED without EXTRA_WIDGET_ENTITY when onReceive is called then do nothing`() = runTest {
+        FailFast.setHandler { _, _ ->
+            // No-op
+        }
+        val receiver = getReceiver()
+        val context: Context = mockk()
+        val appWidgetId = 42
+        val intent = mockIntent(ACTION_APPWIDGET_CREATED, appWidgetId)
+
+        every { intent.getSerializableExtra(EXTRA_WIDGET_ENTITY) } returns null
+
+        receiver.onReceive(context, intent)
+
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { mockedDao wasNot Called }
+    }
+
+    @Test
+    fun `Given intent with ACTION_APPWIDGET_CREATED without EXTRA_APPWIDGET_ID when onReceive is called then do nothing`() = runTest {
+        FailFast.setHandler { _, _ ->
+            // No-op
+        }
+        val receiver = getReceiver()
+        val context: Context = mockk()
+        val intent = mockIntent(ACTION_APPWIDGET_CREATED)
+
+        every { intent.getSerializableExtra(EXTRA_WIDGET_ENTITY) } returns null
+
+        receiver.onReceive(context, intent)
+
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { mockedDao wasNot Called }
     }
 }

@@ -7,13 +7,12 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface ButtonWidgetDao : WidgetDao {
-
+interface ButtonWidgetDao : WidgetDao<ButtonWidgetEntity> {
     @Query("SELECT * FROM button_widgets WHERE id = :id")
     suspend fun get(id: Int): ButtonWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun add(buttonWidgetEntity: ButtonWidgetEntity)
+    override suspend fun add(entity: ButtonWidgetEntity)
 
     @Query("DELETE FROM button_widgets WHERE id = :id")
     override suspend fun delete(id: Int)

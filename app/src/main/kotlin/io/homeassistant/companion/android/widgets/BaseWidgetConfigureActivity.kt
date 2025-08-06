@@ -22,7 +22,7 @@ abstract class BaseWidgetConfigureActivity : BaseActivity() {
 
     protected var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
 
-    abstract val dao: WidgetDao
+    abstract val dao: WidgetDao<*>
 
     abstract val serverSelect: View
     abstract val serverSelectList: Spinner
