@@ -2,10 +2,12 @@ package io.homeassistant.companion.android.developer.catalog
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,6 +33,7 @@ import io.homeassistant.companion.android.developer.catalog.composable.ButtonVar
 import io.homeassistant.companion.android.developer.catalog.composable.HAAccentButton
 import io.homeassistant.companion.android.developer.catalog.composable.HAFilledButton
 import io.homeassistant.companion.android.developer.catalog.composable.HAPlainButton
+import io.homeassistant.companion.android.developer.catalog.theme.HATextStyle
 import io.homeassistant.companion.android.developer.catalog.theme.HATheme
 
 @Composable
@@ -144,6 +147,40 @@ fun HAComposeCatalogScreen() {
                             onClick = {},
                             enabled = false,
                             variant = currentVariant,
+                        )
+                    }
+                }
+                item {
+                    Text("Text Style", Modifier.padding(top = 16.dp))
+                }
+                item {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = "Headline",
+                            style = HATextStyle.Headline,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Text(
+                            text = "Body",
+                            style = HATextStyle.Body,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Text(
+                            text = "BodyMedium",
+                            style = HATextStyle.BodyMedium,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Text(
+                            text = "UserInput",
+                            style = HATextStyle.UserInput,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Text(
+                            text = "Button",
+                            style = HATextStyle.Button,
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }
