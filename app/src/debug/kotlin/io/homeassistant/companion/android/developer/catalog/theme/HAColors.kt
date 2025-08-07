@@ -179,6 +179,9 @@ private object HAColors {
     }
 }
 
+@Immutable
+class HAButtonColors(val buttonColors: ButtonColors, val rippleColor: Color)
+
 /**
  * Inspired from [androidx.compose.material3.ColorScheme] to provide
  * custom color tokens.
@@ -188,25 +191,255 @@ class HAColorScheme(
     val launchScreenBackground: Color,
 
     val colorFillPrimaryLoudResting: Color,
-    val colorFillDisabledLoudResting: Color,
-
+    val colorFillPrimaryNormalResting: Color,
+    val colorFillPrimaryQuietResting: Color,
+    val colorFillPrimaryLoudHover: Color,
+    val colorFillPrimaryNormalHover: Color,
+    val colorFillPrimaryQuietHover: Color,
     val colorOnPrimaryLoud: Color,
+    val colorOnPrimaryNormal: Color,
+    val colorOnPrimaryQuiet: Color,
+
+    val colorFillNeutralLoudResting: Color,
+    val colorFillNeutralNormalResting: Color,
+    val colorFillNeutralQuietResting: Color,
+    val colorFillNeutralLoudHover: Color,
+    val colorFillNeutralNormalHover: Color,
+    val colorFillNeutralQuietHover: Color,
+    val colorOnNeutralLoud: Color,
+    val colorOnNeutralNormal: Color,
+    val colorOnNeutralQuiet: Color,
+
+    val colorFillDangerLoudResting: Color,
+    val colorFillDangerNormalResting: Color,
+    val colorFillDangerQuietResting: Color,
+    val colorFillDangerLoudHover: Color,
+    val colorFillDangerNormalHover: Color,
+    val colorFillDangerQuietHover: Color,
+    val colorOnDangerLoud: Color,
+    val colorOnDangerNormal: Color,
+    val colorOnDangerQuiet: Color,
+
+    val colorFillWarningLoudResting: Color,
+    val colorFillWarningNormalResting: Color,
+    val colorFillWarningQuietResting: Color,
+    val colorFillWarningLoudHover: Color,
+    val colorFillWarningNormalHover: Color,
+    val colorFillWarningQuietHover: Color,
+    val colorOnWarningLoud: Color,
+    val colorOnWarningNormal: Color,
+    val colorOnWarningQuiet: Color,
+
+    val colorFillSuccessLoudResting: Color,
+    val colorFillSuccessNormalResting: Color,
+    val colorFillSuccessQuietResting: Color,
+    val colorFillSuccessLoudHover: Color,
+    val colorFillSuccessNormalHover: Color,
+    val colorFillSuccessQuietHover: Color,
+    val colorOnSuccessLoud: Color,
+    val colorOnSuccessNormal: Color,
+    val colorOnSuccessQuiet: Color,
+
+    val colorFillDisabledLoudResting: Color,
+    val colorFillDisabledNormalResting: Color,
+    val colorFillDisabledQuietResting: Color,
+
     val colorOnDisabledLoud: Color,
+    val colorOnDisabledNormal: Color,
+    val colorOnDisabledQuiet: Color,
 ) {
-    fun buttonColorsFromVariant(variant: ButtonVariant): ButtonColors {
+    fun accentButtonColorsFromVariant(variant: ButtonVariant): HAButtonColors {
         return when (variant) {
             ButtonVariant.PRIMARY -> {
-                ButtonColors(
-                    containerColor = colorFillPrimaryLoudResting,
-                    contentColor = colorOnPrimaryLoud,
-                    disabledContainerColor = colorFillDisabledLoudResting,
-                    disabledContentColor = colorOnDisabledLoud,
+                HAButtonColors(
+                    ButtonColors(
+                        containerColor = colorFillPrimaryLoudResting,
+                        contentColor = colorOnPrimaryLoud,
+                        disabledContainerColor = colorFillDisabledLoudResting,
+                        disabledContentColor = colorOnDisabledLoud,
+                    ),
+                    colorFillPrimaryLoudHover,
                 )
             }
-            ButtonVariant.NEUTRAL -> TODO()
-            ButtonVariant.DANGER -> TODO()
-            ButtonVariant.WARNING -> TODO()
-            ButtonVariant.SUCCESS -> TODO()
+
+            ButtonVariant.NEUTRAL -> {
+                HAButtonColors(
+                    ButtonColors(
+                        containerColor = colorFillNeutralLoudResting,
+                        contentColor = colorOnNeutralLoud,
+                        disabledContainerColor = colorFillDisabledLoudResting,
+                        disabledContentColor = colorOnDisabledLoud,
+                    ),
+                    colorFillNeutralLoudHover,
+                )
+            }
+
+            ButtonVariant.DANGER -> {
+                HAButtonColors(
+                    ButtonColors(
+                        containerColor = colorFillDangerLoudResting,
+                        contentColor = colorOnDangerLoud,
+                        disabledContainerColor = colorFillDisabledLoudResting,
+                        disabledContentColor = colorOnDisabledLoud,
+                    ),
+                    colorFillDangerLoudHover,
+                )
+            }
+
+            ButtonVariant.WARNING -> {
+                HAButtonColors(
+                    ButtonColors(
+                        containerColor = colorFillWarningLoudResting,
+                        contentColor = colorOnWarningLoud,
+                        disabledContainerColor = colorFillDisabledLoudResting,
+                        disabledContentColor = colorOnDisabledLoud,
+                    ),
+                    colorFillWarningLoudHover,
+                )
+            }
+
+            ButtonVariant.SUCCESS -> {
+                HAButtonColors(
+                    ButtonColors(
+                        containerColor = colorFillSuccessLoudResting,
+                        contentColor = colorOnSuccessLoud,
+                        disabledContainerColor = colorFillDisabledLoudResting,
+                        disabledContentColor = colorOnDisabledLoud,
+                    ),
+                    colorFillSuccessLoudHover,
+                )
+            }
+        }
+    }
+
+    fun filledButtonColorsFromVariant(variant: ButtonVariant): HAButtonColors {
+        return when (variant) {
+            ButtonVariant.PRIMARY -> {
+                HAButtonColors(
+                    ButtonColors(
+                        containerColor = colorFillPrimaryNormalResting,
+                        contentColor = colorOnPrimaryNormal,
+                        disabledContainerColor = colorFillDisabledNormalResting,
+                        disabledContentColor = colorOnDisabledNormal,
+                    ),
+                    colorFillPrimaryNormalHover,
+                )
+            }
+
+            ButtonVariant.NEUTRAL -> {
+                HAButtonColors(
+                    ButtonColors(
+                        containerColor = colorFillNeutralNormalResting,
+                        contentColor = colorOnNeutralNormal,
+                        disabledContainerColor = colorFillDisabledNormalResting,
+                        disabledContentColor = colorOnDisabledNormal,
+                    ),
+                    colorFillNeutralNormalHover,
+                )
+            }
+
+            ButtonVariant.DANGER -> {
+                HAButtonColors(
+                    ButtonColors(
+                        containerColor = colorFillDangerNormalResting,
+                        contentColor = colorOnDangerNormal,
+                        disabledContainerColor = colorFillDisabledNormalResting,
+                        disabledContentColor = colorOnDisabledNormal,
+                    ),
+                    colorFillDangerNormalHover,
+                )
+            }
+
+            ButtonVariant.WARNING -> {
+                HAButtonColors(
+                    ButtonColors(
+                        containerColor = colorFillWarningNormalResting,
+                        contentColor = colorOnWarningNormal,
+                        disabledContainerColor = colorFillDisabledNormalResting,
+                        disabledContentColor = colorOnDisabledNormal,
+                    ),
+                    colorFillWarningNormalHover,
+                )
+            }
+
+            ButtonVariant.SUCCESS -> {
+                HAButtonColors(
+                    ButtonColors(
+                        containerColor = colorFillSuccessNormalResting,
+                        contentColor = colorOnSuccessNormal,
+                        disabledContainerColor = colorFillDisabledNormalResting,
+                        disabledContentColor = colorOnDisabledNormal,
+                    ),
+                    colorFillSuccessNormalHover,
+                )
+            }
+        }
+    }
+
+    fun plainButtonColorsFromVariant(variant: ButtonVariant): HAButtonColors {
+        return when (variant) {
+            ButtonVariant.PRIMARY -> {
+                HAButtonColors(
+                    ButtonColors(
+                        // TODO check all variant
+                        // TODO Double check because on figma it's transparent but it should be Quiet IMO
+                        containerColor = HAColors.TransparentNone,
+                        // TODO Double check because on figma it's NORMAL not Quiet
+                        contentColor = colorOnPrimaryQuiet,
+                        disabledContainerColor = colorFillDisabledQuietResting,
+                        disabledContentColor = colorOnDisabledQuiet,
+                    ),
+                    colorFillPrimaryQuietHover,
+                )
+            }
+
+            ButtonVariant.NEUTRAL -> {
+                HAButtonColors(
+                    ButtonColors(
+                        containerColor = HAColors.TransparentNone,
+                        contentColor = colorOnNeutralQuiet,
+                        disabledContainerColor = colorFillDisabledQuietResting,
+                        disabledContentColor = colorOnDisabledQuiet,
+                    ),
+                    colorFillNeutralQuietHover,
+                )
+            }
+
+            ButtonVariant.DANGER -> {
+                HAButtonColors(
+                    ButtonColors(
+                        containerColor = HAColors.TransparentNone,
+                        contentColor = colorOnDangerQuiet,
+                        disabledContainerColor = colorFillDisabledQuietResting,
+                        disabledContentColor = colorOnDisabledQuiet,
+                    ),
+                    colorFillDangerQuietHover,
+                )
+            }
+
+            ButtonVariant.WARNING -> {
+                HAButtonColors(
+                    ButtonColors(
+                        containerColor = HAColors.TransparentNone,
+                        contentColor = colorOnWarningQuiet,
+                        disabledContainerColor = colorFillDisabledQuietResting,
+                        disabledContentColor = colorOnDisabledQuiet,
+                    ),
+                    colorFillWarningQuietHover,
+                )
+            }
+
+            ButtonVariant.SUCCESS -> {
+                HAButtonColors(
+                    ButtonColors(
+                        containerColor = HAColors.TransparentNone,
+                        contentColor = colorOnSuccessQuiet,
+                        disabledContainerColor = colorFillDisabledQuietResting,
+                        disabledContentColor = colorOnDisabledQuiet,
+                    ),
+                    colorFillSuccessQuietHover,
+                )
+            }
         }
     }
 }
@@ -226,9 +459,61 @@ val DarkHAColorScheme = HAColorScheme(
     launchScreenBackground = Color(0xFF111111),
 
     colorFillPrimaryLoudResting = HAColors.Primary40,
-    colorFillDisabledLoudResting = HAColors.Neutral30,
+    colorFillPrimaryNormalResting = HAColors.Primary10,
+    colorFillPrimaryQuietResting = HAColors.Primary05,
+    colorFillPrimaryLoudHover = HAColors.Primary30,
+    colorFillPrimaryNormalHover = HAColors.Primary20,
+    colorFillPrimaryQuietHover = HAColors.Primary10,
     colorOnPrimaryLoud = HAColors.White,
+    colorOnPrimaryNormal = HAColors.Primary60,
+    colorOnPrimaryQuiet = HAColors.Primary70,
+
+    colorFillNeutralLoudResting = HAColors.Neutral40,
+    colorFillNeutralNormalResting = HAColors.Neutral10,
+    colorFillNeutralQuietResting = HAColors.Neutral05,
+    colorFillNeutralLoudHover = HAColors.Neutral30,
+    colorFillNeutralNormalHover = HAColors.Neutral20,
+    colorFillNeutralQuietHover = HAColors.Neutral10,
+    colorOnNeutralLoud = HAColors.White,
+    colorOnNeutralNormal = HAColors.Neutral60,
+    colorOnNeutralQuiet = HAColors.Neutral70,
+
+    colorFillDangerLoudResting = HAColors.Red40,
+    colorFillDangerNormalResting = HAColors.Red10,
+    colorFillDangerQuietResting = HAColors.Red05,
+    colorFillDangerLoudHover = HAColors.Red30,
+    colorFillDangerNormalHover = HAColors.Red20,
+    colorFillDangerQuietHover = HAColors.Red10,
+    colorOnDangerLoud = HAColors.White,
+    colorOnDangerNormal = HAColors.Red60,
+    colorOnDangerQuiet = HAColors.Red70,
+
+    colorFillWarningLoudResting = HAColors.Orange50,
+    colorFillWarningNormalResting = HAColors.Orange10,
+    colorFillWarningQuietResting = HAColors.Orange05,
+    colorFillWarningLoudHover = HAColors.Orange40,
+    colorFillWarningNormalHover = HAColors.Orange20,
+    colorFillWarningQuietHover = HAColors.Orange10,
+    colorOnWarningLoud = HAColors.White,
+    colorOnWarningNormal = HAColors.Orange60,
+    colorOnWarningQuiet = HAColors.Orange70,
+
+    colorFillSuccessLoudResting = HAColors.Green40,
+    colorFillSuccessNormalResting = HAColors.Green10,
+    colorFillSuccessQuietResting = HAColors.Green05,
+    colorFillSuccessLoudHover = HAColors.Green30,
+    colorFillSuccessNormalHover = HAColors.Green20,
+    colorFillSuccessQuietHover = HAColors.Green10,
+    colorOnSuccessLoud = HAColors.White,
+    colorOnSuccessNormal = HAColors.Green60,
+    colorOnSuccessQuiet = HAColors.Green70,
+
+    colorFillDisabledLoudResting = HAColors.Neutral30,
+    colorFillDisabledNormalResting = HAColors.Neutral20,
+    colorFillDisabledQuietResting = HAColors.Neutral10,
     colorOnDisabledLoud = HAColors.Neutral60,
+    colorOnDisabledNormal = HAColors.Neutral60,
+    colorOnDisabledQuiet = HAColors.Neutral40,
 )
 
 val LightHAColorScheme = HAColorScheme(
@@ -236,9 +521,61 @@ val LightHAColorScheme = HAColorScheme(
     launchScreenBackground = Color(0xFFFAFAFA),
 
     colorFillPrimaryLoudResting = HAColors.Primary40,
-    colorFillDisabledLoudResting = HAColors.Neutral80,
+    colorFillPrimaryNormalResting = HAColors.Primary90,
+    colorFillPrimaryQuietResting = HAColors.Primary95,
+    colorFillPrimaryLoudHover = HAColors.Primary30,
+    colorFillPrimaryNormalHover = HAColors.Primary20,
+    colorFillPrimaryQuietHover = HAColors.Primary90,
     colorOnPrimaryLoud = HAColors.White,
+    colorOnPrimaryNormal = HAColors.Primary40,
+    colorOnPrimaryQuiet = HAColors.Primary50,
+
+    colorFillNeutralLoudResting = HAColors.Neutral40,
+    colorFillNeutralNormalResting = HAColors.Neutral90,
+    colorFillNeutralQuietResting = HAColors.Neutral95,
+    colorFillNeutralLoudHover = HAColors.Neutral30,
+    colorFillNeutralNormalHover = HAColors.Neutral80,
+    colorFillNeutralQuietHover = HAColors.Neutral90,
+    colorOnNeutralLoud = HAColors.White,
+    colorOnNeutralNormal = HAColors.Neutral40,
+    colorOnNeutralQuiet = HAColors.Neutral50,
+
+    colorFillDangerLoudResting = HAColors.Red40,
+    colorFillDangerNormalResting = HAColors.Red90,
+    colorFillDangerQuietResting = HAColors.Red95,
+    colorFillDangerLoudHover = HAColors.Red30,
+    colorFillDangerNormalHover = HAColors.Red80,
+    colorFillDangerQuietHover = HAColors.Red90,
+    colorOnDangerLoud = HAColors.White,
+    colorOnDangerNormal = HAColors.Red40,
+    colorOnDangerQuiet = HAColors.Red50,
+
+    colorFillWarningLoudResting = HAColors.Orange50,
+    colorFillWarningNormalResting = HAColors.Orange90,
+    colorFillWarningQuietResting = HAColors.Orange95,
+    colorFillWarningLoudHover = HAColors.Orange40,
+    colorFillWarningNormalHover = HAColors.Orange80,
+    colorFillWarningQuietHover = HAColors.Orange90,
+    colorOnWarningLoud = HAColors.White,
+    colorOnWarningNormal = HAColors.Orange40,
+    colorOnWarningQuiet = HAColors.Orange50,
+
+    colorFillSuccessLoudResting = HAColors.Green40,
+    colorFillSuccessNormalResting = HAColors.Green90,
+    colorFillSuccessQuietResting = HAColors.Green95,
+    colorFillSuccessLoudHover = HAColors.Green30,
+    colorFillSuccessNormalHover = HAColors.Green80,
+    colorFillSuccessQuietHover = HAColors.Green90,
+    colorOnSuccessLoud = HAColors.White,
+    colorOnSuccessNormal = HAColors.Green40,
+    colorOnSuccessQuiet = HAColors.Green50,
+
+    colorFillDisabledLoudResting = HAColors.Neutral80,
+    colorFillDisabledNormalResting = HAColors.Neutral90,
+    colorFillDisabledQuietResting = HAColors.Neutral95,
     colorOnDisabledLoud = HAColors.Neutral95,
+    colorOnDisabledNormal = HAColors.Neutral70,
+    colorOnDisabledQuiet = HAColors.Neutral80,
 )
 
 @SuppressLint("ComposeCompositionLocalUsage")
