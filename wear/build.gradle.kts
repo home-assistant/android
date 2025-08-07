@@ -16,10 +16,10 @@ android {
     }
 
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
+}
 
-    screenshotTests {
-        imageDifferenceThreshold = 0.00025f // 0.025%
-    }
+screenshotTests {
+    imageDifferenceThreshold = 0.00025f // 0.025%
 }
 
 dependencies {
