@@ -106,9 +106,6 @@ class ThermostatTile : TileService() {
                         ContextCompat.getColor(this@ThermostatTile, android.R.color.white),
                     )
                     val chipColors = ChipColors.primaryChipColors(theme)
-                    Timber.d(this@ThermostatTile.packageName)
-                    Timber.d(io.homeassistant.companion.android.home.HomeActivity::class.java.name)
-                    Timber.d(tileId.toString())
                     val androidActivity = ActionBuilders.AndroidActivity.Builder()
                         .setPackageName(this@ThermostatTile.packageName)
                         .setClassName(io.homeassistant.companion.android.home.HomeActivity::class.java.name) // Full activity class name
@@ -127,7 +124,6 @@ class ThermostatTile : TileService() {
                         .build()
 
                     val clickable = Clickable.Builder()
-                        .setId("launch_settings")
                         .setOnClick(launchAction)
                         .build()
 
@@ -152,7 +148,7 @@ class ThermostatTile : TileService() {
                                                 clickable,
                                                 requestParams.deviceConfiguration,
                                             )
-                                                .setTextContent("Open settings")
+                                                .setTextContent(getString(commonR.string.open_settings))
                                                 .setChipColors(chipColors)
                                                 .build(),
                                         ).build(),

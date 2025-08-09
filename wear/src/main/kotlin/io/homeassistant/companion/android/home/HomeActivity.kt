@@ -89,28 +89,14 @@ class HomeActivity :
         // Get rid of me!
         presenter.init(this)
 
-        Timber.d("buttonclicktitle")
-        Timber.d(intent.getStringExtra("launch_mode"))
-        Timber.d(intent.getIntExtra("tile_id", 0).toString())
-
         if (intent.getStringExtra("launch_mode") == "ConfigThermostatTile") {
-            Timber.d("Test")
-            try {
-                packageManager.getActivityInfo(
-                    ComponentName(packageName, OpenTileSettingsActivity::class.java.name),
-                    0
-                )
-            Timber.d("HomeActivity is resolvable in this APK")
-        } catch (e: Exception) {
-            Timber.e(e, "HomeActivity NOT found in wear APK")
-        }
             startActivity(Intent(
                 this@HomeActivity,
                 OpenTileSettingsActivity::class.java)
                 .setAction("ConfigThermostatTile")
                 .putExtra("tile_id", intent.getIntExtra("tile_id", 0))
             )
-            finish() // optional: don’t show this host activity
+            finish()
             return
         }
 

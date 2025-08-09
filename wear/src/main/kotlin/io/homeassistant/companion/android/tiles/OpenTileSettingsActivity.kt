@@ -18,12 +18,8 @@ class OpenTileSettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.d("TileSettingsActivity")
-        Timber.d(intent.action)
-        Timber.d(intent.getIntExtra("tile_id", 0).toString())
 //        val tileId = intent.extras?.getInt("com.google.android.clockwork.EXTRA_PROVIDER_CONFIG_TILE_ID")
         val tileId = intent.extras?.getInt("tile_id")
-        Timber.d(tileId.toString())
         tileId?.takeIf { it != 0 }?.let {
             val settingsIntent = when (intent.action) {
                 "ConfigCameraTile" ->
@@ -56,10 +52,8 @@ class OpenTileSettingsActivity : AppCompatActivity() {
                     )
                 else -> null
             }
-            Timber.d("selected")
             settingsIntent?.let { startActivity(settingsIntent) }
         }
-        Timber.d("Finish")
         finish()
     }
 }
