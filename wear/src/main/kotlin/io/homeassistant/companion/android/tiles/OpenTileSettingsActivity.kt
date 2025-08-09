@@ -17,7 +17,8 @@ class OpenTileSettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val tileId = intent.extras?.getInt("com.google.android.clockwork.EXTRA_PROVIDER_CONFIG_TILE_ID")
+//        val tileId = intent.extras?.getInt("com.google.android.clockwork.EXTRA_PROVIDER_CONFIG_TILE_ID")
+        val tileId = intent.extras?.getInt("tile_id")
         tileId?.takeIf { it != 0 }?.let {
             val settingsIntent = when (intent.action) {
                 "ConfigCameraTile" ->
@@ -43,9 +44,13 @@ class OpenTileSettingsActivity : AppCompatActivity() {
                         tileId = it,
                     )
                 }
+                "ConfigThermostatTile" ->
+                    HomeActivity.getThermostatTileSettingsIntent(
+                        context = this,
+                        tileId = it,
+                    )
                 else -> null
             }
-
             settingsIntent?.let { startActivity(settingsIntent) }
         }
         finish()
