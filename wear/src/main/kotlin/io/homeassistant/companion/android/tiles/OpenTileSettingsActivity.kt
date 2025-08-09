@@ -8,7 +8,6 @@ import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepositoryI
 import io.homeassistant.companion.android.home.HomeActivity
 import javax.inject.Inject
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @AndroidEntryPoint
 class OpenTileSettingsActivity : AppCompatActivity() {

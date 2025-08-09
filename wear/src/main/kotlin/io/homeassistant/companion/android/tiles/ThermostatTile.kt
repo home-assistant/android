@@ -1,11 +1,8 @@
 package io.homeassistant.companion.android.tiles
 
-import android.content.ComponentName
-import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ColorBuilders
-import androidx.wear.protolayout.ColorBuilders.argb
 import androidx.wear.protolayout.DimensionBuilders
 import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
@@ -16,9 +13,8 @@ import androidx.wear.protolayout.TimelineBuilders.Timeline
 import androidx.wear.protolayout.material.Button
 import androidx.wear.protolayout.material.ButtonColors
 import androidx.wear.protolayout.material.ChipColors
-import androidx.wear.protolayout.material.CompactChip
 import androidx.wear.protolayout.material.Colors
-import androidx.wear.protolayout.ActionBuilders.launchAction
+import androidx.wear.protolayout.material.CompactChip
 import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
@@ -96,7 +92,6 @@ class ThermostatTile : TileService() {
                 ).build()
             } else {
                 if (tileConfig?.entityId.isNullOrBlank()) {
-
                     val theme = Colors(
                         ContextCompat.getColor(this@ThermostatTile, commonR.color.colorPrimary),
                         ContextCompat.getColor(this@ThermostatTile, commonR.color.colorOnPrimary),
@@ -108,14 +103,16 @@ class ThermostatTile : TileService() {
                     val chipColors = ChipColors.primaryChipColors(theme)
                     val androidActivity = ActionBuilders.AndroidActivity.Builder()
                         .setPackageName(this@ThermostatTile.packageName)
-                        .setClassName(io.homeassistant.companion.android.home.HomeActivity::class.java.name) // Full activity class name
+                        .setClassName(
+                            io.homeassistant.companion.android.home.HomeActivity::class.java.name,
+                        ) // Full activity class name
                         .addKeyToExtraMapping(
                             "launch_mode",
                             ActionBuilders.AndroidStringExtra.Builder().setValue("ConfigThermostatTile").build(),
                         )
                         .addKeyToExtraMapping(
                             "tile_id",
-                            ActionBuilders.AndroidIntExtra.Builder().setValue(tileId).build()
+                            ActionBuilders.AndroidIntExtra.Builder().setValue(tileId).build(),
                         )
                         .build()
 

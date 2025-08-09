@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.home
 
 import android.Manifest
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -28,7 +27,6 @@ import io.homeassistant.companion.android.tiles.OpenTileSettingsActivity
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @AndroidEntryPoint
 class HomeActivity :
@@ -90,11 +88,13 @@ class HomeActivity :
         presenter.init(this)
 
         if (intent.getStringExtra("launch_mode") == "ConfigThermostatTile") {
-            startActivity(Intent(
-                this@HomeActivity,
-                OpenTileSettingsActivity::class.java)
-                .setAction("ConfigThermostatTile")
-                .putExtra("tile_id", intent.getIntExtra("tile_id", 0))
+            startActivity(
+                Intent(
+                    this@HomeActivity,
+                    OpenTileSettingsActivity::class.java,
+                )
+                    .setAction("ConfigThermostatTile")
+                    .putExtra("tile_id", intent.getIntExtra("tile_id", 0)),
             )
             finish()
             return
