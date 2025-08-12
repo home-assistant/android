@@ -35,4 +35,7 @@ interface TodoWidgetDao : WidgetDao<TodoWidgetEntity> {
 
     @Query("UPDATE todo_widget SET latest_update_data = :lastUpdateData WHERE id = :widgetId")
     suspend fun updateWidgetLastUpdate(widgetId: Int, lastUpdateData: TodoWidgetEntity.LastUpdateData)
+
+    @Query("SELECT COUNT(*) FROM todo_widget")
+    fun getWidgetCountFlow(): Flow<Int>
 }

@@ -1,9 +1,7 @@
 package io.homeassistant.companion.android.widgets.todo
 
 import android.annotation.SuppressLint
-import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -34,7 +32,6 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
@@ -56,8 +53,6 @@ import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import io.homeassistant.companion.android.util.safeTopWindowInsets
-import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
-import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -116,20 +111,7 @@ class TodoWidgetConfigureActivity : BaseActivity() {
     private fun requestPinWidget() {
         val context = this@TodoWidgetConfigureActivity
         lifecycleScope.launch {
-            GlanceAppWidgetManager(context)
-                .requestPinGlanceAppWidget(
-                    TodoWidget::class.java,
-                    successCallback = PendingIntent.getBroadcast(
-                        context,
-                        System.currentTimeMillis().toInt(),
-                        Intent(context, TodoWidget::class.java).apply {
-                            action = ACTION_APPWIDGET_CREATED
-                            putExtra(EXTRA_WIDGET_ENTITY, viewModel.getPendingDaoEntity())
-                        },
-                        // We need the PendingIntent to be mutable so the system inject the EXTRA_APPWIDGET_ID of the created widget
-                        PendingIntent.FLAG_MUTABLE,
-                    ),
-                )
+            viewModel.requestWidgetCreation(context)
             finish()
         }
     }
