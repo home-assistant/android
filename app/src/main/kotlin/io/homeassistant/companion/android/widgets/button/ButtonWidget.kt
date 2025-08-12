@@ -7,7 +7,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
@@ -17,7 +16,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.toColorInt
-import androidx.core.os.BundleCompat
 import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.IconicsSize
@@ -28,6 +26,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
@@ -35,6 +34,10 @@ import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
+import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.widgetScope
+import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import io.homeassistant.companion.android.widgets.common.WidgetAuthenticationActivity
 import java.util.regex.Pattern
 import javax.inject.Inject
@@ -51,18 +54,6 @@ class ButtonWidget : AppWidgetProvider() {
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE"
         private const val CALL_SERVICE_AUTH =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE_AUTH"
-        internal const val RECEIVE_DATA =
-            "io.homeassistant.companion.android.widgets.button.ButtonWidget.RECEIVE_DATA"
-
-        internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
-        internal const val EXTRA_DOMAIN = "EXTRA_DOMAIN"
-        internal const val EXTRA_ACTION = "EXTRA_SERVICE"
-        internal const val EXTRA_ACTION_DATA = "EXTRA_SERVICE_DATA"
-        internal const val EXTRA_LABEL = "EXTRA_LABEL"
-        internal const val EXTRA_ICON_NAME = "EXTRA_ICON_NAME"
-        internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
-        internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
-        internal const val EXTRA_REQUIRE_AUTHENTICATION = "EXTRA_REQUIRE_AUTHENTICATION"
 
         // Vector icon rendering resolution fallback (if we can't infer via AppWidgetManager for some reason)
         private const val DEFAULT_MAX_ICON_SIZE = 512
@@ -102,7 +93,7 @@ class ButtonWidget : AppWidgetProvider() {
 
             val buttonWidgetEntityList = dbWidgetList.filter { systemWidgetIds.contains(it.id) }
             if (buttonWidgetEntityList.isNotEmpty()) {
-                Timber.d("Updating all widgets")
+                Timber.d("Updating all widgets $buttonWidgetEntityList")
                 for (item in buttonWidgetEntityList) {
                     val views = getWidgetRemoteViews(context, item.id)
 
@@ -144,8 +135,23 @@ class ButtonWidget : AppWidgetProvider() {
         when (action) {
             CALL_SERVICE_AUTH -> authThenCallConfiguredAction(context, appWidgetId)
             CALL_SERVICE -> callConfiguredAction(context, appWidgetId)
-            RECEIVE_DATA -> saveActionCallConfiguration(context, intent.extras, appWidgetId)
+            BaseWidgetProvider.RECEIVE_DATA -> updateAllWidgets(context)
             Intent.ACTION_SCREEN_ON -> updateAllWidgets(context)
+            ACTION_APPWIDGET_CREATED -> {
+                if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+                    FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
+                } else {
+                    widgetScope?.launch {
+                        // Use deprecated function to not have to specify the class of T
+                        @Suppress("DEPRECATION", "UNCHECKED_CAST")
+                        val entity = intent.getSerializableExtra(EXTRA_WIDGET_ENTITY) as? ButtonWidgetEntity
+                        entity?.let {
+                            buttonWidgetDao.add(entity.copyWithWidgetId(appWidgetId))
+                        } ?: FailFast.fail { "Missing $EXTRA_WIDGET_ENTITY or it's of the wrong type in intent." }
+                    }
+                }
+                updateAllWidgets(context)
+            }
         }
     }
 
@@ -356,59 +362,6 @@ class ButtonWidget : AppWidgetProvider() {
                 },
                 1000,
             )
-        }
-    }
-
-    private fun saveActionCallConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
-        if (extras == null) return
-
-        val serverId = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
-        val domain: String? = extras.getString(EXTRA_DOMAIN)
-        val action: String? = extras.getString(EXTRA_ACTION)
-        val actionData: String? = extras.getString(EXTRA_ACTION_DATA)
-        val label: String? = extras.getString(EXTRA_LABEL)
-        val requireAuthentication: Boolean = extras.getBoolean(EXTRA_REQUIRE_AUTHENTICATION)
-        val icon: String = extras.getString(EXTRA_ICON_NAME) ?: "mdi:flash"
-        val backgroundType =
-            BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
-                ?: WidgetBackgroundType.DAYNIGHT
-        val textColor: String? = extras.getString(EXTRA_TEXT_COLOR)
-
-        if (serverId == null || domain == null || action == null || actionData == null) {
-            Timber.e("Did not receive complete action call data")
-            return
-        }
-
-        mainScope.launch {
-            Timber.d(
-                "Saving action call config data:" + System.lineSeparator() +
-                    "domain: " + domain + System.lineSeparator() +
-                    "action: " + action + System.lineSeparator() +
-                    "action_data: " + actionData + System.lineSeparator() +
-                    "require_authentication: " + requireAuthentication + System.lineSeparator() +
-                    "label: " + label,
-            )
-
-            val widget =
-                ButtonWidgetEntity(
-                    appWidgetId,
-                    serverId,
-                    icon,
-                    domain,
-                    action,
-                    actionData,
-                    label,
-                    backgroundType,
-                    textColor,
-                    requireAuthentication,
-                )
-            buttonWidgetDao.add(widget)
-
-            // It is the responsibility of the configuration activity to update the app widget
-            // This method is only called during the initial setup of the widget,
-            // so rather than duplicating code in the ButtonWidgetConfigurationActivity,
-            // it is just calling onUpdate manually here.
-            onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
     }
 }

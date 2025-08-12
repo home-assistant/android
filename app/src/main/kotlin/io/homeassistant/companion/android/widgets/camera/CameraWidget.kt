@@ -22,11 +22,16 @@ import coil3.size.Size
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.webview.WebViewActivity
+import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.RECEIVE_DATA
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.widgetScope
+import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import io.homeassistant.companion.android.widgets.common.RemoteViewsTarget
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -40,8 +45,6 @@ import timber.log.Timber
 class CameraWidget : AppWidgetProvider() {
 
     companion object {
-        internal const val RECEIVE_DATA =
-            "io.homeassistant.companion.android.widgets.camera.CameraWidget.RECEIVE_DATA"
         internal const val UPDATE_IMAGE =
             "io.homeassistant.companion.android.widgets.camera.CameraWidget.UPDATE_IMAGE"
 
@@ -214,9 +217,24 @@ class CameraWidget : AppWidgetProvider() {
 
         super.onReceive(context, intent)
         when (lastIntent) {
-            RECEIVE_DATA -> saveEntityConfiguration(context, intent.extras, appWidgetId)
+            RECEIVE_DATA -> updateAllWidgets(context)
             UPDATE_IMAGE -> updateAppWidget(context, appWidgetId)
             Intent.ACTION_SCREEN_ON -> updateAllWidgets(context)
+            ACTION_APPWIDGET_CREATED -> {
+                if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+                    FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
+                } else {
+                    widgetScope?.launch {
+                        // Use deprecated function to not have to specify the class of T
+                        @Suppress("DEPRECATION", "UNCHECKED_CAST")
+                        val entity = intent.getSerializableExtra(EXTRA_WIDGET_ENTITY) as? CameraWidgetEntity
+                        entity?.let {
+                            cameraWidgetDao.add(entity.copyWithWidgetId(appWidgetId))
+                        } ?: FailFast.fail { "Missing $EXTRA_WIDGET_ENTITY or it's of the wrong type in intent." }
+                    }
+                }
+                updateAllWidgets(context)
+            }
         }
     }
 
