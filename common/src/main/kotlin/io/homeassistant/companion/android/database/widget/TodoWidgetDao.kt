@@ -37,5 +37,5 @@ interface TodoWidgetDao : WidgetDao<TodoWidgetEntity> {
     suspend fun updateWidgetLastUpdate(widgetId: Int, lastUpdateData: TodoWidgetEntity.LastUpdateData)
 
     @Query("SELECT COUNT(*) FROM todo_widget")
-    fun getWidgetCountFlow(): Flow<Int>
+    override fun getWidgetCountFlow(): Flow<Int>
 }

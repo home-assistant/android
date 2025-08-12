@@ -25,4 +25,7 @@ interface ButtonWidgetDao : WidgetDao<ButtonWidgetEntity> {
 
     @Query("SELECT * FROM button_widgets")
     fun getAllFlow(): Flow<List<ButtonWidgetEntity>>
+
+    @Query("SELECT COUNT(*) FROM button_widgets")
+    override fun getWidgetCountFlow(): Flow<Int>
 }
