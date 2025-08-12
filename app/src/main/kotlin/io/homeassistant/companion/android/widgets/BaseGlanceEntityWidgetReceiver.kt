@@ -35,14 +35,14 @@ private fun newCoroutineScopeProvider(): () -> CoroutineScope {
 data class EntitiesPerServer(val serverId: Int, val entityIds: List<String>)
 
 /**
- * Base class for Glance widgets that handle the persistence in the database of a created widget and update of the
+ * Base class for Glance widgets that handles the persistence in the database of a created widget and update of the
  * widget based on entity state changes.
  *
  * This class provides the foundational functionality for managing widget updates, handling lifecycle events,
  * and observing entity state changes. It is designed to be extended by specific widget implementations.
  *
  * ### Key Features:
- * - **Widget entity persistence**: Persist the [WidgetEntity] given while creating the widget using [EXTRA_WIDGET_ENTITY] inside the [DAO]
+ * - **Widget entity persistence**: Persist the [WidgetEntity] given while creating the widget using [EXTRA_WIDGET_ENTITY] inside the [DAO].
  * - **Entity state observation**: Watches for updates to specific entities and triggers widget updates accordingly.
  * - **Lifecycle management**: Handles widget lifecycle action [Intent.ACTION_SCREEN_ON], [Intent.ACTION_SCREEN_OFF] and [AppWidgetManager.ACTION_APPWIDGET_UPDATE].
  * - **Real-time updates**: Supports real-time updates for widgets when the user grants the necessary permissions.
