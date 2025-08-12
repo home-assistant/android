@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.toColorInt
+import androidx.core.os.BundleCompat
 import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.IconicsSize
@@ -93,7 +94,7 @@ class ButtonWidget : AppWidgetProvider() {
 
             val buttonWidgetEntityList = dbWidgetList.filter { systemWidgetIds.contains(it.id) }
             if (buttonWidgetEntityList.isNotEmpty()) {
-                Timber.d("Updating all widgets $buttonWidgetEntityList")
+                Timber.d("Updating all widgets")
                 for (item in buttonWidgetEntityList) {
                     val views = getWidgetRemoteViews(context, item.id)
 
@@ -142,9 +143,13 @@ class ButtonWidget : AppWidgetProvider() {
                     FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
                 } else {
                     widgetScope?.launch {
-                        // Use deprecated function to not have to specify the class of T
-                        @Suppress("DEPRECATION", "UNCHECKED_CAST")
-                        val entity = intent.getSerializableExtra(EXTRA_WIDGET_ENTITY) as? ButtonWidgetEntity
+                        val entity = intent.extras?.let {
+                            BundleCompat.getSerializable(
+                                it,
+                                EXTRA_WIDGET_ENTITY,
+                                ButtonWidgetEntity::class.java,
+                            )
+                        }
                         entity?.let {
                             buttonWidgetDao.add(entity.copyWithWidgetId(appWidgetId))
                         } ?: FailFast.fail { "Missing $EXTRA_WIDGET_ENTITY or it's of the wrong type in intent." }

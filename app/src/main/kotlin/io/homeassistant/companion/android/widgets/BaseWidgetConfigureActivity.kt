@@ -94,15 +94,30 @@ abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<
         Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG).show()
     }
 
+    /**
+     * Return a [WidgetEntity] with the current selection, but without pushing this to the [dao]
+     */
     abstract suspend fun getPendingDaoEntity(): T
 
+    /**
+     * The class of the widget being configured, this is going to be used when sending the broadcast
+     * intent for the creation of the widget.
+     */
     abstract val widgetClass: Class<*>
 
+    /**
+     * Requests the widget to be created and waits until it has been saved to the DAO.
+     *
+     * **WARNING**: This function does not handle user cancellation. If a user cancels the widget creation,
+     * this function will not return. If this function is called again and the user does not cancel,
+     * both calls to the function will return. While this behavior could be avoided,
+     * it does not cause issues in the current implementation as returning multiple times has no adverse effects.
+     */
     @RequiresApi(Build.VERSION_CODES.O)
     protected suspend fun createWidget() {
         try {
             val pendingEntity = getPendingDaoEntity()
-            Timber.e("Pending entity = $pendingEntity")
+            // We drop the first value since we only care about knowing when
             dao.getWidgetCountFlow().drop(1).onStart {
                 val context = this@BaseWidgetConfigureActivity
                 getSystemService<AppWidgetManager>()?.requestPinAppWidget(
@@ -118,6 +133,7 @@ abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<
                             action = ACTION_APPWIDGET_CREATED
                             putExtra(EXTRA_WIDGET_ENTITY, pendingEntity)
                         },
+                        // We need the PendingIntent to be mutable so the system inject the EXTRA_APPWIDGET_ID of the created widget
                         PendingIntent.FLAG_MUTABLE,
                     ),
                 )

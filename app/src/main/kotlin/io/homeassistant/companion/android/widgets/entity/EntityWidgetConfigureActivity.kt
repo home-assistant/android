@@ -318,7 +318,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity<StaticWidgetEn
         val entity = if (selectedEntity == null) {
             binding.widgetTextConfigEntityId.text.toString()
         } else {
-            selectedEntity!!.entityId
+            checkNotNull(selectedEntity?.entityId) { "selected entity is null" }
         }
 
         if (entity !in entities[serverId].orEmpty().map { it.entityId }) {

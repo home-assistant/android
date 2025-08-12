@@ -225,9 +225,13 @@ class CameraWidget : AppWidgetProvider() {
                     FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
                 } else {
                     widgetScope?.launch {
-                        // Use deprecated function to not have to specify the class of T
-                        @Suppress("DEPRECATION", "UNCHECKED_CAST")
-                        val entity = intent.getSerializableExtra(EXTRA_WIDGET_ENTITY) as? CameraWidgetEntity
+                        val entity = intent.extras?.let {
+                            BundleCompat.getSerializable(
+                                it,
+                                EXTRA_WIDGET_ENTITY,
+                                CameraWidgetEntity::class.java,
+                            )
+                        }
                         entity?.let {
                             cameraWidgetDao.add(entity.copyWithWidgetId(appWidgetId))
                         } ?: FailFast.fail { "Missing $EXTRA_WIDGET_ENTITY or it's of the wrong type in intent." }

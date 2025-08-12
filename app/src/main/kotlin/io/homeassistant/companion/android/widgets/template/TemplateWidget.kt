@@ -13,6 +13,7 @@ import android.view.View
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
+import androidx.core.os.BundleCompat
 import androidx.core.text.HtmlCompat
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
@@ -103,9 +104,13 @@ class TemplateWidget : AppWidgetProvider() {
                     FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
                 } else {
                     widgetScope?.launch {
-                        // Use deprecated function to not have to specify the class of T
-                        @Suppress("DEPRECATION", "UNCHECKED_CAST")
-                        val entity = intent.getSerializableExtra(EXTRA_WIDGET_ENTITY) as? TemplateWidgetEntity
+                        val entity = intent.extras?.let {
+                            BundleCompat.getSerializable(
+                                it,
+                                EXTRA_WIDGET_ENTITY,
+                                TemplateWidgetEntity::class.java,
+                            )
+                        }
                         entity?.let {
                             templateWidgetDao.add(entity.copyWithWidgetId(appWidgetId))
                         } ?: FailFast.fail { "Missing $EXTRA_WIDGET_ENTITY or it's of the wrong type in intent." }
