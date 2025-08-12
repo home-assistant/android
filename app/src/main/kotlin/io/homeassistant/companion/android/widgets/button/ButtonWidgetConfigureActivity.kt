@@ -1,10 +1,7 @@
 package io.homeassistant.companion.android.widgets.button
 
 import android.annotation.SuppressLint
-import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.content.ComponentName
-import android.content.Intent
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.os.Build
@@ -20,7 +17,6 @@ import android.widget.EditText
 import android.widget.Spinner
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
-import androidx.core.content.getSystemService
 import androidx.core.graphics.toColorInt
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
@@ -36,6 +32,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
+import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
@@ -49,22 +46,12 @@ import io.homeassistant.companion.android.widgets.common.ActionFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
-import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
-class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
-    companion object {
-        private const val PIN_WIDGET_CALLBACK =
-            "io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
-    }
-
-    @Inject
-    lateinit var buttonWidgetDao: ButtonWidgetDao
-    override val dao get() = buttonWidgetDao
-
+class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEntity, ButtonWidgetDao>() {
     private var actions = mutableMapOf<Int, HashMap<String, Action>>()
     private var entities = mutableMapOf<Int, HashMap<String, Entity>>()
     private var dynamicFields = ArrayList<ActionFieldBinder>()
@@ -151,7 +138,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
                         val existingActionData = mutableMapOf<String, Any?>()
                         val addedFields = mutableListOf<String>()
-                        buttonWidgetDao.get(appWidgetId)?.let { buttonWidget ->
+                        dao.get(appWidgetId)?.let { buttonWidget ->
                             if (
                                 buttonWidget.serverId != selectedServerId ||
                                 "${buttonWidget.domain}.${buttonWidget.service}" != actionText
@@ -255,7 +242,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         lifecycleScope.launch {
-            val buttonWidget = buttonWidgetDao.get(appWidgetId)
+            val buttonWidget = dao.get(appWidgetId)
             if (buttonWidget != null) {
                 val actionText = "${buttonWidget.domain}.${buttonWidget.service}"
                 binding.widgetTextConfigService.setText(actionText)
@@ -375,24 +362,16 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                             widgetConfigAction.split(".", limit = 2).size == 2
                         )
                 ) {
-                    getSystemService<AppWidgetManager>()?.requestPinAppWidget(
-                        ComponentName(this, ButtonWidget::class.java),
-                        null,
-                        PendingIntent.getActivity(
-                            this,
-                            System.currentTimeMillis().toInt(),
-                            Intent(
-                                this,
-                                ButtonWidgetConfigureActivity::class.java,
-                            ).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
-                        ),
-                    )
+                    lifecycleScope.launch {
+                        createWidget()
+                    }
                 } else {
                     showAddWidgetError()
                 }
             } else {
-                onAddWidget()
+                lifecycleScope.launch {
+                    updateWidget()
+                }
             }
         }
 
@@ -401,21 +380,62 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         binding.widgetConfigFieldsLayout.layoutManager = LinearLayoutManager(this)
     }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        if (intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
-            appWidgetId = intent.extras!!.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID,
-            )
-            onAddWidget()
-        }
-    }
-
     override fun onServerSelected(serverId: Int) {
         binding.widgetTextConfigService.setText("")
         setAdapterActions(serverId)
     }
+
+    override suspend fun getPendingDaoEntity(): ButtonWidgetEntity {
+        val serverId = checkNotNull(selectedServerId) { "selected server ID is null" }
+        val actionText = binding.widgetTextConfigService.text.toString()
+        val actions = actions[serverId].orEmpty()
+        val domain = actions[actionText]?.domain ?: actionText.split(".", limit = 2)[0]
+        val action = actions[actionText]?.action ?: actionText.split(".", limit = 2)[1]
+        val actionDataMap = HashMap<String, Any>()
+
+        dynamicFields.forEach {
+            var value = it.value
+            if (value != null) {
+                if (it.field == "entity_id" && value is String) {
+                    // Remove trailing commas and spaces
+                    val trailingRegex = "[, ]+$".toRegex()
+                    value = value.replace(trailingRegex, "")
+                }
+                actionDataMap[it.field] = value
+            }
+        }
+
+        return ButtonWidgetEntity(
+            id = appWidgetId,
+            serverId = serverId,
+            domain = domain,
+            service = action,
+            label = binding.label.text.toString(),
+            iconName = binding.widgetConfigIconSelector.tag as String,
+            serviceData = kotlinJsonMapper.encodeToString(MapAnySerializer, actionDataMap),
+            backgroundType = when (binding.backgroundType.selectedItem as String?) {
+                getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
+                getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
+                else -> WidgetBackgroundType.DAYNIGHT
+            },
+            textColor = if (binding.backgroundType.selectedItem as String? ==
+                getString(commonR.string.widget_background_type_transparent)
+            ) {
+                getHexForColor(
+                    if (binding.textColorWhite.isChecked) {
+                        android.R.color.white
+                    } else {
+                        commonR.color.colorWidgetButtonLabelBlack
+                    },
+                )
+            } else {
+                null
+            },
+            requireAuthentication = binding.widgetCheckboxRequireAuthentication.isChecked,
+        )
+    }
+
+    override val widgetClass: Class<*> = ButtonWidget::class.java
 
     @SuppressLint("NotifyDataSetChanged")
     private fun setAdapterActions(serverId: Int) {
@@ -445,113 +465,5 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             PorterDuffColorFilter(ContextCompat.getColor(this, commonR.color.colorIcon), PorterDuff.Mode.SRC_IN)
 
         binding.widgetConfigIconSelector.setImageBitmap(iconDrawable.toBitmap())
-    }
-
-    private fun onAddWidget() {
-        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-            showAddWidgetError()
-            return
-        }
-        try {
-            val context = this@ButtonWidgetConfigureActivity
-
-            // Set up a broadcast intent and pass the action data as extras
-            val intent = Intent()
-            intent.action = ButtonWidget.RECEIVE_DATA
-            intent.component = ComponentName(context, ButtonWidget::class.java)
-
-            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-
-            intent.putExtra(
-                ButtonWidget.EXTRA_SERVER_ID,
-                selectedServerId!!,
-            )
-
-            // Analyze and send action and domain
-            val actionText = binding.widgetTextConfigService.text.toString()
-            val actions = actions[selectedServerId].orEmpty()
-            val domain = actions[actionText]?.domain ?: actionText.split(".", limit = 2)[0]
-            val action = actions[actionText]?.action ?: actionText.split(".", limit = 2)[1]
-            intent.putExtra(
-                ButtonWidget.EXTRA_DOMAIN,
-                domain,
-            )
-            intent.putExtra(
-                ButtonWidget.EXTRA_ACTION,
-                action,
-            )
-
-            // Fetch and send label and icon
-            intent.putExtra(
-                ButtonWidget.EXTRA_LABEL,
-                binding.label.text.toString(),
-            )
-            intent.putExtra(
-                ButtonWidget.EXTRA_ICON_NAME,
-                binding.widgetConfigIconSelector.tag as String,
-            )
-
-            // Analyze and send action data
-            val actionDataMap = HashMap<String, Any>()
-            dynamicFields.forEach {
-                var value = it.value
-                if (value != null) {
-                    if (it.field == "entity_id" && value is String) {
-                        // Remove trailing commas and spaces
-                        val trailingRegex = "[, ]+$".toRegex()
-                        value = value.replace(trailingRegex, "")
-                    }
-                    actionDataMap[it.field] = value
-                }
-            }
-
-            intent.putExtra(
-                ButtonWidget.EXTRA_ACTION_DATA,
-                kotlinJsonMapper.encodeToString(MapAnySerializer, actionDataMap),
-            )
-
-            intent.putExtra(
-                ButtonWidget.EXTRA_BACKGROUND_TYPE,
-                when (binding.backgroundType.selectedItem as String?) {
-                    getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
-                    getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
-                    else -> WidgetBackgroundType.DAYNIGHT
-                },
-            )
-
-            intent.putExtra(
-                ButtonWidget.EXTRA_TEXT_COLOR,
-                if (binding.backgroundType.selectedItem as String? ==
-                    getString(commonR.string.widget_background_type_transparent)
-                ) {
-                    getHexForColor(
-                        if (binding.textColorWhite.isChecked) {
-                            android.R.color.white
-                        } else {
-                            commonR.color.colorWidgetButtonLabelBlack
-                        },
-                    )
-                } else {
-                    null
-                },
-            )
-
-            intent.putExtra(
-                ButtonWidget.EXTRA_REQUIRE_AUTHENTICATION,
-                binding.widgetCheckboxRequireAuthentication.isChecked,
-            )
-
-            context.sendBroadcast(intent)
-
-            // Make sure we pass back the original appWidgetId
-            setResult(
-                RESULT_OK,
-                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId),
-            )
-            finish()
-        } catch (e: Exception) {
-            Timber.e(e, "Issue configuring widget")
-            showAddWidgetError()
-        }
     }
 }
