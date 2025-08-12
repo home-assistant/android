@@ -141,6 +141,7 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
                 } else {
                     widgetScope.launch {
                         // Use deprecated function to not have to specify the class of T
+                        @Suppress("DEPRECATION", "UNCHECKED_CAST")
                         val entity = intent.getSerializableExtra(EXTRA_WIDGET_ENTITY) as? T
                         entity?.let {
                             dao.add(entity.copyWithWidgetId(appWidgetId))
