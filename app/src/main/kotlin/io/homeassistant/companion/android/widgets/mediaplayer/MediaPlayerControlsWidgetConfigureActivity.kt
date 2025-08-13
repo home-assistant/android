@@ -67,7 +67,7 @@ class MediaPlayerControlsWidgetConfigureActivity :
                     }
                 ) {
                     lifecycleScope.launch {
-                        createWidget()
+                        requestWidgetCreation()
                     }
                 } else {
                     showAddWidgetError()

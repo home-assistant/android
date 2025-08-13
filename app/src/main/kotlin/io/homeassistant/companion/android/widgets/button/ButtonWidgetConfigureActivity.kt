@@ -363,7 +363,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
                         )
                 ) {
                     lifecycleScope.launch {
-                        createWidget()
+                        requestWidgetCreation()
                     }
                 } else {
                     showAddWidgetError()

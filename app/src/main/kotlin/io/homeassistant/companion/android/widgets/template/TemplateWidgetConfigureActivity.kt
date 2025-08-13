@@ -143,7 +143,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity<TemplateWidg
             if (requestLauncherSetup) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     lifecycleScope.launch {
-                        createWidget()
+                        requestWidgetCreation()
                     }
                 } else {
                     showAddWidgetError() // this shouldn't be possible

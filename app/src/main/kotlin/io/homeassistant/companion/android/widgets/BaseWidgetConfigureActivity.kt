@@ -114,10 +114,10 @@ abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<
      * it does not cause issues in the current implementation as returning multiple times has no adverse effects.
      */
     @RequiresApi(Build.VERSION_CODES.O)
-    protected suspend fun createWidget() {
+    protected suspend fun requestWidgetCreation() {
         try {
             val pendingEntity = getPendingDaoEntity()
-            // We drop the first value since we only care about knowing when
+            // We drop the first value since we only care about knowing when the widget is actually added
             dao.getWidgetCountFlow().drop(1).onStart {
                 val context = this@BaseWidgetConfigureActivity
                 getSystemService<AppWidgetManager>()?.requestPinAppWidget(

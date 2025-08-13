@@ -58,7 +58,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetEn
             if (requestLauncherSetup) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && isValidServerId() && selectedEntity != null) {
                     lifecycleScope.launch {
-                        createWidget()
+                        requestWidgetCreation()
                     }
                 } else {
                     showAddWidgetError()

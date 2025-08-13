@@ -77,7 +77,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity<StaticWidgetEn
                     isValidServerId()
                 ) {
                     lifecycleScope.launch {
-                        createWidget()
+                        requestWidgetCreation()
                     }
                 } else {
                     showAddWidgetError()
