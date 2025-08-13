@@ -14,11 +14,9 @@ internal fun Provider<PluginDependency>.getPluginId(): String {
 
 internal fun Project.androidConfig(block: CommonExtension<*, *, *, *, *, *>.() -> Unit) {
     when (extensions.findByName("android")) {
-
         is LibraryExtension -> extensions.configure<LibraryExtension> {
             block()
         }
-
         is ApplicationExtension -> extensions.configure<ApplicationExtension> {
             block()
         }
