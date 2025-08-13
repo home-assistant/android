@@ -386,7 +386,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
     }
 
     override suspend fun getPendingDaoEntity(): ButtonWidgetEntity {
-        val serverId = checkNotNull(selectedServerId) { "selected server ID is null" }
+        val serverId = checkNotNull(selectedServerId) { "Selected server ID is null" }
         val actionText = binding.widgetTextConfigService.text.toString()
         val actions = actions[serverId].orEmpty()
         val domain = actions[actionText]?.domain ?: actionText.split(".", limit = 2)[0]

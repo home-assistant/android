@@ -159,8 +159,8 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity<TemplateWidg
     override fun onServerSelected(serverId: Int) = renderTemplateText()
 
     override suspend fun getPendingDaoEntity(): TemplateWidgetEntity {
-        val serverId = checkNotNull(selectedServerId) { "selected server ID is null" }
-        val template = checkNotNull(binding.templateText.text?.toString()) { "template is null" }
+        val serverId = checkNotNull(selectedServerId) { "Selected server ID is null" }
+        val template = checkNotNull(binding.templateText.text?.toString()) { "Template text is null" }
 
         return TemplateWidgetEntity(
             id = appWidgetId,

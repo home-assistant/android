@@ -143,8 +143,8 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetEn
     }
 
     override suspend fun getPendingDaoEntity(): CameraWidgetEntity {
-        val serverId = checkNotNull(selectedServerId) { "selected server ID is null" }
-        val entityId = checkNotNull(selectedEntity?.entityId) { "selected entity is null" }
+        val serverId = checkNotNull(selectedServerId) { "Selected server ID is null" }
+        val entityId = checkNotNull(selectedEntity?.entityId) { "Selected entity is null" }
 
         return CameraWidgetEntity(
             id = appWidgetId,

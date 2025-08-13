@@ -140,7 +140,7 @@ abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<
             }.first()
             finish()
         } catch (e: IllegalStateException) {
-            Timber.e(e, "When creating widget")
+            Timber.e(e, "State error when creating widget")
             showAddWidgetError()
         }
     }
@@ -168,7 +168,7 @@ abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<
             )
             finish()
         } catch (e: IllegalStateException) {
-            Timber.e(e, "When updating widget $appWidgetId")
+            Timber.e(e, "State error when updating widget $appWidgetId")
             showAddWidgetError()
         }
     }

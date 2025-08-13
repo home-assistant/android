@@ -313,16 +313,16 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity<StaticWidgetEn
     }
 
     override suspend fun getPendingDaoEntity(): StaticWidgetEntity {
-        val serverId = checkNotNull(selectedServerId) { "selected server ID is null" }
+        val serverId = checkNotNull(selectedServerId) { "Selected server ID is null" }
 
         val entity = if (selectedEntity == null) {
             binding.widgetTextConfigEntityId.text.toString()
         } else {
-            checkNotNull(selectedEntity?.entityId) { "selected entity is null" }
+            checkNotNull(selectedEntity?.entityId) { "Selected entity is null" }
         }
 
         if (entity !in entities[serverId].orEmpty().map { it.entityId }) {
-            throw IllegalStateException("Wrong entity selected")
+            throw IllegalStateException("Selected entity is unknown on server")
         }
 
         return StaticWidgetEntity(

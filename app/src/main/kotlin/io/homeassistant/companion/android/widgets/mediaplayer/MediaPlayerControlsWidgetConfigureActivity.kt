@@ -186,7 +186,7 @@ class MediaPlayerControlsWidgetConfigureActivity :
     }
 
     override suspend fun getPendingDaoEntity(): MediaPlayerControlsWidgetEntity {
-        val serverId = checkNotNull(selectedServerId) { "selected server ID is null" }
+        val serverId = checkNotNull(selectedServerId) { "Selected server ID is null" }
         selectedEntities = LinkedList()
         val se = binding.widgetTextConfigEntityId.text.split(",")
         se.forEach {
@@ -197,7 +197,7 @@ class MediaPlayerControlsWidgetConfigureActivity :
         val entitySelection = selectedEntities.map { e -> e?.entityId }.reduceOrNull { a, b -> "$a,$b" }
 
         if (entitySelection == null) {
-            throw IllegalStateException("Wrong entity selected")
+            throw IllegalStateException("No valid entities selected")
         }
 
         return MediaPlayerControlsWidgetEntity(
