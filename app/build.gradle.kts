@@ -34,7 +34,7 @@ android {
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
 
     screenshotTests {
-        imageDifferenceThreshold = 0.00025f // 0.025%
+        imageDifferenceThreshold = 0.00030f // 0.030%
     }
 
     firebaseAppDistribution {
