@@ -95,9 +95,7 @@ class ThermostatTile : TileService() {
                     val theme = Colors(
                         ContextCompat.getColor(this@ThermostatTile, commonR.color.colorPrimary),
                         ContextCompat.getColor(this@ThermostatTile, commonR.color.colorOnPrimary),
-                        // Surface
                         ContextCompat.getColor(this@ThermostatTile, R.color.colorOverlay),
-                        // On surface
                         ContextCompat.getColor(this@ThermostatTile, android.R.color.white),
                     )
                     val chipColors = ChipColors.primaryChipColors(theme)
@@ -105,7 +103,7 @@ class ThermostatTile : TileService() {
                         .setPackageName(this@ThermostatTile.packageName)
                         .setClassName(
                             io.homeassistant.companion.android.home.HomeActivity::class.java.name,
-                        ) // Full activity class name
+                        )
                         .addKeyToExtraMapping(
                             "launch_mode",
                             ActionBuilders.AndroidStringExtra.Builder().setValue("ConfigThermostatTile").build(),
