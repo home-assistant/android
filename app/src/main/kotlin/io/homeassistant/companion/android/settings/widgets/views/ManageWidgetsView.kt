@@ -182,7 +182,7 @@ fun ManageWidgetsView(viewModel: ManageWidgetsViewModel) {
     }
 }
 
-private fun <T : WidgetEntity> LazyListScope.widgetItems(
+private fun <T : WidgetEntity<T>> LazyListScope.widgetItems(
     widgetList: List<T>,
     @StringRes title: Int,
     widgetLabel: @Composable (T) -> String,
