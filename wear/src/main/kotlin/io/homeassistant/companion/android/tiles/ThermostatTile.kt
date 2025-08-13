@@ -346,7 +346,7 @@ class ThermostatTile : TileService() {
                 .addContent(
                     LayoutElementBuilders.Text.Builder()
                         .setText(getString(commonR.string.thermostat_tile_no_entity_yet))
-                        .setMaxLines(3)
+                        .setMaxLines(10)
                         .build(),
                 )
                 .addContent(
