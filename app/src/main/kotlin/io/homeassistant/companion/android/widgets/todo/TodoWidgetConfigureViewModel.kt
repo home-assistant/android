@@ -166,7 +166,7 @@ class TodoWidgetConfigureViewModel @Inject constructor(
      * it does not cause issues in the current implementation as returning multiple times has no adverse effects.
      */
     suspend fun requestWidgetCreation(context: Context) {
-        // We drop the first value since we only care about knowing when
+        // We drop the first value since we only care about knowing when the widget is actually added
         todoWidgetDao.getWidgetCountFlow().drop(1).onStart {
             GlanceAppWidgetManager(context)
                 .requestPinGlanceAppWidget(
