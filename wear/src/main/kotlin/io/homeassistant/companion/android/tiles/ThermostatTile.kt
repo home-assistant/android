@@ -92,65 +92,7 @@ class ThermostatTile : TileService() {
                 ).build()
             } else {
                 if (tileConfig?.entityId.isNullOrBlank()) {
-                    val theme = Colors(
-                        ContextCompat.getColor(this@ThermostatTile, commonR.color.colorPrimary),
-                        ContextCompat.getColor(this@ThermostatTile, commonR.color.colorOnPrimary),
-                        ContextCompat.getColor(this@ThermostatTile, R.color.colorOverlay),
-                        ContextCompat.getColor(this@ThermostatTile, android.R.color.white),
-                    )
-                    val chipColors = ChipColors.primaryChipColors(theme)
-                    val androidActivity = ActionBuilders.AndroidActivity.Builder()
-                        .setPackageName(this@ThermostatTile.packageName)
-                        .setClassName(
-                            io.homeassistant.companion.android.home.HomeActivity::class.java.name,
-                        )
-                        .addKeyToExtraMapping(
-                            "launch_mode",
-                            ActionBuilders.AndroidStringExtra.Builder().setValue("ConfigThermostatTile").build(),
-                        )
-                        .addKeyToExtraMapping(
-                            "tile_id",
-                            ActionBuilders.AndroidIntExtra.Builder().setValue(tileId).build(),
-                        )
-                        .build()
-
-                    val launchAction = ActionBuilders.LaunchAction.Builder()
-                        .setAndroidActivity(androidActivity)
-                        .build()
-
-                    val clickable = Clickable.Builder()
-                        .setOnClick(launchAction)
-                        .build()
-
-                    tile.setTileTimeline(
-                        Timeline.fromLayoutElement(
-                            LayoutElementBuilders.Column.Builder()
-                                .addContent(
-                                    LayoutElementBuilders.Text.Builder()
-                                        .setText(getString(commonR.string.thermostat_tile_no_entity_yet))
-                                        .setMaxLines(3)
-                                        .build(),
-                                )
-                                .addContent(
-                                    LayoutElementBuilders.Spacer.Builder()
-                                        .setHeight(DimensionBuilders.dp(10f)).build(),
-                                )
-                                .addContent(
-                                    LayoutElementBuilders.Row.Builder()
-                                        .addContent(
-                                            CompactChip.Builder(
-                                                this@ThermostatTile,
-                                                clickable,
-                                                requestParams.deviceConfiguration,
-                                            )
-                                                .setTextContent(getString(commonR.string.open_settings))
-                                                .setChipColors(chipColors)
-                                                .build(),
-                                        ).build(),
-                                )
-                                .build(),
-                        ),
-                    ).build()
+                    tile.setTileTimeline(getNotConfiguredTimeline(requestParams)).build()
                 } else {
                     try {
                         val entity = tileConfig.entityId?.let {
@@ -389,5 +331,68 @@ class ThermostatTile : TileService() {
                 ),
             )
             .build()
+    }
+
+    private fun getNotConfiguredTimeline(requestParams: RequestBuilders.TileRequest): Timeline {
+        val theme = Colors(
+            ContextCompat.getColor(this@ThermostatTile, commonR.color.colorPrimary),
+            ContextCompat.getColor(this@ThermostatTile, commonR.color.colorOnPrimary),
+            ContextCompat.getColor(this@ThermostatTile, R.color.colorOverlay),
+            ContextCompat.getColor(this@ThermostatTile, android.R.color.white),
+        )
+        val chipColors = ChipColors.primaryChipColors(theme)
+        val notConfiguredTimeline = Timeline.fromLayoutElement(
+            LayoutElementBuilders.Column.Builder()
+                .addContent(
+                    LayoutElementBuilders.Text.Builder()
+                        .setText(getString(commonR.string.thermostat_tile_no_entity_yet))
+                        .setMaxLines(3)
+                        .build(),
+                )
+                .addContent(
+                    LayoutElementBuilders.Spacer.Builder()
+                        .setHeight(DimensionBuilders.dp(10f)).build(),
+                )
+                .addContent(
+                    LayoutElementBuilders.Row.Builder()
+                        .addContent(
+                            CompactChip.Builder(
+                                this@ThermostatTile,
+                                Clickable.Builder()
+                                    .setOnClick(getOpenSettingsActivity(requestParams))
+                                    .build(),
+                                requestParams.deviceConfiguration,
+                            )
+                                .setTextContent(getString(commonR.string.open_settings))
+                                .setChipColors(chipColors)
+                                .build(),
+                        ).build(),
+                )
+                .build(),
+        )
+        return notConfiguredTimeline
+    }
+
+    private fun getOpenSettingsActivity(requestParams: RequestBuilders.TileRequest): ActionBuilders.LaunchAction {
+        val androidActivity = ActionBuilders.AndroidActivity.Builder()
+            .setPackageName(this@ThermostatTile.packageName)
+            .setClassName(
+                io.homeassistant.companion.android.home.HomeActivity::class.java.name,
+            )
+            .addKeyToExtraMapping(
+                "launch_mode",
+                ActionBuilders.AndroidStringExtra.Builder().setValue("ConfigThermostatTile").build(),
+            )
+            .addKeyToExtraMapping(
+                "tile_id",
+                ActionBuilders.AndroidIntExtra.Builder().setValue(requestParams.tileId).build(),
+            )
+            .build()
+
+        val launchAction = ActionBuilders.LaunchAction.Builder()
+            .setAndroidActivity(androidActivity)
+            .build()
+
+        return launchAction
     }
 }
