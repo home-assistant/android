@@ -25,4 +25,7 @@ interface MediaPlayerControlsWidgetDao : WidgetDao<MediaPlayerControlsWidgetEnti
 
     @Query("SELECT * FROM media_player_controls_widgets")
     fun getAllFlow(): Flow<List<MediaPlayerControlsWidgetEntity>>
+
+    @Query("SELECT COUNT(*) FROM media_player_controls_widgets")
+    override fun getWidgetCountFlow(): Flow<Int>
 }

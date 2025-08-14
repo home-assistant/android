@@ -29,4 +29,7 @@ interface StaticWidgetDao : WidgetDao<StaticWidgetEntity> {
 
     @Query("UPDATE static_widget SET last_update = :lastUpdate WHERE id = :widgetId")
     suspend fun updateWidgetLastUpdate(widgetId: Int, lastUpdate: String)
+
+    @Query("SELECT COUNT(*) FROM static_widget")
+    override fun getWidgetCountFlow(): Flow<Int>
 }

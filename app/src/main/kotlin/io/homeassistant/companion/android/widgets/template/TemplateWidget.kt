@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
-import android.os.Bundle
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
@@ -21,10 +20,14 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.getAttribute
+import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
+import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,15 +42,6 @@ class TemplateWidget : AppWidgetProvider() {
     companion object {
         const val UPDATE_VIEW =
             "io.homeassistant.companion.android.widgets.template.TemplateWidget.UPDATE_VIEW"
-        const val RECEIVE_DATA =
-            "io.homeassistant.companion.android.widgets.template.TemplateWidget.RECEIVE_DATA"
-
-        internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
-        internal const val EXTRA_TEMPLATE = "extra_template"
-        internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
-        internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
-        internal const val EXTRA_TEXT_COLOR = "EXTRA_TEXT_COLOR"
-
         private var widgetScope: CoroutineScope? = null
         private val widgetTemplates = mutableMapOf<Int, String>()
         private val widgetJobs = mutableMapOf<Int, Job>()
@@ -102,17 +96,28 @@ class TemplateWidget : AppWidgetProvider() {
         super.onReceive(context, intent)
         when (lastIntent) {
             UPDATE_VIEW -> updateView(context, appWidgetId)
-            RECEIVE_DATA -> {
-                saveEntityConfiguration(
-                    context,
-                    intent.extras,
-                    appWidgetId,
-                )
-                onScreenOn(context)
-            }
-
+            UPDATE_WIDGETS -> onScreenOn(context)
             Intent.ACTION_SCREEN_ON -> onScreenOn(context)
             Intent.ACTION_SCREEN_OFF -> onScreenOff()
+            ACTION_APPWIDGET_CREATED -> {
+                if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+                    FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
+                } else {
+                    widgetScope?.launch {
+                        val entity = intent.extras?.let {
+                            BundleCompat.getSerializable(
+                                it,
+                                EXTRA_WIDGET_ENTITY,
+                                TemplateWidgetEntity::class.java,
+                            )
+                        }
+                        entity?.let {
+                            templateWidgetDao.add(entity.copyWithWidgetId(appWidgetId))
+                        } ?: FailFast.fail { "Missing $EXTRA_WIDGET_ENTITY or it's of the wrong type in intent." }
+                    }
+                }
+                onScreenOn(context)
+            }
         }
     }
 
@@ -278,38 +283,6 @@ class TemplateWidget : AppWidgetProvider() {
             } else {
                 setTextViewText(R.id.widgetTemplateText, "")
             }
-        }
-    }
-
-    private fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
-        if (extras == null) return
-
-        val serverId = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
-        val template: String? = extras.getString(EXTRA_TEMPLATE)
-        val textSize: Float = extras.getFloat(EXTRA_TEXT_SIZE)
-        val backgroundTypeSelection =
-            BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
-                ?: WidgetBackgroundType.DAYNIGHT
-        val textColorSelection: String? = extras.getString(EXTRA_TEXT_COLOR)
-
-        if (serverId == null || template == null) {
-            Timber.e("Did not receive complete widget data")
-            return
-        }
-
-        widgetScope?.launch {
-            templateWidgetDao.add(
-                TemplateWidgetEntity(
-                    appWidgetId,
-                    serverId,
-                    template,
-                    textSize,
-                    templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading",
-                    backgroundTypeSelection,
-                    textColorSelection,
-                ),
-            )
-            onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
     }
 
