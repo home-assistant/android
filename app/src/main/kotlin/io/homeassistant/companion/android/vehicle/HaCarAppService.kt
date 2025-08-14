@@ -78,49 +78,25 @@ class HaCarAppService : CarAppService() {
             override fun onCreateScreen(intent: Intent): Screen {
                 carInfo = carContext.getCarService(CarHardwareManager::class.java).carInfo
 
-                if (intent.getBooleanExtra("TRANSITION_LAUNCH", false)) {
-                    carContext
-                        .getCarService(ScreenManager::class.java).run {
-                            push(
-                                MainVehicleScreen(
-                                    carContext,
-                                    serverManager,
-                                    serverIdFlow,
-                                    entityFlow,
-                                    prefsRepository,
-                                    { loadEntities(lifecycleScope, it) },
-                                    { loadEntities(lifecycleScope, serverId.value) },
-                                ),
-                            )
+                carContext
+                    .getCarService(ScreenManager::class.java).run {
+                        push(
+                            MainVehicleScreen(
+                                carContext,
+                                serverManager,
+                                serverIdFlow,
+                                entityFlow,
+                                prefsRepository,
+                                { loadEntities(lifecycleScope, it) },
+                                { loadEntities(lifecycleScope, serverId.value) },
+                            ),
+                        )
+                    }
 
-                            push(
-                                LoginScreen(
-                                    carContext,
-                                    serverManager,
-                                ),
-                            )
-                        }
-                    return SwitchToDrivingOptimizedScreen(carContext)
-                } else {
-                    carContext
-                        .getCarService(ScreenManager::class.java).run {
-                            push(
-                                MainVehicleScreen(
-                                    carContext,
-                                    serverManager,
-                                    serverIdFlow,
-                                    entityFlow,
-                                    prefsRepository,
-                                    { loadEntities(lifecycleScope, it) },
-                                    { loadEntities(lifecycleScope, serverId.value) },
-                                ),
-                            )
-                        }
-                    return LoginScreen(
-                        carContext,
-                        serverManager,
-                    )
-                }
+                return LoginScreen(
+                    carContext,
+                    serverManager,
+                )
             }
         }
     }
