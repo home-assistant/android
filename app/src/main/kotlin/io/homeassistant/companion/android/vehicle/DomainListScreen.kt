@@ -38,10 +38,6 @@ class DomainListScreen(
     private val domains = mutableSetOf<String>()
     private var domainsAdded = false
 
-    override fun onDrivingOptimizedChanged(newState: Boolean) {
-        invalidate()
-    }
-
     init {
         lifecycleScope.launch {
             allEntities.collect { entities ->
@@ -76,7 +72,7 @@ class DomainListScreen(
         return GridTemplate.Builder().apply {
             setTitle(carContext.getString(R.string.all_entities))
             setHeaderAction(Action.BACK)
-            if (isAutomotive && !isDrivingOptimized && BuildConfig.FLAVOR != "full") {
+            if (isAutomotive && BuildConfig.FLAVOR != "full") {
                 setActionStrip(ActionStrip.Builder().addAction(nativeModeAction(carContext)).build())
             }
             val domainBuild = domainList.build()
