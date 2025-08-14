@@ -1,28 +1,40 @@
 package io.homeassistant.companion.android.widgets
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import android.content.Intent
+import android.os.Build
 import android.view.View
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.Toast
+import androidx.annotation.RequiresApi
+import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.WidgetDao
+import io.homeassistant.companion.android.database.widget.WidgetEntity
 import javax.inject.Inject
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
-abstract class BaseWidgetConfigureActivity : BaseActivity() {
+abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<T>> : BaseActivity() {
 
     @Inject
     lateinit var serverManager: ServerManager
 
     protected var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
 
-    abstract val dao: WidgetDao
+    @Inject
+    lateinit var dao: DAO
 
     abstract val serverSelect: View
     abstract val serverSelectList: Spinner
@@ -80,5 +92,84 @@ abstract class BaseWidgetConfigureActivity : BaseActivity() {
 
     protected fun showAddWidgetError() {
         Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG).show()
+    }
+
+    /**
+     * Return a [WidgetEntity] with the current selection, but without pushing this to the [dao]
+     */
+    abstract suspend fun getPendingDaoEntity(): T
+
+    /**
+     * The class of the widget being configured, this is going to be used when sending the broadcast
+     * intent for the creation of the widget.
+     */
+    abstract val widgetClass: Class<*>
+
+    /**
+     * Requests the widget to be created and waits until it has been saved to the DAO.
+     *
+     * **WARNING**: This function does not handle user cancellation. If a user cancels the widget creation,
+     * this function will not return. If this function is called again and the user does not cancel,
+     * both calls to the function will return. While this behavior could be avoided,
+     * it does not cause issues in the current implementation as returning multiple times has no adverse effects.
+     */
+    @RequiresApi(Build.VERSION_CODES.O)
+    protected suspend fun requestWidgetCreation() {
+        try {
+            val pendingEntity = getPendingDaoEntity()
+            // We drop the first value since we only care about knowing when the widget is actually added
+            dao.getWidgetCountFlow().drop(1).onStart {
+                val context = this@BaseWidgetConfigureActivity
+                getSystemService<AppWidgetManager>()?.requestPinAppWidget(
+                    ComponentName(context, widgetClass),
+                    null,
+                    PendingIntent.getBroadcast(
+                        context,
+                        System.currentTimeMillis().toInt(),
+                        Intent(
+                            context,
+                            widgetClass,
+                        ).apply {
+                            action = ACTION_APPWIDGET_CREATED
+                            putExtra(EXTRA_WIDGET_ENTITY, pendingEntity)
+                        },
+                        // We need the PendingIntent to be mutable so the system inject the EXTRA_APPWIDGET_ID of the created widget
+                        PendingIntent.FLAG_MUTABLE,
+                    ),
+                )
+            }.first()
+            finish()
+        } catch (e: IllegalStateException) {
+            Timber.e(e, "State error when creating widget")
+            showAddWidgetError()
+        }
+    }
+
+    protected suspend fun updateWidget() {
+        val context = this@BaseWidgetConfigureActivity
+
+        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+            showAddWidgetError()
+            return
+        }
+
+        try {
+            val pendingEntity = getPendingDaoEntity()
+            dao.add(pendingEntity)
+
+            val intent = Intent(context, widgetClass)
+            intent.action = BaseWidgetProvider.UPDATE_WIDGETS
+            context.sendBroadcast(intent)
+
+            // Make sure we pass back the original appWidgetId
+            setResult(
+                RESULT_OK,
+                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId),
+            )
+            finish()
+        } catch (e: IllegalStateException) {
+            Timber.e(e, "State error when updating widget $appWidgetId")
+            showAddWidgetError()
+        }
     }
 }

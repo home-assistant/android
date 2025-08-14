@@ -5,9 +5,12 @@ import androidx.appcompat.app.AppCompatDelegate
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme.ANDROID
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme.DARK
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme.LIGHT
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme.SYSTEM
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
@@ -24,9 +27,9 @@ class NightModeManager @Inject constructor(private val prefsRepository: PrefsRep
         val nightMode = prefsRepository.getCurrentNightModeTheme()
         return if (nightMode == null) {
             val nightModeThemeToSet = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                NightModeTheme.SYSTEM
+                SYSTEM
             } else {
-                NightModeTheme.LIGHT
+                LIGHT
             }
             prefsRepository.saveNightModeTheme(nightModeThemeToSet)
             nightModeThemeToSet
@@ -53,16 +56,18 @@ class NightModeManager @Inject constructor(private val prefsRepository: PrefsRep
     }
 }
 
-private fun NightModeTheme.setAsDefaultNightMode() {
-    when (this) {
-        DARK -> {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-        }
-        ANDROID, SYSTEM -> {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-        }
-        else -> {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+private suspend fun NightModeTheme.setAsDefaultNightMode() {
+    withContext(Dispatchers.Main) {
+        when (this@setAsDefaultNightMode) {
+            DARK -> {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            }
+            ANDROID, SYSTEM -> {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+            }
+            else -> {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            }
         }
     }
 }
