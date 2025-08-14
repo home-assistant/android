@@ -51,7 +51,7 @@ object UrlUtil {
             asURI == null -> {
                 base
             }
-            isAbsoluteUrl(input) -> {
+            isAbsoluteUrl(asURI.toString()) -> {
                 asURI.toURL()
             }
             else -> { // Input is relative to base URL
