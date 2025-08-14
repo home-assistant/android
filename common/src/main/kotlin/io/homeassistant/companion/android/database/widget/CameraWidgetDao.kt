@@ -26,4 +26,7 @@ interface CameraWidgetDao : WidgetDao<CameraWidgetEntity> {
 
     @Query("SELECT * FROM camera_widgets")
     fun getAllFlow(): Flow<List<CameraWidgetEntity>>
+
+    @Query("SELECT COUNT(*) FROM camera_widgets")
+    override fun getWidgetCountFlow(): Flow<Int>
 }
