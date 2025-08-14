@@ -18,10 +18,12 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_CAMERA_TILE
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_SHORTCUT_TILE
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_TEMPLATE_TILE
+import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_THERMOSTAT_TILE
 import io.homeassistant.companion.android.home.views.LoadHomePage
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.tiles.OpenTileSettingsActivity
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -58,6 +60,13 @@ class HomeActivity :
             HomeActivity::class.java,
         )
 
+        fun getThermostatTileSettingsIntent(context: Context, tileId: Int) = Intent(
+            Intent.ACTION_VIEW,
+            "$DEEPLINK_PREFIX_SET_THERMOSTAT_TILE/$tileId".toUri(),
+            context,
+            HomeActivity::class.java,
+        )
+
         fun getShortcutsTileSettingsIntent(context: Context, tileId: Int) = Intent(
             Intent.ACTION_VIEW,
             "$DEEPLINK_PREFIX_SET_SHORTCUT_TILE/$tileId".toUri(),
@@ -77,6 +86,19 @@ class HomeActivity :
         super.onCreate(savedInstanceState)
         // Get rid of me!
         presenter.init(this)
+
+        if (intent.getStringExtra("launch_mode") == "ConfigThermostatTile") {
+            startActivity(
+                Intent(
+                    this@HomeActivity,
+                    OpenTileSettingsActivity::class.java,
+                )
+                    .setAction("ConfigThermostatTile")
+                    .putExtra("tile_id", intent.getIntExtra("tile_id", 0)),
+            )
+            finish()
+            return
+        }
 
         presenter.onViewReady()
         setContent {
