@@ -114,10 +114,6 @@ class MainVehicleScreen(
         }
     }
 
-    override fun onDrivingOptimizedChanged(newState: Boolean) {
-        invalidate()
-    }
-
     override fun onGetTemplate(): Template {
         if (isLoggedIn != true) {
             return GridTemplate.Builder().apply {
@@ -193,7 +189,7 @@ class MainVehicleScreen(
             }.build()
 
         val actionStripBuilder = ActionStrip.Builder()
-        if (BuildConfig.FLAVOR != "full") {
+main
             actionStripBuilder.addAction(nativeModeAction(carContext))
         }
         actionStripBuilder.addAction(refreshAction)
