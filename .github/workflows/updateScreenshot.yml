@@ -7,7 +7,7 @@ name: Update Screenshots
 # host as the one use for verifying. It is important since generating the image
 # on another host might result in different rendering.
 
-on:
+on: # yamllint disable-line rule:truthy
   workflow_dispatch:
 
 jobs:
