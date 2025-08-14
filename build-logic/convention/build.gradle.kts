@@ -41,6 +41,7 @@ kotlin {
 dependencies {
     compileOnly(libs.android.gradle.plugin)
     compileOnly(libs.kotlin.gradle.plugin)
+    compileOnly(libs.compose.screenshot.gradle.plugin)
 }
 
 tasks {
@@ -67,6 +68,10 @@ gradlePlugin {
         register("androidCommon") {
             id = libs.plugins.homeassistant.android.common.get().pluginId
             implementationClass = "AndroidCommonConventionPlugin"
+        }
+        register("androidCompose") {
+            id = libs.plugins.homeassistant.android.compose.get().pluginId
+            implementationClass = "AndroidComposeConventionPlugin"
         }
     }
 }

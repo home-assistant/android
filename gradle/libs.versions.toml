@@ -23,6 +23,7 @@ car-versions = "1.7.0"
 changeLog = "3.7.1"
 community-material-typeface = "7.0.96.1-kotlin"
 compose-bom = "2025.07.00"
+composeLintChecks = "1.4.2"
 connectClient = "1.1.0-rc03"
 constraintlayout = "2.2.1"
 coreKtx = "1.16.0"
@@ -107,6 +108,7 @@ screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot"
 # Plugins defined by this project in `:build-logic:convention` module.
 homeassistant-android-application = { id = "homeassistant.android.application" }
 homeassistant-android-common = { id = "homeassistant.android.common" }
+homeassistant-android-compose = { id = "homeassistant.android.compose" }
 homeassistant-android-dependencies = { id = "homeassistant.android.dependencies" }
 homeassistant-android-flavor = { id = "homeassistant.android.flavor" }
 
@@ -115,6 +117,7 @@ activity-compose = { module = "androidx.activity:activity-compose", version.ref 
 activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity-compose" }
 android-beacon-library = { module = "org.altbeacon:android-beacon-library", version.ref = "androidBeaconLibrary" }
 android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
+compose-screenshot-gradle-plugin = { group = "com.android.compose.screenshot", name = "screenshot-test-gradle-plugin", version.ref = "screenshot" }
 androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
 androidx-glance-material = { module = "androidx.glance:glance-material", version.ref = "glance" }
 androidx-glance-preview = { module = "androidx.glance:glance-preview", version.ref = "glance" }
@@ -152,7 +155,9 @@ community-material-typeface = { module = "com.mikepenz:community-material-typefa
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
 compose-animation = { module = "androidx.compose.animation:animation" }
 compose-foundation = { module = "androidx.compose.foundation:foundation" }
+compose-lint-checks = { module = "com.slack.lint.compose:compose-lint-checks", version.ref = "composeLintChecks" }
 compose-material = { module = "androidx.compose.material:material" }
+compose-material3 = { module = "androidx.compose.material3:material3-android" }
 compose-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
 compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 compose-runtime = { module = "androidx.compose.runtime:runtime" }
