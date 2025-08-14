@@ -158,7 +158,7 @@ abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<
             dao.add(pendingEntity)
 
             val intent = Intent(context, widgetClass)
-            intent.action = BaseWidgetProvider.RECEIVE_DATA
+            intent.action = BaseWidgetProvider.UPDATE_WIDGETS
             context.sendBroadcast(intent)
 
             // Make sure we pass back the original appWidgetId

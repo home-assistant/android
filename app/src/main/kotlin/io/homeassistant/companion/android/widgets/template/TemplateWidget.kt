@@ -26,7 +26,7 @@ import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
-import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.RECEIVE_DATA
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -96,7 +96,7 @@ class TemplateWidget : AppWidgetProvider() {
         super.onReceive(context, intent)
         when (lastIntent) {
             UPDATE_VIEW -> updateView(context, appWidgetId)
-            RECEIVE_DATA -> onScreenOn(context)
+            UPDATE_WIDGETS -> onScreenOn(context)
             Intent.ACTION_SCREEN_ON -> onScreenOn(context)
             Intent.ACTION_SCREEN_OFF -> onScreenOff()
             ACTION_APPWIDGET_CREATED -> {

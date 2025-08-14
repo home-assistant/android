@@ -29,7 +29,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.webview.WebViewActivity
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
-import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.RECEIVE_DATA
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.widgetScope
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import io.homeassistant.companion.android.widgets.common.RemoteViewsTarget
@@ -217,7 +217,7 @@ class CameraWidget : AppWidgetProvider() {
 
         super.onReceive(context, intent)
         when (lastIntent) {
-            RECEIVE_DATA -> updateAllWidgets(context)
+            UPDATE_WIDGETS -> updateAllWidgets(context)
             UPDATE_IMAGE -> updateAppWidget(context, appWidgetId)
             Intent.ACTION_SCREEN_ON -> updateAllWidgets(context)
             ACTION_APPWIDGET_CREATED -> {

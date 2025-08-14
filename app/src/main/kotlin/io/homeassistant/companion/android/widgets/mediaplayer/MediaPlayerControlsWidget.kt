@@ -451,7 +451,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 context,
                 appWidgetId,
             )
-            RECEIVE_DATA -> {
+            UPDATE_WIDGETS -> {
                 super.onScreenOn(context)
             }
             UPDATE_MEDIA_IMAGE -> updateView(context, appWidgetId)

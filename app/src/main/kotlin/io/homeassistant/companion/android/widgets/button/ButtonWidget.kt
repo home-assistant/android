@@ -136,7 +136,7 @@ class ButtonWidget : AppWidgetProvider() {
         when (action) {
             CALL_SERVICE_AUTH -> authThenCallConfiguredAction(context, appWidgetId)
             CALL_SERVICE -> callConfiguredAction(context, appWidgetId)
-            BaseWidgetProvider.RECEIVE_DATA -> updateAllWidgets(context)
+            BaseWidgetProvider.UPDATE_WIDGETS -> updateAllWidgets(context)
             Intent.ACTION_SCREEN_ON -> updateAllWidgets(context)
             ACTION_APPWIDGET_CREATED -> {
                 if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {

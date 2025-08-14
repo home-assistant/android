@@ -30,8 +30,8 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
     companion object {
         const val UPDATE_VIEW =
             "io.homeassistant.companion.android.widgets.template.BaseWidgetProvider.UPDATE_VIEW"
-        const val RECEIVE_DATA =
-            "io.homeassistant.companion.android.widgets.RECEIVE_DATA"
+        const val UPDATE_WIDGETS =
+            "io.homeassistant.companion.android.widgets.UPDATE_WIDGETS"
 
         var widgetScope: CoroutineScope? = null
         val widgetEntities = mutableMapOf<Int, List<String>>()
@@ -72,7 +72,7 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
         super.onReceive(context, intent)
         when (lastIntent) {
             UPDATE_VIEW -> updateView(context, appWidgetId)
-            RECEIVE_DATA -> {
+            UPDATE_WIDGETS -> {
                 onScreenOn(context)
             }
             Intent.ACTION_SCREEN_ON -> onScreenOn(context)
