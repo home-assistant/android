@@ -24,6 +24,7 @@ jobs:
       - name: Update Screenshots
         run: ./gradlew updateDebugScreenshotTest updateFullDebugScreenshotTest
 
+
       - name: Commit and push changes
         run: |
           git config user.name "github-actions[bot]"
