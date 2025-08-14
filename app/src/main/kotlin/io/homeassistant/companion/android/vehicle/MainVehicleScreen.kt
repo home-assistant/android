@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.vehicle
 
-import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
@@ -58,8 +57,6 @@ class MainVehicleScreen(
     private var domainsJob: Job? = null
     private var domainsAdded = false
     private var domainsAddedFor: Int? = null
-
-    private val isAutomotive get() = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
 
     init {
         lifecycleScope.launch {
@@ -196,7 +193,7 @@ class MainVehicleScreen(
             }.build()
 
         val actionStripBuilder = ActionStrip.Builder()
-        if (isAutomotive && !isDrivingOptimized && BuildConfig.FLAVOR != "full") {
+        if (BuildConfig.FLAVOR != "full") {
             actionStripBuilder.addAction(nativeModeAction(carContext))
         }
         actionStripBuilder.addAction(refreshAction)
