@@ -41,6 +41,7 @@ private const val PREF_AUTO_FAVORITES = "auto_favorites"
 private const val PREF_LOCATION_HISTORY_DISABLED = "location_history"
 private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displayed"
 private const val PREF_GESTURE_ACTION_PREFIX = "gesture_action"
+private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
 
 /**
  * This class ensure that when we use the local storage in [PrefsRepositoryImpl] the migrations has been made
@@ -314,6 +315,15 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setGestureAction(gesture: HAGesture, action: GestureAction) {
         localStorage().putString("${PREF_GESTURE_ACTION_PREFIX}_${gesture.name}", action.name)
+    }
+
+    override suspend fun isChangeLogPopupEnabled(): Boolean {
+        // Default to true if not set
+        return localStorage().getBoolean(PREF_CHANGE_LOG_POPUP_ENABLED) ?: true
+    }
+
+    override suspend fun setChangeLogPopupEnabled(enabled: Boolean) {
+        localStorage().putBoolean(PREF_CHANGE_LOG_POPUP_ENABLED, enabled)
     }
 
     override suspend fun removeServer(serverId: Int) {

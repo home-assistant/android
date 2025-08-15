@@ -340,6 +340,18 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
             true
         }
 
+        findPreference<SwitchPreference>("change_log_popup_enabled")?.let {
+            lifecycleScope.launch {
+                it.isChecked = presenter.isChangeLogPopupEnabled()
+            }
+            it.setOnPreferenceChangeListener { _, newValue ->
+                lifecycleScope.launch {
+                    presenter.setChangeLogPopupEnabled(newValue as Boolean)
+                }
+                true
+            }
+        }
+
         findPreference<Preference>("version")?.let {
             it.isCopyingEnabled = true
             it.summary = BuildConfig.VERSION_NAME

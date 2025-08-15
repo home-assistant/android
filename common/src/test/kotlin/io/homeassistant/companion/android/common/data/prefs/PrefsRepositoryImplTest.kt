@@ -86,5 +86,35 @@ class PrefsRepositoryImplTest {
 
         // Verify no integration storage was accessed since no migration was needed
         coVerify(exactly = 0) { integrationStorage.getString(any()) }
+
+    @Test
+    fun `Given no preference set when checking change log popup enabled then default is true`() = runTest {
+        coEvery { localStorage.getBoolean("change_log_popup_enabled") } returns true
+
+        val result = repository.isChangeLogPopupEnabled()
+
+        assertEquals(true, result)
+    }
+
+    @Test
+    fun `Given user sets change log popup enabled to true when retrieving then value is true`() = runTest {
+        coEvery { localStorage.putBoolean("change_log_popup_enabled", true) } returns Unit
+        coEvery { localStorage.getBoolean("change_log_popup_enabled") } returns true
+        repository.setChangeLogPopupEnabled(true)
+
+        val result = repository.isChangeLogPopupEnabled()
+
+        assertEquals(true, result)
+    }
+
+    @Test
+    fun `Given user sets change log popup enabled to false when retrieving then value is false`() = runTest {
+        coEvery { localStorage.putBoolean("change_log_popup_enabled", false) } returns Unit
+        coEvery { localStorage.getBoolean("change_log_popup_enabled") } returns false
+        repository.setChangeLogPopupEnabled(false)
+
+        val result = repository.isChangeLogPopupEnabled()
+
+        assertEquals(false, result)
     }
 }
