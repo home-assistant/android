@@ -224,6 +224,11 @@
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/app_version_info">
+        <SwitchPreference
+            android:key="change_log_popup_enabled"
+            android:icon="@drawable/ic_changelog"
+            android:title="@string/enable_change_log_popup"
+            android:summary="@string/enable_change_log_popup_summary" />
         <Preference
             android:key="changelog_prompt"
             android:icon="@drawable/ic_changelog"

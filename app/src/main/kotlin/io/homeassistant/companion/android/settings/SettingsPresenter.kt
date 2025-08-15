@@ -24,4 +24,6 @@ interface SettingsPresenter {
     fun getServerCount(): Int
     suspend fun getNotificationRateLimits(): RateLimitResponse?
     fun showChangeLog(context: Context)
+    suspend fun isChangeLogPopupEnabled(): Boolean
+    suspend fun setChangeLogPopupEnabled(enabled: Boolean)
 }
