@@ -6,12 +6,24 @@ import android.view.ContextThemeWrapper
 import info.hannes.changelog.ChangeLog
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.themes.NightModeManager
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 
-class ChangeLog @Inject constructor(val nightModeManager: NightModeManager) {
+class ChangeLog @Inject constructor(
+    val nightModeManager: NightModeManager,
+    private val prefsRepository: PrefsRepository
+) {
+    private fun createChangeLog(context: Context): ChangeLog {
+        return ChangeLog(context)
+    }
     fun showChangeLog(context: Context, forceShow: Boolean) {
+        // Check if user has enabled change log popup or this is a forced show
+        if (!forceShow && !runBlocking { prefsRepository.isChangeLogPopupEnabled() }) {
+            return
+        }
+
         val isDarkTheme = when (runBlocking { nightModeManager.getCurrentNightMode() }) {
             NightModeTheme.ANDROID, NightModeTheme.SYSTEM -> {
                 val nightModeFlags =
@@ -27,7 +39,7 @@ class ChangeLog @Inject constructor(val nightModeManager: NightModeManager) {
                 darkThemeChangeLog.fullLogDialog.show()
             }
         } else {
-            val changeLog = ChangeLog(context)
+            val changeLog = createChangeLog(context)
             if ((!changeLog.isFirstRunEver && changeLog.isFirstRun) || forceShow) {
                 changeLog.fullLogDialog.show()
             }
