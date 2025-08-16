@@ -13,7 +13,7 @@ import kotlinx.coroutines.runBlocking
 
 class ChangeLog @Inject constructor(
     val nightModeManager: NightModeManager,
-    private val prefsRepository: PrefsRepository
+    private val prefsRepository: PrefsRepository,
 ) {
     private fun createChangeLog(context: Context): ChangeLog {
         return ChangeLog(context)
