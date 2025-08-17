@@ -271,18 +271,14 @@ class CarSensorManager :
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         this.latestContext = context.applicationContext
 
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            sensorsList
-        } else {
-            emptyList()
-        }
+        return sensorsList
     }
 
     @Suppress("KotlinConstantConditions")
     override fun hasSensor(context: Context): Boolean {
         this.latestContext = context.applicationContext
 
-        return isAutomotive || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && BuildConfig.FLAVOR == "full")
+        return isAutomotive || BuildConfig.FLAVOR == "full"
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -312,31 +308,29 @@ class CarSensorManager :
             return
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            if (connected()) {
-                updateCarInfo()
-            } else {
-                carSensorsList.forEach {
-                    if (isEnabled(context, it)) {
-                        val attrs = if (it.sensor.id == fuelType.sensor.id || it.sensor.id == evConnector.sensor.id) {
-                            mapOf(
-                                "options" to when (it.sensor.id) {
-                                    fuelType.sensor.id -> fuelTypeMap.values.toList()
-                                    evConnector.sensor.id -> evTypeMap.values.toList()
-                                    else -> {} // unreachable
-                                },
-                            )
-                        } else {
-                            mapOf()
-                        }
-                        onSensorUpdated(
-                            context,
-                            it.sensor,
-                            STATE_UNAVAILABLE,
-                            it.sensor.statelessIcon,
-                            attrs,
+        if (connected()) {
+            updateCarInfo()
+        } else {
+            carSensorsList.forEach {
+                if (isEnabled(context, it)) {
+                    val attrs = if (it.sensor.id == fuelType.sensor.id || it.sensor.id == evConnector.sensor.id) {
+                        mapOf(
+                            "options" to when (it.sensor.id) {
+                                fuelType.sensor.id -> fuelTypeMap.values.toList()
+                                evConnector.sensor.id -> evTypeMap.values.toList()
+                                else -> {} // unreachable
+                            },
                         )
+                    } else {
+                        mapOf()
                     }
+                    onSensorUpdated(
+                        context,
+                        it.sensor,
+                        STATE_UNAVAILABLE,
+                        it.sensor.statelessIcon,
+                        attrs,
+                    )
                 }
             }
         }

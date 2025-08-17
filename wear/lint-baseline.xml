@@ -68,50 +68,6 @@
     </issue>
 
     <issue
-        id="PrivateResource"
-        message="The resource `@color/white` is marked as private in androidx.wear:wear-input:1.2.0-alpha02"
-        errorLine1="        android:textColor=&quot;@color/white&quot;"
-        errorLine2="                           ~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/listitem_loading.xml"
-            line="22"
-            column="28"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@color/white` is marked as private in androidx.wear:wear-input:1.2.0-alpha02"
-        errorLine1="        &lt;item name=&quot;colorOnSecondary&quot;>@color/white&lt;/item>"
-        errorLine2="                                      ~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/styles.xml"
-            line="6"
-            column="39"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@color/white` is marked as private in androidx.wear:wear-input:1.2.0-alpha02"
-        errorLine1="        &lt;item name=&quot;android:textColor&quot;>@color/white&lt;/item>"
-        errorLine2="                                       ~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/styles.xml"
-            line="12"
-            column="40"/>
-    </issue>
-
-    <issue
-        id="PrivateResource"
-        message="The resource `@color/white` is marked as private in androidx.wear:wear-input:1.2.0-alpha02"
-        errorLine1="        &lt;item name=&quot;android:textColor&quot;>@color/white&lt;/item>"
-        errorLine2="                                       ~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/styles.xml"
-            line="20"
-            column="40"/>
-    </issue>
-
-    <issue
         id="AcceptsUserCertificates"
         message="The Network Security Configuration allows the use of user certificates in the release version of your app"
         errorLine1="            &lt;certificates src=&quot;user&quot;/>"
@@ -140,7 +96,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="179"
+            line="181"
             column="13"/>
     </issue>
 
@@ -151,7 +107,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="187"
+            line="189"
             column="13"/>
     </issue>
 
@@ -162,7 +118,7 @@
         errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/sensors/HealthServicesSensorManager.kt"
-            line="144"
+            line="158"
             column="16"/>
     </issue>
 
@@ -596,7 +552,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/integration/MobileAppIntegrationActivity.kt"
-            line="61"
+            line="63"
             column="31"/>
     </issue>
 
@@ -607,7 +563,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/integration/MobileAppIntegrationActivity.kt"
-            line="61"
+            line="63"
             column="31"/>
     </issue>
 
@@ -618,7 +574,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/phone/PhoneSettingsListener.kt"
-            line="192"
+            line="218"
             column="35"/>
     </issue>
 
@@ -629,7 +585,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/phone/PhoneSettingsListener.kt"
-            line="192"
+            line="218"
             column="35"/>
     </issue>
 
@@ -640,7 +596,7 @@
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/tiles/CameraTile.kt"
-            line="138"
+            line="147"
             column="46"/>
     </issue>
 
@@ -651,7 +607,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/util/LoadingView.kt"
-            line="18"
+            line="16"
             column="26"/>
     </issue>
 
@@ -673,7 +629,7 @@
         errorLine2="                               ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="122"
+            line="124"
             column="32"/>
     </issue>
 
@@ -684,7 +640,7 @@
         errorLine2="                               ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="122"
+            line="124"
             column="32"/>
     </issue>
 
@@ -695,7 +651,7 @@
         errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="193"
+            line="195"
             column="63"/>
     </issue>
 
