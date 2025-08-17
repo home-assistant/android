@@ -22,6 +22,10 @@ jobs:
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
+      # Without any change compare to the latest tag, reckon will not bump the version.
+      - name: Add dumb modification to trigger version bump
+        run: touch dumb_file_to_trigger_version_bump
+
       - name: Generate version.txt
         run: ./gradlew versionFile
 

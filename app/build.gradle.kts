@@ -49,6 +49,7 @@ dependencies {
     "fullImplementation"(libs.car.projected)
 
     screenshotTestImplementation(libs.compose.uiTooling)
+    screenshotTestImplementation(libs.screenshot.validation.api)
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.
