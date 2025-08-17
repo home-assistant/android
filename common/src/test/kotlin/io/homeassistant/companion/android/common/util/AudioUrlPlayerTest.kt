@@ -220,4 +220,21 @@ class AudioUrlPlayerTest {
             assertEquals(AudioAttributes.CONTENT_TYPE_MUSIC, contentType)
         }
     }
+
+    @Test
+    fun `Given anything that happens when invoking playAudio then it does not throw IllegalStateException Already resumed`() = runTest {
+        every { audioManager.getStreamVolume(any()) } returns 1
+
+        val onCompletionListener = slot<MediaPlayer.OnCompletionListener>()
+        val onErrorListener = slot<MediaPlayer.OnErrorListener>()
+        every { mediaPlayer.setOnCompletionListener(capture(onCompletionListener)) } answers {
+            onCompletionListener.captured.onCompletion(mediaPlayer)
+        }
+        every { mediaPlayer.setOnErrorListener(capture(onErrorListener)) } answers {
+            onErrorListener.captured.onError(mediaPlayer, 1, 42)
+        }
+        every { mediaPlayer.prepareAsync() } throws IllegalStateException("dummy")
+
+        player.playAudio("test_url", false)
+    }
 }
