@@ -5,7 +5,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
-import io.homeassistant.companion.android.common.compose.theme.HAColors.TransparentNone
+import io.homeassistant.companion.android.common.compose.theme.HAColors.Transparent
 
 /**
  * Defines the core color palette for the Home Assistant application.
@@ -14,25 +14,25 @@ import io.homeassistant.companion.android.common.compose.theme.HAColors.Transpar
  *
  * Core color tokens are the foundational color values used throughout the design system.
  * These tokens represent raw, brand-independent colors such as grayscale shades, base hues, and accent tones.
- * Core tokens shouldn't be tied to any specific UI purpose or role. Instead, they serve as building blocks from which semantic tokens are derived.
+ * Core tokens shouldn't be tied to any specific UI purpose or role.
+ * Instead, they serve as building blocks from which semantic tokens are derived.
  *
  * ### Usage
  * These colors should not be used directly in UI components. Instead, they serve as the foundation
  * for semantic color tokens defined in [HAColorScheme]. This approach ensures consistency and
  * simplifies color selection by providing meaningful names for UI elements.
  *
- * Changes to core tokens will cascade into semantic tokens that reference them, enabling flexible theming and consistent design language.
- * Please note that these core tokens are not intended to be used directly in components or styles (with some exception like
- * [TransparentNone]).
+ * Changes to core tokens will cascade into semantic tokens that reference them, enabling flexible theming and
+ * consistent design language. Please note that these core tokens are not intended to be used directly in components
+ * or styles (with some exception like [Transparent]).
  *
- * When adding new color tokens, it's crucial to synchronize with the design team, as well as frontend and iOS development teams, to maintain a unified visual language across all platforms.
+ * When adding new color tokens, it's crucial to synchronize with the design team, as well as frontend and
+ * iOS development teams, to maintain a unified visual language across all platforms.
  */
 private object HAColors {
     val Black = Color(0xFF000000)
     val White = Color(0xFFFFFFFF)
-    val TransparentNone = Color(0x00FFFFFF)
-
-    val Image = Color(0xFFFF00CC)
+    val Transparent = Color(0x00FFFFFF)
 
     // Primary
     val Primary05 = Color(0xFF001721)
@@ -206,13 +206,13 @@ class HAButtonColors(val buttonColors: ButtonColors, val rippleColor: Color)
  * aligned with the Home Assistant design system. It defines semantic color tokens, which are
  * abstractions built on top of the core color tokens found in [HAColors].
  *
- * ## Semantic Color Tokens
+ * ## Semantic color tokens
  *
  * Semantic color tokens represent colors based on their usage or purpose within the UI. They provide
  * a layer of abstraction over the core color palette, making it easier to maintain consistency
  * and adapt to different themes.
  *
- * ### Naming Convention
+ * ## Naming convention
  * Tokens are named according to their semantic role (e.g., `primary`, `success`, `warning`).
  * This naming convention enhances clarity and helps developers choose the appropriate color for
  * various UI elements.
@@ -413,7 +413,7 @@ class HAColorScheme(
             ButtonVariant.PRIMARY -> {
                 HAButtonColors(
                     ButtonColors(
-                        containerColor = TransparentNone,
+                        containerColor = Transparent,
                         contentColor = colorOnPrimaryNormal,
                         disabledContainerColor = colorFillDisabledQuietResting,
                         disabledContentColor = colorOnDisabledQuiet,
@@ -425,7 +425,7 @@ class HAColorScheme(
             ButtonVariant.NEUTRAL -> {
                 HAButtonColors(
                     ButtonColors(
-                        containerColor = TransparentNone,
+                        containerColor = Transparent,
                         contentColor = colorOnNeutralNormal,
                         disabledContainerColor = colorFillDisabledQuietResting,
                         disabledContentColor = colorOnDisabledQuiet,
@@ -437,7 +437,7 @@ class HAColorScheme(
             ButtonVariant.DANGER -> {
                 HAButtonColors(
                     ButtonColors(
-                        containerColor = TransparentNone,
+                        containerColor = Transparent,
                         contentColor = colorOnDangerNormal,
                         disabledContainerColor = colorFillDisabledQuietResting,
                         disabledContentColor = colorOnDisabledQuiet,
@@ -449,7 +449,7 @@ class HAColorScheme(
             ButtonVariant.WARNING -> {
                 HAButtonColors(
                     ButtonColors(
-                        containerColor = TransparentNone,
+                        containerColor = Transparent,
                         contentColor = colorOnWarningNormal,
                         disabledContainerColor = colorFillDisabledQuietResting,
                         disabledContentColor = colorOnDisabledQuiet,
@@ -461,7 +461,7 @@ class HAColorScheme(
             ButtonVariant.SUCCESS -> {
                 HAButtonColors(
                     ButtonColors(
-                        containerColor = TransparentNone,
+                        containerColor = Transparent,
                         contentColor = colorOnSuccessNormal,
                         disabledContainerColor = colorFillDisabledQuietResting,
                         disabledContentColor = colorOnDisabledQuiet,
