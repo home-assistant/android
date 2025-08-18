@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
@@ -18,6 +19,7 @@ private class VariantProvider : PreviewParameterProvider<ButtonVariant> {
 class HAButtonScreenshotTest {
 
     @PreviewLightDark
+    @PreviewTest
     @Composable
     fun `HAAccentButton`(@PreviewParameter(VariantProvider::class) variant: ButtonVariant) {
         HATheme {
@@ -39,6 +41,7 @@ class HAButtonScreenshotTest {
     }
 
     @PreviewLightDark
+    @PreviewTest
     @Composable
     fun `HAFilledButton`(@PreviewParameter(VariantProvider::class) variant: ButtonVariant) {
         HATheme {
@@ -60,6 +63,7 @@ class HAButtonScreenshotTest {
     }
 
     @PreviewLightDark
+    @PreviewTest
     @Composable
     fun `HAPlainButton`(@PreviewParameter(VariantProvider::class) variant: ButtonVariant) {
         HATheme {
