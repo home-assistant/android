@@ -57,6 +57,8 @@ enum class ButtonVariant {
  * Displays an accent button, typically used for the most prominent call to action on a screen.
  * The button's appearance is determined by the [variant] and the current theme.
  *
+ * @see https://design.home-assistant.io/#components/ha-button
+ *
  * @param text The text label displayed on the button.
  * @param onClick The lambda function to be executed when the button is clicked.
  * @param modifier Optional [androidx.compose.ui.Modifier] to be applied to the button.
@@ -92,6 +94,8 @@ fun HAAccentButton(
  * Displays a filled button, which is a standard button.
  * The button's appearance is determined by the [variant] and the current theme.
  *
+ * @see https://design.home-assistant.io/#components/ha-button
+ *
  * @param text The text label displayed on the button.
  * @param onClick The lambda function to be executed when the button is clicked.
  * @param modifier Optional [androidx.compose.ui.Modifier] to be applied to the button.
@@ -126,6 +130,8 @@ fun HAFilledButton(
 /**
  * Displays a plain button, which is typically a text-only button with no background fill.
  * The button's appearance is determined by the [variant] and the current theme.
+ *
+ * @see https://design.home-assistant.io/#components/ha-button
  *
  * @param text The text label displayed on the button.
  * @param onClick The lambda function to be executed when the button is clicked.
