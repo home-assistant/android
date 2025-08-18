@@ -1,29 +1,30 @@
 name: Prepare next release
 #  This workflow prepares the next release by updating the changelog and creating a pull request.
-#  It is triggered manually or when a tag that matches the version format is pushed.
+#  It is triggered using the GitHub Actions API (in monthly and weekly workflows) or manually.
 
 on: # yamllint disable-line rule:truthy
   workflow_dispatch:
-  # Trigger on new release (made by weekly.yml workflow)
-  release:
-    types: [prereleased]
-  # Trigger on new tag push (made by monthly.yml workflow)
-  push:
-    tags:
-      - '20[2-9][0-9].[0-9]+.[0-9]+' # Simple matching for CalVer, even if it's not perfect it is enough for detecting that it is a version tag.
+
+concurrency:
+  group: prepare-next-release
+  cancel-in-progress: true
 
 jobs:
   tag:
     name: Prepare next release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - uses: ./.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      # Without any change compare to the latest tag, reckon will not bump the version.
+      - name: Add dumb modification to trigger version bump
+        run: touch dumb_file_to_trigger_version_bump
 
       - name: Generate version.txt
         run: ./gradlew versionFile

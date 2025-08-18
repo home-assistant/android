@@ -29,4 +29,7 @@ interface TemplateWidgetDao : WidgetDao<TemplateWidgetEntity> {
 
     @Query("UPDATE template_widgets SET last_update = :lastUpdate WHERE id = :widgetId")
     suspend fun updateTemplateWidgetLastUpdate(widgetId: Int, lastUpdate: String)
+
+    @Query("SELECT COUNT(*) FROM template_widgets")
+    override fun getWidgetCountFlow(): Flow<Int>
 }
