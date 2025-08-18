@@ -70,18 +70,13 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     }
                     "minimalImplementation"(libs.cronet.embedded)
 
-                    "implementation"(platform(libs.compose.bom))
                     "implementation"(libs.compose.animation)
-                    "implementation"(libs.compose.foundation)
                     "implementation"(libs.compose.material)
                     "implementation"(libs.compose.material.icons.core)
                     "implementation"(libs.compose.material.icons.extended)
                     "implementation"(libs.compose.runtime)
-                    "implementation"(libs.compose.ui)
-                    "implementation"(libs.compose.uiTooling)
                     "implementation"(libs.activity.compose)
                     "implementation"(libs.navigation.compose)
-                    "implementation"(libs.androidx.lifecycle.runtime.compose)
                     "implementation"(libs.core.remoteviews)
 
                     "implementation"(libs.bundles.androidx.glance)
@@ -100,9 +95,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "implementation"(libs.car.core)
 
-                    "androidTestImplementation"(platform(libs.compose.bom))
                     "androidTestImplementation"(libs.bundles.androidx.test)
-                    "androidTestImplementation"(libs.bundles.androidx.compose.ui.test)
                     "androidTestImplementation"(libs.leakcanary.android.instrumentation)
 
                     "testImplementation"(libs.bundles.androidx.glance.testing)
