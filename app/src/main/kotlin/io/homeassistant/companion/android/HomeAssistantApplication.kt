@@ -12,6 +12,8 @@ import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
+import androidx.compose.runtime.Composer
+import androidx.compose.runtime.ExperimentalComposeRuntimeApi
 import androidx.core.content.ContextCompat
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -70,6 +72,7 @@ open class HomeAssistantApplication :
     @Inject
     lateinit var nightModeManager: NightModeManager
 
+    @OptIn(ExperimentalComposeRuntimeApi::class)
     override fun onCreate() {
         super.onCreate()
 
@@ -97,6 +100,9 @@ open class HomeAssistantApplication :
             languagesManager.applyCurrentLang()
             nightModeManager.applyCurrentNightMode()
         }
+
+        // Enable only for debug flavor to avoid perf regressions in release
+        Composer.setDiagnosticStackTraceEnabled(BuildConfig.DEBUG)
 
         // This will make sure we start/stop when we actually need too.
         ContextCompat.registerReceiver(
