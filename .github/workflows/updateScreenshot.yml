@@ -1,0 +1,33 @@
+name: Update Screenshots
+# This workflow updates the reference screenshot on the same host used for verification.
+# Running the update and verification on the same machine ensures consistent rendering,
+# as generating images on different hosts may lead to subtle rendering differences.
+# Use this workflow to maintain reliable and reproducible screenshot comparisons.
+# This workflow is here to help updating the reference screenshot on the same
+# host as the one use for verifying. It is important since generating the image
+# on another host might result in different rendering.
+
+on: # yamllint disable-line rule:truthy
+  workflow_dispatch:
+
+jobs:
+  update_screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          mock-google-services: "true"
+
+      - name: Update Screenshots
+        run: ./gradlew updateDebugScreenshotTest updateFullDebugScreenshotTest
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Update screenshots"
+          git push

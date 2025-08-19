@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
@@ -76,6 +78,8 @@ class LaunchActivity :
         this::onOnboardingComplete,
     )
 
+    private var networkDialog: AlertDialog? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -87,10 +91,12 @@ class LaunchActivity :
                 }
             }
         }
-        presenter.onViewReady(intent.getStringExtra(EXTRA_SERVER_URL_TO_ONBOARD))
+        lifecycleScope.launch {
+            presenter.onViewReady(intent.getStringExtra(EXTRA_SERVER_URL_TO_ONBOARD))
+        }
     }
 
-    override suspend fun displayWebview() {
+    override suspend fun displayWebView() {
         presenter.setSessionExpireMillis(0)
 
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) && BuildConfig.FLAVOR == "full") {
@@ -142,8 +148,23 @@ class LaunchActivity :
         registerActivityResult.launch(OnboardApp.Input(url = serverUrlToOnboard))
     }
 
+    override fun displayAlertMessageDialog(@StringRes messageResId: Int) {
+        if (networkDialog?.isShowing != true) {
+            AlertDialog.Builder(this)
+                .setTitle(commonR.string.error_connection_failed)
+                .setMessage(messageResId)
+                .setCancelable(false)
+                .show()
+        }
+    }
+
+    override fun dismissDialog() {
+        networkDialog?.dismiss()
+        networkDialog = null
+    }
+
     override fun onDestroy() {
-        presenter.onFinish()
+        dismissDialog()
         super.onDestroy()
     }
 
@@ -253,7 +274,7 @@ class LaunchActivity :
             setLocationTracking(serverId, deviceTrackingEnabled)
             setNotifications(serverId, notificationsEnabled)
         }
-        displayWebview()
+        displayWebView()
     }
 
     private suspend fun setLocationTracking(serverId: Int, enabled: Boolean) {

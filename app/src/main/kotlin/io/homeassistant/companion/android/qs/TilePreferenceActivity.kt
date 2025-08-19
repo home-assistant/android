@@ -67,7 +67,7 @@ class TilePreferenceActivity : BaseActivity() {
                     serverId = tileData.serverId,
                 )
             } else {
-                SettingsActivity.newInstance(this@TilePreferenceActivity, SettingsActivity.Deeplink.QS_TILE, tileId)
+                SettingsActivity.newInstance(this@TilePreferenceActivity, SettingsActivity.Deeplink.QSTile(tileId))
             }
 
             withContext(Dispatchers.Main) {

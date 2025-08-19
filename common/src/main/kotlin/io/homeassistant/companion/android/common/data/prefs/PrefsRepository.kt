@@ -4,14 +4,28 @@ import io.homeassistant.companion.android.common.data.integration.ControlsAuthRe
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
 
+enum class NightModeTheme(val storageValue: String) {
+    LIGHT("light"),
+    DARK("dark"),
+
+    @Deprecated("Kept for backwards compatibility see https://github.com/home-assistant/android/pull/2923")
+    ANDROID("android"),
+    SYSTEM("system"),
+    ;
+
+    companion object {
+        fun fromStorageValue(value: String?): NightModeTheme? = entries.firstOrNull { it.storageValue == value }
+    }
+}
+
 interface PrefsRepository {
     suspend fun getAppVersion(): String?
 
     suspend fun saveAppVersion(ver: String)
 
-    suspend fun getCurrentTheme(): String?
+    suspend fun getCurrentNightModeTheme(): NightModeTheme?
 
-    suspend fun saveTheme(theme: String)
+    suspend fun saveNightModeTheme(nightModeTheme: NightModeTheme)
 
     suspend fun getCurrentLang(): String?
 

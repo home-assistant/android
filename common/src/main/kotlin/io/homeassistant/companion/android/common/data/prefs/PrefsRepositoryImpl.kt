@@ -18,7 +18,7 @@ const val MIGRATION_PREF = "migration"
 const val MIGRATION_VERSION = 1
 
 private const val PREF_VER = "version"
-private const val PREF_THEME = "theme"
+private const val PREF_NIGHT_MODE_THEME = "theme"
 private const val PREF_LANG = "lang"
 private const val PREF_LOCALES = "locales"
 private const val PREF_SCREEN_ORIENTATION = "screen_orientation"
@@ -111,12 +111,12 @@ class PrefsRepositoryImpl @Inject constructor(
         localStorage().putString(PREF_VER, ver)
     }
 
-    override suspend fun getCurrentTheme(): String? {
-        return localStorage().getString(PREF_THEME)
+    override suspend fun getCurrentNightModeTheme(): NightModeTheme? {
+        return NightModeTheme.fromStorageValue(localStorage().getString(PREF_NIGHT_MODE_THEME))
     }
 
-    override suspend fun saveTheme(theme: String) {
-        localStorage().putString(PREF_THEME, theme)
+    override suspend fun saveNightModeTheme(nightModeTheme: NightModeTheme) {
+        localStorage().putString(PREF_NIGHT_MODE_THEME, nightModeTheme.storageValue)
     }
 
     override suspend fun getCurrentLang(): String? {

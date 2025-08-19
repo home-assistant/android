@@ -6,11 +6,13 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Bundle
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.database.widget.WidgetDao
+import io.homeassistant.companion.android.database.widget.WidgetEntity
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,13 +25,13 @@ import timber.log.Timber
 /**
  * A widget provider class for widgets that update based on entity state changes.
  */
-abstract class BaseWidgetProvider : AppWidgetProvider() {
+abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : AppWidgetProvider() {
 
     companion object {
         const val UPDATE_VIEW =
             "io.homeassistant.companion.android.widgets.template.BaseWidgetProvider.UPDATE_VIEW"
-        const val RECEIVE_DATA =
-            "io.homeassistant.companion.android.widgets.template.TemplateWidget.RECEIVE_DATA"
+        const val UPDATE_WIDGETS =
+            "io.homeassistant.companion.android.widgets.UPDATE_WIDGETS"
 
         var widgetScope: CoroutineScope? = null
         val widgetEntities = mutableMapOf<Int, List<String>>()
@@ -38,6 +40,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     @Inject
     lateinit var serverManager: ServerManager
+
+    @Inject
+    lateinit var dao: DAO
 
     private var thisSetScope = false
     protected var lastIntent = ""
@@ -56,10 +61,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
-            widgetScope?.launch {
-                val views = getWidgetRemoteViews(context, appWidgetId)
-                appWidgetManager.updateAppWidget(appWidgetId, views)
-            }
+            updateView(context, appWidgetId, appWidgetManager)
         }
     }
 
@@ -70,16 +72,26 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         super.onReceive(context, intent)
         when (lastIntent) {
             UPDATE_VIEW -> updateView(context, appWidgetId)
-            RECEIVE_DATA -> {
-                saveEntityConfiguration(
-                    context,
-                    intent.extras,
-                    appWidgetId,
-                )
+            UPDATE_WIDGETS -> {
                 onScreenOn(context)
             }
             Intent.ACTION_SCREEN_ON -> onScreenOn(context)
             Intent.ACTION_SCREEN_OFF -> onScreenOff()
+            ACTION_APPWIDGET_CREATED -> {
+                if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+                    FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
+                } else {
+                    widgetScope?.launch {
+                        // Use deprecated function to not have to specify the class of T
+                        @Suppress("DEPRECATION", "UNCHECKED_CAST")
+                        val entity = intent.getSerializableExtra(EXTRA_WIDGET_ENTITY) as? T
+                        entity?.let {
+                            dao.add(entity.copyWithWidgetId(appWidgetId))
+                        } ?: FailFast.fail { "Missing $EXTRA_WIDGET_ENTITY or it's of the wrong type in intent." }
+                    }
+                }
+                onScreenOn(context)
+            }
         }
     }
 
@@ -179,6 +191,5 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     // A map of widget IDs to [server ID, list of entity IDs]
     abstract suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>>
-    abstract fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int)
     abstract suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity)
 }

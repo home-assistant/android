@@ -5,23 +5,20 @@ import android.content.res.Configuration
 import android.view.ContextThemeWrapper
 import info.hannes.changelog.ChangeLog
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.themes.ThemesManager
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
+import io.homeassistant.companion.android.themes.NightModeManager
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 
-class ChangeLog @Inject constructor() {
-
-    @Inject
-    lateinit var themesManager: ThemesManager
-
+class ChangeLog @Inject constructor(val nightModeManager: NightModeManager) {
     fun showChangeLog(context: Context, forceShow: Boolean) {
-        val isDarkTheme = when (runBlocking { themesManager.getCurrentTheme() }) {
-            "android", "system" -> {
+        val isDarkTheme = when (runBlocking { nightModeManager.getCurrentNightMode() }) {
+            NightModeTheme.ANDROID, NightModeTheme.SYSTEM -> {
                 val nightModeFlags =
                     context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
                 nightModeFlags == Configuration.UI_MODE_NIGHT_YES
             }
-            "dark" -> true
+            NightModeTheme.DARK -> true
             else -> false
         }
         if (isDarkTheme) {

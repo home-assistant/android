@@ -1655,7 +1655,7 @@ class MessagingManager @Inject constructor(
 
             uri.startsWith(SETTINGS_PREFIX) -> {
                 if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY) {
-                    SettingsActivity.newInstance(context, SettingsActivity.Deeplink.NOTIFICATION_HISTORY)
+                    SettingsActivity.newInstance(context, SettingsActivity.Deeplink.NotificationHistory)
                 } else {
                     WebViewActivity.newInstance(context, null, serverId)
                 }
@@ -1885,11 +1885,9 @@ class MessagingManager @Inject constructor(
             val action = data[INTENT_ACTION]
             val className = data[INTENT_CLASS_NAME]
             val intentUri = if (!data[INTENT_URI].isNullOrEmpty()) data[INTENT_URI]?.toUri() else null
-            val intent = if (intentUri != null) Intent(action, intentUri) else Intent(action)
+            val intent = Intent(action)
             val type = data[INTENT_TYPE]
-            if (!type.isNullOrEmpty()) {
-                intent.type = type
-            }
+            intent.setDataAndType(intentUri, type)
             if (!className.isNullOrEmpty() && !packageName.isNullOrEmpty()) {
                 intent.setClassName(packageName, className)
             }
