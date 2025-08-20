@@ -42,6 +42,9 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
                     "androidTestImplementation"(platform(libs.compose.bom))
                     "androidTestImplementation"(libs.bundles.androidx.compose.ui.test)
 
+                    "testImplementation"(platform(libs.compose.bom))
+                    "testImplementation"(libs.bundles.androidx.compose.ui.test)
+
                     "screenshotTestImplementation"(libs.compose.uiTooling)
                     "screenshotTestImplementation"(libs.screenshot.validation.api)
                 }
