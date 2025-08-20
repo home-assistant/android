@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -272,8 +273,7 @@ class SettingsPresenterImpl @Inject constructor(
         var assistantSuggestion = serverManager.defaultServers.any { it.version?.isAtLeast(2023, 5) == true }
         assistantSuggestion = if (
             assistantSuggestion &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-            context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+            context.isAutomotive()
         ) {
             false
         } else if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

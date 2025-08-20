@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.vehicle
 
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -12,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.vehicle.views.AndroidAutoFavoritesSettings
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
@@ -43,7 +43,7 @@ class ManageAndroidAutoSettingsFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         activity?.title =
-            if (requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            if (requireContext().isAutomotive()) {
                 getString(commonR.string.android_automotive_favorites)
             } else {
                 getString(commonR.string.aa_favorites)

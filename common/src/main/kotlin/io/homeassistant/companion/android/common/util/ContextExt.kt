@@ -24,3 +24,12 @@ suspend fun Context.getSharedPreferencesSuspend(name: String, mode: Int = Contex
         )
     }
 }
+
+/**
+ * Checks if the current device is an Android Automotive OS device.
+ *
+ * @return `true` if the device is an Android Automotive OS device, `false` otherwise.
+ */
+fun Context.isAutomotive(): Boolean {
+    return packageManager.isAutomotive()
+}

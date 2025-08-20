@@ -15,6 +15,7 @@ import com.google.android.gms.threadnetwork.ThreadNetworkStatusCodes
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
+import io.homeassistant.companion.android.common.util.isAutomotive
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -33,7 +34,7 @@ class ThreadManagerImpl @Inject constructor(
     }
 
     override fun appSupportsThread(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 &&
-        !packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+        !packageManager.isAutomotive()
 
     override suspend fun coreSupportsThread(serverId: Int): Boolean {
         if (!serverManager.isRegistered() || serverManager.getServer(serverId)?.user?.isAdmin != true) return false
