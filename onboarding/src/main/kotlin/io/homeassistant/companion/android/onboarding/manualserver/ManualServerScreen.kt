@@ -18,7 +18,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,15 +32,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.composable.HAInput
+import io.homeassistant.companion.android.common.compose.theme.HASpacing
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.compose.HAPreviews
-import io.homeassistant.companion.android.compose.composable.HAButton
-import io.homeassistant.companion.android.compose.composable.HAOutlinedTextField
 import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.theme.HAColors
-import io.homeassistant.companion.android.theme.HASpacing
-import io.homeassistant.companion.android.theme.HATextStyle
-import io.homeassistant.companion.android.theme.HATheme
 import java.net.URL
 
 @Composable
@@ -119,7 +118,7 @@ private fun ManualServerContent(
                 .size(120.dp),
             imageVector = Icons.Default.Storage,
             contentDescription = null,
-            tint = HAColors.Brand.Blue,
+            tint = LocalHAColorScheme.current.colorFillPrimaryLoudResting, // TODO change the color with proper token
         )
         Text(
             text = stringResource(R.string.manual_server_title),
@@ -135,7 +134,7 @@ private fun ManualServerContent(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        HAButton(
+        HAAccentButton(
             text = stringResource(R.string.manual_server_connect),
             onClick = onConnectClick,
             enabled = isServerUrlValid,
@@ -155,7 +154,7 @@ private fun ServerUrlTextField(
 ) {
     val focusRequester = remember { FocusRequester() }
 
-    HAOutlinedTextField(
+    HAInput(
         value = serverUrl,
         onValueChange = onServerUrlChange,
         trailingIcon = {
@@ -163,8 +162,6 @@ private fun ServerUrlTextField(
                 IconButton(onClick = { onServerUrlChange("") }) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        // TODO check the color
-                        tint = OutlinedTextFieldDefaults.colors().cursorColor,
                         contentDescription = stringResource(R.string.manual_server_clear_url),
                     )
                 }
@@ -174,7 +171,7 @@ private fun ServerUrlTextField(
             Text(
                 text = "http://homeassistant.local:8123",
                 style = HATextStyle.UserInput,
-                color = HAColors.Neutral60, // TODO use the theme instead
+                color = LocalHAColorScheme.current.colorOnNeutralNormal,
             )
         },
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),

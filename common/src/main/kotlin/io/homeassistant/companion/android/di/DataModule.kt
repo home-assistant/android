@@ -138,8 +138,6 @@ abstract class DataModule {
 
     @Binds
     @Singleton
-    @Binds
-    @Singleton
     @NamedKeyChainRepository
     abstract fun bindKeyChainRepository(keyChainRepository: KeyChainRepositoryImpl): KeyChainRepository
 

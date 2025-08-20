@@ -33,14 +33,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.composable.HAInput
+import io.homeassistant.companion.android.common.compose.theme.HASpacing
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.compose.HAPreviews
-import io.homeassistant.companion.android.compose.composable.HAButton
-import io.homeassistant.companion.android.compose.composable.HAOutlinedTextField
 import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.theme.HASpacing
-import io.homeassistant.companion.android.theme.HATextStyle
-import io.homeassistant.companion.android.theme.HATheme
 
 @Composable
 internal fun NameYourDeviceScreen(
@@ -127,7 +127,7 @@ private fun NameYourDeviceContent(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        HAButton(
+        HAAccentButton(
             text = stringResource(R.string.name_your_device_save),
             onClick = onSaveClick,
             enabled = saveClickable,
@@ -147,7 +147,7 @@ private fun DeviceNameTextField(
 ) {
     val focusRequester = remember { FocusRequester() }
 
-    HAOutlinedTextField(
+    HAInput(
         value = deviceName,
         onValueChange = onDeviceNameChange,
         trailingIcon = {

@@ -13,6 +13,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,8 +46,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -58,18 +61,19 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
+import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
+import io.homeassistant.companion.android.common.compose.theme.HABrandColors
+import io.homeassistant.companion.android.common.compose.theme.HARadius
+import io.homeassistant.companion.android.common.compose.theme.HASpacing
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.compose.HAPreviews
-import io.homeassistant.companion.android.compose.composable.HAButton
-import io.homeassistant.companion.android.compose.composable.HATextButton
 import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.theme.HABorderWidth
-import io.homeassistant.companion.android.theme.HAColors
-import io.homeassistant.companion.android.theme.HARadius
-import io.homeassistant.companion.android.theme.HASpacing
-import io.homeassistant.companion.android.theme.HATextStyle
-import io.homeassistant.companion.android.theme.HATheme
 import java.net.URL
 
 @Composable
@@ -159,14 +163,15 @@ private fun OneServerFound(
                 contentDescription = null,
                 modifier = Modifier
                     .size(64.dp), // TODO define the right size to use
-                tint = HAColors.Brand.Blue,
+                // TODO change the color with proper token
+                tint = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
             )
             Text(
                 text = serverDiscovered.url.toString(),
                 style = HATextStyle.Body,
                 modifier = Modifier.padding(vertical = HASpacing.S),
             )
-            HAButton(
+            HAAccentButton(
                 text = stringResource(R.string.welcome_connect_to_ha),
                 onClick = {
                     onConnectClick(serverDiscovered.url)
@@ -202,7 +207,7 @@ private fun ScreenContent(
             is ServersDiscovered -> ServersDiscoveredContent(discoveryState, onConnectClick)
         }
 
-        HATextButton(
+        HAPlainButton(
             text = stringResource(commonR.string.manual_setup),
             onClick = onManualSetupClick,
             modifier = Modifier.padding(bottom = HASpacing.XL),
@@ -242,11 +247,13 @@ private fun ServerItemContent(server: ServerDiscovered, onConnectClick: (URL) ->
             .fillMaxWidth()
             .padding(vertical = HASpacing.XS)
             .border(
-                border = BorderStroke(HABorderWidth.S, HAColors.Neutral80),
+                border = BorderStroke(HABorderWidth.S, LocalHAColorScheme.current.colorBorderNeutralQuiet),
                 shape = rowShape,
             )
             .clip(rowShape)
             .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(color = LocalHAColorScheme.current.colorFillPrimaryLoudHover),
                 onClick = {
                     onConnectClick(server.url)
                 },
@@ -335,7 +342,7 @@ private fun AnimatedIcon() {
             modifier = Modifier
                 .size(80.dp)
                 .align(Alignment.Center)
-                .background(HAColors.Brand.Blue, CircleShape),
+                .background(HABrandColors.Blue, CircleShape), // TODO change the color with proper token
         ) {
             Icon(
                 imageVector = ImageVector.vectorResource(commonR.drawable.ic_stat_ic_notification_blue),
@@ -343,7 +350,7 @@ private fun AnimatedIcon() {
                 modifier = Modifier
                     .align(Alignment.Center)
                     .size(40.dp),
-                tint = HAColors.Brand.Background,
+                tint = HABrandColors.Background,
             )
         }
     }

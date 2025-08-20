@@ -15,11 +15,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.compose.HAPreviews
 import io.homeassistant.companion.android.compose.composable.HALoading
 import io.homeassistant.companion.android.compose.composable.HAWebView
-import io.homeassistant.companion.android.theme.HATheme
-import io.homeassistant.companion.android.theme.LocalHAColorScheme
 
 @Composable
 internal fun ConnectionScreen(
@@ -54,7 +54,7 @@ internal fun ConnectionScreen(
                 .height(
                     WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding(),
                 )
-                .background(LocalHAColorScheme.current.launchScreenBackground),
+                .background(LocalHAColorScheme.current.colorSurfaceDefault),
         )
         url?.let {
             HAWebView(

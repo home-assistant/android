@@ -16,13 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.theme.HASpacing
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.compose.HAPreviews
-import io.homeassistant.companion.android.compose.composable.HAButton
 import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.theme.HASpacing
-import io.homeassistant.companion.android.theme.HATextStyle
-import io.homeassistant.companion.android.theme.HATheme
 
 @Composable
 internal fun LocalFirstScreen(onBackClick: () -> Unit, onNextClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -65,7 +65,7 @@ private fun LocalFirstContent(onNextClick: () -> Unit, modifier: Modifier = Modi
 
         Spacer(modifier = Modifier.weight(1f))
 
-        HAButton(
+        HAAccentButton(
             text = stringResource(R.string.local_first_next),
             onClick = onNextClick,
             modifier = Modifier.padding(bottom = HASpacing.XL),

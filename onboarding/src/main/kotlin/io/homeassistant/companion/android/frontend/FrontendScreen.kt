@@ -24,12 +24,12 @@ import androidx.compose.ui.res.stringResource
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
-import io.homeassistant.companion.android.compose.composable.HAButton
-import io.homeassistant.companion.android.compose.composable.HATextButton
+import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
+import io.homeassistant.companion.android.common.compose.theme.HARadius
+import io.homeassistant.companion.android.common.compose.theme.HASpacing
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.theme.HARadius
-import io.homeassistant.companion.android.theme.HASpacing
-import io.homeassistant.companion.android.theme.HATextStyle
 import timber.log.Timber
 
 /**
@@ -88,13 +88,13 @@ private fun NotificationBottomSheet(
                     text = stringResource(R.string.allow_notification_content),
                     style = HATextStyle.Body,
                 )
-                HAButton(
+                HAAccentButton(
                     text = stringResource(R.string.allow_notification_button),
                     onClick = {
                         notificationPermission.launchPermissionRequest()
                     },
                 )
-                HATextButton(
+                HAFilledButton(
                     text = stringResource(R.string.allow_notification_not_allow),
                     onClick = { onNotificationPermissionResult(false) },
                     modifier = Modifier.padding(bottom = HASpacing.XL),
