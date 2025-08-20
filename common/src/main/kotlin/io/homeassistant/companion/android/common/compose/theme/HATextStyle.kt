@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.compose.theme
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -24,38 +25,53 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle.UserI
  */
 object HATextStyle {
 
-    val Headline = TextStyle(
-        fontStyle = FontStyle.Normal,
-        fontSize = HAFontSize.X4L,
-        lineHeight = HAFontSize.X5L,
-        fontWeight = FontWeight.W500,
-        textAlign = TextAlign.Center,
-    )
+    val Headline
+        @Composable
+        get() = TextStyle(
+            fontStyle = FontStyle.Normal,
+            fontSize = HAFontSize.X4L,
+            lineHeight = HAFontSize.X5L,
+            fontWeight = FontWeight.W500,
+            textAlign = TextAlign.Center,
+            color = LocalHAColorScheme.current.colorTextPrimary,
+        )
 
-    val Body = TextStyle(
-        fontStyle = FontStyle.Normal,
-        fontSize = HAFontSize.L,
-        lineHeight = HAFontSize.X2L,
-        fontWeight = FontWeight.Normal,
-        textAlign = TextAlign.Center,
-        letterSpacing = 0.sp,
-    )
+    val Body
+        @Composable
+        get() = TextStyle(
+            fontStyle = FontStyle.Normal,
+            fontSize = HAFontSize.L,
+            lineHeight = HAFontSize.X2L,
+            fontWeight = FontWeight.Normal,
+            textAlign = TextAlign.Center,
+            letterSpacing = 0.sp,
+            color = LocalHAColorScheme.current.colorTextSecondary,
+        )
 
-    val BodyMedium = Body.copy(
-        fontSize = HAFontSize.M,
-        lineHeight = HAFontSize.XL,
-    )
+    val BodyMedium
+        @Composable
+        get() = Body.copy(
+            fontSize = HAFontSize.M,
+            lineHeight = HAFontSize.XL,
+        )
 
-    val UserInput = Body.copy(
-        textAlign = TextAlign.Start,
-    )
+    val UserInput
+        @Composable
+        get() = Body.copy(
+            textAlign = TextAlign.Start,
+        )
 
-    val Button = TextStyle(
-        fontStyle = FontStyle.Normal,
-        fontSize = HAFontSize.L,
-        lineHeight = HAFontSize.X2L,
-        fontWeight = FontWeight.W500,
-        textAlign = TextAlign.Center,
-        letterSpacing = 0.15.sp,
-    )
+    val Button
+        @Composable
+        get() = TextStyle(
+            fontStyle = FontStyle.Normal,
+            fontSize = HAFontSize.L,
+            lineHeight = HAFontSize.X2L,
+            fontWeight = FontWeight.W500,
+            textAlign = TextAlign.Center,
+            letterSpacing = 0.15.sp,
+            /**
+             Color should not be set here since it is control by [androidx.compose.material3.ButtonColors.contentColor]
+             */
+        )
 }

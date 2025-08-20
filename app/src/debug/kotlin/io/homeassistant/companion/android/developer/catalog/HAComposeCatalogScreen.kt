@@ -14,7 +14,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Rectangle
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
+import io.homeassistant.companion.android.common.compose.composable.HAInput
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HASpacing
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
@@ -65,8 +68,8 @@ fun HAComposeCatalogScreen() {
                 buttonSection(variant = currentVariant, enabled = false)
                 buttonsWithIcon(variant = currentVariant)
                 buttonsWithBigContent(variant = currentVariant)
-                // Max size buttons
                 textStyles()
+                input()
             }
         }
     }
@@ -251,6 +254,103 @@ private fun LazyListScope.textStyles() {
                 text = "Button",
                 style = HATextStyle.Button,
                 modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+private fun LazyListScope.input() {
+    catalogSection(title = "Input") {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            var value1 by remember { mutableStateOf("") }
+            var value2 by remember { mutableStateOf("") }
+            var value3 by remember { mutableStateOf("") }
+            var value4 by remember { mutableStateOf("") }
+            var value5 by remember { mutableStateOf("") }
+            // TODO set the text style so that the container control the color
+            HAInput(
+                value = value1,
+                onValueChange = { value1 = it },
+                trailingIcon = {
+                    if (value1.isNotBlank()) {
+                        IconButton(onClick = { value1 = "" }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = null,
+                            )
+                        }
+                    }
+                },
+            )
+            HAInput(
+                value = value2,
+                onValueChange = { value2 = it },
+                placeholder = {
+                    Text(
+                        text = "Placeholder",
+                        style = HATextStyle.UserInput,
+                    )
+                },
+            )
+            HAInput(
+                value = value3,
+                onValueChange = { value3 = it },
+                label = {
+                    Text(
+                        text = "Label",
+                        style = HATextStyle.UserInput,
+                    )
+                },
+            )
+            HAInput(
+                value = value4,
+                onValueChange = { value4 = it },
+                label = {
+                    Text(
+                        text = "Label",
+                        style = HATextStyle.UserInput,
+                    )
+                },
+                placeholder = {
+                    Text(
+                        text = "Placeholder",
+                        style = HATextStyle.UserInput,
+                    )
+                },
+            )
+            HAInput(
+                value = value5,
+                onValueChange = { value5 = it },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Rectangle,
+                        contentDescription = null,
+                    )
+                },
+                label = {
+                    Text(
+                        text = "Label",
+                        style = HATextStyle.UserInput,
+                    )
+                },
+                placeholder = {
+                    Text(
+                        text = "Placeholder",
+                        style = HATextStyle.UserInput,
+                    )
+                },
+                isError = value5.isNotBlank(),
+                supportingText = {
+                    if (value5.isNotBlank()) {
+                        Text(
+                            text = "Supporting text",
+                            // TODO set the style so that the container control the color and size
+                            // style = HATextStyle.UserInput,
+                        )
+                    }
+                },
             )
         }
     }

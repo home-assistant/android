@@ -26,6 +26,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
             extensions.getByType<ApplicationExtension>().apply {
                 dependencies {
                     "implementation"(project(":common"))
+                    "debugImplementation"(project(":onboarding"))
 
                     "implementation"(libs.blurView)
                     "implementation"(libs.haze)
@@ -72,6 +73,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "implementation"(libs.compose.animation)
                     "implementation"(libs.compose.material)
+                    "implementation"(libs.compose.material3)
                     "implementation"(libs.compose.material.icons.core)
                     "implementation"(libs.compose.material.icons.extended)
                     "implementation"(libs.compose.runtime)

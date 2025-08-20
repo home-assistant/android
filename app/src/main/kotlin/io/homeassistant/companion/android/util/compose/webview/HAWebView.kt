@@ -75,6 +75,7 @@ fun HAWebView(
         },
         modifier = modifier,
     )
+    // TODO add BackHandler only when we use navigation.
 }
 
 fun WebView.settings(configureDsl: WebSettings.() -> Unit) {

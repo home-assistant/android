@@ -16,6 +16,15 @@ fun HATheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () 
     CompositionLocalProvider(
         LocalHAColorScheme provides if (darkTheme) DarkHAColorScheme else LightHAColorScheme,
     ) {
-        MaterialTheme(content = content)
+        MaterialTheme(
+            content = content,
+            colorScheme = MaterialTheme.colorScheme.copy(
+                // Override the surface so that Composable like Scaffold use the right background color without
+                // us injecting manually the color.
+                surface = LocalHAColorScheme.current.colorSurfaceDefault,
+                background = LocalHAColorScheme.current.colorSurfaceDefault,
+                surfaceContainerLow = LocalHAColorScheme.current.colorSurfaceDefault,
+            ),
+        )
     }
 }
