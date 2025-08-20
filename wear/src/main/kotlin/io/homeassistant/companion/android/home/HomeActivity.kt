@@ -46,6 +46,7 @@ class HomeActivity :
 
     companion object {
         private const val EXTRA_FROM_ONBOARDING = "from_onboarding"
+        const val LAUNCH_MODE = "launch_mode"
 
         fun newInstance(context: Context, fromOnboarding: Boolean = false): Intent {
             return Intent(context, HomeActivity::class.java).apply {
@@ -87,13 +88,13 @@ class HomeActivity :
         // Get rid of me!
         presenter.init(this)
 
-        if (intent.getStringExtra("launch_mode") == "ConfigThermostatTile") {
+        if (intent.getStringExtra(LAUNCH_MODE) == OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE) {
             startActivity(
                 OpenTileSettingsActivity.newInstance(
                     this@HomeActivity,
-                    "ConfigThermostatTile",
-                    intent.getIntExtra("tile_id", 0)
-                )
+                    OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE,
+                    intent.getIntExtra(OpenTileSettingsActivity.TILE_ID, 0),
+                ),
             )
             finish()
             return

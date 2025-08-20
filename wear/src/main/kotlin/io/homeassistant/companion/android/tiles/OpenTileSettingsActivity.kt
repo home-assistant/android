@@ -19,15 +19,17 @@ class OpenTileSettingsActivity : AppCompatActivity() {
 
     companion object {
 
+        const val TILE_ID = "tile_id"
+        const val CONFIG_THERMOSTAT_TILE = "ConfigThermostatTile"
+
         fun newInstance(context: ComponentActivity, action: String, tileId: Int): Intent {
             return Intent(
                 context,
-                OpenTileSettingsActivity::class.java
+                OpenTileSettingsActivity::class.java,
             )
                 .setAction(action)
-                .putExtra("tile_id", tileId)
+                .putExtra(TILE_ID, tileId)
         }
-
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,7 +61,7 @@ class OpenTileSettingsActivity : AppCompatActivity() {
                         tileId = it,
                     )
                 }
-                "ConfigThermostatTile" ->
+                CONFIG_THERMOSTAT_TILE ->
                     HomeActivity.getThermostatTileSettingsIntent(
                         context = this,
                         tileId = it,

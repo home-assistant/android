@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.ThermostatTile
+import io.homeassistant.companion.android.home.HomeActivity
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -380,11 +381,14 @@ class ThermostatTile : TileService() {
                 io.homeassistant.companion.android.home.HomeActivity::class.java.name,
             )
             .addKeyToExtraMapping(
-                "launch_mode",
-                ActionBuilders.AndroidStringExtra.Builder().setValue("ConfigThermostatTile").build(),
+                HomeActivity.LAUNCH_MODE,
+                ActionBuilders.AndroidStringExtra.Builder().setValue(
+                    OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE,
+                )
+                    .build(),
             )
             .addKeyToExtraMapping(
-                "tile_id",
+                OpenTileSettingsActivity.TILE_ID,
                 ActionBuilders.AndroidIntExtra.Builder().setValue(requestParams.tileId).build(),
             )
             .build()
