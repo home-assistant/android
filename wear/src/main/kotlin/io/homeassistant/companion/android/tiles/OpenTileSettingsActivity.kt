@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.tiles
 
+import android.content.Intent
 import android.os.Bundle
+import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
@@ -14,6 +16,19 @@ class OpenTileSettingsActivity : AppCompatActivity() {
 
     @Inject
     lateinit var wearPrefsRepository: WearPrefsRepositoryImpl
+
+    companion object {
+
+        fun newInstance(context: ComponentActivity, action: String, tileId: Int): Intent {
+            return Intent(
+                context,
+                OpenTileSettingsActivity::class.java
+            )
+                .setAction(action)
+                .putExtra("tile_id", tileId)
+        }
+
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

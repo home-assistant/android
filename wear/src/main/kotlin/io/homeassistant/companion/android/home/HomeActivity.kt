@@ -89,12 +89,11 @@ class HomeActivity :
 
         if (intent.getStringExtra("launch_mode") == "ConfigThermostatTile") {
             startActivity(
-                Intent(
+                OpenTileSettingsActivity.newInstance(
                     this@HomeActivity,
-                    OpenTileSettingsActivity::class.java,
+                    "ConfigThermostatTile",
+                    intent.getIntExtra("tile_id", 0)
                 )
-                    .setAction("ConfigThermostatTile")
-                    .putExtra("tile_id", intent.getIntExtra("tile_id", 0)),
             )
             finish()
             return
