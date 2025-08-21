@@ -14,6 +14,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.wear.protolayout.ActionBuilders
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_CAMERA_TILE
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_SHORTCUT_TILE
@@ -46,12 +47,38 @@ class HomeActivity :
 
     companion object {
         private const val EXTRA_FROM_ONBOARDING = "from_onboarding"
-        const val LAUNCH_MODE = "launch_mode"
+        private const val LAUNCH_MODE = "launch_mode"
 
         fun newInstance(context: Context, fromOnboarding: Boolean = false): Intent {
             return Intent(context, HomeActivity::class.java).apply {
                 putExtra(EXTRA_FROM_ONBOARDING, fromOnboarding)
             }
+        }
+
+        fun getLaunchAction(packageName: String, tileId: Int): ActionBuilders.LaunchAction {
+            val androidActivity = ActionBuilders.AndroidActivity.Builder()
+                .setPackageName(packageName)
+                .setClassName(
+                    HomeActivity::class.java.name,
+                )
+                .addKeyToExtraMapping(
+                    LAUNCH_MODE,
+                    ActionBuilders.AndroidStringExtra.Builder().setValue(
+                        OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE,
+                    )
+                        .build(),
+                )
+                .addKeyToExtraMapping(
+                    OpenTileSettingsActivity.TILE_ID,
+                    ActionBuilders.AndroidIntExtra.Builder().setValue(tileId).build(),
+                )
+                .build()
+
+            val launchAction = ActionBuilders.LaunchAction.Builder()
+                .setAndroidActivity(androidActivity)
+                .build()
+
+            return launchAction
         }
 
         fun getCameraTileSettingsIntent(context: Context, tileId: Int) = Intent(

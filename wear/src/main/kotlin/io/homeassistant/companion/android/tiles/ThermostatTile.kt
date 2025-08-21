@@ -360,7 +360,12 @@ class ThermostatTile : TileService() {
                             CompactChip.Builder(
                                 this@ThermostatTile,
                                 Clickable.Builder()
-                                    .setOnClick(getOpenSettingsActivity(requestParams))
+                                    .setOnClick(
+                                        HomeActivity.getLaunchAction(
+                                            this@ThermostatTile.packageName,
+                                            requestParams.tileId,
+                                        ),
+                                    )
                                     .build(),
                                 requestParams.deviceConfiguration,
                             )
@@ -372,31 +377,5 @@ class ThermostatTile : TileService() {
                 .build(),
         )
         return notConfiguredTimeline
-    }
-
-    private fun getOpenSettingsActivity(requestParams: RequestBuilders.TileRequest): ActionBuilders.LaunchAction {
-        val androidActivity = ActionBuilders.AndroidActivity.Builder()
-            .setPackageName(this@ThermostatTile.packageName)
-            .setClassName(
-                io.homeassistant.companion.android.home.HomeActivity::class.java.name,
-            )
-            .addKeyToExtraMapping(
-                HomeActivity.LAUNCH_MODE,
-                ActionBuilders.AndroidStringExtra.Builder().setValue(
-                    OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE,
-                )
-                    .build(),
-            )
-            .addKeyToExtraMapping(
-                OpenTileSettingsActivity.TILE_ID,
-                ActionBuilders.AndroidIntExtra.Builder().setValue(requestParams.tileId).build(),
-            )
-            .build()
-
-        val launchAction = ActionBuilders.LaunchAction.Builder()
-            .setAndroidActivity(androidActivity)
-            .build()
-
-        return launchAction
     }
 }
