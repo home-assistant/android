@@ -19,7 +19,8 @@ class OpenTileSettingsActivity : AppCompatActivity() {
 
     companion object {
 
-        const val TILE_ID = "tile_id"
+        const val TILE_ID_KEY = "tile_id"
+        const val TILE_ID_CLOCKWORK = "com.google.android.clockwork.EXTRA_PROVIDER_CONFIG_TILE_ID"
         const val CONFIG_CAMERA_TILE = "ConfigCameraTile"
         const val CONFIG_SHORTCUT_TILE = "ConfigShortcutsTile"
         const val CONFIG_TEMPLATE_TILE = "ConfigTemplateTile"
@@ -31,14 +32,18 @@ class OpenTileSettingsActivity : AppCompatActivity() {
                 OpenTileSettingsActivity::class.java,
             )
                 .setAction(action)
-                .putExtra(TILE_ID, tileId)
+                .putExtra(TILE_ID_KEY, tileId)
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        val tileId = intent.extras?.getInt("com.google.android.clockwork.EXTRA_PROVIDER_CONFIG_TILE_ID")
-        val tileId = intent.extras?.getInt(TILE_ID)
+        val extras = intent.extras
+        val tileId = when {
+            extras?.containsKey(TILE_ID_CLOCKWORK) == true -> extras.getInt(TILE_ID_CLOCKWORK)
+            extras?.containsKey(TILE_ID_KEY) == true -> extras.getInt(TILE_ID_KEY)
+            else -> null
+        }
         tileId?.takeIf { it != 0 }?.let {
             val settingsIntent = when (intent.action) {
                 CONFIG_CAMERA_TILE ->

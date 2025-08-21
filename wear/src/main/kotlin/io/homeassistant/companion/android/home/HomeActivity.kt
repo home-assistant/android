@@ -69,7 +69,7 @@ class HomeActivity :
                         .build(),
                 )
                 .addKeyToExtraMapping(
-                    OpenTileSettingsActivity.TILE_ID,
+                    OpenTileSettingsActivity.TILE_ID_KEY,
                     ActionBuilders.AndroidIntExtra.Builder().setValue(tileId).build(),
                 )
                 .build()
@@ -120,7 +120,7 @@ class HomeActivity :
                 OpenTileSettingsActivity.newInstance(
                     this@HomeActivity,
                     OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE,
-                    intent.getIntExtra(OpenTileSettingsActivity.TILE_ID, 0),
+                    intent.getIntExtra(OpenTileSettingsActivity.TILE_ID_KEY, 0),
                 ),
             )
             finish()
