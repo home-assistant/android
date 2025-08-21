@@ -20,6 +20,9 @@ class OpenTileSettingsActivity : AppCompatActivity() {
     companion object {
 
         const val TILE_ID = "tile_id"
+        const val CONFIG_CAMERA_TILE = "ConfigCameraTile"
+        const val CONFIG_SHORTCUT_TILE = "ConfigShortcutsTile"
+        const val CONFIG_TEMPLATE_TILE = "ConfigTemplateTile"
         const val CONFIG_THERMOSTAT_TILE = "ConfigThermostatTile"
 
         fun newInstance(context: ComponentActivity, action: String, tileId: Int): Intent {
@@ -35,15 +38,15 @@ class OpenTileSettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 //        val tileId = intent.extras?.getInt("com.google.android.clockwork.EXTRA_PROVIDER_CONFIG_TILE_ID")
-        val tileId = intent.extras?.getInt("tile_id")
+        val tileId = intent.extras?.getInt(TILE_ID)
         tileId?.takeIf { it != 0 }?.let {
             val settingsIntent = when (intent.action) {
-                "ConfigCameraTile" ->
+                CONFIG_CAMERA_TILE ->
                     HomeActivity.getCameraTileSettingsIntent(
                         context = this,
                         tileId = it,
                     )
-                "ConfigShortcutsTile" -> {
+                CONFIG_SHORTCUT_TILE -> {
                     lifecycleScope.launch {
                         wearPrefsRepository.getTileShortcutsAndSaveTileId(tileId)
                     }
@@ -52,7 +55,7 @@ class OpenTileSettingsActivity : AppCompatActivity() {
                         tileId = it,
                     )
                 }
-                "ConfigTemplateTile" -> {
+                CONFIG_TEMPLATE_TILE -> {
                     lifecycleScope.launch {
                         wearPrefsRepository.getTemplateTileAndSaveTileId(tileId)
                     }
