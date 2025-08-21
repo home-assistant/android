@@ -20,7 +20,7 @@ class OpenTileSettingsActivity : AppCompatActivity() {
     companion object {
 
         const val TILE_ID_KEY = "tile_id"
-        const val TILE_ID_CLOCKWORK = "com.google.android.clockwork.EXTRA_PROVIDER_CONFIG_TILE_ID"
+        private const val TILE_ID_CLOCKWORK = "com.google.android.clockwork.EXTRA_PROVIDER_CONFIG_TILE_ID"
         const val CONFIG_CAMERA_TILE = "ConfigCameraTile"
         const val CONFIG_SHORTCUT_TILE = "ConfigShortcutsTile"
         const val CONFIG_TEMPLATE_TILE = "ConfigTemplateTile"
