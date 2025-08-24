@@ -46,6 +46,28 @@
     </issue>
 
     <issue
+        id="PrivateResource"
+        message="Overriding `@string/state_off` which is marked as private in androidx.compose.ui:ui-android:1.9.0. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
+        errorLine1="    &lt;string name=&quot;state_off&quot;>Off&lt;/string>"
+        errorLine2="                  ~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="896"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="PrivateResource"
+        message="Overriding `@string/state_on` which is marked as private in androidx.compose.ui:ui-android:1.9.0. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
+        errorLine1="    &lt;string name=&quot;state_on&quot;>On&lt;/string>"
+        errorLine2="                  ~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="897"
+            column="19"/>
+    </issue>
+
+    <issue
         id="PluralsCandidate"
         message="Formatting %d followed by words (&quot;sensors&quot;): This should probably be a plural rather than a string"
         errorLine1="    &lt;string name=&quot;disable_all_sensors&quot;>Disable all %1$d sensors&lt;/string>"

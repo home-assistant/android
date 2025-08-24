@@ -11,6 +11,9 @@
         <activity android:name=".developer.DevPlaygroundActivity"
             android:exported="true" />
 
+        <activity android:name=".developer.catalog.HAComposeCatalogActivity"
+            android:exported="true" />
+
         <activity android:name=".developer.DemoExoPlayerActivity"
             android:supportsPictureInPicture="true"
             android:resizeableActivity="true"

@@ -121,7 +121,7 @@ class LaunchActivity :
             }
 
             if (serverParameter != null) {
-                startActivity(WebViewActivity.newInstance(this, intent.data?.path, serverParameter))
+                startActivity(WebViewActivity.newInstance(this, intent.data?.toString(), serverParameter))
             } else { // Show server chooser
                 supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
                     val serverId = if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
@@ -130,7 +130,7 @@ class LaunchActivity :
                         null
                     }
                     supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
-                    startActivity(WebViewActivity.newInstance(this, intent.data?.path, serverId))
+                    startActivity(WebViewActivity.newInstance(this, intent.data?.toString(), serverId))
                     finish()
                     overridePendingTransition(0, 0) // Disable activity start/stop animation
                 }
@@ -138,7 +138,7 @@ class LaunchActivity :
                 return
             }
         } else {
-            startActivity(WebViewActivity.newInstance(this, intent.data?.path))
+            startActivity(WebViewActivity.newInstance(this, intent.data?.toString()))
         }
         finish()
         overridePendingTransition(0, 0) // Disable activity start/stop animation
