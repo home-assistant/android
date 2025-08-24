@@ -336,7 +336,9 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
         }
 
         findPreference<Preference>("changelog_prompt")?.setOnPreferenceClickListener {
-            presenter.showChangeLog(requireContext())
+            lifecycleScope.launch {
+                presenter.showChangeLog(requireContext())
+            }
             true
         }
 

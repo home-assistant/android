@@ -175,7 +175,7 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun showChangeLog(context: Context) {
+    override suspend fun showChangeLog(context: Context) {
         changeLog.showChangeLog(context, true)
     }
 

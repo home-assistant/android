@@ -23,7 +23,7 @@ interface SettingsPresenter {
     fun getServersFlow(): StateFlow<List<Server>>
     fun getServerCount(): Int
     suspend fun getNotificationRateLimits(): RateLimitResponse?
-    fun showChangeLog(context: Context)
+    suspend fun showChangeLog(context: Context)
     suspend fun isChangeLogPopupEnabled(): Boolean
     suspend fun setChangeLogPopupEnabled(enabled: Boolean)
 }
