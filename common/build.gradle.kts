@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.homeassistant.android.common)
+    alias(libs.plugins.homeassistant.android.compose)
 }
 
 val homeAssistantAndroidPushUrl: String by project
@@ -60,5 +61,7 @@ dependencies {
 
     // This fix an issue: provided Metadata instance has version 2.1.0, while maximum supported version is 2.0.0. To support newer versions, update the kotlinx-metadata-jvm library
     lintChecks(libs.androidx.runtime.lint)
-    implementation(platform(libs.compose.bom))
+
+    implementation(libs.compose.material3)
+    lintChecks(libs.compose.lint.checks)
 }

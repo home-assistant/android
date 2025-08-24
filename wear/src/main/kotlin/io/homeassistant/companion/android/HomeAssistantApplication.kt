@@ -10,6 +10,8 @@ import android.net.wifi.WifiManager
 import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
+import androidx.compose.runtime.Composer
+import androidx.compose.runtime.ExperimentalComposeRuntimeApi
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
@@ -34,6 +36,7 @@ open class HomeAssistantApplication : Application() {
     @Named("keyStore")
     lateinit var keyStore: KeyChainRepository
 
+    @OptIn(ExperimentalComposeRuntimeApi::class)
     override fun onCreate() {
         super.onCreate()
 
@@ -46,6 +49,9 @@ open class HomeAssistantApplication : Application() {
 
         // We should initialize the logger as early as possible in the lifecycle of the application
         Timber.plant(Timber.DebugTree())
+
+        // Enable only for debug flavor to avoid perf regressions in release
+        Composer.setDiagnosticStackTraceEnabled(BuildConfig.DEBUG)
 
         ioScope.launch {
             keyStore.load(applicationContext, KeyStoreRepositoryImpl.ALIAS)

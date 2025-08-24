@@ -11,9 +11,8 @@ import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -27,9 +26,11 @@ class AudioUrlPlayer @VisibleForTesting constructor(
 
     constructor(audioManager: AudioManager?) : this(audioManager, { MediaPlayer() })
 
-    @VisibleForTesting var player: MediaPlayer? = null
+    @VisibleForTesting
+    var player: MediaPlayer? = null
 
-    @VisibleForTesting var focusRequest: AudioFocusRequestCompat? = null
+    @VisibleForTesting
+    var focusRequest: AudioFocusRequestCompat? = null
     private val focusListener = OnAudioFocusChangeListener { /* Not used */ }
 
     /**
@@ -45,7 +46,7 @@ class AudioUrlPlayer @VisibleForTesting constructor(
         }
 
         return@withContext if (canPlayMusic()) {
-            suspendCoroutine { cont ->
+            suspendCancellableCoroutine { cont ->
                 player = mediaPlayerCreator().apply {
                     setAudioAttributes(
                         AudioAttributes.Builder()
@@ -66,31 +67,42 @@ class AudioUrlPlayer @VisibleForTesting constructor(
                             .build(),
                     )
                     setOnPreparedListener {
-                        if (isActive) {
+                        if (cont.isActive) {
                             requestFocus(isAssistant)
                             it.start()
                         } else {
                             releasePlayer()
-                            cont.resume(false)
                         }
                     }
                     setOnErrorListener { _, what, extra ->
                         Timber.e("Media player encountered error: $what ($extra)")
                         releasePlayer()
-                        cont.resume(false)
+                        if (cont.isActive) {
+                            cont.resume(false)
+                        }
                         return@setOnErrorListener true
                     }
                     setOnCompletionListener {
                         releasePlayer()
-                        cont.resume(true)
+                        if (cont.isActive) {
+                            cont.resume(true)
+                        }
                     }
                 }
+                cont.invokeOnCancellation {
+                    Timber.d("Coroutine cancelled, releasing player")
+                    releasePlayer()
+                }
+
                 try {
                     player?.setDataSource(url)
                     player?.prepareAsync()
                 } catch (e: Exception) {
                     Timber.e(e, "Media player couldn't be prepared")
-                    cont.resume(false)
+                    releasePlayer()
+                    if (cont.isActive) {
+                        cont.resume(false)
+                    }
                 }
             }
         } else {
