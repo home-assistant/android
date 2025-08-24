@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardApp
@@ -183,9 +184,7 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
             it.entryValues = percentages.map { pct -> pct.toString() }.toTypedArray()
         }
 
-        val isAutomotive =
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+        val isAutomotive = requireContext().isAutomotive()
 
         findPreference<PreferenceCategory>("assist")?.isVisible = !isAutomotive
 

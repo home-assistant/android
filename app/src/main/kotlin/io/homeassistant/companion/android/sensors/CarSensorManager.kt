@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.car.app.hardware.common.CarValue
@@ -18,6 +17,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -219,7 +219,7 @@ class CarSensorManager :
 
     private lateinit var latestContext: Context
 
-    private val isAutomotive get() = latestContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    private val isAutomotive get() = latestContext.isAutomotive()
 
     private val carSensorsList get() = allSensorsList.filter {
         (isAutomotive && it.automotiveEnabled) ||

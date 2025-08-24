@@ -134,17 +134,6 @@
     </issue>
 
     <issue
-        id="InlinedApi"
-        message="Field requires API level 23 (current min is 21): `android.content.pm.PackageManager#FEATURE_AUTOMOTIVE`"
-        errorLine1="    private val isAutomotive get() = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)"
-        errorLine2="                                                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/vehicle/LoginScreen.kt"
-            line="62"
-            column="81"/>
-    </issue>
-
-    <issue
         id="NewApi"
         message="Field requires API level 31 (current min is 30): `CameraControl`"
         errorLine1="            &quot;camera&quot; to CameraControl,"
@@ -547,7 +536,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="525"
+            line="524"
             column="17"/>
     </issue>
 
@@ -558,7 +547,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="525"
+            line="524"
             column="17"/>
     </issue>
 
@@ -1055,7 +1044,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="336"
+            line="335"
             column="52"/>
     </issue>
 
@@ -1066,7 +1055,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="336"
+            line="335"
             column="52"/>
     </issue>
 
@@ -1077,7 +1066,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="359"
+            line="358"
             column="52"/>
     </issue>
 
@@ -1088,7 +1077,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="359"
+            line="358"
             column="52"/>
     </issue>
 
@@ -1099,7 +1088,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="558"
+            line="557"
             column="21"/>
     </issue>
 
