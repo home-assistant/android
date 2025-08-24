@@ -1037,8 +1037,8 @@ class WebViewActivity :
         WebsocketManager.start(this)
         lifecycleScope.launch {
             checkAndWarnForDisabledLocation()
+            changeLog.showChangeLog(this@WebViewActivity, false)
         }
-        changeLog.showChangeLog(this, false)
 
         if (::loadedUrl.isInitialized) {
             waitForConnection()

@@ -3,28 +3,35 @@ package io.homeassistant.companion.android.util
 import android.content.Context
 import android.content.res.Configuration
 import android.view.ContextThemeWrapper
+import androidx.annotation.VisibleForTesting
 import info.hannes.changelog.ChangeLog
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.themes.NightModeManager
 import javax.inject.Inject
-import kotlinx.coroutines.runBlocking
 
-class ChangeLog @Inject constructor(
+open class ChangeLog @Inject constructor(
     val nightModeManager: NightModeManager,
     private val prefsRepository: PrefsRepository,
 ) {
-    private fun createChangeLog(context: Context): ChangeLog {
+    @VisibleForTesting
+    internal open fun createChangeLog(context: Context): ChangeLog {
         return ChangeLog(context)
     }
-    fun showChangeLog(context: Context, forceShow: Boolean) {
+
+    @VisibleForTesting
+    internal open fun createDarkThemeChangeLog(context: Context): DarkThemeChangeLog {
+        return DarkThemeChangeLog(context)
+    }
+
+    suspend fun showChangeLog(context: Context, forceShow: Boolean) {
         // Check if user has enabled change log popup or this is a forced show
-        if (!forceShow && !runBlocking { prefsRepository.isChangeLogPopupEnabled() }) {
+        if (!forceShow && !prefsRepository.isChangeLogPopupEnabled()) {
             return
         }
 
-        val isDarkTheme = when (runBlocking { nightModeManager.getCurrentNightMode() }) {
+        val isDarkTheme = when (nightModeManager.getCurrentNightMode()) {
             NightModeTheme.ANDROID, NightModeTheme.SYSTEM -> {
                 val nightModeFlags =
                     context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
@@ -34,7 +41,7 @@ class ChangeLog @Inject constructor(
             else -> false
         }
         if (isDarkTheme) {
-            val darkThemeChangeLog = DarkThemeChangeLog(context)
+            val darkThemeChangeLog = createDarkThemeChangeLog(context)
             if ((!darkThemeChangeLog.isFirstRunEver && darkThemeChangeLog.isFirstRun) || forceShow) {
                 darkThemeChangeLog.fullLogDialog.show()
             }

@@ -318,8 +318,7 @@ class PrefsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun isChangeLogPopupEnabled(): Boolean {
-        // Default to true if not set
-        return localStorage().getBoolean(PREF_CHANGE_LOG_POPUP_ENABLED) ?: true
+        return localStorage().getBooleanOrNull(PREF_CHANGE_LOG_POPUP_ENABLED) ?: true
     }
 
     override suspend fun setChangeLogPopupEnabled(enabled: Boolean) {
