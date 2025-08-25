@@ -165,10 +165,6 @@ class ServerSettingsPresenterImpl @Inject constructor(
 
     override fun hasWifi(): Boolean = wifiHelper.hasWifi()
 
-    override fun isSsidUsed(): Boolean = runBlocking {
-        serverManager.getServer(serverId)?.connection?.internalSsids?.isNotEmpty() == true
-    }
-
     override fun clearSsids() {
         mainScope.launch {
             serverManager.getServer(serverId)?.let {
