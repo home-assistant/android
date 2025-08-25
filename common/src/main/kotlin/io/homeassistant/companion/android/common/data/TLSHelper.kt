@@ -1,13 +1,14 @@
 package io.homeassistant.companion.android.common.data
 
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import java.net.Socket
 import java.security.KeyStore
 import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
-import javax.inject.Named
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedKeyManager
@@ -16,8 +17,8 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 
 class TLSHelper @Inject constructor(
-    @Named("keyChainRepository") private val keyChainRepository: KeyChainRepository,
-    @Named("keyStore") private val keyStore: KeyChainRepository,
+    @NamedKeyChain private val keyChainRepository: KeyChainRepository,
+    @NamedKeyStore private val keyStore: KeyChainRepository,
 ) {
 
     fun setupOkHttpClientSSLSocketFactory(builder: OkHttpClient.Builder) {
