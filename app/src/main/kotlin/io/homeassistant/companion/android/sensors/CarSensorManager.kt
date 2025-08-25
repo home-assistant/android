@@ -217,6 +217,7 @@ class CarSensorManager :
 
     private lateinit var latestContext: Context
 
+    @Suppress("ObsoleteSdkInt") // Needed for app module (minSdk 21) but obsolete for automotive (minSdk 29)
     private val areCarSensorApisAvailable get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
 
     private val isAutomotive get() = latestContext.isAutomotive()

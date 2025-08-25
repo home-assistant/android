@@ -575,17 +575,6 @@
 
     <issue
         id="ObsoleteSdkInt"
-        message="Unnecessary; `SDK_INT` is always >= 26"
-        errorLine1="@RequiresApi(Build.VERSION_CODES.O)"
-        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/sensors/CarSensorManager.kt"
-            line="28"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 29"
         errorLine1="    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {"
         errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
