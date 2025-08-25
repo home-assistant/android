@@ -491,16 +491,18 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
             serverPreference.setOnPreferenceClickListener {
                 serverAuth = server.id
                 val settingsActivity = requireActivity() as SettingsActivity
-                val needsAuth = settingsActivity.isAppLocked(server.id)
-                if (!needsAuth) {
-                    onServerLockResult(Authenticator.SUCCESS)
-                } else {
-                    val canAuth = settingsActivity.requestAuthentication(
-                        getString(commonR.string.biometric_set_title),
-                        ::onServerLockResult,
-                    )
-                    if (!canAuth) {
+                lifecycleScope.launch {
+                    val needsAuth = settingsActivity.isAppLocked(server.id)
+                    if (!needsAuth) {
                         onServerLockResult(Authenticator.SUCCESS)
+                    } else {
+                        val canAuth = settingsActivity.requestAuthentication(
+                            getString(commonR.string.biometric_set_title),
+                            ::onServerLockResult,
+                        )
+                        if (!canAuth) {
+                            onServerLockResult(Authenticator.SUCCESS)
+                        }
                     }
                 }
                 return@setOnPreferenceClickListener true
