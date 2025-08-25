@@ -1021,7 +1021,7 @@ class HealthConnectSensorManager : SensorManager {
             metrics = setOf(metric),
             timeRangeFilter = TimeRangeFilter.between(
                 LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
-                LocalDateTime.of(LocalDate.now(), LocalTime.now()),
+                LocalDateTime.of(LocalDate.now(), LocalTime.MAX),
             ),
         )
     }
