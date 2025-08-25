@@ -65,7 +65,6 @@ fun HAComposeCatalogScreen() {
                 buttonSection(variant = currentVariant, enabled = false)
                 buttonsWithIcon(variant = currentVariant)
                 buttonsWithBigContent(variant = currentVariant)
-                // Max size buttons
                 textStyles()
             }
         }
@@ -95,7 +94,7 @@ private fun VariantDropdownMenu(onVariantClick: (ButtonVariant) -> Unit, modifie
 @Composable
 private fun TopBar(onVariantClick: (ButtonVariant) -> Unit) {
     TopAppBar(
-        title = { Text("HA Compose Catalog") },
+        title = { Text("HA Compose Catalog", style = HATextStyle.Headline) },
         actions = {
             VariantDropdownMenu(
                 modifier = Modifier,
@@ -117,7 +116,7 @@ private fun CatalogRow(content: @Composable () -> Unit) {
 
 private fun LazyListScope.catalogSection(title: String, content: @Composable () -> Unit) {
     item {
-        Text(text = title, modifier = Modifier.padding(top = HASpacing.M))
+        Text(text = title, modifier = Modifier.padding(top = HASpacing.M), style = HATextStyle.Body)
     }
     item {
         content()

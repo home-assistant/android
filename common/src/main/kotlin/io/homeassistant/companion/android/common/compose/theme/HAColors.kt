@@ -189,11 +189,13 @@ private object HAColors {
     val Yellow80 = Color(0xFFFAC22B)
     val Yellow90 = Color(0xFFFFE495)
     val Yellow95 = Color(0xFFFEF3CD)
+}
 
-    object Brand {
-        val Blue = Color(0xFF18BCF2)
-        val Background = Color(0xFFF2F4F9)
-    }
+// TODO validate with design team if this color are immutable or not (not changeable by the users and also stay the same
+//  in dark mode)
+object HABrandColors {
+    val Blue = Color(0xFF18BCF2)
+    val Background = Color(0xFFF2F4F9)
 }
 
 @Immutable
@@ -279,6 +281,18 @@ class HAColorScheme(
     val colorOnDisabledLoud: Color,
     val colorOnDisabledNormal: Color,
     val colorOnDisabledQuiet: Color,
+
+    val colorSurfaceDefault: Color,
+
+    val colorTextPrimary: Color,
+    val colorTextSecondary: Color,
+    val colorTextDisabled: Color,
+
+    val colorBorderPrimaryNormal: Color,
+    val colorBorderNeutralQuiet: Color,
+
+    val colorBorderDangerNormal: Color,
+
 ) {
     fun accentButtonColorsFromVariant(variant: ButtonVariant): HAButtonColors {
         return when (variant) {
@@ -530,6 +544,16 @@ val DarkHAColorScheme = HAColorScheme(
     colorOnDisabledLoud = HAColors.Neutral60,
     colorOnDisabledNormal = HAColors.Neutral60,
     colorOnDisabledQuiet = HAColors.Neutral40,
+
+    colorSurfaceDefault = HAColors.Neutral10,
+
+    colorTextPrimary = HAColors.White,
+    colorTextSecondary = HAColors.Neutral70,
+    colorTextDisabled = HAColors.Neutral60,
+
+    colorBorderPrimaryNormal = HAColors.Primary50,
+    colorBorderNeutralQuiet = HAColors.Neutral40,
+    colorBorderDangerNormal = HAColors.Red50,
 )
 
 val LightHAColorScheme = HAColorScheme(
@@ -589,6 +613,16 @@ val LightHAColorScheme = HAColorScheme(
     colorOnDisabledLoud = HAColors.Neutral95,
     colorOnDisabledNormal = HAColors.Neutral70,
     colorOnDisabledQuiet = HAColors.Neutral80,
+
+    colorSurfaceDefault = HAColors.White,
+
+    colorTextPrimary = HAColors.Neutral05,
+    colorTextSecondary = HAColors.Neutral40,
+    colorTextDisabled = HAColors.Neutral60,
+
+    colorBorderPrimaryNormal = HAColors.Primary70,
+    colorBorderNeutralQuiet = HAColors.Neutral80,
+    colorBorderDangerNormal = HAColors.Red70,
 )
 
 val LocalHAColorScheme = staticCompositionLocalOf { LightHAColorScheme }
