@@ -37,7 +37,7 @@ abstract class LaunchPresenterBase(
             ) {
                 networkStatusMonitor.observeNetworkStatus(activeServer.connection)
                     .takeWhile { state ->
-                        // Until the network is ready we continue to observer network status changes
+                        // Until the network is ready we continue to observe network status changes
                         !handleNetworkState(state)
                     }.collect()
             } else {
