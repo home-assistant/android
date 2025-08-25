@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.widgets.camera
 
-import android.R
+import android.R.layout
 import android.appwidget.AppWidgetManager
 import android.os.Build
 import android.os.Bundle
@@ -185,7 +185,7 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetEn
     private fun initTapActionsSpinner() {
         val tapActionValues =
             listOf(getString(commonR.string.refresh), getString(commonR.string.widget_tap_action_open))
-        binding.tapActionList.adapter = ArrayAdapter(this, R.layout.simple_spinner_dropdown_item, tapActionValues)
+        binding.tapActionList.adapter = ArrayAdapter(this, layout.simple_spinner_dropdown_item, tapActionValues)
     }
 
     private fun setCurrentTapAction(tapAction: WidgetTapAction) {
