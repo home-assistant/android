@@ -20,7 +20,7 @@ fun HATheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () 
             content = content,
             colorScheme = MaterialTheme.colorScheme.copy(
                 // Override the surface so that Composable like Scaffold use the right background color without
-                // us injecting manually the color.
+                // manually injecting the color.
                 surface = LocalHAColorScheme.current.colorSurfaceDefault,
                 background = LocalHAColorScheme.current.colorSurfaceDefault,
                 // Used by ModalBottomSheetDefaults.containerColor

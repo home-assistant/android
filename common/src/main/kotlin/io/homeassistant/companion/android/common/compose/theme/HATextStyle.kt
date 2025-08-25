@@ -71,7 +71,7 @@ object HATextStyle {
             textAlign = TextAlign.Center,
             letterSpacing = 0.15.sp,
             /**
-             Color should not be set here since it is control by [androidx.compose.material3.ButtonColors.contentColor]
+             Color should not be set here since it is controlled by [androidx.compose.material3.ButtonColors.contentColor]
              */
         )
 }
