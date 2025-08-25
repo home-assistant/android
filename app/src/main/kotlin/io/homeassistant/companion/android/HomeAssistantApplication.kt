@@ -21,7 +21,7 @@ import coil3.SingletonImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyChainRepository
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
@@ -60,7 +60,7 @@ open class HomeAssistantApplication :
     lateinit var prefsRepository: PrefsRepository
 
     @Inject
-    @NamedKeyChainRepository
+    @NamedKeyChain
     lateinit var keyChainRepository: KeyChainRepository
 
     @Inject

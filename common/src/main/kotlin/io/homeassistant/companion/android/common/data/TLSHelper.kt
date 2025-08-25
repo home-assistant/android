@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.common.data
 
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyChainRepository
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import java.net.Socket
 import java.security.KeyStore
@@ -17,7 +17,7 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 
 class TLSHelper @Inject constructor(
-    @NamedKeyChainRepository private val keyChainRepository: KeyChainRepository,
+    @NamedKeyChain private val keyChainRepository: KeyChainRepository,
     @NamedKeyStore private val keyStore: KeyChainRepository,
 ) {
 

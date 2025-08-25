@@ -81,7 +81,7 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.barcode.BarcodeScannerActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyChainRepository
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
@@ -204,7 +204,7 @@ class WebViewActivity :
     lateinit var authenticationDao: AuthenticationDao
 
     @Inject
-    @NamedKeyChainRepository
+    @NamedKeyChain
     lateinit var keyChainRepository: KeyChainRepository
 
     private lateinit var webView: WebView
