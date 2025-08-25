@@ -14,14 +14,17 @@ import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.wear.protolayout.ActionBuilders
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_CAMERA_TILE
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_SHORTCUT_TILE
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_TEMPLATE_TILE
+import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_THERMOSTAT_TILE
 import io.homeassistant.companion.android.home.views.LoadHomePage
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.tiles.OpenTileSettingsActivity
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -44,6 +47,7 @@ class HomeActivity :
 
     companion object {
         private const val EXTRA_FROM_ONBOARDING = "from_onboarding"
+        private const val LAUNCH_MODE = "launch_mode"
 
         fun newInstance(context: Context, fromOnboarding: Boolean = false): Intent {
             return Intent(context, HomeActivity::class.java).apply {
@@ -51,9 +55,42 @@ class HomeActivity :
             }
         }
 
+        fun getLaunchAction(packageName: String, tileId: Int): ActionBuilders.LaunchAction {
+            val androidActivity = ActionBuilders.AndroidActivity.Builder()
+                .setPackageName(packageName)
+                .setClassName(
+                    HomeActivity::class.java.name,
+                )
+                .addKeyToExtraMapping(
+                    LAUNCH_MODE,
+                    ActionBuilders.AndroidStringExtra.Builder().setValue(
+                        OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE,
+                    )
+                        .build(),
+                )
+                .addKeyToExtraMapping(
+                    OpenTileSettingsActivity.TILE_ID_KEY,
+                    ActionBuilders.AndroidIntExtra.Builder().setValue(tileId).build(),
+                )
+                .build()
+
+            val launchAction = ActionBuilders.LaunchAction.Builder()
+                .setAndroidActivity(androidActivity)
+                .build()
+
+            return launchAction
+        }
+
         fun getCameraTileSettingsIntent(context: Context, tileId: Int) = Intent(
             Intent.ACTION_VIEW,
             "$DEEPLINK_PREFIX_SET_CAMERA_TILE/$tileId".toUri(),
+            context,
+            HomeActivity::class.java,
+        )
+
+        fun getThermostatTileSettingsIntent(context: Context, tileId: Int) = Intent(
+            Intent.ACTION_VIEW,
+            "$DEEPLINK_PREFIX_SET_THERMOSTAT_TILE/$tileId".toUri(),
             context,
             HomeActivity::class.java,
         )
@@ -77,6 +114,18 @@ class HomeActivity :
         super.onCreate(savedInstanceState)
         // Get rid of me!
         presenter.init(this)
+
+        if (intent.getStringExtra(LAUNCH_MODE) == OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE) {
+            startActivity(
+                OpenTileSettingsActivity.newInstance(
+                    this@HomeActivity,
+                    OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE,
+                    intent.getIntExtra(OpenTileSettingsActivity.TILE_ID_KEY, 0),
+                ),
+            )
+            finish()
+            return
+        }
 
         presenter.onViewReady()
         setContent {

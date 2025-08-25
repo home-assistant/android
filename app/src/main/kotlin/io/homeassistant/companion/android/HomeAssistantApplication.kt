@@ -5,7 +5,6 @@ import android.app.NotificationManager
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.net.wifi.WifiManager
 import android.nfc.NfcAdapter
@@ -26,6 +25,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.common.util.HAStrictMode
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -334,7 +334,7 @@ open class HomeAssistantApplication :
             ContextCompat.RECEIVER_EXPORTED,
         )
 
-        if (!this.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+        if (!isAutomotive()) {
             // Update widgets when the screen turns on, updates are skipped if widgets were not added
             val buttonWidget = ButtonWidget()
             val entityWidget = EntityWidget()

@@ -2,12 +2,12 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.app.AlarmManager
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
@@ -46,7 +46,7 @@ class NextAlarmManager : SensorManager {
 
     override fun hasSensor(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            !context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+            !context.isAutomotive()
         } else {
             true
         }

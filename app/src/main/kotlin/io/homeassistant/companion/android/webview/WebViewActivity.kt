@@ -87,6 +87,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
@@ -746,7 +747,7 @@ class WebViewActivity :
                                     val hasBarCodeScanner =
                                         if (
                                             pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) &&
-                                            !pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+                                            !isAutomotive()
                                         ) {
                                             1
                                         } else {

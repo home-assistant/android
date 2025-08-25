@@ -219,7 +219,7 @@ jobs:
             profile: "tv_4k"
             target: "android-tv"
             gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
-          - api-level: 35
+          - api-level: 36
             arch: x86_64
             profile: "pixel_7"
             target: "google_apis"
