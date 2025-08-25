@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import androidx.biometric.BiometricManager
 import androidx.core.content.IntentCompat
 import androidx.fragment.app.commit
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
@@ -29,6 +30,7 @@ import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.parcelize.Parcelize
 import timber.log.Timber
@@ -143,19 +145,23 @@ class SettingsActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
-        blurView.setBlurEnabled(isAppLocked())
+        lifecycleScope.launch {
+            blurView.setBlurEnabled(isAppLocked())
+        }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus && !isFinishing) {
-            if (isAppLocked()) {
-                authenticating = true
-                authenticator.authenticate(getString(commonR.string.biometric_title))
-                blurView.setBlurEnabled(true)
-            } else {
-                setAppActive(true)
-                blurView.setBlurEnabled(false)
+            lifecycleScope.launch {
+                if (isAppLocked()) {
+                    authenticating = true
+                    authenticator.authenticate(getString(commonR.string.biometric_title))
+                    blurView.setBlurEnabled(true)
+                } else {
+                    setAppActive(true)
+                    blurView.setBlurEnabled(false)
+                }
             }
         }
     }
@@ -190,18 +196,18 @@ class SettingsActivity : BaseActivity() {
     /**
      * @return `true` if the app is locked for the active server or the currently visible server
      */
-    private fun isAppLocked(): Boolean {
+    private suspend fun isAppLocked(): Boolean {
         val serverFragment = supportFragmentManager.findFragmentByTag(ServerSettingsFragment.TAG)
         val serverLocked = serverFragment?.let { isAppLocked((it as ServerSettingsFragment).getServerId()) } ?: false
         return serverLocked || isAppLocked(ServerManager.SERVER_ID_ACTIVE)
     }
 
-    fun isAppLocked(serverId: Int?): Boolean = runBlocking {
-        serverManager.getServer(serverId ?: ServerManager.SERVER_ID_ACTIVE)?.let {
+    suspend fun isAppLocked(serverId: Int?): Boolean {
+        return serverManager.getServer(serverId ?: ServerManager.SERVER_ID_ACTIVE)?.let {
             try {
                 serverManager.integrationRepository(it.id).isAppLocked()
             } catch (e: IllegalArgumentException) {
-                Timber.w("Cannot determine app locked state")
+                Timber.w(e, "Cannot determine app locked state")
                 false
             }
         } ?: false
@@ -217,12 +223,13 @@ class SettingsActivity : BaseActivity() {
         setAppActive(ServerManager.SERVER_ID_ACTIVE, active)
     }
 
+    // TODO remove runBlocking https://github.com/home-assistant/android/issues/5688
     fun setAppActive(serverId: Int?, active: Boolean) = runBlocking {
         serverManager.getServer(serverId ?: ServerManager.SERVER_ID_ACTIVE)?.let {
             try {
                 serverManager.integrationRepository(it.id).setAppActive(active)
             } catch (e: IllegalArgumentException) {
-                Timber.w("Cannot set app active $active for server $serverId")
+                Timber.w(e, "Cannot set app active $active for server $serverId")
             }
         }
     }
