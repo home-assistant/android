@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 abstract class LaunchPresenterBase(
     private val view: LaunchView,
@@ -45,23 +46,26 @@ abstract class LaunchPresenterBase(
         }
     }
 
-    private suspend fun handleNetworkState(state: NetworkState): Boolean = when (state) {
-        NetworkState.READY_LOCAL, NetworkState.READY_REMOTE -> {
-            view.dismissDialog()
-            resyncRegistration()
-            view.displayWebView()
-            true
-        }
+    private suspend fun handleNetworkState(state: NetworkState): Boolean {
+        Timber.i("Current network state $state")
+        return when (state) {
+            NetworkState.READY_LOCAL, NetworkState.READY_REMOTE -> {
+                view.dismissDialog()
+                resyncRegistration()
+                view.displayWebView()
+                true
+            }
 
-        // the activity has a CircularProgressIndicator running
-        NetworkState.CONNECTING -> {
-            view.dismissDialog()
-            false
-        }
+            // the activity has a CircularProgressIndicator running
+            NetworkState.CONNECTING -> {
+                view.dismissDialog()
+                false
+            }
 
-        NetworkState.UNAVAILABLE -> {
-            view.displayAlertMessageDialog(R.string.error_connection_failed_no_network)
-            false
+            NetworkState.UNAVAILABLE -> {
+                view.displayAlertMessageDialog(R.string.error_connection_failed_no_network)
+                false
+            }
         }
     }
 
