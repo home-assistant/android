@@ -1,0 +1,118 @@
+package io.homeassistant.companion.android.compose.composable
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
+import com.android.tools.screenshot.PreviewTest
+import io.homeassistant.companion.android.common.compose.composable.HATextField
+import io.homeassistant.companion.android.common.compose.theme.HASpacing
+import io.homeassistant.companion.android.common.compose.theme.HATheme
+
+class HATextFieldScreenshotTest {
+
+    @PreviewLightDark
+    @PreviewTest
+    @Composable
+    fun `HATextField`() {
+        HATheme {
+            Column {
+                HATextFieldForTest("Hello")
+                HATextFieldForTest("")
+            }
+        }
+    }
+
+    @PreviewLightDark
+    @PreviewTest
+    @Composable
+    fun `HATextField with label`() {
+        HATheme {
+            Column {
+                HATextFieldForTest("Hello", label = "Label")
+                HATextFieldForTest("", label = "Label")
+            }
+        }
+    }
+
+    @PreviewLightDark
+    @PreviewTest
+    @Composable
+    fun `HATextField with placeholder`() {
+        HATheme {
+            Column {
+                HATextFieldForTest("Value write on top of placeholder", placeholder = "Placeholder")
+                HATextFieldForTest("", placeholder = "Placeholder")
+            }
+        }
+    }
+
+    @PreviewLightDark
+    @PreviewTest
+    @Composable
+    fun `HATextField with error`() {
+        HATheme {
+            Column {
+                HATextFieldForTest("Hello", label = "Label", errorText = "Error with label")
+                HATextFieldForTest("Hello", errorText = "Error without label")
+            }
+        }
+    }
+
+    @Composable
+    private fun HATextFieldForTest(
+        value: String,
+        label: String? = null,
+        placeholder: String? = null,
+        errorText: String? = null,
+    ) {
+        HATextField(
+            // For some reason in test we need to fix the height and to avoid weird cut we fix it to a big value
+            modifier = Modifier.height(120.dp),
+            value = value,
+            onValueChange = {},
+            label = label?.let { { Text(label) } },
+            placeholder = placeholder?.let { { Text(placeholder) } },
+            isError = errorText != null,
+            supportingText = errorText?.let {
+                {
+                    Text(errorText)
+                }
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Outlined.Info,
+                    contentDescription = null,
+                )
+            },
+            trailingIcon = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(HASpacing.XS),
+                    modifier = Modifier.padding(
+                        end = HASpacing.M,
+                    ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = null,
+                    )
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                    )
+                }
+            },
+        )
+    }
+}
