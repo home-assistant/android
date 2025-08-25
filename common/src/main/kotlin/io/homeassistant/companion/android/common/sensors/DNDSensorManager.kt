@@ -2,13 +2,13 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.app.NotificationManager
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.isAutomotive
 
 @RequiresApi(Build.VERSION_CODES.M)
 class DNDSensorManager : SensorManager {
@@ -47,7 +47,7 @@ class DNDSensorManager : SensorManager {
 
     @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.M)
     override fun hasSensor(context: Context): Boolean {
-        return if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+        return if (context.isAutomotive()) {
             false
         } else {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.M

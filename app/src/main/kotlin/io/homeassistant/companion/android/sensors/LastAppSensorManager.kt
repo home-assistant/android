@@ -10,6 +10,7 @@ import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.isAutomotive
 import timber.log.Timber
 
 class LastAppSensorManager : SensorManager {
@@ -34,7 +35,7 @@ class LastAppSensorManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        return if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+        return if (context.isAutomotive()) {
             false
         } else {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.M

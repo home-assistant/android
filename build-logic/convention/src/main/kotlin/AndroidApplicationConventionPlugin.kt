@@ -34,8 +34,8 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             apply(plugin = libs.plugins.kotlin.android.getPluginId())
             apply(plugin = libs.plugins.ksp.getPluginId())
             apply(plugin = libs.plugins.hilt.getPluginId())
-            apply(plugin = libs.plugins.compose.compiler.getPluginId())
             AndroidCommonConventionPlugin().apply(target)
+            AndroidComposeConventionPlugin().apply(target)
 
             extensions.configure<ApplicationExtension> {
                 namespace = APPLICATION_ID
@@ -54,7 +54,6 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
 
                 buildFeatures {
                     viewBinding = true
-                    compose = true
                 }
 
                 signingConfigs {

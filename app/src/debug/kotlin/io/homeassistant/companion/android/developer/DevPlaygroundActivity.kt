@@ -21,6 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.barcode.BarcodeScannerActivity
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.developer.catalog.HAComposeCatalogActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
@@ -82,6 +83,11 @@ private fun DevPlayGroundScreen(context: Context? = null) {
             }
         }) {
             Text("Fail fast")
+        }
+        Button(modifier = Modifier.padding(top = 16.dp), onClick = {
+            context?.run { startActivity(Intent(this, HAComposeCatalogActivity::class.java)) }
+        }) {
+            Text("Start HA Compose Catalog")
         }
     }
 }

@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.launch
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -20,6 +19,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -99,7 +99,7 @@ class LaunchActivity :
     override suspend fun displayWebView() {
         presenter.setSessionExpireMillis(0)
 
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) && BuildConfig.FLAVOR == "full") {
+        if (isAutomotive() && BuildConfig.FLAVOR == "full") {
             val carIntent = Intent(
                 this,
                 Class.forName("androidx.car.app.activity.CarAppActivity"),
@@ -121,7 +121,7 @@ class LaunchActivity :
             }
 
             if (serverParameter != null) {
-                startActivity(WebViewActivity.newInstance(this, intent.data?.path, serverParameter))
+                startActivity(WebViewActivity.newInstance(this, intent.data?.toString(), serverParameter))
             } else { // Show server chooser
                 supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
                     val serverId = if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
@@ -130,7 +130,7 @@ class LaunchActivity :
                         null
                     }
                     supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
-                    startActivity(WebViewActivity.newInstance(this, intent.data?.path, serverId))
+                    startActivity(WebViewActivity.newInstance(this, intent.data?.toString(), serverId))
                     finish()
                     overridePendingTransition(0, 0) // Disable activity start/stop animation
                 }
@@ -138,7 +138,7 @@ class LaunchActivity :
                 return
             }
         } else {
-            startActivity(WebViewActivity.newInstance(this, intent.data?.path))
+            startActivity(WebViewActivity.newInstance(this, intent.data?.toString()))
         }
         finish()
         overridePendingTransition(0, 0) // Disable activity start/stop animation
