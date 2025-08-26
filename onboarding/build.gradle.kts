@@ -39,6 +39,7 @@ dependencies {
     testImplementation(libs.navigation.test)
     testImplementation(libs.hilt.android.testing)
 
+    androidTestImplementation(libs.kotlin.stdlib)
     androidTestImplementation(libs.leakcanary.android.instrumentation)
     androidTestImplementation(libs.bundles.androidx.test)
     androidTestImplementation(libs.hilt.android.testing)
