@@ -14,4 +14,8 @@ data class CameraWidgetEntity(
     val entityId: String,
     @ColumnInfo(name = "tap_action", defaultValue = "REFRESH")
     val tapAction: WidgetTapAction,
-) : WidgetEntity
+) : WidgetEntity<CameraWidgetEntity> {
+    override fun copyWithWidgetId(appWidgetId: Int): CameraWidgetEntity {
+        return copy(id = appWidgetId)
+    }
+}

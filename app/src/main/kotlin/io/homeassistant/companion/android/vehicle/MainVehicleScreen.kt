@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.vehicle
 
-import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
@@ -26,6 +25,7 @@ import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.getChangeServerGridItem
@@ -59,7 +59,7 @@ class MainVehicleScreen(
     private var domainsAdded = false
     private var domainsAddedFor: Int? = null
 
-    private val isAutomotive get() = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    private val isAutomotive get() = carContext.isAutomotive()
 
     init {
         lifecycleScope.launch {
@@ -98,7 +98,10 @@ class MainVehicleScreen(
                             domainsAdded = true
 
                             val newFavorites = getFavoritesList(entities)
-                            invalidate = invalidate || newFavorites.size != favoritesEntities.size || newFavorites.toSet() != favoritesEntities.toSet()
+                            invalidate =
+                                invalidate ||
+                                newFavorites.size != favoritesEntities.size ||
+                                newFavorites.toSet() != favoritesEntities.toSet()
                             favoritesEntities = newFavorites
 
                             if (invalidate) invalidate()

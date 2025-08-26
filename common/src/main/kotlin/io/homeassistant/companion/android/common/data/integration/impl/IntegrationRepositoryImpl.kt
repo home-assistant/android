@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.FireEventRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.GetConfigIntegrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.GetZonesIntegrationRequest
+import io.homeassistant.companion.android.common.data.integration.impl.entities.IntegrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceIntegrationRequest
@@ -37,13 +38,19 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.database.server.Server
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.ResponseBody
+import retrofit2.Response
 import timber.log.Timber
 
 class IntegrationRepositoryImpl @AssistedInject constructor(
@@ -63,9 +70,14 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val OS_NAME = "Android"
         private const val PUSH_URL = BuildConfig.PUSH_URL
 
-        private const val PREF_APP_VERSION = "app_version" // Note: _not_ server-specific
-        private const val PREF_PUSH_TOKEN = "push_token" // Note: _not_ server-specific
-        private const val PREF_ORPHANED_THREAD_BORDER_AGENT_IDS = "orphaned_thread_border_agent_ids" // Note: _not_ server-specific
+        // Note: _not_ server-specific
+        private const val PREF_APP_VERSION = "app_version"
+
+        // Note: _not_ server-specific
+        private const val PREF_PUSH_TOKEN = "push_token"
+
+        // Note: _not_ server-specific
+        private const val PREF_ORPHANED_THREAD_BORDER_AGENT_IDS = "orphaned_thread_border_agent_ids"
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
@@ -80,7 +92,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val APPLOCK_TIMEOUT_GRACE_MS = 1000
     }
 
-    private val server get() = serverManager.getServer(serverId)!!
+    private suspend fun server(): Server {
+        return checkNotNull(serverManager.getServer(serverId)) { "No server found for id $serverId" }
+    }
 
     private val webSocketRepository get() = serverManager.webSocketRepository(serverId)
 
@@ -94,7 +108,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         request.supportsEncryption = false
         request.deviceId = deviceId
 
-        val url = server.connection.getUrl()?.toHttpUrlOrNull()
+        val url = server().connection.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
             Timber.e("Unable to register device due to missing URL")
             return
@@ -108,8 +122,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         try {
             persistDeviceRegistration(deviceRegistration)
             serverManager.updateServer(
-                server.copy(
-                    connection = server.connection.copy(
+                server().copy(
+                    connection = server().connection.copy(
                         webhookId = response.webhookId,
                         cloudhookUrl = response.cloudhookUrl,
                         cloudUrl = response.remoteUiUrl,
@@ -127,50 +141,31 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration, allowReregistration: Boolean) {
         val request = RegisterDeviceIntegrationRequest(createUpdateRegistrationRequest(deviceRegistration))
-        var causeException: Exception? = null
-        for (it in server.connection.getApiUrls()) {
-            try {
-                val response = integrationService.callWebhook(it.toHttpUrlOrNull()!!, request)
-                // The server should return a body with the registration, but might return:
-                // 200 with empty body for broken direct webhook
-                // 404 for broken cloudhook
-                // 410 for missing config entry
-                if (response.isSuccessful) {
-                    if (response.code() == 200 && (response.body()?.contentLength() ?: 0) == 0L) {
-                        throw IllegalStateException("update_registration returned empty body")
-                    } else {
-                        persistDeviceRegistration(deviceRegistration)
-                        return
+        server().callWebhookOnUrls(request, onSuccess = { response ->
+            // The server should return a body with the registration, but might return:
+            // 200 with empty body for broken direct webhook
+            if (response.code() == 200 && response.body()?.contentLength() == 0L) {
+                Timber.w("update_registration returned empty body")
+                if (allowReregistration) {
+                    Timber.w("Device registration broken and reregistration allowed, reregistering")
+                    try {
+                        registerDevice(deviceRegistration)
+                    } catch (e: Exception) {
+                        throw IntegrationException("Device registration broken and reregistration failed", e)
                     }
-                } else if (response.code() == 404 || response.code() == 410) {
-                    throw IllegalStateException("update_registration returned code ${response.code()}")
-                }
-            } catch (e: Exception) {
-                if (causeException == null) causeException = e
-                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
-            }
-        }
-
-        if (causeException != null) {
-            if (allowReregistration && (causeException is IllegalStateException)) {
-                Timber.w(causeException, "Device registration broken, reregistering")
-                try {
-                    registerDevice(deviceRegistration)
-                } catch (e: Exception) {
-                    throw IntegrationException(e)
+                } else {
+                    throw IntegrationException("Device registration broken and reregistration not allowed.")
                 }
             } else {
-                throw IntegrationException(causeException)
+                persistDeviceRegistration(deviceRegistration)
             }
-        } else {
-            throw IntegrationException("Error calling integration request update_registration")
-        }
+        })
     }
 
     override suspend fun getRegistration(): DeviceRegistration {
         return DeviceRegistration(
             localStorage.getString(PREF_APP_VERSION),
-            server.deviceName,
+            server().deviceName,
             localStorage.getString(PREF_PUSH_TOKEN),
         )
     }
@@ -180,7 +175,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             localStorage.putString(PREF_APP_VERSION, deviceRegistration.appVersion)
         }
         if (deviceRegistration.deviceName != null) {
-            serverManager.updateServer(server.copy(deviceName = deviceRegistration.deviceName))
+            serverManager.updateServer(server().copy(deviceName = deviceRegistration.deviceName))
         }
         if (deviceRegistration.pushToken != null) {
             localStorage.putString(PREF_PUSH_TOKEN, deviceRegistration.pushToken)
@@ -200,27 +195,32 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val threadBorderAgentIds = getThreadBorderAgentIds()
         if (threadBorderAgentIds.any()) {
             val orphanedBorderAgentIds = localStorage.getStringSet(PREF_ORPHANED_THREAD_BORDER_AGENT_IDS).orEmpty()
-            localStorage.putStringSet(PREF_ORPHANED_THREAD_BORDER_AGENT_IDS, orphanedBorderAgentIds + threadBorderAgentIds.toSet())
+            localStorage.putStringSet(
+                PREF_ORPHANED_THREAD_BORDER_AGENT_IDS,
+                orphanedBorderAgentIds + threadBorderAgentIds.toSet(),
+            )
         }
         localStorage.remove("${serverId}_$PREF_THREAD_BORDER_AGENT_IDS")
 
         // app version and push token is device-specific
     }
 
-    private fun isRegistered(): Boolean {
-        return server.connection.getApiUrls().isNotEmpty()
+    private suspend fun isRegistered(): Boolean {
+        return server().connection.getApiUrls().isNotEmpty()
     }
 
     override suspend fun renderTemplate(template: String, variables: Map<String, String>): String? {
         var causeException: Exception? = null
-        for (it in server.connection.getApiUrls()) {
+        for (it in server().connection.getApiUrls()) {
             try {
-                return integrationService.getTemplate(
+                val templateResult = integrationService.getTemplate(
                     it.toHttpUrlOrNull()!!,
                     RenderTemplateIntegrationRequest(
                         mapOf("template" to Template(template, variables)),
                     ),
                 )["template"]
+                // We check if the result is a JsonPrimitive instead of a simple global toString to avoid rendering " around the string
+                return if (templateResult is JsonPrimitive) templateResult.contentOrNull else templateResult.toString()
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
@@ -243,143 +243,40 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun updateLocation(updateLocation: UpdateLocation) {
         val updateLocationRequest = createUpdateLocation(updateLocation)
-
-        var causeException: Exception? = null
-        for (it in server.connection.getApiUrls()) {
-            var wasSuccess = false
-            try {
-                wasSuccess =
-                    integrationService.callWebhook(
-                        it.toHttpUrlOrNull()!!,
-                        updateLocationRequest,
-                    ).isSuccessful
-            } catch (e: Exception) {
-                if (causeException == null) causeException = e
-                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
-            }
-            // if we had a successful call we can return
-            if (wasSuccess) {
-                return
-            }
-        }
-
-        if (causeException != null) {
-            throw IntegrationException(causeException)
-        } else {
-            throw IntegrationException("Error calling integration request update_location")
-        }
+        server().callWebhookOnUrls(updateLocationRequest)
     }
 
-    override suspend fun callAction(
-        domain: String,
-        action: String,
-        actionData: Map<String, Any?>,
-    ) {
-        var wasSuccess = false
-
-        val actionRequest =
-            ActionRequest(
-                domain,
-                action,
-                actionData,
-            )
-
-        var causeException: Exception? = null
-        for (it in server.connection.getApiUrls()) {
-            try {
-                wasSuccess =
-                    integrationService.callWebhook(
-                        it.toHttpUrlOrNull()!!,
-                        CallServiceIntegrationRequest(
-                            actionRequest,
-                        ),
-                    ).isSuccessful
-            } catch (e: Exception) {
-                if (causeException == null) causeException = e
-                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
-            }
-            // if we had a successful call we can return
-            if (wasSuccess) {
-                return
-            }
-        }
-
-        if (causeException != null) {
-            throw IntegrationException(causeException)
-        } else {
-            throw IntegrationException("Error calling integration request call_service")
-        }
+    override suspend fun callAction(domain: String, action: String, actionData: Map<String, Any?>) {
+        server().callWebhookOnUrls(
+            CallServiceIntegrationRequest(
+                ActionRequest(
+                    domain,
+                    action,
+                    actionData,
+                ),
+            ),
+        )
     }
 
     override suspend fun scanTag(data: Map<String, String>) {
-        var wasSuccess = false
-
-        var causeException: Exception? = null
-        for (it in server.connection.getApiUrls()) {
-            try {
-                wasSuccess =
-                    integrationService.callWebhook(
-                        it.toHttpUrlOrNull()!!,
-                        ScanTagIntegrationRequest(
-                            data,
-                        ),
-                    ).isSuccessful
-            } catch (e: Exception) {
-                if (causeException == null) causeException = e
-                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
-            }
-            // if we had a successful call we can return
-            if (wasSuccess) {
-                return
-            }
-        }
-
-        if (causeException != null) {
-            throw IntegrationException(causeException)
-        } else {
-            throw IntegrationException("Error calling integration request scan_tag")
-        }
+        server().callWebhookOnUrls(ScanTagIntegrationRequest(data))
     }
 
     override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>) {
-        var wasSuccess = false
-
-        val fireEventRequest = FireEventRequest(
-            eventType,
-            eventData.plus(Pair("device_id", deviceId)),
+        server().callWebhookOnUrls(
+            FireEventIntegrationRequest(
+                FireEventRequest(
+                    eventType,
+                    eventData.plus(Pair("device_id", deviceId)),
+                ),
+            ),
         )
-
-        var causeException: Exception? = null
-        for (it in server.connection.getApiUrls()) {
-            try {
-                wasSuccess =
-                    integrationService.callWebhook(
-                        it.toHttpUrlOrNull()!!,
-                        FireEventIntegrationRequest(
-                            fireEventRequest,
-                        ),
-                    ).isSuccessful
-            } catch (e: Exception) {
-                if (causeException == null) causeException = e
-                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
-            }
-            // if we had a successful call we can return
-            if (wasSuccess) {
-                return
-            }
-        }
-
-        if (causeException != null) {
-            throw IntegrationException(causeException)
-        } else {
-            throw IntegrationException("Error calling integration request fire_event")
-        }
     }
 
     override suspend fun getZones(): List<Entity> {
         var causeException: Exception? = null
         var zones: List<EntityResponse>? = null
-        for (it in server.connection.getApiUrls()) {
+        for (it in server().connection.getApiUrls()) {
             try {
                 zones = integrationService.getZones(it.toHttpUrlOrNull()!!, GetZonesIntegrationRequest)
             } catch (e: Exception) {
@@ -406,7 +303,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val sessionExpired = currentMillis > sessionExpireMillis
         val appLocked = lockEnabled && !appActive && sessionExpired
 
-        Timber.d("isAppLocked(): $appLocked. (LockEnabled: $lockEnabled, appActive: $appActive, expireMillis: $sessionExpireMillis, currentMillis: $currentMillis)")
+        Timber.d(
+            "isAppLocked(): $appLocked. (LockEnabled: $lockEnabled, appActive: $appActive, expireMillis: $sessionExpireMillis, currentMillis: $currentMillis)",
+        )
         return appLocked
     }
 
@@ -418,23 +317,18 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         appActive = active
     }
 
-    override suspend fun sessionTimeOut(value: Int) =
-        localStorage.putInt("${serverId}_$PREF_SESSION_TIMEOUT", value)
+    override suspend fun sessionTimeOut(value: Int) = localStorage.putInt("${serverId}_$PREF_SESSION_TIMEOUT", value)
 
-    override suspend fun getSessionTimeOut(): Int =
-        localStorage.getInt("${serverId}_$PREF_SESSION_TIMEOUT") ?: 0
+    override suspend fun getSessionTimeOut(): Int = localStorage.getInt("${serverId}_$PREF_SESSION_TIMEOUT") ?: 0
 
     override suspend fun setSessionExpireMillis(value: Long) =
         localStorage.putLong("${serverId}_$PREF_SESSION_EXPIRE", value)
 
-    private suspend fun getSessionExpireMillis(): Long =
-        localStorage.getLong("${serverId}_$PREF_SESSION_EXPIRE") ?: 0
+    private suspend fun getSessionExpireMillis(): Long = localStorage.getLong("${serverId}_$PREF_SESSION_EXPIRE") ?: 0
 
-    override suspend fun isTrusted(): Boolean =
-        localStorage.getBooleanOrNull("${serverId}_$PREF_TRUSTED") ?: true
+    override suspend fun isTrusted(): Boolean = localStorage.getBooleanOrNull("${serverId}_$PREF_TRUSTED") ?: true
 
-    override suspend fun setTrusted(trusted: Boolean) =
-        localStorage.putBoolean("${serverId}_$PREF_TRUSTED", trusted)
+    override suspend fun setTrusted(trusted: Boolean) = localStorage.putBoolean("${serverId}_$PREF_TRUSTED", trusted)
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse {
         val pushToken = localStorage.getString(PREF_PUSH_TOKEN) ?: ""
@@ -465,7 +359,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val current = System.currentTimeMillis()
         val next = localStorage.getLong("${serverId}_$PREF_CHECK_SENSOR_REGISTRATION_NEXT") ?: 0
         if (current <= next) {
-            return server._version
+            return server()._version
                 ?: "" // Skip checking HA version as it has not been 4 hours yet
         }
 
@@ -480,15 +374,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             }
         } catch (e: Exception) {
             Timber.e(e, "Issue getting new version from core.")
-            server._version ?: ""
+            server()._version ?: ""
         }
     }
 
-    override suspend fun isHomeAssistantVersionAtLeast(
-        year: Int,
-        month: Int,
-        release: Int,
-    ): Boolean {
+    override suspend fun isHomeAssistantVersionAtLeast(year: Int, month: Int, release: Int): Boolean {
         if (!isRegistered()) return false
 
         val version = HomeAssistantVersion.fromString(getHomeAssistantVersion())
@@ -499,7 +389,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         var response: GetConfigResponse? = null
         var causeException: Exception? = null
 
-        for (it in server.connection.getApiUrls()) {
+        for (it in server().connection.getApiUrls()) {
             try {
                 response = integrationService.getConfig(it.toHttpUrlOrNull()!!, GetConfigIntegrationRequest)
             } catch (e: Exception) {
@@ -529,13 +419,13 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
      * Update this repository's [server] with information from a [GetConfigResponse] like original
      * name and core version.
      */
-    private fun updateServerWithConfig(config: GetConfigResponse) {
+    private suspend fun updateServerWithConfig(config: GetConfigResponse) {
         serverManager.updateServer(
-            server.copy(
+            server().copy(
                 _name = config.locationName,
                 _version = config.version,
-                deviceRegistryId = config.hassDeviceId ?: server.deviceRegistryId,
-                connection = server.connection.copy(
+                deviceRegistryId = config.hassDeviceId ?: server().deviceRegistryId,
+                connection = server().connection.copy(
                     cloudUrl = config.remoteUiUrl,
                     cloudhookUrl = config.cloudhookUrl,
                 ),
@@ -553,8 +443,12 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }?.toList()
     }
 
-    override suspend fun getAssistResponse(text: String, pipelineId: String?, conversationId: String?): Flow<AssistPipelineEvent>? {
-        return if (server.version?.isAtLeast(2023, 5, 0) == true) {
+    override suspend fun getAssistResponse(
+        text: String,
+        pipelineId: String?,
+        conversationId: String?,
+    ): Flow<AssistPipelineEvent>? {
+        return if (server().version?.isAtLeast(2023, 5, 0) == true) {
             webSocketRepository.runAssistPipelineForText(text, pipelineId, conversationId)
         } else {
             flow {
@@ -618,7 +512,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun getEntity(entityId: String): Entity? {
-        val url = server.connection.getUrl()?.toHttpUrlOrNull()
+        val url = server().connection.getUrl()?.toHttpUrlOrNull()
         if (url == null) {
             Timber.e("Unable to register device due to missing URL")
             return null
@@ -652,7 +546,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>? {
-        return if (server.user.isAdmin == true) {
+        return if (server().user.isAdmin == true) {
             webSocketRepository.getStateChanges(entityIds)
                 ?.filter { it.toState != null }
                 ?.map {
@@ -683,13 +577,13 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         // Version is read from server variable (cached) to prevent multiple failed requests in a
         // row and very long suspend if server is offline for a longer period of time. This function
         // will only be called from other places which already refresh the config + version.
-        val canRegisterCategoryStateClass = server.version?.isAtLeast(2021, 11, 0) == true
-        val canRegisterEntityDisabledState = server.version?.isAtLeast(2022, 6, 0) == true
-        val canRegisterDeviceClassDistance = server.version?.isAtLeast(2022, 10, 0) == true
-        val canRegisterNullProperties = server.version?.isAtLeast(2023, 2, 0) == true
-        val canRegisterDeviceClassEnum = server.version?.isAtLeast(2023, 1, 0) == true
-        val canRegisterDeviceClassEnergyCalories = server.version?.isAtLeast(2024, 10, 0) == true
-        val canRegisterDeviceClassBloodGlucose = server.version?.isAtLeast(2024, 12, 0) == true
+        val canRegisterCategoryStateClass = server().version?.isAtLeast(2021, 11, 0) == true
+        val canRegisterEntityDisabledState = server().version?.isAtLeast(2022, 6, 0) == true
+        val canRegisterDeviceClassDistance = server().version?.isAtLeast(2022, 10, 0) == true
+        val canRegisterNullProperties = server().version?.isAtLeast(2023, 2, 0) == true
+        val canRegisterDeviceClassEnum = server().version?.isAtLeast(2023, 1, 0) == true
+        val canRegisterDeviceClassEnergyCalories = server().version?.isAtLeast(2024, 10, 0) == true
+        val canRegisterDeviceClassBloodGlucose = server().version?.isAtLeast(2024, 12, 0) == true
 
         val registrationData = SensorRegistrationRequest(
             sensorRegistration.uniqueId,
@@ -708,14 +602,19 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 "distance" -> if (canRegisterDeviceClassDistance) sensorRegistration.deviceClass else null
                 "enum" -> if (canRegisterDeviceClassEnum) sensorRegistration.deviceClass else null
                 "energy" -> if (
-                    canRegisterDeviceClassEnergyCalories || sensorRegistration.unitOfMeasurement !in listOf("cal", "kcal")
+                    canRegisterDeviceClassEnergyCalories ||
+                    sensorRegistration.unitOfMeasurement !in listOf("cal", "kcal")
                 ) {
                     sensorRegistration.deviceClass
                 } else {
                     null
                 }
 
-                "blood_glucose_concentration" -> if (canRegisterDeviceClassBloodGlucose) sensorRegistration.deviceClass else null
+                "blood_glucose_concentration" -> if (canRegisterDeviceClassBloodGlucose) {
+                    sensorRegistration.deviceClass
+                } else {
+                    null
+                }
                 else -> sensorRegistration.deviceClass
             },
             sensorRegistration.unitOfMeasurement,
@@ -727,25 +626,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         val integrationRequest = RegisterSensorIntegrationRequest(registrationData)
 
-        var causeException: Exception? = null
-        for (it in server.connection.getApiUrls()) {
-            try {
-                integrationService.callWebhook(it.toHttpUrlOrNull()!!, integrationRequest)
-                    .let {
-                        // If we created sensor or it already exists
-                        if (it.isSuccessful || it.code() == 409) {
-                            return
-                        }
-                    }
-            } catch (e: Exception) {
-                if (causeException == null) causeException = e
-                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
-            }
-        }
-        if (causeException != null) {
-            throw IntegrationException(causeException)
-        } else {
-            throw IntegrationException("Error calling integration request register_sensor")
+        server().callWebhookOnUrls(integrationRequest) { response ->
+            // If we created sensor or it already exists
+            response.isSuccessful || response.code() == 409
         }
     }
 
@@ -763,7 +646,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         )
 
         var causeException: Exception? = null
-        for (it in server.connection.getApiUrls()) {
+        for (it in server().connection.getApiUrls()) {
             try {
                 integrationService.updateSensors(it.toHttpUrlOrNull()!!, integrationRequest).let {
                     it.forEach { (_, response) ->
@@ -795,6 +678,44 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         } else {
             false
         }
+    }
+
+    private suspend fun Server.callWebhookOnUrls(
+        request: IntegrationRequest,
+        onSuccess: suspend (response: Response<ResponseBody>) -> Unit = {},
+        isValidResponse: (response: Response<ResponseBody>) -> Boolean = { response -> response.isSuccessful },
+    ) {
+        var firstCauseException: Exception? = null
+        val httpURLs = connection.getApiUrls().mapNotNull { it.toHttpUrlOrNull() }
+
+        if (httpURLs.isEmpty()) {
+            throw IntegrationException(
+                "No valid url can be found in server connection ${if (BuildConfig.DEBUG) connection.getApiUrls() else ""}",
+            )
+        }
+
+        httpURLs.forEach { url ->
+            try {
+                val response = integrationService.callWebhook(url, request)
+                if (isValidResponse(response)) {
+                    onSuccess(response)
+                    // If the response is successful we return and ignore potential firstCauseException
+                    return
+                } else {
+                    throw IntegrationException(
+                        "Error calling webhook",
+                        response.code(),
+                        response.errorBody(),
+                    )
+                }
+            } catch (e: Exception) {
+                if (firstCauseException == null) firstCauseException = e
+                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
+            }
+        }
+
+        firstCauseException?.let { throw it }
+        FailFast.fail { "Error calling webhook without cause." }
     }
 
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {

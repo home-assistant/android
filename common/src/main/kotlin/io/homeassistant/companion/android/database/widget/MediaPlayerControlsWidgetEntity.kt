@@ -26,4 +26,9 @@ data class MediaPlayerControlsWidgetEntity(
     override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
     @ColumnInfo(name = "text_color")
     override val textColor: String? = null,
-) : WidgetEntity, ThemeableWidgetEntity
+) : WidgetEntity<MediaPlayerControlsWidgetEntity>,
+    ThemeableWidgetEntity {
+    override fun copyWithWidgetId(appWidgetId: Int): MediaPlayerControlsWidgetEntity {
+        return copy(id = appWidgetId)
+    }
+}

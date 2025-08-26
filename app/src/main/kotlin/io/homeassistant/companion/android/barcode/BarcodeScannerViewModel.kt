@@ -54,7 +54,8 @@ class BarcodeScannerViewModel @Inject constructor(
     }
 
     fun checkPermission() {
-        hasPermission = ContextCompat.checkSelfPermission(app, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        hasPermission =
+            ContextCompat.checkSelfPermission(app, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
     }
 
     fun sendScannerResult(messageId: Int, text: String, format: String) {

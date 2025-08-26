@@ -10,15 +10,18 @@ import android.net.wifi.WifiManager
 import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
+import androidx.compose.runtime.Composer
+import androidx.compose.runtime.ExperimentalComposeRuntimeApi
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositoryImpl
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
+import io.homeassistant.companion.android.common.util.HAStrictMode
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import javax.inject.Inject
-import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,13 +33,25 @@ open class HomeAssistantApplication : Application() {
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     @Inject
-    @Named("keyStore")
+    @NamedKeyStore
     lateinit var keyStore: KeyChainRepository
 
+    @OptIn(ExperimentalComposeRuntimeApi::class)
     override fun onCreate() {
         super.onCreate()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            BuildConfig.DEBUG &&
+            !BuildConfig.NO_STRICT_MODE
+        ) {
+            HAStrictMode.enable()
+        }
+
         // We should initialize the logger as early as possible in the lifecycle of the application
         Timber.plant(Timber.DebugTree())
+
+        // Enable only for debug flavor to avoid perf regressions in release
+        Composer.setDiagnosticStackTraceEnabled(BuildConfig.DEBUG)
 
         ioScope.launch {
             keyStore.load(applicationContext, KeyStoreRepositoryImpl.ALIAS)
@@ -164,6 +179,11 @@ open class HomeAssistantApplication : Application() {
         val screenIntentFilter = IntentFilter()
         screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)
 
-        ContextCompat.registerReceiver(this, complicationReceiver, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        ContextCompat.registerReceiver(
+            this,
+            complicationReceiver,
+            screenIntentFilter,
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
     }
 }

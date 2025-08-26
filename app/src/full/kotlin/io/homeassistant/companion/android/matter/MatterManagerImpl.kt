@@ -9,6 +9,7 @@ import com.google.android.gms.home.matter.Matter
 import com.google.android.gms.home.matter.commissioning.CommissioningRequest
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
+import io.homeassistant.companion.android.common.util.isAutomotive
 import javax.inject.Inject
 import timber.log.Timber
 
@@ -17,8 +18,8 @@ class MatterManagerImpl @Inject constructor(
     private val packageManager: PackageManager,
 ) : MatterManager {
 
-    override fun appSupportsCommissioning(): Boolean =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 && !packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    override fun appSupportsCommissioning(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 &&
+        !packageManager.isAutomotive()
 
     override suspend fun coreSupportsCommissioning(serverId: Int): Boolean {
         if (!serverManager.isRegistered() || serverManager.getServer(serverId)?.user?.isAdmin != true) return false

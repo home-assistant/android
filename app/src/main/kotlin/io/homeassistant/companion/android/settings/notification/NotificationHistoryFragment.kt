@@ -46,39 +46,41 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                     menu.findItem(R.id.last100)?.title = getString(commonR.string.last_num_notifications, 100)
 
                     val prefCategory = findPreference<PreferenceCategory>("list_notifications")
-                    val allNotifications = notificationDao.getAll()
+                    lifecycleScope.launch {
+                        val allNotifications = notificationDao.getAll()
 
-                    if (allNotifications.isEmpty()) {
-                        menu.removeItem(R.id.search_notifications)
-                        menu.removeItem(R.id.notification_filter)
-                        menu.removeItem(R.id.action_delete)
-                    } else {
-                        val searchViewItem = menu.findItem(R.id.search_notifications)
-                        val searchView: SearchView = searchViewItem.actionView as SearchView
-                        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                            override fun onQueryTextSubmit(query: String?): Boolean {
-                                searchView.clearFocus()
+                        if (allNotifications.isEmpty()) {
+                            menu.removeItem(R.id.search_notifications)
+                            menu.removeItem(R.id.notification_filter)
+                            menu.removeItem(R.id.action_delete)
+                        } else {
+                            val searchViewItem = menu.findItem(R.id.search_notifications)
+                            val searchView: SearchView = searchViewItem.actionView as SearchView
+                            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                                override fun onQueryTextSubmit(query: String?): Boolean {
+                                    searchView.clearFocus()
 
-                                return false
-                            }
-
-                            override fun onQueryTextChange(query: String?): Boolean {
-                                var searchList: Array<NotificationItem> = emptyArray()
-                                if (!query.isNullOrEmpty()) {
-                                    for (item in allNotifications) {
-                                        if (item.message.contains(query, true)) {
-                                            searchList += item
-                                        }
-                                    }
-                                    prefCategory?.title = getString(commonR.string.search_results)
-                                    reloadNotifications(searchList, prefCategory)
-                                } else if (query.isNullOrEmpty()) {
-                                    prefCategory?.title = getString(commonR.string.notifications)
-                                    filterNotifications(filterValue, notificationDao, prefCategory)
+                                    return false
                                 }
-                                return false
-                            }
-                        })
+
+                                override fun onQueryTextChange(query: String?): Boolean {
+                                    var searchList: Array<NotificationItem> = emptyArray()
+                                    if (!query.isNullOrEmpty()) {
+                                        for (item in allNotifications) {
+                                            if (item.message.contains(query, true)) {
+                                                searchList += item
+                                            }
+                                        }
+                                        prefCategory?.title = getString(commonR.string.search_results)
+                                        reloadNotifications(searchList, prefCategory)
+                                    } else if (query.isNullOrEmpty()) {
+                                        prefCategory?.title = getString(commonR.string.notifications)
+                                        filterNotifications(filterValue, notificationDao, prefCategory)
+                                    }
+                                    return false
+                                }
+                            })
+                        }
                     }
                 }
 
@@ -109,6 +111,9 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        // This cause StrictMode to trigger since it loads the XML from the disk
+        // we could put this in IO thread but with the risk that following
+        // findPreference return null and cause the UI to be wrong.
         setPreferencesFromResource(R.xml.notifications, rootKey)
     }
 
@@ -116,18 +121,20 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         super.onResume()
 
         activity?.title = getString(commonR.string.notifications)
-        val notificationList = notificationDao.getLastItems(25)
+        lifecycleScope.launch {
+            val notificationList = notificationDao.getLastItems(25)
 
-        val prefCategory = findPreference<PreferenceCategory>("list_notifications")
-        if (notificationList.isNotEmpty()) {
-            prefCategory?.isVisible = true
-            reloadNotifications(notificationList, prefCategory)
-        } else {
-            findPreference<PreferenceCategory>("list_notifications")?.let {
-                it.isVisible = false
-            }
-            findPreference<Preference>("no_notifications")?.let {
-                it.isVisible = true
+            val prefCategory = findPreference<PreferenceCategory>("list_notifications")
+            if (notificationList.isNotEmpty()) {
+                prefCategory?.isVisible = true
+                reloadNotifications(notificationList, prefCategory)
+            } else {
+                findPreference<PreferenceCategory>("list_notifications")?.let {
+                    it.isVisible = false
+                }
+                findPreference<Preference>("no_notifications")?.let {
+                    it.isVisible = true
+                }
             }
         }
     }
@@ -150,7 +157,8 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
 
         builder.setNegativeButton(
             commonR.string.confirm_negative,
-        ) { dialog, _ -> // Do nothing
+        ) { dialog, _ ->
+            // Do nothing
             dialog.dismiss()
         }
 
@@ -183,8 +191,14 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         }
     }
 
-    private fun filterNotifications(filterValue: Int, notificationDao: NotificationDao, prefCategory: PreferenceCategory?) {
-        val notificationList = notificationDao.getLastItems(filterValue)
-        reloadNotifications(notificationList, prefCategory)
+    private fun filterNotifications(
+        filterValue: Int,
+        notificationDao: NotificationDao,
+        prefCategory: PreferenceCategory?,
+    ) {
+        lifecycleScope.launch {
+            val notificationList = notificationDao.getLastItems(filterValue)
+            reloadNotifications(notificationList, prefCategory)
+        }
     }
 }

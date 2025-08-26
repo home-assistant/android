@@ -12,10 +12,9 @@ interface ServerSettingsPresenter {
     fun updateServerName()
     fun updateUrlStatus()
     fun hasWifi(): Boolean
-    fun isSsidUsed(): Boolean
     fun clearSsids()
 
     fun setAppActive(active: Boolean)
 
-    fun serverURL(): String?
+    suspend fun serverURL(): String?
 }

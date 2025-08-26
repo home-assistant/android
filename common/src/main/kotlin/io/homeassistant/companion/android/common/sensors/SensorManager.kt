@@ -38,6 +38,7 @@ interface SensorManager {
 
     val name: Int
 
+    // TODO any reason to use mainScope here and not iO? https://github.com/home-assistant/android/issues/5585
     val sensorWorkerScope: CoroutineScope
         get() = CoroutineScope(Dispatchers.Main + Job())
 
@@ -160,18 +161,7 @@ interface SensorManager {
         return true
     }
 
-    fun addSettingIfNotPresent(
-        context: Context,
-        sensor: BasicSensor,
-        settingName: String,
-        settingType: SensorSettingType,
-        default: String,
-        enabled: Boolean = true,
-    ) {
-        getSetting(context, sensor, settingName, settingType, default, enabled)
-    }
-
-    fun isSettingEnabled(context: Context, sensor: BasicSensor, settingName: String): Boolean {
+    suspend fun isSettingEnabled(context: Context, sensor: BasicSensor, settingName: String): Boolean {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val setting = sensorDao
             .getSettings(sensor.id)
@@ -182,38 +172,55 @@ interface SensorManager {
     suspend fun enableDisableSetting(context: Context, sensor: BasicSensor, settingName: String, enabled: Boolean) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val settingEnabled = isSettingEnabled(context, sensor, settingName)
-        if (enabled && !settingEnabled ||
-            !enabled && settingEnabled
+        if (enabled &&
+            !settingEnabled ||
+            !enabled &&
+            settingEnabled
         ) {
             sensorDao.updateSettingEnabled(sensor.id, settingName, enabled)
         }
     }
 
-    fun getToggleSetting(
+    suspend fun getToggleSetting(
         context: Context,
         sensor: BasicSensor,
         settingName: String,
         default: Boolean,
         enabled: Boolean = true,
     ): Boolean {
-        return getSetting(context, sensor, settingName, SensorSettingType.TOGGLE, default.toString(), enabled).toBoolean()
+        return getSetting(
+            context,
+            sensor,
+            settingName,
+            SensorSettingType.TOGGLE,
+            default.toString(),
+            enabled,
+        ).toBoolean()
     }
 
-    fun getNumberSetting(
+    suspend fun getNumberSetting(
         context: Context,
         sensor: BasicSensor,
         settingName: String,
         default: Int,
         enabled: Boolean = true,
     ): Int {
-        return getSetting(context, sensor, settingName, SensorSettingType.NUMBER, default.toString(), enabled).toIntOrNull() ?: default
+        return getSetting(
+            context,
+            sensor,
+            settingName,
+            SensorSettingType.NUMBER,
+            default.toString(),
+            enabled,
+        ).toIntOrNull()
+            ?: default
     }
 
     /**
      * Get the stored setting value for...
      * @param default Value to use if the setting does not exist
      */
-    fun getSetting(
+    suspend fun getSetting(
         context: Context,
         sensor: BasicSensor,
         settingName: String,
@@ -234,7 +241,7 @@ interface SensorManager {
         return setting ?: default
     }
 
-    fun onSensorUpdated(
+    suspend fun onSensorUpdated(
         context: Context,
         basicSensor: BasicSensor,
         state: Any,
@@ -313,12 +320,11 @@ interface SensorManager {
         fun serverManager(): ServerManager
     }
 
-    fun serverManager(context: Context) =
-        EntryPointAccessors.fromApplication(
-            context.applicationContext,
-            SensorManagerEntryPoint::class.java,
-        )
-            .serverManager()
+    fun serverManager(context: Context) = EntryPointAccessors.fromApplication(
+        context.applicationContext,
+        SensorManagerEntryPoint::class.java,
+    )
+        .serverManager()
 }
 
 fun SensorManager.id(): String {

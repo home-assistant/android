@@ -156,7 +156,12 @@ class BatterySensorManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        val intent = ContextCompat.registerReceiver(context, null, IntentFilter(Intent.ACTION_BATTERY_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED)
+        val intent = ContextCompat.registerReceiver(
+            context,
+            null,
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
         return intent?.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false) == true
     }
 
@@ -164,10 +169,13 @@ class BatterySensorManager : SensorManager {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
-        val intent = ContextCompat.registerReceiver(context, null, IntentFilter(Intent.ACTION_BATTERY_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED)
+    override suspend fun requestSensorUpdate(context: Context) {
+        val intent = ContextCompat.registerReceiver(
+            context,
+            null,
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
         if (intent != null) {
             updateBatteryLevel(context, intent)
             updateBatteryState(context, intent)
@@ -436,7 +444,7 @@ class BatterySensorManager : SensorManager {
         return intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) / 10f
     }
 
-    private fun getBatteryCurrent(context: Context, batteryManager: BatteryManager): Float? {
+    private suspend fun getBatteryCurrent(context: Context, batteryManager: BatteryManager): Float? {
         val current = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
         return if (
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && current != Int.MIN_VALUE) ||
@@ -454,7 +462,7 @@ class BatterySensorManager : SensorManager {
         }
     }
 
-    private fun getBatteryVolts(context: Context, intent: Intent): Float? {
+    private suspend fun getBatteryVolts(context: Context, intent: Intent): Float? {
         val voltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0)
         return if (voltage != 0) {
             val dividerSetting = getNumberSetting(

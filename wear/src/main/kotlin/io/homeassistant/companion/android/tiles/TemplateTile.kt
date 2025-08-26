@@ -53,35 +53,34 @@ class TemplateTile : TileService() {
     @Inject
     lateinit var wearPrefsRepository: WearPrefsRepository
 
-    override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
-        serviceScope.future {
-            if (requestParams.currentState.lastClickableId == MODIFIER_CLICK_REFRESH) {
-                if (wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
-            }
-
-            val tileId = requestParams.tileId
-            val templateTileConfig = getTemplateTileConfig(tileId)
-            val freshness = when {
-                templateTileConfig.refreshInterval <= 1 -> 0
-                else -> templateTileConfig.refreshInterval
-            }
-
-            Tile.Builder()
-                .setResourcesVersion("1")
-                .setFreshnessIntervalMillis(freshness.toLong() * 1_000)
-                .setTileTimeline(
-                    if (serverManager.isRegistered()) {
-                        timeline(templateTileConfig)
-                    } else {
-                        loggedOutTimeline(
-                            this@TemplateTile,
-                            requestParams,
-                            commonR.string.template,
-                            commonR.string.template_tile_log_in,
-                        )
-                    },
-                ).build()
+    override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> = serviceScope.future {
+        if (requestParams.currentState.lastClickableId == MODIFIER_CLICK_REFRESH) {
+            if (wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
         }
+
+        val tileId = requestParams.tileId
+        val templateTileConfig = getTemplateTileConfig(tileId)
+        val freshness = when {
+            templateTileConfig.refreshInterval <= 1 -> 0
+            else -> templateTileConfig.refreshInterval
+        }
+
+        Tile.Builder()
+            .setResourcesVersion("1")
+            .setFreshnessIntervalMillis(freshness.toLong() * 1_000)
+            .setTileTimeline(
+                if (serverManager.isRegistered()) {
+                    timeline(templateTileConfig)
+                } else {
+                    loggedOutTimeline(
+                        this@TemplateTile,
+                        requestParams,
+                        commonR.string.template,
+                        commonR.string.template_tile_log_in,
+                    )
+                },
+            ).build()
+    }
 
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {
@@ -190,7 +189,11 @@ class TemplateTile : TileService() {
 
     private fun parseHtml(renderedText: String): LayoutElementBuilders.Spannable {
         // Replace control char \r\n, \r, \n and also \r\n, \r, \n as text literals in strings to <br>
-        val renderedSpanned = fromHtml(renderedText.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>"), FROM_HTML_MODE_LEGACY)
+        val renderedSpanned =
+            fromHtml(
+                renderedText.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>"),
+                FROM_HTML_MODE_LEGACY,
+            )
         return LayoutElementBuilders.Spannable.Builder().apply {
             var start = 0
             var end = 0
@@ -209,7 +212,8 @@ class TemplateTile : TileService() {
                                 ColorBuilders.ColorProp.Builder(span.foregroundColor).build(),
                             )
                             is RelativeSizeSpan -> {
-                                val defaultSize = 16 // https://developer.android.com/training/wearables/design/typography
+                                // https://developer.android.com/training/wearables/design/typography
+                                val defaultSize = 16
                                 setSize(
                                     DimensionBuilders.SpProp.Builder()
                                         .setValue(span.sizeChange * defaultSize)

@@ -1,9 +1,7 @@
 package io.homeassistant.companion.android.widgets.todo
 
 import android.annotation.SuppressLint
-import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -34,7 +32,6 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
@@ -57,14 +54,9 @@ import io.homeassistant.companion.android.util.previewServer2
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import io.homeassistant.companion.android.util.safeTopWindowInsets
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @AndroidEntryPoint
 class TodoWidgetConfigureActivity : BaseActivity() {
-    companion object {
-        private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.todo.TodoWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
-    }
-
     private val viewModel: TodoWidgetConfigureViewModel by viewModels()
     private val supportedTextColors: List<String>
         get() = listOf(
@@ -90,42 +82,27 @@ class TodoWidgetConfigureActivity : BaseActivity() {
             HomeAssistantAppTheme {
                 TodoWidgetConfigureScreen(
                     viewModel = viewModel,
-                    onAddWidget = { onSetupWidget() },
+                    onActionClick = { onActionClick() },
                 )
             }
         }
     }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        val extras = intent.extras
-        if (extras == null) {
-            Timber.d("Received new intent without data")
-            return
-        }
-        val widgetId = extras.getInt(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            AppWidgetManager.INVALID_APPWIDGET_ID,
-        )
-        if (extras.getBoolean(PIN_WIDGET_CALLBACK, false)) {
-            viewModel.onSetup(widgetId, supportedTextColors)
-            onAddWidget()
-        }
-    }
-
     @SuppressLint("ObsoleteSdkInt")
-    private fun onSetupWidget() {
-        if (intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) == true) {
-            if (
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                viewModel.isValidSelection()
-            ) {
-                requestPinWidget()
+    private fun onActionClick() {
+        lifecycleScope.launch {
+            if (intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) == true) {
+                if (
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                    viewModel.isValidSelection()
+                ) {
+                    requestPinWidget()
+                } else {
+                    showAddWidgetError()
+                }
             } else {
-                showAddWidgetError()
+                onUpdateWidget()
             }
-        } else {
-            onAddWidget()
         }
     }
 
@@ -134,42 +111,33 @@ class TodoWidgetConfigureActivity : BaseActivity() {
     private fun requestPinWidget() {
         val context = this@TodoWidgetConfigureActivity
         lifecycleScope.launch {
-            GlanceAppWidgetManager(context)
-                .requestPinGlanceAppWidget(
-                    TodoWidget::class.java,
-                    successCallback = PendingIntent.getActivity(
-                        context,
-                        System.currentTimeMillis().toInt(),
-                        Intent(context, TodoWidgetConfigureActivity::class.java)
-                            .putExtra(PIN_WIDGET_CALLBACK, true)
-                            .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
-                    ),
-                )
+            viewModel.requestWidgetCreation(context)
+            finish()
         }
     }
 
-    private fun onAddWidget() {
+    private suspend fun onUpdateWidget() {
         try {
-            viewModel.addWidgetConfiguration()
+            viewModel.updateWidgetConfiguration()
             setResult(RESULT_OK)
-            viewModel.updateWidget(this)
+            viewModel.updateWidget(this@TodoWidgetConfigureActivity)
             finish()
-        } catch (_: IllegalStateException) {
-            showAddWidgetError()
+        } catch (_: Exception) {
+            showUpdateWidgetError()
         }
     }
 
     private fun showAddWidgetError() {
         Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG).show()
     }
+
+    private fun showUpdateWidgetError() {
+        Toast.makeText(applicationContext, R.string.widget_update_error, Toast.LENGTH_LONG).show()
+    }
 }
 
 @Composable
-private fun TodoWidgetConfigureScreen(
-    viewModel: TodoWidgetConfigureViewModel,
-    onAddWidget: () -> Unit,
-) {
+private fun TodoWidgetConfigureScreen(viewModel: TodoWidgetConfigureViewModel, onActionClick: () -> Unit) {
     val servers by viewModel.servers.collectAsStateWithLifecycle()
     val entities by viewModel.entities.collectAsStateWithLifecycle()
 
@@ -187,7 +155,7 @@ private fun TodoWidgetConfigureScreen(
         textColorIndex = viewModel.textColorIndex,
         onTextColorSelected = { viewModel.textColorIndex = it },
         isUpdateWidget = viewModel.isUpdateWidget,
-        onAddWidget = onAddWidget,
+        onActionClick = onActionClick,
     )
 }
 
@@ -206,7 +174,7 @@ private fun TodoWidgetConfigureView(
     textColorIndex: Int,
     onTextColorSelected: (Int) -> Unit,
     isUpdateWidget: Boolean,
-    onAddWidget: () -> Unit,
+    onActionClick: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -258,7 +226,9 @@ private fun TodoWidgetConfigureView(
                 Switch(
                     checked = showCompleted,
                     onCheckedChange = { onShowCompletedChanged(it) },
-                    colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb)),
+                    colors = SwitchDefaults.colors(
+                        uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb),
+                    ),
                 )
             }
 
@@ -283,7 +253,7 @@ private fun TodoWidgetConfigureView(
 
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { onAddWidget() },
+                onClick = { onActionClick() },
             ) {
                 Text(stringResource(if (isUpdateWidget) R.string.update_widget else R.string.add_widget))
             }
@@ -315,7 +285,7 @@ private fun TodoWidgetConfigureViewPreview() {
             textColorIndex = 0,
             onTextColorSelected = {},
             isUpdateWidget = true,
-            onAddWidget = {},
+            onActionClick = {},
         )
     }
 }

@@ -12,9 +12,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import timber.log.Timber
 
-class FlashlightHelper @Inject constructor(
-    @ApplicationContext context: Context,
-) {
+class FlashlightHelper @Inject constructor(@ApplicationContext context: Context) {
 
     private val cameraManager by lazy { context.getSystemService<CameraManager>() }
     private val cameraId: String? by lazy {

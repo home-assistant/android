@@ -5,8 +5,6 @@ import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorUpdateReceiver
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import java.util.UUID
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import timber.log.Timber
 
 object DeviceCommandData {
@@ -59,22 +57,45 @@ object DeviceCommandData {
 private fun checkCommandFormat(data: Map<String, String>): Boolean {
     return when (data[NotificationData.MESSAGE]) {
         DeviceCommandData.COMMAND_BEACON_MONITOR -> {
-            !data[NotificationData.COMMAND].isNullOrEmpty() && data[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS
+            !data[NotificationData.COMMAND].isNullOrEmpty() &&
+                data[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS
         }
         DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
-            (!data[NotificationData.COMMAND].isNullOrEmpty() && data[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS) ||
+            (
+                !data[NotificationData.COMMAND].isNullOrEmpty() &&
+                    data[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS
+                ) ||
                 (
-                    (!data[NotificationData.COMMAND].isNullOrEmpty() && data[NotificationData.COMMAND] in DeviceCommandData.BLE_COMMANDS) &&
+                    (
+                        !data[NotificationData.COMMAND].isNullOrEmpty() &&
+                            data[NotificationData.COMMAND] in DeviceCommandData.BLE_COMMANDS
+                        ) &&
                         (
-                            (!data[DeviceCommandData.BLE_ADVERTISE].isNullOrEmpty() && data[DeviceCommandData.BLE_ADVERTISE] in DeviceCommandData.BLE_ADVERTISE_COMMANDS) ||
-                                (!data[DeviceCommandData.BLE_TRANSMIT].isNullOrEmpty() && data[DeviceCommandData.BLE_TRANSMIT] in DeviceCommandData.BLE_TRANSMIT_COMMANDS) ||
-                                (data[NotificationData.COMMAND] == DeviceCommandData.BLE_SET_UUID && !data[DeviceCommandData.BLE_UUID].isNullOrEmpty()) ||
-                                (data[NotificationData.COMMAND] == DeviceCommandData.BLE_SET_MAJOR && !data[DeviceCommandData.BLE_MAJOR].isNullOrEmpty()) ||
-                                (data[NotificationData.COMMAND] == DeviceCommandData.BLE_SET_MINOR && !data[DeviceCommandData.BLE_MINOR].isNullOrEmpty()) ||
+                            (
+                                !data[DeviceCommandData.BLE_ADVERTISE].isNullOrEmpty() &&
+                                    data[DeviceCommandData.BLE_ADVERTISE] in DeviceCommandData.BLE_ADVERTISE_COMMANDS
+                                ) ||
+                                (
+                                    !data[DeviceCommandData.BLE_TRANSMIT].isNullOrEmpty() &&
+                                        data[DeviceCommandData.BLE_TRANSMIT] in DeviceCommandData.BLE_TRANSMIT_COMMANDS
+                                    ) ||
+                                (
+                                    data[NotificationData.COMMAND] == DeviceCommandData.BLE_SET_UUID &&
+                                        !data[DeviceCommandData.BLE_UUID].isNullOrEmpty()
+                                    ) ||
+                                (
+                                    data[NotificationData.COMMAND] == DeviceCommandData.BLE_SET_MAJOR &&
+                                        !data[DeviceCommandData.BLE_MAJOR].isNullOrEmpty()
+                                    ) ||
+                                (
+                                    data[NotificationData.COMMAND] == DeviceCommandData.BLE_SET_MINOR &&
+                                        !data[DeviceCommandData.BLE_MINOR].isNullOrEmpty()
+                                    ) ||
                                 (
                                     data[NotificationData.COMMAND] == DeviceCommandData.BLE_SET_MEASURED_POWER &&
                                         (
-                                            data[DeviceCommandData.BLE_MEASURED_POWER]?.toIntOrNull() != null && data[DeviceCommandData.BLE_MEASURED_POWER]?.toInt()!! < 0
+                                            data[DeviceCommandData.BLE_MEASURED_POWER]?.toIntOrNull() != null &&
+                                                data[DeviceCommandData.BLE_MEASURED_POWER]?.toInt()!! < 0
                                             )
                                     )
                             )
@@ -84,10 +105,7 @@ private fun checkCommandFormat(data: Map<String, String>): Boolean {
     }
 }
 
-fun commandBeaconMonitor(
-    context: Context,
-    data: Map<String, String>,
-): Boolean {
+suspend fun commandBeaconMonitor(context: Context, data: Map<String, String>): Boolean {
     if (!checkCommandFormat(data)) {
         Timber.d(
             "Invalid beacon monitor command received, posting notification to device",
@@ -105,12 +123,7 @@ fun commandBeaconMonitor(
     return true
 }
 
-suspend fun commandBleTransmitter(
-    context: Context,
-    data: Map<String, String>,
-    sensorDao: SensorDao,
-    mainScope: CoroutineScope,
-): Boolean {
+suspend fun commandBleTransmitter(context: Context, data: Map<String, String>, sensorDao: SensorDao): Boolean {
     if (!checkCommandFormat(data)) {
         Timber.d(
             "Invalid ble transmitter command received, posting notification to device",
@@ -165,13 +178,11 @@ suspend fun commandBleTransmitter(
         )
 
         // Force the transmitter to restart and send updated attributes
-        mainScope.launch {
-            sensorDao.updateLastSentStatesAndIcons(
-                BluetoothSensorManager.bleTransmitter.id,
-                null,
-                null,
-            )
-        }
+        sensorDao.updateLastSentStatesAndIcons(
+            BluetoothSensorManager.bleTransmitter.id,
+            null,
+            null,
+        )
     }
     BluetoothSensorManager().requestSensorUpdate(context)
     SensorUpdateReceiver.updateSensors(context)

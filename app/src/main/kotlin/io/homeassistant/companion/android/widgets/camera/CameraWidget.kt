@@ -22,11 +22,16 @@ import coil3.size.Size
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.webview.WebViewActivity
+import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.widgetScope
+import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import io.homeassistant.companion.android.widgets.common.RemoteViewsTarget
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -40,8 +45,6 @@ import timber.log.Timber
 class CameraWidget : AppWidgetProvider() {
 
     companion object {
-        internal const val RECEIVE_DATA =
-            "io.homeassistant.companion.android.widgets.camera.CameraWidget.RECEIVE_DATA"
         internal const val UPDATE_IMAGE =
             "io.homeassistant.companion.android.widgets.camera.CameraWidget.UPDATE_IMAGE"
 
@@ -62,11 +65,7 @@ class CameraWidget : AppWidgetProvider() {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    override fun onUpdate(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray,
-    ) {
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them
         appWidgetIds.forEach { appWidgetId ->
             updateAppWidget(
@@ -128,7 +127,9 @@ class CameraWidget : AppWidgetProvider() {
         if (widget != null) {
             try {
                 val entityPictureUrl = retrieveCameraImageUrl(widget.serverId, widget.entityId)
-                val baseUrl = serverManager.getServer(widget.serverId)?.connection?.getUrl().toString().removeSuffix("/")
+                val baseUrl = serverManager.getServer(
+                    widget.serverId,
+                )?.connection?.getUrl().toString().removeSuffix("/")
                 url = "$baseUrl$entityPictureUrl"
             } catch (e: Exception) {
                 Timber.e(e, "Failed to fetch entity or entity does not exist")
@@ -216,9 +217,28 @@ class CameraWidget : AppWidgetProvider() {
 
         super.onReceive(context, intent)
         when (lastIntent) {
-            RECEIVE_DATA -> saveEntityConfiguration(context, intent.extras, appWidgetId)
+            UPDATE_WIDGETS -> updateAllWidgets(context)
             UPDATE_IMAGE -> updateAppWidget(context, appWidgetId)
             Intent.ACTION_SCREEN_ON -> updateAllWidgets(context)
+            ACTION_APPWIDGET_CREATED -> {
+                if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+                    FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
+                } else {
+                    widgetScope?.launch {
+                        val entity = intent.extras?.let {
+                            BundleCompat.getSerializable(
+                                it,
+                                EXTRA_WIDGET_ENTITY,
+                                CameraWidgetEntity::class.java,
+                            )
+                        }
+                        entity?.let {
+                            cameraWidgetDao.add(entity.copyWithWidgetId(appWidgetId))
+                        } ?: FailFast.fail { "Missing $EXTRA_WIDGET_ENTITY or it's of the wrong type in intent." }
+                    }
+                }
+                updateAllWidgets(context)
+            }
         }
     }
 

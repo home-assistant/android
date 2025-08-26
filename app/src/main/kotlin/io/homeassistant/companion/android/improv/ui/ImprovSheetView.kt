@@ -59,8 +59,12 @@ fun ImprovSheetView(
     onRestart: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var selectedName by rememberSaveable(screenState.initialDeviceName) { mutableStateOf<String?>(screenState.initialDeviceName) }
-    var selectedAddress by rememberSaveable(screenState.initialDeviceAddress) { mutableStateOf<String?>(screenState.initialDeviceAddress) }
+    var selectedName by rememberSaveable(screenState.initialDeviceName) {
+        mutableStateOf<String?>(screenState.initialDeviceName)
+    }
+    var selectedAddress by rememberSaveable(screenState.initialDeviceAddress) {
+        mutableStateOf<String?>(screenState.initialDeviceAddress)
+    }
     var submittedWifi by rememberSaveable { mutableStateOf(false) }
 
     ModalBottomSheet(
@@ -88,7 +92,10 @@ fun ImprovSheetView(
                 ImprovWifiInput(
                     activeSsid = if (
                         screenState.activeSsid?.isNotBlank() == true &&
-                        (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || screenState.activeSsid !== WifiManager.UNKNOWN_SSID)
+                        (
+                            Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
+                                screenState.activeSsid !== WifiManager.UNKNOWN_SSID
+                            )
                     ) {
                         screenState.activeSsid
                     } else {
@@ -159,10 +166,7 @@ fun ImprovSheetView(
 }
 
 @Composable
-fun ImprovDeviceRow(
-    device: ImprovDevice,
-    onClick: (ImprovDevice) -> Unit,
-) {
+fun ImprovDeviceRow(device: ImprovDevice, onClick: (ImprovDevice) -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -182,10 +186,7 @@ fun ImprovDeviceRow(
 }
 
 @Composable
-fun ImprovWifiInput(
-    activeSsid: String?,
-    onSubmit: (String, String) -> Unit,
-) {
+fun ImprovWifiInput(activeSsid: String?, onSubmit: (String, String) -> Unit) {
     var ssidInput by rememberSaveable { mutableStateOf(activeSsid ?: "") }
     var passwordInput by rememberSaveable { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -213,7 +214,8 @@ fun ImprovWifiInput(
             }),
             trailingIcon = {
                 val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                val description = stringResource(if (passwordVisible) commonR.string.hide_password else commonR.string.view_password)
+                val description =
+                    stringResource(if (passwordVisible) commonR.string.hide_password else commonR.string.view_password)
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(image, description)
                 }

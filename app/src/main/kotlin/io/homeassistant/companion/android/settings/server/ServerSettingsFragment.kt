@@ -46,7 +46,9 @@ import timber.log.Timber
 private const val BASE_INVITE_URL = "https://my.home-assistant.io/invite/#"
 
 @AndroidEntryPoint
-class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
+class ServerSettingsFragment :
+    PreferenceFragmentCompat(),
+    ServerSettingsView {
 
     companion object {
         const val TAG = "ServerSettingsFragment"
@@ -111,7 +113,10 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                 findPreference<EditTextPreference>("session_timeout")?.isVisible = false
             } else {
                 val settingsActivity = requireActivity() as SettingsActivity
-                val canAuth = settingsActivity.requestAuthentication(getString(commonR.string.biometric_set_title), ::setLockAuthenticationResult)
+                val canAuth = settingsActivity.requestAuthentication(
+                    getString(commonR.string.biometric_set_title),
+                    ::setLockAuthenticationResult,
+                )
                 isValid = canAuth
 
                 if (!canAuth) {
@@ -194,13 +199,16 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
                     .setMessage(commonR.string.server_delete_confirm)
                     .setPositiveButton(commonR.string.delete) { dialog, _ ->
                         dialog.cancel()
-                        serverDeleteHandler.postDelayed({
-                            serverDeleteDialog = AlertDialog.Builder(requireContext())
-                                .setMessage(commonR.string.server_delete_working)
-                                .setCancelable(false)
-                                .create()
-                            serverDeleteDialog?.show()
-                        }, 2500L)
+                        serverDeleteHandler.postDelayed(
+                            {
+                                serverDeleteDialog = AlertDialog.Builder(requireContext())
+                                    .setMessage(commonR.string.server_delete_working)
+                                    .setCancelable(false)
+                                    .create()
+                                serverDeleteDialog?.show()
+                            },
+                            2500L,
+                        )
                         lifecycleScope.launch { presenter.deleteServer() }
                     }
                     .setNegativeButton(commonR.string.cancel, null)
@@ -223,19 +231,29 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
 
                 override fun onPrepareMenu(menu: Menu) {
                     super.onPrepareMenu(menu)
-                    menu.findItem(R.id.share_server).isVisible = presenter.serverURL() != null
+                    lifecycleScope.launch {
+                        menu.findItem(R.id.share_server).isVisible = presenter.serverURL() != null
+                    }
                 }
 
                 override fun onMenuItemSelected(menuItem: MenuItem): Boolean = when (menuItem.itemId) {
                     R.id.share_server -> {
                         menuItem.isChecked = true
-                        val sendIntent: Intent = Intent().apply {
-                            action = Intent.ACTION_SEND
-                            putExtra(Intent.EXTRA_SUBJECT, getString(commonR.string.join_our_server))
-                            putExtra(Intent.EXTRA_TEXT, "$BASE_INVITE_URL${URLEncoder.encode(presenter.serverURL(), Charsets.UTF_8.toString())}")
-                            type = "text/plain"
+                        lifecycleScope.launch {
+                            val sendIntent: Intent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(Intent.EXTRA_SUBJECT, getString(commonR.string.join_our_server))
+                                putExtra(
+                                    Intent.EXTRA_TEXT,
+                                    "$BASE_INVITE_URL${URLEncoder.encode(
+                                        presenter.serverURL(),
+                                        Charsets.UTF_8.toString(),
+                                    )}",
+                                )
+                                type = "text/plain"
+                            }
+                            startActivity(Intent.createChooser(sendIntent, null))
                         }
-                        startActivity(Intent.createChooser(sendIntent, null))
                         true
                     }
                     else -> false
@@ -254,7 +272,14 @@ class ServerSettingsFragment : ServerSettingsView, PreferenceFragmentCompat() {
     }
 
     override fun enableInternalConnection(isEnabled: Boolean) {
-        val iconTint = if (isEnabled) ContextCompat.getColor(requireContext(), commonR.color.colorAccent) else Color.DKGRAY
+        val iconTint = if (isEnabled) {
+            ContextCompat.getColor(
+                requireContext(),
+                commonR.color.colorAccent,
+            )
+        } else {
+            Color.DKGRAY
+        }
 
         findPreference<EditTextPreference>("connection_internal")?.let {
             it.isEnabled = isEnabled

@@ -15,24 +15,30 @@ import kotlinx.coroutines.flow.Flow
 interface SensorDao {
 
     @Query("SELECT * FROM Sensors WHERE id = :id")
-    fun get(id: String): List<Sensor>
+    suspend fun get(id: String): List<Sensor>
 
     @Query("SELECT * FROM Sensors WHERE id = :id AND server_id = :serverId")
-    fun get(id: String, serverId: Int): Sensor?
+    suspend fun get(id: String, serverId: Int): Sensor?
 
     @Query("SELECT * FROM sensors")
     fun getAllFlow(): Flow<List<Sensor>>
 
     @Transaction
-    @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id")
-    fun getFull(id: String): Map<Sensor, List<Attribute>>
+    @Query(
+        "SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id",
+    )
+    suspend fun getFull(id: String): Map<Sensor, List<Attribute>>
 
     @Transaction
-    @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id AND sensors.server_id = :serverId")
-    fun getFull(id: String, serverId: Int): Map<Sensor, List<Attribute>>
+    @Query(
+        "SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id AND sensors.server_id = :serverId",
+    )
+    suspend fun getFull(id: String, serverId: Int): Map<Sensor, List<Attribute>>
 
     @Transaction
-    @Query("SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id")
+    @Query(
+        "SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id",
+    )
     fun getFullFlow(id: String): Flow<Map<Sensor, List<Attribute>>>
 
     @Query("SELECT * FROM Sensors WHERE server_id = :serverId")
@@ -43,23 +49,23 @@ interface SensorDao {
 
     @Transaction
     @Query("SELECT * FROM sensor_settings WHERE sensor_id = :id")
-    fun getSettings(id: String): List<SensorSetting>
+    suspend fun getSettings(id: String): List<SensorSetting>
 
     @Transaction
     @Query("SELECT * FROM sensor_settings WHERE sensor_id = :id ORDER BY sensor_id")
     fun getSettingsFlow(id: String): Flow<List<SensorSetting>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun add(sensor: Sensor)
+    suspend fun add(sensor: Sensor)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(attribute: Attribute)
+    suspend fun add(attribute: Attribute)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(attributes: List<Attribute>)
+    suspend fun add(attributes: List<Attribute>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(sensorSetting: SensorSetting)
+    suspend fun add(sensorSetting: SensorSetting)
 
     @Query("DELETE FROM sensors WHERE id = :sensorId AND server_id = :serverId")
     suspend fun removeSensor(sensorId: String, serverId: Int)
@@ -79,19 +85,19 @@ interface SensorDao {
     suspend fun clearSettings(sensorId: String)
 
     @Query("DELETE FROM sensor_settings WHERE sensor_id = :sensorId AND name = :settingName")
-    fun removeSetting(sensorId: String, settingName: String)
+    suspend fun removeSetting(sensorId: String, settingName: String)
 
     @Query("DELETE FROM sensor_settings WHERE sensor_id = :sensorId AND name IN (:settingNames)")
-    fun removeSettings(sensorId: String, settingNames: List<String>)
+    suspend fun removeSettings(sensorId: String, settingNames: List<String>)
 
     @Update
-    fun update(sensor: Sensor)
+    suspend fun update(sensor: Sensor)
 
     @Query("DELETE FROM sensor_attributes WHERE sensor_id = :sensorId")
-    fun clearAttributes(sensorId: String)
+    suspend fun clearAttributes(sensorId: String)
 
     @Transaction
-    fun replaceAllAttributes(sensorId: String, attributes: List<Attribute>) {
+    suspend fun replaceAllAttributes(sensorId: String, attributes: List<Attribute>) {
         clearAttributes(sensorId)
         add(attributes)
     }
@@ -100,9 +106,11 @@ interface SensorDao {
     suspend fun updateSettingEnabled(sensorId: String, settingName: String, enabled: Boolean)
 
     @Query("UPDATE sensor_settings SET value = :value WHERE sensor_id = :sensorId AND name = :settingName")
-    fun updateSettingValue(sensorId: String, settingName: String, value: String)
+    suspend fun updateSettingValue(sensorId: String, settingName: String, value: String)
 
-    @Query("UPDATE sensors SET last_sent_state = :state, last_sent_icon = :icon WHERE id = :sensorId AND server_id = :serverId")
+    @Query(
+        "UPDATE sensors SET last_sent_state = :state, last_sent_icon = :icon WHERE id = :sensorId AND server_id = :serverId",
+    )
     suspend fun updateLastSentStateAndIcon(sensorId: String, serverId: Int, state: String?, icon: String?)
 
     @Query("UPDATE sensors SET last_sent_state = :state, last_sent_icon = :icon WHERE id = :sensorId")
@@ -135,7 +143,7 @@ interface SensorDao {
     }
 
     @Transaction
-    fun getOrDefault(sensorId: String, serverId: Int, permission: Boolean, enabledByDefault: Boolean): Sensor? {
+    suspend fun getOrDefault(sensorId: String, serverId: Int, permission: Boolean, enabledByDefault: Boolean): Sensor? {
         val sensor = get(sensorId, serverId)
 
         if (sensor?.enabled == true && !permission) {
@@ -148,7 +156,12 @@ interface SensorDao {
     }
 
     @Transaction
-    fun getAnyIsEnabled(sensorId: String, servers: List<Int>, permission: Boolean, enabledByDefault: Boolean): Boolean {
+    suspend fun getAnyIsEnabled(
+        sensorId: String,
+        servers: List<Int>,
+        permission: Boolean,
+        enabledByDefault: Boolean,
+    ): Boolean {
         // Create and update entries for all
         var sensorList = get(sensorId)
         var changedList = false

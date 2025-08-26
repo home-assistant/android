@@ -34,8 +34,8 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             apply(plugin = libs.plugins.kotlin.android.getPluginId())
             apply(plugin = libs.plugins.ksp.getPluginId())
             apply(plugin = libs.plugins.hilt.getPluginId())
-            apply(plugin = libs.plugins.compose.compiler.getPluginId())
             AndroidCommonConventionPlugin().apply(target)
+            AndroidComposeConventionPlugin().apply(target)
 
             extensions.configure<ApplicationExtension> {
                 namespace = APPLICATION_ID
@@ -46,11 +46,14 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
 
                     versionName = project.version.toString()
                     versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+
+                    val noStrictMode = project.findProperty("noStrictMode")?.toString()?.ifEmpty { "true" }
+                        ?.toBoolean() ?: false
+                    buildConfigField("Boolean", "NO_STRICT_MODE", noStrictMode.toString())
                 }
 
                 buildFeatures {
                     viewBinding = true
-                    compose = true
                 }
 
                 signingConfigs {

@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.util
 
 import io.homeassistant.companion.android.common.util.FailFast.setHandler
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * A handler for [FailFast] exceptions.
@@ -9,7 +10,7 @@ import io.homeassistant.companion.android.common.util.FailFast.setHandler
  * Don't forget to register the handler in [FailFast.setHandler].
  */
 fun interface FailFastHandler {
-    fun handleException(exception: Exception, additionalMessage: String?)
+    fun handleException(throwable: Throwable, additionalMessage: String?)
 }
 
 private class FailFastException : Exception {
@@ -62,6 +63,19 @@ object FailFast {
     }
 
     /**
+     * Triggers the configured [FailFastHandler] with a given [Throwable].
+     *
+     * This method allows to manually trigger the [FailFastHandler] by providing a specific
+     * [Throwable]. The provided `throwable` is passed directly to the [FailFastHandler], to keep
+     * the original stack trace.
+     *
+     * @param throwable The [Throwable] to be handled.
+     */
+    fun failWith(throwable: Throwable) {
+        handler.handleException(throwable, null)
+    }
+
+    /**
      * Checks a condition and triggers the configured [FailFastHandler] if the condition is true.
      *
      * This method is used to assert conditions that should not occur during normal execution.
@@ -90,11 +104,12 @@ object FailFast {
      * @param block The block of code to execute.
      */
     fun failOnCatch(message: () -> String? = { null }, block: () -> Unit) {
-        failOnCatch<Unit>(message, Unit, block)
+        failOnCatch(message, Unit, block)
     }
 
     /**
-     * Executes a block of code that returns a value and triggers the configured [FailFastHandler] if an exception occurs, returning a fallback value.
+     * Executes a block of code that returns a value and triggers the configured [FailFastHandler] if an exception occurs,
+     * returning a fallback value.
      *
      * This method is similar to the other `failOnCatch` but is designed for blocks of code that return a value.
      * If an exception is caught during the execution of the `block`, a [FailFastException] is created
@@ -111,6 +126,36 @@ object FailFast {
     fun <T> failOnCatch(message: () -> String? = { null }, fallback: T, block: () -> T): T {
         return try {
             block()
+        } catch (e: Throwable) {
+            handler.handleException(FailFastException(e), message())
+            fallback
+        }
+    }
+
+    /**
+     * Executes a suspending block of code that returns a value and triggers the configured [FailFastHandler] if an exception occurs,
+     * returning a fallback value.
+     *
+     * This method is similar to `failOnCatch` but is designed for suspending blocks of code that return a value.
+     * If an exception (other than [CancellationException]) is caught during the execution of the `block`, a [FailFastException] is created
+     * wrapping the original exception and passed to the [FailFastHandler] along with an optional `message`.
+     * The `fallback` value is then returned if the handler did not kill the process.
+     * [CancellationException]s are re-thrown as they are considered a normal part of coroutine behavior.
+     *
+     * @param T The type of the value returned by the `block` and the `fallback` value.
+     * @param message A lambda function that returns an optional additional message for the handler.
+     *                Defaults to a lambda returning `null`.
+     * @param fallback The value to return if an exception occurs.
+     * @param block The suspending block of code to execute, which is expected to return a value of type `T`.
+     * @return The result of the `block` execution, or the `fallback` value if an exception occurs.
+     * @throws CancellationException if the coroutine is cancelled during the execution of the `block`.
+     */
+    suspend fun <T> failOnCatchSuspend(message: () -> String? = { null }, fallback: T, block: suspend () -> T): T {
+        return try {
+            block()
+        } catch (e: CancellationException) {
+            // re-throw in case of cancellation since it's a normal behavior
+            throw e
         } catch (e: Throwable) {
             handler.handleException(FailFastException(e), message())
             fallback

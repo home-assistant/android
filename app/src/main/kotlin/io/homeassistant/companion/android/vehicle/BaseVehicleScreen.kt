@@ -2,16 +2,14 @@ package io.homeassistant.companion.android.vehicle
 
 import android.car.Car
 import android.car.drivingstate.CarUxRestrictionsManager
-import android.content.pm.PackageManager
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import io.homeassistant.companion.android.common.util.isAutomotive
 import timber.log.Timber
 
-abstract class BaseVehicleScreen(
-    carContext: CarContext,
-) : Screen(carContext) {
+abstract class BaseVehicleScreen(carContext: CarContext) : Screen(carContext) {
     private var car: Car? = null
     private var carRestrictionManager: CarUxRestrictionsManager? = null
     protected val isDrivingOptimized
@@ -44,7 +42,7 @@ abstract class BaseVehicleScreen(
     abstract fun onDrivingOptimizedChanged(newState: Boolean)
 
     private fun registerAutomotiveRestrictionListener() {
-        if (carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+        if (carContext.isAutomotive()) {
             Timber.i("Register for Automotive Restrictions")
             car = Car.createCar(carContext)
             carRestrictionManager =

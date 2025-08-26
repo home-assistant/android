@@ -14,8 +14,10 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -30,7 +32,7 @@ import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.settings.language.LanguagesManager
-import io.homeassistant.companion.android.themes.ThemesManager
+import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.UrlUtil
 import javax.inject.Inject
@@ -48,12 +50,13 @@ import timber.log.Timber
 class SettingsPresenterImpl @Inject constructor(
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
-    private val themesManager: ThemesManager,
+    private val nightModeManager: NightModeManager,
     private val langsManager: LanguagesManager,
     private val changeLog: ChangeLog,
     private val settingsDao: SettingsDao,
     private val sensorDao: SensorDao,
-) : SettingsPresenter, PreferenceDataStore() {
+) : PreferenceDataStore(),
+    SettingsPresenter {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -104,7 +107,11 @@ class SettingsPresenterImpl @Inject constructor(
                 "assist_voice_command_intent" ->
                     view.getPackageManager()?.setComponentEnabledSetting(
                         voiceCommandAppComponent,
-                        if (value) PackageManager.COMPONENT_ENABLED_STATE_DEFAULT else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        if (value) {
+                            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
+                        } else {
+                            PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                        },
                         PackageManager.DONT_KILL_APP,
                     )
                 "enable_ha_launcher" -> enableLauncherMode(value)
@@ -115,7 +122,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun getString(key: String, defValue: String?): String? = runBlocking {
         when (key) {
-            "themes" -> themesManager.getCurrentTheme()
+            "themes" -> nightModeManager.getCurrentNightMode().storageValue
             "languages" -> langsManager.getCurrentLang()
             "page_zoom" -> prefsRepository.getPageZoomLevel().toString()
             "screen_orientation" -> prefsRepository.getScreenOrientation()
@@ -126,7 +133,7 @@ class SettingsPresenterImpl @Inject constructor(
     override fun putString(key: String, value: String?) {
         mainScope.launch {
             when (key) {
-                "themes" -> themesManager.saveTheme(value)
+                "themes" -> nightModeManager.saveNightMode(NightModeTheme.fromStorageValue(value))
                 "languages" -> langsManager.saveLang(value)
                 "page_zoom" -> prefsRepository.setPageZoomLevel(value?.toIntOrNull())
                 "screen_orientation" -> prefsRepository.saveScreenOrientation(value)
@@ -231,7 +238,7 @@ class SettingsPresenterImpl @Inject constructor(
         )
     }
 
-    private fun setNotifications(serverId: Int, enabled: Boolean) {
+    private suspend fun setNotifications(serverId: Int, enabled: Boolean) {
         // Full: this only refers to the system permission on Android 13+ so no changes are necessary.
         // Minimal: change persistent connection setting to reflect preference.
         if (BuildConfig.FLAVOR != "full") {
@@ -266,13 +273,13 @@ class SettingsPresenterImpl @Inject constructor(
         var assistantSuggestion = serverManager.defaultServers.any { it.version?.isAtLeast(2023, 5) == true }
         assistantSuggestion = if (
             assistantSuggestion &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-            context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+            context.isAutomotive()
         ) {
             false
         } else if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val roleManager = context.getSystemService<RoleManager>()
-            roleManager?.isRoleAvailable(RoleManager.ROLE_ASSISTANT) == true && !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)
+            roleManager?.isRoleAvailable(RoleManager.ROLE_ASSISTANT) == true &&
+                !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)
         } else if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val defaultApp: String? = Settings.Secure.getString(context.contentResolver, "assistant")
             defaultApp?.contains(BuildConfig.APPLICATION_ID) == false
@@ -289,7 +296,9 @@ class SettingsPresenterImpl @Inject constructor(
         }
 
         // Notifications
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            !NotificationManagerCompat.from(context).areNotificationsEnabled()
+        ) {
             suggestions += SettingsHomeSuggestion(
                 SettingsPresenter.SUGGESTION_NOTIFICATION_PERMISSION,
                 commonR.string.suggestion_notifications_title,
@@ -310,7 +319,11 @@ class SettingsPresenterImpl @Inject constructor(
     private fun enableLauncherMode(enable: Boolean) {
         view.getPackageManager()?.setComponentEnabledSetting(
             launcherAliasComponent,
-            if (enable) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            if (enable) {
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+            } else {
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            },
             PackageManager.DONT_KILL_APP,
         )
     }

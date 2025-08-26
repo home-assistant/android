@@ -20,10 +20,8 @@ import javax.inject.Inject
 import timber.log.Timber
 
 @HiltViewModel
-class OnboardingViewModel @Inject constructor(
-    val serverManager: ServerManager,
-    app: Application,
-) : AndroidViewModel(app) {
+class OnboardingViewModel @Inject constructor(val serverManager: ServerManager, app: Application) :
+    AndroidViewModel(app) {
 
     private val _homeAssistantSearcher = HomeAssistantSearcher(
         nsdManager = app.getSystemService()!!,
@@ -104,7 +102,10 @@ class OnboardingViewModel @Inject constructor(
 
     private fun onInstanceFound(instance: HomeAssistantInstance) {
         if (
-            (discoveryOptions == OnboardApp.DiscoveryOptions.ADD_EXISTING_EXTERNAL || discoveryOptions == OnboardApp.DiscoveryOptions.HIDE_EXISTING) &&
+            (
+                discoveryOptions == OnboardApp.DiscoveryOptions.ADD_EXISTING_EXTERNAL ||
+                    discoveryOptions == OnboardApp.DiscoveryOptions.HIDE_EXISTING
+                ) &&
             serverManager.defaultServers.any { it.connection.hasUrl(instance.url) }
         ) {
             // Skip anything with a URL known to the app, as it is added initially or should be hidden

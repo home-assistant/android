@@ -11,7 +11,9 @@ import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.updateAll
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.widget.WidgetDao
+import io.homeassistant.companion.android.database.widget.WidgetEntity
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -24,7 +26,8 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 private fun newCoroutineScopeProvider(): () -> CoroutineScope {
-    val exceptionHandler = CoroutineExceptionHandler { _, throwable -> Timber.e(throwable, "Unhandled error in widget scope") }
+    val exceptionHandler =
+        CoroutineExceptionHandler { _, throwable -> Timber.e(throwable, "Unhandled error in widget scope") }
     // Use SupervisorJob to avoid cancelling all jobs when one fails since the scope is used across all the widgets
     return { CoroutineScope(Dispatchers.Main + SupervisorJob() + exceptionHandler) }
 }
@@ -32,12 +35,14 @@ private fun newCoroutineScopeProvider(): () -> CoroutineScope {
 data class EntitiesPerServer(val serverId: Int, val entityIds: List<String>)
 
 /**
- * Base class for Glance widgets that update based on entity state changes.
+ * Base class for Glance widgets that handles the persistence in the database of a created widget and update of the
+ * widget based on entity state changes.
  *
  * This class provides the foundational functionality for managing widget updates, handling lifecycle events,
  * and observing entity state changes. It is designed to be extended by specific widget implementations.
  *
  * ### Key Features:
+ * - **Widget entity persistence**: Persist the [WidgetEntity] given while creating the widget using [EXTRA_WIDGET_ENTITY] inside the [DAO].
  * - **Entity state observation**: Watches for updates to specific entities and triggers widget updates accordingly.
  * - **Lifecycle management**: Handles widget lifecycle action [Intent.ACTION_SCREEN_ON], [Intent.ACTION_SCREEN_OFF] and [AppWidgetManager.ACTION_APPWIDGET_UPDATE].
  * - **Real-time updates**: Supports real-time updates for widgets when the user grants the necessary permissions.
@@ -85,7 +90,7 @@ data class EntitiesPerServer(val serverId: Int, val entityIds: List<String>)
  * @param DAO The type of the DAO used for managing widget data in the database. It must implement [WidgetDao] and
  *            be injectable with Hilt.
  */
-abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTesting constructor(
+abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetDao<T>> @VisibleForTesting constructor(
     private val widgetScopeProvider: () -> CoroutineScope,
     private val glanceManagerProvider: (Context) -> GlanceAppWidgetManager,
 ) : GlanceAppWidgetReceiver() {
@@ -130,6 +135,20 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
                     glanceAppWidget.updateAll(context)
                 }
             }
+            ACTION_APPWIDGET_CREATED -> {
+                if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+                    FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
+                } else {
+                    widgetScope.launch {
+                        // Use deprecated function to not have to specify the class of T
+                        @Suppress("DEPRECATION", "UNCHECKED_CAST")
+                        val entity = intent.getSerializableExtra(EXTRA_WIDGET_ENTITY) as? T
+                        entity?.let {
+                            dao.add(entity.copyWithWidgetId(appWidgetId))
+                        } ?: FailFast.fail { "Missing $EXTRA_WIDGET_ENTITY or it's of the wrong type in intent." }
+                    }
+                }
+            }
         }
     }
 
@@ -169,12 +188,12 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
 
     private fun startWatchingForEntitiesChanges(context: Context) {
         setupWidgetScope()
-        if (!serverManager.isRegistered()) {
-            Timber.tag(widgetClassName).d("No server registered won't watch for entities")
-            return
-        }
-
         widgetScope.launch {
+            if (!serverManager.isRegistered()) {
+                Timber.tag(widgetClassName).d("No server registered won't watch for entities")
+                return@launch
+            }
+
             val entitiesPerServer = cleanupOrphansWidgetAndGetEntitiesByServer(context)
 
             entitiesPerServer.forEach { (appWidgetId, entitiesPerServer) ->
@@ -190,7 +209,9 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
                 }
                 if (entityUpdatesFlow != null) {
                     widgetJobs[appWidgetId] = widgetScope.launch {
-                        Timber.tag(widgetClassName).d("Watching updates of entities($entitiesId) for widget $appWidgetId")
+                        Timber.tag(
+                            widgetClassName,
+                        ).d("Watching updates of entities($entitiesId) for widget $appWidgetId")
                         entityUpdatesFlow.collect {
                             onEntityUpdate(context, appWidgetId, it)
                             updateView(context, appWidgetId)
@@ -214,9 +235,7 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
         widgetJobs.remove(appWidgetId)?.cancel()
     }
 
-    private suspend fun cleanupOrphansWidgetAndGetEntitiesByServer(
-        context: Context,
-    ): Map<Int, EntitiesPerServer> {
+    private suspend fun cleanupOrphansWidgetAndGetEntitiesByServer(context: Context): Map<Int, EntitiesPerServer> {
         val manager = glanceManagerProvider(context)
         val glanceIds = manager.getGlanceIds(glanceAppWidget.javaClass)
 
@@ -248,10 +267,7 @@ abstract class BaseGlanceEntityWidgetReceiver<DAO : WidgetDao> @VisibleForTestin
      * update your data source from elsewhere in the app, make sure to call `update` in case a
      * Worker for this widget is not currently running.
      */
-    private suspend fun updateView(
-        context: Context,
-        appWidgetId: Int,
-    ) {
+    private suspend fun updateView(context: Context, appWidgetId: Int) {
         val manager = glanceManagerProvider(context)
         if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
             val glanceId = manager.getGlanceIdBy(appWidgetId)

@@ -6,13 +6,11 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
-import androidx.core.os.BundleCompat
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import com.google.android.material.color.DynamicColors
@@ -29,17 +27,13 @@ import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.RemoteViewsTarget
 import java.util.LinkedList
-import javax.inject.Inject
-import kotlin.collections.HashMap
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
-class MediaPlayerControlsWidget : BaseWidgetProvider() {
+class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
 
     companion object {
-        internal const val RECEIVE_DATA =
-            "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.RECEIVE_DATA"
         internal const val UPDATE_MEDIA_IMAGE =
             "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.UPDATE_MEDIA_IMAGE"
         internal const val CALL_PREV_TRACK =
@@ -56,28 +50,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_VOLUME_DOWN"
         internal const val CALL_VOLUME_UP =
             "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_VOLUME_UP"
-
-        internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
-        internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
-        internal const val EXTRA_LABEL = "EXTRA_LABEL"
-        internal const val EXTRA_SHOW_VOLUME = "EXTRA_SHOW_VOLUME"
-        internal const val EXTRA_SHOW_SOURCE = "EXTRA_SHOW_VOLUME_SOURCE"
-        internal const val EXTRA_SHOW_SKIP = "EXTRA_INCLUDE_SKIP"
-        internal const val EXTRA_SHOW_SEEK = "EXTRA_INCLUDE_SEEK"
-        internal const val EXTRA_BACKGROUND_TYPE = "EXTRA_BACKGROUND_TYPE"
     }
-
-    @Inject
-    lateinit var mediaPlayCtrlWidgetDao: MediaPlayerControlsWidgetDao
 
     override fun getWidgetProvider(context: Context): ComponentName =
         ComponentName(context, MediaPlayerControlsWidget::class.java)
 
-    override fun onUpdate(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray,
-    ) {
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them
         appWidgetIds.forEach { appWidgetId ->
             updateView(
@@ -104,7 +82,11 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
-    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity?): RemoteViews {
+    override suspend fun getWidgetRemoteViews(
+        context: Context,
+        appWidgetId: Int,
+        suggestedEntity: Entity?,
+    ): RemoteViews {
         val updateMediaIntent = Intent(context, MediaPlayerControlsWidget::class.java).apply {
             action = UPDATE_MEDIA_IMAGE
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -145,9 +127,17 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        val widget = mediaPlayCtrlWidgetDao.get(appWidgetId)
-        val useDynamicColors = widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
-        return RemoteViews(context.packageName, if (useDynamicColors) R.layout.widget_media_controls_wrapper_dynamiccolor else R.layout.widget_media_controls_wrapper_default).apply {
+        val widget = dao.get(appWidgetId)
+        val useDynamicColors =
+            widget?.backgroundType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable()
+        return RemoteViews(
+            context.packageName,
+            if (useDynamicColors) {
+                R.layout.widget_media_controls_wrapper_dynamiccolor
+            } else {
+                R.layout.widget_media_controls_wrapper_default
+            },
+        ).apply {
             if (widget != null) {
                 val entityIds: LinkedList<String> = LinkedList()
                 entityIds.addAll(widget.entityId.split(","))
@@ -171,7 +161,11 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     )
                 }
 
-                val artist = (entity?.attributes?.get("media_artist") ?: entity?.attributes?.get("media_album_artist"))?.toString()
+                val artist = (
+                    entity?.attributes?.get(
+                        "media_artist",
+                    ) ?: entity?.attributes?.get("media_album_artist")
+                    )?.toString()
                 val title = entity?.attributes?.get("media_title")?.toString()
                 val album = entity?.attributes?.get("media_album_name")?.toString()
                 val icon = entity?.attributes?.get("icon")?.toString()
@@ -247,8 +241,16 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                 )
 
                 val entityPictureUrl = entity?.attributes?.get("entity_picture")?.toString()
-                val baseUrl = serverManager.getServer(widget.serverId)?.connection?.getUrl().toString().removeSuffix("/")
-                val url = if (entityPictureUrl?.startsWith("http") == true) entityPictureUrl else "$baseUrl$entityPictureUrl"
+                val baseUrl = serverManager.getServer(
+                    widget.serverId,
+                )?.connection?.getUrl().toString().removeSuffix("/")
+                val url = if (entityPictureUrl?.startsWith("http") ==
+                    true
+                ) {
+                    entityPictureUrl
+                } else {
+                    "$baseUrl$entityPictureUrl"
+                }
                 if (entityPictureUrl == null) {
                     setViewVisibility(
                         R.id.widgetMediaPlaceholder,
@@ -401,9 +403,14 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     }
 
     override suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>> =
-        mediaPlayCtrlWidgetDao.getAll().associate { it.id to (it.serverId to it.entityId.split(",")) }
+        dao.getAll().associate { it.id to (it.serverId to it.entityId.split(",")) }
 
-    private suspend fun getEntity(context: Context, serverId: Int, entityIds: List<String>, suggestedEntity: Entity?): Entity? {
+    private suspend fun getEntity(
+        context: Context,
+        serverId: Int,
+        entityIds: List<String>,
+        suggestedEntity: Entity?,
+    ): Entity? {
         val entity: Entity?
         try {
             entity = if (suggestedEntity != null && entityIds.contains(suggestedEntity.entityId)) {
@@ -444,8 +451,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                 context,
                 appWidgetId,
             )
-            RECEIVE_DATA -> {
-                saveEntityConfiguration(context, intent.extras, appWidgetId)
+            UPDATE_WIDGETS -> {
                 super.onScreenOn(context)
             }
             UPDATE_MEDIA_IMAGE -> updateView(context, appWidgetId)
@@ -459,51 +465,15 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
-    override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
-        if (extras == null) return
-
-        val serverId = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
-        val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
-        val labelSelection: String? = extras.getString(EXTRA_LABEL)
-        val showSkip: Boolean = extras.getBoolean(EXTRA_SHOW_SKIP)
-        val showSeek: Boolean = extras.getBoolean(EXTRA_SHOW_SEEK)
-        val showVolume: Boolean = extras.getBoolean(EXTRA_SHOW_VOLUME)
-        val showSource: Boolean = extras.getBoolean(EXTRA_SHOW_SOURCE)
-        val backgroundType = BundleCompat.getSerializable(extras, EXTRA_BACKGROUND_TYPE, WidgetBackgroundType::class.java)
-            ?: WidgetBackgroundType.DAYNIGHT
-
-        if (serverId == null || entitySelection == null) {
-            Timber.e("Did not receive complete configuration data")
-            return
-        }
-
-        widgetScope?.launch {
-            Timber.d(
-                "Saving action call config data:" + System.lineSeparator() +
-                    "entity id: " + entitySelection + System.lineSeparator(),
-            )
-            mediaPlayCtrlWidgetDao.add(
-                MediaPlayerControlsWidgetEntity(
-                    appWidgetId,
-                    serverId,
-                    entitySelection,
-                    labelSelection,
-                    showSkip,
-                    showSeek,
-                    showVolume,
-                    showSource,
-                    backgroundType,
-                ),
-            )
-
-            onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
-        }
-    }
-
     override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity) {
-        mediaPlayCtrlWidgetDao.get(appWidgetId)?.let {
+        dao.get(appWidgetId)?.let {
             widgetScope?.launch {
-                val views = getWidgetRemoteViews(context, appWidgetId, getEntity(context, it.serverId, it.entityId.split(","), null))
+                val views =
+                    getWidgetRemoteViews(
+                        context,
+                        appWidgetId,
+                        getEntity(context, it.serverId, it.entityId.split(","), null),
+                    )
                 AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
             }
         }
@@ -512,7 +482,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     private fun callPreviousTrackAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Timber.d("Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
 
             if (entity == null) {
                 Timber.d("Failed to retrieve media player entity")
@@ -526,7 +496,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             val domain = "media_player"
             val action = "media_previous_track"
-            val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
+            val entityId: String = getEntity(
+                context,
+                entity.serverId,
+                entity.entityId.split(","),
+                null,
+            )?.entityId.toString()
 
             val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
@@ -537,7 +512,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     private fun callRewindAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Timber.d("Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
 
             if (entity == null) {
                 Timber.d("Failed to retrieve media player entity")
@@ -572,7 +547,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             val domain = "media_player"
             val action = "media_seek"
-            val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
+            val entityId: String = getEntity(
+                context,
+                entity.serverId,
+                entity.entityId.split(","),
+                null,
+            )?.entityId.toString()
 
             val actionDataMap: HashMap<String, Any> = hashMapOf(
                 "entity_id" to entityId,
@@ -590,7 +570,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     private fun callPlayPauseAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Timber.d("Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
 
             if (entity == null) {
                 Timber.d("Failed to retrieve media player entity")
@@ -604,7 +584,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             val domain = "media_player"
             val action = "media_play_pause"
-            val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
+            val entityId: String = getEntity(
+                context,
+                entity.serverId,
+                entity.entityId.split(","),
+                null,
+            )?.entityId.toString()
 
             val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
@@ -619,7 +604,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     private fun callFastForwardAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Timber.d("Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
 
             if (entity == null) {
                 Timber.d("Failed to retrieve media player entity")
@@ -654,7 +639,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             val domain = "media_player"
             val action = "media_seek"
-            val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
+            val entityId: String = getEntity(
+                context,
+                entity.serverId,
+                entity.entityId.split(","),
+                null,
+            )?.entityId.toString()
 
             val actionDataMap: HashMap<String, Any> = hashMapOf(
                 "entity_id" to entityId,
@@ -672,7 +662,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     private fun callNextTrackAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Timber.d("Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
 
             if (entity == null) {
                 Timber.d("Failed to retrieve media player entity")
@@ -686,7 +676,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             val domain = "media_player"
             val action = "media_next_track"
-            val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
+            val entityId: String = getEntity(
+                context,
+                entity.serverId,
+                entity.entityId.split(","),
+                null,
+            )?.entityId.toString()
 
             val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
@@ -701,7 +696,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     private fun callVolumeDownAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Timber.d("Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
 
             if (entity == null) {
                 Timber.d("Failed to retrieve media player entity")
@@ -715,7 +710,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             val domain = "media_player"
             val action = "volume_down"
-            val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
+            val entityId: String = getEntity(
+                context,
+                entity.serverId,
+                entity.entityId.split(","),
+                null,
+            )?.entityId.toString()
 
             val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
@@ -730,7 +730,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     private fun callVolumeUpAction(context: Context, appWidgetId: Int) {
         widgetScope?.launch {
             Timber.d("Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
 
             if (entity == null) {
                 Timber.d("Failed to retrieve media player entity")
@@ -744,7 +744,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             val domain = "media_player"
             val action = "volume_up"
-            val entityId: String = getEntity(context, entity.serverId, entity.entityId.split(","), null)?.entityId.toString()
+            val entityId: String = getEntity(
+                context,
+                entity.serverId,
+                entity.entityId.split(","),
+                null,
+            )?.entityId.toString()
 
             val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
@@ -758,7 +763,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         widgetScope?.launch {
-            mediaPlayCtrlWidgetDao.deleteAll(appWidgetIds)
+            dao.deleteAll(appWidgetIds)
             appWidgetIds.forEach { removeSubscription(it) }
         }
     }

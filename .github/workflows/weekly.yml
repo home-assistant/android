@@ -9,7 +9,7 @@ jobs:
     name: Tag Weekly Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -34,4 +34,15 @@ jobs:
               inputs: {
                 "beta": "true",
               },
+            })
+
+      - name: Trigger Prepare Next Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'prepareNextRelease.yml',
+              ref: 'main',
             })

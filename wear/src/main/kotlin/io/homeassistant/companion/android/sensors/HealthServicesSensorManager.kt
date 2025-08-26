@@ -23,7 +23,11 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.AppDatabase
 import java.time.Instant
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.guava.await
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
@@ -99,6 +103,8 @@ class HealthServicesSensorManager : SensorManager {
     private var dataTypesRegistered = emptySet<DataType<*, *>>()
     private var activityStateRegistered = false
 
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
+
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/wear-os/sensors#health-services"
     }
@@ -121,16 +127,24 @@ class HealthServicesSensorManager : SensorManager {
 
         val supportedSensors = mutableListOf(userActivityState)
 
-        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.FLOORS_DAILY) == true) {
+        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.FLOORS_DAILY) ==
+            true
+        ) {
             supportedSensors += dailyFloors
         }
-        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.DISTANCE_DAILY) == true) {
+        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.DISTANCE_DAILY) ==
+            true
+        ) {
             supportedSensors += dailyDistance
         }
-        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.CALORIES_DAILY) == true) {
+        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.CALORIES_DAILY) ==
+            true
+        ) {
             supportedSensors += dailyCalories
         }
-        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.STEPS_DAILY) == true) {
+        if (passiveMonitoringCapabilities?.supportedDataTypesPassiveMonitoring?.contains(DataType.STEPS_DAILY) ==
+            true
+        ) {
             supportedSensors += dailySteps
         }
         return supportedSensors
@@ -157,8 +171,11 @@ class HealthServicesSensorManager : SensorManager {
         val dailyStepsEnabled = isEnabled(latestContext, dailySteps)
 
         if (
-            !activityStateEnabled && !dailyFloorEnabled && !dailyDistanceEnabled &&
-            !dailyCaloriesEnabled && !dailyStepsEnabled
+            !activityStateEnabled &&
+            !dailyFloorEnabled &&
+            !dailyDistanceEnabled &&
+            !dailyCaloriesEnabled &&
+            !dailyStepsEnabled
         ) {
             clearHealthServicesCallBack()
             return
@@ -186,7 +203,10 @@ class HealthServicesSensorManager : SensorManager {
             .setDataTypes(dataTypes)
             .build()
 
-        if (dataTypesRegistered != dataTypes || activityStateRegistered != activityStateEnabled || callbackLastUpdated + 1800000 < System.currentTimeMillis()) {
+        if (dataTypesRegistered != dataTypes ||
+            activityStateRegistered != activityStateEnabled ||
+            callbackLastUpdated + 1800000 < System.currentTimeMillis()
+        ) {
             clearHealthServicesCallBack()
         }
 
@@ -196,30 +216,32 @@ class HealthServicesSensorManager : SensorManager {
         val passiveListenerCallback: PassiveListenerCallback = object : PassiveListenerCallback {
             override fun onUserActivityInfoReceived(info: UserActivityInfo) {
                 Timber.d("User activity state: ${info.userActivityState.name}")
-                callbackLastUpdated = System.currentTimeMillis()
-                val forceUpdate = info.userActivityState == UserActivityState.USER_ACTIVITY_EXERCISE
-                onSensorUpdated(
-                    latestContext,
-                    userActivityState,
-                    when (info.userActivityState) {
-                        UserActivityState.USER_ACTIVITY_ASLEEP -> "asleep"
-                        UserActivityState.USER_ACTIVITY_PASSIVE -> "passive"
-                        UserActivityState.USER_ACTIVITY_EXERCISE -> "exercise"
-                        else -> STATE_UNKNOWN
-                    },
-                    getActivityIcon(info),
-                    mapOf(
-                        "time" to info.stateChangeTime,
-                        "exercise_type" to info.exerciseInfo?.exerciseType?.name,
-                        "options" to listOf("asleep", "passive", "exercise"),
-                    ),
-                    forceUpdate = forceUpdate,
-                )
-                val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-                val sensorData = sensorDao.get(userActivityState.id)
+                ioScope.launch {
+                    callbackLastUpdated = System.currentTimeMillis()
+                    val forceUpdate = info.userActivityState == UserActivityState.USER_ACTIVITY_EXERCISE
+                    onSensorUpdated(
+                        latestContext,
+                        userActivityState,
+                        when (info.userActivityState) {
+                            UserActivityState.USER_ACTIVITY_ASLEEP -> "asleep"
+                            UserActivityState.USER_ACTIVITY_PASSIVE -> "passive"
+                            UserActivityState.USER_ACTIVITY_EXERCISE -> "exercise"
+                            else -> STATE_UNKNOWN
+                        },
+                        getActivityIcon(info),
+                        mapOf(
+                            "time" to info.stateChangeTime,
+                            "exercise_type" to info.exerciseInfo?.exerciseType?.name,
+                            "options" to listOf("asleep", "passive", "exercise"),
+                        ),
+                        forceUpdate = forceUpdate,
+                    )
+                    val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
+                    val sensorData = sensorDao.get(userActivityState.id)
 
-                if (sensorData.any { it.state != it.lastSentState } || forceUpdate) {
-                    SensorReceiver.updateAllSensors(latestContext)
+                    if (sensorData.any { it.state != it.lastSentState } || forceUpdate) {
+                        SensorReceiver.updateAllSensors(latestContext)
+                    }
                 }
             }
 
@@ -269,7 +291,9 @@ class HealthServicesSensorManager : SensorManager {
             }
 
             override fun onRegistered() {
-                Timber.d("Health services callback successfully registered for the following data types: ${passiveListenerConfig!!.dataTypes} User Activity Info: ${passiveListenerConfig!!.shouldUserActivityInfoBeRequested} Health Events: ${passiveListenerConfig!!.healthEventTypes}")
+                Timber.d(
+                    "Health services callback successfully registered for the following data types: ${passiveListenerConfig!!.dataTypes} User Activity Info: ${passiveListenerConfig!!.shouldUserActivityInfoBeRequested} Health Events: ${passiveListenerConfig!!.healthEventTypes}",
+                )
                 callBackRegistered = true
             }
         }
@@ -295,7 +319,10 @@ class HealthServicesSensorManager : SensorManager {
             UserActivityState.USER_ACTIVITY_EXERCISE -> {
                 when (info.exerciseInfo?.exerciseType) {
                     ExerciseType.ALPINE_SKIING, ExerciseType.SKIING -> "mdi:skiing"
-                    ExerciseType.WEIGHTLIFTING, ExerciseType.BARBELL_SHOULDER_PRESS, ExerciseType.BENCH_PRESS -> "mdi:weight-lifter"
+                    ExerciseType.WEIGHTLIFTING,
+                    ExerciseType.BARBELL_SHOULDER_PRESS,
+                    ExerciseType.BENCH_PRESS,
+                    -> "mdi:weight-lifter"
                     ExerciseType.BIKING, ExerciseType.BIKING_STATIONARY, ExerciseType.MOUNTAIN_BIKING -> "mdi:bike"
                     ExerciseType.SWIMMING_POOL, ExerciseType.SWIMMING_OPEN_WATER -> "mdi:swim"
                     ExerciseType.BASEBALL -> "mdi:baseball"
@@ -332,16 +359,14 @@ class HealthServicesSensorManager : SensorManager {
                     else -> "mdi:run"
                 }
             }
+
             UserActivityState.USER_ACTIVITY_PASSIVE -> "mdi:human-handsdown"
             UserActivityState.USER_ACTIVITY_ASLEEP -> "mdi:sleep"
             else -> userActivityState.statelessIcon
         }
     }
 
-    private fun processDataPoint(
-        dataPoints: List<IntervalDataPoint<*>>,
-        basicSensor: SensorManager.BasicSensor,
-    ) {
+    private fun processDataPoint(dataPoints: List<IntervalDataPoint<*>>, basicSensor: SensorManager.BasicSensor) {
         var latest = 0
         var lastIndex = 0
         val bootInstant =
@@ -350,19 +375,23 @@ class HealthServicesSensorManager : SensorManager {
         if (dataPoints.isNotEmpty()) {
             dataPoints.forEachIndexed { index, intervalDataPoint ->
                 val endTime = intervalDataPoint.getEndInstant(bootInstant)
-                Timber.d("${basicSensor.id} data index: $index with value: ${intervalDataPoint.value} end time: ${endTime.toEpochMilli()}")
+                Timber.d(
+                    "${basicSensor.id} data index: $index with value: ${intervalDataPoint.value} end time: ${endTime.toEpochMilli()}",
+                )
                 if (endTime.toEpochMilli() > latest) {
                     latest = endTime.toEpochMilli().toInt()
                     lastIndex = index
                 }
             }
-            onSensorUpdated(
-                latestContext,
-                basicSensor,
-                dataPoints[lastIndex].value,
-                basicSensor.statelessIcon,
-                mapOf(),
-            )
+            ioScope.launch {
+                onSensorUpdated(
+                    latestContext,
+                    basicSensor,
+                    dataPoints[lastIndex].value,
+                    basicSensor.statelessIcon,
+                    mapOf(),
+                )
+            }
         }
     }
 }

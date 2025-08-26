@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.glance.appwidget.GlanceAppWidget
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
+import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.widgets.BaseGlanceEntityWidgetReceiver
 import io.homeassistant.companion.android.widgets.EntitiesPerServer
 
@@ -17,7 +18,7 @@ import io.homeassistant.companion.android.widgets.EntitiesPerServer
  * Otherwise the widgets won't update at all after the composition ends.
  */
 @AndroidEntryPoint
-class TodoWidget : BaseGlanceEntityWidgetReceiver<TodoWidgetDao>() {
+class TodoWidget : BaseGlanceEntityWidgetReceiver<TodoWidgetEntity, TodoWidgetDao>() {
     override val glanceAppWidget: GlanceAppWidget = TodoGlanceAppWidget()
 
     override suspend fun getWidgetEntitiesByServer(context: Context): Map<Int, EntitiesPerServer> {

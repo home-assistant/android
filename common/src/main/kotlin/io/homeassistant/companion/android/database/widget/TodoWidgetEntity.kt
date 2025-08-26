@@ -25,7 +25,8 @@ data class TodoWidgetEntity(
     @ColumnInfo(name = "show_completed", defaultValue = "true")
     val showCompleted: Boolean = true,
     @ColumnInfo(name = "latest_update_data") val latestUpdateData: LastUpdateData? = null,
-) : WidgetEntity, ThemeableWidgetEntity {
+) : WidgetEntity<TodoWidgetEntity>,
+    ThemeableWidgetEntity {
 
     @Serializable
     @OptIn(ExperimentalSerializationApi::class)
@@ -34,14 +35,11 @@ data class TodoWidgetEntity(
         @JsonNames("entityName")
         val entityName: String? = null,
         val todos: List<TodoItem>,
-    )
+    ) : java.io.Serializable
 
     @Serializable
-    data class TodoItem(
-        val uid: String? = null,
-        val summary: String? = null,
-        val status: String? = null,
-    )
+    data class TodoItem(val uid: String? = null, val summary: String? = null, val status: String? = null) :
+        java.io.Serializable
 
     fun isSameConfiguration(other: TodoWidgetEntity): Boolean {
         /**
@@ -50,5 +48,9 @@ data class TodoWidgetEntity(
          *  By doing this we make the check more future proof, if a new configuration field is added.
          */
         return other.copy(latestUpdateData = null) == this.copy(latestUpdateData = null)
+    }
+
+    override fun copyWithWidgetId(appWidgetId: Int): TodoWidgetEntity {
+        return copy(id = appWidgetId)
     }
 }

@@ -105,7 +105,10 @@ fun AndroidAutoFavoritesSettings(
             items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
                 val favoriteEntity =
                     favoriteEntities[index].split("-")
-                androidAutoViewModel.sortedEntities.firstOrNull { it.entityId == favoriteEntity[1] && favoriteEntity[0].toInt() == selectedServer }?.let {
+                androidAutoViewModel.sortedEntities.firstOrNull {
+                    it.entityId == favoriteEntity[1] &&
+                        favoriteEntity[0].toInt() == selectedServer
+                }?.let {
                     ReorderableItem(
                         state = reorderState,
                         key = favoriteEntities[index],

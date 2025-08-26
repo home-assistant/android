@@ -1,9 +1,6 @@
 package io.homeassistant.companion.android.widgets.mediaplayer
 
-import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.content.ComponentName
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -12,13 +9,13 @@ import android.widget.AutoCompleteTextView
 import android.widget.MultiAutoCompleteTextView
 import android.widget.Spinner
 import android.widget.Toast
-import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
+import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
@@ -27,23 +24,14 @@ import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import java.util.LinkedList
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 @AndroidEntryPoint
-class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity() {
-
-    companion object {
-        private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
-    }
-
+class MediaPlayerControlsWidgetConfigureActivity :
+    BaseWidgetConfigureActivity<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
     private var requestLauncherSetup = false
-
-    @Inject
-    lateinit var mediaPlayerControlsWidgetDao: MediaPlayerControlsWidgetDao
-    override val dao get() = mediaPlayerControlsWidgetDao
 
     private lateinit var binding: WidgetMediaControlsConfigureBinding
 
@@ -78,21 +66,16 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
                         entities[selectedServerId!!].orEmpty().any { e -> e.entityId == it.trim() }
                     }
                 ) {
-                    getSystemService<AppWidgetManager>()?.requestPinAppWidget(
-                        ComponentName(this, MediaPlayerControlsWidget::class.java),
-                        null,
-                        PendingIntent.getActivity(
-                            this,
-                            System.currentTimeMillis().toInt(),
-                            Intent(this, MediaPlayerControlsWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
-                        ),
-                    )
+                    lifecycleScope.launch {
+                        requestWidgetCreation()
+                    }
                 } else {
                     showAddWidgetError()
                 }
             } else {
-                onAddWidget()
+                lifecycleScope.launch {
+                    updateWidget()
+                }
             }
         }
 
@@ -116,44 +99,48 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
             return
         }
 
-        val mediaPlayerWidget = mediaPlayerControlsWidgetDao.get(appWidgetId)
-
         val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
-        binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
-        if (mediaPlayerWidget != null) {
-            binding.label.setText(mediaPlayerWidget.label)
-            binding.widgetTextConfigEntityId.setText(mediaPlayerWidget.entityId)
-            binding.widgetShowVolumeButtonCheckbox.isChecked = mediaPlayerWidget.showVolume
-            binding.widgetShowSeekButtonsCheckbox.isChecked = mediaPlayerWidget.showSeek
-            binding.widgetShowSkipButtonsCheckbox.isChecked = mediaPlayerWidget.showSkip
-            binding.widgetShowMediaPlayerSource.isChecked = mediaPlayerWidget.showSource
-            binding.backgroundType.setSelection(
-                WidgetUtils.getSelectedBackgroundOption(
-                    this,
-                    mediaPlayerWidget.backgroundType,
-                    backgroundTypeValues,
-                ),
-            )
-            val entities = runBlocking {
-                try {
-                    mediaPlayerWidget.entityId.split(",").map { s ->
-                        serverManager.integrationRepository(mediaPlayerWidget.serverId).getEntity(s.trim())
-                    }
-                } catch (e: Exception) {
-                    Timber.e(e, "Unable to get entity information")
-                    Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
-                        .show()
-                    null
-                }
-            }
-            if (entities != null) {
-                selectedEntities.addAll(entities)
-            }
-            binding.addButton.setText(commonR.string.update_widget)
-        }
-        entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
+        binding.backgroundType.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
-        setupServerSelect(mediaPlayerWidget?.serverId)
+        lifecycleScope.launch {
+            val mediaPlayerWidget = dao.get(appWidgetId)
+
+            if (mediaPlayerWidget != null) {
+                binding.label.setText(mediaPlayerWidget.label)
+                binding.widgetTextConfigEntityId.setText(mediaPlayerWidget.entityId)
+                binding.widgetShowVolumeButtonCheckbox.isChecked = mediaPlayerWidget.showVolume
+                binding.widgetShowSeekButtonsCheckbox.isChecked = mediaPlayerWidget.showSeek
+                binding.widgetShowSkipButtonsCheckbox.isChecked = mediaPlayerWidget.showSkip
+                binding.widgetShowMediaPlayerSource.isChecked = mediaPlayerWidget.showSource
+                binding.backgroundType.setSelection(
+                    WidgetUtils.getSelectedBackgroundOption(
+                        this@MediaPlayerControlsWidgetConfigureActivity,
+                        mediaPlayerWidget.backgroundType,
+                        backgroundTypeValues,
+                    ),
+                )
+                val entities = runBlocking {
+                    try {
+                        mediaPlayerWidget.entityId.split(",").map { s ->
+                            serverManager.integrationRepository(mediaPlayerWidget.serverId).getEntity(s.trim())
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e, "Unable to get entity information")
+                        Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
+                            .show()
+                        null
+                    }
+                }
+                if (entities != null) {
+                    selectedEntities.addAll(entities)
+                }
+                binding.addButton.setText(commonR.string.update_widget)
+            }
+            setupServerSelect(mediaPlayerWidget?.serverId)
+        }
+
+        entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
 
         binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
         binding.widgetTextConfigEntityId.setTokenizer(MultiAutoCompleteTextView.CommaTokenizer())
@@ -198,87 +185,37 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseWidgetConfigureActivity()
         }
     }
 
-    private fun onAddWidget() {
-        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-            showAddWidgetError()
-            return
+    override suspend fun getPendingDaoEntity(): MediaPlayerControlsWidgetEntity {
+        val serverId = checkNotNull(selectedServerId) { "Selected server ID is null" }
+        selectedEntities = LinkedList()
+        val se = binding.widgetTextConfigEntityId.text.split(",")
+        se.forEach {
+            val entity = entities[serverId]?.firstOrNull { e -> e.entityId == it.trim() }
+            if (entity != null) selectedEntities.add(entity)
         }
-        try {
-            val context = this@MediaPlayerControlsWidgetConfigureActivity
 
-            // Set up a broadcast intent and pass the service call data as extras
-            val intent = Intent()
-            intent.action = MediaPlayerControlsWidget.RECEIVE_DATA
-            intent.component = ComponentName(context, MediaPlayerControlsWidget::class.java)
+        val entitySelection = selectedEntities.map { e -> e?.entityId }.reduceOrNull { a, b -> "$a,$b" }
 
-            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-
-            intent.putExtra(
-                MediaPlayerControlsWidget.EXTRA_SERVER_ID,
-                selectedServerId!!,
-            )
-
-            selectedEntities = LinkedList()
-            val se = binding.widgetTextConfigEntityId.text.split(",")
-            se.forEach {
-                val entity = entities[selectedServerId]!!.firstOrNull { e -> e.entityId == it.trim() }
-                if (entity != null) selectedEntities.add(entity)
-            }
-            intent.putExtra(
-                MediaPlayerControlsWidget.EXTRA_ENTITY_ID,
-                selectedEntities.map { e -> e?.entityId }.reduce { a, b -> "$a,$b" },
-            )
-            intent.putExtra(
-                MediaPlayerControlsWidget.EXTRA_LABEL,
-                binding.label.text.toString(),
-            )
-            intent.putExtra(
-                MediaPlayerControlsWidget.EXTRA_SHOW_VOLUME,
-                binding.widgetShowVolumeButtonCheckbox.isChecked,
-            )
-            intent.putExtra(
-                MediaPlayerControlsWidget.EXTRA_SHOW_SKIP,
-                binding.widgetShowSkipButtonsCheckbox.isChecked,
-            )
-            intent.putExtra(
-                MediaPlayerControlsWidget.EXTRA_SHOW_SEEK,
-                binding.widgetShowSeekButtonsCheckbox.isChecked,
-            )
-            intent.putExtra(
-                MediaPlayerControlsWidget.EXTRA_SHOW_SOURCE,
-                binding.widgetShowMediaPlayerSource.isChecked,
-            )
-            intent.putExtra(
-                MediaPlayerControlsWidget.EXTRA_BACKGROUND_TYPE,
-                when (binding.backgroundType.selectedItem as String?) {
-                    getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
-                    getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
-                    else -> WidgetBackgroundType.DAYNIGHT
-                },
-            )
-
-            context.sendBroadcast(intent)
-
-            // Make sure we pass back the original appWidgetId
-            setResult(
-                RESULT_OK,
-                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId),
-            )
-            finish()
-        } catch (e: Exception) {
-            Timber.e(e, "Issue configuring widget")
-            showAddWidgetError()
+        if (entitySelection == null) {
+            throw IllegalStateException("No valid entities selected")
         }
+
+        return MediaPlayerControlsWidgetEntity(
+            id = appWidgetId,
+            serverId = serverId,
+            entityId = entitySelection,
+            label = binding.label.text.toString(),
+            showVolume = binding.widgetShowVolumeButtonCheckbox.isChecked,
+            showSkip = binding.widgetShowSkipButtonsCheckbox.isChecked,
+            showSeek = binding.widgetShowSeekButtonsCheckbox.isChecked,
+            showSource = binding.widgetShowMediaPlayerSource.isChecked,
+            backgroundType = when (binding.backgroundType.selectedItem as String?) {
+                getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
+                getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
+                else -> WidgetBackgroundType.DAYNIGHT
+            },
+        )
     }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        if (intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
-            appWidgetId = intent.extras!!.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID,
-            )
-            onAddWidget()
-        }
-    }
+    override val widgetClass: Class<*> = MediaPlayerControlsWidget::class.java
 }

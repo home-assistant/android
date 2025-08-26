@@ -7,13 +7,13 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface StaticWidgetDao : WidgetDao {
+interface StaticWidgetDao : WidgetDao<StaticWidgetEntity> {
 
     @Query("SELECT * FROM static_widget WHERE id = :id")
-    fun get(id: Int): StaticWidgetEntity?
+    suspend fun get(id: Int): StaticWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun add(staticWidgetEntity: StaticWidgetEntity)
+    override suspend fun add(entity: StaticWidgetEntity)
 
     @Query("DELETE FROM static_widget WHERE id = :id")
     override suspend fun delete(id: Int)
@@ -29,4 +29,7 @@ interface StaticWidgetDao : WidgetDao {
 
     @Query("UPDATE static_widget SET last_update = :lastUpdate WHERE id = :widgetId")
     suspend fun updateWidgetLastUpdate(widgetId: Int, lastUpdate: String)
+
+    @Query("SELECT COUNT(*) FROM static_widget")
+    override fun getWidgetCountFlow(): Flow<Int>
 }

@@ -2,7 +2,6 @@ name: Pull Request
 
 on: # yamllint disable-line rule:truthy
   pull_request:
-    branches: [main]
 
 # This workflow should cancel previous builds since it means that a new commit has been made to the PR
 concurrency:
@@ -13,7 +12,7 @@ jobs:
   yamllint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Register yamllint problem matcher
         run: |
@@ -25,7 +24,7 @@ jobs:
   lockfiles:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -56,7 +55,7 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -78,7 +77,7 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -105,7 +104,7 @@ jobs:
     needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -137,7 +136,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -182,7 +181,7 @@ jobs:
     needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -220,7 +219,7 @@ jobs:
             profile: "tv_4k"
             target: "android-tv"
             gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
-          - api-level: 35
+          - api-level: 36
             arch: x86_64
             profile: "pixel_7"
             target: "google_apis"
@@ -255,7 +254,7 @@ jobs:
           docker-images: false # Takes 16s, enable if needed in the future
           large-packages: false # includes google-cloud-sdk and it's slow
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -330,7 +329,7 @@ jobs:
 
     steps:
       - name: Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
 
       - name: Publish Test Results EnricoMi
         uses: EnricoMi/publish-unit-test-result-action@v2

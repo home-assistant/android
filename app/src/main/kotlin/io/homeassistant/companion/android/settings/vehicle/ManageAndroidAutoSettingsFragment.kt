@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.vehicle
 
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -12,33 +11,25 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.vehicle.views.AndroidAutoFavoritesSettings
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class ManageAndroidAutoSettingsFragment : Fragment() {
 
-    @Inject
-    lateinit var serverManager: ServerManager
-
     val viewModel: ManageAndroidAutoViewModel by viewModels()
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
                     AndroidAutoFavoritesSettings(
                         androidAutoViewModel = viewModel,
-                        serversList = serverManager.defaultServers,
-                        defaultServer = serverManager.getServer()?.id ?: 0,
+                        serversList = viewModel.defaultServers,
+                        defaultServer = viewModel.defaultServerId,
                     )
                 }
             }
@@ -52,7 +43,7 @@ class ManageAndroidAutoSettingsFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         activity?.title =
-            if (requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            if (requireContext().isAutomotive()) {
                 getString(commonR.string.android_automotive_favorites)
             } else {
                 getString(commonR.string.aa_favorites)

@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.websocket
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
@@ -13,15 +12,18 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.getSystemService
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.wifi.WifiHelper
+import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.settings.SettingViewModel
+import io.homeassistant.companion.android.settings.SettingViewModel.Companion.DEFAULT_WEBSOCKET_SETTING
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.websocket.views.WebsocketSettingView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
@@ -41,9 +43,10 @@ class WebsocketSettingFragment : Fragment() {
 
     private var isIgnoringBatteryOptimizations by mutableStateOf(false)
 
-    private val requestBackgroundAccessResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        setIgnoringBatteryOptimizations()
-    }
+    private val requestBackgroundAccessResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            setIgnoringBatteryOptimizations()
+        }
 
     private var serverId = -1
 
@@ -54,18 +57,14 @@ class WebsocketSettingFragment : Fragment() {
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
-                    val settings = viewModel.getSettingFlow(serverId)
-                        .collectAsState(initial = viewModel.getSetting(serverId))
+                    val settingFlow = remember { viewModel.getSettingFlow(serverId) }
+                    val settings = settingFlow.collectAsState(initial = null)
                     WebsocketSettingView(
-                        websocketSetting = settings.value.websocketSetting,
+                        websocketSetting = settings.value?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING,
                         unrestrictedBackgroundAccess = isIgnoringBatteryOptimizations,
                         hasWifi = wifiHelper.hasWifi(),
                         onSettingChanged = { viewModel.updateWebsocketSetting(serverId, it) },
@@ -74,7 +73,7 @@ class WebsocketSettingFragment : Fragment() {
                                 requestBackgroundAccessResult.launch(
                                     Intent(
                                         Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                                        Uri.parse("package:${activity?.packageName}"),
+                                        "package:${activity?.packageName}".toUri(),
                                     ),
                                 )
                             }

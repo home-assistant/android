@@ -257,6 +257,7 @@
     <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
     <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
     <string name="error_connection_failed_to">Unable to connect to %1$s</string>
+    <string name="error_connection_failed_no_network">Network unavailable, please check your connection</string>
     <string name="error_loading_entities">Error loading entities</string>
     <string name="error_onboarding_connection_failed">Unable to connect to Home Assistant.</string>
     <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error. Please ensure your certificate is valid.</string>
@@ -285,7 +286,7 @@
     <string name="filter_sensors_enabled">Enabled sensors</string>
     <string name="filter_sensors_disabled">Disabled sensors</string>
     <string name="filter_updates">Filter updates</string>
-    <string name="firebase_error_message">This means you will be unable to receive cloud notifications.\n\nLocal notifications will still be available via persistent connection settings in companion app settings</string>
+    <string name="firebase_error_message">This means you will be unable to receive cloud notifications.\n\nLocal notifications will still be available via persistent connection settings in Companion app settings</string>
     <string name="firebase_error_title">Firebase error</string>
     <string name="fullscreen_def">Put application in full screen</string>
     <string name="fullscreen">Fullscreen</string>
@@ -293,6 +294,38 @@
     <string name="screen_orientation_option_label_system">Follow system settings</string>
     <string name="screen_orientation_option_label_portrait">Portrait</string>
     <string name="screen_orientation_option_label_landscape">Landscape</string>
+    <string name="gestures">Gestures</string>
+    <string name="gestures_action_navigate_dashboard">Go to default dashboard</string>
+    <string name="gestures_action_navigate_forward">Go to next page</string>
+    <string name="gestures_action_navigate_reload">Reload page</string>
+    <string name="gestures_action_open_app_settings">Open app settings</string>
+    <string name="gestures_action_open_app_developer">Open app troubleshooting</string>
+    <string name="gestures_action_open_assist">Open Assist</string>
+    <string name="gestures_action_quickbar_commands">Search commands</string>
+    <string name="gestures_action_quickbar_default">Search entities</string>
+    <string name="gestures_action_quickbar_devices">Search devices</string>
+    <string name="gestures_action_server_list">Servers list</string>
+    <string name="gestures_action_server_next">Next server</string>
+    <string name="gestures_action_server_previous">Previous server</string>
+    <string name="gestures_action_show_sidebar">Show sidebar</string>
+    <string name="gestures_category_app">App</string>
+    <string name="gestures_category_navigation">Navigation</string>
+    <string name="gestures_category_servers">Servers</string>
+    <string name="gestures_description">Set up gestures for quick actions whenever you are using the main Home Assistant UI.\n\nNote: if your device has gestures that work in any app, they may override Home Assistant gestures.</string>
+    <string name="gestures_direction_down">Swipe down</string>
+    <string name="gestures_direction_left">Swipe left</string>
+    <string name="gestures_direction_right">Swipe right</string>
+    <string name="gestures_direction_up">Swipe up</string>
+    <string name="gesture_name_swipe_down_two">Swipe down using two fingers</string>
+    <string name="gesture_name_swipe_down_three">Swipe down using three fingers</string>
+    <string name="gesture_name_swipe_left_two">Swipe left using two fingers</string>
+    <string name="gesture_name_swipe_left_three">Swipe left using three fingers</string>
+    <string name="gesture_name_swipe_right_two">Swipe right using two fingers</string>
+    <string name="gesture_name_swipe_right_three">Swipe right using three fingers</string>
+    <string name="gesture_name_swipe_up_two">Swipe up using two fingers</string>
+    <string name="gesture_name_swipe_up_three">Swipe up using three fingers</string>
+    <string name="gestures_pointers_two">Using two fingers</string>
+    <string name="gestures_pointers_three">Using three fingers</string>
     <string name="get_help">Get help</string>
     <string name="grant_permission">Grant permission</string>
     <string name="help">Help</string>
@@ -587,7 +620,7 @@
     <string name="select_file">Select file</string>
     <string name="select_instance">Select your Home Assistant server</string>
     <string name="sensor_description_active_calories_burned">Last recorded active calories burned from Health Connect</string>
-    <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications. Attributes will include the contents of all notifications if the corresponding setting is enabled. It\'s enabled by default.</string>
+    <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the sensor updates notifications. Attributes will include the contents of all notifications if the corresponding setting is enabled. It\'s enabled by default.</string>
     <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be</string>
     <string name="sensor_description_android_auto">If the phone is currently connected to an Android Auto head unit</string>
     <string name="sensor_description_android_os_version">Android OS version</string>
@@ -780,7 +813,7 @@
     <string name="server_settings">Server settings</string>
     <string name="servers_devices_category">Servers &amp; devices</string>
     <string name="server_activate">Activate</string>
-    <string name="server_activate_swipe_hint">Tip: quickly activate using a three-finger swipe left, right, or up when viewing a server.</string>
+    <string name="server_activate_gesture_hint">Tip: you can quickly activate and switch servers by using gestures.</string>
     <string name="server_add">Add server</string>
     <string name="server_add_success">Server added</string>
     <string name="server_add_failed">Couldn\'t add server</string>
@@ -1071,6 +1104,7 @@
     <string name="widget_text_color_label">Widget text color:</string>
     <string name="widget_text_color_label_icon">Widget text/icon color:</string>
     <string name="widget_text_color_white">White</string>
+    <string name="widget_update_error">Unable to update widget.</string>
     <string name="widgets">Widgets</string>
     <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
     <string name="companion_app">Companion app</string>
@@ -1112,7 +1146,7 @@
     <string name="sensor_update_frequency_fast_charging">Fast while charging\n\nSensors will update every minute while the device is charging. When not charging sensors will update every 15 minutes.</string>
     <string name="sensor_update_frequency_fast_always">Fast always\n\nSensors will update every minute, always.</string>
     <string name="sensor_update_notification">In order for the app to send sensor updates in the background a notification will be created during the update. You may use the button below to manage the appearance of this notification. It is recommended to minimize the notification to hide the icon.</string>
-    <string name="sensor_worker_notification_channel">Manage sensor worker notification</string>
+    <string name="sensor_worker_notification_channel">Manage sensor updates channel</string>
     <string name="sensor_worker_sync_missing_permissions">To enable this sensor, turn it on in the app settings</string>
     <string name="sensor_update_frequency_summary">Change the frequency of updates for sensors that do not update instantly.</string>
     <string name="sensor_update_type_chip_intent">Updates instantly</string>
@@ -1378,7 +1412,7 @@
     <string name="thermostat">Thermostat</string>
     <string name="thermostat_tile_desc">See and change the thermostat temperature.</string>
     <string name="thermostat_tile_no_tiles_yet">There are no thermostat tiles added yet - add one from the watch face to set it up</string>
-    <string name="thermostat_tile_no_entity_yet">Edit the tile settings and select a thermostat to show</string>
+    <string name="thermostat_tile_no_entity_yet">Open the tile settings to select a thermostat</string>
     <string name="thermostat_tile_n">Thermostat tile #%d</string>
     <string name="thermostat_tile_log_in">Log in to add a thermostat tile</string>
     <string name="thermostat_tile">Thermostat tile</string>
@@ -1390,4 +1424,5 @@
     <string name="default_launcher_prompt">Change home app</string>
     <string name="default_launcher_prompt_def">Open settings to choose your default home app. Currently set to %s.</string>
     <string name="unknown_launcher_label">unknown app</string>
+    <string name="open_settings">Open settings</string>
 </resources>

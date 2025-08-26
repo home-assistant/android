@@ -6,11 +6,9 @@ import io.homeassistant.companion.android.common.util.capitalize
 import java.util.Locale
 import javax.inject.Inject
 
-class LanguagesProvider @Inject constructor(
-    private var langManager: LanguagesManager,
-) {
+class LanguagesProvider @Inject constructor(private var langManager: LanguagesManager) {
 
-    fun getSupportedLanguages(context: Context): Map<String, String> {
+    suspend fun getSupportedLanguages(context: Context): Map<String, String> {
         val listAppLocales = sortedMapOf<String, String>()
         val resources = context.resources
 
@@ -22,7 +20,9 @@ class LanguagesProvider @Inject constructor(
             listAppLocales[display] = it
         }
 
-        val languages = mutableMapOf(resources.getString(commonR.string.lang_option_label_default) to LanguagesManager.DEF_LOCALE)
+        val languages = mutableMapOf(
+            resources.getString(commonR.string.lang_option_label_default) to LanguagesManager.DEF_LOCALE,
+        )
         languages.putAll(listAppLocales)
         return languages
     }

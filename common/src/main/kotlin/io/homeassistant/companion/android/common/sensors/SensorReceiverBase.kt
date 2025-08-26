@@ -46,13 +46,18 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         const val ACTION_STOP_BEACON_SCANNING = "io.homeassistant.companion.android.STOP_BEACON_SCANNING"
         const val EXTRA_SENSOR_ID = "sensorId"
 
-        fun shouldDoFastUpdates(context: Context): Boolean {
+        suspend fun shouldDoFastUpdates(context: Context): Boolean {
             val settingDao = AppDatabase.getInstance(context).settingsDao().get(0)
             return when (settingDao?.sensorUpdateFrequency) {
                 SensorUpdateFrequencySetting.FAST_ALWAYS -> true
                 SensorUpdateFrequencySetting.FAST_WHILE_CHARGING -> {
                     val batteryStatusIntent =
-                        ContextCompat.registerReceiver(context, null, IntentFilter(Intent.ACTION_BATTERY_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED)
+                        ContextCompat.registerReceiver(
+                            context,
+                            null,
+                            IntentFilter(Intent.ACTION_BATTERY_CHANGED),
+                            ContextCompat.RECEIVER_NOT_EXPORTED,
+                        )
                     return batteryStatusIntent?.let { BatterySensorManager.getIsCharging(it) } ?: false
                 }
                 else -> false
@@ -89,30 +94,30 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         Timber.d("Received intent: ${intent.action}")
-        skippableActions[intent.action]?.let { sensors ->
-            val noSensorsEnabled = sensors.none {
-                isSensorEnabled(it)
+        ioScope.launch {
+            skippableActions[intent.action]?.let { sensors ->
+                val noSensorsEnabled = sensors.none {
+                    isSensorEnabled(it)
+                }
+                if (noSensorsEnabled) {
+                    Timber.d(
+                        String.format(
+                            "Sensor(s) %s corresponding to received event %s are disabled, skipping sensors update",
+                            sensors.toString(),
+                            intent.action,
+                        ),
+                    )
+                    return@launch
+                }
             }
-            if (noSensorsEnabled) {
-                Timber.d(
-                    String.format(
-                        "Sensor(s) %s corresponding to received event %s are disabled, skipping sensors update",
-                        sensors.toString(),
-                        intent.action,
-                    ),
-                )
-                return
+
+            if (intent.action == ACTION_STOP_BEACON_SCANNING) {
+                BluetoothSensorManager.enableDisableBeaconMonitor(context, false)
+                return@launch
             }
-        }
 
-        if (intent.action == ACTION_STOP_BEACON_SCANNING) {
-            BluetoothSensorManager.enableDisableBeaconMonitor(context, false)
-            return
-        }
-
-        @Suppress("DEPRECATION")
-        if (isSensorEnabled(LastUpdateManager.lastUpdate.id)) {
-            ioScope.launch {
+            @Suppress("DEPRECATION")
+            if (isSensorEnabled(LastUpdateManager.lastUpdate.id)) {
                 LastUpdateManager().sendLastUpdate(context, intent.action)
                 val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
                 for (setting in allSettings) {
@@ -137,9 +142,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     }
                 }
             }
-        }
 
-        ioScope.launch {
             if (intent.action == Intent.ACTION_TIME_TICK && !shouldDoFastUpdates(context)) {
                 Timber.i("Skipping faster update because not charging/different preference")
                 return@launch
@@ -161,16 +164,11 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         }
     }
 
-    private fun isSensorEnabled(id: String): Boolean {
+    private suspend fun isSensorEnabled(id: String): Boolean {
         return sensorDao.get(id).any { it.enabled }
     }
 
-    suspend fun updateSensors(
-        context: Context,
-        serverManager: ServerManager,
-        sensorDao: SensorDao,
-        intent: Intent?,
-    ) {
+    suspend fun updateSensors(context: Context, serverManager: ServerManager, sensorDao: SensorDao, intent: Intent?) {
         if (!serverManager.isRegistered()) {
             Timber.w("Device not registered, skipping sensor update/registration")
             return
@@ -204,7 +202,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         sensorDao: SensorDao,
     ): Boolean {
         val currentHAversion = serverManager.integrationRepository(server.id).getHomeAssistantVersion()
-        val supportsDisabledSensors = serverManager.integrationRepository(server.id).isHomeAssistantVersionAtLeast(2022, 6, 0)
+        val supportsDisabledSensors = serverManager.integrationRepository(
+            server.id,
+        ).isHomeAssistantVersionAtLeast(2022, 6, 0)
         val serverIsTrusted = serverManager.integrationRepository(server.id).isTrusted()
         val coreSensorStatus: Map<String, Boolean>? =
             if (supportsDisabledSensors && (serverIsTrusted || (sensorDao.getEnabledCount() ?: 0) > 0)) {
@@ -285,11 +285,14 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                                 context.getSystemService<NotificationManager>()?.let { notificationManager ->
                                     createNotificationChannel(context)
                                     val notificationId = "$CHANNEL_SENSOR_SYNC-${basicSensor.id}".hashCode()
-                                    val notificationIntent = getSensorSettingsIntent(context, basicSensor.id, manager.id(), notificationId)
+                                    val notificationIntent =
+                                        getSensorSettingsIntent(context, basicSensor.id, manager.id(), notificationId)
                                     val notification = NotificationCompat.Builder(context, CHANNEL_SENSOR_SYNC)
                                         .setSmallIcon(R.drawable.ic_stat_ic_notification)
                                         .setContentTitle(context.getString(basicSensor.name))
-                                        .setContentText(context.getString(R.string.sensor_worker_sync_missing_permissions))
+                                        .setContentText(
+                                            context.getString(R.string.sensor_worker_sync_missing_permissions),
+                                        )
                                         .setContentIntent(notificationIntent)
                                         .setAutoCancel(true)
                                         .build()
@@ -323,14 +326,22 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         sensorDao.update(sensor)
                     } catch (e: Exception) {
                         Timber.e(e, "Issue re-registering sensor ${basicSensor.id}")
-                        if (e is IntegrationException && (e.cause is ConnectException || e.cause is SocketTimeoutException)) {
-                            Timber.w("Server can't be reached, skipping other registrations for sensors due to version change")
+                        if (e is IntegrationException &&
+                            (e.cause is ConnectException || e.cause is SocketTimeoutException)
+                        ) {
+                            Timber.w(
+                                "Server can't be reached, skipping other registrations for sensors due to version change",
+                            )
                             serverIsReachable = false
                         }
                     }
                 }
 
-                if (canBeRegistered && sensor.enabled && sensor.registered != null && (sensor.state != sensor.lastSentState || sensor.icon != sensor.lastSentIcon)) {
+                if (canBeRegistered &&
+                    sensor.enabled &&
+                    sensor.registered != null &&
+                    (sensor.state != sensor.lastSentState || sensor.icon != sensor.lastSentIcon)
+                ) {
                     enabledRegistrations.add(fullSensor.toSensorRegistration(basicSensor))
                 }
             }
@@ -349,7 +360,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 val exceptionOk = e is IntegrationException &&
                     (e.cause is IOException || e.cause is CancellationException)
                 if (exceptionOk) {
-                    Timber.w("Exception while updating sensors: ${e::class.java.simpleName}: ${e.cause?.let { it::class.java.name } }")
+                    Timber.w(e, "Exception while updating sensors")
                 } else {
                     Timber.e(e, "Exception while updating sensors.")
                 }
@@ -388,10 +399,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         serverManager.integrationRepository(fullSensor.sensor.serverId).registerSensor(reg)
     }
 
-    private suspend fun updateSensor(
-        context: Context,
-        sensorId: String,
-    ) {
+    private suspend fun updateSensor(context: Context, sensorId: String) {
         val sensorManager = managers.firstOrNull {
             it.getAvailableSensors(context).any { s -> s.id == sensorId }
         } ?: return
@@ -403,12 +411,15 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         val basicSensor = sensorManager.getAvailableSensors(context).firstOrNull { it.id == sensorId } ?: return
         val fullSensors = sensorDao.getFull(sensorId).toSensorsWithAttributes()
         fullSensors.filter {
-            it.sensor.enabled && it.sensor.registered == true &&
+            it.sensor.enabled &&
+                it.sensor.registered == true &&
                 (it.sensor.state != it.sensor.lastSentState || it.sensor.icon != it.sensor.lastSentIcon)
         }.forEach { fullSensor ->
             ioScope.launch {
                 try {
-                    serverManager.integrationRepository(fullSensor.sensor.serverId).updateSensors(listOf(fullSensor.toSensorRegistration(basicSensor)))
+                    serverManager.integrationRepository(
+                        fullSensor.sensor.serverId,
+                    ).updateSensors(listOf(fullSensor.toSensorRegistration(basicSensor)))
                     sensorDao.updateLastSentStateAndIcon(
                         basicSensor.id,
                         fullSensor.sensor.serverId,

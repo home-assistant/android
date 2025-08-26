@@ -23,7 +23,11 @@ import androidx.media3.common.util.UnstableApi
 import kotlin.time.Duration
 
 @OptIn(UnstableApi::class)
-internal class FakePlayer(val currentPosition: Duration = Duration.ZERO, val muted: Boolean = false, val playing: Boolean = false) : Player {
+internal class FakePlayer(
+    val currentPosition: Duration = Duration.ZERO,
+    val muted: Boolean = false,
+    val playing: Boolean = false,
+) : Player {
     override fun getApplicationLooper(): Looper {
         TODO("Not yet implemented")
     }
@@ -208,10 +212,6 @@ internal class FakePlayer(val currentPosition: Duration = Duration.ZERO, val mut
         TODO("Not yet implemented")
     }
 
-    override fun seekToPreviousWindow() {
-        TODO("Not yet implemented")
-    }
-
     override fun seekToPreviousMediaItem() {
         TODO("Not yet implemented")
     }
@@ -224,23 +224,7 @@ internal class FakePlayer(val currentPosition: Duration = Duration.ZERO, val mut
         TODO("Not yet implemented")
     }
 
-    override fun hasNext(): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun hasNextWindow(): Boolean {
-        TODO("Not yet implemented")
-    }
-
     override fun hasNextMediaItem(): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun next() {
-        TODO("Not yet implemented")
-    }
-
-    override fun seekToNextWindow() {
         TODO("Not yet implemented")
     }
 

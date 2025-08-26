@@ -20,9 +20,7 @@ import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 
 @Composable
-fun SensorsView(
-    onClickSensorManager: (SensorManager) -> Unit,
-) {
+fun SensorsView(onClickSensorManager: (SensorManager) -> Unit) {
     WearAppTheme {
         val sensorManagers = getSensorManagers()
         ThemeLazyColumn {

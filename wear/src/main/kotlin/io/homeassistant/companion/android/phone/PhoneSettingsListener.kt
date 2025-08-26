@@ -17,6 +17,8 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositoryImpl
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -42,18 +44,18 @@ import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
-import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlinx.serialization.encodeToString
 import timber.log.Timber
 
 @AndroidEntryPoint
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
-class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChangedListener {
+class PhoneSettingsListener :
+    WearableListenerService(),
+    DataClient.OnDataChangedListener {
 
     @Inject
     lateinit var serverManager: ServerManager
@@ -65,11 +67,11 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     lateinit var favoritesDao: FavoritesDao
 
     @Inject
-    @Named("keyChainRepository")
+    @NamedKeyChain
     lateinit var keyChainRepository: KeyChainRepository
 
     @Inject
-    @Named("keyStore")
+    @NamedKeyStore
     lateinit var keyStore: KeyChainRepository
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -89,16 +91,40 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             dataMap.putBoolean(WearDataMessages.CONFIG_IS_AUTHENTICATED, isRegistered)
             if (isRegistered) {
                 dataMap.putInt(WearDataMessages.CONFIG_SERVER_ID, serverManager.getServer()?.id ?: 0)
-                dataMap.putString(WearDataMessages.CONFIG_SERVER_EXTERNAL_URL, serverManager.getServer()?.connection?.externalUrl ?: "")
-                dataMap.putString(WearDataMessages.CONFIG_SERVER_WEBHOOK_ID, serverManager.getServer()?.connection?.webhookId ?: "")
-                dataMap.putString(WearDataMessages.CONFIG_SERVER_CLOUD_URL, serverManager.getServer()?.connection?.cloudUrl ?: "")
-                dataMap.putString(WearDataMessages.CONFIG_SERVER_CLOUDHOOK_URL, serverManager.getServer()?.connection?.cloudhookUrl ?: "")
-                dataMap.putBoolean(WearDataMessages.CONFIG_SERVER_USE_CLOUD, serverManager.getServer()?.connection?.useCloud ?: false)
-                dataMap.putString(WearDataMessages.CONFIG_SERVER_REFRESH_TOKEN, serverManager.getServer()?.session?.refreshToken ?: "")
+                dataMap.putString(
+                    WearDataMessages.CONFIG_SERVER_EXTERNAL_URL,
+                    serverManager.getServer()?.connection?.externalUrl ?: "",
+                )
+                dataMap.putString(
+                    WearDataMessages.CONFIG_SERVER_WEBHOOK_ID,
+                    serverManager.getServer()?.connection?.webhookId ?: "",
+                )
+                dataMap.putString(
+                    WearDataMessages.CONFIG_SERVER_CLOUD_URL,
+                    serverManager.getServer()?.connection?.cloudUrl ?: "",
+                )
+                dataMap.putString(
+                    WearDataMessages.CONFIG_SERVER_CLOUDHOOK_URL,
+                    serverManager.getServer()?.connection?.cloudhookUrl ?: "",
+                )
+                dataMap.putBoolean(
+                    WearDataMessages.CONFIG_SERVER_USE_CLOUD,
+                    serverManager.getServer()?.connection?.useCloud ?: false,
+                )
+                dataMap.putString(
+                    WearDataMessages.CONFIG_SERVER_REFRESH_TOKEN,
+                    serverManager.getServer()?.session?.refreshToken ?: "",
+                )
             }
-            dataMap.putString(WearDataMessages.CONFIG_SUPPORTED_DOMAINS, kotlinJsonMapper.encodeToString(HomePresenterImpl.supportedDomains))
+            dataMap.putString(
+                WearDataMessages.CONFIG_SUPPORTED_DOMAINS,
+                kotlinJsonMapper.encodeToString(HomePresenterImpl.supportedDomains),
+            )
             dataMap.putString(WearDataMessages.CONFIG_FAVORITES, kotlinJsonMapper.encodeToString(currentFavorites))
-            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILES, kotlinJsonMapper.encodeToString(wearPrefsRepository.getAllTemplateTiles()))
+            dataMap.putString(
+                WearDataMessages.CONFIG_TEMPLATE_TILES,
+                kotlinJsonMapper.encodeToString(wearPrefsRepository.getAllTemplateTiles()),
+            )
             setUrgent()
             asPutDataRequest()
         }

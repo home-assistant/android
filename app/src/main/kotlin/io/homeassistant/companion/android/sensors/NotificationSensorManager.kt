@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.UiModeManager
 import android.content.ComponentName
 import android.content.Context
-import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.media.MediaMetadata
 import android.media.session.MediaSessionManager
@@ -19,11 +18,14 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class NotificationSensorManager : NotificationListenerService(), SensorManager {
+class NotificationSensorManager :
+    NotificationListenerService(),
+    SensorManager {
     companion object {
         private const val SETTING_ALLOW_LIST = "notification_allow_list"
         private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
@@ -74,7 +76,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         return "https://companion.home-assistant.io/docs/core/sensors#notification-sensors"
     }
     override fun hasSensor(context: Context): Boolean {
-        return if (!context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+        return if (!context.isAutomotive()) {
             val uiManager = context.getSystemService<UiModeManager>()
             uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
         } else {
@@ -247,7 +249,13 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
 
             try {
                 val attr: MutableMap<String, Any?> = mutableMapOf()
-                val includeContentsAsAttrsSetting = getToggleSetting(applicationContext, activeNotificationCount, SETTING_INCLUDE_CONTENTS_AS_ATTRS, default = true)
+                val includeContentsAsAttrsSetting =
+                    getToggleSetting(
+                        applicationContext,
+                        activeNotificationCount,
+                        SETTING_INCLUDE_CONTENTS_AS_ATTRS,
+                        default = true,
+                    )
                 if (includeContentsAsAttrsSetting) {
                     for (item in activeNotifications) {
                         attr += mappedBundle(item.notification.extras, "_${item.packageName}_${item.id}").orEmpty()
@@ -296,9 +304,17 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         }
 
         val mediaSessionManager = context.getSystemService<MediaSessionManager>()!!
-        val mediaList = mediaSessionManager.getActiveSessions(ComponentName(context, NotificationSensorManager::class.java))
+        val mediaList = mediaSessionManager.getActiveSessions(
+            ComponentName(context, NotificationSensorManager::class.java),
+        )
         val sessionCount = mediaList.size
-        val primaryPlaybackState = if (sessionCount > 0) getPlaybackState(mediaList[0].playbackState?.state) else STATE_UNAVAILABLE
+        val primaryPlaybackState = if (sessionCount >
+            0
+        ) {
+            getPlaybackState(mediaList[0].playbackState?.state)
+        } else {
+            STATE_UNAVAILABLE
+        }
         val attr: MutableMap<String, Any?> = mutableMapOf()
         if (mediaList.size > 0) {
             for (item in mediaList) {

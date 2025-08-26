@@ -71,7 +71,8 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:enableOnBackInvokedCallback="true"
         android:localeConfig="@xml/locales_config"
-        tools:ignore="GoogleAppIndexingWarning"
+        android:intentMatchingFlags="enforceIntentFilter"
+        tools:ignore="GoogleAppIndexingWarning,UnusedAttribute"
         tools:targetApi="tiramisu">
 
         <!-- Start things like SensorWorker on device boot -->
@@ -111,7 +112,6 @@
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.CALL_SERVICE" />
                 <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.CALL_SERVICE_AUTH" />
-                <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.RECEIVE_DATA" />
             </intent-filter>
 
             <meta-data
@@ -123,7 +123,6 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.camera.CameraWidget.RECEIVE_DATA" />
                 <action android:name="io.homeassistant.companion.android.widgets.camera.CameraWidget.UPDATE_IMAGE" />
             </intent-filter>
 
@@ -136,7 +135,6 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.StaticWidget.RECEIVE_DATA" />
             </intent-filter>
 
             <meta-data
@@ -159,7 +157,6 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.RECEIVE_DATA" />
                 <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.UPDATE_MEDIA_IMAGE" />
                 <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_PREV_TRACK" />
                 <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_REWIND" />
@@ -184,7 +181,6 @@
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
                 <action android:name="io.homeassistant.companion.android.background.REQUEST_SENSORS_UPDATE" />
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.template.TemplateWidget.RECEIVE_DATA" />
             </intent-filter>
 
             <meta-data
@@ -268,7 +264,12 @@
         <receiver
             android:name=".sensors.LocationSensorManager"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <!--As discussed in https://github.com/home-assistant/android/pull/5509 we are ok
+            about exposing this receiver since the data are not leaking outside of Home Assistant.
+            And Action would just force the update of the sensor nothing else.
+            -->
             <intent-filter>
                 <action android:name="io.homeassistant.companion.android.background.REQUEST_ACCURATE_UPDATE" />
             </intent-filter>
@@ -277,7 +278,7 @@
         <receiver
             android:name=".sensors.ActivitySensorManager"
             android:enabled="true"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="io.homeassistant.companion.android.background.REQUEST_ACTIVITY_UPDATES" />
             </intent-filter>
@@ -403,7 +404,7 @@
         <activity
             android:name=".settings.SettingsActivity"
             android:parentActivityName=".webview.WebViewActivity"
-            android:exported="true"
+            android:exported="false"
             android:configChanges="orientation|screenSize"
             android:theme="@style/Theme.HomeAssistant.Config" />
 
@@ -947,7 +948,7 @@
         <receiver
             android:name=".notifications.NotificationActionReceiver"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="false" />
 
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"

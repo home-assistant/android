@@ -2,19 +2,23 @@ package io.homeassistant.companion.android.launch
 
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
+import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class LaunchPresenterImpl @Inject constructor(
     view: LaunchView,
     serverManager: ServerManager,
-) : LaunchPresenterBase(view, serverManager) {
-    override fun resyncRegistration() {
-        if (!serverManager.isRegistered()) return
+    networkStatusMonitor: NetworkStatusMonitor,
+) : LaunchPresenterBase(view, serverManager, networkStatusMonitor) {
+    override suspend fun resyncRegistration() = coroutineScope {
+        if (!serverManager.isRegistered()) return@coroutineScope
+
         serverManager.defaultServers.forEach {
-            ioScope.launch {
+            launch {
                 try {
                     serverManager.integrationRepository(it.id).updateRegistration(
                         DeviceRegistration(

@@ -9,7 +9,7 @@ jobs:
     name: Tag Monthly Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Get Current Time
         uses: josStorer/get-current-time@v2.1.2
@@ -19,3 +19,14 @@ jobs:
         uses: rickstaa/action-create-tag@v1.7.2
         with:
           tag: ${{ steps.current-time.outputs.year }}.${{ steps.current-time.outputs.month }}.0
+
+      - name: Trigger Prepare Next Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'prepareNextRelease.yml',
+              ref: 'main',
+            })

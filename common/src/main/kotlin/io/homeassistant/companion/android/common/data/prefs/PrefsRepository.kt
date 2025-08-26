@@ -1,15 +1,31 @@
 package io.homeassistant.companion.android.common.data.prefs
 
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
+import io.homeassistant.companion.android.common.util.GestureAction
+import io.homeassistant.companion.android.common.util.HAGesture
+
+enum class NightModeTheme(val storageValue: String) {
+    LIGHT("light"),
+    DARK("dark"),
+
+    @Deprecated("Kept for backwards compatibility see https://github.com/home-assistant/android/pull/2923")
+    ANDROID("android"),
+    SYSTEM("system"),
+    ;
+
+    companion object {
+        fun fromStorageValue(value: String?): NightModeTheme? = entries.firstOrNull { it.storageValue == value }
+    }
+}
 
 interface PrefsRepository {
     suspend fun getAppVersion(): String?
 
     suspend fun saveAppVersion(ver: String)
 
-    suspend fun getCurrentTheme(): String?
+    suspend fun getCurrentNightModeTheme(): NightModeTheme?
 
-    suspend fun saveTheme(theme: String)
+    suspend fun saveNightModeTheme(nightModeTheme: NightModeTheme)
 
     suspend fun getCurrentLang(): String?
 
@@ -94,6 +110,10 @@ interface PrefsRepository {
     suspend fun getImprovPermissionDisplayedCount(): Int
 
     suspend fun addImprovPermissionDisplayedCount()
+
+    suspend fun getGestureAction(gesture: HAGesture): GestureAction
+
+    suspend fun setGestureAction(gesture: HAGesture, action: GestureAction)
 
     /** Clean up any app-level preferences that might reference servers */
     suspend fun removeServer(serverId: Int)

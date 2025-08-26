@@ -1,9 +1,6 @@
 package io.homeassistant.companion.android.widgets.entity
 
-import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.content.ComponentName
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.text.Editable
@@ -17,7 +14,6 @@ import android.widget.MultiAutoCompleteTextView.CommaTokenizer
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.core.content.ContextCompat
-import androidx.core.content.getSystemService
 import androidx.core.graphics.toColorInt
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
@@ -28,6 +24,7 @@ import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
+import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.databinding.WidgetStaticConfigureBinding
@@ -35,24 +32,13 @@ import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewMode
 import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
-import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
-import javax.inject.Inject
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 @AndroidEntryPoint
-class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
-
-    companion object {
-        private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
-    }
-
-    @Inject
-    lateinit var staticWidgetDao: StaticWidgetDao
-    override val dao get() = staticWidgetDao
+class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity<StaticWidgetEntity, StaticWidgetDao>() {
 
     private var entities = mutableMapOf<Int, List<Entity>>()
 
@@ -90,21 +76,16 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                     Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                     isValidServerId()
                 ) {
-                    getSystemService<AppWidgetManager>()?.requestPinAppWidget(
-                        ComponentName(this, EntityWidget::class.java),
-                        null,
-                        PendingIntent.getActivity(
-                            this,
-                            System.currentTimeMillis().toInt(),
-                            Intent(this, EntityWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
-                        ),
-                    )
+                    lifecycleScope.launch {
+                        requestWidgetCreation()
+                    }
                 } else {
                     showAddWidgetError()
                 }
             } else {
-                onAddWidget()
+                lifecycleScope.launch {
+                    updateWidget()
+                }
             }
         }
 
@@ -128,20 +109,15 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
             return
         }
 
-        val staticWidget = staticWidgetDao.get(appWidgetId)
+        lifecycleScope.launch {
+            val staticWidget = dao.get(appWidgetId)
 
-        val tapActionValues = listOf(getString(commonR.string.widget_tap_action_toggle), getString(commonR.string.refresh))
-        binding.tapActionList.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tapActionValues)
-        val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
-        binding.backgroundType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
-
-        if (staticWidget != null) {
-            binding.widgetTextConfigEntityId.setText(staticWidget.entityId)
-            binding.label.setText(staticWidget.label)
-            binding.textSize.setText(staticWidget.textSize.toInt().toString())
-            binding.stateSeparator.setText(staticWidget.stateSeparator)
-            val entity = runBlocking {
-                try {
+            if (staticWidget != null) {
+                binding.widgetTextConfigEntityId.setText(staticWidget.entityId)
+                binding.label.setText(staticWidget.label)
+                binding.textSize.setText(staticWidget.textSize.toInt().toString())
+                binding.stateSeparator.setText(staticWidget.stateSeparator)
+                val entity = try {
                     serverManager.integrationRepository(staticWidget.serverId).getEntity(staticWidget.entityId)
                 } catch (e: Exception) {
                     Timber.e(e, "Unable to get entity information")
@@ -149,39 +125,71 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
                         .show()
                     null
                 }
+
+                val attributeIds = staticWidget.attributeIds
+                if (!attributeIds.isNullOrEmpty()) {
+                    binding.appendAttributeValueCheckbox.isChecked = true
+                    appendAttributes = true
+                    for (item in attributeIds.split(',')) {
+                        selectedAttributeIds.add(item)
+                    }
+                    binding.widgetTextConfigAttribute.setText(attributeIds.replace(",", ", "))
+                    binding.attributeValueLinearLayout.visibility = VISIBLE
+                    binding.attributeSeparator.setText(staticWidget.attributeSeparator)
+                }
+                if (entity != null) {
+                    selectedEntity = entity
+                    setupAttributes()
+                }
+
+                val toggleable = entity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
+                binding.tapAction.isVisible = toggleable
+                binding.tapActionList.setSelection(
+                    if (toggleable &&
+                        staticWidget.tapAction == WidgetTapAction.TOGGLE
+                    ) {
+                        0
+                    } else {
+                        1
+                    },
+                )
+                binding.textColor.visibility =
+                    if (staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
+                binding.textColorWhite.isChecked =
+                    staticWidget.textColor?.let {
+                        it.toColorInt() == ContextCompat.getColor(
+                            this@EntityWidgetConfigureActivity,
+                            android.R.color.white,
+                        )
+                    }
+                        ?: true
+                binding.textColorBlack.isChecked =
+                    staticWidget.textColor?.let {
+                        it.toColorInt() ==
+                            ContextCompat.getColor(
+                                this@EntityWidgetConfigureActivity,
+                                commonR.color.colorWidgetButtonLabelBlack,
+                            )
+                    }
+                        ?: false
+
+                binding.addButton.setText(commonR.string.update_widget)
+            } else {
+                binding.backgroundType.setSelection(0)
             }
 
-            val attributeIds = staticWidget.attributeIds
-            if (!attributeIds.isNullOrEmpty()) {
-                binding.appendAttributeValueCheckbox.isChecked = true
-                appendAttributes = true
-                for (item in attributeIds.split(','))
-                    selectedAttributeIds.add(item)
-                binding.widgetTextConfigAttribute.setText(attributeIds.replace(",", ", "))
-                binding.attributeValueLinearLayout.visibility = VISIBLE
-                binding.attributeSeparator.setText(staticWidget.attributeSeparator)
-            }
-            if (entity != null) {
-                selectedEntity = entity
-                setupAttributes()
-            }
-
-            val toggleable = entity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS
-            binding.tapAction.isVisible = toggleable
-            binding.tapActionList.setSelection(if (toggleable && staticWidget.tapAction == WidgetTapAction.TOGGLE) 0 else 1)
-            binding.textColor.visibility = if (staticWidget.backgroundType == WidgetBackgroundType.TRANSPARENT) View.VISIBLE else View.GONE
-            binding.textColorWhite.isChecked =
-                staticWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, android.R.color.white) } ?: true
-            binding.textColorBlack.isChecked =
-                staticWidget.textColor?.let { it.toColorInt() == ContextCompat.getColor(this, commonR.color.colorWidgetButtonLabelBlack) } ?: false
-
-            binding.addButton.setText(commonR.string.update_widget)
-        } else {
-            binding.backgroundType.setSelection(0)
+            setupServerSelect(staticWidget?.serverId)
         }
-        entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
 
-        setupServerSelect(staticWidget?.serverId)
+        val tapActionValues =
+            listOf(getString(commonR.string.widget_tap_action_toggle), getString(commonR.string.refresh))
+        binding.tapActionList.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tapActionValues)
+        val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
+        binding.backgroundType.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
+
+        entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
 
         binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
         binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
@@ -202,7 +210,9 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 binding.textColor.visibility =
-                    if (parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)) {
+                    if (parent?.adapter?.getItem(position) ==
+                        getString(commonR.string.widget_background_type_transparent)
+                    ) {
                         View.VISIBLE
                     } else {
                         View.GONE
@@ -235,6 +245,8 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         setupAttributes()
         setAdapterEntities(serverId)
     }
+
+    override val widgetClass: Class<*> = EntityWidget::class.java
 
     private fun setAdapterEntities(serverId: Int) {
         entityAdapter?.let { adapter ->
@@ -287,7 +299,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
     }
 
     private fun setupAttributes() {
-        val fetchedAttributes = selectedEntity?.attributes as? Map<String, String>
+        val fetchedAttributes = selectedEntity?.attributes
         val attributesAdapter = ArrayAdapter<String>(this, android.R.layout.simple_dropdown_item_1line)
         binding.widgetTextConfigAttribute.setAdapter(attributesAdapter)
         attributesAdapter.addAll(*fetchedAttributes?.keys.orEmpty().toTypedArray())
@@ -300,120 +312,59 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity() {
         }
     }
 
-    private fun onAddWidget() {
-        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-            showAddWidgetError()
-            return
+    override suspend fun getPendingDaoEntity(): StaticWidgetEntity {
+        val serverId = checkNotNull(selectedServerId) { "Selected server ID is null" }
+
+        val entity = if (selectedEntity == null) {
+            binding.widgetTextConfigEntityId.text.toString()
+        } else {
+            checkNotNull(selectedEntity?.entityId) { "Selected entity is null" }
         }
-        try {
-            val context = this@EntityWidgetConfigureActivity
 
-            // Set up a broadcast intent and pass the service call data as extras
-            val intent = Intent()
-            intent.action = BaseWidgetProvider.RECEIVE_DATA
-            intent.component = ComponentName(context, EntityWidget::class.java)
+        if (entity !in entities[serverId].orEmpty().map { it.entityId }) {
+            throw IllegalStateException("Selected entity is unknown on server")
+        }
 
-            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-
-            intent.putExtra(
-                EntityWidget.EXTRA_SERVER_ID,
-                selectedServerId!!,
-            )
-
-            val entity = if (selectedEntity == null) {
-                binding.widgetTextConfigEntityId.text.toString()
-            } else {
-                selectedEntity!!.entityId
-            }
-            if (entity !in entities[selectedServerId].orEmpty().map { it.entityId }) {
-                showAddWidgetError()
-                return
-            }
-            intent.putExtra(
-                EntityWidget.EXTRA_ENTITY_ID,
-                entity,
-            )
-
-            intent.putExtra(
-                EntityWidget.EXTRA_LABEL,
-                binding.label.text.toString(),
-            )
-
-            intent.putExtra(
-                EntityWidget.EXTRA_TEXT_SIZE,
-                binding.textSize.text.toString(),
-            )
-
-            intent.putExtra(
-                EntityWidget.EXTRA_STATE_SEPARATOR,
-                binding.stateSeparator.text.toString(),
-            )
-
-            if (appendAttributes) {
-                val attributes = if (selectedAttributeIds.isEmpty()) {
+        return StaticWidgetEntity(
+            id = appWidgetId,
+            serverId = serverId,
+            entityId = entity,
+            label = binding.label.text?.toString(),
+            textSize = binding.textSize.text?.toString()?.toFloatOrNull() ?: 30F,
+            stateSeparator = binding.stateSeparator.text?.toString() ?: "",
+            attributeIds = if (appendAttributes) {
+                if (selectedAttributeIds.isEmpty()) {
                     binding.widgetTextConfigAttribute.text.toString()
                 } else {
-                    selectedAttributeIds
+                    selectedAttributeIds.joinToString(",")
                 }
-                intent.putExtra(
-                    EntityWidget.EXTRA_ATTRIBUTE_IDS,
-                    attributes,
+            } else {
+                null
+            },
+            attributeSeparator = if (appendAttributes) binding.attributeSeparator.text?.toString() ?: "" else "",
+            tapAction = when (binding.tapActionList.selectedItemPosition) {
+                0 -> WidgetTapAction.TOGGLE
+                else -> WidgetTapAction.REFRESH
+            },
+            backgroundType = when (binding.backgroundType.selectedItem as String?) {
+                getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
+                getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
+                else -> WidgetBackgroundType.DAYNIGHT
+            },
+            textColor = if (binding.backgroundType.selectedItem as String? ==
+                getString(commonR.string.widget_background_type_transparent)
+            ) {
+                getHexForColor(
+                    if (binding.textColorWhite.isChecked) {
+                        android.R.color.white
+                    } else {
+                        commonR.color.colorWidgetButtonLabelBlack
+                    },
                 )
-
-                intent.putExtra(
-                    EntityWidget.EXTRA_ATTRIBUTE_SEPARATOR,
-                    binding.attributeSeparator.text.toString(),
-                )
-            }
-
-            intent.putExtra(
-                EntityWidget.EXTRA_TAP_ACTION,
-                when (binding.tapActionList.selectedItemPosition) {
-                    0 -> WidgetTapAction.TOGGLE
-                    else -> WidgetTapAction.REFRESH
-                },
-            )
-
-            intent.putExtra(
-                EntityWidget.EXTRA_BACKGROUND_TYPE,
-                when (binding.backgroundType.selectedItem as String?) {
-                    getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
-                    getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
-                    else -> WidgetBackgroundType.DAYNIGHT
-                },
-            )
-
-            intent.putExtra(
-                EntityWidget.EXTRA_TEXT_COLOR,
-                if (binding.backgroundType.selectedItem as String? == getString(commonR.string.widget_background_type_transparent)) {
-                    getHexForColor(if (binding.textColorWhite.isChecked) android.R.color.white else commonR.color.colorWidgetButtonLabelBlack)
-                } else {
-                    null
-                },
-            )
-
-            context.sendBroadcast(intent)
-
-            // Make sure we pass back the original appWidgetId
-            setResult(
-                RESULT_OK,
-                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId),
-            )
-            finish()
-        } catch (e: Exception) {
-            Timber.e(e, "Issue configuring widget")
-            showAddWidgetError()
-        }
-    }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        if (intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
-            appWidgetId = intent.extras!!.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID,
-            )
-            onAddWidget()
-        }
+            } else {
+                null
+            },
+            lastUpdate = dao.get(appWidgetId)?.lastUpdate ?: "",
+        )
     }
 }

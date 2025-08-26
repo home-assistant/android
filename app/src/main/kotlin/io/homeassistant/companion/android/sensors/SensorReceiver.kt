@@ -138,8 +138,7 @@ class SensorReceiver : SensorReceiverBase() {
         sensorManagerId: String,
         notificationId: Int,
     ): PendingIntent? {
-        val intent = SettingsActivity.newInstance(context).apply {
-            putExtra("fragment", "sensors/$sensorId")
+        val intent = SettingsActivity.newInstance(context, SettingsActivity.Deeplink.Sensor(sensorId)).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         }

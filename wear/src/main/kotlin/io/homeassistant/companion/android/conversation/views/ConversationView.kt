@@ -67,10 +67,7 @@ private const val SCREEN_CONVERSATION = "conversation"
 private const val SCREEN_PIPELINES = "pipelines"
 
 @Composable
-fun LoadAssistView(
-    conversationViewModel: ConversationViewModel,
-    onVoiceInputIntent: () -> Unit,
-) {
+fun LoadAssistView(conversationViewModel: ConversationViewModel, onVoiceInputIntent: () -> Unit) {
     WearAppTheme {
         val swipeDismissableNavController = rememberSwipeDismissableNavController()
         SwipeDismissableNavHost(
@@ -121,7 +118,13 @@ fun ConversationResultView(
     val scrollState = rememberScalingLazyListState()
     LaunchedEffect(conversation.size) {
         scrollState.scrollToItem(
-            if (inputMode != AssistViewModelBase.AssistInputMode.BLOCKED) (conversation.size + 1) else conversation.size,
+            if (inputMode !=
+                AssistViewModelBase.AssistInputMode.BLOCKED
+            ) {
+                (conversation.size + 1)
+            } else {
+                conversation.size
+            },
         )
     }
     if (hapticFeedback) {
@@ -204,16 +207,24 @@ fun ConversationResultView(
                         onClick = { onMicrophoneInput() },
                         colors =
                         if (inputIsActive) {
-                            IconButtonDefaults.filledIconButtonColors(containerColor = Color.Transparent, contentColor = Color.Black)
+                            IconButtonDefaults.filledIconButtonColors(
+                                containerColor = Color.Transparent,
+                                contentColor = Color.Black,
+                            )
                         } else {
-                            IconButtonDefaults.filledIconButtonColors(containerColor = wearColorScheme.outlineVariant, contentColor = Color.White)
+                            IconButtonDefaults.filledIconButtonColors(
+                                containerColor = wearColorScheme.outlineVariant,
+                                contentColor = Color.White,
+                            )
                         },
                         modifier = Modifier.touchTargetAwareSize(IconButtonDefaults.SmallButtonSize),
                     ) {
                         Icon(
                             Icons.Filled.Mic,
                             contentDescription = stringResource(R.string.assist_start_listening),
-                            modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize)),
+                            modifier = Modifier.size(
+                                IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize),
+                            ),
                             tint = LocalContentColor.current,
                         )
                     }
@@ -268,10 +279,7 @@ fun SpeechBubble(text: String, isResponse: Boolean) {
 }
 
 @Composable
-fun ConversationPipelinesView(
-    pipelines: List<AssistPipelineResponse>,
-    onSelectPipeline: (String) -> Unit,
-) {
+fun ConversationPipelinesView(pipelines: List<AssistPipelineResponse>, onSelectPipeline: (String) -> Unit) {
     WearAppTheme {
         ThemeLazyColumn {
             item {

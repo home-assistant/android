@@ -80,9 +80,7 @@ fun LoadNotification(notification: NotificationItem) {
 }
 
 @Composable
-fun NotificationDetailViewHeader(
-    @StringRes stringId: Int,
-) {
+fun NotificationDetailViewHeader(@StringRes stringId: Int) {
     Text(
         text = stringResource(stringId),
         fontWeight = FontWeight.ExtraBold,

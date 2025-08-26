@@ -35,10 +35,12 @@ class ExternalUrlViewModel @Inject constructor(
 
     init {
         state.get<Int>(ExternalUrlFragment.EXTRA_SERVER)?.let { serverId = it }
-        serverManager.getServer(serverId)?.let {
-            canUseCloud = it.connection.canUseCloud()
-            useCloud = it.connection.useCloud
-            externalUrl = it.connection.getUrl(isInternal = false, force = true).toString()
+        viewModelScope.launch {
+            serverManager.getServer(serverId)?.let {
+                canUseCloud = it.connection.canUseCloud()
+                useCloud = it.connection.useCloud
+                externalUrl = it.connection.getUrl(isInternal = false, force = true).toString()
+            }
         }
     }
 

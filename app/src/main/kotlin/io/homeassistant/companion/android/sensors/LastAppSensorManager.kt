@@ -10,6 +10,7 @@ import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.isAutomotive
 import timber.log.Timber
 
 class LastAppSensorManager : SensorManager {
@@ -34,7 +35,7 @@ class LastAppSensorManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        return if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+        return if (context.isAutomotive()) {
             false
         } else {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
@@ -47,9 +48,7 @@ class LastAppSensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateLastApp(context)
     }
 
@@ -61,14 +60,21 @@ class LastAppSensorManager : SensorManager {
 
         val usageStats = context.getSystemService<UsageStatsManager>()!!
         val current = System.currentTimeMillis()
-        val lastApp = usageStats.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, current - 1000 * 1000, current).maxByOrNull { it.lastTimeUsed }?.packageName ?: "none"
+        val lastApp =
+            usageStats.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, current - 1000 * 1000, current).maxByOrNull {
+                it.lastTimeUsed
+            }?.packageName
+                ?: "none"
 
         var appLabel = STATE_UNKNOWN
 
         try {
             val pm = context.packageManager
             val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                pm.getApplicationInfo(lastApp, PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()))
+                pm.getApplicationInfo(
+                    lastApp,
+                    PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()),
+                )
             } else {
                 @Suppress("DEPRECATION")
                 pm.getApplicationInfo(lastApp, PackageManager.GET_META_DATA)

@@ -13,14 +13,20 @@ open class ExternalBusMessage(
     val callback: ValueCallback<String>? = null,
 )
 
-class NavigateTo(path: String, replace: Boolean = false) : ExternalBusMessage(
+class NavigateTo(path: String, replace: Boolean = false) :
+    ExternalBusMessage(
+        id = -1,
+        type = "command",
+        command = "navigate",
+        payload = mapOf(
+            "path" to path,
+            "options" to mapOf(
+                "replace" to replace,
+            ),
+        ),
+    )
+object ShowSidebar : ExternalBusMessage(
     id = -1,
     type = "command",
-    command = "navigate",
-    payload = mapOf(
-        "path" to path,
-        "options" to mapOf(
-            "replace" to replace,
-        ),
-    ),
+    command = "sidebar/show",
 )

@@ -14,7 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.wifi.improv.DeviceState
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.data.wifi.WifiHelper
+import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.improv.ImprovRepository
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.setLayoutAndExpandedByDefault
@@ -114,11 +114,7 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -131,7 +127,8 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
                             startScanning()
                         },
                         onDismiss = {
-                            val domain = improvRepository.getResultState().firstOrNull()?.toHttpUrlOrNull()?.queryParameter("domain")
+                            val domain = improvRepository.getResultState().firstOrNull()?.toHttpUrlOrNull()
+                                ?.queryParameter("domain")
                             setFragmentResult(RESULT_KEY, bundleOf(RESULT_DOMAIN to domain))
                             improvRepository.clearStatesForDevice()
                             dismiss()

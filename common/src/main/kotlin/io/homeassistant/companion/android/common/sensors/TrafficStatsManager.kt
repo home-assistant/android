@@ -88,9 +88,7 @@ class TrafficStatsManager : SensorManager {
         }
         return true
     }
-    override suspend fun requestSensorUpdate(
-        context: Context,
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateMobileRxBytes(context)
         updateMobileTxBytes(context)
         updateTotalRxBytes(context)
