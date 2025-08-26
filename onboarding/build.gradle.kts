@@ -16,6 +16,8 @@ android {
 dependencies {
     implementation(project(":common"))
 
+    implementation(libs.kotlin.stdlib)
+
     implementation(libs.core.splashscreen)
 
     implementation(libs.core.ktx)
