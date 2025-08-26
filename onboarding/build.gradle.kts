@@ -16,6 +16,8 @@ android {
 dependencies {
     implementation(project(":common"))
 
+    debugImplementation(libs.leakcanary.android)
+
     implementation(libs.kotlin.stdlib)
 
     implementation(libs.core.splashscreen)
