@@ -6,7 +6,8 @@ import io.homeassistant.companion.android.common.data.network.NetworkState
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -35,13 +36,15 @@ abstract class LaunchPresenterBase(
                 activeServer != null
             ) {
                 networkStatusMonitor.observeNetworkStatus(activeServer.connection)
-                    .collectLatest { state ->
-                        if (handleNetworkState(state)) return@collectLatest
-                    }
+                    .takeWhile { state ->
+                        // Until the network is ready we continue to observe network status changes
+                        !handleNetworkState(state)
+                    }.collect()
             } else {
                 view.displayOnBoarding(false)
             }
         } catch (e: IllegalArgumentException) { // Server was just removed, nothing is added
+            Timber.e(e, "Issue checking servers falling back to onboarding")
             view.displayOnBoarding(false)
         }
     }

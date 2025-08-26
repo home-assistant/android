@@ -84,8 +84,8 @@ private class LocalStorageWithMigration(
                     }
 
                     localStorage.putInt(MIGRATION_PREF, MIGRATION_VERSION)
-                    migrationChecked.set(true)
                 }
+                migrationChecked.set(true)
             }
         }
     }
