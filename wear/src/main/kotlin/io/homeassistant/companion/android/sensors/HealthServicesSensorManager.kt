@@ -28,7 +28,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.R)
@@ -278,12 +277,13 @@ class HealthServicesSensorManager : SensorManager {
 
             override fun onPermissionLost() {
                 val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-                runBlocking {
+                CoroutineScope(Dispatchers.IO).launch {
                     serverManager(latestContext).defaultServers.forEach {
                         sensorDao.setSensorsEnabled(listOf(userActivityState.id), it.id, false)
                     }
                 }
             }
+
 
             override fun onRegistrationFailed(throwable: Throwable) {
                 Timber.e(throwable, "onRegistrationFailed")

@@ -42,7 +42,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 @HiltViewModel
@@ -88,17 +87,11 @@ class SensorDetailViewModel @Inject constructor(
     private val _permissionSnackbar = MutableSharedFlow<PermissionSnackbar>()
     var permissionSnackbar = _permissionSnackbar.asSharedFlow()
 
-    val sensorManager: SensorManager? = runBlocking {
-        SensorReceiver.MANAGERS
-            .find {
-                it.getAvailableSensors(getApplication()).any { sensor -> sensor.id == sensorId }
-            }
-    }
-
-    val basicSensor: SensorManager.BasicSensor? = runBlocking {
-        sensorManager?.getAvailableSensors(getApplication())
-            ?.find { it.id == sensorId }
-    }
+    // Make these mutable and initialize asynchronously
+    var sensorManager by mutableStateOf<SensorManager?>(null)
+        private set
+    var basicSensor by mutableStateOf<SensorManager.BasicSensor?>(null)
+        private set
 
     /** A list of all sensors (for each server) with states */
     var sensors by mutableStateOf<List<SensorWithAttributes>>(emptyList())
@@ -124,26 +117,25 @@ class SensorDetailViewModel @Inject constructor(
     val serversDoExpand = _serversDoExpand.asStateFlow()
     val serversStateExpand = serversDoExpand.collectAsState(false)
 
-    private val zones by lazy {
-        Timber.d("Get zones from Home Assistant for listing zones in preferences...")
-        runBlocking {
-            val cachedZones = mutableListOf<String>()
-            serverManager.defaultServers.map { server ->
-                async {
-                    try {
-                        serverManager.integrationRepository(server.id).getZones().map { "${server.id}_${it.entityId}" }
-                    } catch (e: Exception) {
-                        Timber.e(e, "Error receiving zones from Home Assistant")
-                        emptyList()
-                    }
-                }
-            }.awaitAll().forEach { cachedZones.addAll(it) }
-            Timber.d("Successfully received " + cachedZones.size + " zones (" + cachedZones + ") from Home Assistant")
-            cachedZones
-        }
-    }
+    private var zones by mutableStateOf<List<String>>(emptyList())
 
     init {
+        // Initialize sensor manager and basic sensor asynchronously
+        viewModelScope.launch {
+            val manager = SensorReceiver.MANAGERS
+                .find {
+                    it.getAvailableSensors(getApplication()).any { sensor -> sensor.id == sensorId }
+                }
+            sensorManager = manager
+            basicSensor = manager?.getAvailableSensors(getApplication())
+                ?.find { it.id == sensorId }
+        }
+
+        // Load zones asynchronously
+        viewModelScope.launch {
+            loadZones()
+        }
+
         val sensorFlow = sensorDao.getFullFlow(sensorId)
         viewModelScope.launch {
             sensorFlow.collect { map ->
@@ -169,10 +161,27 @@ class SensorDetailViewModel @Inject constructor(
         }
     }
 
+    private suspend fun loadZones() {
+        Timber.d("Get zones from Home Assistant for listing zones in preferences...")
+        val cachedZones = mutableListOf<String>()
+        serverManager.defaultServers.map { server ->
+            async {
+                try {
+                    serverManager.integrationRepository(server.id).getZones().map { "${server.id}_${it.entityId}" }
+                } catch (e: Exception) {
+                    Timber.e(e, "Error receiving zones from Home Assistant")
+                    emptyList()
+                }
+            }
+        }.awaitAll().forEach { cachedZones.addAll(it) }
+        Timber.d("Successfully received " + cachedZones.size + " zones (" + cachedZones + ") from Home Assistant")
+        zones = cachedZones
+    }
+
     private suspend fun checkSensorEnabled(sensors: List<SensorWithAttributes>) {
         if (sensorManager != null && basicSensor != null && sensors.isNotEmpty()) {
             sensorCheckedEnabled = true
-            val hasPermission = sensorManager.checkPermission(getApplication(), basicSensor.id)
+            val hasPermission = sensorManager!!.checkPermission(getApplication(), basicSensor!!.id)
             sensors.forEach { thisSensor ->
                 val enabled = thisSensor.sensor.enabled && hasPermission
                 updateSensorEntity(enabled, thisSensor.sensor.serverId)
@@ -192,14 +201,14 @@ class SensorDetailViewModel @Inject constructor(
                     ) {
                         val sensorName = basicSensor?.let {
                             getApplication<Application>().getString(
-                                basicSensor.name,
+                                basicSensor!!.name,
                             )
                         }.orEmpty()
                         locationPermissionRequests.value =
                             LocationPermissionsDialog(block = true, serverId = serverId, sensors = arrayOf(sensorName))
                         return@launch
                     } else {
-                        if (!sensorManager.checkPermission(getApplication(), sensorId)) {
+                        if (!sensorManager!!.checkPermission(getApplication(), sensorId)) {
                             if (sensorManager is NetworkSensorManager) {
                                 locationPermissionRequests.value =
                                     LocationPermissionsDialog(false, serverId, emptyArray(), permissions)
@@ -490,10 +499,11 @@ class SensorDetailViewModel @Inject constructor(
             }
             SensorSettingType.LIST_BEACONS -> {
                 // show current beacons and also previously selected UUIDs
-                entries ?: (sensorManager as BluetoothSensorManager).getBeaconUUIDs()
-                    .plus(setting.value.split(", ").filter { it.isNotEmpty() })
-                    .sorted()
-                    .distinct()
+                entries ?: (sensorManager as? BluetoothSensorManager)?.getBeaconUUIDs()
+                    ?.plus(setting.value.split(", ").filter { it.isNotEmpty() })
+                    ?.sorted()
+                    ?.distinct()
+                ?: emptyList()
             }
             else ->
                 emptyList()
@@ -538,11 +548,11 @@ class SensorDetailViewModel @Inject constructor(
                             Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                             Manifest.permission.ACCESS_COARSE_LOCATION,
                             Manifest.permission.ACCESS_FINE_LOCATION,
-                            ->
+                                ->
                                 commonR.string.enable_sensor_missing_permission_location
                             Manifest.permission.BLUETOOTH_ADVERTISE,
                             Manifest.permission.BLUETOOTH_CONNECT,
-                            ->
+                                ->
                                 commonR.string.enable_sensor_missing_permission_nearby_devices
                             Manifest.permission.READ_PHONE_STATE ->
                                 commonR.string.enable_sensor_missing_permission_phone

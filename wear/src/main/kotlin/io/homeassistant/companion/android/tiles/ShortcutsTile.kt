@@ -45,9 +45,10 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.guava.future
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 // Dimensions (dp)
@@ -146,8 +147,7 @@ class ShortcutsTile : TileService() {
                 .build()
         }
 
-    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent): Unit = runBlocking {
-        withContext(Dispatchers.IO) {
+    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent){
             /**
              * When the app is updated from an older version (which only supported a single Shortcut Tile),
              * and the user is adding a new Shortcuts Tile, we can't tell for sure if it's the 1st or 2nd Tile.
@@ -163,12 +163,13 @@ class ShortcutsTile : TileService() {
              *    and the old Tile will behave as it is the new Tile. This is needed because
              *    we don't know if it's the 1st or 2nd Tile.
              */
+        GlobalScope.launch(Dispatchers.IO) {
             wearPrefsRepository.getTileShortcutsAndSaveTileId(requestParams.tileId)
         }
     }
 
-    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent): Unit = runBlocking {
-        withContext(Dispatchers.IO) {
+    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent){
+        GlobalScope.launch(Dispatchers.IO) {
             wearPrefsRepository.removeTileShortcuts(requestParams.tileId)
         }
     }

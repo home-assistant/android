@@ -3,13 +3,15 @@ package io.homeassistant.companion.android.share
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
 
@@ -38,7 +40,9 @@ class ShareActivity : BaseActivity() {
                 }
             }
         }
-        runBlocking {
+
+        // Use lifecycleScope.launch instead of runBlocking to launch coroutine safely
+        lifecycleScope.launch {
             try {
                 serverManager.integrationRepository().fireEvent("mobile_app.share", data)
                 Timber.d("Share successful!")
@@ -54,8 +58,9 @@ class ShareActivity : BaseActivity() {
                     commonR.string.share_failed,
                     Toast.LENGTH_LONG,
                 ).show()
+            } finally {
+                finish()
             }
         }
-        finish()
     }
 }

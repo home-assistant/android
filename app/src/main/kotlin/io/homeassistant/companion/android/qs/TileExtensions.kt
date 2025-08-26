@@ -44,7 +44,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -94,7 +93,7 @@ abstract class TileExtensions : TileService() {
         super.onTileRemoved()
         Timber.d("Tile: ${getTileId()} removed")
         handleInject()
-        runBlocking {
+        MainScope().launch {
             setTileAdded(getTileId(), false)
         }
     }

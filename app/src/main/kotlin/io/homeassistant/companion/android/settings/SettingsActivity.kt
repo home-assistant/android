@@ -31,7 +31,6 @@ import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFra
 import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import javax.inject.Inject
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.parcelize.Parcelize
 import timber.log.Timber
 
@@ -219,18 +218,25 @@ class SettingsActivity : BaseActivity() {
      */
     private fun setAppActive(active: Boolean) {
         val serverFragment = supportFragmentManager.findFragmentByTag(ServerSettingsFragment.TAG)
-        serverFragment?.let { setAppActive((it as ServerSettingsFragment).getServerId(), active) }
-        setAppActive(ServerManager.SERVER_ID_ACTIVE, active)
+        serverFragment?.let { setAppActiveInScope((it as ServerSettingsFragment).getServerId(), active) }
+        setAppActiveInScope(ServerManager.SERVER_ID_ACTIVE, active)
     }
 
     // TODO remove runBlocking https://github.com/home-assistant/android/issues/5688
-    fun setAppActive(serverId: Int?, active: Boolean) = runBlocking {
+    suspend fun setAppActive(serverId: Int?, active: Boolean) {
         serverManager.getServer(serverId ?: ServerManager.SERVER_ID_ACTIVE)?.let {
             try {
                 serverManager.integrationRepository(it.id).setAppActive(active)
             } catch (e: IllegalArgumentException) {
                 Timber.w(e, "Cannot set app active $active for server $serverId")
             }
+        }
+    }
+
+    fun setAppActiveInScope(serverId: Int?, active: Boolean) {
+        // Use lifecycleScope to launch the suspend function without blocking the main thread
+        lifecycleScope.launch {
+            setAppActive(serverId, active)
         }
     }
 

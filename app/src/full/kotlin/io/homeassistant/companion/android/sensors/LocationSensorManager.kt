@@ -51,10 +51,12 @@ import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -1202,41 +1204,55 @@ class LocationSensorManager :
 
         val now = System.currentTimeMillis()
         val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-        val fullSensor = sensorDao.getFull(singleAccurateLocation.id).toSensorWithAttributes()
-        val latestAccurateLocation =
-            fullSensor?.attributes?.firstOrNull { it.name == "lastAccurateLocationRequest" }?.value?.toLongOrNull()
-                ?: 0L
 
-        val sensorSettings = sensorDao.getSettings(singleAccurateLocation.id)
-        val minAccuracy = sensorSettings
-            .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
-            ?: DEFAULT_MINIMUM_ACCURACY
-        sensorDao.add(
-            SensorSetting(
-                singleAccurateLocation.id,
-                SETTING_ACCURACY,
-                minAccuracy.toString(),
-                SensorSettingType.NUMBER,
-            ),
-        )
-        val minTimeBetweenUpdates = sensorSettings
-            .firstOrNull { it.name == SETTING_ACCURATE_UPDATE_TIME }?.value?.toIntOrNull()
-            ?: 60000
-        sensorDao.add(
-            SensorSetting(
-                singleAccurateLocation.id,
-                SETTING_ACCURATE_UPDATE_TIME,
-                minTimeBetweenUpdates.toString(),
-                SensorSettingType.NUMBER,
-            ),
-        )
+        // Move database operations to IO dispatcher
+        val (latestAccurateLocation, minAccuracy, minTimeBetweenUpdates) = withContext(Dispatchers.IO) {
+            val fullSensor = sensorDao.getFull(singleAccurateLocation.id).toSensorWithAttributes()
+            val latestAccurateLocation = fullSensor?.attributes
+                ?.firstOrNull { it.name == "lastAccurateLocationRequest" }
+                ?.value?.toLongOrNull() ?: 0L
+
+            val sensorSettings = sensorDao.getSettings(singleAccurateLocation.id)
+
+            val minAccuracy = sensorSettings
+                .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
+                ?: DEFAULT_MINIMUM_ACCURACY
+
+            sensorDao.add(
+                SensorSetting(
+                    singleAccurateLocation.id,
+                    SETTING_ACCURACY,
+                    minAccuracy.toString(),
+                    SensorSettingType.NUMBER,
+                ),
+            )
+
+            val minTimeBetweenUpdates = sensorSettings
+                .firstOrNull { it.name == SETTING_ACCURATE_UPDATE_TIME }?.value?.toIntOrNull()
+                ?: 60000
+
+            sensorDao.add(
+                SensorSetting(
+                    singleAccurateLocation.id,
+                    SETTING_ACCURATE_UPDATE_TIME,
+                    minTimeBetweenUpdates.toString(),
+                    SensorSettingType.NUMBER,
+                ),
+            )
+
+            Triple(latestAccurateLocation, minAccuracy, minTimeBetweenUpdates)
+        }
 
         // Only update accurate location at most once a minute
         if (now < latestAccurateLocation + minTimeBetweenUpdates) {
             Timber.d("Not requesting accurate location, last accurate location was too recent")
             return
         }
-        sensorDao.add(Attribute(singleAccurateLocation.id, "lastAccurateLocationRequest", now.toString(), "string"))
+
+        // Add the timestamp attribute in IO context
+        withContext(Dispatchers.IO) {
+            sensorDao.add(Attribute(singleAccurateLocation.id, "lastAccurateLocationRequest", now.toString(), "string"))
+        }
 
         val maxRetries = 5
         val request = LocationRequest.Builder(10000).apply {
@@ -1244,6 +1260,10 @@ class LocationSensorManager :
             setMaxUpdates(maxRetries)
             setMinUpdateIntervalMillis(5000)
         }.build()
+
+        // Create a coroutine scope for location callbacks
+        val locationScope = CoroutineScope(Dispatchers.Main)
+
         try {
             LocationServices.getFusedLocationProviderClient(latestContext)
                 .requestLocationUpdates(
@@ -1258,72 +1278,87 @@ class LocationSensorManager :
                                     acquire(10 * 60 * 1000L) // 10 minutes
                                 }
                         var numberCalls = 0
+
                         override fun onLocationResult(locationResult: LocationResult) {
                             numberCalls++
-                            Timber.d(
+                            Timber.d("Got single accurate location update: ${locationResult.lastLocation}")
 
-                                "Got single accurate location update: ${locationResult.lastLocation}",
-                            )
-                            if (locationResult.equals(null)) {
+                            val location = locationResult.lastLocation
+                            if (location == null) {
                                 Timber.w("No location provided.")
                                 return
                             }
 
                             when {
-                                locationResult.lastLocation!!.accuracy <= minAccuracy -> {
-                                    Timber.d(
-                                        "Location accurate enough, all done with high accuracy.",
-                                    )
-                                    runBlocking {
-                                        locationResult.lastLocation?.let {
-                                            getEnabledServers(
-                                                latestContext,
-                                                singleAccurateLocation,
-                                            ).forEach { serverId ->
-                                                sendLocationUpdate(
-                                                    it,
-                                                    serverId,
-                                                    LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION,
-                                                )
-                                            }
-                                        }
-                                    }
-                                    if (wakeLock?.isHeld == true) wakeLock.release()
+                                location.accuracy <= minAccuracy -> {
+                                    Timber.d("Location accurate enough, all done with high accuracy.")
+                                    handleAccurateLocation(location, locationScope)
+                                    cleanupAndRemoveUpdates()
                                 }
 
                                 numberCalls >= maxRetries -> {
-                                    Timber.d(
-                                        "No location was accurate enough, sending our last location anyway",
-                                    )
-                                    if (locationResult.lastLocation!!.accuracy <= minAccuracy * 2) {
-                                        runBlocking {
-                                            getEnabledServers(
-                                                latestContext,
-                                                singleAccurateLocation,
-                                            ).forEach { serverId ->
-                                                sendLocationUpdate(
-                                                    locationResult.lastLocation!!,
-                                                    serverId,
-                                                    LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION,
-                                                )
-                                            }
-                                        }
+                                    Timber.d("No location was accurate enough, sending our last location anyway")
+                                    if (location.accuracy <= minAccuracy * 2) {
+                                        handleAccurateLocation(location, locationScope)
                                     }
-                                    if (wakeLock?.isHeld == true) wakeLock.release()
+                                    cleanupAndRemoveUpdates()
                                 }
 
                                 else -> {
-                                    Timber.w(
-                                        "Location not accurate enough on retry $numberCalls of $maxRetries",
-                                    )
+                                    Timber.w("Location not accurate enough on retry $numberCalls of $maxRetries")
                                 }
                             }
+                        }
+
+                        private fun handleAccurateLocation(location: Location, scope: CoroutineScope) {
+                            // Use the provided scope to launch coroutine for async operations
+                            scope.launch {
+                                try {
+                                    getEnabledServers(latestContext, singleAccurateLocation).forEach { serverId ->
+                                        sendLocationUpdate(
+                                            location,
+                                            serverId,
+                                            LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION,
+                                        )
+                                    }
+                                } catch (e: Exception) {
+                                    Timber.e(e, "Failed to send location update")
+                                }
+                            }
+                        }
+
+                        private fun cleanupAndRemoveUpdates() {
+                            // Release wake lock safely
+                            wakeLock?.releaseIfHeld()
+
+                            // Remove location updates
+                            try {
+                                LocationServices.getFusedLocationProviderClient(latestContext)
+                                    .removeLocationUpdates(this)
+                            } catch (e: Exception) {
+                                Timber.w(e, "Failed to remove location updates")
+                            }
+
+                            // Cancel the location scope to clean up any pending operations
+                            locationScope.cancel()
                         }
                     },
                     Looper.getMainLooper(),
                 )
         } catch (e: Exception) {
             Timber.e(e, "Failed to get location data for single accurate sensor")
+            locationScope.cancel()
+        }
+    }
+
+    // Extension function to release wake lock safely if held
+    private fun PowerManager.WakeLock?.releaseIfHeld() {
+        try {
+            if (this?.isHeld == true) {
+                this.release()
+            }
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to release wake lock")
         }
     }
 

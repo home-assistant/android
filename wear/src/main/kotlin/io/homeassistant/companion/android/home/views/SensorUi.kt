@@ -11,6 +11,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -26,7 +27,6 @@ import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.theme.getSwitchButtonColors
 import io.homeassistant.companion.android.util.batterySensorManager
 import io.homeassistant.companion.android.views.ThemeLazyColumn
-import kotlinx.coroutines.runBlocking
 
 @SuppressLint("InlinedApi")
 @Composable
@@ -134,7 +134,10 @@ fun SensorUi(
 @Composable
 private fun PreviewSensorUI() {
     val context = LocalContext.current
-    val batterySensors = runBlocking { batterySensorManager.getAvailableSensors(context) }
+    val batterySensors by produceState<List<SensorManager.BasicSensor>>(initialValue = emptyList()) {
+        value = batterySensorManager.getAvailableSensors(context)
+    }
+
     CompositionLocalProvider {
         ThemeLazyColumn {
             item {

@@ -7,7 +7,9 @@ import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.toStringList
 import javax.inject.Inject
 import javax.inject.Named
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -18,22 +20,24 @@ class WearPrefsRepositoryImpl @Inject constructor(
 
     companion object {
         @VisibleForTesting const val MIGRATION_PREF = "migration"
-
         @VisibleForTesting const val MIGRATION_VERSION = 2
-
         private const val PREF_TILE_SHORTCUTS = "tile_shortcuts_list"
         private const val PREF_SHOW_TILE_SHORTCUTS_TEXT = "show_tile_shortcuts_text"
-
         @VisibleForTesting const val PREF_TILE_TEMPLATES = "tile_templates"
         private const val PREF_WEAR_HAPTIC_FEEDBACK = "wear_haptic_feedback"
         private const val PREF_WEAR_TOAST_CONFIRMATION = "wear_toast_confirmation"
         private const val PREF_WEAR_FAVORITES_ONLY = "wear_favorites_only"
-
         private const val UNKNOWN_TEMPLATE_TILE_ID = -1
     }
 
     init {
-        runBlocking {
+        // Kick off the migration asynchronously when the object is created
+        migratePreferences()
+    }
+
+    private fun migratePreferences() {
+        // We don't use runBlocking here; instead, we launch a coroutine to handle this asynchronously.
+        CoroutineScope(Dispatchers.IO).launch {
             val legacyPrefTileTemplate = "tile_template"
             val legacyPrefTileTemplateRefreshInterval = "tile_template_refresh_interval"
 
@@ -63,9 +67,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
 
             if (currentVersion == null || currentVersion < 2) {
                 val template = localStorage.getString(legacyPrefTileTemplate)
-                val templateRefreshInterval = localStorage.getInt(
-                    legacyPrefTileTemplateRefreshInterval,
-                )
+                val templateRefreshInterval = localStorage.getInt(legacyPrefTileTemplateRefreshInterval)
 
                 if (template != null && templateRefreshInterval != null) {
                     val templates = mapOf(

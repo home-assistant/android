@@ -9,58 +9,98 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 class ServerSettingsPresenterImpl @Inject constructor(
     private val serverManager: ServerManager,
     private val wifiHelper: WifiHelper,
-) : PreferenceDataStore(),
-    ServerSettingsPresenter {
+) : PreferenceDataStore(), ServerSettingsPresenter {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     private lateinit var view: ServerSettingsView
     private var serverId = -1
 
+    // Local caches to support synchronous access
+    private var trustServer: Boolean = false
+    private var appLock: Boolean = false
+    private var appLockHomeBypass: Boolean = false
+
+    private var serverName: String? = null
+    private var registrationName: String? = null
+    private var connectionInternal: String? = null
+    private var sessionTimeout: String? = null
+
     override fun init(view: ServerSettingsView, serverId: Int) {
         this.view = view
         this.serverId = serverId
+        preloadPreferences()
+    }
+
+    private fun preloadPreferences() {
+        mainScope.launch {
+            try {
+                val integrationRepo = serverManager.integrationRepository(serverId)
+                val authRepo = serverManager.authenticationRepository(serverId)
+                val server = serverManager.getServer(serverId)
+
+                trustServer = integrationRepo.isTrusted()
+                appLock = authRepo.isLockEnabledRaw()
+                appLockHomeBypass = authRepo.isLockHomeBypassEnabled()
+
+                serverName = server?.nameOverride
+                registrationName = server?.deviceName
+                connectionInternal = server?.connection?.getUrl(isInternal = true, force = true)?.toString()
+                sessionTimeout = integrationRepo.getSessionTimeOut().toString()
+            } catch (e: Exception) {
+                Timber.e(e, "Error preloading preferences")
+            }
+        }
     }
 
     override fun getPreferenceDataStore(): PreferenceDataStore = this
 
-    override fun getBoolean(key: String?, defValue: Boolean): Boolean = runBlocking {
-        when (key) {
-            "trust_server" -> serverManager.integrationRepository(serverId).isTrusted()
-            "app_lock" -> serverManager.authenticationRepository(serverId).isLockEnabledRaw()
-            "app_lock_home_bypass" -> serverManager.authenticationRepository(serverId).isLockHomeBypassEnabled()
-            else -> throw IllegalArgumentException("No boolean found by this key: $key")
+    override fun getBoolean(key: String?, defValue: Boolean): Boolean {
+        return when (key) {
+            "trust_server" -> trustServer
+            "app_lock" -> appLock
+            "app_lock_home_bypass" -> appLockHomeBypass
+            else -> {
+                Timber.e("No boolean found by this key: $key")
+                defValue
+            }
         }
     }
 
     override fun putBoolean(key: String?, value: Boolean) {
         mainScope.launch {
             when (key) {
-                "trust_server" -> serverManager.integrationRepository(serverId).setTrusted(value)
-                "app_lock" -> serverManager.authenticationRepository(serverId).setLockEnabled(value)
-                "app_lock_home_bypass" -> serverManager.authenticationRepository(
-                    serverId,
-                ).setLockHomeBypassEnabled(value)
+                "trust_server" -> {
+                    serverManager.integrationRepository(serverId).setTrusted(value)
+                    trustServer = value
+                }
+                "app_lock" -> {
+                    serverManager.authenticationRepository(serverId).setLockEnabled(value)
+                    appLock = value
+                }
+                "app_lock_home_bypass" -> {
+                    serverManager.authenticationRepository(serverId).setLockHomeBypassEnabled(value)
+                    appLockHomeBypass = value
+                }
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
     }
 
-    override fun getString(key: String?, defValue: String?): String? = runBlocking {
-        when (key) {
-            "server_name" -> serverManager.getServer(serverId)?.nameOverride
-            "registration_name" -> serverManager.getServer(serverId)?.deviceName
-            "connection_internal" -> (
-                serverManager.getServer(serverId)?.connection?.getUrl(isInternal = true, force = true)
-                    ?: ""
-                ).toString()
-            "session_timeout" -> serverManager.integrationRepository(serverId).getSessionTimeOut().toString()
-            else -> throw IllegalArgumentException("No string found by this key: $key")
+    override fun getString(key: String?, defValue: String?): String? {
+        return when (key) {
+            "server_name" -> serverName ?: defValue
+            "registration_name" -> registrationName ?: defValue
+            "connection_internal" -> connectionInternal ?: defValue
+            "session_timeout" -> sessionTimeout ?: defValue
+            else -> {
+                Timber.e("No string found by this key: $key")
+                defValue
+            }
         }
     }
 
@@ -70,40 +110,41 @@ class ServerSettingsPresenterImpl @Inject constructor(
                 "server_name" -> {
                     serverManager.getServer(serverId)?.let {
                         serverManager.updateServer(
-                            it.copy(
-                                nameOverride = value?.ifBlank { null },
-                            ),
+                            it.copy(nameOverride = value?.ifBlank { null })
                         )
+                        serverName = value
                     }
                     view.updateServerName(serverManager.getServer(serverId)?.friendlyName ?: "")
                 }
+
                 "registration_name" -> {
                     serverManager.getServer(serverId)?.let {
                         serverManager.updateServer(
-                            it.copy(
-                                deviceName = value?.ifBlank { null },
-                            ),
+                            it.copy(deviceName = value?.ifBlank { null })
                         )
+                        registrationName = value
                     }
                 }
+
                 "connection_internal" -> {
                     serverManager.getServer(serverId)?.let {
                         serverManager.updateServer(
-                            it.copy(
-                                connection = it.connection.copy(
-                                    internalUrl = value,
-                                ),
-                            ),
+                            it.copy(connection = it.connection.copy(internalUrl = value))
                         )
+                        connectionInternal = value
                     }
                 }
+
                 "session_timeout" -> {
                     try {
-                        serverManager.integrationRepository(serverId).sessionTimeOut(value.toString().toInt())
+                        val timeout = value?.toIntOrNull() ?: return@launch
+                        serverManager.integrationRepository(serverId).sessionTimeOut(timeout)
+                        sessionTimeout = timeout.toString()
                     } catch (e: Exception) {
                         Timber.e(e, "Issue saving session timeout value")
                     }
                 }
+
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
@@ -115,7 +156,6 @@ class ServerSettingsPresenterImpl @Inject constructor(
                 serverManager.authenticationRepository(serverId).revokeSession()
             } catch (e: Exception) {
                 Timber.w(e, "Unable to revoke session for server")
-                // Remove server anyway, the user wants to delete and we don't need the server for that
             }
             serverManager.removeServer(serverId)
             view.onRemovedServer(
@@ -128,12 +168,12 @@ class ServerSettingsPresenterImpl @Inject constructor(
     }
 
     override fun onFinish() {
-        runBlocking {
+        mainScope.launch {
             if (serverManager.getServer()?.id != serverId) {
                 setAppActive(false)
             }
+            mainScope.cancel()
         }
-        mainScope.cancel()
     }
 
     override fun hasMultipleServers(): Boolean = serverManager.defaultServers.size > 1
@@ -153,11 +193,12 @@ class ServerSettingsPresenterImpl @Inject constructor(
                 )
             }
         }
+
         mainScope.launch {
             val connection = serverManager.getServer(serverId)?.connection
             val ssids = connection?.internalSsids.orEmpty()
             view.enableInternalConnection(
-                ssids.isNotEmpty() || connection?.internalEthernet == true || connection?.internalVpn == true,
+                ssids.isNotEmpty() || connection?.internalEthernet == true || connection?.internalVpn == true
             )
             view.updateHomeNetwork(ssids, connection?.internalEthernet, connection?.internalVpn)
         }
@@ -169,23 +210,20 @@ class ServerSettingsPresenterImpl @Inject constructor(
         mainScope.launch {
             serverManager.getServer(serverId)?.let {
                 serverManager.updateServer(
-                    it.copy(
-                        connection = it.connection.copy(
-                            internalSsids = emptyList(),
-                        ),
-                    ),
+                    it.copy(connection = it.connection.copy(internalSsids = emptyList()))
                 )
             }
             updateUrlStatus()
         }
     }
 
-    override fun setAppActive(active: Boolean) = runBlocking {
-        try {
-            serverManager.integrationRepository(serverId).setAppActive(active)
-        } catch (e: IllegalArgumentException) {
-            Timber.w("Cannot set app active $active for server $serverId")
-            Unit
+    override fun setAppActive(active: Boolean) {
+        mainScope.launch {
+            try {
+                serverManager.integrationRepository(serverId).setAppActive(active)
+            } catch (e: IllegalArgumentException) {
+                Timber.w("Cannot set app active $active for server $serverId")
+            }
         }
     }
 

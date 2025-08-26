@@ -77,7 +77,9 @@ import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundTypeConverter
 import io.homeassistant.companion.android.database.widget.WidgetTapActionConverter
 import java.util.UUID
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @Database(
@@ -1033,7 +1035,9 @@ abstract class AppDatabase : RoomDatabase() {
             with(NotificationManagerCompat.from(appContext)) {
                 notify(NOTIFICATION_ID, notification)
             }
-            runBlocking {
+
+            // Launch coroutine on Main dispatcher (UI thread) or a proper scope you control
+            CoroutineScope(Dispatchers.Main).launch {
                 try {
                     integrationRepository.fireEvent("mobile_app.migration_failed", mapOf())
                     Timber.d("Event sent to Home Assistant")

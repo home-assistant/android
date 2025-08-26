@@ -9,6 +9,8 @@ import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -19,6 +21,12 @@ class HomeAssistantApis @Inject constructor(
     private val tlsHelper: TLSHelper,
     @ApplicationContext private val appContext: Context,
 ) {
+    init {
+        // Launch a coroutine to preload the keys asynchronously
+        GlobalScope.launch {
+            tlsHelper.preloadKeys()
+        }
+    }
     companion object {
         private const val LOCAL_HOST = "http://localhost/"
         const val USER_AGENT = "User-Agent"

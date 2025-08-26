@@ -32,7 +32,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -198,8 +197,8 @@ class CameraTile : TileService() {
             builder.build()
         }
 
-    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) = runBlocking {
-        withContext(Dispatchers.IO) {
+    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) {
+        serviceScope.launch(Dispatchers.IO) {
             val dao = AppDatabase.getInstance(this@CameraTile).cameraTileDao()
             if (dao.get(requestParams.tileId) == null) {
                 dao.add(CameraTile(id = requestParams.tileId))
@@ -207,13 +206,14 @@ class CameraTile : TileService() {
         }
     }
 
-    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) = runBlocking {
-        withContext(Dispatchers.IO) {
+    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) {
+        serviceScope.launch(Dispatchers.IO) {
             AppDatabase.getInstance(this@CameraTile)
                 .cameraTileDao()
                 .delete(requestParams.tileId)
         }
     }
+
 
     override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
         serviceScope.launch {

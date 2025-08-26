@@ -8,11 +8,13 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.themes.NightModeManager
 import javax.inject.Inject
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class ChangeLog @Inject constructor(val nightModeManager: NightModeManager) {
-    fun showChangeLog(context: Context, forceShow: Boolean) {
-        val isDarkTheme = when (runBlocking { nightModeManager.getCurrentNightMode() }) {
+    suspend fun showChangeLog(context: Context, forceShow: Boolean) {
+        // Get the current night mode asynchronously
+        val isDarkTheme = when (nightModeManager.getCurrentNightMode()) {
             NightModeTheme.ANDROID, NightModeTheme.SYSTEM -> {
                 val nightModeFlags =
                     context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
@@ -21,6 +23,7 @@ class ChangeLog @Inject constructor(val nightModeManager: NightModeManager) {
             NightModeTheme.DARK -> true
             else -> false
         }
+
         if (isDarkTheme) {
             val darkThemeChangeLog = DarkThemeChangeLog(context)
             if ((!darkThemeChangeLog.isFirstRunEver && darkThemeChangeLog.isFirstRun) || forceShow) {

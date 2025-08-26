@@ -39,8 +39,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.guava.future
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -171,22 +170,24 @@ class ThermostatTile : TileService() {
                 .build()
         }
 
-    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) = runBlocking {
-        withContext(Dispatchers.IO) {
+    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) {
+        serviceScope.launch {
             val dao = AppDatabase.getInstance(this@ThermostatTile).thermostatTileDao()
             if (dao.get(requestParams.tileId) == null) {
                 dao.add(ThermostatTile(id = requestParams.tileId))
-            } // else already existing, don't overwrite existing tile data
+            }
         }
     }
 
-    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) = runBlocking {
-        withContext(Dispatchers.IO) {
+
+    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) {
+        serviceScope.launch {
             AppDatabase.getInstance(this@ThermostatTile)
                 .thermostatTileDao()
                 .delete(requestParams.tileId)
         }
     }
+
 
     override fun onDestroy() {
         super.onDestroy()

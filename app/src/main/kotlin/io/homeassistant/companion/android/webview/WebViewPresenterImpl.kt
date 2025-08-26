@@ -278,7 +278,7 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun isFullScreen(): Boolean = runBlocking {
+    override fun isFullScreen(): Boolean = sco {
         prefsRepository.isFullScreenEnabled()
     }
 

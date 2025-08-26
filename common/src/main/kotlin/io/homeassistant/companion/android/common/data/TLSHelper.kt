@@ -13,13 +13,14 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedKeyManager
 import javax.net.ssl.X509TrustManager
-import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 
 class TLSHelper @Inject constructor(
     @NamedKeyChain private val keyChainRepository: KeyChainRepository,
     @NamedKeyStore private val keyStore: KeyChainRepository,
 ) {
+    private var certificateChain: Array<X509Certificate>? = null
+    private var privateKey: PrivateKey? = null
 
     fun setupOkHttpClientSSLSocketFactory(builder: OkHttpClient.Builder) {
         val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
@@ -31,7 +32,10 @@ class TLSHelper @Inject constructor(
 
         builder.sslSocketFactory(sslContext.socketFactory, trustManagers[0] as X509TrustManager)
     }
-
+    suspend fun preloadKeys() {
+        certificateChain = keyChainRepository.getCertificateChain() ?: keyStore.getCertificateChain()
+        privateKey = keyChainRepository.getPrivateKey() ?: keyStore.getPrivateKey()
+    }
     private fun getMTLSKeyManagerForOKHTTP(): X509ExtendedKeyManager {
         return object : X509ExtendedKeyManager() {
             override fun getClientAliases(p0: String?, p1: Array<out Principal>?): Array<String> {
@@ -51,25 +55,11 @@ class TLSHelper @Inject constructor(
             }
 
             override fun getCertificateChain(p0: String?): Array<X509Certificate>? {
-                var chain: Array<X509Certificate>?
-
-                // block until a chain is provided via the TLSWebView
-                runBlocking {
-                    chain = keyChainRepository.getCertificateChain() ?: keyStore.getCertificateChain()
-                }
-
-                return chain
+                return certificateChain
             }
 
             override fun getPrivateKey(p0: String?): PrivateKey? {
-                var key: PrivateKey?
-
-                // block until a key is provided via the TLSWebView
-                runBlocking {
-                    key = keyChainRepository.getPrivateKey() ?: keyStore.getPrivateKey()
-                }
-
-                return key
+                return privateKey
             }
         }
     }

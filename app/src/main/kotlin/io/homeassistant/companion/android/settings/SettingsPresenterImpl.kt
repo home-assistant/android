@@ -38,13 +38,12 @@ import io.homeassistant.companion.android.util.UrlUtil
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 class SettingsPresenterImpl @Inject constructor(
@@ -55,8 +54,7 @@ class SettingsPresenterImpl @Inject constructor(
     private val changeLog: ChangeLog,
     private val settingsDao: SettingsDao,
     private val sensorDao: SensorDao,
-) : PreferenceDataStore(),
-    SettingsPresenter {
+) : PreferenceDataStore(), SettingsPresenter {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -74,8 +72,8 @@ class SettingsPresenterImpl @Inject constructor(
 
     private var suggestionFlow = MutableStateFlow<SettingsHomeSuggestion?>(null)
 
-    override fun getBoolean(key: String, defValue: Boolean): Boolean = runBlocking {
-        return@runBlocking when (key) {
+    suspend fun getBoolean(key: String, defValue: Boolean): Boolean {
+        return when (key) {
             "fullscreen" -> prefsRepository.isFullScreenEnabled()
             "keep_screen_on" -> prefsRepository.isKeepScreenOnEnabled()
             "pinch_to_zoom" -> prefsRepository.isPinchToZoomEnabled()
@@ -88,7 +86,6 @@ class SettingsPresenterImpl @Inject constructor(
             }
             "enable_ha_launcher" -> {
                 val componentSetting = view.getPackageManager()?.getComponentEnabledSetting(launcherAliasComponent)
-                // By default it should be disabled and only shown when the user enabled it
                 componentSetting != null && componentSetting == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
             }
             else -> throw IllegalArgumentException("No boolean found by this key: $key")
@@ -104,7 +101,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "crash_reporting" -> prefsRepository.setCrashReporting(value)
                 "autoplay_video" -> prefsRepository.setAutoPlayVideo(value)
                 "always_show_first_view_on_app_start" -> prefsRepository.setAlwaysShowFirstViewOnAppStart(value)
-                "assist_voice_command_intent" ->
+                "assist_voice_command_intent" -> {
                     view.getPackageManager()?.setComponentEnabledSetting(
                         voiceCommandAppComponent,
                         if (value) {
@@ -114,14 +111,15 @@ class SettingsPresenterImpl @Inject constructor(
                         },
                         PackageManager.DONT_KILL_APP,
                     )
+                }
                 "enable_ha_launcher" -> enableLauncherMode(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
     }
 
-    override fun getString(key: String, defValue: String?): String? = runBlocking {
-        when (key) {
+    suspend fun getString(key: String, defValue: String?): String? {
+        return when (key) {
             "themes" -> nightModeManager.getCurrentNightMode().storageValue
             "languages" -> langsManager.getCurrentLang()
             "page_zoom" -> prefsRepository.getPageZoomLevel().toString()
@@ -160,8 +158,8 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun getServerCount(): Int = serverManager.defaultServers.size
 
-    override suspend fun getNotificationRateLimits(): RateLimitResponse? = withContext(Dispatchers.IO) {
-        try {
+    override suspend fun getNotificationRateLimits(): RateLimitResponse? {
+        return try {
             if (serverManager.isRegistered()) {
                 serverManager.integrationRepository().getNotificationRateLimits()
             } else {
@@ -169,12 +167,14 @@ class SettingsPresenterImpl @Inject constructor(
             }
         } catch (e: Exception) {
             Timber.d("Unable to get rate limits")
-            return@withContext null
+            null
         }
     }
 
     override fun showChangeLog(context: Context) {
-        changeLog.showChangeLog(context, true)
+        GlobalScope.launch{
+            changeLog.showChangeLog(context, true)
+        }
     }
 
     override suspend fun addServer(result: OnboardApp.Output?) {
@@ -239,8 +239,6 @@ class SettingsPresenterImpl @Inject constructor(
     }
 
     private suspend fun setNotifications(serverId: Int, enabled: Boolean) {
-        // Full: this only refers to the system permission on Android 13+ so no changes are necessary.
-        // Minimal: change persistent connection setting to reflect preference.
         if (BuildConfig.FLAVOR != "full") {
             settingsDao.insert(
                 Setting(
@@ -269,12 +267,8 @@ class SettingsPresenterImpl @Inject constructor(
     private suspend fun getSuggestions(context: Context, overwrite: Boolean) {
         val suggestions = mutableListOf<SettingsHomeSuggestion>()
 
-        // Assist
         var assistantSuggestion = serverManager.defaultServers.any { it.version?.isAtLeast(2023, 5) == true }
-        assistantSuggestion = if (
-            assistantSuggestion &&
-            context.isAutomotive()
-        ) {
+        assistantSuggestion = if (assistantSuggestion && context.isAutomotive()) {
             false
         } else if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val roleManager = context.getSystemService<RoleManager>()
@@ -295,7 +289,6 @@ class SettingsPresenterImpl @Inject constructor(
             )
         }
 
-        // Notifications
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             !NotificationManagerCompat.from(context).areNotificationsEnabled()
         ) {

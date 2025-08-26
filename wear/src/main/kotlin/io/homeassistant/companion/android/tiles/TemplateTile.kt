@@ -36,7 +36,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import timber.log.Timber
@@ -98,8 +97,8 @@ class TemplateTile : TileService() {
                 .build()
         }
 
-    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent): Unit = runBlocking {
-        withContext(Dispatchers.IO) {
+    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent){
+        serviceScope.launch{
             /**
              * When the app is updated from an older version (which only supported a single Template Tile),
              * and the user is adding a new Template Tile, we can't tell for sure if it's the 1st or 2nd Tile.
@@ -119,8 +118,8 @@ class TemplateTile : TileService() {
         }
     }
 
-    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent): Unit = runBlocking {
-        withContext(Dispatchers.IO) {
+    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent){
+        serviceScope.launch {
             wearPrefsRepository.removeTemplateTile(requestParams.tileId)
         }
     }

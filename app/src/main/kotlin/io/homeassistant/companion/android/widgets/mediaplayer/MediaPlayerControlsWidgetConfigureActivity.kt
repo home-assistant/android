@@ -25,14 +25,13 @@ import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import java.util.LinkedList
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidgetConfigureActivity :
     BaseWidgetConfigureActivity<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
-    private var requestLauncherSetup = false
 
+    private var requestLauncherSetup = false
     private lateinit var binding: WidgetMediaControlsConfigureBinding
 
     override val serverSelect: View
@@ -43,16 +42,12 @@ class MediaPlayerControlsWidgetConfigureActivity :
 
     private var entities = mutableMapOf<Int, List<Entity>>()
     private var selectedEntities: LinkedList<Entity?> = LinkedList()
-
     private var entityAdapter: SingleItemArrayAdapter<Entity>? = null
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Set the result to CANCELED.  This will cause the widget host to cancel
-        // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
-
         binding = WidgetMediaControlsConfigureBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.root.applySafeDrawingInsets()
@@ -79,21 +74,18 @@ class MediaPlayerControlsWidgetConfigureActivity :
             }
         }
 
-        // Find the widget id from the intent.
-        val intent = intent
         val extras = intent.extras
         if (extras != null) {
             appWidgetId = extras.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
             requestLauncherSetup = extras.getBoolean(
                 ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
-                false,
+                false
             )
         }
 
-        // If this activity was started with an intent without an app widget ID, finish with an error.
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID && !requestLauncherSetup) {
             finish()
             return
@@ -117,26 +109,27 @@ class MediaPlayerControlsWidgetConfigureActivity :
                     WidgetUtils.getSelectedBackgroundOption(
                         this@MediaPlayerControlsWidgetConfigureActivity,
                         mediaPlayerWidget.backgroundType,
-                        backgroundTypeValues,
-                    ),
+                        backgroundTypeValues
+                    )
                 )
-                val entities = runBlocking {
-                    try {
-                        mediaPlayerWidget.entityId.split(",").map { s ->
-                            serverManager.integrationRepository(mediaPlayerWidget.serverId).getEntity(s.trim())
-                        }
-                    } catch (e: Exception) {
-                        Timber.e(e, "Unable to get entity information")
-                        Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
-                            .show()
-                        null
+
+                try {
+                    val entityList = mediaPlayerWidget.entityId.split(",").mapNotNull { s ->
+                        serverManager.integrationRepository(mediaPlayerWidget.serverId).getEntity(s.trim())
                     }
+                    selectedEntities.addAll(entityList)
+                } catch (e: Exception) {
+                    Timber.e(e, "Unable to get entity information")
+                    Toast.makeText(
+                        applicationContext,
+                        commonR.string.widget_entity_fetch_error,
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
-                if (entities != null) {
-                    selectedEntities.addAll(entities)
-                }
+
                 binding.addButton.setText(commonR.string.update_widget)
             }
+
             setupServerSelect(mediaPlayerWidget?.serverId)
         }
 
@@ -154,8 +147,6 @@ class MediaPlayerControlsWidgetConfigureActivity :
                     entities[server.id] = fetchedEntities
                     if (server.id == selectedServerId) setAdapterEntities(server.id)
                 } catch (e: Exception) {
-                    // If entities fail to load, it's okay to pass
-                    // an empty map to the dynamicFieldAdapter
                     Timber.e(e, "Failed to query entities")
                 }
             }
@@ -194,7 +185,7 @@ class MediaPlayerControlsWidgetConfigureActivity :
             if (entity != null) selectedEntities.add(entity)
         }
 
-        val entitySelection = selectedEntities.map { e -> e?.entityId }.reduceOrNull { a, b -> "$a,$b" }
+        val entitySelection = selectedEntities.map { it?.entityId }.reduceOrNull { a, b -> "$a,$b" }
 
         if (entitySelection == null) {
             throw IllegalStateException("No valid entities selected")
@@ -213,7 +204,7 @@ class MediaPlayerControlsWidgetConfigureActivity :
                 getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
                 getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
                 else -> WidgetBackgroundType.DAYNIGHT
-            },
+            }
         )
     }
 

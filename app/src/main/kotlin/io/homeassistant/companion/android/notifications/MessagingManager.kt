@@ -94,11 +94,11 @@ import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -2055,7 +2055,7 @@ class MessagingManager @Inject constructor(
                             NotificationData.MESSAGE to context.getString(commonR.string.missing_command_permission),
                             THIS_SERVER_ID to serverId,
                         )
-                        runBlocking {
+                        GlobalScope.launch {
                             sendNotification(data)
                         }
                     } else {

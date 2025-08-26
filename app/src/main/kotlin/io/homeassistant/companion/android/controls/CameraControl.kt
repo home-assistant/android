@@ -15,16 +15,17 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
+import kotlinx.coroutines.*
+import timber.log.Timber
 import java.net.URL
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
-import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.S)
 object CameraControl : HaControl {
+
+    // Create a CoroutineScope for background tasks
+    private val scope = CoroutineScope(Dispatchers.Main)
+
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
@@ -34,23 +35,38 @@ object CameraControl : HaControl {
         val image = if (info.baseUrl != null &&
             (entity.attributes["entity_picture"] as? String)?.isNotBlank() == true
         ) {
-            getThumbnail(info.baseUrl + entity.attributes["entity_picture"] as String)
+            // Launch coroutine to get the thumbnail asynchronously
+            scope.launch {
+                val thumbnail = getThumbnail(info.baseUrl + entity.attributes["entity_picture"] as String)
+                val icon = if (thumbnail != null) {
+                    Icon.createWithBitmap(thumbnail)
+                } else {
+                    Icon.createWithResource(context, R.drawable.control_camera_placeholder)
+                }
+                control.setControlTemplate(
+                    ThumbnailTemplate(
+                        entity.entityId,
+                        entity.state != STATE_UNAVAILABLE && thumbnail != null,
+                        icon,
+                        context.getString(commonR.string.widget_camera_contentdescription),
+                    ),
+                )
+            }
         } else {
-            null
+
         }
-        val icon = if (image != null) {
-            Icon.createWithBitmap(image)
-        } else {
-            Icon.createWithResource(context, R.drawable.control_camera_placeholder)
+
+        // If image is null, use placeholder directly
+        if (image == null) {
+            control.setControlTemplate(
+                ThumbnailTemplate(
+                    entity.entityId,
+                    false,
+                    Icon.createWithResource(context, R.drawable.control_camera_placeholder),
+                    context.getString(commonR.string.widget_camera_contentdescription),
+                ),
+            )
         }
-        control.setControlTemplate(
-            ThumbnailTemplate(
-                entity.entityId,
-                entity.state != STATE_UNAVAILABLE && image != null,
-                icon,
-                context.getString(commonR.string.widget_camera_contentdescription),
-            ),
-        )
         return control
     }
 
@@ -64,17 +80,15 @@ object CameraControl : HaControl {
         return true
     }
 
-    private fun getThumbnail(path: String): Bitmap? = runBlocking {
+    private suspend fun getThumbnail(path: String): Bitmap? {
         var image: Bitmap? = null
         withTimeoutOrNull(TimeUnit.SECONDS.toMillis(2)) {
-            withContext(Dispatchers.IO) {
-                try {
-                    image = BitmapFactory.decodeStream(URL(path).openStream())
-                } catch (e: Exception) {
-                    Timber.e(e, "Couldn't download image for control")
-                }
+            try {
+                image = BitmapFactory.decodeStream(URL(path).openStream())
+            } catch (e: Exception) {
+                Timber.e(e, "Couldn't download image for control")
             }
         }
-        return@runBlocking image
+        return image
     }
 }
