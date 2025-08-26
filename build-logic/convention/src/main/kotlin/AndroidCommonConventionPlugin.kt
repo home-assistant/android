@@ -1,4 +1,5 @@
 
+import com.android.build.api.dsl.ApplicationExtension
 import io.homeassistant.companion.android.androidConfig
 import io.homeassistant.companion.android.getPluginId
 import java.io.File
@@ -122,6 +123,15 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     "testImplementation"(libs.turbine)
 
                     "testImplementation"(project(":testing-unit"))
+
+                    if (this@androidConfig is ApplicationExtension) {
+                        val noLeakCanary = project.findProperty("noLeakCanary")?.toString()?.ifEmpty { "true" }
+                            ?.toBoolean() ?: false
+
+                        if (!noLeakCanary) {
+                            "debugImplementation"(libs.leakcanary.android)
+                        }
+                    }
                 }
             }
 
