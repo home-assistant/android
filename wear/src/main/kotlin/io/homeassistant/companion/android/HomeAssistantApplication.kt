@@ -49,6 +49,7 @@ open class HomeAssistantApplication : Application() {
 
         // We should initialize the logger as early as possible in the lifecycle of the application
         Timber.plant(Timber.DebugTree())
+        Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK ${Build.VERSION.SDK_INT}")
 
         // Enable only for debug flavor to avoid perf regressions in release
         Composer.setDiagnosticStackTraceEnabled(BuildConfig.DEBUG)
