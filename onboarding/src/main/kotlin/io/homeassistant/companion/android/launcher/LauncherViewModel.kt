@@ -46,7 +46,6 @@ internal class LauncherViewModel @Inject constructor(
 
     private val _navigationEventsFlow = MutableSharedFlow<LauncherNavigationEvent>(replay = 1)
     val navigationEventsFlow = _navigationEventsFlow.asSharedFlow()
-    fun shouldShowSplashScreen(): Boolean = navigationEventsFlow.replayCache.isEmpty()
 
     init {
         viewModelScope.launch {
@@ -68,6 +67,8 @@ internal class LauncherViewModel @Inject constructor(
             }
         }
     }
+
+    fun shouldShowSplashScreen(): Boolean = navigationEventsFlow.replayCache.isEmpty()
 
     private suspend fun getActiveServerConnectedAndRegistered(): Server? {
         return serverManager.getServer(ServerManager.SERVER_ID_ACTIVE)?.takeIf {
