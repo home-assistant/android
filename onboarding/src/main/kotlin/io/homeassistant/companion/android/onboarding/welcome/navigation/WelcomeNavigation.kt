@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data object WelcomeRoute
 
-internal fun NavController.navigateToWelcome(navOptions: NavOptions) {
+internal fun NavController.navigateToWelcome(navOptions: NavOptions? = null) {
     navigate(route = WelcomeRoute, navOptions)
 }
 
@@ -22,9 +22,6 @@ internal fun NavController.navigateToLearnMore() {
 
 internal fun NavGraphBuilder.welcomeScreen(onConnectClick: () -> Unit, onLearnMoreClick: () -> Unit) {
     composable<WelcomeRoute> {
-        WelcomeScreen(
-            onConnectClick = onConnectClick,
-            onLearnMoreClick = onLearnMoreClick,
-        )
+        WelcomeScreen(onConnectClick = onConnectClick, onLearnMoreClick = onLearnMoreClick)
     }
 }

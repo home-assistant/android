@@ -5,9 +5,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navOptions
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.compose.HAApp
@@ -37,18 +38,23 @@ class LauncherActivity : AppCompatActivity() {
             HATheme {
                 val navController = rememberNavController()
 
-                val startDestinationState =
-                    produceState<HAStartDestinationRoute?>(initialValue = null, key1 = viewModel) {
-                        value = when (viewModel.navigationEventsFlow.first()) {
-                            LauncherNavigationEvent.Frontend -> FrontendRoute
-                            LauncherNavigationEvent.Onboarding -> OnboardingRoute
-                        }
+                LaunchedEffect(viewModel) {
+                    val startDestination = when (viewModel.navigationEventsFlow.first()) {
+                        LauncherNavigationEvent.Frontend -> FrontendRoute
+                        LauncherNavigationEvent.Onboarding -> OnboardingRoute
                     }
+                    navController.navigate(
+                        startDestination,
+                        navOptions {
+                            // We want to clear the stack to remove the LoadingScreen
+                            popUpTo(navController.graph.id) {
+                                inclusive = true
+                            }
+                        },
+                    )
+                }
 
-                HAApp(
-                    navController,
-                    startDestination = startDestinationState.value,
-                )
+                HAApp(navController)
             }
         }
     }
