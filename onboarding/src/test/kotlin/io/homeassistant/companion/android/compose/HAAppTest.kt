@@ -12,11 +12,11 @@ import androidx.navigation.testing.TestNavHostController
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
-import io.homeassistant.companion.android.HAStartDestinationRoute
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
-import io.homeassistant.companion.android.onboarding.OnboardingRoute
+import io.homeassistant.companion.android.frontend.navigation.navigateToFrontend
 import io.homeassistant.companion.android.onboarding.R
+import io.homeassistant.companion.android.onboarding.navigateToOnboarding
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.stringResources
@@ -48,25 +48,22 @@ class HAAppTest {
     fun setup() {
         Timber.Forest.plant(ConsoleLogTree)
         ConsoleLogTree.verbose = true
-    }
 
-    private fun setupNavController(startDestination: HAStartDestinationRoute?) {
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
             navController.navigatorProvider.addNavigator(ComposeNavigator())
 
             HAApp(
                 navController = navController,
-                startDestination = startDestination,
             )
         }
     }
 
     @Test
-    fun `Given Onboarding event when starting the app then show Welcome`() {
-        setupNavController(OnboardingRoute)
-        assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
+    fun `Given HAApp when navigate to Welcome then show Welcome`() {
         composeTestRule.apply {
+            navController.navigateToOnboarding()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
             onNodeWithText(stringResources(R.string.welcome_home_assistant_title)).assertIsDisplayed()
             onNodeWithText(stringResources(R.string.welcome_details)).assertIsDisplayed()
             onNodeWithText(stringResources(R.string.welcome_connect_to_ha)).assertIsDisplayed()
@@ -76,10 +73,10 @@ class HAAppTest {
     }
 
     @Test
-    fun `Given Frontend event when starting the app then show Frontend`() {
-        setupNavController(FrontendRoute)
-        assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
+    fun `Given HAApp when navigate to Welcome then show Frontend`() {
         composeTestRule.apply {
+            navController.navigateToFrontend()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
             onNodeWithTag("frontend_placeholder").assertIsDisplayed()
         }
     }

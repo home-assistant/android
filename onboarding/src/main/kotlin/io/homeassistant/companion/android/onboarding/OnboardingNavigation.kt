@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.onboarding
 
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavOptions
 import androidx.navigation.navigation
 import io.homeassistant.companion.android.HAStartDestinationRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
@@ -11,6 +12,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 internal data object OnboardingRoute : HAStartDestinationRoute
+
+internal fun NavController.navigateToOnboarding(navOptions: NavOptions? = null) {
+    navigate(OnboardingRoute, navOptions)
+}
 
 /**
  * Adds the onboarding graph to the [NavGraphBuilder].It is dedicated for onboarding it can be accessed either by using the
