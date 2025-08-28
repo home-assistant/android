@@ -18,7 +18,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import io.homeassistant.companion.android.HAStartDestinationRoute
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.loading.LoadingScreen
 
 /**
  * Main composable for the Home Assistant app.
@@ -30,10 +32,16 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
  * Sub composable needs to handle vertical insets themselves.
  *
  * @param navController The NavHostController to use for navigation.
+ * @param startDestination The initial destination of the navigation graph. If it is null [LoadingScreen]
+ *                         is displayed.
  * @param modifier The modifier to be applied to this composable.
  */
 @Composable
-internal fun HAApp(navController: NavHostController, modifier: Modifier = Modifier) {
+internal fun HAApp(
+    navController: NavHostController,
+    startDestination: HAStartDestinationRoute?,
+    modifier: Modifier = Modifier,
+) {
     val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
@@ -61,6 +69,7 @@ internal fun HAApp(navController: NavHostController, modifier: Modifier = Modifi
         ) {
             HANavHost(
                 navController = navController,
+                startDestination = startDestination,
                 onShowSnackbar = { message, action ->
                     snackbarHostState.showSnackbar(
                         message,

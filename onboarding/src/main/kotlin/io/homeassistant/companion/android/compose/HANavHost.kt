@@ -3,7 +3,9 @@ package io.homeassistant.companion.android.compose
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import io.homeassistant.companion.android.HAStartDestinationRoute
 import io.homeassistant.companion.android.frontend.navigation.frontendScreen
+import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.loading.navigation.LoadingRoute
 import io.homeassistant.companion.android.loading.navigation.loadingScreen
 import io.homeassistant.companion.android.onboarding.onboarding
@@ -16,6 +18,8 @@ import io.homeassistant.companion.android.onboarding.onboarding
  * to a different destination.
  *
  * @param navController The [NavHostController] for managing navigation.
+ * @param startDestination The initial destination of the navigation graph. If it is null [LoadingScreen]
+ *                         is displayed.
  * @param onShowSnackbar A suspending function to display a snackbar.
  *                       It takes a [message] and an optional [action] label.
  *                       Returns `true` if the action was performed (if an action was provided),
@@ -24,17 +28,20 @@ import io.homeassistant.companion.android.onboarding.onboarding
 @Composable
 internal fun HANavHost(
     navController: NavHostController,
+    startDestination: HAStartDestinationRoute?,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
 ) {
-    NavHost(
-        navController = navController,
-        startDestination = LoadingRoute,
-    ) {
-        loadingScreen()
-        onboarding(
-            navController,
-            onShowSnackbar = onShowSnackbar,
-        )
-        frontendScreen()
-    }
+    startDestination?.let {
+        NavHost(
+            navController = navController,
+            startDestination = startDestination,
+        ) {
+            loadingScreen()
+            onboarding(
+                navController,
+                onShowSnackbar = onShowSnackbar,
+            )
+            frontendScreen()
+        }
+    } ?: LoadingScreen()
 }

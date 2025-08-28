@@ -11,9 +11,9 @@ class HAAppScreenshotTest {
     @PreviewTest
     @PreviewLightDark
     @Composable
-    fun `HAApp initial state`() {
+    fun `HAApp no start destination`() {
         HATheme {
-            HAApp(navController = rememberNavController())
+            HAApp(navController = rememberNavController(), startDestination = null)
         }
     }
 }
