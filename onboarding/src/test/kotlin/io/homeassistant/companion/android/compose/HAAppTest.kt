@@ -12,11 +12,11 @@ import androidx.navigation.testing.TestNavHostController
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import io.homeassistant.companion.android.HAStartDestinationRoute
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
-import io.homeassistant.companion.android.frontend.navigation.navigateToFrontend
+import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.onboarding.navigateToOnboarding
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.stringResources
@@ -25,6 +25,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.assertNull
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -48,21 +49,33 @@ class HAAppTest {
     fun setup() {
         Timber.Forest.plant(ConsoleLogTree)
         ConsoleLogTree.verbose = true
+    }
 
+    private fun setApp(startDestination: HAStartDestinationRoute?) {
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
             navController.navigatorProvider.addNavigator(ComposeNavigator())
 
             HAApp(
                 navController = navController,
+                startDestination = startDestination,
             )
         }
     }
 
     @Test
-    fun `Given HAApp when navigate to Welcome then show Welcome`() {
+    fun `Given HAApp when no start destination then show loading`() {
+        setApp(null)
         composeTestRule.apply {
-            navController.navigateToOnboarding()
+            assertNull(navController.currentBackStackEntry)
+            onNodeWithContentDescription(stringResources(R.string.loading_content_description)).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun `Given HAApp when navigate to Welcome then show Welcome`() {
+        setApp(OnboardingRoute)
+        composeTestRule.apply {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
             onNodeWithText(stringResources(R.string.welcome_home_assistant_title)).assertIsDisplayed()
             onNodeWithText(stringResources(R.string.welcome_details)).assertIsDisplayed()
@@ -74,8 +87,8 @@ class HAAppTest {
 
     @Test
     fun `Given HAApp when navigate to Welcome then show Frontend`() {
+        setApp(FrontendRoute)
         composeTestRule.apply {
-            navController.navigateToFrontend()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
             onNodeWithTag("frontend_placeholder").assertIsDisplayed()
         }
