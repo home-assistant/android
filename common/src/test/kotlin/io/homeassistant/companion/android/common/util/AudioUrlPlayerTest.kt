@@ -24,7 +24,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+@Config(sdk = [Build.VERSION_CODES.M])
 class AudioUrlPlayerTest {
     private lateinit var audioManager: AudioManager
     private lateinit var mediaPlayer: MediaPlayer
@@ -65,7 +65,7 @@ class AudioUrlPlayerTest {
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP, Build.VERSION_CODES.VANILLA_ICE_CREAM])
+    @Config(sdk = [Build.VERSION_CODES.M, Build.VERSION_CODES.VANILLA_ICE_CREAM])
     fun `Given volume above 0 and url when playAudio then play audio returns true`() = runTest {
         val onCompletionListener = slot<MediaPlayer.OnCompletionListener>()
         val onPreparedListener = slot<MediaPlayer.OnPreparedListener>()
@@ -132,7 +132,7 @@ class AudioUrlPlayerTest {
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP, Build.VERSION_CODES.VANILLA_ICE_CREAM])
+    @Config(sdk = [Build.VERSION_CODES.M, Build.VERSION_CODES.VANILLA_ICE_CREAM])
     fun `Given a player already started when playAudio then the previous player is stopped and focus abandoned`() = runTest {
         every { audioManager.getStreamVolume(any()) } returns 1
 
@@ -182,7 +182,7 @@ class AudioUrlPlayerTest {
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP, Build.VERSION_CODES.VANILLA_ICE_CREAM])
+    @Config(sdk = [Build.VERSION_CODES.M, Build.VERSION_CODES.VANILLA_ICE_CREAM])
     fun `Given a URL and is assistant when playAudio then set proper audio attributes`() = runTest {
         every { audioManager.getStreamVolume(any()) } returns 1
         val audioAttributes = slot<AudioAttributes>()
@@ -204,7 +204,7 @@ class AudioUrlPlayerTest {
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP, Build.VERSION_CODES.VANILLA_ICE_CREAM])
+    @Config(sdk = [Build.VERSION_CODES.M, Build.VERSION_CODES.VANILLA_ICE_CREAM])
     fun `Given a URL and is not assistant when playAudio then set proper audio attributes`() = runTest {
         every { audioManager.getStreamVolume(any()) } returns 1
         val audioAttributes = slot<AudioAttributes>()
