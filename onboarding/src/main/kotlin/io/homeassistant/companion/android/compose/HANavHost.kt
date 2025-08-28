@@ -26,7 +26,6 @@ import io.homeassistant.companion.android.onboarding.onboarding
 internal fun HANavHost(
     navController: NavHostController,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
-    // Retrieve the existing ViewModel created for Launcher
     startDestination: HAStartDestinationRoute?,
 ) {
     startDestination?.let { startDestination ->
