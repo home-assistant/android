@@ -81,6 +81,7 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.barcode.BarcodeScannerActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
@@ -112,7 +113,6 @@ import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import io.homeassistant.companion.android.webview.externalbus.NavigateTo
 import io.homeassistant.companion.android.webview.externalbus.ShowSidebar
 import javax.inject.Inject
-import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -205,7 +205,7 @@ class WebViewActivity :
     lateinit var authenticationDao: AuthenticationDao
 
     @Inject
-    @Named("keyChainRepository")
+    @NamedKeyChain
     lateinit var keyChainRepository: KeyChainRepository
 
     private lateinit var webView: WebView

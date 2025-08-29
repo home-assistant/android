@@ -17,6 +17,8 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositoryImpl
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -42,13 +44,11 @@ import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
-import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlinx.serialization.encodeToString
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -67,11 +67,11 @@ class PhoneSettingsListener :
     lateinit var favoritesDao: FavoritesDao
 
     @Inject
-    @Named("keyChainRepository")
+    @NamedKeyChain
     lateinit var keyChainRepository: KeyChainRepository
 
     @Inject
-    @Named("keyStore")
+    @NamedKeyStore
     lateinit var keyStore: KeyChainRepository
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())

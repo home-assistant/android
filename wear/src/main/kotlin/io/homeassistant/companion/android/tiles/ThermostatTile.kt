@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.tiles
 
+import androidx.core.content.ContextCompat
 import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ColorBuilders
 import androidx.wear.protolayout.DimensionBuilders
@@ -11,6 +12,9 @@ import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.protolayout.TimelineBuilders.Timeline
 import androidx.wear.protolayout.material.Button
 import androidx.wear.protolayout.material.ButtonColors
+import androidx.wear.protolayout.material.ChipColors
+import androidx.wear.protolayout.material.Colors
+import androidx.wear.protolayout.material.CompactChip
 import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
@@ -27,6 +31,7 @@ import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.ThermostatTile
+import io.homeassistant.companion.android.home.HomeActivity
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -88,17 +93,7 @@ class ThermostatTile : TileService() {
                 ).build()
             } else {
                 if (tileConfig?.entityId.isNullOrBlank()) {
-                    tile.setTileTimeline(
-                        Timeline.fromLayoutElement(
-                            LayoutElementBuilders.Box.Builder()
-                                .addContent(
-                                    LayoutElementBuilders.Text.Builder()
-                                        .setText(getString(commonR.string.thermostat_tile_no_entity_yet))
-                                        .setMaxLines(10)
-                                        .build(),
-                                ).build(),
-                        ),
-                    ).build()
+                    tile.setTileTimeline(getNotConfiguredTimeline(requestParams)).build()
                 } else {
                     try {
                         val entity = tileConfig.entityId?.let {
@@ -337,5 +332,50 @@ class ThermostatTile : TileService() {
                 ),
             )
             .build()
+    }
+
+    private fun getNotConfiguredTimeline(requestParams: RequestBuilders.TileRequest): Timeline {
+        val theme = Colors(
+            ContextCompat.getColor(this@ThermostatTile, commonR.color.colorPrimary),
+            ContextCompat.getColor(this@ThermostatTile, commonR.color.colorOnPrimary),
+            ContextCompat.getColor(this@ThermostatTile, R.color.colorOverlay),
+            ContextCompat.getColor(this@ThermostatTile, android.R.color.white),
+        )
+        val chipColors = ChipColors.primaryChipColors(theme)
+        val notConfiguredTimeline = Timeline.fromLayoutElement(
+            LayoutElementBuilders.Column.Builder()
+                .addContent(
+                    LayoutElementBuilders.Text.Builder()
+                        .setText(getString(commonR.string.thermostat_tile_no_entity_yet))
+                        .setMaxLines(10)
+                        .build(),
+                )
+                .addContent(
+                    LayoutElementBuilders.Spacer.Builder()
+                        .setHeight(DimensionBuilders.dp(10f)).build(),
+                )
+                .addContent(
+                    LayoutElementBuilders.Row.Builder()
+                        .addContent(
+                            CompactChip.Builder(
+                                this@ThermostatTile,
+                                Clickable.Builder()
+                                    .setOnClick(
+                                        HomeActivity.getLaunchAction(
+                                            this@ThermostatTile.packageName,
+                                            requestParams.tileId,
+                                        ),
+                                    )
+                                    .build(),
+                                requestParams.deviceConfiguration,
+                            )
+                                .setTextContent(getString(commonR.string.open_settings))
+                                .setChipColors(chipColors)
+                                .build(),
+                        ).build(),
+                )
+                .build(),
+        )
+        return notConfiguredTimeline
     }
 }

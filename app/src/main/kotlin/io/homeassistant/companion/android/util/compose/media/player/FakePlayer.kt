@@ -212,10 +212,6 @@ internal class FakePlayer(
         TODO("Not yet implemented")
     }
 
-    override fun seekToPreviousWindow() {
-        TODO("Not yet implemented")
-    }
-
     override fun seekToPreviousMediaItem() {
         TODO("Not yet implemented")
     }
@@ -228,23 +224,7 @@ internal class FakePlayer(
         TODO("Not yet implemented")
     }
 
-    override fun hasNext(): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun hasNextWindow(): Boolean {
-        TODO("Not yet implemented")
-    }
-
     override fun hasNextMediaItem(): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun next() {
-        TODO("Not yet implemented")
-    }
-
-    override fun seekToNextWindow() {
         TODO("Not yet implemented")
     }
 

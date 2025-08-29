@@ -20,6 +20,7 @@ import coil3.SingletonImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
@@ -41,7 +42,6 @@ import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControl
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
 import io.homeassistant.companion.android.widgets.todo.TodoWidget
 import javax.inject.Inject
-import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -60,7 +60,7 @@ open class HomeAssistantApplication :
     lateinit var prefsRepository: PrefsRepository
 
     @Inject
-    @Named("keyChainRepository")
+    @NamedKeyChain
     lateinit var keyChainRepository: KeyChainRepository
 
     @Inject
@@ -88,6 +88,7 @@ open class HomeAssistantApplication :
 
         // We should initialize the logger as early as possible in the lifecycle of the application
         Timber.plant(Timber.DebugTree())
+        Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK ${Build.VERSION.SDK_INT}")
 
         registerActivityLifecycleCallbacks(LifecycleHandler)
 
