@@ -364,6 +364,7 @@ class ThermostatTile : TileService() {
                                         HomeActivity.getLaunchAction(
                                             this@ThermostatTile.packageName,
                                             requestParams.tileId,
+                                            OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE,
                                         ),
                                     )
                                     .build(),
