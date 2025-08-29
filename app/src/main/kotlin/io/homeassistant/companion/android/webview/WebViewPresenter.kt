@@ -26,24 +26,21 @@ interface WebViewPresenter {
 
     fun onRevokeExternalAuth(callback: String)
 
-    fun isFullScreen(): Boolean
+    suspend fun isFullScreen(): Boolean
 
-    fun getScreenOrientation(): String?
+    suspend fun getScreenOrientation(): String?
 
-    fun isKeepScreenOnEnabled(): Boolean
+    suspend fun isKeepScreenOnEnabled(): Boolean
 
-    fun getPageZoomLevel(): Int
-    fun isPinchToZoomEnabled(): Boolean
-    fun isWebViewDebugEnabled(): Boolean
+    suspend fun getPageZoomLevel(): Int
+    suspend fun isPinchToZoomEnabled(): Boolean
+    suspend fun isWebViewDebugEnabled(): Boolean
 
     suspend fun isAppLocked(): Boolean
-    fun setAppActive(active: Boolean)
+    suspend fun setAppActive(active: Boolean)
 
-    fun isLockEnabled(): Boolean
-    fun isAutoPlayVideoEnabled(): Boolean
-    fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean
-
-    fun sessionTimeOut(): Int
+    suspend fun isAutoPlayVideoEnabled(): Boolean
+    suspend fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean
 
     fun onExternalBusMessage(message: JSONObject)
 
@@ -55,7 +52,7 @@ interface WebViewPresenter {
 
     suspend fun isSsidUsed(): Boolean
 
-    fun getAuthorizationHeader(): String
+    suspend fun getAuthorizationHeader(): String
 
     suspend fun parseWebViewColor(webViewColor: String): Int
 
