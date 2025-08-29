@@ -19,7 +19,7 @@ import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
-import io.homeassistant.companion.android.testing.unit.stringResources
+import io.homeassistant.companion.android.testing.unit.stringResource
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -66,7 +66,7 @@ class HAAppTest {
         setApp(null)
         composeTestRule.apply {
             assertNull(navController.currentBackStackEntry)
-            onNodeWithContentDescription(stringResources(R.string.loading_content_description)).assertIsDisplayed()
+            onNodeWithContentDescription(stringResource(R.string.loading_content_description)).assertIsDisplayed()
         }
     }
 
@@ -75,11 +75,11 @@ class HAAppTest {
         setApp(OnboardingRoute)
         composeTestRule.apply {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
-            onNodeWithText(stringResources(R.string.welcome_home_assistant_title)).assertIsDisplayed()
-            onNodeWithText(stringResources(R.string.welcome_details)).assertIsDisplayed()
-            onNodeWithText(stringResources(R.string.welcome_connect_to_ha)).assertIsDisplayed()
-            onNodeWithText(stringResources(R.string.welcome_learn_more)).assertIsDisplayed()
-            onNodeWithContentDescription(stringResources(R.string.home_assistant_branding_icon_content_description)).assertIsDisplayed()
+            onNodeWithText(stringResource(R.string.welcome_home_assistant_title)).assertIsDisplayed()
+            onNodeWithText(stringResource(R.string.welcome_details)).assertIsDisplayed()
+            onNodeWithText(stringResource(R.string.welcome_connect_to_ha)).assertIsDisplayed()
+            onNodeWithText(stringResource(R.string.welcome_learn_more)).assertIsDisplayed()
+            onNodeWithContentDescription(stringResource(R.string.home_assistant_branding_icon_content_description)).assertIsDisplayed()
         }
     }
 
