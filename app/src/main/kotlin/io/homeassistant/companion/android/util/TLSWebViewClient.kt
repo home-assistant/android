@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.util
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
@@ -43,12 +44,12 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
         return null
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     override fun onReceivedClientCertRequest(view: WebView, request: ClientCertRequest) {
         Timber.d("onReceivedClientCertRequest invoked looking for cert in local storage or ask the user for it")
         // Let the WebViewActivity know the endpoint requires TLS Client Auth
         isTLSClientAuthNeeded = true
 
+        @SuppressLint("ObsoleteSdkInt") // Needed for app module (minSdk 21) but obsolete for automotive (minSdk 29)
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             // Let the request flow so that the calling activity can catch the error
             request.proceed(key, chain)
