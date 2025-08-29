@@ -10,6 +10,8 @@ import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.themes.NightModeManager
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 open class ChangeLog @Inject constructor(
     val nightModeManager: NightModeManager,
@@ -40,15 +42,19 @@ open class ChangeLog @Inject constructor(
             NightModeTheme.DARK -> true
             else -> false
         }
-        if (isDarkTheme) {
-            val darkThemeChangeLog = createDarkThemeChangeLog(context)
-            if ((!darkThemeChangeLog.isFirstRunEver && darkThemeChangeLog.isFirstRun) || forceShow) {
-                darkThemeChangeLog.fullLogDialog.show()
-            }
-        } else {
-            val changeLog = createChangeLog(context)
-            if ((!changeLog.isFirstRunEver && changeLog.isFirstRun) || forceShow) {
-                changeLog.fullLogDialog.show()
+
+        // Ensure UI operations happen on Main thread
+        withContext(Dispatchers.Main) {
+            if (isDarkTheme) {
+                val darkThemeChangeLog = createDarkThemeChangeLog(context)
+                if ((!darkThemeChangeLog.isFirstRunEver && darkThemeChangeLog.isFirstRun) || forceShow) {
+                    darkThemeChangeLog.fullLogDialog.show()
+                }
+            } else {
+                val changeLog = createChangeLog(context)
+                if ((!changeLog.isFirstRunEver && changeLog.isFirstRun) || forceShow) {
+                    changeLog.fullLogDialog.show()
+                }
             }
         }
     }
