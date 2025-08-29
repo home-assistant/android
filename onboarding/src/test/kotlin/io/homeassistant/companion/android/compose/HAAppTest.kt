@@ -20,7 +20,6 @@ import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.stringResources
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -31,7 +30,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import timber.log.Timber
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
@@ -47,7 +45,7 @@ class HAAppTest {
 
     @Before
     fun setup() {
-        Timber.Forest.plant(ConsoleLogTree)
+        Timber.plant(ConsoleLogTree)
         ConsoleLogTree.verbose = true
     }
 
