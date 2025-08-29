@@ -233,11 +233,7 @@ class CarSensorManager :
 
     private suspend fun allDisabled(): Boolean = sensorsList.none { isEnabled(latestContext, it) }
 
-    private fun connected(): Boolean = if (areCarSensorApisAvailable) {
-        HaCarAppService.carInfo != null
-    } else {
-        false
-    }
+    private fun connected(): Boolean = areCarSensorApisAvailable && HaCarAppService.carInfo != null
 
     private val fuelTypeMap = mapOf(
         EnergyProfile.FUEL_TYPE_BIODIESEL to "Biodiesel",
