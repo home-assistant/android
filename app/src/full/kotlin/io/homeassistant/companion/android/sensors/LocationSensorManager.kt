@@ -54,7 +54,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -1274,7 +1273,7 @@ class LocationSensorManager :
                                     Timber.d(
                                         "Location accurate enough, all done with high accuracy.",
                                     )
-                                    runBlocking {
+                                    sensorWorkerScope.launch {
                                         locationResult.lastLocation?.let {
                                             getEnabledServers(
                                                 latestContext,
@@ -1296,7 +1295,7 @@ class LocationSensorManager :
                                         "No location was accurate enough, sending our last location anyway",
                                     )
                                     if (locationResult.lastLocation!!.accuracy <= minAccuracy * 2) {
-                                        runBlocking {
+                                        sensorWorkerScope.launch {
                                             getEnabledServers(
                                                 latestContext,
                                                 singleAccurateLocation,
