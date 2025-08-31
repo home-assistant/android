@@ -2,7 +2,6 @@ name: Pull Request
 
 on: # yamllint disable-line rule:truthy
   pull_request:
-    branches: [master]
 
 # This workflow should cancel previous builds since it means that a new commit has been made to the PR
 concurrency:
@@ -13,7 +12,7 @@ jobs:
   yamllint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Register yamllint problem matcher
         run: |
@@ -25,10 +24,11 @@ jobs:
   lockfiles:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Update lockfiles
@@ -55,10 +55,11 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       # Since `build-logic` is added with `includeBuild` we have to call ktlint explicitly on `:convention`.
@@ -76,10 +77,11 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Validate Lint
@@ -102,14 +104,15 @@ jobs:
     needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Validate Screenshot Previews
-        run: ./gradlew validateDebugScreenshotTest
+        run: ./gradlew validateDebugScreenshotTest validateFullDebugScreenshotTest
 
       - name: Upload test results
         if: always()
@@ -119,19 +122,27 @@ jobs:
           path: |
               **/build/test-results/**/TEST-*.xml
 
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Screenshot test failure HTML report
+          path: |
+              **/build/reports/screenshotTest/**
+
   pr_build:
     needs: [yamllint, lockfiles]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Check for modified DB schemas on branch
         run: |
-          if git diff --name-only --diff-filter=DMR origin/master... | grep "^common/schemas"; then
+          if git diff --name-only --diff-filter=DMR origin/main... | grep "^common/schemas"; then
             echo -e "\n❌ Existing database schema modified, please increase the database version instead"
             exit 1
           else
@@ -140,7 +151,11 @@ jobs:
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
+
+      - name: Check version file creation
+        run: ./gradlew versionFile
 
       - name: Build Debug APK
         run: |
@@ -166,14 +181,16 @@ jobs:
     needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Run test
-        run: ./gradlew :common:testDebugUnitTest # Should be adapted once we have more than one tests
+        # Run testFullDebugUnitTest at the app level since :automotive shares the same sourceSet than app. Minimal and Full are the same in unit tests for now
+        run: ./gradlew testDebugUnitTest :app:testFullDebugUnitTest :lint:test
 
       - name: Upload test results
         if: always()
@@ -202,22 +219,22 @@ jobs:
             profile: "tv_4k"
             target: "android-tv"
             gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
-          - api-level: 35
+          - api-level: 36
             arch: x86_64
             profile: "pixel_7"
             target: "google_apis"
             gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
-          # Disabled due to Github Actions limitations https://github.com/ReactiveCircus/android-emulator-runner/pull/428
-          # - api-level: 33
-          #   arch: x86_64
-          #   profile: "automotive_1024p_landscape"
-          #   target: "android-automotive"
-          #   gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
-          # - api-level: "34-ext9" # -ext9 is not usable because of https://github.com/ReactiveCircus/android-emulator-runner/issues/429
-          #   arch: x86_64
-          #   profile: "automotive_ultrawide"
-          #   target: "android-automotive"
-          #   gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: 33
+            arch: x86_64
+            profile: "automotive_1024p_landscape"
+            target: "android-automotive"
+            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+          - api-level: "34"
+            system-image-api-level: "34-ext9"
+            arch: x86_64
+            profile: "automotive_1024p_landscape"
+            target: "android-automotive"
+            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           - api-level: 26
             arch: x86
             profile: "wearos_square"
@@ -237,10 +254,11 @@ jobs:
           docker-images: false # Takes 16s, enable if needed in the future
           large-packages: false # includes google-cloud-sdk and it's slow
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-build-env
         with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Enable KVM group perms
@@ -272,6 +290,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           profile: ${{ matrix.configuration.profile }}
           target: ${{ matrix.configuration.target }}
+          system-image-api-level: ${{ matrix.configuration.system-image-api-level }}
           script: |
             echo "Generated AVD snapshot for caching."
 
@@ -287,6 +306,7 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           profile: ${{ matrix.configuration.profile }}
           target: ${{ matrix.configuration.target }}
+          system-image-api-level: ${{ matrix.configuration.system-image-api-level }}
           script: ./gradlew ${{ matrix.configuration.gradle_target }}
 
       - name: Upload test results
@@ -309,7 +329,7 @@ jobs:
 
     steps:
       - name: Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
 
       - name: Publish Test Results EnricoMi
         uses: EnricoMi/publish-unit-test-result-action@v2

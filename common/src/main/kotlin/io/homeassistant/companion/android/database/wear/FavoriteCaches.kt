@@ -15,5 +15,5 @@ data class FavoriteCaches(
     @ColumnInfo(name = "friendly_name")
     val friendlyName: String,
     @ColumnInfo(name = "icon")
-    val icon: String?
+    val icon: String?,
 )

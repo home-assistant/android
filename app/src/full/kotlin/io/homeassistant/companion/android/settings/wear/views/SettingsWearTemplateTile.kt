@@ -45,6 +45,7 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.util.intervalToString
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @Composable
 fun SettingsWearTemplateTile(
@@ -53,42 +54,50 @@ fun SettingsWearTemplateTile(
     refreshInterval: Int,
     onContentChanged: (String) -> Unit,
     onRefreshIntervalChanged: (Int) -> Unit,
-    onBackClicked: () -> Unit
+    onBackClicked: () -> Unit,
 ) {
     Scaffold(
         topBar = {
             SettingsWearTopAppBar(
                 title = { Text(stringResource(commonR.string.template_tile)) },
                 onBackClicked = onBackClicked,
-                docsLink = WEAR_DOCS_LINK
+                docsLink = WEAR_DOCS_LINK,
             )
-        }
+        },
     ) { padding ->
-        Column(Modifier.padding(padding).padding(all = 16.dp)) {
+        Column(
+            Modifier
+                .padding(safeBottomPaddingValues())
+                .padding(padding)
+                .padding(all = 16.dp),
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
                     asset = CommunityMaterial.Icon3.cmd_timer_cog,
                     colorFilter = ColorFilter.tint(colorResource(commonR.color.colorPrimary)),
                     modifier = Modifier
                         .height(24.dp)
-                        .width(24.dp)
+                        .width(24.dp),
                 )
                 Text(
                     stringResource(commonR.string.refresh_interval),
-                    modifier = Modifier.padding(start = 4.dp, end = 4.dp)
+                    modifier = Modifier.padding(start = 4.dp, end = 4.dp),
                 )
                 Box {
                     var dropdownExpanded by remember { mutableStateOf(false) }
                     OutlinedButton(
-                        onClick = { dropdownExpanded = true }
+                        onClick = { dropdownExpanded = true },
                     ) {
                         Text(intervalToString(LocalContext.current, refreshInterval))
                     }
                     DropdownMenu(
                         expanded = dropdownExpanded,
-                        onDismissRequest = { dropdownExpanded = false }
+                        onDismissRequest = { dropdownExpanded = false },
                     ) {
-                        val options = listOf(0, 1, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 2 * 60 * 60, 5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60)
+                        val options = listOf(
+                            0, 1, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 2 * 60 * 60,
+                            5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60,
+                        )
                         for (option in options) {
                             DropdownMenuItem(onClick = {
                                 onRefreshIntervalChanged(option)
@@ -108,12 +117,12 @@ fun SettingsWearTemplateTile(
                     Text(stringResource(commonR.string.template_tile_content))
                 },
                 modifier = Modifier.padding(top = 8.dp),
-                maxLines = 10
+                maxLines = 10,
             )
             Text(
                 parseHtml(renderedTemplate),
                 fontSize = 12.sp,
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = 8.dp),
             )
         }
     }
@@ -121,7 +130,8 @@ fun SettingsWearTemplateTile(
 
 private fun parseHtml(renderedText: String) = buildAnnotatedString {
     // Replace control char \r\n, \r, \n and also \r\n, \r, \n as text literals in strings to <br>
-    val renderedSpanned = fromHtml(renderedText.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>"), FROM_HTML_MODE_LEGACY)
+    val renderedSpanned =
+        fromHtml(renderedText.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>"), FROM_HTML_MODE_LEGACY)
     append(renderedSpanned.toString())
     renderedSpanned.getSpans(0, renderedSpanned.length, CharacterStyle::class.java).forEach { span ->
         val start = renderedSpanned.getSpanStart(span)
@@ -136,7 +146,11 @@ private fun parseHtml(renderedText: String) = buildAnnotatedString {
             is StyleSpan -> when (span.style) {
                 Typeface.BOLD -> addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)
                 Typeface.ITALIC -> addStyle(SpanStyle(fontStyle = FontStyle.Italic), start, end)
-                Typeface.BOLD_ITALIC -> addStyle(SpanStyle(fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic), start, end)
+                Typeface.BOLD_ITALIC -> addStyle(
+                    SpanStyle(fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic),
+                    start,
+                    end,
+                )
             }
             is UnderlineSpan -> addStyle(SpanStyle(textDecoration = TextDecoration.Underline), start, end)
         }
@@ -152,6 +166,6 @@ private fun PreviewSettingsWearTemplateTile() {
         refreshInterval = 300,
         onContentChanged = {},
         onRefreshIntervalChanged = {},
-        onBackClicked = {}
+        onBackClicked = {},
     )
 }

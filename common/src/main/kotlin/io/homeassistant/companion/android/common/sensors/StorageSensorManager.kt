@@ -19,7 +19,7 @@ class StorageSensorManager : SensorManager {
             "mdi:harddisk",
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         private val externalStorage = SensorManager.BasicSensor(
             "external_storage",
@@ -29,7 +29,7 @@ class StorageSensorManager : SensorManager {
             "mdi:micro-sd",
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
         private fun getExternalStoragePathIfAvailable(context: Context): File? {
@@ -40,9 +40,11 @@ class StorageSensorManager : SensorManager {
             for (item in pathsSD) {
                 if (item != null) {
                     Timber.d(
-                        "PATH $item is mounted ${Environment.getExternalStorageState(item) == Environment.MEDIA_MOUNTED} and removable is ${Environment.isExternalStorageRemovable(
-                            item
-                        )}"
+                        "PATH $item is mounted ${Environment.getExternalStorageState(
+                            item,
+                        ) == Environment.MEDIA_MOUNTED} and removable is ${Environment.isExternalStorageRemovable(
+                            item,
+                        )}",
                     )
                     if (Environment.getExternalStorageState(item) == Environment.MEDIA_MOUNTED) {
                         removable = Environment.isExternalStorageRemovable(item)
@@ -69,9 +71,7 @@ class StorageSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateInternalStorageSensor(context)
         updateExternalStorageSensor(context)
     }
@@ -91,8 +91,8 @@ class StorageSensorManager : SensorManager {
             storageSensor.statelessIcon,
             mapOf(
                 "Free internal storage" to internalStorageStats.freeBytes,
-                "Total internal storage" to internalStorageStats.totalBytes
-            )
+                "Total internal storage" to internalStorageStats.totalBytes,
+            ),
         )
     }
 
@@ -113,8 +113,8 @@ class StorageSensorManager : SensorManager {
             externalStorage.statelessIcon,
             mapOf(
                 "free_external_storage" to (externalStorageStats?.freeBytes ?: "No SD Card"),
-                "total_external_storage" to (externalStorageStats?.totalBytes ?: "No SD Card")
-            )
+                "total_external_storage" to (externalStorageStats?.totalBytes ?: "No SD Card"),
+            ),
         )
     }
 
@@ -139,17 +139,13 @@ class StorageSensorManager : SensorManager {
         return "$sizeWithThousandsSeparator$suffix"
     }
 
-    private data class StorageStats(
-        val totalBytes: String,
-        val freeBytes: String,
-        val percentage: Int
-    )
+    private data class StorageStats(val totalBytes: String, val freeBytes: String, val percentage: Int)
 
     private fun getStorageStats(path: File) = with(StatFs(path.path)) {
         StorageStats(
             totalBytes = formatSize(blockCountLong * blockSizeLong),
             freeBytes = formatSize(availableBlocksLong * blockSizeLong),
-            percentage = ((availableBlocksLong.toDouble() / blockCountLong.toDouble()) * 100).roundToInt()
+            percentage = ((availableBlocksLong.toDouble() / blockCountLong.toDouble()) * 100).roundToInt(),
         )
     }
 }

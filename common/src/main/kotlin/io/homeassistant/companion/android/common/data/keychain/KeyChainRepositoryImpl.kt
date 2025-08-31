@@ -11,9 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-class KeyChainRepositoryImpl @Inject constructor(
-    private val prefsRepository: PrefsRepository
-) : KeyChainRepository {
+class KeyChainRepositoryImpl @Inject constructor(private val prefsRepository: PrefsRepository) : KeyChainRepository {
 
     private var alias: String? = null
     private var key: PrivateKey? = null
@@ -62,7 +60,8 @@ class KeyChainRepositoryImpl @Inject constructor(
                 } catch (t: Throwable) {
                     when (t) {
                         is AssertionError,
-                        is Exception -> Timber.e(t, "Issue getting certificate chain")
+                        is Exception,
+                        -> Timber.e(t, "Issue getting certificate chain")
                         else -> throw t
                     }
                     null
@@ -74,7 +73,8 @@ class KeyChainRepositoryImpl @Inject constructor(
                 } catch (t: Throwable) {
                     when (t) {
                         is AssertionError,
-                        is Exception -> Timber.e(t, "Issue getting private key")
+                        is Exception,
+                        -> Timber.e(t, "Issue getting private key")
                         else -> throw t
                     }
                     null

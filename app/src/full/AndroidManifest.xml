@@ -6,12 +6,13 @@
     <uses-permission android:name="com.google.android.gms.permission.CAR_FUEL" />
     <uses-permission android:name="com.google.android.gms.permission.CAR_MILEAGE" />
     <uses-permission android:name="com.google.android.gms.permission.CAR_SPEED" />
+    <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND" />
     <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
 <!--    <uses-permission android:name="android.permission.health.READ_BASAL_BODY_TEMPERATURE" />-->
 <!--    <uses-permission android:name="android.permission.health.READ_BASAL_METABOLIC_RATE" />-->
     <uses-permission android:name="android.permission.health.READ_BLOOD_GLUCOSE" />
     <uses-permission android:name="android.permission.health.READ_BLOOD_PRESSURE" />
-<!--    <uses-permission android:name="android.permission.health.READ_BODY_FAT" />-->
+    <uses-permission android:name="android.permission.health.READ_BODY_FAT" />
 <!--    <uses-permission android:name="android.permission.health.READ_BODY_WATER_MASS" />-->
 <!--    <uses-permission android:name="android.permission.health.READ_BODY_TEMPERATURE" />-->
 <!--    <uses-permission android:name="android.permission.health.READ_BONE_MASS" />-->
@@ -19,14 +20,14 @@
     <uses-permission android:name="android.permission.health.READ_ELEVATION_GAINED" />
     <uses-permission android:name="android.permission.health.READ_FLOORS_CLIMBED" />
     <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
-<!--    <uses-permission android:name="android.permission.health.READ_HEART_RATE_VARIABILITY" />-->
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE_VARIABILITY" />
 <!--    <uses-permission android:name="android.permission.health.READ_HEIGHT" />-->
 <!--    <uses-permission android:name="android.permission.health.READ_HYDRATION" />-->
 <!--    <uses-permission android:name="android.permission.health.READ_LEAN_BODY_MASS" />-->
-<!--    <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION" />-->
-<!--    <uses-permission android:name="android.permission.health.READ_RESPIRATORY_RATE" />-->
-<!--    <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE" />-->
-<!--    <uses-permission android:name="android.permission.health.READ_SLEEP" />-->
+    <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION" />
+    <uses-permission android:name="android.permission.health.READ_RESPIRATORY_RATE" />
+    <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
     <uses-permission android:name="android.permission.health.READ_STEPS" />
     <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED" />
     <uses-permission android:name="android.permission.health.READ_VO2_MAX" />
@@ -79,7 +80,7 @@
 
         <receiver android:name=".location.HighAccuracyLocationReceiver"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="false" />
 
         <service
             android:name=".notifications.FirebaseCloudMessagingService"
@@ -92,12 +93,20 @@
         <service
             android:name=".location.HighAccuracyLocationService"
             android:enabled="true"
-            android:exported="true"
+            android:exported="false"
             android:foregroundServiceType="location"/>
 
         <service
             android:name=".matter.MatterCommissioningService"
-            android:exported="true" />
+            android:exported="true"
+            tools:ignore="ExportedService">
+            <!--This service is used by Google to commission devices; it needs to be exposed so that
+            Google Home Matter commissioning can forward us the commissioning request.
+            This is not described by Google documentation, but it seems that GMS is doing
+            some signature verification to avoid malicious intent coming from any other app.
+            https://github.com/home-assistant/android/pull/5509#discussion_r2214145170
+            -->
+        </service>
 
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
@@ -114,7 +123,12 @@
             android:resource="@xml/automotive_app_desc"/>
         <service
             android:name=".vehicle.HaCarAppService"
-            android:exported="true">
+            android:intentMatchingFlags="allowNullAction"
+            android:exported="true"
+            tools:ignore="ExportedService,NewApi">
+            <!--As mentioned in the documentation it is safe to export this service without defining permission
+            https://developer.android.com/training/cars/apps#declare-carappservice
+            -->
             <intent-filter>
                 <action android:name="androidx.car.app.CarAppService" />
                 <category android:name="androidx.car.app.category.IOT"/>

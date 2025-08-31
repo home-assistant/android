@@ -3,8 +3,6 @@ package io.homeassistant.companion.android.phone
 import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.wear.tiles.TileService
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
@@ -19,10 +17,13 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositoryImpl
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.WearDataMessages
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
@@ -43,7 +44,6 @@ import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
-import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -53,7 +53,9 @@ import timber.log.Timber
 
 @AndroidEntryPoint
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
-class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChangedListener {
+class PhoneSettingsListener :
+    WearableListenerService(),
+    DataClient.OnDataChangedListener {
 
     @Inject
     lateinit var serverManager: ServerManager
@@ -65,16 +67,14 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     lateinit var favoritesDao: FavoritesDao
 
     @Inject
-    @Named("keyChainRepository")
+    @NamedKeyChain
     lateinit var keyChainRepository: KeyChainRepository
 
     @Inject
-    @Named("keyStore")
+    @NamedKeyStore
     lateinit var keyStore: KeyChainRepository
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-
-    private val objectMapper = jacksonObjectMapper()
 
     override fun onMessageReceived(event: MessageEvent) {
         Timber.d("Message received: $event")
@@ -91,16 +91,40 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             dataMap.putBoolean(WearDataMessages.CONFIG_IS_AUTHENTICATED, isRegistered)
             if (isRegistered) {
                 dataMap.putInt(WearDataMessages.CONFIG_SERVER_ID, serverManager.getServer()?.id ?: 0)
-                dataMap.putString(WearDataMessages.CONFIG_SERVER_EXTERNAL_URL, serverManager.getServer()?.connection?.externalUrl ?: "")
-                dataMap.putString(WearDataMessages.CONFIG_SERVER_WEBHOOK_ID, serverManager.getServer()?.connection?.webhookId ?: "")
-                dataMap.putString(WearDataMessages.CONFIG_SERVER_CLOUD_URL, serverManager.getServer()?.connection?.cloudUrl ?: "")
-                dataMap.putString(WearDataMessages.CONFIG_SERVER_CLOUDHOOK_URL, serverManager.getServer()?.connection?.cloudhookUrl ?: "")
-                dataMap.putBoolean(WearDataMessages.CONFIG_SERVER_USE_CLOUD, serverManager.getServer()?.connection?.useCloud ?: false)
-                dataMap.putString(WearDataMessages.CONFIG_SERVER_REFRESH_TOKEN, serverManager.getServer()?.session?.refreshToken ?: "")
+                dataMap.putString(
+                    WearDataMessages.CONFIG_SERVER_EXTERNAL_URL,
+                    serverManager.getServer()?.connection?.externalUrl ?: "",
+                )
+                dataMap.putString(
+                    WearDataMessages.CONFIG_SERVER_WEBHOOK_ID,
+                    serverManager.getServer()?.connection?.webhookId ?: "",
+                )
+                dataMap.putString(
+                    WearDataMessages.CONFIG_SERVER_CLOUD_URL,
+                    serverManager.getServer()?.connection?.cloudUrl ?: "",
+                )
+                dataMap.putString(
+                    WearDataMessages.CONFIG_SERVER_CLOUDHOOK_URL,
+                    serverManager.getServer()?.connection?.cloudhookUrl ?: "",
+                )
+                dataMap.putBoolean(
+                    WearDataMessages.CONFIG_SERVER_USE_CLOUD,
+                    serverManager.getServer()?.connection?.useCloud ?: false,
+                )
+                dataMap.putString(
+                    WearDataMessages.CONFIG_SERVER_REFRESH_TOKEN,
+                    serverManager.getServer()?.session?.refreshToken ?: "",
+                )
             }
-            dataMap.putString(WearDataMessages.CONFIG_SUPPORTED_DOMAINS, objectMapper.writeValueAsString(HomePresenterImpl.supportedDomains))
-            dataMap.putString(WearDataMessages.CONFIG_FAVORITES, objectMapper.writeValueAsString(currentFavorites))
-            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILES, objectMapper.writeValueAsString(wearPrefsRepository.getAllTemplateTiles()))
+            dataMap.putString(
+                WearDataMessages.CONFIG_SUPPORTED_DOMAINS,
+                kotlinJsonMapper.encodeToString(HomePresenterImpl.supportedDomains),
+            )
+            dataMap.putString(WearDataMessages.CONFIG_FAVORITES, kotlinJsonMapper.encodeToString(currentFavorites))
+            dataMap.putString(
+                WearDataMessages.CONFIG_TEMPLATE_TILES,
+                kotlinJsonMapper.encodeToString(wearPrefsRepository.getAllTemplateTiles()),
+            )
             setUrgent()
             asPutDataRequest()
         }
@@ -169,10 +193,10 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                 _name = "",
                 type = ServerType.TEMPORARY,
                 connection = ServerConnectionInfo(
-                    externalUrl = formattedUrl
+                    externalUrl = formattedUrl,
                 ),
                 session = ServerSessionInfo(),
-                user = ServerUserInfo()
+                user = ServerUserInfo(),
             )
             serverId = serverManager.addServer(server)
             serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
@@ -181,8 +205,8 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                     "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                     deviceName,
                     getMessagingToken(),
-                    false
-                )
+                    false,
+                ),
             )
             serverManager.convertTemporaryServer(serverId)
             launch {
@@ -231,7 +255,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     private fun saveFavorites(dataMap: DataMap) {
         val favoritesIds: List<String> =
-            objectMapper.readValue(dataMap.getString(WearDataMessages.CONFIG_FAVORITES, "[]"))
+            kotlinJsonMapper.decodeFromString(dataMap.getString(WearDataMessages.CONFIG_FAVORITES, "[]"))
 
         mainScope.launch {
             favoritesDao.replaceAll(favoritesIds)
@@ -243,11 +267,11 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     }
 
     private fun saveTemplateTiles(dataMap: DataMap) = mainScope.launch {
-        val templateTilesFromPhone: Map<Int, TemplateTileConfig> = objectMapper.readValue(
+        val templateTilesFromPhone: Map<Int, TemplateTileConfig> = kotlinJsonMapper.decodeFromString(
             dataMap.getString(
                 WearDataMessages.CONFIG_TEMPLATE_TILES,
-                "{}"
-            )
+                "{}",
+            ),
         )
 
         wearPrefsRepository.setAllTemplateTiles(templateTilesFromPhone)
@@ -261,7 +285,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             updater.requestUpdate(ShortcutsTile::class.java)
             updater.requestUpdate(TemplateTile::class.java)
         } catch (e: Exception) {
-            Timber.w("Unable to request tiles update")
+            Timber.w(e, "Unable to request tiles update")
         }
     }
 }

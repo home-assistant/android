@@ -19,10 +19,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
 @Composable
-fun IconDialogContent(
-    iconFilter: IconFilter = DefaultIconFilter(),
-    onSelect: (IIcon) -> Unit
-) {
+fun IconDialogContent(iconFilter: IconFilter = DefaultIconFilter(), onSelect: (IIcon) -> Unit) {
     var searchQuery by remember { mutableStateOf("") }
     Column {
         IconDialogSearch(value = searchQuery, onValueChange = { searchQuery = it })
@@ -30,23 +27,19 @@ fun IconDialogContent(
             typeface = CommunityMaterial,
             searchQuery = searchQuery,
             iconFilter = iconFilter,
-            onClick = onSelect
+            onClick = onSelect,
         )
     }
 }
 
 @Composable
-fun IconDialog(
-    iconFilter: IconFilter = DefaultIconFilter(),
-    onSelect: (IIcon) -> Unit,
-    onDismissRequest: () -> Unit
-) {
+fun IconDialog(iconFilter: IconFilter = DefaultIconFilter(), onSelect: (IIcon) -> Unit, onDismissRequest: () -> Unit) {
     Dialog(onDismissRequest = onDismissRequest) {
         Surface(
             modifier = Modifier
                 .width(480.dp)
                 .height(500.dp),
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.medium,
         ) {
             IconDialogContent(iconFilter = iconFilter, onSelect = onSelect)
         }
@@ -61,7 +54,7 @@ private fun IconDialogPreview() {
             modifier = Modifier
                 .width(480.dp)
                 .height(500.dp),
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.medium,
         ) {
             IconDialogContent(onSelect = {})
         }

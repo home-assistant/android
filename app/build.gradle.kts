@@ -1,4 +1,4 @@
-import com.google.gms.googleservices.GoogleServicesPlugin.GoogleServicesPluginConfig
+import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
 
 plugins {
     alias(libs.plugins.homeassistant.android.application)
@@ -24,11 +24,16 @@ android {
         }
     }
 
-    firebaseAppDistribution {
-        serviceCredentialsFile = "firebaseAppDistributionServiceCredentialsFile.json"
-        releaseNotesFile = "./app/build/outputs/changelogBeta"
-        groups = "continuous-deployment"
+    lint {
+        // Until we fully migrate to Material3 this lint issue is too verbose https://github.com/home-assistant/android/issues/5420
+        disable += listOf("UsingMaterialAndMaterial3Libraries")
     }
+}
+
+firebaseAppDistribution {
+    serviceCredentialsFile = "firebaseAppDistributionServiceCredentialsFile.json"
+    releaseNotesFile = "./app/build/outputs/changelogBeta"
+    groups = "continuous-deployment"
 }
 
 dependencies {
@@ -37,6 +42,6 @@ dependencies {
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.
-configure<GoogleServicesPluginConfig> {
+googleServices {
     disableVersionCheck = true
 }

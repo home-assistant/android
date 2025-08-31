@@ -2,14 +2,12 @@ package io.homeassistant.companion.android.settings.wear
 
 import android.annotation.SuppressLint
 import android.app.Application
+import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.fasterxml.jackson.databind.JsonMappingException
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
@@ -25,6 +23,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.WearDataMessages
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
@@ -41,23 +40,18 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import org.burnoutcrew.reorderable.ItemPosition
+import kotlinx.serialization.SerializationException
 import timber.log.Timber
 
 @HiltViewModel
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
-class SettingsWearViewModel @Inject constructor(
-    private val serverManager: ServerManager,
-    application: Application
-) :
+class SettingsWearViewModel @Inject constructor(private val serverManager: ServerManager, application: Application) :
     AndroidViewModel(application),
     DataClient.OnDataChangedListener {
 
     companion object {
         private const val CAPABILITY_WEAR_SENDS_CONFIG = "sends_config"
     }
-
-    private val objectMapper = jacksonObjectMapper()
 
     private val _hasData = MutableStateFlow(false)
     val hasData = _hasData.asStateFlow()
@@ -67,7 +61,7 @@ class SettingsWearViewModel @Inject constructor(
     private var serverId = 0
     private var remoteServerId = 0
 
-    var entities = mutableStateMapOf<String, Entity<*>>()
+    var entities = mutableStateMapOf<String, Entity>()
         private set
     var supportedDomains = mutableStateListOf<String>()
         private set
@@ -99,7 +93,7 @@ class SettingsWearViewModel @Inject constructor(
                             Wearable.getMessageClient(application).sendMessage(
                                 node.id,
                                 "/requestConfig",
-                                ByteArray(0)
+                                ByteArray(0),
                             ).await()
                             Timber.d("Request for config sent successfully")
                         } catch (e: Exception) {
@@ -175,13 +169,13 @@ class SettingsWearViewModel @Inject constructor(
                         .renderTemplate(template, mapOf()).toString()
                 } catch (e: Exception) {
                     Timber.e(e, "Exception while rendering template for tile ID $tileId")
-                    // JsonMappingException suggests that template is not a String (= error)
+                    // SerializationException suggests that template is not a String (= error)
                     templateTilesRenderedTemplates[tileId] = getApplication<Application>().getString(
-                        if (e.cause is JsonMappingException) {
+                        if (e.cause is SerializationException) {
                             commonR.string.template_error
                         } else {
                             commonR.string.template_render_error
-                        }
+                        },
                     )
                 }
             }
@@ -199,22 +193,20 @@ class SettingsWearViewModel @Inject constructor(
         sendHomeFavorites(favoriteEntityIds.toList())
     }
 
-    fun onMove(fromItem: ItemPosition, toItem: ItemPosition) {
+    fun onMove(fromItem: LazyListItemInfo, toItem: LazyListItemInfo) {
         favoriteEntityIds.apply {
             add(
                 favoriteEntityIds.indexOfFirst { it == toItem.key },
-                removeAt(favoriteEntityIds.indexOfFirst { it == fromItem.key })
+                removeAt(favoriteEntityIds.indexOfFirst { it == fromItem.key }),
             )
         }
     }
-
-    fun canDragOver(position: ItemPosition) = favoriteEntityIds.any { it == position.key }
 
     fun sendHomeFavorites(favoritesList: List<String>) = viewModelScope.launch {
         val application = getApplication<HomeAssistantApplication>()
         val putDataRequest = PutDataMapRequest.create("/updateFavorites").run {
             dataMap.putLong(WearDataMessages.KEY_UPDATE_TIME, System.nanoTime())
-            dataMap.putString(WearDataMessages.CONFIG_FAVORITES, objectMapper.writeValueAsString(favoritesList))
+            dataMap.putString(WearDataMessages.CONFIG_FAVORITES, kotlinJsonMapper.encodeToString(favoritesList))
             setUrgent()
             asPutDataRequest()
         }
@@ -230,7 +222,9 @@ class SettingsWearViewModel @Inject constructor(
 
     private fun readUriData(uri: String): ByteArray {
         if (uri.isEmpty()) return ByteArray(0)
-        return getApplication<HomeAssistantApplication>().contentResolver.openInputStream(uri.toUri())!!.buffered().use {
+        return getApplication<HomeAssistantApplication>().contentResolver.openInputStream(
+            uri.toUri(),
+        )!!.buffered().use {
             it.readBytes()
         }
     }
@@ -242,7 +236,7 @@ class SettingsWearViewModel @Inject constructor(
         deviceTrackingEnabled: Boolean,
         notificationsEnabled: Boolean,
         tlsClientCertificateUri: String,
-        tlsClientCertificatePassword: String
+        tlsClientCertificatePassword: String,
     ) {
         _hasData.value = false // Show loading indicator
         val putDataRequest = PutDataMapRequest.create("/authenticate").run {
@@ -277,7 +271,10 @@ class SettingsWearViewModel @Inject constructor(
 
     fun sendTemplateTileInfo() {
         val putDataRequest = PutDataMapRequest.create("/updateTemplateTiles").run {
-            dataMap.putString(WearDataMessages.CONFIG_TEMPLATE_TILES, objectMapper.writeValueAsString(templateTiles))
+            dataMap.putString(
+                WearDataMessages.CONFIG_TEMPLATE_TILES,
+                kotlinJsonMapper.encodeToString(templateTiles.toMap()),
+            )
             setUrgent()
             asPutDataRequest()
         }
@@ -320,21 +317,26 @@ class SettingsWearViewModel @Inject constructor(
         }
 
         val supportedDomainsList: List<String> =
-            objectMapper.readValue(data.getString(WearDataMessages.CONFIG_SUPPORTED_DOMAINS, "[\"input_boolean\", \"light\", \"lock\", \"switch\", \"script\", \"scene\"]"))
+            kotlinJsonMapper.decodeFromString(
+                data.getString(
+                    WearDataMessages.CONFIG_SUPPORTED_DOMAINS,
+                    "[\"input_boolean\", \"light\", \"lock\", \"switch\", \"script\", \"scene\"]",
+                ),
+            )
         supportedDomains.clear()
         supportedDomains.addAll(supportedDomainsList)
         val favoriteEntityIdList: List<String> =
-            objectMapper.readValue(data.getString(WearDataMessages.CONFIG_FAVORITES, "[]"))
+            kotlinJsonMapper.decodeFromString(data.getString(WearDataMessages.CONFIG_FAVORITES, "[]"))
         favoriteEntityIds.clear()
         favoriteEntityIdList.forEach { entityId ->
             favoriteEntityIds.add(entityId)
         }
 
-        val templateTilesFromWear: Map<Int, TemplateTileConfig> = objectMapper.readValue(
+        val templateTilesFromWear: Map<Int, TemplateTileConfig> = kotlinJsonMapper.decodeFromString(
             data.getString(
                 WearDataMessages.CONFIG_TEMPLATE_TILES,
-                "{}"
-            )
+                "{}",
+            ),
         )
         setTemplateTiles(templateTilesFromWear)
 
@@ -368,11 +370,11 @@ class SettingsWearViewModel @Inject constructor(
                         cloudUrl = wearCloudUrl,
                         webhookId = wearWebhookId,
                         cloudhookUrl = wearCloudhookUrl,
-                        useCloud = wearUseCloud
+                        useCloud = wearUseCloud,
                     ),
                     session = ServerSessionInfo(),
-                    user = ServerUserInfo()
-                )
+                    user = ServerUserInfo(),
+                ),
             )
             serverManager.authenticationRepository(serverId).registerRefreshToken(wearRefreshToken)
             remoteServerId = wearServerId

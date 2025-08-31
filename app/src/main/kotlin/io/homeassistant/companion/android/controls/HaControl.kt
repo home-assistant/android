@@ -25,28 +25,34 @@ import io.homeassistant.companion.android.webview.WebViewActivity
 interface HaControl {
 
     @SuppressLint("ResourceType")
-    fun createControl(
-        context: Context,
-        entity: Entity<Map<String, Any>>,
-        info: HaControlInfo
-    ): Control {
+    fun createControl(context: Context, entity: Entity, info: HaControlInfo): Control {
         val controlPath = "entityId:${info.entityId}"
         val control = Control.StatefulBuilder(
             info.systemId,
             PendingIntent.getActivity(
                 context,
                 controlPath.hashCode(),
-                WebViewActivity.newInstance(context.applicationContext, controlPath, info.serverId).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
-            )
+                WebViewActivity.newInstance(
+                    context.applicationContext,
+                    controlPath,
+                    info.serverId,
+                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE,
+            ),
         )
         control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
         control.setSubtitle(info.area?.name ?: "")
         control.setDeviceType(getDeviceType(entity))
-        control.setZone(
-            (if (info.serverName != null) "${info.serverName}: " else "") +
-                (info.area?.name ?: getDomainString(context, entity))
-        )
+
+        if (info.splitMultiServerIntoStructure && info.serverName != null) {
+            control.setZone(info.area?.name ?: getDomainString(context, entity))
+            control.setStructure(info.serverName)
+        } else {
+            control.setZone(
+                (if (info.serverName != null) "${info.serverName}: " else "") +
+                    (info.area?.name ?: getDomainString(context, entity)),
+            )
+        }
         control.setStatus(Control.STATUS_OK)
         control.setStatusText(entity.friendlyState(context))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -68,7 +74,7 @@ interface HaControl {
                     entity.state in listOf(
                         "off",
                         "unavailable",
-                        "unknown"
+                        "unknown",
                     ) -> R.color.colorDeviceControlsOff
                     else -> R.color.colorDeviceControlsDefaultOn
                 }
@@ -81,7 +87,11 @@ interface HaControl {
             val iconOverride = listOf("media_player", "number")
             if (entity.domain in iconOverride) {
                 val icon = IconicsDrawable(context, entity.getIcon(context)).apply { sizeDp = 48 }
-                val tint = if (entity.isActive()) R.color.colorDeviceControlsDefaultOn else R.color.colorDeviceControlsOff
+                val tint = if (entity.isActive()) {
+                    R.color.colorDeviceControlsDefaultOn
+                } else {
+                    R.color.colorDeviceControlsOff
+                }
                 icon.setTint(ContextCompat.getColor(context, tint))
                 control.setCustomIcon(icon.toAndroidIconCompat().toIcon(context))
             }
@@ -93,13 +103,13 @@ interface HaControl {
     fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity<Map<String, Any>>,
-        info: HaControlInfo
+        entity: Entity,
+        info: HaControlInfo,
     ): Control.StatefulBuilder
 
-    fun getDeviceType(entity: Entity<Map<String, Any>>): Int
+    fun getDeviceType(entity: Entity): Int
 
-    fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String
+    fun getDomainString(context: Context, entity: Entity): String
 
     suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean
 }

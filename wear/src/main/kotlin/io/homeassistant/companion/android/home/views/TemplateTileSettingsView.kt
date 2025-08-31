@@ -23,11 +23,7 @@ import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 
 @Composable
-fun TemplateTileSettingsView(
-    templateContent: String,
-    refreshInterval: Int,
-    onClickRefreshInterval: () -> Unit
-) {
+fun TemplateTileSettingsView(templateContent: String, refreshInterval: Int, onClickRefreshInterval: () -> Unit) {
     WearAppTheme {
         ThemeLazyColumn {
             item {
@@ -40,13 +36,13 @@ fun TemplateTileSettingsView(
                     icon = {
                         Image(
                             asset = CommunityMaterial.Icon3.cmd_timer_cog,
-                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface)
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
                     colors = getFilledTonalButtonColors(),
                     label = { Text(stringResource(R.string.refresh_interval)) },
                     secondaryLabel = { Text(intervalToString(LocalContext.current, refreshInterval)) },
-                    onClick = onClickRefreshInterval
+                    onClick = onClickRefreshInterval,
                 )
             }
             item {
@@ -58,7 +54,7 @@ fun TemplateTileSettingsView(
             item {
                 Text(
                     templateContent,
-                    color = Color.DarkGray
+                    color = Color.DarkGray,
                 )
             }
         }

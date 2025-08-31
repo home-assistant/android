@@ -85,7 +85,7 @@ class ManageTilesViewModel @Inject constructor(
     state: SavedStateHandle,
     private val serverManager: ServerManager,
     private val tileDao: TileDao,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
 
     companion object {
@@ -130,7 +130,7 @@ class ManageTilesViewModel @Inject constructor(
             Tile37Service.TILE_ID to Tile37Service::class.java,
             Tile38Service.TILE_ID to Tile38Service::class.java,
             Tile39Service.TILE_ID to Tile39Service::class.java,
-            Tile40Service.TILE_ID to Tile40Service::class.java
+            Tile40Service.TILE_ID to Tile40Service::class.java,
         )
     }
 
@@ -143,7 +143,7 @@ class ManageTilesViewModel @Inject constructor(
 
     var servers by mutableStateOf(serverManager.defaultServers)
         private set
-    var sortedEntities by mutableStateOf<List<Entity<*>>>(emptyList())
+    var sortedEntities by mutableStateOf<List<Entity>>(emptyList())
         private set
     var selectedServerId by mutableStateOf(ServerManager.SERVER_ID_ACTIVE)
         private set
@@ -161,7 +161,7 @@ class ManageTilesViewModel @Inject constructor(
     private var selectedTileId = 0
     private var selectedTileAdded = false
 
-    private val entities = mutableMapOf<Int, List<Entity<*>>>()
+    private val entities = mutableMapOf<Int, List<Entity>>()
 
     private val _tileInfoSnackbar = MutableSharedFlow<Int>(replay = 1)
     var tileInfoSnackbar = _tileInfoSnackbar.asSharedFlow()
@@ -227,7 +227,8 @@ class ManageTilesViewModel @Inject constructor(
     }
 
     fun selectServerId(serverId: Int) {
-        val resetEntity = serverId != selectedServerId && entities[serverId]?.none { it.entityId == selectedEntityId } == true
+        val resetEntity =
+            serverId != selectedServerId && entities[serverId]?.none { it.entityId == selectedEntityId } == true
         selectedServerId = serverId
         loadEntities(serverId)
         selectEntityId(if (resetEntity) "" else selectedEntityId)
@@ -254,7 +255,7 @@ class ManageTilesViewModel @Inject constructor(
         selectedShouldVibrate = currentTile.shouldVibrate
         tileAuthRequired = currentTile.authRequired
         selectIcon(
-            currentTile.iconName?.let { CommunityMaterial.getIconByMdiName(it) }
+            currentTile.iconName?.let { CommunityMaterial.getIconByMdiName(it) },
         )
     }
 
@@ -270,7 +271,7 @@ class ManageTilesViewModel @Inject constructor(
                 label = tileLabel,
                 subtitle = tileSubtitle,
                 shouldVibrate = selectedShouldVibrate,
-                authRequired = tileAuthRequired
+                authRequired = tileAuthRequired,
             )
             tileDao.add(tileData)
 
@@ -289,7 +290,7 @@ class ManageTilesViewModel @Inject constructor(
                     ComponentName(app, service),
                     tileLabel,
                     icon,
-                    Executors.newSingleThreadExecutor()
+                    Executors.newSingleThreadExecutor(),
                 ) { result ->
                     viewModelScope.launch {
                         Timber.d("Adding quick settings tile, system returned: $result")

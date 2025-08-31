@@ -2,11 +2,13 @@ package io.homeassistant.companion.android.settings.wear.views
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.IconButton
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -21,6 +23,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import io.homeassistant.companion.android.util.safeTopWindowInsets
 
 const val WEAR_DOCS_LINK = "https://companion.home-assistant.io/docs/wear-os/"
 
@@ -29,7 +32,7 @@ fun LoadSettingsHomeView(
     settingsWearViewModel: SettingsWearViewModel,
     deviceName: String,
     loginWearOs: () -> Unit,
-    onStartBackClicked: () -> Unit
+    onStartBackClicked: () -> Unit,
 ) {
     HomeAssistantAppTheme {
         val navController = rememberNavController()
@@ -38,7 +41,7 @@ fun LoadSettingsHomeView(
                 LoadWearFavoritesSettings(
                     settingsWearViewModel = settingsWearViewModel,
                     onBackClicked = { navController.navigateUp() },
-                    events = settingsWearViewModel.resultSnackbar
+                    events = settingsWearViewModel.resultSnackbar,
                 )
             }
             composable(SettingsWearMainView.LANDING) {
@@ -53,7 +56,7 @@ fun LoadSettingsHomeView(
                     navigateTemplateTile = { navController.navigate(SettingsWearMainView.TEMPLATES) },
                     loginWearOs = loginWearOs,
                     onBackClicked = onStartBackClicked,
-                    events = settingsWearViewModel.resultSnackbar
+                    events = settingsWearViewModel.resultSnackbar,
                 )
             }
             composable(SettingsWearMainView.TEMPLATES) {
@@ -64,12 +67,12 @@ fun LoadSettingsHomeView(
                     },
                     onBackClicked = {
                         navController.navigateUp()
-                    }
+                    },
                 )
             }
             composable(
                 route = SettingsWearMainView.TEMPLATE_TILE.format("{tileId}"),
-                arguments = listOf(navArgument("tileId") { type = NavType.IntType })
+                arguments = listOf(navArgument("tileId") { type = NavType.IntType }),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt("tileId")
                 val templateTile = settingsWearViewModel.templateTiles[tileId]
@@ -90,7 +93,7 @@ fun LoadSettingsHomeView(
                         },
                         onBackClicked = {
                             navController.navigateUp()
-                        }
+                        },
                     )
                 }
             }
@@ -99,19 +102,16 @@ fun LoadSettingsHomeView(
 }
 
 @Composable
-fun SettingsWearTopAppBar(
-    title: @Composable () -> Unit,
-    onBackClicked: () -> Unit,
-    docsLink: String? = null
-) {
+fun SettingsWearTopAppBar(title: @Composable () -> Unit, onBackClicked: () -> Unit, docsLink: String? = null) {
     val context = LocalContext.current
     TopAppBar(
         title = title,
+        modifier = Modifier.windowInsetsPadding(safeTopWindowInsets()),
         navigationIcon = {
             IconButton(onClick = onBackClicked) {
                 Image(
                     asset = CommunityMaterial.Icon.cmd_arrow_left,
-                    colorFilter = ColorFilter.tint(colorResource(commonR.color.colorOnBackground))
+                    colorFilter = ColorFilter.tint(colorResource(commonR.color.colorOnBackground)),
                 )
             }
         },
@@ -124,12 +124,12 @@ fun SettingsWearTopAppBar(
                     Image(
                         asset = CommunityMaterial.Icon2.cmd_help_circle_outline,
                         contentDescription = stringResource(commonR.string.help),
-                        colorFilter = ColorFilter.tint(colorResource(commonR.color.colorOnBackground))
+                        colorFilter = ColorFilter.tint(colorResource(commonR.color.colorOnBackground)),
                     )
                 }
             }
         },
         backgroundColor = colorResource(id = commonR.color.colorBackground),
-        contentColor = colorResource(id = commonR.color.colorOnBackground)
+        contentColor = colorResource(id = commonR.color.colorOnBackground),
     )
 }

@@ -7,10 +7,7 @@ import android.content.res.Resources
 import io.homeassistant.companion.android.R as commonR
 import kotlin.math.min
 
-data class TileSlot(
-    val id: String,
-    val name: String
-)
+data class TileSlot(val id: String, val name: String)
 
 /**
  * Loads the list of tile slots.
@@ -38,7 +35,7 @@ fun updateActiveTileServices(highestInUse: Int, context: Context) {
             } else {
                 PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
             },
-            PackageManager.DONT_KILL_APP
+            PackageManager.DONT_KILL_APP,
         )
     }
 }

@@ -16,14 +16,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.util.plus
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @Composable
-fun NfcWelcomeView(
-    isNfcEnabled: Boolean,
-    onReadClicked: () -> Unit,
-    onWriteClicked: () -> Unit
-) {
-    LazyColumn(contentPadding = PaddingValues(all = 16.dp)) {
+fun NfcWelcomeView(isNfcEnabled: Boolean, onReadClicked: () -> Unit, onWriteClicked: () -> Unit) {
+    LazyColumn(
+        contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(),
+    ) {
         item {
             Text(stringResource(commonR.string.nfc_welcome_message))
         }
@@ -34,7 +34,7 @@ fun NfcWelcomeView(
                         .padding(end = 8.dp)
                         .weight(1f),
                     enabled = isNfcEnabled,
-                    onClick = onReadClicked
+                    onClick = onReadClicked,
                 ) {
                     Text(stringResource(commonR.string.nfc_btn_read_tag))
                 }
@@ -43,7 +43,7 @@ fun NfcWelcomeView(
                         .padding(start = 8.dp)
                         .weight(1f),
                     enabled = isNfcEnabled,
-                    onClick = onWriteClicked
+                    onClick = onWriteClicked,
                 ) {
                     Text(stringResource(commonR.string.nfc_btn_write_tag))
                 }
@@ -54,7 +54,7 @@ fun NfcWelcomeView(
             item {
                 Text(
                     text = stringResource(commonR.string.nfc_welcome_turnon),
-                    modifier = Modifier.padding(top = 48.dp)
+                    modifier = Modifier.padding(top = 48.dp),
                 )
             }
             item {
@@ -63,7 +63,7 @@ fun NfcWelcomeView(
                     contentPadding = PaddingValues(horizontal = 0.dp),
                     onClick = {
                         context.startActivity(Intent(Settings.ACTION_NFC_SETTINGS))
-                    }
+                    },
                 ) {
                     Text(stringResource(commonR.string.settings))
                 }

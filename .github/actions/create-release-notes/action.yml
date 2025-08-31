@@ -33,7 +33,7 @@ runs:
             owner: context.repo.owner,
             repo: context.repo.repo,
             tag_name: '${{ inputs.tag-name }}',
-            target_commitish: 'master',
+            target_commitish: 'main',
             previous_tag_name: '${{ steps.latest-release-tag.outputs.result }}',
           })
           return data.body.replaceAll('`', '\'').replaceAll('"', '\'')

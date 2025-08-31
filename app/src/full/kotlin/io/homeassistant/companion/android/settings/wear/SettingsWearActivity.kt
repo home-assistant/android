@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.concurrent.futures.await
 import androidx.core.net.toUri
@@ -23,6 +24,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.databinding.ActivitySettingsWearBinding
 import io.homeassistant.companion.android.settings.HelpMenuProvider
 import io.homeassistant.companion.android.settings.wear.views.SettingsWearMainView
+import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,7 +32,9 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityChangedListener {
+class SettingsWearActivity :
+    AppCompatActivity(),
+    CapabilityClient.OnCapabilityChangedListener {
 
     private lateinit var binding: ActivitySettingsWearBinding
 
@@ -44,8 +48,11 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        enableEdgeToEdge()
+
         binding = ActivitySettingsWearBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.root.applySafeDrawingInsets()
 
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -174,12 +181,16 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
             }
             wearNodesWithApp.size < allConnectedNodes.size -> {
                 Timber.d("Installed on some devices")
-                startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp, getAuthIntentUrl()))
+                startActivity(
+                    SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp, getAuthIntentUrl()),
+                )
                 finish()
             }
             else -> {
                 Timber.d("Installed on all devices")
-                startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp, getAuthIntentUrl()))
+                startActivity(
+                    SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp, getAuthIntentUrl()),
+                )
                 finish()
             }
         }
@@ -204,14 +215,14 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
                     remoteActivityHelper
                         ?.startRemoteActivity(
                             targetIntent = intent,
-                            targetNodeId = node.id
+                            targetNodeId = node.id,
                         )
                         ?.await()
 
                     Toast.makeText(
                         this@SettingsWearActivity,
                         getString(commonR.string.store_request_successful),
-                        Toast.LENGTH_SHORT
+                        Toast.LENGTH_SHORT,
                     ).show()
                 } catch (cancellationException: CancellationException) {
                     // Request was cancelled normally
@@ -219,7 +230,7 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
                     Toast.makeText(
                         this@SettingsWearActivity,
                         getString(commonR.string.store_request_unsuccessful),
-                        Toast.LENGTH_LONG
+                        Toast.LENGTH_LONG,
                     ).show()
                 }
             }

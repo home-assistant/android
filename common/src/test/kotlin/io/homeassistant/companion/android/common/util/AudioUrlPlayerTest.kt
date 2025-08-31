@@ -24,7 +24,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+@Config(sdk = [Build.VERSION_CODES.M])
 class AudioUrlPlayerTest {
     private lateinit var audioManager: AudioManager
     private lateinit var mediaPlayer: MediaPlayer
@@ -65,7 +65,7 @@ class AudioUrlPlayerTest {
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP, Build.VERSION_CODES.VANILLA_ICE_CREAM])
+    @Config(sdk = [Build.VERSION_CODES.M, Build.VERSION_CODES.VANILLA_ICE_CREAM])
     fun `Given volume above 0 and url when playAudio then play audio returns true`() = runTest {
         val onCompletionListener = slot<MediaPlayer.OnCompletionListener>()
         val onPreparedListener = slot<MediaPlayer.OnPreparedListener>()
@@ -132,7 +132,7 @@ class AudioUrlPlayerTest {
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP, Build.VERSION_CODES.VANILLA_ICE_CREAM])
+    @Config(sdk = [Build.VERSION_CODES.M, Build.VERSION_CODES.VANILLA_ICE_CREAM])
     fun `Given a player already started when playAudio then the previous player is stopped and focus abandoned`() = runTest {
         every { audioManager.getStreamVolume(any()) } returns 1
 
@@ -182,7 +182,7 @@ class AudioUrlPlayerTest {
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP, Build.VERSION_CODES.VANILLA_ICE_CREAM])
+    @Config(sdk = [Build.VERSION_CODES.M, Build.VERSION_CODES.VANILLA_ICE_CREAM])
     fun `Given a URL and is assistant when playAudio then set proper audio attributes`() = runTest {
         every { audioManager.getStreamVolume(any()) } returns 1
         val audioAttributes = slot<AudioAttributes>()
@@ -204,7 +204,7 @@ class AudioUrlPlayerTest {
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP, Build.VERSION_CODES.VANILLA_ICE_CREAM])
+    @Config(sdk = [Build.VERSION_CODES.M, Build.VERSION_CODES.VANILLA_ICE_CREAM])
     fun `Given a URL and is not assistant when playAudio then set proper audio attributes`() = runTest {
         every { audioManager.getStreamVolume(any()) } returns 1
         val audioAttributes = slot<AudioAttributes>()
@@ -219,5 +219,22 @@ class AudioUrlPlayerTest {
             assertEquals(AudioAttributes.USAGE_MEDIA, usage)
             assertEquals(AudioAttributes.CONTENT_TYPE_MUSIC, contentType)
         }
+    }
+
+    @Test
+    fun `Given anything that happens when invoking playAudio then it does not throw IllegalStateException Already resumed`() = runTest {
+        every { audioManager.getStreamVolume(any()) } returns 1
+
+        val onCompletionListener = slot<MediaPlayer.OnCompletionListener>()
+        val onErrorListener = slot<MediaPlayer.OnErrorListener>()
+        every { mediaPlayer.setOnCompletionListener(capture(onCompletionListener)) } answers {
+            onCompletionListener.captured.onCompletion(mediaPlayer)
+        }
+        every { mediaPlayer.setOnErrorListener(capture(onErrorListener)) } answers {
+            onErrorListener.captured.onError(mediaPlayer, 1, 42)
+        }
+        every { mediaPlayer.prepareAsync() } throws IllegalStateException("dummy")
+
+        player.playAudio("test_url", false)
     }
 }

@@ -25,13 +25,13 @@ import io.homeassistant.companion.android.views.rememberExpandedStates
 
 @Composable
 fun EntityViewList(
-    entityLists: Map<String, List<Entity<*>>>,
+    entityLists: Map<String, List<Entity>>,
     entityListsOrder: List<String>,
-    entityListFilter: (Entity<*>) -> Boolean,
+    entityListFilter: (Entity) -> Boolean,
     onEntityClicked: (String, String) -> Unit,
     onEntityLongClicked: (String) -> Unit,
     isHapticEnabled: Boolean,
-    isToastEnabled: Boolean
+    isToastEnabled: Boolean,
 ) {
     // Remember expanded state of each header
     val expandedStates = rememberExpandedStates(entityLists.keys.map { it.hashCode() })
@@ -46,7 +46,7 @@ fun EntityViewList(
                             ExpandableListHeader(
                                 string = header,
                                 key = header.hashCode(),
-                                expandedStates = expandedStates
+                                expandedStates = expandedStates,
                             )
                         } else {
                             ListHeader(header)
@@ -59,7 +59,7 @@ fun EntityViewList(
                                 entity,
                                 onEntityClicked,
                                 isHapticEnabled,
-                                isToastEnabled
+                                isToastEnabled,
                             ) { entityId -> onEntityLongClicked(entityId) }
                         }
 
@@ -70,11 +70,11 @@ fun EntityViewList(
                                         label = {
                                             Text(
                                                 text = stringResource(commonR.string.loading_entities),
-                                                textAlign = TextAlign.Center
+                                                textAlign = TextAlign.Center,
                                             )
                                         },
                                         onClick = { /* No op */ },
-                                        colors = getPrimaryButtonColors()
+                                        colors = getPrimaryButtonColors(),
                                     )
                                 }
                             }
@@ -96,7 +96,7 @@ private fun PreviewEntityListView() {
         onEntityClicked = { _, _ -> },
         onEntityLongClicked = { },
         isHapticEnabled = false,
-        isToastEnabled = false
+        isToastEnabled = false,
     )
 }
 
@@ -104,13 +104,16 @@ private fun PreviewEntityListView() {
 @Composable
 private fun PreviewEntityListScenes() {
     EntityViewList(
-        entityLists = mapOf(stringResource(commonR.string.scenes) to listOf(playPreviewEntityScene1, playPreviewEntityScene2, playPreviewEntityScene3)),
+        entityLists = mapOf(
+            stringResource(commonR.string.scenes) to
+                listOf(playPreviewEntityScene1, playPreviewEntityScene2, playPreviewEntityScene3),
+        ),
         entityListsOrder = listOf(stringResource(commonR.string.scenes)),
         entityListFilter = { true },
         onEntityClicked = { _, _ -> },
         onEntityLongClicked = { },
         isHapticEnabled = false,
-        isToastEnabled = false
+        isToastEnabled = false,
     )
 }
 
@@ -124,6 +127,6 @@ private fun PreviewEntityListEmpty() {
         onEntityClicked = { _, _ -> },
         onEntityLongClicked = { },
         isHapticEnabled = false,
-        isToastEnabled = false
+        isToastEnabled = false,
     )
 }

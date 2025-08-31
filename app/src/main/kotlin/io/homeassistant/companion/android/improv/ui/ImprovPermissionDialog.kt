@@ -58,11 +58,7 @@ class ImprovPermissionDialog : BottomSheetDialogFragment() {
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -70,7 +66,7 @@ class ImprovPermissionDialog : BottomSheetDialogFragment() {
                         needsBluetooth = neededPermissions.any { it.contains("BLUETOOTH", ignoreCase = true) },
                         needsLocation = neededPermissions.any { it == Manifest.permission.ACCESS_FINE_LOCATION },
                         onContinue = { requestPermissions.launch(neededPermissions) },
-                        onSkip = { dismiss() }
+                        onSkip = { dismiss() },
                     )
                 }
             }

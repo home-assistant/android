@@ -9,8 +9,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -20,7 +20,7 @@ class SsidViewModel @Inject constructor(
     state: SavedStateHandle,
     private val serverManager: ServerManager,
     private val wifiHelper: WifiHelper,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
 
     var wifiSsids = mutableStateListOf<String>()
@@ -80,9 +80,9 @@ class SsidViewModel @Inject constructor(
                 serverManager.updateServer(
                     it.copy(
                         connection = it.connection.copy(
-                            internalSsids = ssids
-                        )
-                    )
+                            internalSsids = ssids,
+                        ),
+                    ),
                 )
             }
             wifiSsids.clear()
@@ -106,9 +106,9 @@ class SsidViewModel @Inject constructor(
                 serverManager.updateServer(
                     it.copy(
                         connection = it.connection.copy(
-                            internalEthernet = eth
-                        )
-                    )
+                            internalEthernet = eth,
+                        ),
+                    ),
                 )
                 ethernet = eth
             }
@@ -121,9 +121,9 @@ class SsidViewModel @Inject constructor(
                 serverManager.updateServer(
                     it.copy(
                         connection = it.connection.copy(
-                            internalVpn = privateNetwork
-                        )
-                    )
+                            internalVpn = privateNetwork,
+                        ),
+                    ),
                 )
                 vpn = privateNetwork
             }
@@ -136,9 +136,9 @@ class SsidViewModel @Inject constructor(
                 serverManager.updateServer(
                     it.copy(
                         connection = it.connection.copy(
-                            prioritizeInternal = prioritize
-                        )
-                    )
+                            prioritizeInternal = prioritize,
+                        ),
+                    ),
                 )
                 prioritizeInternal = prioritize
             }

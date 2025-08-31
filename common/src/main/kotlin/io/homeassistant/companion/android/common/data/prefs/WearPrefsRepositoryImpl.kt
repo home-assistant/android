@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.common.data.prefs
 
+import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.toStringList
 import javax.inject.Inject
 import javax.inject.Named
@@ -11,16 +13,18 @@ import org.json.JSONObject
 
 class WearPrefsRepositoryImpl @Inject constructor(
     @Named("wear") private val localStorage: LocalStorage,
-    @Named("integration") private val integrationStorage: LocalStorage
+    @Named("integration") private val integrationStorage: LocalStorage,
 ) : WearPrefsRepository {
 
     companion object {
-        private const val MIGRATION_PREF = "migration"
-        private const val MIGRATION_VERSION = 2
+        @VisibleForTesting const val MIGRATION_PREF = "migration"
+
+        @VisibleForTesting const val MIGRATION_VERSION = 2
 
         private const val PREF_TILE_SHORTCUTS = "tile_shortcuts_list"
         private const val PREF_SHOW_TILE_SHORTCUTS_TEXT = "show_tile_shortcuts_text"
-        private const val PREF_TILE_TEMPLATES = "tile_templates"
+
+        @VisibleForTesting const val PREF_TILE_TEMPLATES = "tile_templates"
         private const val PREF_WEAR_HAPTIC_FEEDBACK = "wear_haptic_feedback"
         private const val PREF_WEAR_TOAST_CONFIRMATION = "wear_toast_confirmation"
         private const val PREF_WEAR_FAVORITES_ONLY = "wear_favorites_only"
@@ -60,12 +64,13 @@ class WearPrefsRepositoryImpl @Inject constructor(
             if (currentVersion == null || currentVersion < 2) {
                 val template = localStorage.getString(legacyPrefTileTemplate)
                 val templateRefreshInterval = localStorage.getInt(
-                    legacyPrefTileTemplateRefreshInterval
+                    legacyPrefTileTemplateRefreshInterval,
                 )
 
                 if (template != null && templateRefreshInterval != null) {
                     val templates = mapOf(
-                        UNKNOWN_TEMPLATE_TILE_ID.toString() to TemplateTileConfig(template, templateRefreshInterval).toJSONObject()
+                        UNKNOWN_TEMPLATE_TILE_ID.toString() to
+                            kotlinJsonMapper.encodeToString(TemplateTileConfig(template, templateRefreshInterval)),
                     )
 
                     localStorage.putString(PREF_TILE_TEMPLATES, JSONObject(templates).toString())
@@ -117,9 +122,9 @@ class WearPrefsRepositoryImpl @Inject constructor(
                     val entities = jsonArray.toStringList()
                     mapOf(
                         // the key is null since we don't (yet) have the tileId
-                        null to entities
+                        null to entities,
                     )
-                }
+                },
             )
         } ?: emptyMap()
     }
@@ -154,14 +159,8 @@ class WearPrefsRepositoryImpl @Inject constructor(
 
     override suspend fun getAllTemplateTiles(): Map<Int, TemplateTileConfig> {
         return localStorage.getString(PREF_TILE_TEMPLATES)?.let { jsonStr ->
-            val jsonObject = JSONObject(jsonStr)
-            buildMap {
-                jsonObject.keys().forEach { tileId ->
-                    val id = tileId.toInt()
-                    val templateTileConfig = TemplateTileConfig(jsonObject.getJSONObject(tileId))
-                    put(id, templateTileConfig)
-                }
-            }
+            kotlinJsonMapper.decodeFromString<Map<String, TemplateTileConfig>>(jsonStr)
+                .mapKeys { it.key.toInt() }
         } ?: emptyMap()
     }
 
@@ -183,10 +182,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun setAllTemplateTiles(templateTiles: Map<Int, TemplateTileConfig>) {
-        val templateTilesJson = templateTiles.map { (tileId, templateTileConfig) ->
-            tileId.toString() to templateTileConfig.toJSONObject()
-        }.toMap()
-        val jsonStr = JSONObject(templateTilesJson).toString()
+        val jsonStr = kotlinJsonMapper.encodeToString(templateTiles.mapKeys { it.key.toString() })
         localStorage.putString(PREF_TILE_TEMPLATES, jsonStr)
     }
 

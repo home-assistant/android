@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,7 +21,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -67,7 +64,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -81,7 +77,11 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
+import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import kotlinx.coroutines.launch
+
+private val HEADER_HEIGHT = 48.dp
+private val CONTROLS_HEIGHT = 112.dp
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -96,7 +96,7 @@ fun AssistSheetView(
     onChangeInput: () -> Unit,
     onTextInput: (String) -> Unit,
     onMicrophoneInput: () -> Unit,
-    onHide: () -> Unit
+    onHide: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val state = rememberModalBottomSheetState(
@@ -107,9 +107,8 @@ fun AssistSheetView(
                 coroutineScope.launch { onHide() }
             }
             true
-        }
+        },
     )
-    val configuration = LocalConfiguration.current
 
     val sheetCornerRadius = dimensionResource(R.dimen.bottom_sheet_corner_radius)
 
@@ -123,7 +122,7 @@ fun AssistSheetView(
                 Modifier
                     .navigationBarsPadding()
                     .imePadding()
-                    .padding(16.dp)
+                    .padding(16.dp),
             ) {
                 Column {
                     val lazyListState = rememberLazyListState()
@@ -136,18 +135,15 @@ fun AssistSheetView(
                         currentPipeline = currentPipeline,
                         fromFrontend = fromFrontend,
                         onSelectPipeline = onSelectPipeline,
-                        onManagePipelines = onManagePipelines
+                        onManagePipelines = onManagePipelines,
                     )
                     LazyColumn(
                         state = lazyListState,
                         modifier = Modifier
                             .padding(vertical = 16.dp)
                             .heightIn(
-                                max = configuration.screenHeightDp.dp -
-                                    WindowInsets.safeContent.asPaddingValues().calculateBottomPadding() -
-                                    WindowInsets.safeContent.asPaddingValues().calculateTopPadding() -
-                                    96.dp
-                            )
+                                max = safeScreenHeight() - HEADER_HEIGHT - CONTROLS_HEIGHT,
+                            ),
                     ) {
                         items(conversation) {
                             SpeechBubble(text = it.message, isResponse = !it.isInput)
@@ -157,11 +153,11 @@ fun AssistSheetView(
                         inputMode,
                         onChangeInput,
                         onTextInput,
-                        onMicrophoneInput
+                        onMicrophoneInput,
                     )
                 }
             }
-        }
+        },
     ) {
         // The rest of the screen is empty
     }
@@ -173,12 +169,12 @@ fun AssistSheetHeader(
     currentPipeline: AssistUiPipeline?,
     fromFrontend: Boolean,
     onSelectPipeline: (Int, String) -> Unit,
-    onManagePipelines: (() -> Unit)?
+    onManagePipelines: (() -> Unit)?,
 ) = Column(verticalArrangement = Arrangement.Center) {
     Text(
         text = stringResource(if (fromFrontend) commonR.string.assist else commonR.string.app_name),
         fontSize = 20.sp,
-        letterSpacing = 0.25.sp
+        letterSpacing = 0.25.sp,
     )
     if (currentPipeline != null) {
         val color = colorResource(commonR.color.colorOnSurfaceVariant)
@@ -190,12 +186,16 @@ fun AssistSheetHeader(
                     mutableStateOf(pipelines.distinctBy { it.serverId }.size > 1)
                 }
                 Row(
-                    modifier = Modifier.clickable { pipelineShowList = !pipelineShowList }
+                    modifier = Modifier.clickable { pipelineShowList = !pipelineShowList },
                 ) {
                     Text(
-                        text = if (pipelineShowServer) "${currentPipeline.serverName}: ${currentPipeline.name}" else currentPipeline.name,
+                        text = if (pipelineShowServer) {
+                            "${currentPipeline.serverName}: ${currentPipeline.name}"
+                        } else {
+                            currentPipeline.name
+                        },
                         color = color,
-                        style = MaterialTheme.typography.caption
+                        style = MaterialTheme.typography.caption,
                     )
                     Icon(
                         imageVector = Icons.Default.ExpandMore,
@@ -203,12 +203,12 @@ fun AssistSheetHeader(
                         modifier = Modifier
                             .height(16.dp)
                             .padding(start = 4.dp),
-                        tint = color
+                        tint = color,
                     )
                 }
                 DropdownMenu(
                     expanded = pipelineShowList,
-                    onDismissRequest = { pipelineShowList = false }
+                    onDismissRequest = { pipelineShowList = false },
                 ) {
                     pipelines.forEach {
                         val isSelected =
@@ -219,7 +219,7 @@ fun AssistSheetHeader(
                         }) {
                             Text(
                                 text = if (pipelineShowServer) "${it.serverName}: ${it.name}" else it.name,
-                                fontWeight = if (isSelected) FontWeight.SemiBold else null
+                                fontWeight = if (isSelected) FontWeight.SemiBold else null,
                             )
                         }
                     }
@@ -240,7 +240,7 @@ fun AssistSheetControls(
     inputMode: AssistViewModelBase.AssistInputMode?,
     onChangeInput: () -> Unit,
     onTextInput: (String) -> Unit,
-    onMicrophoneInput: () -> Unit
+    onMicrophoneInput: () -> Unit,
 ) = Row(verticalAlignment = Alignment.CenterVertically) {
     if (inputMode == null) { // Pipeline info has not yet loaded, empty space for now
         Spacer(modifier = Modifier.height(64.dp))
@@ -253,12 +253,16 @@ fun AssistSheetControls(
 
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(inputMode) {
-        if (inputMode == AssistViewModelBase.AssistInputMode.TEXT || inputMode == AssistViewModelBase.AssistInputMode.TEXT_ONLY) {
+        if (inputMode == AssistViewModelBase.AssistInputMode.TEXT ||
+            inputMode == AssistViewModelBase.AssistInputMode.TEXT_ONLY
+        ) {
             focusRequester.requestFocus()
         }
     }
 
-    if (inputMode == AssistViewModelBase.AssistInputMode.TEXT || inputMode == AssistViewModelBase.AssistInputMode.TEXT_ONLY) {
+    if (inputMode == AssistViewModelBase.AssistInputMode.TEXT ||
+        inputMode == AssistViewModelBase.AssistInputMode.TEXT_ONLY
+    ) {
         var text by rememberSaveable(stateSaver = TextFieldValue.Saver) {
             mutableStateOf(TextFieldValue())
         }
@@ -276,7 +280,7 @@ fun AssistSheetControls(
                     onTextInput(text.text)
                     text = TextFieldValue("")
                 }
-            })
+            }),
         )
         IconButton(
             onClick = {
@@ -287,16 +291,16 @@ fun AssistSheetControls(
                     onChangeInput()
                 }
             },
-            enabled = (inputMode != AssistViewModelBase.AssistInputMode.TEXT_ONLY || text.text.isNotBlank())
+            enabled = (inputMode != AssistViewModelBase.AssistInputMode.TEXT_ONLY || text.text.isNotBlank()),
         ) {
             val inputIsSend = text.text.isNotBlank() || inputMode == AssistViewModelBase.AssistInputMode.TEXT_ONLY
             Image(
                 asset = if (inputIsSend) CommunityMaterial.Icon3.cmd_send else CommunityMaterial.Icon3.cmd_microphone,
                 contentDescription = stringResource(
-                    if (inputIsSend) commonR.string.assist_send_text else commonR.string.assist_start_listening
+                    if (inputIsSend) commonR.string.assist_send_text else commonR.string.assist_start_listening,
                 ),
                 colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp),
             )
         }
     } else {
@@ -304,7 +308,7 @@ fun AssistSheetControls(
         Spacer(Modifier.weight(0.5f))
         Box(
             modifier = Modifier.size(64.dp),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             val inputIsActive = inputMode == AssistViewModelBase.AssistInputMode.VOICE_ACTIVE
             if (inputIsActive) {
@@ -314,15 +318,15 @@ fun AssistSheetControls(
                     targetValue = 1.2f,
                     animationSpec = infiniteRepeatable(
                         animation = tween(600, easing = LinearEasing),
-                        repeatMode = RepeatMode.Reverse
-                    )
+                        repeatMode = RepeatMode.Reverse,
+                    ),
                 )
                 Box(
                     modifier = Modifier
                         .size(48.dp)
                         .scale(scale)
                         .background(color = colorResource(commonR.color.colorSpeechText), shape = CircleShape)
-                        .clip(CircleShape)
+                        .clip(CircleShape),
                 )
             }
             OutlinedButton(
@@ -335,15 +339,19 @@ fun AssistSheetControls(
                 } else {
                     ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colors.onSurface)
                 },
-                contentPadding = PaddingValues(all = 0.dp)
+                contentPadding = PaddingValues(all = 0.dp),
             ) {
                 Image(
                     asset = CommunityMaterial.Icon3.cmd_microphone,
                     contentDescription = stringResource(
-                        if (inputIsActive) commonR.string.assist_stop_listening else commonR.string.assist_start_listening
+                        if (inputIsActive) {
+                            commonR.string.assist_stop_listening
+                        } else {
+                            commonR.string.assist_start_listening
+                        },
                     ),
                     colorFilter = ColorFilter.tint(LocalContentColor.current),
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(28.dp),
                 )
             }
         }
@@ -352,7 +360,7 @@ fun AssistSheetControls(
             Icon(
                 imageVector = Icons.Outlined.Keyboard,
                 contentDescription = stringResource(commonR.string.assist_enter_text),
-                tint = MaterialTheme.colors.onSurface
+                tint = MaterialTheme.colors.onSurface,
             )
         }
     }
@@ -368,8 +376,8 @@ fun SpeechBubble(text: String, isResponse: Boolean) {
                 start = if (isResponse) 0.dp else 24.dp,
                 end = if (isResponse) 24.dp else 0.dp,
                 top = 8.dp,
-                bottom = 8.dp
-            )
+                bottom = 8.dp,
+            ),
     ) {
         Box(
             modifier = Modifier
@@ -383,10 +391,10 @@ fun SpeechBubble(text: String, isResponse: Boolean) {
                         topLeft = 12.dp,
                         topRight = 12.dp,
                         bottomLeft = if (isResponse) 0.dp else 12.dp,
-                        bottomRight = if (isResponse) 12.dp else 0.dp
-                    )
+                        bottomRight = if (isResponse) 12.dp else 0.dp,
+                    ),
                 )
-                .padding(4.dp)
+                .padding(4.dp),
         ) {
             Text(
                 text = text,
@@ -396,7 +404,7 @@ fun SpeechBubble(text: String, isResponse: Boolean) {
                     Color.Black
                 },
                 modifier = Modifier
-                    .padding(2.dp)
+                    .padding(2.dp),
             )
         }
     }

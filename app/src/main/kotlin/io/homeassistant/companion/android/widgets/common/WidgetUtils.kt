@@ -16,7 +16,7 @@ object WidgetUtils {
     fun getBackgroundOptionList(context: Context): Array<String> {
         val backgroundTypeValues = mutableListOf(
             context.getString(R.string.widget_background_type_daynight),
-            context.getString(R.string.widget_background_type_transparent)
+            context.getString(R.string.widget_background_type_transparent),
         )
         if (DynamicColors.isDynamicColorAvailable()) {
             backgroundTypeValues.add(0, context.getString(R.string.widget_background_type_dynamiccolor))
@@ -24,12 +24,21 @@ object WidgetUtils {
         return backgroundTypeValues.toTypedArray()
     }
 
-    fun getSelectedBackgroundOption(context: Context, selectedType: WidgetBackgroundType, options: Array<String>) = when {
-        selectedType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable() ->
-            options.indexOf(context.getString(R.string.widget_background_type_dynamiccolor))
-        selectedType == WidgetBackgroundType.TRANSPARENT ->
-            options.indexOf(context.getString(R.string.widget_background_type_transparent))
-        else ->
-            options.indexOf(context.getString(R.string.widget_background_type_daynight))
+    fun getSelectedBackgroundOption(context: Context, selectedType: WidgetBackgroundType, options: Array<String>) =
+        when {
+            selectedType == WidgetBackgroundType.DYNAMICCOLOR && DynamicColors.isDynamicColorAvailable() ->
+                options.indexOf(context.getString(R.string.widget_background_type_dynamiccolor))
+
+            selectedType == WidgetBackgroundType.TRANSPARENT ->
+                options.indexOf(context.getString(R.string.widget_background_type_transparent))
+
+            else ->
+                options.indexOf(context.getString(R.string.widget_background_type_daynight))
+        }
+
+    fun getWidgetBackgroundType(context: Context, selectedOption: String) = when (selectedOption) {
+        context.getString(R.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
+        context.getString(R.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
+        else -> WidgetBackgroundType.DAYNIGHT
     }
 }

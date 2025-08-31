@@ -17,7 +17,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -48,22 +47,20 @@ fun MdcAlertDialog(
     onCancel: (() -> Unit)? = null,
     onSave: (() -> Unit)? = null,
     onOK: (() -> Unit)? = null,
-    contentPadding: PaddingValues = PaddingValues(horizontal = 24.dp)
+    contentPadding: PaddingValues = PaddingValues(horizontal = 24.dp),
 ) {
-    val configuration = LocalConfiguration.current
-
     Dialog(onDismissRequest = onDismissRequest) {
         Surface(
             shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colors.surface
+            color = MaterialTheme.colors.surface,
         ) {
             Column(
-                modifier = Modifier.heightIn(max = configuration.screenHeightDp.dp - 16.dp)
+                modifier = Modifier.heightIn(max = screenHeight() - 16.dp),
             ) {
                 Box(
                     modifier = Modifier
                         .padding(horizontal = 24.dp, vertical = 16.dp)
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
                 ) {
                     ProvideTextStyle(MaterialTheme.typography.h6, title)
                 }
@@ -71,7 +68,7 @@ fun MdcAlertDialog(
                     modifier = Modifier
                         .padding(contentPadding)
                         .fillMaxWidth()
-                        .weight(weight = 1f, fill = false)
+                        .weight(weight = 1f, fill = false),
                 ) {
                     ProvideTextStyle(MaterialTheme.typography.body1, content)
                 }
@@ -79,7 +76,7 @@ fun MdcAlertDialog(
                     horizontalArrangement = Arrangement.End,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(all = 8.dp)
+                        .padding(all = 8.dp),
                 ) {
                     onCancel?.let {
                         TextButton(onClick = it) {

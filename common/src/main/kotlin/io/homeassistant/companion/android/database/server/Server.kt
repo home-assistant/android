@@ -29,10 +29,33 @@ data class Server(
     val deviceName: String? = null,
     @Embedded val connection: ServerConnectionInfo,
     @Embedded val session: ServerSessionInfo,
-    @Embedded val user: ServerUserInfo
+    @Embedded val user: ServerUserInfo,
 ) {
-    constructor(id: Int, _name: String, nameOverride: String?, _version: String?, deviceRegistryId: String?, listOrder: Int, deviceName: String?, connection: ServerConnectionInfo, session: ServerSessionInfo, user: ServerUserInfo) :
-        this(id, _name, nameOverride, _version, deviceRegistryId, ServerType.DEFAULT, listOrder, deviceName, connection, session, user)
+    constructor(
+        id: Int,
+        _name: String,
+        nameOverride: String?,
+        _version: String?,
+        deviceRegistryId: String?,
+        listOrder: Int,
+        deviceName: String?,
+        connection: ServerConnectionInfo,
+        session: ServerSessionInfo,
+        user: ServerUserInfo,
+    ) :
+        this(
+            id,
+            _name,
+            nameOverride,
+            _version,
+            deviceRegistryId,
+            ServerType.DEFAULT,
+            listOrder,
+            deviceName,
+            connection,
+            session,
+            user,
+        )
 
     val friendlyName: String
         get() = nameOverride ?: _name.ifBlank { connection.externalUrl }
@@ -43,5 +66,5 @@ data class Server(
 
 enum class ServerType {
     TEMPORARY,
-    DEFAULT
+    DEFAULT,
 }

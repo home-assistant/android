@@ -1,0 +1,98 @@
+name: Prepare next release
+#  This workflow prepares the next release by updating the changelog and creating a pull request.
+#  It is triggered using the GitHub Actions API (in monthly and weekly workflows) or manually.
+
+on: # yamllint disable-line rule:truthy
+  workflow_dispatch:
+
+concurrency:
+  group: prepare-next-release
+  cancel-in-progress: true
+
+jobs:
+  tag:
+    name: Prepare next release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      # Without any change compare to the latest tag, reckon will not bump the version.
+      - name: Add dumb modification to trigger version bump
+        run: touch dumb_file_to_trigger_version_bump
+
+      - name: Generate version.txt
+        run: ./gradlew versionFile
+
+      - name: Update changelog_master.xml
+        run: |
+          VERSION=$(cat version.txt | sed 's/-.*//')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          # Update the version in changelog_master.xml (the command is only working on GNU sed)
+          sed -i -E '/<release [^>]*version="[^"]+"/ s/(version=")[^ -]+/\1'"$VERSION"'/' app/src/main/res/xml/changelog_master.xml
+
+      - name: Create changelog update branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.TAG_PUSH_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin
+          git checkout -B weekly_changelog_bump
+          git add app/src/main/res/xml/changelog_master.xml
+          git commit -m "Bump changelog_master.xml for weekly release ${VERSION}"
+          git push -f origin weekly_changelog_bump
+
+      - name: Create or update change log update PR
+        uses: actions/github-script@v7
+        env:
+          VERSION: ${{ env.VERSION }}
+        with:
+          script: |
+            const version = process.env.VERSION;
+            const { owner, repo } = context.repo;
+            const head = 'weekly_changelog_bump';
+            const base = 'main';
+            const title = `Bump changelog_master.xml for weekly release ${version}`;
+            const body = [
+              'Automated PR to update changelog_master.xml for weekly release.',
+            ].join('\n');
+
+            // Search for existing open PR from the branch
+            const prs = await github.rest.pulls.list({
+              owner: owner,
+              repo: repo,
+              head: `${owner}:${head}`,
+              base: base,
+              state: 'open'
+            });
+
+            if (prs.data.length > 0) {
+              // Update the existing PR
+              const pr = prs.data[0];
+              await github.rest.pulls.update({
+                  owner: owner,
+                  repo: repo,
+                  pull_number: pr.number,
+                  title: title,
+                  body: body,
+                  base: base
+              });
+              core.info(`Updated existing PR #${pr.number}`);
+            } else {
+              // Create a new PR
+              await github.rest.pulls.create({
+                  owner: owner,
+                  repo: repo,
+                  title: title,
+                  head: head,
+                  base: base,
+                  body: body
+              });
+              core.info('Created new PR');
+            }

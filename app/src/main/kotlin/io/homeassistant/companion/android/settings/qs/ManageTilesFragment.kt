@@ -30,11 +30,7 @@ class ManageTilesFragment : Fragment() {
 
     val viewModel: ManageTilesViewModel by viewModels()
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -46,7 +42,7 @@ class ManageTilesFragment : Fragment() {
                                 onIconDialogIconsSelected(it)
                                 showingDialog = false
                             },
-                            onDismissRequest = { showingDialog = false }
+                            onDismissRequest = { showingDialog = false },
                         )
                     }
 
@@ -54,7 +50,7 @@ class ManageTilesFragment : Fragment() {
                         viewModel = viewModel,
                         onShowIconDialog = {
                             showingDialog = true
-                        }
+                        },
                     )
                 }
             }

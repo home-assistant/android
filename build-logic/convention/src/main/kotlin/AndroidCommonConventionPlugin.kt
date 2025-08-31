@@ -1,12 +1,12 @@
+
 import com.android.build.api.dsl.ApplicationExtension
-import com.android.build.api.dsl.CommonExtension
-import com.android.build.api.dsl.LibraryExtension
+import io.homeassistant.companion.android.androidConfig
 import io.homeassistant.companion.android.getPluginId
+import java.io.File
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.apply
-import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -27,10 +27,16 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             apply(plugin = libs.plugins.kotlin.android.getPluginId())
+            apply(plugin = libs.plugins.kotlin.serialization.getPluginId())
             apply(plugin = libs.plugins.ksp.getPluginId())
             apply(plugin = libs.plugins.hilt.getPluginId())
 
-            fun CommonExtension<*, *, *, *, *, *>.configure() {
+            // We create a resources directory to put `robolectric.properties` and set the SDK version
+            // inspired from https://github.com/PaulWoitaschek/Voice/commit/55505083dd3c3ecfe7b28192d7e9664ebb066399
+            // More info https://github.com/robolectric/robolectric/issues/10103
+            val testResourcesDir = file("build/generated/testResources").apply { mkdirs() }
+
+            androidConfig {
                 compileSdk = libs.versions.androidSdk.compile.get().toInt()
 
                 defaultConfig {
@@ -45,6 +51,7 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                 compileOptions {
                     sourceCompatibility(libs.versions.javaVersion.get())
                     targetCompatibility(libs.versions.javaVersion.get())
+                    isCoreLibraryDesugaringEnabled = true
                 }
 
                 tasks.withType<KotlinCompile>().configureEach {
@@ -57,6 +64,12 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     unitTests {
                         isReturnDefaultValues = true
                         isIncludeAndroidResources = true
+                    }
+                }
+
+                sourceSets {
+                    named("test") {
+                        resources.srcDir(testResourcesDir)
                     }
                 }
 
@@ -77,7 +90,10 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     baseline = file("lint-baseline.xml")
                     // We already have renovate for this
                     checkDependencies = false
-                    disable += listOf("GradleDependency", "AndroidGradlePluginVersion")
+                    disable += listOf(
+                        "GradleDependency",
+                        "AndroidGradlePluginVersion",
+                    )
                     // Since we use baseline we should not have full path in the files
                     absolutePaths = false
 
@@ -86,22 +102,42 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                 }
 
                 dependencies {
-                    "implementation"(libs.timber)
-                }
-            }
+                    "lintChecks"(project(":lint"))
 
-            when (extensions.findByName("android")) {
-                is ApplicationExtension -> extensions.configure<ApplicationExtension> {
-                    configure()
-                    dependencies {
-                        val noLeakCanary = project.findProperty("noLeakCanary")?.toString()?.ifEmpty { "true" }?.toBoolean() ?: false
+                    "coreLibraryDesugaring"(libs.tools.desugar.jdk)
+
+                    "implementation"(libs.timber)
+                    "implementation"(libs.kotlinx.serialization.json)
+
+                    "ksp"(libs.hilt.android.compiler)
+                    "implementation"(libs.hilt.android)
+
+                    "testRuntimeOnly"(libs.junit.platform.launcher)
+
+                    "testImplementation"(platform(libs.junit.bom))
+                    "testImplementation"(libs.kotlinx.coroutines.test)
+                    "testImplementation"(libs.junit.jupiter)
+                    "testImplementation"(libs.junit.vintage.engine)
+                    "testImplementation"(libs.mockk)
+                    "testImplementation"(libs.robolectric)
+                    "testImplementation"(libs.turbine)
+
+                    "testImplementation"(project(":testing-unit"))
+
+                    if (this@androidConfig is ApplicationExtension) {
+                        val noLeakCanary = project.findProperty("noLeakCanary")?.toString()?.ifEmpty { "true" }
+                            ?.toBoolean() ?: false
 
                         if (!noLeakCanary) {
                             "debugImplementation"(libs.leakcanary.android)
                         }
                     }
                 }
-                is LibraryExtension -> extensions.configure<LibraryExtension> { configure() }
+            }
+
+            File(testResourcesDir, "robolectric.properties").apply {
+                val sdkVersion = libs.versions.robolectric.target.sdk.get().toInt()
+                writeText("sdk=$sdkVersion")
             }
         }
     }

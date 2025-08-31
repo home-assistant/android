@@ -21,7 +21,7 @@ import timber.log.Timber
 
 class MobileAppIntegrationPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
-    private val serverManager: ServerManager
+    private val serverManager: ServerManager,
 ) : MobileAppIntegrationPresenter {
     private val view = context as MobileAppIntegrationView
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -31,7 +31,7 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
             "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
             deviceName,
             getMessagingToken(),
-            false
+            false,
         )
     }
 

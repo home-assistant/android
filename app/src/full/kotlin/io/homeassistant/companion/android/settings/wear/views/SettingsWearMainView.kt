@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -23,7 +24,7 @@ class SettingsWearMainView : AppCompatActivity() {
 
     private val registerActivityResult = registerForActivityResult(
         OnboardApp(),
-        this::onOnboardingComplete
+        this::onOnboardingComplete,
     )
 
     companion object {
@@ -44,11 +45,13 @@ class SettingsWearMainView : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        enableEdgeToEdge()
+
         setContent {
             LoadSettingsHomeView(
                 settingsWearViewModel,
                 currentNodes.firstOrNull()?.displayName ?: "unknown",
-                this::loginWearOs
+                this::loginWearOs,
             ) { onBackPressedDispatcher.onBackPressed() }
         }
 
@@ -74,17 +77,23 @@ class SettingsWearMainView : AppCompatActivity() {
                 notificationsPossible = false,
                 isWatch = true,
                 discoveryOptions = OnboardApp.DiscoveryOptions.ADD_EXISTING_EXTERNAL,
-                mayRequireTlsClientCertificate = (application as HomeAssistantApplication).keyChainRepository.getPrivateKey() != null
-            )
+                mayRequireTlsClientCertificate =
+                (application as HomeAssistantApplication).keyChainRepository.getPrivateKey() != null,
+            ),
         )
     }
 
     private fun onOnboardingComplete(result: OnboardApp.Output?) {
-        if (result != null) {
-            val (url, authCode, deviceName, deviceTrackingEnabled, _, tlsCertificateUri, tlsCertificatePassword) = result
-            settingsWearViewModel.sendAuthToWear(url, authCode, deviceName, deviceTrackingEnabled, true, tlsCertificateUri, tlsCertificatePassword)
-        } else {
-            Timber.e("onOnboardingComplete: Activity result returned null intent data")
-        }
+        result?.apply {
+            settingsWearViewModel.sendAuthToWear(
+                url,
+                authCode,
+                deviceName,
+                deviceTrackingEnabled,
+                true,
+                tlsClientCertificateUri,
+                tlsClientCertificatePassword,
+            )
+        } ?: Timber.e("onOnboardingComplete: Activity result returned null intent data")
     }
 }

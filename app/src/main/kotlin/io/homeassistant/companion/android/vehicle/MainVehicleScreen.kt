@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.vehicle
 
-import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
@@ -26,6 +25,7 @@ import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.getChangeServerGridItem
@@ -44,13 +44,13 @@ class MainVehicleScreen(
     carContext: CarContext,
     val serverManager: ServerManager,
     private val serverId: StateFlow<Int>,
-    private val allEntities: Flow<Map<String, Entity<*>>>,
+    private val allEntities: Flow<Map<String, Entity>>,
     private val prefsRepository: PrefsRepository,
     private val onChangeServer: (Int) -> Unit,
-    private val onRefresh: () -> Unit
+    private val onRefresh: () -> Unit,
 ) : BaseVehicleScreen(carContext) {
 
-    private var favoritesEntities: List<Entity<*>> = listOf()
+    private var favoritesEntities: List<Entity> = listOf()
     private var entityRegistry: List<EntityRegistryResponse>? = null
     private var favoritesList = emptyList<String>()
     private var isLoggedIn: Boolean? = null
@@ -59,7 +59,7 @@ class MainVehicleScreen(
     private var domainsAdded = false
     private var domainsAddedFor: Int? = null
 
-    private val isAutomotive get() = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    private val isAutomotive get() = carContext.isAutomotive()
 
     init {
         lifecycleScope.launch {
@@ -98,7 +98,10 @@ class MainVehicleScreen(
                             domainsAdded = true
 
                             val newFavorites = getFavoritesList(entities)
-                            invalidate = invalidate || newFavorites.size != favoritesEntities.size || newFavorites.toSet() != favoritesEntities.toSet()
+                            invalidate =
+                                invalidate ||
+                                newFavorites.size != favoritesEntities.size ||
+                                newFavorites.toSet() != favoritesEntities.toSet()
                             favoritesEntities = newFavorites
 
                             if (invalidate) invalidate()
@@ -138,7 +141,7 @@ class MainVehicleScreen(
                 entityRegistry,
                 domains,
                 flowOf(),
-                allEntities
+                allEntities,
             ) { onChangeServer(it) }.getEntityGridItems(favoritesEntities)
         } else {
             var builder = ItemList.Builder()
@@ -152,7 +155,7 @@ class MainVehicleScreen(
                     prefsRepository,
                     allEntities,
                     entityRegistry,
-                    lifecycleScope
+                    lifecycleScope,
                 )
             }
 
@@ -162,8 +165,8 @@ class MainVehicleScreen(
                     screenManager,
                     serverManager.integrationRepository(serverId.value),
                     allEntities,
-                    entityRegistry
-                ).build()
+                    entityRegistry,
+                ).build(),
             )
 
             if (serverManager.defaultServers.size > 1) {
@@ -172,8 +175,8 @@ class MainVehicleScreen(
                         carContext,
                         screenManager,
                         serverManager,
-                        serverId
-                    ) { onChangeServer(it) }.build()
+                        serverId,
+                    ) { onChangeServer(it) }.build(),
                 )
             }
             builder
@@ -183,10 +186,10 @@ class MainVehicleScreen(
                 CarIcon.Builder(
                     IconicsDrawable(carContext, CommunityMaterial.Icon3.cmd_refresh).apply {
                         sizeDp = 64
-                    }.toAndroidIconCompat()
+                    }.toAndroidIconCompat(),
                 )
                     .setTint(CarColor.DEFAULT)
-                    .build()
+                    .build(),
             )
             .setOnClickListener {
                 onRefresh()
@@ -211,7 +214,7 @@ class MainVehicleScreen(
         }.build()
     }
 
-    private fun getFavoritesList(entities: Map<String, Entity<*>>): List<Entity<*>> {
+    private fun getFavoritesList(entities: Map<String, Entity>): List<Entity> {
         return entities.values.filter { entity -> favoritesList.contains("${serverId.value}-${entity.entityId}") }
             .sortedBy { entity -> favoritesList.indexOf("${serverId.value}-${entity.entityId}") }
     }

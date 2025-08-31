@@ -296,6 +296,7 @@ obj/
 .idea/gradle.xml
 .idea/jarRepositories.xml
 .idea/navEditor.xml
+.idea/deviceManager.xml
 
 # Legacy Eclipse project files
 .cproject
@@ -336,6 +337,9 @@ fabric.properties
 google-services.json
 *.keystore
 version.txt
+
+## Kotlin daemon
+.kotlin
 
 ## Make sure our translation downloads don't make our repo dirty when building.
 strings.zip

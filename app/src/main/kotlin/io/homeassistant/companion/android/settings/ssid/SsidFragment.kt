@@ -38,11 +38,7 @@ class SsidFragment : Fragment() {
 
     private var canReadWifi by mutableStateOf(false)
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HomeAssistantAppTheme {
@@ -60,7 +56,7 @@ class SsidFragment : Fragment() {
                         onRequestPermission = { onRequestLocationPermission() },
                         onSetEthernet = viewModel::setInternalWithEthernet,
                         onSetVpn = viewModel::setInternalWithVpn,
-                        onSetPrioritize = viewModel::setPrioritize
+                        onSetPrioritize = viewModel::setPrioritize,
                     )
                 }
             }
@@ -105,15 +101,15 @@ class SsidFragment : Fragment() {
                 permissionsToCheck,
                 continueYesCallback = {
                     requestLocationPermission()
-                }
+                },
             )
         } else {
             DisabledLocationHandler.showLocationDisabledWarnDialog(
                 requireActivity(),
                 arrayOf(
-                    getString(commonR.string.manage_ssids_wifi)
+                    getString(commonR.string.manage_ssids_wifi),
                 ),
-                showAsNotification = false
+                showAsNotification = false,
             )
         }
     }
@@ -121,7 +117,9 @@ class SsidFragment : Fragment() {
     private fun checkPermission(permissions: Array<String>?): Boolean {
         if (!permissions.isNullOrEmpty()) {
             for (permission in permissions) {
-                if (ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_DENIED) {
+                if (ContextCompat.checkSelfPermission(requireContext(), permission) ==
+                    PackageManager.PERMISSION_DENIED
+                ) {
                     return false
                 }
             }

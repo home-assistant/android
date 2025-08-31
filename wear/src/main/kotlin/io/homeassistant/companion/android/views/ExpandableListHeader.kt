@@ -23,9 +23,7 @@ import io.homeassistant.companion.android.common.R as commonR
  * Remember expanded state of each header
  */
 @Composable
-fun <K> rememberExpandedStates(
-    initialKeys: Iterable<K>
-): SnapshotStateMap<K, Boolean> {
+fun <K> rememberExpandedStates(initialKeys: Iterable<K>): SnapshotStateMap<K, Boolean> {
     val defaultExpanded = if (initialKeys is Collection) {
         initialKeys.size == 1
     } else {
@@ -41,39 +39,35 @@ fun <K> rememberExpandedStates(
 }
 
 @Composable
-fun ExpandableListHeader(
-    string: String,
-    expanded: Boolean,
-    onExpandChanged: (Boolean) -> Unit
-) {
+fun ExpandableListHeader(string: String, expanded: Boolean, onExpandChanged: (Boolean) -> Unit) {
     androidx.wear.compose.material.ListHeader(
         modifier = Modifier
-            .clickable { onExpandChanged(!expanded) }
+            .clickable { onExpandChanged(!expanded) },
     ) {
         Row {
             Text(
-                text = string
+                text = string,
             )
             Spacer(modifier = Modifier.width(4.dp))
             Image(
-                asset = if (expanded) CommunityMaterial.Icon.cmd_chevron_up else CommunityMaterial.Icon.cmd_chevron_down,
+                asset = if (expanded) {
+                    CommunityMaterial.Icon.cmd_chevron_up
+                } else {
+                    CommunityMaterial.Icon.cmd_chevron_down
+                },
                 contentDescription = stringResource(if (expanded) commonR.string.collapse else commonR.string.expand),
-                colorFilter = ColorFilter.tint(LocalContentColor.current)
+                colorFilter = ColorFilter.tint(LocalContentColor.current),
             )
         }
     }
 }
 
 @Composable
-fun <K> ExpandableListHeader(
-    string: String,
-    key: K,
-    expandedStates: SnapshotStateMap<K, Boolean>
-) {
+fun <K> ExpandableListHeader(string: String, key: K, expandedStates: SnapshotStateMap<K, Boolean>) {
     ExpandableListHeader(
         string = string,
         expanded = expandedStates.getOrDefault(key, true),
-        onExpandChanged = { expandedStates[key] = it }
+        onExpandChanged = { expandedStates[key] = it },
     )
 }
 
@@ -83,6 +77,6 @@ private fun PreviewExpandableListHeader() {
     ExpandableListHeader(
         string = stringResource(commonR.string.other),
         expanded = true,
-        onExpandChanged = {}
+        onExpandChanged = {},
     )
 }

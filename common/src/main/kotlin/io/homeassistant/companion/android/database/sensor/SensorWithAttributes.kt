@@ -1,30 +1,21 @@
 package io.homeassistant.companion.android.database.sensor
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 
-data class SensorWithAttributes(
-    val sensor: Sensor,
-    val attributes: List<Attribute>
-) {
+data class SensorWithAttributes(val sensor: Sensor, val attributes: List<Attribute>) {
     fun toSensorRegistration(basicSensor: SensorManager.BasicSensor): SensorRegistration<Any> {
-        var objectMapper: ObjectMapper? = null
         val attributes = attributes.associate {
             val attributeValue = when (it.valueType) {
                 "listboolean", "listfloat", "listlong", "listint", "liststring" -> {
-                    if (objectMapper == null) objectMapper = jacksonObjectMapper()
-                    objectMapper?.let { mapper ->
-                        when (it.valueType) {
-                            "listboolean" -> mapper.readValue<List<Boolean>>(it.value)
-                            "listfloat" -> mapper.readValue<List<Number>>(it.value)
-                            "listlong" -> mapper.readValue<List<Long>>(it.value)
-                            "listint" -> mapper.readValue<List<Int>>(it.value)
-                            else -> mapper.readValue<List<String>>(it.value)
-                        }
-                    } ?: it.value // Fallback: provide JSON string, but shouldn't happen
+                    when (it.valueType) {
+                        "listboolean" -> kotlinJsonMapper.decodeFromString<List<Boolean>>(it.value)
+                        "listfloat" -> kotlinJsonMapper.decodeFromString<List<Float>>(it.value)
+                        "listlong" -> kotlinJsonMapper.decodeFromString<List<Long>>(it.value)
+                        "listint" -> kotlinJsonMapper.decodeFromString<List<Int>>(it.value)
+                        else -> kotlinJsonMapper.decodeFromString<List<String>>(it.value)
+                    }
                 }
                 "boolean" -> it.value.toBoolean()
                 "float" -> it.value.toFloat()
@@ -55,7 +46,7 @@ data class SensorWithAttributes(
             sensor.unitOfMeasurement?.ifBlank { null } ?: basicSensor.unitOfMeasurement,
             sensor.stateClass?.ifBlank { null } ?: basicSensor.stateClass,
             sensor.entityCategory?.ifBlank { null } ?: basicSensor.entityCategory,
-            !sensor.enabled
+            !sensor.enabled,
         )
     }
 }

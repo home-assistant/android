@@ -46,7 +46,7 @@ internal val wearColorScheme: ColorScheme = ColorScheme(
     surfaceContainer = Color.Black,
     onSurfaceVariant = md_theme_dark_onSurfaceVariant,
     outline = md_theme_dark_outline,
-    outlineVariant = md_theme_dark_outlineVariant
+    outlineVariant = md_theme_dark_outlineVariant,
 )
 
 @Composable
@@ -56,13 +56,13 @@ fun getSwitchButtonColors() = SwitchButtonDefaults.switchButtonColors(
     checkedTrackBorderColor = wearColorScheme.tertiary,
     checkedThumbIconColor = wearColorScheme.tertiary,
     checkedContainerColor = wearColorScheme.surfaceContainerHigh,
-    uncheckedContainerColor = wearColorScheme.surfaceContainerLow
+    uncheckedContainerColor = wearColorScheme.surfaceContainerLow,
 )
 
 @Composable
 fun getFilledTonalButtonColors() = ButtonDefaults.filledTonalButtonColors(
     containerColor = wearColorScheme.surfaceContainerLow,
-    disabledContainerColor = wearColorScheme.surfaceContainerLow.copy(alpha = 0.38f)
+    disabledContainerColor = wearColorScheme.surfaceContainerLow.copy(alpha = 0.38f),
 )
 
 @Composable
@@ -70,5 +70,5 @@ fun getPrimaryButtonColors() = ButtonDefaults.buttonColors(containerColor = wear
 
 @Composable
 fun getInlineSliderDefaultColors() = SliderDefaults.sliderColors(
-    containerColor = wearColorScheme.surfaceContainerLow
+    containerColor = wearColorScheme.surfaceContainerLow,
 )

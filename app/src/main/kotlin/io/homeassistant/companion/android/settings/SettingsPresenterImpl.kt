@@ -14,8 +14,10 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -30,7 +32,7 @@ import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.settings.language.LanguagesManager
-import io.homeassistant.companion.android.themes.ThemesManager
+import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.UrlUtil
 import javax.inject.Inject
@@ -48,12 +50,13 @@ import timber.log.Timber
 class SettingsPresenterImpl @Inject constructor(
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
-    private val themesManager: ThemesManager,
+    private val nightModeManager: NightModeManager,
     private val langsManager: LanguagesManager,
     private val changeLog: ChangeLog,
     private val settingsDao: SettingsDao,
-    private val sensorDao: SensorDao
-) : SettingsPresenter, PreferenceDataStore() {
+    private val sensorDao: SensorDao,
+) : PreferenceDataStore(),
+    SettingsPresenter {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -61,7 +64,12 @@ class SettingsPresenterImpl @Inject constructor(
 
     private val voiceCommandAppComponent = ComponentName(
         BuildConfig.APPLICATION_ID,
-        "io.homeassistant.companion.android.assist.VoiceCommandIntentActivity"
+        "io.homeassistant.companion.android.assist.VoiceCommandIntentActivity",
+    )
+
+    private val launcherAliasComponent = ComponentName(
+        BuildConfig.APPLICATION_ID,
+        "io.homeassistant.companion.android.launch.LauncherAlias",
     )
 
     private var suggestionFlow = MutableStateFlow<SettingsHomeSuggestion?>(null)
@@ -77,6 +85,11 @@ class SettingsPresenterImpl @Inject constructor(
             "assist_voice_command_intent" -> {
                 val componentSetting = view.getPackageManager()?.getComponentEnabledSetting(voiceCommandAppComponent)
                 componentSetting != null && componentSetting != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            }
+            "enable_ha_launcher" -> {
+                val componentSetting = view.getPackageManager()?.getComponentEnabledSetting(launcherAliasComponent)
+                // By default it should be disabled and only shown when the user enabled it
+                componentSetting != null && componentSetting == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
             }
             else -> throw IllegalArgumentException("No boolean found by this key: $key")
         }
@@ -94,9 +107,14 @@ class SettingsPresenterImpl @Inject constructor(
                 "assist_voice_command_intent" ->
                     view.getPackageManager()?.setComponentEnabledSetting(
                         voiceCommandAppComponent,
-                        if (value) PackageManager.COMPONENT_ENABLED_STATE_DEFAULT else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                        PackageManager.DONT_KILL_APP
+                        if (value) {
+                            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
+                        } else {
+                            PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                        },
+                        PackageManager.DONT_KILL_APP,
                     )
+                "enable_ha_launcher" -> enableLauncherMode(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -104,7 +122,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun getString(key: String, defValue: String?): String? = runBlocking {
         when (key) {
-            "themes" -> themesManager.getCurrentTheme()
+            "themes" -> nightModeManager.getCurrentNightMode().storageValue
             "languages" -> langsManager.getCurrentLang()
             "page_zoom" -> prefsRepository.getPageZoomLevel().toString()
             "screen_orientation" -> prefsRepository.getScreenOrientation()
@@ -115,7 +133,7 @@ class SettingsPresenterImpl @Inject constructor(
     override fun putString(key: String, value: String?) {
         mainScope.launch {
             when (key) {
-                "themes" -> themesManager.saveTheme(value)
+                "themes" -> nightModeManager.saveNightMode(NightModeTheme.fromStorageValue(value))
                 "languages" -> langsManager.saveLang(value)
                 "page_zoom" -> prefsRepository.setPageZoomLevel(value?.toIntOrNull())
                 "screen_orientation" -> prefsRepository.saveScreenOrientation(value)
@@ -170,10 +188,10 @@ class SettingsPresenterImpl @Inject constructor(
                     _name = "",
                     type = ServerType.TEMPORARY,
                     connection = ServerConnectionInfo(
-                        externalUrl = formattedUrl
+                        externalUrl = formattedUrl,
                     ),
                     session = ServerSessionInfo(),
-                    user = ServerUserInfo()
+                    user = ServerUserInfo(),
                 )
                 serverId = serverManager.addServer(server)
                 serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
@@ -181,8 +199,8 @@ class SettingsPresenterImpl @Inject constructor(
                     DeviceRegistration(
                         "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                         deviceName,
-                        messagingToken
-                    )
+                        messagingToken,
+                    ),
                 )
                 serverManager.getServer()?.id?.let {
                     serverManager.activateServer(it) // Prevent unexpected active server changes
@@ -213,14 +231,14 @@ class SettingsPresenterImpl @Inject constructor(
             sensorIds = listOf(
                 LocationSensorManager.backgroundLocation.id,
                 LocationSensorManager.zoneLocation.id,
-                LocationSensorManager.singleAccurateLocation.id
+                LocationSensorManager.singleAccurateLocation.id,
             ),
             serverId = serverId,
-            enabled = enabled
+            enabled = enabled,
         )
     }
 
-    private fun setNotifications(serverId: Int, enabled: Boolean) {
+    private suspend fun setNotifications(serverId: Int, enabled: Boolean) {
         // Full: this only refers to the system permission on Android 13+ so no changes are necessary.
         // Minimal: change persistent connection setting to reflect preference.
         if (BuildConfig.FLAVOR != "full") {
@@ -228,8 +246,8 @@ class SettingsPresenterImpl @Inject constructor(
                 Setting(
                     serverId,
                     if (enabled) WebsocketSetting.ALWAYS else WebsocketSetting.NEVER,
-                    SensorUpdateFrequencySetting.NORMAL
-                )
+                    SensorUpdateFrequencySetting.NORMAL,
+                ),
             )
         }
     }
@@ -255,13 +273,13 @@ class SettingsPresenterImpl @Inject constructor(
         var assistantSuggestion = serverManager.defaultServers.any { it.version?.isAtLeast(2023, 5) == true }
         assistantSuggestion = if (
             assistantSuggestion &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-            context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+            context.isAutomotive()
         ) {
             false
         } else if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val roleManager = context.getSystemService<RoleManager>()
-            roleManager?.isRoleAvailable(RoleManager.ROLE_ASSISTANT) == true && !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)
+            roleManager?.isRoleAvailable(RoleManager.ROLE_ASSISTANT) == true &&
+                !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)
         } else if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val defaultApp: String? = Settings.Secure.getString(context.contentResolver, "assistant")
             defaultApp?.contains(BuildConfig.APPLICATION_ID) == false
@@ -273,17 +291,19 @@ class SettingsPresenterImpl @Inject constructor(
                 SettingsPresenter.SUGGESTION_ASSISTANT_APP,
                 commonR.string.suggestion_assist_title,
                 commonR.string.suggestion_assist_summary,
-                R.drawable.ic_comment_processing_outline
+                R.drawable.ic_comment_processing_outline,
             )
         }
 
         // Notifications
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            !NotificationManagerCompat.from(context).areNotificationsEnabled()
+        ) {
             suggestions += SettingsHomeSuggestion(
                 SettingsPresenter.SUGGESTION_NOTIFICATION_PERMISSION,
                 commonR.string.suggestion_notifications_title,
                 commonR.string.suggestion_notifications_summary,
-                commonR.drawable.ic_notifications
+                commonR.drawable.ic_notifications,
             )
         }
 
@@ -294,5 +314,17 @@ class SettingsPresenterImpl @Inject constructor(
         } else if (filteredSuggestions.none { it.id == suggestionFlow.value?.id }) {
             suggestionFlow.emit(null)
         }
+    }
+
+    private fun enableLauncherMode(enable: Boolean) {
+        view.getPackageManager()?.setComponentEnabledSetting(
+            launcherAliasComponent,
+            if (enable) {
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+            } else {
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            },
+            PackageManager.DONT_KILL_APP,
+        )
     }
 }

@@ -5,10 +5,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
+import androidx.compose.material.SnackbarHost
 import androidx.compose.material.Text
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
@@ -22,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.settings.views.SettingsRow
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import io.homeassistant.companion.android.util.wearDeviceName
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -37,7 +43,7 @@ fun SettingWearLandingView(
     navigateTemplateTile: () -> Unit,
     loginWearOs: () -> Unit,
     onBackClicked: () -> Unit,
-    events: Flow<String>
+    events: Flow<String>,
 ) {
     val scaffoldState = rememberScaffoldState()
     LaunchedEffect("snackbar") {
@@ -48,30 +54,38 @@ fun SettingWearLandingView(
 
     Scaffold(
         scaffoldState = scaffoldState,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = scaffoldState.snackbarHostState,
+                modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets()),
+            )
+        },
         topBar = {
             SettingsWearTopAppBar(
                 title = { Text(stringResource(commonR.string.wear_settings)) },
                 onBackClicked = onBackClicked,
-                docsLink = WEAR_DOCS_LINK
+                docsLink = WEAR_DOCS_LINK,
             )
-        }
+        },
     ) { padding ->
         Column(
             modifier = Modifier
+                .verticalScroll(rememberScrollState())
                 .fillMaxWidth()
-                .padding(padding)
+                .padding(safeBottomPaddingValues())
+                .padding(padding),
         ) {
             Row(
                 modifier = Modifier
                     .height(48.dp)
                     .padding(start = 72.dp, end = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = stringResource(id = commonR.string.manage_wear_device, deviceName),
                     style = MaterialTheme.typography.body2,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colors.primary
+                    color = MaterialTheme.colors.primary,
                 )
             }
             when {
@@ -84,14 +98,14 @@ fun SettingWearLandingView(
                         secondaryText = stringResource(commonR.string.set_favorites_on_device),
                         mdiIcon = CommunityMaterial.Icon3.cmd_star,
                         enabled = true,
-                        onClicked = navigateFavorites
+                        onClicked = navigateFavorites,
                     )
                     SettingsRow(
                         primaryText = stringResource(commonR.string.template_tiles),
                         secondaryText = stringResource(commonR.string.template_tile_set_on_watch),
                         mdiIcon = CommunityMaterial.Icon3.cmd_text_box,
                         enabled = true,
-                        onClicked = navigateTemplateTile
+                        onClicked = navigateTemplateTile,
                     )
                 }
                 else -> {
@@ -99,7 +113,7 @@ fun SettingWearLandingView(
                         onClick = loginWearOs,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 10.dp, start = 16.dp, end = 16.dp)
+                            .padding(top = 10.dp, start = 16.dp, end = 16.dp),
                     ) {
                         Text(stringResource(commonR.string.login_wear_os_device))
                     }
@@ -120,6 +134,6 @@ private fun PreviewSettingWearLandingView() {
         navigateTemplateTile = {},
         loginWearOs = {},
         onBackClicked = {},
-        events = emptyFlow()
+        events = emptyFlow(),
     )
 }

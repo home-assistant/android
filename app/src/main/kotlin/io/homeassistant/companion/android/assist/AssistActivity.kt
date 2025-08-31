@@ -5,17 +5,15 @@ import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.assist.ui.AssistSheetView
@@ -24,6 +22,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class AssistActivity : BaseActivity() {
@@ -43,7 +42,7 @@ class AssistActivity : BaseActivity() {
             serverId: Int = -1,
             pipelineId: String? = null,
             startListening: Boolean = true,
-            fromFrontend: Boolean = true
+            fromFrontend: Boolean = true,
         ): Intent {
             return Intent(context, AssistActivity::class.java).apply {
                 putExtra(EXTRA_SERVER, serverId)
@@ -56,21 +55,18 @@ class AssistActivity : BaseActivity() {
 
     private val requestPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
-        { viewModel.onPermissionResult(it) }
-    )
+    ) { viewModel.onPermissionResult(it) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge(
-            navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT)
-        )
         super.onCreate(savedInstanceState)
         updateShowWhenLocked()
 
         if (savedInstanceState == null) {
-            if (!viewModel.isRegistered()) {
-                startActivity(Intent(this, LaunchActivity::class.java))
-                finish()
-                return
+            lifecycleScope.launch {
+                if (!viewModel.isRegistered()) {
+                    startActivity(Intent(this@AssistActivity, LaunchActivity::class.java))
+                    finish()
+                }
             }
 
             viewModel.onCreate(
@@ -92,7 +88,7 @@ class AssistActivity : BaseActivity() {
                     true
                 } else {
                     null
-                }
+                },
             )
         }
 
@@ -108,15 +104,15 @@ class AssistActivity : BaseActivity() {
                     currentPipeline = viewModel.currentPipeline,
                     onSelectPipeline = viewModel::changePipeline,
                     onManagePipelines =
-                    if (fromFrontend && viewModel.userCanManagePipelines()) {
+                    if (fromFrontend && viewModel.userCanManagePipelines) {
                         {
                             startActivity(
                                 WebViewActivity.newInstance(
                                     this,
-                                    "config/voice-assistants/assistants"
+                                    "config/voice-assistants/assistants",
                                 ).apply {
                                     flags += Intent.FLAG_ACTIVITY_NEW_TASK // Delivers data in onNewIntent
-                                }
+                                },
                             )
                             finish()
                         }
@@ -126,7 +122,7 @@ class AssistActivity : BaseActivity() {
                     onChangeInput = viewModel::onChangeInput,
                     onTextInput = viewModel::onTextInput,
                     onMicrophoneInput = viewModel::onMicrophoneInput,
-                    onHide = { finish() }
+                    onHide = { finish() },
                 )
             }
         }
@@ -134,7 +130,9 @@ class AssistActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.setPermissionInfo(hasRecordingPermission()) { requestPermission.launch(Manifest.permission.RECORD_AUDIO) }
+        viewModel.setPermissionInfo(hasRecordingPermission()) {
+            requestPermission.launch(Manifest.permission.RECORD_AUDIO)
+        }
     }
 
     override fun onPause() {

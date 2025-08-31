@@ -4,14 +4,15 @@ import android.car.Car
 import android.car.drivingstate.CarUxRestrictionsManager
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-import android.content.pm.PackageManager
 import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.util.PermissionRequestMediator
 import javax.inject.Inject
 import kotlin.math.absoluteValue
@@ -28,13 +29,14 @@ open class BaseActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 permissionRequestMediator.eventFlow.collect { permissionToRequest ->
                     ActivityCompat.requestPermissions(
                         this@BaseActivity,
                         arrayOf(permissionToRequest),
-                        permissionToRequest.hashCode().absoluteValue
+                        permissionToRequest.hashCode().absoluteValue,
                     )
                 }
             }
@@ -54,7 +56,7 @@ open class BaseActivity : AppCompatActivity() {
     }
 
     private fun registerListener() {
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+        if (isAutomotive()) {
             car = Car.createCar(this)
             carRestrictionManager =
                 car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
@@ -72,12 +74,12 @@ open class BaseActivity : AppCompatActivity() {
         startActivity(
             Intent(
                 this,
-                Class.forName("androidx.car.app.activity.CarAppActivity")
-            ).putExtra("TRANSITION_LAUNCH", true).addFlags(FLAG_ACTIVITY_NEW_TASK)
+                Class.forName("androidx.car.app.activity.CarAppActivity"),
+            ).putExtra("TRANSITION_LAUNCH", true).addFlags(FLAG_ACTIVITY_NEW_TASK),
         )
         overridePendingTransition(
             androidx.appcompat.R.anim.abc_slide_in_bottom,
-            androidx.appcompat.R.anim.abc_slide_in_bottom
+            androidx.appcompat.R.anim.abc_slide_in_bottom,
         )
     }
 }

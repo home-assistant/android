@@ -10,6 +10,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+/**
+ * Final location of a file on the device is /data/data/io.homeassistant.companion.android<.debug>/cache/fatalcrash/last_crash
+ */
+
 private const val FATAL_CRASH_FILE = "/fatalcrash/last_crash"
 
 fun initCrashSaving(context: Context) {
@@ -27,7 +31,7 @@ fun initCrashSaving(context: Context) {
                 """|Timestamp: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(Date())}
                     |Thread: ${thread.name}
                     |Exception: ${exception.stackTraceToString()}
-                """.trimMargin()
+                """.trimMargin(),
             )
         } catch (e: Exception) {
             Timber.i(e, "Tried saving fatal crash but encountered exception")

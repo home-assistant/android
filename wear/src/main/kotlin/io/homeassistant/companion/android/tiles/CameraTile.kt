@@ -85,16 +85,16 @@ class CameraTile : TileService() {
                         timeline(
                             requestParams.deviceConfiguration.screenWidthDp,
                             requestParams.deviceConfiguration.screenHeightDp,
-                            tileConfig?.entityId.isNullOrBlank()
+                            tileConfig?.entityId.isNullOrBlank(),
                         )
                     } else {
                         loggedOutTimeline(
                             this@CameraTile,
                             requestParams,
                             commonR.string.camera,
-                            commonR.string.camera_tile_log_in
+                            commonR.string.camera_tile_log_in,
                         )
-                    }
+                    },
                 )
                 .build()
         }
@@ -117,17 +117,26 @@ class CameraTile : TileService() {
                     val url = UrlUtil.handle(serverManager.getServer()?.connection?.getUrl(), picture ?: "")
                     if (picture != null && url != null) {
                         var byteArray: ByteArray?
-                        val maxWidth = requestParams.deviceConfiguration.screenWidthDp * requestParams.deviceConfiguration.screenDensity
-                        val maxHeight = requestParams.deviceConfiguration.screenHeightDp * requestParams.deviceConfiguration.screenDensity
+                        val maxWidth =
+                            requestParams.deviceConfiguration.screenWidthDp *
+                                requestParams.deviceConfiguration.screenDensity
+                        val maxHeight =
+                            requestParams.deviceConfiguration.screenHeightDp *
+                                requestParams.deviceConfiguration.screenDensity
                         withContext(Dispatchers.IO) {
                             val response = okHttpClient.newCall(Request.Builder().url(url).build()).execute()
                             byteArray = response.body.byteStream().readBytes()
                             byteArray?.let {
                                 var bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
                                 if (bitmap.width > maxWidth || bitmap.height > maxHeight) {
-                                    Timber.d("Scaling camera snapshot to fit screen (${bitmap.width}x${bitmap.height} to ${maxWidth.toInt()}x${maxHeight.toInt()} max)")
+                                    Timber.d(
+                                        "Scaling camera snapshot to fit screen (${bitmap.width}x${bitmap.height} to ${maxWidth.toInt()}x${maxHeight.toInt()} max)",
+                                    )
                                     val currentRatio = (bitmap.width.toFloat() / bitmap.height.toFloat())
-                                    val screenRatio = (requestParams.deviceConfiguration.screenWidthDp.toFloat() / requestParams.deviceConfiguration.screenHeightDp.toFloat())
+                                    val screenRatio = (
+                                        requestParams.deviceConfiguration.screenWidthDp.toFloat() /
+                                            requestParams.deviceConfiguration.screenHeightDp.toFloat()
+                                        )
                                     imageWidth = maxWidth.toInt()
                                     imageHeight = maxHeight.toInt()
                                     if (currentRatio > screenRatio) {
@@ -167,8 +176,8 @@ class CameraTile : TileService() {
                         .setAndroidResourceByResId(
                             ResourceBuilders.AndroidImageResourceByResId.Builder()
                                 .setResourceId(R.drawable.ic_refresh)
-                                .build()
-                        ).build()
+                                .build(),
+                        ).build(),
                 )
             if (imageData != null) {
                 builder.addIdToImageMapping(
@@ -180,9 +189,9 @@ class CameraTile : TileService() {
                                 .setWidthPx(imageWidth)
                                 .setHeightPx(imageHeight)
                                 .setFormat(ResourceBuilders.IMAGE_FORMAT_UNDEFINED)
-                                .build()
+                                .build(),
                         )
-                        .build()
+                        .build(),
                 )
             }
 
@@ -238,7 +247,7 @@ class CameraTile : TileService() {
                     LayoutElementBuilders.Text.Builder()
                         .setText(getString(commonR.string.camera_tile_no_entity_yet))
                         .setMaxLines(10)
-                        .build()
+                        .build(),
                 )
             } else {
                 addContent(
@@ -247,13 +256,13 @@ class CameraTile : TileService() {
                         .setWidth(DimensionBuilders.dp(width.toFloat()))
                         .setHeight(DimensionBuilders.dp(height.toFloat()))
                         .setContentScaleMode(CONTENT_SCALE_MODE_FIT)
-                        .build()
+                        .build(),
                 )
             }
             // Refresh button
             addContent(getRefreshButton())
             // Click: refresh
             setModifiers(getRefreshModifiers())
-        }.build()
+        }.build(),
     )
 }

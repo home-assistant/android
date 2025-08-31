@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.NotificationManagerCompat
@@ -30,11 +31,13 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
 import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
+import io.homeassistant.companion.android.settings.gestures.GesturesFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.notification.NotificationChannelFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
@@ -47,6 +50,7 @@ import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoSett
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
+import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.time.Instant
 import java.time.ZoneId
@@ -58,18 +62,19 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
-class SettingsFragment(
-    private val presenter: SettingsPresenter,
-    private val langProvider: LanguagesProvider
-) : SettingsView, PreferenceFragmentCompat() {
+class SettingsFragment(private val presenter: SettingsPresenter, private val langProvider: LanguagesProvider) :
+    PreferenceFragmentCompat(),
+    SettingsView {
 
-    private val requestBackgroundAccessResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        updateBackgroundAccessPref()
-    }
+    private val requestBackgroundAccessResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            updateBackgroundAccessPref()
+        }
 
-    private val requestNotificationPermissionResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        updateNotificationChannelPrefs()
-    }
+    private val requestNotificationPermissionResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            updateNotificationChannelPrefs()
+        }
 
     private val requestOnboardingResult = registerForActivityResult(OnboardApp(), this::onOnboardingComplete)
 
@@ -121,7 +126,9 @@ class SettingsFragment(
                                 }
                                 return@setOnPreferenceClickListener true
                             }
-                            it.setOnPreferenceCancelListener { presenter.cancelSuggestion(requireContext(), suggestion.id) }
+                            it.setOnPreferenceCancelListener {
+                                presenter.cancelSuggestion(requireContext(), suggestion.id)
+                            }
                         }
                         it.isVisible = suggestion != null
                     }
@@ -135,8 +142,8 @@ class SettingsFragment(
                     OnboardApp.Input(
                         // Empty url skips the 'Welcome' screen
                         url = "",
-                        discoveryOptions = OnboardApp.DiscoveryOptions.HIDE_EXISTING
-                    )
+                        discoveryOptions = OnboardApp.DiscoveryOptions.HIDE_EXISTING,
+                    ),
                 )
                 return@setOnPreferenceClickListener true
             }
@@ -159,6 +166,14 @@ class SettingsFragment(
             }
         }
 
+        findPreference<Preference>("gestures")?.setOnPreferenceClickListener {
+            parentFragmentManager.commit {
+                replace(R.id.content, GesturesFragment::class.java, null)
+                addToBackStack(getString(commonR.string.gestures))
+            }
+            return@setOnPreferenceClickListener true
+        }
+
         findPreference<ListPreference>("page_zoom")?.let {
             // The list of percentages for iOS/Android should match
             // https://github.com/home-assistant/iOS/blob/ff66bbf2e3f9add0abb0b492499b81e824db36ed/Sources/Shared/Settings/SettingsStore.swift#L108
@@ -169,8 +184,7 @@ class SettingsFragment(
             it.entryValues = percentages.map { pct -> pct.toString() }.toTypedArray()
         }
 
-        val isAutomotive =
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+        val isAutomotive = requireContext().isAutomotive()
 
         findPreference<PreferenceCategory>("assist")?.isVisible = !isAutomotive
 
@@ -271,14 +285,24 @@ class SettingsFragment(
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             try {
                                 val utcDateTime = Instant.parse(rateLimits.resetsAt)
-                                formattedDate = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).format(utcDateTime.atZone(ZoneId.systemDefault()))
+                                formattedDate =
+                                    DateTimeFormatter.ofLocalizedDateTime(
+                                        FormatStyle.MEDIUM,
+                                    ).format(utcDateTime.atZone(ZoneId.systemDefault()))
                             } catch (e: Exception) {
                                 Timber.d(e, "Cannot parse notification rate limit date \"${rateLimits.resetsAt}\"")
                             }
                         }
                         it.isVisible = true
-                        it.summary = "\n${getString(commonR.string.successful)}: ${rateLimits.successful}       ${getString(commonR.string.errors)}: ${rateLimits.errors}" +
-                            "\n\n${getString(commonR.string.remaining)}/${getString(commonR.string.maximum)}: ${rateLimits.remaining}/${rateLimits.maximum}" +
+                        it.summary =
+                            "\n${getString(
+                                commonR.string.successful,
+                            )}: ${rateLimits.successful}       ${getString(
+                                commonR.string.errors,
+                            )}: ${rateLimits.errors}" +
+                            "\n\n${getString(
+                                commonR.string.remaining,
+                            )}/${getString(commonR.string.maximum)}: ${rateLimits.remaining}/${rateLimits.maximum}" +
                             "\n\n${getString(commonR.string.resets_at)}: $formattedDate"
                     }
                 }
@@ -302,7 +326,10 @@ class SettingsFragment(
             val link = if (BuildConfig.VERSION_NAME.startsWith("LOCAL")) {
                 "https://github.com/home-assistant/android/releases"
             } else {
-                "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace("-full", "").replace("-minimal", "")}"
+                "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace(
+                    "-full",
+                    "",
+                ).replace("-minimal", "")}"
             }
             it.summary = link
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
@@ -319,9 +346,11 @@ class SettingsFragment(
         }
 
         findPreference<ListPreference>("languages")?.let {
-            val languages = langProvider.getSupportedLanguages(requireContext())
-            it.entries = languages.keys.toTypedArray()
-            it.entryValues = languages.values.toTypedArray()
+            lifecycleScope.launch {
+                val languages = langProvider.getSupportedLanguages(requireContext())
+                it.entries = languages.keys.toTypedArray()
+                it.entryValues = languages.values.toTypedArray()
+            }
         }
 
         findPreference<Preference>("privacy")?.let {
@@ -339,7 +368,8 @@ class SettingsFragment(
 
         findPreference<PreferenceCategory>("android_auto")?.let {
             it.isVisible =
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && (BuildConfig.FLAVOR == "full" || isAutomotive)
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                (BuildConfig.FLAVOR == "full" || isAutomotive)
             if (isAutomotive) {
                 it.title = getString(commonR.string.android_automotive)
             }
@@ -357,6 +387,17 @@ class SettingsFragment(
                 return@setOnPreferenceClickListener true
             }
         }
+
+        if (!isAutomotive) {
+            setupLauncherPrefs()
+        }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        // We don't consume the insets so that the snackbar can use the insets from the
+        // CoordinatorLayout and be displayed above the navigation bar.
+        applyBottomSafeDrawingInsets(consumeInsets = false)
     }
 
     private fun removeSystemFromThemesIfNeeded() {
@@ -382,8 +423,9 @@ class SettingsFragment(
     private fun updateAssistantApp() {
         // On Android Q+, this is a workaround as Android doesn't allow requesting the assistant role
         try {
-            val openIntent = Intent(Intent.ACTION_MAIN)
-            openIntent.component = ComponentName("com.android.settings", "com.android.settings.Settings\$ManageAssistActivity")
+            val openIntent = Intent("android.settings.VOICE_INPUT_SETTINGS")
+            openIntent.component =
+                ComponentName("com.android.settings", "com.android.settings.Settings\$ManageAssistActivity")
             openIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             startActivity(openIntent)
         } catch (e: ActivityNotFoundException) {
@@ -392,7 +434,7 @@ class SettingsFragment(
             startActivity(
                 Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                }
+                },
             )
         }
     }
@@ -441,20 +483,26 @@ class SettingsFragment(
             serverPreference.key = serverKeys[index]
             serverPreference.order = index
             try {
-                serverPreference.icon = AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_stat_ic_notification_blue)
+                serverPreference.icon =
+                    AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_stat_ic_notification_blue)
             } catch (e: Exception) {
                 Timber.e(e, "Unable to set the server icon")
             }
             serverPreference.setOnPreferenceClickListener {
                 serverAuth = server.id
                 val settingsActivity = requireActivity() as SettingsActivity
-                val needsAuth = settingsActivity.isAppLocked(server.id)
-                if (!needsAuth) {
-                    onServerLockResult(Authenticator.SUCCESS)
-                } else {
-                    val canAuth = settingsActivity.requestAuthentication(getString(commonR.string.biometric_set_title), ::onServerLockResult)
-                    if (!canAuth) {
+                lifecycleScope.launch {
+                    val needsAuth = settingsActivity.isAppLocked(server.id)
+                    if (!needsAuth) {
                         onServerLockResult(Authenticator.SUCCESS)
+                    } else {
+                        val canAuth = settingsActivity.requestAuthentication(
+                            getString(commonR.string.biometric_set_title),
+                            ::onServerLockResult,
+                        )
+                        if (!canAuth) {
+                            onServerLockResult(Authenticator.SUCCESS)
+                        }
                     }
                 }
                 return@setOnPreferenceClickListener true
@@ -488,7 +536,7 @@ class SettingsFragment(
                     R.id.content,
                     ServerSettingsFragment::class.java,
                     Bundle().apply { putInt(ServerSettingsFragment.EXTRA_SERVER, serverAuth!!) },
-                    ServerSettingsFragment.TAG
+                    ServerSettingsFragment.TAG,
                 )
                 addToBackStack(getString(commonR.string.server_settings))
             }
@@ -508,8 +556,8 @@ class SettingsFragment(
             requestBackgroundAccessResult.launch(
                 Intent(
                     Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                    Uri.parse("package:${activity?.packageName}")
-                )
+                    Uri.parse("package:${activity?.packageName}"),
+                ),
             )
         }
     }
@@ -519,7 +567,7 @@ class SettingsFragment(
             requestNotificationPermissionResult.launch(
                 Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
                     putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().packageName)
-                }
+                },
             )
         }
     }
@@ -531,12 +579,47 @@ class SettingsFragment(
                 ?: false
     }
 
+    private fun getDefaultLauncherInfo(): String {
+        val intent = Intent(Intent.ACTION_MAIN)
+            .addCategory(Intent.CATEGORY_HOME)
+
+        getPackageManager()?.let { packageManager ->
+            packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)?.let {
+                val packageName = it.activityInfo.packageName
+                return packageManager.getApplicationLabel(packageManager.getApplicationInfo(packageName, 0)).toString()
+            }
+        }
+
+        return getString(commonR.string.unknown_launcher_label)
+    }
+
+    private fun setupLauncherPrefs() {
+        val launcherSwitchPref = findPreference<SwitchPreference>("enable_ha_launcher")
+        val launcherPref = findPreference<Preference>("set_launcher_app")
+
+        findPreference<PreferenceCategory>("launcher_category")?.isVisible = true
+
+        launcherSwitchPref?.setOnPreferenceClickListener {
+            launcherPref?.isVisible = launcherSwitchPref.isChecked
+            true
+        }
+
+        launcherPref?.apply {
+            isVisible = launcherSwitchPref?.isChecked ?: false
+            summary = getString(commonR.string.default_launcher_prompt_def, getDefaultLauncherInfo())
+            setOnPreferenceClickListener {
+                startActivity(Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                true
+            }
+        }
+    }
+
     override fun onAddServerResult(success: Boolean, serverId: Int?) {
         view?.let {
             snackbar = Snackbar.make(
                 it,
                 if (success) commonR.string.server_add_success else commonR.string.server_add_failed,
-                5_000
+                5_000,
             ).apply {
                 if (success && serverId != null) {
                     setAction(commonR.string.activate) {
@@ -562,6 +645,8 @@ class SettingsFragment(
         super.onResume()
         activity?.title = getString(commonR.string.companion_app)
         context?.let { presenter.updateSuggestions(it) }
+        findPreference<Preference>("set_launcher_app")?.summary =
+            getString(commonR.string.default_launcher_prompt_def, getDefaultLauncherInfo())
     }
 
     override fun onDestroy() {

@@ -58,13 +58,13 @@ class EntityGridVehicleScreen(
     val title: String,
     private val entityRegistry: List<EntityRegistryResponse>?,
     private val domains: MutableSet<String>,
-    private val entitiesFlow: Flow<List<Entity<*>>>,
-    private val allEntities: Flow<Map<String, Entity<*>>>,
-    private val onChangeServer: (Int) -> Unit
+    private val entitiesFlow: Flow<List<Entity>>,
+    private val allEntities: Flow<Map<String, Entity>>,
+    private val onChangeServer: (Int) -> Unit,
 ) : Screen(carContext) {
 
     private var loading = true
-    var entities: List<Entity<*>> = listOf()
+    var entities: List<Entity> = listOf()
     private val isFavorites = title == carContext.getString(R.string.favorites)
     private val shouldSwitchServers = serverManager.defaultServers.size > 1
 
@@ -81,7 +81,7 @@ class EntityGridVehicleScreen(
         }
     }
 
-    fun getEntityGridItems(entities: List<Entity<*>>): ItemList.Builder {
+    fun getEntityGridItems(entities: List<Entity>): ItemList.Builder {
         val listBuilder = if (entities.isNotEmpty()) {
             createEntityGrid(entities)
         } else {
@@ -94,7 +94,7 @@ class EntityGridVehicleScreen(
                 prefsRepository,
                 allEntities,
                 entityRegistry,
-                lifecycleScope
+                lifecycleScope,
             )
         }
         if (isFavorites) {
@@ -104,8 +104,8 @@ class EntityGridVehicleScreen(
                     screenManager,
                     integrationRepository,
                     allEntities,
-                    entityRegistry
-                ).build()
+                    entityRegistry,
+                ).build(),
             )
             if (domains.isNotEmpty()) {
                 listBuilder.addItem(
@@ -117,8 +117,8 @@ class EntityGridVehicleScreen(
                         serverId,
                         allEntities,
                         prefsRepository,
-                        entityRegistry
-                    ).build()
+                        entityRegistry,
+                    ).build(),
                 )
             }
             if (shouldSwitchServers) {
@@ -127,8 +127,8 @@ class EntityGridVehicleScreen(
                         carContext,
                         screenManager,
                         serverManager,
-                        serverId
-                    ) { onChangeServer(it) }.build()
+                        serverId,
+                    ) { onChangeServer(it) }.build(),
                 )
             }
         }
@@ -150,7 +150,7 @@ class EntityGridVehicleScreen(
         }.build()
     }
 
-    private fun createEntityGrid(entities: List<Entity<*>>): ItemList.Builder {
+    private fun createEntityGrid(entities: List<Entity>): ItemList.Builder {
         val listBuilder = ItemList.Builder()
         val manager = carContext.getCarService(ConstraintManager::class.java)
         val gridLimit = manager.getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID)
@@ -183,7 +183,7 @@ class EntityGridVehicleScreen(
                                         if (lat != null && lon != null) {
                                             val intent = Intent(
                                                 CarContext.ACTION_NAVIGATE,
-                                                Uri.parse("geo:$lat,$lon")
+                                                Uri.parse("geo:$lat,$lon"),
                                             )
                                             carContext.startCarApp(intent)
                                         }
@@ -208,19 +208,19 @@ class EntityGridVehicleScreen(
                         CarIcon.Builder(
                             IconicsDrawable(carContext, icon).apply {
                                 sizeDp = 64
-                            }.toAndroidIconCompat()
+                            }.toAndroidIconCompat(),
                         )
                             .setTint(
                                 if (entity.isActive() && entity.domain in EntityExt.STATE_COLORED_DOMAINS) {
                                     CarColor.createCustom(
                                         carContext.getColor(R.color.colorYellow),
-                                        carContext.getColor(R.color.colorYellow)
+                                        carContext.getColor(R.color.colorYellow),
                                     )
                                 } else {
                                     CarColor.DEFAULT
-                                }
+                                },
                             )
-                            .build()
+                            .build(),
                     )
             }
             listBuilder.addItem(gridItem.build())

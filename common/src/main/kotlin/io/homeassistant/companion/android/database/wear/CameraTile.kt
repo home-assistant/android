@@ -19,5 +19,5 @@ data class CameraTile(
     val entityId: String? = null,
     /** The refresh interval of this tile, in seconds */
     @ColumnInfo(name = "refresh_interval")
-    val refreshInterval: Long? = null
+    val refreshInterval: Long? = null,
 )

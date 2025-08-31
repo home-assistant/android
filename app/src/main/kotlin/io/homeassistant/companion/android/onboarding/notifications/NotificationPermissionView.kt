@@ -25,35 +25,33 @@ import io.homeassistant.companion.android.onboarding.OnboardingScreen
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
 @Composable
-fun NotificationPermissionView(
-    onSetNotificationsEnabled: (Boolean) -> Unit
-) {
+fun NotificationPermissionView(onSetNotificationsEnabled: (Boolean) -> Unit) {
     val scrollState = rememberScrollState()
     OnboardingScreen {
         Column(
             modifier = Modifier
                 .verticalScroll(scrollState)
                 .fillMaxWidth()
-                .weight(1f)
+                .weight(1f),
         ) {
             OnboardingHeaderView(
                 icon = CommunityMaterial.Icon.cmd_bell_outline,
-                title = stringResource(id = commonR.string.notifications)
+                title = stringResource(id = commonR.string.notifications),
             )
             Text(
                 text = stringResource(id = commonR.string.onboarding_notifications_subtitle),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .padding(bottom = 48.dp)
-                    .align(Alignment.CenterHorizontally)
+                    .align(Alignment.CenterHorizontally),
             )
             OnboardingPermissionBullet(
                 icon = CommunityMaterial.Icon.cmd_alert_decagram,
-                text = stringResource(id = commonR.string.onboarding_notifications_bullet_alert)
+                text = stringResource(id = commonR.string.onboarding_notifications_bullet_alert),
             )
             OnboardingPermissionBullet(
                 icon = CommunityMaterial.Icon3.cmd_text,
-                text = stringResource(id = commonR.string.onboarding_notifications_bullet_commands)
+                text = stringResource(id = commonR.string.onboarding_notifications_bullet_commands),
             )
         }
         Row(modifier = Modifier.padding(top = 16.dp)) {
@@ -73,7 +71,7 @@ fun NotificationPermissionView(
 fun NotificationPermissionViewPreview() {
     HomeAssistantAppTheme {
         NotificationPermissionView(
-            onSetNotificationsEnabled = {}
+            onSetNotificationsEnabled = {},
         )
     }
 }

@@ -23,7 +23,7 @@ interface AuthenticationService {
         @Url url: HttpUrl,
         @Field("grant_type") grandType: String,
         @Field("code") code: String,
-        @Field("client_id") clientId: String
+        @Field("client_id") clientId: String,
     ): Token
 
     @FormUrlEncoded
@@ -32,21 +32,18 @@ interface AuthenticationService {
         @Url url: HttpUrl,
         @Field("grant_type") grandType: String,
         @Field("refresh_token") refreshToken: String,
-        @Field("client_id") clientId: String
+        @Field("client_id") clientId: String,
     ): Response<Token>
 
     @FormUrlEncoded
     @POST
-    suspend fun revokeToken(
-        @Url url: HttpUrl,
-        @Field("token") refreshToken: String
-    )
+    suspend fun revokeToken(@Url url: HttpUrl, @Field("token") refreshToken: String)
 
     @FormUrlEncoded
     @POST
     suspend fun revokeTokenLegacy(
         @Url url: HttpUrl,
         @Field("token") refreshToken: String,
-        @Field("action") action: String
+        @Field("action") action: String,
     )
 }

@@ -12,5 +12,5 @@ data class Setting(
     @ColumnInfo(name = "websocket_setting")
     var websocketSetting: WebsocketSetting,
     @ColumnInfo(name = "sensor_update_frequency")
-    var sensorUpdateFrequency: SensorUpdateFrequencySetting
+    var sensorUpdateFrequency: SensorUpdateFrequencySetting,
 )

@@ -3,7 +3,9 @@ package io.homeassistant.companion.android.settings.vehicle
 import android.app.Application
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -18,7 +20,6 @@ import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
-import org.burnoutcrew.reorderable.ItemPosition
 import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -26,16 +27,22 @@ import timber.log.Timber
 class ManageAndroidAutoViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
 
     val favoritesList = mutableStateListOf<String>()
 
-    var sortedEntities by mutableStateOf<List<Entity<*>>>(emptyList())
+    var sortedEntities by mutableStateOf<List<Entity>>(emptyList())
         private set
-    val entities = mutableMapOf<Int, List<Entity<*>>>()
+    val entities = mutableMapOf<Int, List<Entity>>()
+
+    val defaultServers = serverManager.defaultServers
+
+    var defaultServerId by mutableIntStateOf(0)
+
     init {
         viewModelScope.launch {
+            defaultServerId = serverManager.getServer()?.id ?: 0
             favoritesList.addAll(prefsRepository.getAutoFavorites())
             serverManager.defaultServers.map {
                 async {
@@ -54,16 +61,14 @@ class ManageAndroidAutoViewModel @Inject constructor(
         }
     }
 
-    fun onMove(fromItem: ItemPosition, toItem: ItemPosition) {
+    fun onMove(fromItem: LazyListItemInfo, toItem: LazyListItemInfo) {
         favoritesList.apply {
             add(
                 favoritesList.indexOfFirst { it == toItem.key },
-                removeAt(favoritesList.indexOfFirst { it == fromItem.key })
+                removeAt(favoritesList.indexOfFirst { it == fromItem.key }),
             )
         }
     }
-
-    fun canDragOver(position: ItemPosition) = favoritesList.any { it == position.key }
 
     fun saveFavorites() {
         viewModelScope.launch {

@@ -19,7 +19,7 @@ import timber.log.Timber
 class ExternalUrlViewModel @Inject constructor(
     state: SavedStateHandle,
     private val serverManager: ServerManager,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
 
     var canUseCloud by mutableStateOf(false)
@@ -35,10 +35,12 @@ class ExternalUrlViewModel @Inject constructor(
 
     init {
         state.get<Int>(ExternalUrlFragment.EXTRA_SERVER)?.let { serverId = it }
-        serverManager.getServer(serverId)?.let {
-            canUseCloud = it.connection.canUseCloud()
-            useCloud = it.connection.useCloud
-            externalUrl = it.connection.getUrl(isInternal = false, force = true).toString()
+        viewModelScope.launch {
+            serverManager.getServer(serverId)?.let {
+                canUseCloud = it.connection.canUseCloud()
+                useCloud = it.connection.useCloud
+                externalUrl = it.connection.getUrl(isInternal = false, force = true).toString()
+            }
         }
     }
 
@@ -49,9 +51,9 @@ class ExternalUrlViewModel @Inject constructor(
                 serverManager.updateServer(
                     it.copy(
                         connection = it.connection.copy(
-                            useCloud = useCloud
-                        )
-                    )
+                            useCloud = useCloud,
+                        ),
+                    ),
                 )
             }
         }
@@ -65,9 +67,9 @@ class ExternalUrlViewModel @Inject constructor(
                     serverManager.updateServer(
                         it.copy(
                             connection = it.connection.copy(
-                                externalUrl = formatted
-                            )
-                        )
+                                externalUrl = formatted,
+                            ),
+                        ),
                     )
                     externalUrl = formatted
                 } catch (e: MalformedHttpUrlException) {

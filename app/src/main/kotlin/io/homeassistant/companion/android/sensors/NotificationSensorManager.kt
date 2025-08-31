@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.UiModeManager
 import android.content.ComponentName
 import android.content.Context
-import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.media.MediaMetadata
 import android.media.session.MediaSessionManager
@@ -19,11 +18,14 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class NotificationSensorManager : NotificationListenerService(), SensorManager {
+class NotificationSensorManager :
+    NotificationListenerService(),
+    SensorManager {
     companion object {
         private const val SETTING_ALLOW_LIST = "notification_allow_list"
         private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
@@ -37,7 +39,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             commonR.string.sensor_description_last_notification,
             "mdi:bell-ring",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-notification",
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
         )
         val lastRemovedNotification = SensorManager.BasicSensor(
             "last_removed_notification",
@@ -46,7 +48,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             commonR.string.sensor_description_last_removed_notification,
             "mdi:bell-ring",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-removed-notification",
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
         )
         val activeNotificationCount = SensorManager.BasicSensor(
             "active_notification_count",
@@ -57,7 +59,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             unitOfMeasurement = "notifications",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#active-notification-count",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
         private val mediaSession = SensorManager.BasicSensor(
             "media_session",
@@ -66,7 +68,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             commonR.string.sensor_description_media_session,
             "mdi:play-circle",
             deviceClass = "enum",
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#media-session-sensor"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#media-session-sensor",
         )
     }
 
@@ -74,7 +76,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         return "https://companion.home-assistant.io/docs/core/sensors#notification-sensors"
     }
     override fun hasSensor(context: Context): Boolean {
-        return if (!context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+        return if (!context.isAutomotive()) {
             val uiManager = context.getSystemService<UiModeManager>()
             uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
         } else {
@@ -126,14 +128,14 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
                 lastNotification,
                 SETTING_ALLOW_LIST,
                 SensorSettingType.LIST_APPS,
-                default = ""
+                default = "",
             ).split(", ").filter { it.isNotBlank() }
 
             val disableAllowListRequirement = getToggleSetting(
                 applicationContext,
                 lastNotification,
                 SETTING_DISABLE_ALLOW_LIST,
-                default = false
+                default = false,
             )
 
             if (sbn.packageName == application.packageName ||
@@ -169,7 +171,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
                 state.toString().take(255),
                 lastNotification.statelessIcon,
                 attr,
-                forceUpdate = true
+                forceUpdate = true,
             )
 
             // Need to send update!
@@ -192,14 +194,14 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
                 lastRemovedNotification,
                 SETTING_ALLOW_LIST,
                 SensorSettingType.LIST_APPS,
-                default = ""
+                default = "",
             ).split(", ").filter { it.isNotBlank() }
 
             val disableAllowListRequirement = getToggleSetting(
                 applicationContext,
                 lastRemovedNotification,
                 SETTING_DISABLE_ALLOW_LIST,
-                default = false
+                default = false,
             )
 
             if (sbn.packageName == application.packageName ||
@@ -231,7 +233,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
                 state.toString().take(255),
                 lastRemovedNotification.statelessIcon,
                 attr,
-                forceUpdate = true
+                forceUpdate = true,
             )
 
             // Need to send update!
@@ -247,7 +249,13 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
 
             try {
                 val attr: MutableMap<String, Any?> = mutableMapOf()
-                val includeContentsAsAttrsSetting = getToggleSetting(applicationContext, activeNotificationCount, SETTING_INCLUDE_CONTENTS_AS_ATTRS, default = true)
+                val includeContentsAsAttrsSetting =
+                    getToggleSetting(
+                        applicationContext,
+                        activeNotificationCount,
+                        SETTING_INCLUDE_CONTENTS_AS_ATTRS,
+                        default = true,
+                    )
                 if (includeContentsAsAttrsSetting) {
                     for (item in activeNotifications) {
                         attr += mappedBundle(item.notification.extras, "_${item.packageName}_${item.id}").orEmpty()
@@ -267,7 +275,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
                     activeNotificationCount,
                     activeNotifications.size,
                     activeNotificationCount.statelessIcon,
-                    attr
+                    attr,
                 )
             } catch (e: Exception) {
                 Timber.e(e, "Unable to update active notifications")
@@ -287,7 +295,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         PlaybackState.STATE_REWINDING to "Rewinding",
         PlaybackState.STATE_SKIPPING_TO_NEXT to "Skip to Next",
         PlaybackState.STATE_SKIPPING_TO_PREVIOUS to "Skip to Previous",
-        PlaybackState.STATE_SKIPPING_TO_QUEUE_ITEM to "Skip to Queue Item"
+        PlaybackState.STATE_SKIPPING_TO_QUEUE_ITEM to "Skip to Queue Item",
     )
 
     private suspend fun updateMediaSession(context: Context) {
@@ -296,9 +304,17 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         }
 
         val mediaSessionManager = context.getSystemService<MediaSessionManager>()!!
-        val mediaList = mediaSessionManager.getActiveSessions(ComponentName(context, NotificationSensorManager::class.java))
+        val mediaList = mediaSessionManager.getActiveSessions(
+            ComponentName(context, NotificationSensorManager::class.java),
+        )
         val sessionCount = mediaList.size
-        val primaryPlaybackState = if (sessionCount > 0) getPlaybackState(mediaList[0].playbackState?.state) else STATE_UNAVAILABLE
+        val primaryPlaybackState = if (sessionCount >
+            0
+        ) {
+            getPlaybackState(mediaList[0].playbackState?.state)
+        } else {
+            STATE_UNAVAILABLE
+        }
         val attr: MutableMap<String, Any?> = mutableMapOf()
         if (mediaList.size > 0) {
             for (item in mediaList) {
@@ -309,13 +325,13 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
                     "duration_" + item.packageName to item.metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION),
                     "media_id_" + item.packageName to item.metadata?.getString(MediaMetadata.METADATA_KEY_MEDIA_ID),
                     "playback_position_" + item.packageName to item.playbackState?.position,
-                    "playback_state_" + item.packageName to getPlaybackState(item.playbackState?.state)
+                    "playback_state_" + item.packageName to getPlaybackState(item.playbackState?.state),
                 )
             }
         }
         attr += mapOf(
             "total_media_session_count" to sessionCount,
-            "options" to mediaStates.values.toList()
+            "options" to mediaStates.values.toList(),
         )
         onSensorUpdated(
             context,
@@ -323,7 +339,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             primaryPlaybackState,
             mediaSession.statelessIcon,
             attr,
-            forceUpdate = primaryPlaybackState == "Playing"
+            forceUpdate = primaryPlaybackState == "Playing",
         )
     }
 

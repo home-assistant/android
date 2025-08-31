@@ -82,7 +82,7 @@ class SensorReceiver : SensorReceiverBase() {
             StepsSensorManager(),
             StorageSensorManager(),
             TimeZoneManager(),
-            TrafficStatsManager()
+            TrafficStatsManager(),
         )
 
         const val ACTION_REQUEST_SENSORS_UPDATE =
@@ -120,7 +120,7 @@ class SensorReceiver : SensorReceiverBase() {
             AudioSensorManager.volNotification.id,
             AudioSensorManager.volMusic.id,
             AudioSensorManager.volRing.id,
-            AudioSensorManager.volSystem.id
+            AudioSensorManager.volSystem.id,
         ),
         Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE to listOf(DevicePolicyManager.isWorkProfile.id),
         Intent.ACTION_MANAGED_PROFILE_AVAILABLE to listOf(DevicePolicyManager.isWorkProfile.id),
@@ -128,18 +128,17 @@ class SensorReceiver : SensorReceiverBase() {
         NfcAdapter.ACTION_ADAPTER_STATE_CHANGED to listOf(NfcSensorManager.nfcStateSensor.id),
         Intent.ACTION_CONFIGURATION_CHANGED to listOf(
             DisplaySensorManager.screenOrientation.id,
-            DisplaySensorManager.screenRotation.id
-        )
+            DisplaySensorManager.screenRotation.id,
+        ),
     )
 
     override fun getSensorSettingsIntent(
         context: Context,
         sensorId: String,
         sensorManagerId: String,
-        notificationId: Int
+        notificationId: Int,
     ): PendingIntent? {
-        val intent = SettingsActivity.newInstance(context).apply {
-            putExtra("fragment", "sensors/$sensorId")
+        val intent = SettingsActivity.newInstance(context, SettingsActivity.Deeplink.Sensor(sensorId)).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         }

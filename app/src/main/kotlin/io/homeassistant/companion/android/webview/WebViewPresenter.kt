@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.webview
 import android.content.Context
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
+import io.homeassistant.companion.android.common.util.GestureAction
+import io.homeassistant.companion.android.common.util.GestureDirection
 import kotlinx.coroutines.flow.Flow
 import org.json.JSONObject
 
@@ -11,12 +13,12 @@ interface WebViewPresenter {
     fun onViewReady(path: String?)
 
     fun getActiveServer(): Int
-    fun getActiveServerName(): String?
-    fun updateActiveServer()
-    fun setActiveServer(id: Int)
-    fun switchActiveServer(id: Int)
-    fun nextServer()
-    fun previousServer()
+    suspend fun getActiveServerName(): String?
+    suspend fun updateActiveServer()
+    suspend fun setActiveServer(id: Int)
+    suspend fun switchActiveServer(id: Int)
+    suspend fun nextServer()
+    suspend fun previousServer()
 
     fun onGetExternalAuth(context: Context, callback: String, force: Boolean)
 
@@ -34,7 +36,7 @@ interface WebViewPresenter {
     fun isPinchToZoomEnabled(): Boolean
     fun isWebViewDebugEnabled(): Boolean
 
-    fun isAppLocked(): Boolean
+    suspend fun isAppLocked(): Boolean
     fun setAppActive(active: Boolean)
 
     fun isLockEnabled(): Boolean
@@ -45,11 +47,13 @@ interface WebViewPresenter {
 
     fun onExternalBusMessage(message: JSONObject)
 
+    suspend fun getGestureAction(direction: GestureDirection, pointerCount: Int): GestureAction
+
     fun onStart(context: Context)
 
     fun onFinish()
 
-    fun isSsidUsed(): Boolean
+    suspend fun isSsidUsed(): Boolean
 
     fun getAuthorizationHeader(): String
 

@@ -7,5 +7,5 @@ data class SettingsHomeSuggestion(
     val id: String,
     @StringRes val title: Int,
     @StringRes val summary: Int,
-    @DrawableRes val icon: Int
+    @DrawableRes val icon: Int,
 )

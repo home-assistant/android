@@ -6,7 +6,9 @@ import android.content.Intent
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 
-class LocationSensorManager : BroadcastReceiver(), SensorManager {
+class LocationSensorManager :
+    BroadcastReceiver(),
+    SensorManager {
 
     companion object {
         const val MINIMUM_ACCURACY = 200
@@ -28,7 +30,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             commonR.string.basic_sensor_name_location_background,
             commonR.string.sensor_description_location_background,
             "mdi:map-marker-multiple",
-            updateType = SensorManager.BasicSensor.UpdateType.LOCATION
+            updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
         )
         val zoneLocation = SensorManager.BasicSensor(
             "zone_background",
@@ -36,7 +38,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             commonR.string.basic_sensor_name_location_zone,
             commonR.string.sensor_description_location_zone,
             "mdi:map-marker-radius",
-            updateType = SensorManager.BasicSensor.UpdateType.LOCATION
+            updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
         )
         val singleAccurateLocation = SensorManager.BasicSensor(
             "accurate_location",
@@ -44,7 +46,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             commonR.string.basic_sensor_name_location_accurate,
             commonR.string.sensor_description_location_accurate,
             "mdi:crosshairs-gps",
-            updateType = SensorManager.BasicSensor.UpdateType.LOCATION
+            updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
         )
 
         fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {}

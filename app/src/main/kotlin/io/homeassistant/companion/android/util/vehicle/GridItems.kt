@@ -27,7 +27,7 @@ import io.homeassistant.companion.android.vehicle.ChangeServerScreen
 import io.homeassistant.companion.android.vehicle.DomainListScreen
 import io.homeassistant.companion.android.vehicle.EntityGridVehicleScreen
 import io.homeassistant.companion.android.vehicle.MapVehicleScreen
-import java.util.Calendar
+import java.time.LocalDateTime
 import java.util.Locale
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,7 +40,7 @@ fun getChangeServerGridItem(
     screenManager: ScreenManager,
     serverManager: ServerManager,
     serverId: StateFlow<Int>,
-    onChangeServer: (Int) -> Unit
+    onChangeServer: (Int) -> Unit,
 ): GridItem.Builder {
     return GridItem.Builder().apply {
         setTitle(carContext.getString(R.string.aa_change_server))
@@ -48,13 +48,13 @@ fun getChangeServerGridItem(
             CarIcon.Builder(
                 IconicsDrawable(
                     carContext,
-                    CommunityMaterial.Icon2.cmd_home_switch
+                    CommunityMaterial.Icon2.cmd_home_switch,
                 ).apply {
                     sizeDp = 64
-                }.toAndroidIconCompat()
+                }.toAndroidIconCompat(),
             )
                 .setTint(CarColor.DEFAULT)
-                .build()
+                .build(),
         )
         setOnClickListener {
             Timber.i("Change server clicked")
@@ -62,8 +62,8 @@ fun getChangeServerGridItem(
                 ChangeServerScreen(
                     carContext,
                     serverManager,
-                    serverId
-                )
+                    serverId,
+                ),
             ) {
                 it?.toString()?.toIntOrNull()?.let { serverId ->
                     onChangeServer(serverId)
@@ -78,8 +78,8 @@ fun getNavigationGridItem(
     carContext: CarContext,
     screenManager: ScreenManager,
     integrationRepository: IntegrationRepository,
-    allEntities: Flow<Map<String, Entity<*>>>,
-    entityRegistry: List<EntityRegistryResponse>?
+    allEntities: Flow<Map<String, Entity>>,
+    entityRegistry: List<EntityRegistryResponse>?,
 ): GridItem.Builder {
     return GridItem.Builder().apply {
         setTitle(carContext.getString(R.string.aa_navigation))
@@ -87,13 +87,13 @@ fun getNavigationGridItem(
             CarIcon.Builder(
                 IconicsDrawable(
                     carContext,
-                    CommunityMaterial.Icon3.cmd_map_outline
+                    CommunityMaterial.Icon3.cmd_map_outline,
                 ).apply {
                     sizeDp = 64
-                }.toAndroidIconCompat()
+                }.toAndroidIconCompat(),
             )
                 .setTint(CarColor.DEFAULT)
-                .build()
+                .build(),
         )
         setOnClickListener {
             Timber.i("Navigation clicked")
@@ -106,11 +106,11 @@ fun getNavigationGridItem(
                             entity.domain in MAP_DOMAINS &&
                                 RegistriesDataHandler.getHiddenByForEntity(
                                     entity.entityId,
-                                    entityRegistry
+                                    entityRegistry,
                                 ) == null
                         }
-                    }
-                )
+                    },
+                ),
             )
         }
     }
@@ -124,9 +124,9 @@ fun getDomainList(
     serverManager: ServerManager,
     serverId: StateFlow<Int>,
     prefsRepository: PrefsRepository,
-    allEntities: Flow<Map<String, Entity<*>>>,
+    allEntities: Flow<Map<String, Entity>>,
     entityRegistry: List<EntityRegistryResponse>?,
-    lifecycleScope: LifecycleCoroutineScope
+    lifecycleScope: LifecycleCoroutineScope,
 ): ItemList.Builder {
     val listBuilder = ItemList.Builder()
     domains.forEach { domain ->
@@ -138,18 +138,18 @@ fun getDomainList(
         val icon = Entity(
             "$domain.ha_android_placeholder",
             "",
-            mapOf<Any, Any>(),
-            Calendar.getInstance(),
-            Calendar.getInstance(),
-            null
+            mapOf<String, Any>(),
+            LocalDateTime.now(),
+            LocalDateTime.now(),
         ).getIcon(carContext)
 
         val entityList = allEntities.map {
             it.values.filter { entity ->
-                entity.domain == domain && RegistriesDataHandler.getHiddenByForEntity(
-                    entity.entityId,
-                    entityRegistry
-                ) == null
+                entity.domain == domain &&
+                    RegistriesDataHandler.getHiddenByForEntity(
+                        entity.entityId,
+                        entityRegistry,
+                    ) == null
             }
         }
         var domainIsEmpty = false
@@ -166,10 +166,10 @@ fun getDomainList(
                             IconicsDrawable(carContext, icon)
                                 .apply {
                                     sizeDp = 64
-                                }.toAndroidIconCompat()
+                                }.toAndroidIconCompat(),
                         )
                             .setTint(CarColor.DEFAULT)
-                            .build()
+                            .build(),
                     )
                 }
                     .setTitle(friendlyDomain)
@@ -186,11 +186,11 @@ fun getDomainList(
                                 entityRegistry,
                                 domains,
                                 entityList,
-                                allEntities
-                            ) { }
+                                allEntities,
+                            ) { },
                         )
                     }
-                    .build()
+                    .build(),
             )
         }
     }
@@ -206,9 +206,9 @@ fun getDomainsGridItem(
     serverManager: ServerManager,
     integrationRepository: IntegrationRepository,
     serverId: StateFlow<Int>,
-    allEntities: Flow<Map<String, Entity<*>>>,
+    allEntities: Flow<Map<String, Entity>>,
     prefsRepository: PrefsRepository,
-    entityRegistry: List<EntityRegistryResponse>?
+    entityRegistry: List<EntityRegistryResponse>?,
 ): GridItem.Builder {
     return GridItem.Builder().apply {
         setTitle(carContext.getString(R.string.all_entities))
@@ -216,13 +216,13 @@ fun getDomainsGridItem(
             CarIcon.Builder(
                 IconicsDrawable(
                     carContext,
-                    CommunityMaterial.Icon3.cmd_view_list
+                    CommunityMaterial.Icon3.cmd_view_list,
                 ).apply {
                     sizeDp = 64
-                }.toAndroidIconCompat()
+                }.toAndroidIconCompat(),
             )
                 .setTint(CarColor.DEFAULT)
-                .build()
+                .build(),
         )
         setOnClickListener {
             Timber.i("Categories clicked")
@@ -234,8 +234,8 @@ fun getDomainsGridItem(
                     serverId,
                     allEntities,
                     prefsRepository,
-                    entityRegistry
-                )
+                    entityRegistry,
+                ),
             )
         }
     }

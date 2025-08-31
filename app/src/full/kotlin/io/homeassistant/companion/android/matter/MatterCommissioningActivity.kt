@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.matter
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -35,12 +36,14 @@ class MatterCommissioningActivity : AppCompatActivity() {
     private var servers by mutableStateOf<List<Server>>(emptyList())
     private var newMatterDevice = false
 
-    private val threadPermissionLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        deviceCode?.let { viewModel.onThreadPermissionResult(result, it) }
-    }
+    private val threadPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+            deviceCode?.let { viewModel.onThreadPermissionResult(result, it) }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         setContent {
             HomeAssistantAppTheme {
@@ -51,7 +54,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
                     onSelectServer = viewModel::checkSupport,
                     onConfirmCommissioning = { startCommissioning() },
                     onClose = { finish() },
-                    onContinue = { continueToApp(false) }
+                    onContinue = { continueToApp(false) },
                 )
             }
         }
@@ -69,7 +72,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
                         "room name: ${data.roomName}\n" +
                         "product id: ${data.productId}\n" +
                         "vendor id: ${data.vendorId}\n" +
-                        "window expires: ${data.commissioningWindowExpirationMillis}"
+                        "window expires: ${data.commissioningWindowExpirationMillis}",
                 )
 
                 deviceName = data.deviceName

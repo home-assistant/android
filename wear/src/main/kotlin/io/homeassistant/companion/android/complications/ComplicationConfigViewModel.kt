@@ -32,20 +32,20 @@ class ComplicationConfigViewModel @Inject constructor(
     application: Application,
     favoritesDao: FavoritesDao,
     private val serverManager: ServerManager,
-    private val entityStateComplicationsDao: EntityStateComplicationsDao
+    private val entityStateComplicationsDao: EntityStateComplicationsDao,
 ) : AndroidViewModel(application) {
 
     enum class LoadingState {
         LOADING,
         READY,
-        ERROR
+        ERROR,
     }
 
     val app = getApplication<HomeAssistantApplication>()
 
-    var entities = mutableStateMapOf<String, Entity<*>>()
+    var entities = mutableStateMapOf<String, Entity>()
         private set
-    var entitiesByDomain = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
+    var entitiesByDomain = mutableStateMapOf<String, SnapshotStateList<Entity>>()
         private set
     var entitiesByDomainOrder = mutableStateListOf<String>()
         private set
@@ -119,7 +119,7 @@ class ComplicationConfigViewModel @Inject constructor(
 
         // Create a list with all discovered domains + their entities
         domainsList.forEach { domain ->
-            val entitiesInDomain = mutableStateListOf<Entity<*>>()
+            val entitiesInDomain = mutableStateListOf<Entity>()
             entitiesInDomain.addAll(entitiesList.filter { it.domain == domain })
             entitiesByDomain[domain]?.let {
                 it.clear()
@@ -142,7 +142,7 @@ class ComplicationConfigViewModel @Inject constructor(
             SimplifiedEntity(
                 entityId = fullEntity.entityId,
                 friendlyName = fullEntity.friendlyName,
-                icon = (fullEntity.attributes as? Map<*, *>)?.get("icon") as? String ?: ""
+                icon = (fullEntity.attributes as? Map<*, *>)?.get("icon") as? String ?: "",
             )
         }
     }
@@ -161,16 +161,16 @@ class ComplicationConfigViewModel @Inject constructor(
 
     fun addEntityStateComplication(id: Int, entity: SimplifiedEntity) {
         viewModelScope.launch {
-            entityStateComplicationsDao.add(EntityStateComplications(id, entity.entityId, entityShowTitle, entityShowUnit))
+            entityStateComplicationsDao.add(
+                EntityStateComplications(id, entity.entityId, entityShowTitle, entityShowUnit),
+            )
         }
     }
 
     /**
      * Convert a Flow into a State object that updates until the view model is cleared.
      */
-    private fun <T> Flow<T>.collectAsState(
-        initial: T
-    ): State<T> {
+    private fun <T> Flow<T>.collectAsState(initial: T): State<T> {
         val state = mutableStateOf(initial)
         viewModelScope.launch {
             collect { state.value = it }

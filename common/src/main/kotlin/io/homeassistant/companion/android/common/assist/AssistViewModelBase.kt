@@ -35,7 +35,7 @@ abstract class AssistViewModelBase(
     private val serverManager: ServerManager,
     private val audioRecorder: AudioRecorder,
     private val audioUrlPlayer: AudioUrlPlayer,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
 
     companion object {
@@ -48,7 +48,7 @@ abstract class AssistViewModelBase(
         TEXT_ONLY,
         VOICE_INACTIVE,
         VOICE_ACTIVE,
-        BLOCKED
+        BLOCKED,
     }
 
     protected val app = application
@@ -65,7 +65,7 @@ abstract class AssistViewModelBase(
     private var conversationId: String? = null
     private var continueConversation = AtomicBoolean(false)
 
-    fun isRegistered(): Boolean = serverManager.isRegistered()
+    suspend fun isRegistered(): Boolean = serverManager.isRegistered()
 
     abstract fun getInput(): AssistInputMode?
     abstract fun setInput(inputMode: AssistInputMode)
@@ -84,7 +84,7 @@ abstract class AssistViewModelBase(
     protected fun runAssistPipelineInternal(
         text: String?,
         pipeline: AssistPipelineResponse?,
-        onEvent: (AssistEvent) -> Unit
+        onEvent: (AssistEvent) -> Unit,
     ) {
         val isVoice = text == null
         var job: Job? = null
@@ -94,13 +94,13 @@ abstract class AssistViewModelBase(
                     sampleRate = AudioRecorder.SAMPLE_RATE,
                     outputTts = pipeline?.ttsEngine?.isNotBlank() == true,
                     pipelineId = pipeline?.id,
-                    conversationId = conversationId
+                    conversationId = conversationId,
                 )
             } else {
                 serverManager.integrationRepository(selectedServerId).getAssistResponse(
-                    text = text!!,
+                    text = text,
                     pipelineId = pipeline?.id,
-                    conversationId = conversationId
+                    conversationId = conversationId,
                 )
             }
 
@@ -137,7 +137,7 @@ abstract class AssistViewModelBase(
                         val data = (it.data as? AssistPipelineIntentEnd)?.intentOutput ?: return@collect
                         conversationId = data.conversationId
                         continueConversation.set(data.continueConversation)
-                        data.response.speech.plain["speech"]?.let { speech ->
+                        data.response.speech?.plain?.get("speech")?.let { speech ->
                             onEvent(AssistEvent.Message.Output(speech))
                         }
                     }

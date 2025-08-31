@@ -1,13 +1,14 @@
 package io.homeassistant.companion.android.common.data
 
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import java.net.Socket
 import java.security.KeyStore
 import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
-import javax.inject.Named
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedKeyManager
@@ -16,8 +17,8 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 
 class TLSHelper @Inject constructor(
-    @Named("keyChainRepository") private val keyChainRepository: KeyChainRepository,
-    @Named("keyStore") private val keyStore: KeyChainRepository
+    @NamedKeyChain private val keyChainRepository: KeyChainRepository,
+    @NamedKeyStore private val keyStore: KeyChainRepository,
 ) {
 
     fun setupOkHttpClientSSLSocketFactory(builder: OkHttpClient.Builder) {
@@ -33,33 +34,19 @@ class TLSHelper @Inject constructor(
 
     private fun getMTLSKeyManagerForOKHTTP(): X509ExtendedKeyManager {
         return object : X509ExtendedKeyManager() {
-            override fun getClientAliases(
-                p0: String?,
-                p1: Array<out Principal>?
-            ): Array<String> {
+            override fun getClientAliases(p0: String?, p1: Array<out Principal>?): Array<String> {
                 return emptyArray()
             }
 
-            override fun chooseClientAlias(
-                p0: Array<out String>?,
-                p1: Array<out Principal>?,
-                p2: Socket?
-            ): String {
+            override fun chooseClientAlias(p0: Array<out String>?, p1: Array<out Principal>?, p2: Socket?): String {
                 return ""
             }
 
-            override fun getServerAliases(
-                p0: String?,
-                p1: Array<out Principal>?
-            ): Array<String> {
+            override fun getServerAliases(p0: String?, p1: Array<out Principal>?): Array<String> {
                 return arrayOf()
             }
 
-            override fun chooseServerAlias(
-                p0: String?,
-                p1: Array<out Principal>?,
-                p2: Socket?
-            ): String {
+            override fun chooseServerAlias(p0: String?, p1: Array<out Principal>?, p2: Socket?): String {
                 return ""
             }
 

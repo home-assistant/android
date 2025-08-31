@@ -27,9 +27,9 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                 dependencies {
                     "implementation"(project(":common"))
 
-                    "coreLibraryDesugaring"(libs.tools.desugar.jdk)
-
                     "implementation"(libs.blurView)
+                    "implementation"(libs.haze)
+                    "implementation"(libs.haze.materials)
                     "fullImplementation"(libs.androidx.health.connect.client)
 
                     "implementation"(libs.kotlin.stdlib)
@@ -37,9 +37,6 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "implementation"(libs.kotlinx.coroutines.core)
                     "implementation"(libs.kotlinx.coroutines.android)
                     "fullImplementation"(libs.kotlinx.coroutines.play.services)
-
-                    "implementation"(libs.hilt.android)
-                    "ksp"(libs.hilt.android.compiler)
 
                     "implementation"(libs.appcompat)
                     "implementation"(libs.androidx.lifecycle.runtime.ktx)
@@ -49,8 +46,8 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "implementation"(libs.material)
                     "implementation"(libs.fragment.ktx)
 
-                    "implementation"(libs.jackson.module.kotlin)
-                    "implementation"(libs.okhttp)
+                    "implementation"(platform(libs.okhttp.bom))
+                    "implementation"(libs.okhttp.android)
 
                     "implementation"(libs.bundles.coil)
 
@@ -59,7 +56,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "fullImplementation"(libs.play.services.threadnetwork)
                     "fullImplementation"(platform(libs.firebase.bom))
                     "fullImplementation"(libs.firebase.messaging)
-                    "fullImplementation"(libs.sentry.android)
+                    "fullImplementation"(libs.sentry.android.core)
                     "fullImplementation"(libs.play.services.wearable)
                     "fullImplementation"(libs.wear.remote.interactions)
 
@@ -73,18 +70,16 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     }
                     "minimalImplementation"(libs.cronet.embedded)
 
-                    "implementation"(platform(libs.compose.bom))
                     "implementation"(libs.compose.animation)
-                    "implementation"(libs.compose.foundation)
                     "implementation"(libs.compose.material)
                     "implementation"(libs.compose.material.icons.core)
                     "implementation"(libs.compose.material.icons.extended)
                     "implementation"(libs.compose.runtime)
-                    "implementation"(libs.compose.ui)
-                    "implementation"(libs.compose.uiTooling)
                     "implementation"(libs.activity.compose)
                     "implementation"(libs.navigation.compose)
-                    "implementation"(libs.androidx.lifecycle.runtime.compose)
+                    "implementation"(libs.core.remoteviews)
+
+                    "implementation"(libs.bundles.androidx.glance)
 
                     "implementation"(libs.iconics.core)
                     "implementation"(libs.iconics.compose)
@@ -100,9 +95,10 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "implementation"(libs.car.core)
 
-                    "androidTestImplementation"(platform(libs.compose.bom))
                     "androidTestImplementation"(libs.bundles.androidx.test)
-                    "androidTestImplementation"(libs.bundles.androidx.compose.ui.test)
+                    "androidTestImplementation"(libs.leakcanary.android.instrumentation)
+
+                    "testImplementation"(libs.bundles.androidx.glance.testing)
                 }
             }
         }

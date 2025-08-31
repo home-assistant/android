@@ -27,8 +27,8 @@ object MediaPlayerControl : HaControl {
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity<Map<String, Any>>,
-        info: HaControlInfo
+        entity: Entity,
+        info: HaControlInfo,
     ): Control.StatefulBuilder {
         if (entity.supportsVolumeSet()) {
             val volumeLevel = entity.getVolumeLevel()
@@ -43,9 +43,9 @@ object MediaPlayerControl : HaControl {
                         volumeLevel?.max ?: 100f,
                         volumeLevel?.value ?: 0f,
                         entity.getVolumeStep(),
-                        "%.0f%%"
-                    )
-                )
+                        "%.0f%%",
+                    ),
+                ),
             )
         } else {
             control.setControlTemplate(
@@ -53,30 +53,26 @@ object MediaPlayerControl : HaControl {
                     entity.entityId,
                     ControlButton(
                         entity.isActive(),
-                        ""
-                    )
-                )
+                        "",
+                    ),
+                ),
             )
         }
         return control
     }
 
-    override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
-        DeviceTypes.TYPE_TV
+    override fun getDeviceType(entity: Entity): Int = DeviceTypes.TYPE_TV
 
-    override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+    override fun getDomainString(context: Context, entity: Entity): String =
         context.getString(commonR.string.media_player)
 
-    override suspend fun performAction(
-        integrationRepository: IntegrationRepository,
-        action: ControlAction
-    ): Boolean {
+    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
         when (action) {
             is BooleanAction -> {
                 integrationRepository.callAction(
                     action.templateId.split(".")[0],
                     "media_play_pause",
-                    hashMapOf("entity_id" to action.templateId)
+                    hashMapOf("entity_id" to action.templateId),
                 )
             }
             is FloatAction -> {
@@ -88,8 +84,8 @@ object MediaPlayerControl : HaControl {
                     "volume_set",
                     hashMapOf(
                         "entity_id" to action.templateId,
-                        "volume_level" to BigDecimal(volumeLevel.toDouble()).setScale(2, RoundingMode.HALF_UP)
-                    )
+                        "volume_level" to BigDecimal(volumeLevel.toDouble()).setScale(2, RoundingMode.HALF_UP),
+                    ),
                 )
             }
         }

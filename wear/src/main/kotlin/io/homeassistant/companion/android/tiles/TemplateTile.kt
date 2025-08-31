@@ -23,7 +23,6 @@ import androidx.wear.tiles.RequestBuilders.ResourcesRequest
 import androidx.wear.tiles.RequestBuilders.TileRequest
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
-import com.fasterxml.jackson.databind.JsonMappingException
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
@@ -39,6 +38,7 @@ import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerializationException
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -53,35 +53,34 @@ class TemplateTile : TileService() {
     @Inject
     lateinit var wearPrefsRepository: WearPrefsRepository
 
-    override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
-        serviceScope.future {
-            if (requestParams.currentState.lastClickableId == MODIFIER_CLICK_REFRESH) {
-                if (wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
-            }
-
-            val tileId = requestParams.tileId
-            val templateTileConfig = getTemplateTileConfig(tileId)
-            val freshness = when {
-                templateTileConfig.refreshInterval <= 1 -> 0
-                else -> templateTileConfig.refreshInterval
-            }
-
-            Tile.Builder()
-                .setResourcesVersion("1")
-                .setFreshnessIntervalMillis(freshness.toLong() * 1_000)
-                .setTileTimeline(
-                    if (serverManager.isRegistered()) {
-                        timeline(templateTileConfig)
-                    } else {
-                        loggedOutTimeline(
-                            this@TemplateTile,
-                            requestParams,
-                            commonR.string.template,
-                            commonR.string.template_tile_log_in
-                        )
-                    }
-                ).build()
+    override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> = serviceScope.future {
+        if (requestParams.currentState.lastClickableId == MODIFIER_CLICK_REFRESH) {
+            if (wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
         }
+
+        val tileId = requestParams.tileId
+        val templateTileConfig = getTemplateTileConfig(tileId)
+        val freshness = when {
+            templateTileConfig.refreshInterval <= 1 -> 0
+            else -> templateTileConfig.refreshInterval
+        }
+
+        Tile.Builder()
+            .setResourcesVersion("1")
+            .setFreshnessIntervalMillis(freshness.toLong() * 1_000)
+            .setTileTimeline(
+                if (serverManager.isRegistered()) {
+                    timeline(templateTileConfig)
+                } else {
+                    loggedOutTimeline(
+                        this@TemplateTile,
+                        requestParams,
+                        commonR.string.template,
+                        commonR.string.template_tile_log_in,
+                    )
+                },
+            ).build()
+    }
 
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {
@@ -93,8 +92,8 @@ class TemplateTile : TileService() {
                         .setAndroidResourceByResId(
                             ResourceBuilders.AndroidImageResourceByResId.Builder()
                                 .setResourceId(R.drawable.ic_refresh)
-                                .build()
-                        ).build()
+                                .build(),
+                        ).build(),
                 )
                 .build()
         }
@@ -155,8 +154,8 @@ class TemplateTile : TileService() {
             }
         } catch (e: Exception) {
             Timber.e(e, "Exception while rendering template")
-            // JsonMappingException suggests that template is not a String (= error)
-            if (e.cause is JsonMappingException) {
+            // SerializationException suggests that template is not a String (= error)
+            if (e.cause is SerializationException) {
                 getString(commonR.string.template_error)
             } else {
                 getString(commonR.string.template_render_error)
@@ -176,11 +175,11 @@ class TemplateTile : TileService() {
                 LayoutElementBuilders.Text.Builder()
                     .setText(getString(commonR.string.template_tile_empty))
                     .setMaxLines(10)
-                    .build()
+                    .build(),
             )
         } else {
             addContent(
-                parseHtml(renderedText)
+                parseHtml(renderedText),
             )
         }
         addContent(getRefreshButton())
@@ -190,7 +189,11 @@ class TemplateTile : TileService() {
 
     private fun parseHtml(renderedText: String): LayoutElementBuilders.Spannable {
         // Replace control char \r\n, \r, \n and also \r\n, \r, \n as text literals in strings to <br>
-        val renderedSpanned = fromHtml(renderedText.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>"), FROM_HTML_MODE_LEGACY)
+        val renderedSpanned =
+            fromHtml(
+                renderedText.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>"),
+                FROM_HTML_MODE_LEGACY,
+            )
         return LayoutElementBuilders.Spannable.Builder().apply {
             var start = 0
             var end = 0
@@ -203,17 +206,18 @@ class TemplateTile : TileService() {
                             is AbsoluteSizeSpan -> setSize(
                                 DimensionBuilders.SpProp.Builder()
                                     .setValue(span.size / applicationContext.resources.displayMetrics.scaledDensity)
-                                    .build()
+                                    .build(),
                             )
                             is ForegroundColorSpan -> setColor(
-                                ColorBuilders.ColorProp.Builder(span.foregroundColor).build()
+                                ColorBuilders.ColorProp.Builder(span.foregroundColor).build(),
                             )
                             is RelativeSizeSpan -> {
-                                val defaultSize = 16 // https://developer.android.com/training/wearables/design/typography
+                                // https://developer.android.com/training/wearables/design/typography
+                                val defaultSize = 16
                                 setSize(
                                     DimensionBuilders.SpProp.Builder()
                                         .setValue(span.sizeChange * defaultSize)
-                                        .build()
+                                        .build(),
                                 )
                             }
                             is StyleSpan -> when (span.style) {
@@ -230,7 +234,7 @@ class TemplateTile : TileService() {
                     LayoutElementBuilders.SpanText.Builder()
                         .setText(renderedSpanned.substring(start, end))
                         .setFontStyle(fontStyle)
-                        .build()
+                        .build(),
                 )
 
                 start = end

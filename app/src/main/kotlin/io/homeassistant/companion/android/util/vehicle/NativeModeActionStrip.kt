@@ -1,10 +1,10 @@
 package io.homeassistant.companion.android.util.vehicle
 
 import android.content.Intent
-import android.content.pm.PackageManager
 import androidx.car.app.CarContext
 import androidx.car.app.model.Action
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.launch.LaunchActivity
 import timber.log.Timber
 
@@ -22,12 +22,12 @@ fun startNativeActivity(carContext: CarContext) {
         startActivity(
             Intent(
                 carContext,
-                LaunchActivity::class.java
+                LaunchActivity::class.java,
             ).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
+            },
         )
-        if (carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+        if (carContext.isAutomotive()) {
             finishCarApp()
         }
     }

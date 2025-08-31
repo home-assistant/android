@@ -80,7 +80,7 @@ class SensorReceiver : SensorReceiverBase() {
             TheaterModeSensorManager(),
             TimeZoneManager(),
             TrafficStatsManager(),
-            WetModeSensorManager()
+            WetModeSensorManager(),
         )
         val MANAGERS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             allManager.plus(HealthServicesSensorManager())
@@ -119,27 +119,27 @@ class SensorReceiver : SensorReceiverBase() {
             AudioSensorManager.volNotification.id,
             AudioSensorManager.volMusic.id,
             AudioSensorManager.volRing.id,
-            AudioSensorManager.volSystem.id
+            AudioSensorManager.volSystem.id,
         ),
         "com.google.android.clockwork.actions.WET_MODE_STARTED" to listOf(WetModeSensorManager.wetModeSensor.id),
         "com.google.android.clockwork.actions.WET_MODE_ENDED" to listOf(WetModeSensorManager.wetModeSensor.id),
         "android.bluetooth.device.action.ACL_CONNECTED" to listOf(BluetoothSensorManager.bluetoothConnection.id),
         "android.bluetooth.device.action.ACL_DISCONNECTED" to listOf(BluetoothSensorManager.bluetoothConnection.id),
         BluetoothAdapter.ACTION_STATE_CHANGED to listOf(BluetoothSensorManager.bluetoothState.id),
-        NfcAdapter.ACTION_ADAPTER_STATE_CHANGED to listOf(NfcSensorManager.nfcStateSensor.id)
+        NfcAdapter.ACTION_ADAPTER_STATE_CHANGED to listOf(NfcSensorManager.nfcStateSensor.id),
     )
 
     override fun getSensorSettingsIntent(
         context: Context,
         sensorId: String,
         sensorManagerId: String,
-        notificationId: Int
+        notificationId: Int,
     ): PendingIntent? {
         val intent = Intent(
             Intent.ACTION_VIEW,
             "$DEEPLINK_SENSOR_MANAGER/$sensorManagerId".toUri(),
             context,
-            HomeActivity::class.java
+            HomeActivity::class.java,
         )
         return TaskStackBuilder.create(context).run {
             addNextIntentWithParentStack(intent)

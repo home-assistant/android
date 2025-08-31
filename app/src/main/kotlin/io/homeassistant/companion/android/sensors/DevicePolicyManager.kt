@@ -13,7 +13,7 @@ class DevicePolicyManager : SensorManager {
             R.string.sensor_name_work_profile,
             R.string.sensor_description_work_profile,
             "mdi:briefcase",
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
         )
     }
 
@@ -60,7 +60,7 @@ class DevicePolicyManager : SensorManager {
                 isWorkProfile,
                 state,
                 isWorkProfile.statelessIcon,
-                mapOf()
+                mapOf(),
             )
         }
     }

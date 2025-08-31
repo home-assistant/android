@@ -29,5 +29,10 @@ data class StaticWidgetEntity(
     @ColumnInfo(name = "background_type", defaultValue = "DAYNIGHT")
     override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
     @ColumnInfo(name = "text_color")
-    override val textColor: String? = null
-) : WidgetEntity, ThemeableWidgetEntity
+    override val textColor: String? = null,
+) : WidgetEntity<StaticWidgetEntity>,
+    ThemeableWidgetEntity {
+    override fun copyWithWidgetId(appWidgetId: Int): StaticWidgetEntity {
+        return copy(id = appWidgetId)
+    }
+}

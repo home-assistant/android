@@ -6,23 +6,25 @@ import android.os.Build
 import android.webkit.CookieManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.BuildConfig
-import io.homeassistant.companion.android.common.util.jacksonObjectMapperForHACore
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-import retrofit2.converter.jackson.JacksonConverterFactory
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 class HomeAssistantApis @Inject constructor(
     private val tlsHelper: TLSHelper,
     @ApplicationContext private val appContext: Context,
-    private val configurators: Set<@JvmSuppressWildcards OkHttpConfigurator>
+    private val configurators: Set<@JvmSuppressWildcards OkHttpConfigurator>,
 ) {
     companion object {
         private const val LOCAL_HOST = "http://localhost/"
         const val USER_AGENT = "User-Agent"
-        val USER_AGENT_STRING = "Home Assistant/${BuildConfig.VERSION_NAME} (Android ${Build.VERSION.RELEASE}; ${Build.MODEL})"
+        private val ANDROID_DETAILS = "Android ${Build.VERSION.RELEASE}; ${Build.MODEL}"
+        val USER_AGENT_STRING = "Home Assistant/${BuildConfig.VERSION_NAME} ($ANDROID_DETAILS)"
 
         private const val CALL_TIMEOUT = 30L
         private const val READ_TIMEOUT = 30L
@@ -33,7 +35,7 @@ class HomeAssistantApis @Inject constructor(
             builder.addInterceptor(
                 HttpLoggingInterceptor().apply {
                     level = HttpLoggingInterceptor.Level.BODY
-                }
+                },
             )
         }
         builder.addNetworkInterceptor {
@@ -41,7 +43,7 @@ class HomeAssistantApis @Inject constructor(
                 it.request()
                     .newBuilder()
                     .header(USER_AGENT, USER_AGENT_STRING)
-                    .build()
+                    .build(),
             )
         }
 
@@ -73,9 +75,9 @@ class HomeAssistantApis @Inject constructor(
     val retrofit: Retrofit = Retrofit
         .Builder()
         .addConverterFactory(
-            JacksonConverterFactory.create(
-                jacksonObjectMapperForHACore()
-            )
+            kotlinJsonMapper.asConverterFactory(
+                "application/json; charset=UTF-8".toMediaType(),
+            ),
         )
         .client(configureOkHttpClient(OkHttpClient.Builder()).build())
         .baseUrl(LOCAL_HOST)

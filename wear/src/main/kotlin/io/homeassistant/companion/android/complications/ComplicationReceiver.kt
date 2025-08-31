@@ -42,7 +42,7 @@ class ComplicationReceiver : BroadcastReceiver() {
             ComplicationDataSourceUpdateRequester
                 .create(
                     context = context,
-                    complicationDataSourceComponent = ComponentName(context, EntityStateDataSourceService::class.java)
+                    complicationDataSourceComponent = ComponentName(context, EntityStateDataSourceService::class.java),
                 )
                 .requestUpdate(id)
         }
@@ -52,14 +52,14 @@ class ComplicationReceiver : BroadcastReceiver() {
         ComplicationDataSourceUpdateRequester
             .create(
                 context = context,
-                complicationDataSourceComponent = ComponentName(context, EntityStateDataSourceService::class.java)
+                complicationDataSourceComponent = ComponentName(context, EntityStateDataSourceService::class.java),
             )
             .requestUpdateAll()
     }
 
     private fun onScreenOn(context: Context) {
-        if (!serverManager.isRegistered()) return
         scope.launch {
+            if (!serverManager.isRegistered()) return@launch
             updateAllComplications(context)
         }
     }
@@ -72,10 +72,7 @@ class ComplicationReceiver : BroadcastReceiver() {
          * Returns a pending intent, suitable for use as a tap intent, that causes a complication to be
          * toggled and updated.
          */
-        fun getComplicationToggleIntent(
-            context: Context,
-            complicationInstanceId: Int
-        ): PendingIntent {
+        fun getComplicationToggleIntent(context: Context, complicationInstanceId: Int): PendingIntent {
             val intent = Intent(context, ComplicationReceiver::class.java).apply {
                 action = UPDATE_COMPLICATION
                 putExtra(EXTRA_ID, complicationInstanceId)
@@ -87,21 +84,18 @@ class ComplicationReceiver : BroadcastReceiver() {
                 context,
                 complicationInstanceId,
                 intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
         }
 
-        fun getComplicationConfigureIntent(
-            context: Context,
-            complicationInstanceId: Int
-        ): PendingIntent {
+        fun getComplicationConfigureIntent(context: Context, complicationInstanceId: Int): PendingIntent {
             return PendingIntent.getActivity(
                 context,
                 complicationInstanceId,
                 Intent(context, ComplicationConfigActivity::class.java).apply {
                     putExtra(EXTRA_CONFIG_COMPLICATION_ID, complicationInstanceId)
                 },
-                PendingIntent.FLAG_IMMUTABLE
+                PendingIntent.FLAG_IMMUTABLE,
             )
         }
 
@@ -110,7 +104,7 @@ class ComplicationReceiver : BroadcastReceiver() {
                 context,
                 0,
                 Intent(context, ConversationActivity::class.java),
-                PendingIntent.FLAG_IMMUTABLE
+                PendingIntent.FLAG_IMMUTABLE,
             )
         }
     }

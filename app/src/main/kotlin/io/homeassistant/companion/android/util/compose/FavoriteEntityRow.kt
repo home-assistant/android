@@ -29,33 +29,31 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
-import org.burnoutcrew.reorderable.ReorderableLazyListState
-import org.burnoutcrew.reorderable.detectReorderAfterLongPress
+import sh.calvin.reorderable.ReorderableCollectionItemScope
 
 @Composable
-fun FavoriteEntityRow(
+fun ReorderableCollectionItemScope.FavoriteEntityRow(
     entityName: String,
     entityId: String,
     onClick: () -> Unit,
     checked: Boolean,
     draggable: Boolean = false,
     isDragging: Boolean = false,
-    reorderableState: ReorderableLazyListState? = null
 ) {
     val surfaceElevation = animateDpAsState(targetValue = if (isDragging) 8.dp else 0.dp)
     var rowModifier = Modifier.fillMaxWidth().heightIn(min = 72.dp)
-    if (draggable && reorderableState != null) {
-        rowModifier = rowModifier.then(Modifier.detectReorderAfterLongPress(reorderableState))
+    if (draggable) {
+        rowModifier = rowModifier.longPressDraggableHandle()
     }
     Surface(
-        elevation = surfaceElevation.value
+        elevation = surfaceElevation.value,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = rowModifier
+            modifier = rowModifier,
         ) {
             Column(
-                modifier = Modifier.weight(1f).padding(start = 16.dp)
+                modifier = Modifier.weight(1f).padding(start = 16.dp),
             ) {
                 Text(text = entityName, style = MaterialTheme.typography.body1)
                 CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
@@ -65,7 +63,7 @@ fun FavoriteEntityRow(
             IconButton(onClick = onClick) {
                 Icon(
                     imageVector = if (checked) Icons.Default.Clear else Icons.Default.Add,
-                    contentDescription = stringResource(if (checked) R.string.delete else R.string.add_favorite)
+                    contentDescription = stringResource(if (checked) R.string.delete else R.string.add_favorite),
                 )
             }
             if (draggable) {
@@ -77,7 +75,7 @@ fun FavoriteEntityRow(
                         modifier = Modifier
                             .size(width = 40.dp, height = 24.dp)
                             .padding(end = 16.dp)
-                            .alpha(LocalContentAlpha.current)
+                            .alpha(LocalContentAlpha.current),
                     )
                 }
             }

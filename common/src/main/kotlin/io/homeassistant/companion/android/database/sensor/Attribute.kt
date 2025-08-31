@@ -12,5 +12,5 @@ data class Attribute(
     @ColumnInfo(name = "value")
     val value: String,
     @ColumnInfo(name = "value_type")
-    val valueType: String
+    val valueType: String,
 )

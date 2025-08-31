@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -30,7 +31,7 @@ import kotlinx.coroutines.launch
 class ManageControlsViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
-    private val application: Application
+    private val application: Application,
 ) : AndroidViewModel(application) {
 
     var panelEnabled by mutableStateOf(false)
@@ -44,17 +45,24 @@ class ManageControlsViewModel @Inject constructor(
     var entitiesLoaded by mutableStateOf(false)
         private set
 
-    val entitiesList = mutableStateMapOf<Int, List<Entity<*>>>()
+    val entitiesList = mutableStateMapOf<Int, List<Entity>>()
 
     var panelSetting by mutableStateOf<Pair<String?, Int>?>(null)
         private set
+
+    var structureEnabled by mutableStateOf(false)
+        private set
+
+    val defaultServers = serverManager.defaultServers
+
+    var defaultServerId by mutableIntStateOf(0)
 
     init {
         viewModelScope.launch {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 panelEnabled =
                     application.packageManager.getComponentEnabledSetting(
-                        ComponentName(application, HaControlsPanelActivity::class.java)
+                        ComponentName(application, HaControlsPanelActivity::class.java),
                     ) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
 
                 val panelServer = prefsRepository.getControlsPanelServer()
@@ -69,14 +77,18 @@ class ManageControlsViewModel @Inject constructor(
             authRequired = prefsRepository.getControlsAuthRequired()
             authRequiredList.addAll(prefsRepository.getControlsAuthEntities())
 
+            structureEnabled = prefsRepository.getControlsEnableStructure()
+
+            defaultServerId = serverManager.getServer()?.id ?: 0
+
             serverManager.defaultServers.map { server ->
                 async {
                     val entities = serverManager.integrationRepository(server.id).getEntities()
                         ?.filter { it.domain in HaControlsProviderService.getSupportedDomains() }
                         ?.sortedWith(
                             compareBy(String.CASE_INSENSITIVE_ORDER) {
-                                (it.attributes as Map<String, Any>)["friendly_name"].toString()
-                            }
+                                it.attributes["friendly_name"].toString()
+                            },
                         )
                     if (entities != null) {
                         entitiesList[server.id] = entities
@@ -107,7 +119,7 @@ class ManageControlsViewModel @Inject constructor(
                 entitiesList.forEach { (server, entities) ->
                     authRequiredList.addAll(
                         entities.filter { server != serverId || it.entityId != entityId }
-                            .map { "$server.${it.entityId}" }
+                            .map { "$server.${it.entityId}" },
                     )
                 }
             } else if (authRequiredList.contains(settingId)) {
@@ -153,11 +165,13 @@ class ManageControlsViewModel @Inject constructor(
             } else {
                 PackageManager.COMPONENT_ENABLED_STATE_DEFAULT // Default is disabled
             },
-            PackageManager.DONT_KILL_APP
+            PackageManager.DONT_KILL_APP,
         )
         panelEnabled = enabled
         if (panelSetting?.second == null) {
-            serverManager.getServer()?.id?.let { setPanelConfig("", it) }
+            viewModelScope.launch {
+                serverManager.getServer()?.id?.let { setPanelConfig("", it) }
+            }
         }
     }
 
@@ -166,5 +180,13 @@ class ManageControlsViewModel @Inject constructor(
         prefsRepository.setControlsPanelServer(serverId)
         prefsRepository.setControlsPanelPath(cleanedPath)
         panelSetting = Pair(cleanedPath, serverId)
+    }
+
+    fun setStructureEnable(enabled: Boolean) {
+        structureEnabled = enabled
+
+        viewModelScope.launch {
+            prefsRepository.setControlsEnableStructure(enabled)
+        }
     }
 }

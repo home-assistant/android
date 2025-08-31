@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @Composable
 fun ExternalUrlView(
@@ -28,17 +29,19 @@ fun ExternalUrlView(
     useCloud: Boolean,
     externalUrl: String?,
     onUseCloudToggle: (Boolean) -> Unit,
-    onExternalUrlSaved: (String) -> Unit
+    onExternalUrlSaved: (String) -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
 
     Column(
-        modifier = Modifier.padding(vertical = 16.dp)
+        modifier = Modifier
+            .padding(safeBottomPaddingValues(applyHorizontal = false))
+            .padding(vertical = 16.dp),
     ) {
         if (canUseCloud) {
             ExternalUrlCloudView(
                 useCloud = useCloud,
-                onUseCloudToggle = onUseCloudToggle
+                onUseCloudToggle = onUseCloudToggle,
             )
             Spacer(modifier = Modifier.height(24.dp))
         }
@@ -47,7 +50,7 @@ fun ExternalUrlView(
             ExternalUrlInputView(
                 url = externalUrl,
                 focusRequester = focusRequester,
-                onSaveUrl = onExternalUrlSaved
+                onSaveUrl = onExternalUrlSaved,
             )
         }
     }
@@ -58,27 +61,26 @@ fun ExternalUrlView(
 }
 
 @Composable
-fun ExternalUrlCloudView(
-    useCloud: Boolean,
-    onUseCloudToggle: (Boolean) -> Unit
-) {
+fun ExternalUrlCloudView(useCloud: Boolean, onUseCloudToggle: (Boolean) -> Unit) {
     Row(
         modifier = Modifier
             .clickable { onUseCloudToggle(!useCloud) }
             .heightIn(min = 56.dp)
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = stringResource(commonR.string.input_cloud),
             modifier = Modifier
                 .weight(1f)
-                .padding(end = 16.dp)
+                .padding(end = 16.dp),
         )
         Switch(
             checked = useCloud,
             onCheckedChange = null,
-            colors = SwitchDefaults.colors(uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb))
+            colors = SwitchDefaults.colors(
+                uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb),
+            ),
         )
     }
 }
@@ -91,7 +93,7 @@ fun PreviewExternalUrlViewCloudOn() {
         useCloud = true,
         externalUrl = "https://home.example.com:8123/",
         onUseCloudToggle = {},
-        onExternalUrlSaved = {}
+        onExternalUrlSaved = {},
     )
 }
 
@@ -103,7 +105,7 @@ fun PreviewExternalUrlViewCloudOff() {
         useCloud = false,
         externalUrl = "https://home.example.com:8123/",
         onUseCloudToggle = {},
-        onExternalUrlSaved = {}
+        onExternalUrlSaved = {},
     )
 }
 
@@ -115,6 +117,6 @@ fun PreviewExternalUrlViewCloudNone() {
         useCloud = false,
         externalUrl = "https://home.example.com:8123/",
         onUseCloudToggle = {},
-        onExternalUrlSaved = {}
+        onExternalUrlSaved = {},
     )
 }

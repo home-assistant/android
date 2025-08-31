@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.homeassistant.android.application)
     alias(libs.plugins.google.services)
-    alias(libs.plugins.screenshot)
 }
 
 android {
@@ -11,15 +10,8 @@ android {
 
         versionName = project.version.toString()
         // We add 1 because the app and wear versions need to have different version codes.
-        versionCode = 1 + checkNotNull(versionCode) { "Did you forget to apply the convention plugin that set the version code?" }
-    }
-
-    experimentalProperties["android.experimental.enableScreenshotTest"] = true
-
-    testOptions {
-        screenshotTests {
-            imageDifferenceThreshold = 0.00025f // 0.025%
-        }
+        versionCode =
+            1 + checkNotNull(versionCode) { "Did you forget to apply the convention plugin that set the version code?" }
     }
 }
 
@@ -43,11 +35,8 @@ dependencies {
     implementation(libs.wear.remote.interactions)
     implementation(libs.wear.phone.interactions)
 
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.android.compiler)
-
-    implementation(libs.jackson.module.kotlin)
-    implementation(libs.okhttp)
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp.android)
 
     implementation(libs.iconics.core)
     implementation(libs.appcompat)
@@ -56,11 +45,8 @@ dependencies {
 
     implementation(libs.activity.ktx)
     implementation(libs.activity.compose)
-    implementation(platform(libs.compose.bom))
-    implementation(libs.compose.foundation)
     implementation(libs.compose.material.icons.core)
     implementation(libs.compose.material.icons.extended)
-    implementation(libs.compose.uiTooling)
     implementation(libs.wear.compose.foundation)
     implementation(libs.wear.compose.material)
     implementation(libs.wear.compose.navigation)
@@ -75,9 +61,6 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
-    screenshotTestImplementation(libs.compose.uiTooling)
 
-    androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.bundles.androidx.test)
-    androidTestImplementation(libs.bundles.androidx.compose.ui.test)
 }

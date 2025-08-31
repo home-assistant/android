@@ -30,7 +30,7 @@ class LastRebootSensorManager : SensorManager {
             commonR.string.sensor_description_last_reboot,
             "mdi:restart",
             deviceClass = "timestamp",
-            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
     }
 
@@ -48,9 +48,7 @@ class LastRebootSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         updateLastReboot(context)
     }
 
@@ -67,9 +65,12 @@ class LastRebootSensorManager : SensorManager {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val fullSensor = sensorDao.getFull(lastRebootSensor.id).toSensorWithAttributes()
         val sensorSetting = sensorDao.getSettings(lastRebootSensor.id)
-        val lastTimeMillis = fullSensor?.attributes?.firstOrNull { it.name == TIME_MILLISECONDS }?.value?.toLongOrNull() ?: 0L
+        val lastTimeMillis =
+            fullSensor?.attributes?.firstOrNull { it.name == TIME_MILLISECONDS }?.value?.toLongOrNull() ?: 0L
         val settingDeadband = sensorSetting.firstOrNull { it.name == SETTING_DEADBAND }?.value?.toIntOrNull() ?: 60000
-        sensorDao.add(SensorSetting(lastRebootSensor.id, SETTING_DEADBAND, settingDeadband.toString(), SensorSettingType.NUMBER))
+        sensorDao.add(
+            SensorSetting(lastRebootSensor.id, SETTING_DEADBAND, settingDeadband.toString(), SensorSettingType.NUMBER),
+        )
         try {
             timeInMillis = System.currentTimeMillis() - SystemClock.elapsedRealtime()
             val diffMillis = (timeInMillis - lastTimeMillis).absoluteValue
@@ -95,8 +96,8 @@ class LastRebootSensorManager : SensorManager {
             lastRebootSensor.statelessIcon,
             mapOf(
                 LOCAL_TIME to local,
-                TIME_MILLISECONDS to timeInMillis
-            )
+                TIME_MILLISECONDS to timeInMillis,
+            ),
         )
     }
 }

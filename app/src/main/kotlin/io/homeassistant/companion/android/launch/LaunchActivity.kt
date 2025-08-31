@@ -1,10 +1,11 @@
 package io.homeassistant.companion.android.launch
 
+import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
@@ -12,11 +13,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -42,8 +45,20 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import timber.log.Timber
 
+private const val EXTRA_SERVER_URL_TO_ONBOARD = "extra_server_url_to_onboard"
+
 @AndroidEntryPoint
-class LaunchActivity : AppCompatActivity(), LaunchView {
+class LaunchActivity :
+    AppCompatActivity(),
+    LaunchView {
+
+    companion object {
+        fun newInstance(context: Context, serverUrlToOnboard: String): Intent {
+            return Intent(context, LaunchActivity::class.java).apply {
+                putExtra(EXTRA_SERVER_URL_TO_ONBOARD, serverUrlToOnboard)
+            }
+        }
+    }
 
     @Inject
     lateinit var presenter: LaunchPresenter
@@ -60,8 +75,10 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
 
     private val registerActivityResult = registerForActivityResult(
         OnboardApp(),
-        this::onOnboardingComplete
+        this::onOnboardingComplete,
     )
+
+    private var networkDialog: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,21 +86,23 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             Box(modifier = Modifier.fillMaxSize()) {
                 HomeAssistantAppTheme {
                     CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
                     )
                 }
             }
         }
-        presenter.onViewReady()
+        lifecycleScope.launch {
+            presenter.onViewReady(intent.getStringExtra(EXTRA_SERVER_URL_TO_ONBOARD))
+        }
     }
 
-    override fun displayWebview() {
+    override suspend fun displayWebView() {
         presenter.setSessionExpireMillis(0)
 
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) && BuildConfig.FLAVOR == "full") {
+        if (isAutomotive() && BuildConfig.FLAVOR == "full") {
             val carIntent = Intent(
                 this,
-                Class.forName("androidx.car.app.activity.CarAppActivity")
+                Class.forName("androidx.car.app.activity.CarAppActivity"),
             ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(carIntent)
         } else if (presenter.hasMultipleServers() && intent.data?.path?.isNotBlank() == true) {
@@ -102,7 +121,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             }
 
             if (serverParameter != null) {
-                startActivity(WebViewActivity.newInstance(this, intent.data?.path, serverParameter))
+                startActivity(WebViewActivity.newInstance(this, intent.data?.toString(), serverParameter))
             } else { // Show server chooser
                 supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
                     val serverId = if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
@@ -111,7 +130,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                         null
                     }
                     supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
-                    startActivity(WebViewActivity.newInstance(this, intent.data?.path, serverId))
+                    startActivity(WebViewActivity.newInstance(this, intent.data?.toString(), serverId))
                     finish()
                     overridePendingTransition(0, 0) // Disable activity start/stop animation
                 }
@@ -119,18 +138,33 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 return
             }
         } else {
-            startActivity(WebViewActivity.newInstance(this, intent.data?.path))
+            startActivity(WebViewActivity.newInstance(this, intent.data?.toString()))
         }
         finish()
         overridePendingTransition(0, 0) // Disable activity start/stop animation
     }
 
-    override fun displayOnBoarding(sessionConnected: Boolean) {
-        registerActivityResult.launch(OnboardApp.Input())
+    override fun displayOnBoarding(sessionConnected: Boolean, serverUrlToOnboard: String?) {
+        registerActivityResult.launch(OnboardApp.Input(url = serverUrlToOnboard))
+    }
+
+    override fun displayAlertMessageDialog(@StringRes messageResId: Int) {
+        if (networkDialog?.isShowing != true) {
+            AlertDialog.Builder(this)
+                .setTitle(commonR.string.error_connection_failed)
+                .setMessage(messageResId)
+                .setCancelable(false)
+                .show()
+        }
+    }
+
+    override fun dismissDialog() {
+        networkDialog?.dismiss()
+        networkDialog = null
     }
 
     override fun onDestroy() {
-        presenter.onFinish()
+        dismissDialog()
         super.onDestroy()
     }
 
@@ -151,7 +185,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                                     deviceName,
                                     messagingToken,
                                     deviceTrackingEnabled,
-                                    notificationsEnabled
+                                    notificationsEnabled,
                                 )
                             }
                         }
@@ -163,7 +197,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                         deviceName,
                         messagingToken,
                         deviceTrackingEnabled,
-                        notificationsEnabled
+                        notificationsEnabled,
                     )
                 }
             } else {
@@ -178,7 +212,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         deviceName: String,
         messagingToken: String,
         deviceTrackingEnabled: Boolean,
-        notificationsEnabled: Boolean
+        notificationsEnabled: Boolean,
     ) {
         var serverId: Int? = null
         try {
@@ -187,10 +221,10 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 _name = "",
                 type = ServerType.TEMPORARY,
                 connection = ServerConnectionInfo(
-                    externalUrl = formattedUrl
+                    externalUrl = formattedUrl,
                 ),
                 session = ServerSessionInfo(),
-                user = ServerUserInfo()
+                user = ServerUserInfo(),
             )
             serverId = serverManager.addServer(server)
             serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
@@ -198,8 +232,8 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 DeviceRegistration(
                     "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                     deviceName,
-                    messagingToken
-                )
+                    messagingToken,
+                ),
             )
             serverId = serverManager.convertTemporaryServer(serverId)
         } catch (e: Exception) {
@@ -226,7 +260,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                         e is SSLHandshakeException -> commonR.string.webview_error_FAILED_SSL_HANDSHAKE
                         e is SSLException -> commonR.string.webview_error_SSL_INVALID
                         else -> commonR.string.webview_error
-                    }
+                    },
                 )
                 .setCancelable(false)
                 .setPositiveButton(commonR.string.ok) { dialog, _ ->
@@ -240,7 +274,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             setLocationTracking(serverId, deviceTrackingEnabled)
             setNotifications(serverId, notificationsEnabled)
         }
-        displayWebview()
+        displayWebView()
     }
 
     private suspend fun setLocationTracking(serverId: Int, enabled: Boolean) {
@@ -248,21 +282,21 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
             sensorIds = listOf(
                 LocationSensorManager.backgroundLocation.id,
                 LocationSensorManager.zoneLocation.id,
-                LocationSensorManager.singleAccurateLocation.id
+                LocationSensorManager.singleAccurateLocation.id,
             ),
             serverId = serverId,
-            enabled = enabled
+            enabled = enabled,
         )
     }
 
-    private fun setNotifications(serverId: Int, enabled: Boolean) {
+    private suspend fun setNotifications(serverId: Int, enabled: Boolean) {
         // Full: this only refers to the system permission on Android 13+ so no changes are necessary.
         // Minimal: change persistent connection setting to reflect preference.
         if (BuildConfig.FLAVOR != "full") {
             settingViewModel.getSetting(serverId) // Required to create initial value
             settingViewModel.updateWebsocketSetting(
                 serverId,
-                if (enabled) WebsocketSetting.ALWAYS else WebsocketSetting.NEVER
+                if (enabled) WebsocketSetting.ALWAYS else WebsocketSetting.NEVER,
             )
         }
     }

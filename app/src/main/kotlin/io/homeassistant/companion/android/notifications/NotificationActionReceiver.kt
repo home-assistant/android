@@ -44,7 +44,11 @@ class NotificationActionReceiver : BroadcastReceiver() {
     lateinit var notificationDao: NotificationDao
 
     override fun onReceive(context: Context, intent: Intent) {
-        val notificationAction = IntentCompat.getParcelableExtra(intent, EXTRA_NOTIFICATION_ACTION, NotificationAction::class.java)
+        val notificationAction = IntentCompat.getParcelableExtra(
+            intent,
+            EXTRA_NOTIFICATION_ACTION,
+            NotificationAction::class.java,
+        )
 
         if (notificationAction == null) {
             Timber.e("Failed to get notification action.")
@@ -71,14 +75,14 @@ class NotificationActionReceiver : BroadcastReceiver() {
                             "${MessagingManager.SOURCE_REPLY_HISTORY}$index" to text!!
                         }
                         .toMap(),
-                    "${MessagingManager.SOURCE_REPLY}$databaseId"
+                    "${MessagingManager.SOURCE_REPLY}$databaseId",
                 )
             } else {
                 val notificationManagerCompat = NotificationManagerCompat.from(context)
                 notificationManagerCompat.cancel(
                     tag,
                     messageId,
-                    true
+                    true,
                 )
             }
         }
@@ -95,31 +99,31 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         when (intent.action) {
             FIRE_EVENT -> {
-                val serverId = notificationDao.get(databaseId.toInt())?.serverId ?: ServerManager.SERVER_ID_ACTIVE
-                fireEvent(notificationAction, serverId, onComplete, onFailure)
+                ioScope.launch {
+                    val serverId = notificationDao.get(databaseId.toInt())?.serverId ?: ServerManager.SERVER_ID_ACTIVE
+                    fireEvent(notificationAction, serverId, onComplete, onFailure)
+                }
             }
         }
     }
 
-    private fun fireEvent(
+    private suspend fun fireEvent(
         action: NotificationAction,
         serverId: Int,
         onComplete: () -> Unit,
-        onFailure: () -> Unit
+        onFailure: () -> Unit,
     ) {
-        ioScope.launch {
-            try {
-                serverManager.integrationRepository(serverId).fireEvent(
-                    "mobile_app_notification_action",
-                    action.data
-                        .filter { !it.key.startsWith(MessagingManager.SOURCE_REPLY_HISTORY) }
-                        .plus(Pair("action", action.key))
-                )
-                onComplete()
-            } catch (e: Exception) {
-                Timber.e(e, "Unable to fire event.")
-                onFailure()
-            }
+        try {
+            serverManager.integrationRepository(serverId).fireEvent(
+                "mobile_app_notification_action",
+                action.data
+                    .filter { !it.key.startsWith(MessagingManager.SOURCE_REPLY_HISTORY) }
+                    .plus(Pair("action", action.key)),
+            )
+            onComplete()
+        } catch (e: Exception) {
+            Timber.e(e, "Unable to fire event.")
+            onFailure()
         }
     }
 }

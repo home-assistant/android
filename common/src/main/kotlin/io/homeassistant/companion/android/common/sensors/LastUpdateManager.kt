@@ -19,7 +19,7 @@ class LastUpdateManager : SensorManager {
             commonR.string.sensor_description_last_update,
             "mdi:update",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            updateType = SensorManager.BasicSensor.UpdateType.INTENT
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
     }
 
@@ -37,9 +37,7 @@ class LastUpdateManager : SensorManager {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(
-        context: Context
-    ) {
+    override suspend fun requestSensorUpdate(context: Context) {
         // No op
     }
 
@@ -59,7 +57,7 @@ class LastUpdateManager : SensorManager {
             lastUpdate,
             intentAction,
             lastUpdate.statelessIcon,
-            mapOf()
+            mapOf(),
         )
 
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
@@ -86,7 +84,9 @@ class LastUpdateManager : SensorManager {
             // delete old settings from DB:
             sensorDao.removeSettings(lastUpdate.id, intentSettings.map { it.name })
             // add new settings to DB:
-            newIntentSettings.forEach(sensorDao::add)
+            newIntentSettings.forEach {
+                sensorDao.add(it)
+            }
         }
         val addNewIntentToggle = allSettings.firstOrNull { it.name == SETTING_ADD_NEW_INTENT }
         if (addNewIntentToggle == null) {
@@ -99,7 +99,9 @@ class LastUpdateManager : SensorManager {
                 // turn off the toggle:
                 sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
                 // add the new Intent:
-                sensorDao.add(SensorSetting(lastUpdate.id, newIntentSettingName, intentAction, SensorSettingType.STRING))
+                sensorDao.add(
+                    SensorSetting(lastUpdate.id, newIntentSettingName, intentAction, SensorSettingType.STRING),
+                )
             }
         }
     }

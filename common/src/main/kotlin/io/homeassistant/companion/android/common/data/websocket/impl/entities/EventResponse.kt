@@ -1,10 +1,6 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import kotlinx.serialization.Serializable
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class EventResponse<T>(
-    val eventType: String,
-    val timeFired: String,
-    val data: T
-)
+@Serializable
+data class EventResponse<T>(val eventType: String, val timeFired: String, val data: T)

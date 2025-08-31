@@ -25,5 +25,5 @@ data class ThermostatTile(
     val targetTemperature: Float? = null,
     /** Whether or not to show the entity friendly name on the tile. */
     @ColumnInfo(name = "show_entity_name")
-    val showEntityName: Boolean? = true
+    val showEntityName: Boolean? = true,
 )

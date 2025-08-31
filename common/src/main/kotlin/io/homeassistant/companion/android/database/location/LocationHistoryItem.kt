@@ -20,7 +20,7 @@ data class LocationHistoryItem(
     val accuracy: Int?,
     val data: String?,
     @ColumnInfo(name = "server_id")
-    val serverId: Int?
+    val serverId: Int?,
 ) {
     fun toSharingString(serverName: String?): String {
         val createdString = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(created)
@@ -42,7 +42,7 @@ enum class LocationHistoryItemTrigger {
     GEOFENCE_EXIT,
     GEOFENCE_DWELL,
     SINGLE_ACCURATE_LOCATION,
-    UNKNOWN
+    UNKNOWN,
 }
 
 enum class LocationHistoryItemResult {
@@ -53,5 +53,5 @@ enum class LocationHistoryItemResult {
     SKIPPED_DEBOUNCE,
     SKIPPED_OLD,
     FAILED_SEND,
-    SENT
+    SENT,
 }

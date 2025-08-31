@@ -6,32 +6,38 @@ import android.os.Build
 import android.text.format.DateUtils
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon2
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon3
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
+import io.homeassistant.companion.android.common.util.LocalDateTimeSerializer
+import io.homeassistant.companion.android.common.util.MapAnySerializer
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.Calendar
 import java.util.Locale
 import kotlin.math.round
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
 import timber.log.Timber
 
-data class Entity<T>(
+@Serializable
+data class Entity(
     val entityId: String,
     val state: String,
-    val attributes: T,
-    val lastChanged: Calendar,
-    val lastUpdated: Calendar,
-    val context: Map<String, Any?>?
+    @Serializable(with = MapAnySerializer::class)
+    val attributes: Map<String, @Polymorphic Any?>,
+    @Serializable(with = LocalDateTimeSerializer::class)
+    val lastChanged: LocalDateTime,
+    @Serializable(with = LocalDateTimeSerializer::class)
+    val lastUpdated: LocalDateTime,
 )
 
-data class EntityPosition(
-    val value: Float,
-    val min: Float,
-    val max: Float
-)
+data class EntityPosition(val value: Float, val min: Float, val max: Float)
 
 object EntityExt {
     const val TAG = "EntityExt"
@@ -47,12 +53,12 @@ object EntityExt {
     val DOMAINS_PRESS = listOf("button", "input_button")
     val DOMAINS_TOGGLE = listOf(
         "automation", "cover", "fan", "humidifier", "input_boolean", "light", "lock",
-        "media_player", "remote", "siren", "switch"
+        "media_player", "remote", "siren", "switch",
     )
 
     val APP_PRESS_ACTION_DOMAINS = DOMAINS_PRESS + DOMAINS_TOGGLE + listOf(
         "scene",
-        "script"
+        "script",
     )
 
     val STATE_COLORED_DOMAINS = listOf(
@@ -84,11 +90,11 @@ object EntityExt {
         "timer",
         "update",
         "vacuum",
-        "water_heater"
+        "water_heater",
     )
 }
 
-val <T> Entity<T>.domain: String
+val Entity.domain: String
     get() = this.entityId.split(".")[0]
 
 /**
@@ -96,28 +102,20 @@ val <T> Entity<T>.domain: String
  * Based on home-assistant-js-websocket entities `processEvent` function:
  * https://github.com/home-assistant/home-assistant-js-websocket/blob/449fa43668f5316eb31609cd36088c5e82c818e2/lib/entities.ts#L47
  */
-fun Entity<Map<String, Any>>.applyCompressedStateDiff(diff: CompressedStateDiff): Entity<Map<String, Any>> {
-    var (_, newState, newAttributes, newLastChanged, newLastUpdated, newContext) = this
+fun Entity.applyCompressedStateDiff(diff: CompressedStateDiff): Entity {
+    var (_, newState, newAttributes, newLastChanged, newLastUpdated) = this
     diff.plus?.let { plus ->
         plus.state?.let {
             newState = it
         }
-        plus.context?.let {
-            newContext = if (it is String) {
-                newContext?.toMutableMap()?.apply { set("id", it) }
-            } else {
-                newContext?.plus(it as Map<String, Any?>)
-            }
-        }
         plus.lastChanged?.let {
-            val calendar = Calendar.getInstance().apply { timeInMillis = round(it * 1000).toLong() }
-            newLastChanged = calendar
-            newLastUpdated = calendar
+            val dateTime = LocalDateTime.ofEpochSecond(round(it).toLong(), 0, ZoneOffset.UTC)
+            newLastChanged = dateTime
+            newLastUpdated = dateTime
         } ?: plus.lastUpdated?.let {
-            newLastUpdated =
-                Calendar.getInstance().apply { timeInMillis = round(it * 1000).toLong() }
+            newLastUpdated = LocalDateTime.ofEpochSecond(round(it).toLong(), 0, ZoneOffset.UTC)
         }
-        plus.attributes?.let {
+        plus.attributes.let {
             newAttributes = newAttributes.plus(it)
         }
     }
@@ -130,16 +128,15 @@ fun Entity<Map<String, Any>>.applyCompressedStateDiff(diff: CompressedStateDiff)
         attributes = newAttributes,
         lastChanged = newLastChanged,
         lastUpdated = newLastUpdated,
-        context = newContext
     )
 }
 
-fun <T> Entity<T>.getCoverPosition(): EntityPosition? {
+fun Entity.getCoverPosition(): EntityPosition? {
     // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-cover.ts#L33
     return try {
         if (
             domain != "cover" ||
-            (attributes as Map<*, *>)["current_position"] == null
+            attributes["current_position"] == null
         ) {
             return null
         }
@@ -151,7 +148,7 @@ fun <T> Entity<T>.getCoverPosition(): EntityPosition? {
         EntityPosition(
             value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
             min = minValue,
-            max = maxValue
+            max = maxValue,
         )
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getCoverPosition")
@@ -159,39 +156,41 @@ fun <T> Entity<T>.getCoverPosition(): EntityPosition? {
     }
 }
 
-fun <T> Entity<T>.supportsAlarmControlPanelArmAway(): Boolean {
+fun Entity.supportsAlarmControlPanelArmAway(): Boolean {
     return try {
         if (domain != "alarm_control_panel") return false
-        ((attributes as Map<*, *>)["supported_features"] as Int) and EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY == EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY
+        (attributes["supported_features"] as Number).toInt() and
+            EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY == EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsArmedAway")
         false
     }
 }
 
-fun <T> Entity<T>.supportsFanSetSpeed(): Boolean {
+fun Entity.supportsFanSetSpeed(): Boolean {
     return try {
         if (domain != "fan") return false
-        ((attributes as Map<*, *>)["supported_features"] as Int) and EntityExt.FAN_SUPPORT_SET_SPEED == EntityExt.FAN_SUPPORT_SET_SPEED
+        (attributes["supported_features"] as Number).toInt() and
+            EntityExt.FAN_SUPPORT_SET_SPEED == EntityExt.FAN_SUPPORT_SET_SPEED
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsFanSetSpeed")
         false
     }
 }
 
-fun <T> Entity<T>.getFanSpeed(): EntityPosition? {
+fun Entity.getFanSpeed(): EntityPosition? {
     // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-fan.js#L48
     return try {
         if (!supportsFanSetSpeed()) return null
 
         val minValue = 0f
         val maxValue = 100f
-        val currentValue = ((attributes as Map<*, *>)["percentage"] as? Number)?.toFloat() ?: 0f
+        val currentValue = (attributes["percentage"] as? Number)?.toFloat() ?: 0f
 
         EntityPosition(
             value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
             min = minValue,
-            max = maxValue
+            max = maxValue,
         )
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getFanSpeed")
@@ -199,7 +198,7 @@ fun <T> Entity<T>.getFanSpeed(): EntityPosition? {
     }
 }
 
-fun <T> Entity<T>.getFanSteps(): Int? {
+fun Entity.getFanSteps(): Int? {
     return try {
         if (!supportsFanSetSpeed()) return null
 
@@ -211,7 +210,7 @@ fun <T> Entity<T>.getFanSteps(): Int? {
         }
 
         return calculateNumStep(
-            ((attributes as Map<*, *>)["percentage_step"] as? Double)?.toDouble() ?: 1.0
+            (attributes["percentage_step"] as? Number)?.toDouble() ?: 1.0,
         ) - 1
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getFanSteps")
@@ -219,25 +218,32 @@ fun <T> Entity<T>.getFanSteps(): Int? {
     }
 }
 
-fun <T> Entity<T>.supportsLightBrightness(): Boolean {
+fun Entity.supportsLightBrightness(): Boolean {
     return try {
         if (domain != "light") return false
 
         // On HA Core 2021.5 and later brightness detection has changed
         // to simplify things in the app lets use both methods for now
         val supportedColorModes =
-            (attributes as Map<*, *>)["supported_color_modes"] as? List<String>
+            attributes["supported_color_modes"] as? List<String>
         val supportsBrightness =
-            if (supportedColorModes == null) false else (supportedColorModes - EntityExt.LIGHT_MODE_NO_BRIGHTNESS_SUPPORT.toSet()).isNotEmpty()
-        val supportedFeatures = attributes["supported_features"] as Int
-        supportsBrightness || (supportedFeatures and EntityExt.LIGHT_SUPPORT_BRIGHTNESS_DEPR == EntityExt.LIGHT_SUPPORT_BRIGHTNESS_DEPR)
+            if (supportedColorModes ==
+                null
+            ) {
+                false
+            } else {
+                (supportedColorModes - EntityExt.LIGHT_MODE_NO_BRIGHTNESS_SUPPORT.toSet()).isNotEmpty()
+            }
+        val supportedFeatures = (attributes["supported_features"] as Number).toInt()
+        supportsBrightness ||
+            (supportedFeatures and EntityExt.LIGHT_SUPPORT_BRIGHTNESS_DEPR == EntityExt.LIGHT_SUPPORT_BRIGHTNESS_DEPR)
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsLightBrightness")
         false
     }
 }
 
-fun <T> Entity<T>.getLightBrightness(): EntityPosition? {
+fun Entity.getLightBrightness(): EntityPosition? {
     // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-light.ts#L90
     return try {
         if (!supportsLightBrightness()) return null
@@ -247,16 +253,17 @@ fun <T> Entity<T>.getLightBrightness(): EntityPosition? {
                 val minValue = 0f
                 val maxValue = 100f
                 val currentValue =
-                    ((attributes as Map<*, *>)["brightness"] as? Number)?.toFloat()?.div(255f)
+                    (attributes["brightness"] as? Number)?.toFloat()?.div(255f)
                         ?.times(100)
                         ?: 0f
 
                 EntityPosition(
                     value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
                     min = minValue,
-                    max = maxValue
+                    max = maxValue,
                 )
             }
+
             else -> null
         }
     } catch (e: Exception) {
@@ -265,32 +272,34 @@ fun <T> Entity<T>.getLightBrightness(): EntityPosition? {
     }
 }
 
-fun <T> Entity<T>.supportsLightColorTemperature(): Boolean {
+fun Entity.supportsLightColorTemperature(): Boolean {
     return try {
         if (domain != "light") return false
 
         val supportedColorModes =
-            (attributes as Map<*, *>)["supported_color_modes"] as? List<String>
+            attributes["supported_color_modes"] as? List<String>
         val supportsColorTemp =
-            supportedColorModes?.contains(EntityExt.LIGHT_MODE_COLOR_TEMP) ?: false
-        val supportedFeatures = attributes["supported_features"] as Int
-        supportsColorTemp || (supportedFeatures and EntityExt.LIGHT_SUPPORT_COLOR_TEMP_DEPR == EntityExt.LIGHT_SUPPORT_COLOR_TEMP_DEPR)
+            supportedColorModes?.contains(EntityExt.LIGHT_MODE_COLOR_TEMP) == true
+        val supportedFeatures = (attributes["supported_features"] as Number).toInt()
+        supportsColorTemp ||
+            (supportedFeatures and EntityExt.LIGHT_SUPPORT_COLOR_TEMP_DEPR == EntityExt.LIGHT_SUPPORT_COLOR_TEMP_DEPR)
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsLightColorTemperature")
         false
     }
 }
 
-fun <T> Entity<T>.getLightColor(): Int? {
+fun Entity.getLightColor(): Int? {
     // https://github.com/home-assistant/frontend/blob/dev/src/panels/lovelace/cards/hui-light-card.ts#L243
     return try {
         if (domain != "light") return null
 
         when {
-            state != "off" && (attributes as Map<*, *>)["rgb_color"] != null -> {
-                val (r, g, b) = (attributes["rgb_color"] as List<Int>)
+            state != "off" && attributes["rgb_color"] != null -> {
+                val (r, g, b) = (attributes["rgb_color"] as List<Number>).map { it.toInt() }
                 Color.rgb(r, g, b)
             }
+
             else -> null
         }
     } catch (e: Exception) {
@@ -299,17 +308,18 @@ fun <T> Entity<T>.getLightColor(): Int? {
     }
 }
 
-fun <T> Entity<T>.supportsVolumeSet(): Boolean {
+fun Entity.supportsVolumeSet(): Boolean {
     return try {
         if (domain != "media_player") return false
-        ((attributes as Map<*, *>)["supported_features"] as Int) and EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET == EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET
+        (attributes["supported_features"] as Number).toInt() and
+            EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET == EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsVolumeSet")
         false
     }
 }
 
-fun <T> Entity<T>.getVolumeLevel(): EntityPosition? {
+fun Entity.getVolumeLevel(): EntityPosition? {
     return try {
         if (!supportsVolumeSet()) return null
 
@@ -318,12 +328,12 @@ fun <T> Entity<T>.getVolumeLevel(): EntityPosition? {
 
         // Convert to percentage to match frontend behavior:
         // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-media_player.ts#L137
-        val currentValue = ((attributes as Map<*, *>)["volume_level"] as? Number)?.toFloat()?.times(100) ?: 0f
+        val currentValue = (attributes["volume_level"] as? Number)?.toFloat()?.times(100) ?: 0f
 
         EntityPosition(
             value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
             min = minValue,
-            max = maxValue
+            max = maxValue,
         )
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getVolumeLevel")
@@ -331,11 +341,11 @@ fun <T> Entity<T>.getVolumeLevel(): EntityPosition? {
     }
 }
 
-fun <T> Entity<T>.getVolumeStep(): Float {
+fun Entity.getVolumeStep(): Float {
     return try {
         if (!supportsVolumeSet()) return 0.1f
 
-        val volumeStep = ((attributes as Map<*, *>)["volume_step"] as? Number)?.toFloat() ?: 0.1f
+        val volumeStep = (attributes["volume_step"] as? Number)?.toFloat() ?: 0.1f
         volumeStep.coerceAtLeast(0.01f)
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getVolumeStep")
@@ -343,12 +353,12 @@ fun <T> Entity<T>.getVolumeStep(): Float {
     }
 }
 
-fun <T> Entity<T>.getIcon(context: Context): IIcon {
-    val attributes = this.attributes as Map<String, Any?>
+fun Entity.getIcon(context: Context): IIcon {
+    val attributes = this.attributes
     val icon = attributes["icon"] as? String
     return if (icon?.startsWith("mdi") == true) {
         val mdiIcon = icon.split(":")[1]
-        return IconicsDrawable(context, "cmd-$mdiIcon").icon ?: CommunityMaterial.Icon.cmd_bookmark
+        return IconicsDrawable(context, "cmd-$mdiIcon").icon ?: Icon.cmd_bookmark
     } else {
         /**
          * Return a default icon for the domain that matches the icon used in the frontend, see
@@ -358,342 +368,384 @@ fun <T> Entity<T>.getIcon(context: Context): IIcon {
         val compareState =
             state.ifBlank { attributes["state"] as String? }
         when (domain) {
-            "air_quality" -> CommunityMaterial.Icon.cmd_air_filter
+            "air_quality" -> Icon.cmd_air_filter
             "alarm_control_panel" -> when (compareState) {
-                "armed_away" -> CommunityMaterial.Icon3.cmd_shield_lock
-                "armed_custom_bypass" -> CommunityMaterial.Icon3.cmd_security
-                "armed_home" -> CommunityMaterial.Icon3.cmd_shield_home
-                "armed_night" -> CommunityMaterial.Icon3.cmd_shield_moon
-                "armed_vacation" -> CommunityMaterial.Icon3.cmd_shield_airplane
-                "disarmed" -> CommunityMaterial.Icon3.cmd_shield_off
-                "pending" -> CommunityMaterial.Icon3.cmd_shield_outline
-                "triggered" -> CommunityMaterial.Icon.cmd_bell_ring
-                else -> CommunityMaterial.Icon3.cmd_shield
+                "armed_away" -> Icon3.cmd_shield_lock
+                "armed_custom_bypass" -> Icon3.cmd_security
+                "armed_home" -> Icon3.cmd_shield_home
+                "armed_night" -> Icon3.cmd_shield_moon
+                "armed_vacation" -> Icon3.cmd_shield_airplane
+                "disarmed" -> Icon3.cmd_shield_off
+                "pending" -> Icon3.cmd_shield_outline
+                "triggered" -> Icon.cmd_bell_ring
+                else -> Icon3.cmd_shield
             }
-            "alert" -> CommunityMaterial.Icon.cmd_alert
+
+            "alert" -> Icon.cmd_alert
             "automation" -> if (compareState == "off") {
-                CommunityMaterial.Icon3.cmd_robot_off
+                Icon3.cmd_robot_off
             } else {
-                CommunityMaterial.Icon3.cmd_robot
+                Icon3.cmd_robot
             }
-            "binary_sensor" -> binarySensorIcon(compareState, this as Entity<Map<String, Any?>>)
+
+            "binary_sensor" -> binarySensorIcon(compareState, this)
             "button" -> when (attributes["device_class"]) {
-                "restart" -> CommunityMaterial.Icon3.cmd_restart
-                "update" -> CommunityMaterial.Icon3.cmd_package_up
-                else -> CommunityMaterial.Icon2.cmd_gesture_tap_button
+                "restart" -> Icon3.cmd_restart
+                "update" -> Icon3.cmd_package_up
+                else -> Icon2.cmd_gesture_tap_button
             }
-            "calendar" -> CommunityMaterial.Icon.cmd_calendar
+
+            "calendar" -> Icon.cmd_calendar
             "camera" -> if (compareState == "off") {
-                CommunityMaterial.Icon3.cmd_video_off
+                Icon3.cmd_video_off
             } else {
-                CommunityMaterial.Icon3.cmd_video
+                Icon3.cmd_video
             }
-            "climate" -> CommunityMaterial.Icon3.cmd_thermostat
-            "configurator" -> CommunityMaterial.Icon.cmd_cog
-            "conversation" -> CommunityMaterial.Icon3.cmd_microphone_message
-            "cover" -> coverIcon(compareState, this as Entity<Map<String, Any?>>)
-            "counter" -> CommunityMaterial.Icon.cmd_counter
+
+            "climate" -> Icon3.cmd_thermostat
+            "configurator" -> Icon.cmd_cog
+            "conversation" -> Icon3.cmd_microphone_message
+            "cover" -> coverIcon(compareState, this)
+            "counter" -> Icon.cmd_counter
             "fan" -> if (compareState == "off") {
-                CommunityMaterial.Icon2.cmd_fan_off
+                Icon2.cmd_fan_off
             } else {
-                CommunityMaterial.Icon2.cmd_fan
+                Icon2.cmd_fan
             }
-            "google_assistant" -> CommunityMaterial.Icon2.cmd_google_assistant
-            "group" -> CommunityMaterial.Icon2.cmd_google_circles_communities
-            "homeassistant" -> CommunityMaterial.Icon2.cmd_home_assistant
-            "homekit" -> CommunityMaterial.Icon2.cmd_home_automation
+
+            "google_assistant" -> Icon2.cmd_google_assistant
+            "group" -> Icon2.cmd_google_circles_communities
+            "homeassistant" -> Icon2.cmd_home_assistant
+            "homekit" -> Icon2.cmd_home_automation
             "humidifier" -> if (compareState == "off") {
-                CommunityMaterial.Icon.cmd_air_humidifier_off
+                Icon.cmd_air_humidifier_off
             } else {
-                CommunityMaterial.Icon.cmd_air_humidifier
+                Icon.cmd_air_humidifier
             }
-            "image_processing" -> CommunityMaterial.Icon2.cmd_image_filter_frames
+
+            "image_processing" -> Icon2.cmd_image_filter_frames
             "input_boolean" -> if (!entityId.endsWith(".ha_android_placeholder")) {
                 if (compareState == "on") {
-                    CommunityMaterial.Icon.cmd_check_circle_outline
+                    Icon.cmd_check_circle_outline
                 } else {
-                    CommunityMaterial.Icon.cmd_close_circle_outline
+                    Icon.cmd_close_circle_outline
                 }
             } else { // For SimplifiedEntity without state, use a more generic icon
-                CommunityMaterial.Icon3.cmd_toggle_switch_outline
+                Icon3.cmd_toggle_switch_outline
             }
-            "input_button" -> CommunityMaterial.Icon2.cmd_gesture_tap_button
+
+            "input_button" -> Icon2.cmd_gesture_tap_button
             "input_datetime" -> if (attributes["has_date"] == false) {
-                CommunityMaterial.Icon.cmd_clock
+                Icon.cmd_clock
             } else if (attributes["has_time"] == false) {
-                CommunityMaterial.Icon.cmd_calendar
+                Icon.cmd_calendar
             } else {
-                CommunityMaterial.Icon.cmd_calendar_clock
+                Icon.cmd_calendar_clock
             }
-            "input_number" -> CommunityMaterial.Icon3.cmd_ray_vertex
-            "input_select" -> CommunityMaterial.Icon2.cmd_format_list_bulleted
-            "input_text" -> CommunityMaterial.Icon2.cmd_form_textbox
-            "lawn_mower" -> CommunityMaterial.Icon3.cmd_robot_mower
-            "light" -> CommunityMaterial.Icon2.cmd_lightbulb
+
+            "input_number" -> Icon3.cmd_ray_vertex
+            "input_select" -> Icon2.cmd_format_list_bulleted
+            "input_text" -> Icon2.cmd_form_textbox
+            "lawn_mower" -> Icon3.cmd_robot_mower
+            "light" -> Icon2.cmd_lightbulb
             "lock" -> when (compareState) {
-                "unlocked", "open" -> CommunityMaterial.Icon2.cmd_lock_open_variant
-                "jammed" -> CommunityMaterial.Icon2.cmd_lock_alert
-                "locking", "unlocking", "opening" -> CommunityMaterial.Icon2.cmd_lock_clock
-                else -> CommunityMaterial.Icon2.cmd_lock
+                "unlocked", "open" -> Icon2.cmd_lock_open_variant
+                "jammed" -> Icon2.cmd_lock_alert
+                "locking", "unlocking", "opening" -> Icon2.cmd_lock_clock
+                else -> Icon2.cmd_lock
             }
-            "mailbox" -> CommunityMaterial.Icon3.cmd_mailbox
+
+            "mailbox" -> Icon3.cmd_mailbox
             "media_player" -> when (attributes["device_class"]) {
                 "speaker" -> when (compareState) {
-                    "playing" -> CommunityMaterial.Icon3.cmd_speaker_play
-                    "paused" -> CommunityMaterial.Icon3.cmd_speaker_pause
-                    "off" -> CommunityMaterial.Icon3.cmd_speaker_off
-                    else -> CommunityMaterial.Icon3.cmd_speaker
+                    "playing" -> Icon3.cmd_speaker_play
+                    "paused" -> Icon3.cmd_speaker_pause
+                    "off" -> Icon3.cmd_speaker_off
+                    else -> Icon3.cmd_speaker
                 }
+
                 "tv" -> when (compareState) {
-                    "playing" -> CommunityMaterial.Icon3.cmd_television_play
-                    "paused" -> CommunityMaterial.Icon3.cmd_television_pause
-                    "off" -> CommunityMaterial.Icon3.cmd_television_off
-                    else -> CommunityMaterial.Icon3.cmd_television
+                    "playing" -> Icon3.cmd_television_play
+                    "paused" -> Icon3.cmd_television_pause
+                    "off" -> Icon3.cmd_television_off
+                    else -> Icon3.cmd_television
                 }
+
                 "receiver" -> when (compareState) {
-                    "off" -> CommunityMaterial.Icon.cmd_audio_video_off
-                    else -> CommunityMaterial.Icon.cmd_audio_video
+                    "off" -> Icon.cmd_audio_video_off
+                    else -> Icon.cmd_audio_video
                 }
+
                 else -> when (compareState) {
-                    "playing", "paused" -> CommunityMaterial.Icon.cmd_cast_connected
-                    "off" -> CommunityMaterial.Icon.cmd_cast_off
-                    else -> CommunityMaterial.Icon.cmd_cast
+                    "playing", "paused" -> Icon.cmd_cast_connected
+                    "off" -> Icon.cmd_cast_off
+                    else -> Icon.cmd_cast
                 }
             }
-            "notify" -> CommunityMaterial.Icon3.cmd_message
+
+            "notify" -> Icon3.cmd_message
             "number" -> when (attributes["device_class"]) {
-                "apparent_power", "power", "reactive_power" -> CommunityMaterial.Icon2.cmd_flash
-                "aqi" -> CommunityMaterial.Icon.cmd_air_filter
-                "area" -> CommunityMaterial.Icon3.cmd_texture_box
-                "atmospheric_pressure" -> CommunityMaterial.Icon3.cmd_thermometer_lines
-                "battery" -> CommunityMaterial.Icon.cmd_battery
-                "blood_glucose_concentration" -> CommunityMaterial.Icon3.cmd_spoon_sugar
-                "carbon_dioxide" -> CommunityMaterial.Icon3.cmd_molecule_co2
-                "carbon_monoxide" -> CommunityMaterial.Icon3.cmd_molecule_co
-                "conductivity" -> CommunityMaterial.Icon3.cmd_sprout_outline
-                "current" -> CommunityMaterial.Icon.cmd_current_ac
-                "data_rate" -> CommunityMaterial.Icon3.cmd_transmission_tower
-                "data_size" -> CommunityMaterial.Icon.cmd_database
-                "distance" -> CommunityMaterial.Icon.cmd_arrow_left_right
-                "duration" -> CommunityMaterial.Icon3.cmd_progress_clock
-                "energy" -> CommunityMaterial.Icon2.cmd_lightning_bolt
-                "energy_storage" -> CommunityMaterial.Icon.cmd_car_battery
-                "frequency", "voltage" -> CommunityMaterial.Icon3.cmd_sine_wave
-                "gas" -> CommunityMaterial.Icon3.cmd_meter_gas
-                "humidity" -> CommunityMaterial.Icon3.cmd_water_percent
-                "illuminance" -> CommunityMaterial.Icon.cmd_brightness_5
-                "irradiance" -> CommunityMaterial.Icon3.cmd_sun_wireless
-                "moisture" -> CommunityMaterial.Icon3.cmd_water_percent
-                "monetary" -> CommunityMaterial.Icon.cmd_cash
+                "apparent_power", "power", "reactive_power" -> Icon2.cmd_flash
+                "aqi" -> Icon.cmd_air_filter
+                "area" -> Icon3.cmd_texture_box
+                "atmospheric_pressure" -> Icon3.cmd_thermometer_lines
+                "battery" -> Icon.cmd_battery
+                "blood_glucose_concentration" -> Icon3.cmd_spoon_sugar
+                "carbon_dioxide" -> Icon3.cmd_molecule_co2
+                "carbon_monoxide" -> Icon3.cmd_molecule_co
+                "conductivity" -> Icon3.cmd_sprout_outline
+                "current" -> Icon.cmd_current_ac
+                "data_rate" -> Icon3.cmd_transmission_tower
+                "data_size" -> Icon.cmd_database
+                "distance" -> Icon.cmd_arrow_left_right
+                "duration" -> Icon3.cmd_progress_clock
+                "energy" -> Icon2.cmd_lightning_bolt
+                "energy_storage" -> Icon.cmd_car_battery
+                "frequency", "voltage" -> Icon3.cmd_sine_wave
+                "gas" -> Icon3.cmd_meter_gas
+                "humidity" -> Icon3.cmd_water_percent
+                "illuminance" -> Icon.cmd_brightness_5
+                "irradiance" -> Icon3.cmd_sun_wireless
+                "moisture" -> Icon3.cmd_water_percent
+                "monetary" -> Icon.cmd_cash
                 "nitrogen_dioxide", "nitrogen_monoxide", "nitrogen_oxide", "ozone",
                 "pm1", "pm10", "pm25", "sulfur_dioxide", "volatile_organic_compounds",
-                "volatile_organic_compounds_parts" -> CommunityMaterial.Icon3.cmd_molecule
-                "ph" -> CommunityMaterial.Icon3.cmd_ph
-                "power_factor" -> CommunityMaterial.Icon.cmd_angle_acute
-                "precipitation" -> CommunityMaterial.Icon3.cmd_weather_rainy
-                "precipitation_intensity" -> CommunityMaterial.Icon3.cmd_weather_pouring
-                "pressure" -> CommunityMaterial.Icon2.cmd_gauge
-                "signal_strength" -> CommunityMaterial.Icon3.cmd_wifi
-                "sound_pressure" -> CommunityMaterial.Icon.cmd_ear_hearing
-                "speed" -> CommunityMaterial.Icon3.cmd_speedometer
-                "temperature" -> CommunityMaterial.Icon3.cmd_thermometer
-                "volume" -> CommunityMaterial.Icon.cmd_car_coolant_level
-                "volume_storage" -> CommunityMaterial.Icon3.cmd_storage_tank
-                "water" -> CommunityMaterial.Icon3.cmd_water
-                "weight" -> CommunityMaterial.Icon3.cmd_weight
-                "wind_speed" -> CommunityMaterial.Icon3.cmd_weather_windy
-                else -> CommunityMaterial.Icon3.cmd_ray_vertex
+                "volatile_organic_compounds_parts",
+                -> Icon3.cmd_molecule
+
+                "ph" -> Icon3.cmd_ph
+                "power_factor" -> Icon.cmd_angle_acute
+                "precipitation" -> Icon3.cmd_weather_rainy
+                "precipitation_intensity" -> Icon3.cmd_weather_pouring
+                "pressure" -> Icon2.cmd_gauge
+                "signal_strength" -> Icon3.cmd_wifi
+                "sound_pressure" -> Icon.cmd_ear_hearing
+                "speed" -> Icon3.cmd_speedometer
+                "temperature" -> Icon3.cmd_thermometer
+                "volume" -> Icon.cmd_car_coolant_level
+                "volume_storage" -> Icon3.cmd_storage_tank
+                "water" -> Icon3.cmd_water
+                "weight" -> Icon3.cmd_weight
+                "wind_speed" -> Icon3.cmd_weather_windy
+                else -> Icon3.cmd_ray_vertex
             }
-            "persistent_notification" -> CommunityMaterial.Icon.cmd_bell
+
+            "persistent_notification" -> Icon.cmd_bell
             "person" -> if (compareState == "not_home") {
-                CommunityMaterial.Icon.cmd_account_arrow_right
+                Icon.cmd_account_arrow_right
             } else {
-                CommunityMaterial.Icon.cmd_account
+                Icon.cmd_account
             }
-            "plant" -> CommunityMaterial.Icon2.cmd_flower
-            "proximity" -> CommunityMaterial.Icon.cmd_apple_safari
+
+            "plant" -> Icon2.cmd_flower
+            "proximity" -> Icon.cmd_apple_safari
             "remote" -> if (compareState == "on") {
-                CommunityMaterial.Icon3.cmd_remote
+                Icon3.cmd_remote
             } else {
-                CommunityMaterial.Icon3.cmd_remote_off
+                Icon3.cmd_remote_off
             }
-            "scene" -> CommunityMaterial.Icon3.cmd_palette_outline // Different from frontend: outline version
-            "schedule" -> CommunityMaterial.Icon.cmd_calendar_clock
-            "script" -> CommunityMaterial.Icon3.cmd_script_text_outline // Different from frontend: outline version
-            "select" -> CommunityMaterial.Icon2.cmd_format_list_bulleted
-            "sensor" -> sensorIcon(compareState, this as Entity<Map<String, Any?>>)
-            "siren" -> CommunityMaterial.Icon.cmd_bullhorn
-            "simple_alarm" -> CommunityMaterial.Icon.cmd_bell
+
+            "scene" -> Icon3.cmd_palette_outline // Different from frontend: outline version
+            "schedule" -> Icon.cmd_calendar_clock
+            "script" -> Icon3.cmd_script_text_outline // Different from frontend: outline version
+            "select" -> Icon2.cmd_format_list_bulleted
+            "sensor" -> sensorIcon(compareState, this)
+            "siren" -> Icon.cmd_bullhorn
+            "simple_alarm" -> Icon.cmd_bell
             "sun" -> if (compareState == "above_horizon") {
-                CommunityMaterial.Icon3.cmd_white_balance_sunny
+                Icon3.cmd_white_balance_sunny
             } else {
-                CommunityMaterial.Icon3.cmd_weather_night
+                Icon3.cmd_weather_night
             }
+
             "switch" -> if (!entityId.endsWith(".ha_android_placeholder")) {
                 when (attributes["device_class"]) {
-                    "outlet" -> if (compareState == "on") CommunityMaterial.Icon3.cmd_power_plug else CommunityMaterial.Icon3.cmd_power_plug_off
-                    "switch" -> if (compareState == "on") CommunityMaterial.Icon3.cmd_toggle_switch_variant else CommunityMaterial.Icon3.cmd_toggle_switch_variant_off
-                    else -> CommunityMaterial.Icon2.cmd_flash
+                    "outlet" -> if (compareState ==
+                        "on"
+                    ) {
+                        Icon3.cmd_power_plug
+                    } else {
+                        Icon3.cmd_power_plug_off
+                    }
+
+                    "switch" -> if (compareState ==
+                        "on"
+                    ) {
+                        Icon3.cmd_toggle_switch_variant
+                    } else {
+                        Icon3.cmd_toggle_switch_variant_off
+                    }
+
+                    else -> Icon2.cmd_flash
                 }
             } else { // For SimplifiedEntity without state, use a more generic icon
-                CommunityMaterial.Icon2.cmd_light_switch
+                Icon2.cmd_light_switch
             }
-            "tag" -> CommunityMaterial.Icon3.cmd_tag_outline
-            "text" -> CommunityMaterial.Icon2.cmd_form_textbox
-            "timer" -> CommunityMaterial.Icon3.cmd_timer_outline
-            "update" -> CommunityMaterial.Icon3.cmd_package
-            "updater" -> CommunityMaterial.Icon.cmd_cloud_upload
-            "vacuum" -> CommunityMaterial.Icon3.cmd_robot_vacuum
+
+            "tag" -> Icon3.cmd_tag_outline
+            "text" -> Icon2.cmd_form_textbox
+            "timer" -> Icon3.cmd_timer_outline
+            "update" -> Icon3.cmd_package
+            "updater" -> Icon.cmd_cloud_upload
+            "vacuum" -> Icon3.cmd_robot_vacuum
             "water_heater" -> if (compareState == "off") {
-                CommunityMaterial.Icon3.cmd_water_boiler_off
+                Icon3.cmd_water_boiler_off
             } else {
-                CommunityMaterial.Icon3.cmd_water_boiler
+                Icon3.cmd_water_boiler
             }
+
             "weather" -> when (state) {
-                "clear-night" -> CommunityMaterial.Icon3.cmd_weather_night
-                "exceptional" -> CommunityMaterial.Icon.cmd_alert_circle_outline
-                "fog" -> CommunityMaterial.Icon3.cmd_weather_fog
-                "hail" -> CommunityMaterial.Icon3.cmd_weather_hail
-                "lightning" -> CommunityMaterial.Icon3.cmd_weather_lightning
-                "lightning-rainy" -> CommunityMaterial.Icon3.cmd_weather_lightning_rainy
-                "partlycloudy" -> CommunityMaterial.Icon3.cmd_weather_partly_cloudy
-                "pouring" -> CommunityMaterial.Icon3.cmd_weather_pouring
-                "rainy" -> CommunityMaterial.Icon3.cmd_weather_rainy
-                "snowy" -> CommunityMaterial.Icon3.cmd_weather_snowy
-                "snowy-rainy" -> CommunityMaterial.Icon3.cmd_weather_snowy_rainy
-                "sunny" -> CommunityMaterial.Icon3.cmd_weather_sunny
-                "windy" -> CommunityMaterial.Icon3.cmd_weather_windy
-                "windy-variant" -> CommunityMaterial.Icon3.cmd_weather_windy_variant
-                else -> CommunityMaterial.Icon3.cmd_weather_cloudy
+                "clear-night" -> Icon3.cmd_weather_night
+                "exceptional" -> Icon.cmd_alert_circle_outline
+                "fog" -> Icon3.cmd_weather_fog
+                "hail" -> Icon3.cmd_weather_hail
+                "lightning" -> Icon3.cmd_weather_lightning
+                "lightning-rainy" -> Icon3.cmd_weather_lightning_rainy
+                "partlycloudy" -> Icon3.cmd_weather_partly_cloudy
+                "pouring" -> Icon3.cmd_weather_pouring
+                "rainy" -> Icon3.cmd_weather_rainy
+                "snowy" -> Icon3.cmd_weather_snowy
+                "snowy-rainy" -> Icon3.cmd_weather_snowy_rainy
+                "sunny" -> Icon3.cmd_weather_sunny
+                "windy" -> Icon3.cmd_weather_windy
+                "windy-variant" -> Icon3.cmd_weather_windy_variant
+                else -> Icon3.cmd_weather_cloudy
             }
-            "zone" -> CommunityMaterial.Icon3.cmd_map_marker_radius
-            else -> CommunityMaterial.Icon.cmd_bookmark
+
+            "zone" -> Icon3.cmd_map_marker_radius
+            else -> Icon.cmd_bookmark
         }
     }
 }
 
-private fun binarySensorIcon(state: String?, entity: Entity<Map<String, Any?>>): IIcon {
+private fun binarySensorIcon(state: String?, entity: Entity): IIcon {
     val isOff = state == "off"
 
     return when (entity.attributes["device_class"]) {
-        "battery" -> if (isOff) CommunityMaterial.Icon.cmd_battery else CommunityMaterial.Icon.cmd_battery_outline
-        "battery_charging" -> if (isOff) CommunityMaterial.Icon.cmd_battery else CommunityMaterial.Icon.cmd_battery_charging
-        "carbon_monoxide" -> if (isOff) CommunityMaterial.Icon3.cmd_smoke_detector else CommunityMaterial.Icon3.cmd_smoke_detector_alert
-        "cold" -> if (isOff) CommunityMaterial.Icon3.cmd_thermometer else CommunityMaterial.Icon3.cmd_snowflake
-        "connectivity" -> if (isOff) CommunityMaterial.Icon.cmd_close_network_outline else CommunityMaterial.Icon.cmd_check_network_outline
-        "door" -> if (isOff) CommunityMaterial.Icon.cmd_door_closed else CommunityMaterial.Icon.cmd_door_open
-        "garage_door" -> if (isOff) CommunityMaterial.Icon2.cmd_garage else CommunityMaterial.Icon2.cmd_garage_open
-        "gas", "problem", "safety", "tamper" -> if (isOff) CommunityMaterial.Icon.cmd_check_circle else CommunityMaterial.Icon.cmd_alert_circle
-        "heat" -> if (isOff) CommunityMaterial.Icon3.cmd_thermometer else CommunityMaterial.Icon2.cmd_fire
-        "light" -> if (isOff) CommunityMaterial.Icon.cmd_brightness_5 else CommunityMaterial.Icon.cmd_brightness_7
-        "lock" -> if (isOff) CommunityMaterial.Icon2.cmd_lock else CommunityMaterial.Icon2.cmd_lock_open
-        "moisture" -> if (isOff) CommunityMaterial.Icon3.cmd_water_off else CommunityMaterial.Icon3.cmd_water
-        "motion" -> if (isOff) CommunityMaterial.Icon3.cmd_motion_sensor_off else CommunityMaterial.Icon3.cmd_motion_sensor
-        "occupancy", "presence" -> if (isOff) CommunityMaterial.Icon2.cmd_home_outline else CommunityMaterial.Icon2.cmd_home
-        "opening" -> if (isOff) CommunityMaterial.Icon3.cmd_square else CommunityMaterial.Icon3.cmd_square_outline
-        "plug", "power" -> if (isOff) CommunityMaterial.Icon3.cmd_power_plug_off else CommunityMaterial.Icon3.cmd_power_plug
-        "running" -> if (isOff) CommunityMaterial.Icon3.cmd_stop else CommunityMaterial.Icon3.cmd_play
-        "smoke" -> if (isOff) CommunityMaterial.Icon3.cmd_smoke_detector_variant else CommunityMaterial.Icon3.cmd_smoke_detector_variant_alert
-        "sound" -> if (isOff) CommunityMaterial.Icon3.cmd_music_note_off else CommunityMaterial.Icon3.cmd_music_note
-        "update" -> if (isOff) CommunityMaterial.Icon3.cmd_package else CommunityMaterial.Icon3.cmd_package_up
-        "vibration" -> if (isOff) CommunityMaterial.Icon.cmd_crop_portrait else CommunityMaterial.Icon3.cmd_vibrate
-        "window" -> if (isOff) CommunityMaterial.Icon3.cmd_window_closed else CommunityMaterial.Icon3.cmd_window_open
-        else -> if (isOff) CommunityMaterial.Icon3.cmd_radiobox_blank else CommunityMaterial.Icon.cmd_checkbox_marked_circle
+        "battery" -> if (isOff) Icon.cmd_battery else Icon.cmd_battery_outline
+        "battery_charging" -> if (isOff) Icon.cmd_battery else Icon.cmd_battery_charging
+        "carbon_monoxide" -> if (isOff) Icon3.cmd_smoke_detector else Icon3.cmd_smoke_detector_alert
+        "cold" -> if (isOff) Icon3.cmd_thermometer else Icon3.cmd_snowflake
+        "connectivity" -> if (isOff) Icon.cmd_close_network_outline else Icon.cmd_check_network_outline
+        "door" -> if (isOff) Icon.cmd_door_closed else Icon.cmd_door_open
+        "garage_door" -> if (isOff) Icon2.cmd_garage else Icon2.cmd_garage_open
+        "gas", "problem", "safety", "tamper" -> if (isOff) Icon.cmd_check_circle else Icon.cmd_alert_circle
+        "heat" -> if (isOff) Icon3.cmd_thermometer else Icon2.cmd_fire
+        "light" -> if (isOff) Icon.cmd_brightness_5 else Icon.cmd_brightness_7
+        "lock" -> if (isOff) Icon2.cmd_lock else Icon2.cmd_lock_open
+        "moisture" -> if (isOff) Icon3.cmd_water_off else Icon3.cmd_water
+        "motion" -> if (isOff) Icon3.cmd_motion_sensor_off else Icon3.cmd_motion_sensor
+        "occupancy", "presence" -> if (isOff) Icon2.cmd_home_outline else Icon2.cmd_home
+        "opening" -> if (isOff) Icon3.cmd_square else Icon3.cmd_square_outline
+        "plug", "power" -> if (isOff) Icon3.cmd_power_plug_off else Icon3.cmd_power_plug
+        "running" -> if (isOff) Icon3.cmd_stop else Icon3.cmd_play
+        "smoke" -> if (isOff) Icon3.cmd_smoke_detector_variant else Icon3.cmd_smoke_detector_variant_alert
+        "sound" -> if (isOff) Icon3.cmd_music_note_off else Icon3.cmd_music_note
+        "update" -> if (isOff) Icon3.cmd_package else Icon3.cmd_package_up
+        "vibration" -> if (isOff) Icon.cmd_crop_portrait else Icon3.cmd_vibrate
+        "window" -> if (isOff) Icon3.cmd_window_closed else Icon3.cmd_window_open
+        else -> if (isOff) Icon3.cmd_radiobox_blank else Icon.cmd_checkbox_marked_circle
     }
 }
 
-private fun coverIcon(state: String?, entity: Entity<Map<String, Any?>>): IIcon {
+private fun coverIcon(state: String?, entity: Entity): IIcon {
     val open = state !== "closed"
 
     return when (entity.attributes["device_class"]) {
         "garage" -> when (state) {
-            "opening" -> CommunityMaterial.Icon.cmd_arrow_up_box
-            "closing" -> CommunityMaterial.Icon.cmd_arrow_down_box
-            "closed" -> CommunityMaterial.Icon2.cmd_garage
-            else -> CommunityMaterial.Icon2.cmd_garage_open
+            "opening" -> Icon.cmd_arrow_up_box
+            "closing" -> Icon.cmd_arrow_down_box
+            "closed" -> Icon2.cmd_garage
+            else -> Icon2.cmd_garage_open
         }
+
         "gate" -> when (state) {
-            "opening", "closing" -> CommunityMaterial.Icon2.cmd_gate_arrow_right
-            "closed" -> CommunityMaterial.Icon2.cmd_gate
-            else -> CommunityMaterial.Icon2.cmd_gate_open
+            "opening", "closing" -> Icon2.cmd_gate_arrow_right
+            "closed" -> Icon2.cmd_gate
+            else -> Icon2.cmd_gate_open
         }
-        "door" -> if (open) CommunityMaterial.Icon.cmd_door_open else CommunityMaterial.Icon.cmd_door_closed
-        "damper" -> if (open) CommunityMaterial.Icon.cmd_circle else CommunityMaterial.Icon.cmd_circle_slice_8
+
+        "door" -> if (open) Icon.cmd_door_open else Icon.cmd_door_closed
+        "damper" -> if (open) Icon.cmd_circle else Icon.cmd_circle_slice_8
         "shutter" -> when (state) {
-            "opening" -> CommunityMaterial.Icon.cmd_arrow_up_box
-            "closing" -> CommunityMaterial.Icon.cmd_arrow_down_box
-            "closed" -> CommunityMaterial.Icon3.cmd_window_shutter
-            else -> CommunityMaterial.Icon3.cmd_window_shutter_open
+            "opening" -> Icon.cmd_arrow_up_box
+            "closing" -> Icon.cmd_arrow_down_box
+            "closed" -> Icon3.cmd_window_shutter
+            else -> Icon3.cmd_window_shutter_open
         }
+
         "curtain" -> when (state) {
-            "opening" -> CommunityMaterial.Icon.cmd_arrow_split_vertical
-            "closing" -> CommunityMaterial.Icon.cmd_arrow_collapse_horizontal
-            "closed" -> CommunityMaterial.Icon.cmd_curtains_closed
-            else -> CommunityMaterial.Icon.cmd_curtains
+            "opening" -> Icon.cmd_arrow_split_vertical
+            "closing" -> Icon.cmd_arrow_collapse_horizontal
+            "closed" -> Icon.cmd_curtains_closed
+            else -> Icon.cmd_curtains
         }
+
         "blind", "shade" -> when (state) {
-            "opening" -> CommunityMaterial.Icon.cmd_arrow_up_box
-            "closing" -> CommunityMaterial.Icon.cmd_arrow_down_box
-            "closed" -> CommunityMaterial.Icon.cmd_blinds
-            else -> CommunityMaterial.Icon.cmd_blinds_open
+            "opening" -> Icon.cmd_arrow_up_box
+            "closing" -> Icon.cmd_arrow_down_box
+            "closed" -> Icon.cmd_blinds
+            else -> Icon.cmd_blinds_open
         }
+
         else -> when (state) {
-            "opening" -> CommunityMaterial.Icon.cmd_arrow_up_box
-            "closing" -> CommunityMaterial.Icon.cmd_arrow_down_box
-            "closed" -> CommunityMaterial.Icon3.cmd_window_closed
-            else -> CommunityMaterial.Icon3.cmd_window_open
+            "opening" -> Icon.cmd_arrow_up_box
+            "closing" -> Icon.cmd_arrow_down_box
+            "closed" -> Icon3.cmd_window_closed
+            else -> Icon3.cmd_window_open
         }
     }
 }
 
-private fun sensorIcon(state: String?, entity: Entity<Map<String, Any?>>): IIcon {
+private fun sensorIcon(state: String?, entity: Entity): IIcon {
     var icon: IIcon? = null
 
     if (entity.attributes["device_class"] != null) {
         icon = when (entity.attributes["device_class"]) {
-            "apparent_power", "power", "reactive_power" -> CommunityMaterial.Icon2.cmd_flash
-            "aqi" -> CommunityMaterial.Icon.cmd_air_filter
-            "atmospheric_pressure" -> CommunityMaterial.Icon3.cmd_thermometer_lines
+            "apparent_power", "power", "reactive_power" -> Icon2.cmd_flash
+            "aqi" -> Icon.cmd_air_filter
+            "atmospheric_pressure" -> Icon3.cmd_thermometer_lines
             "battery" -> {
                 val batteryValue = state?.toDoubleOrNull()
                 if (batteryValue == null) {
                     when (state) {
-                        "off" -> CommunityMaterial.Icon.cmd_battery
-                        "on" -> CommunityMaterial.Icon.cmd_battery_alert
-                        else -> CommunityMaterial.Icon.cmd_battery_unknown
+                        "off" -> Icon.cmd_battery
+                        "on" -> Icon.cmd_battery_alert
+                        else -> Icon.cmd_battery_unknown
                     }
                 } else if (batteryValue <= 5) {
-                    CommunityMaterial.Icon.cmd_battery_alert_variant_outline
+                    Icon.cmd_battery_alert_variant_outline
                 } else {
                     when (((batteryValue / 10) * 10).toInt()) {
-                        10 -> CommunityMaterial.Icon.cmd_battery_10
-                        20 -> CommunityMaterial.Icon.cmd_battery_20
-                        30 -> CommunityMaterial.Icon.cmd_battery_30
-                        40 -> CommunityMaterial.Icon.cmd_battery_40
-                        50 -> CommunityMaterial.Icon.cmd_battery_50
-                        60 -> CommunityMaterial.Icon.cmd_battery_60
-                        70 -> CommunityMaterial.Icon.cmd_battery_70
-                        80 -> CommunityMaterial.Icon.cmd_battery_80
-                        90 -> CommunityMaterial.Icon.cmd_battery_90
-                        else -> CommunityMaterial.Icon.cmd_battery
+                        10 -> Icon.cmd_battery_10
+                        20 -> Icon.cmd_battery_20
+                        30 -> Icon.cmd_battery_30
+                        40 -> Icon.cmd_battery_40
+                        50 -> Icon.cmd_battery_50
+                        60 -> Icon.cmd_battery_60
+                        70 -> Icon.cmd_battery_70
+                        80 -> Icon.cmd_battery_80
+                        90 -> Icon.cmd_battery_90
+                        else -> Icon.cmd_battery
                     }
                 }
             }
-            "carbon_dioxide" -> CommunityMaterial.Icon3.cmd_molecule_co2
-            "carbon_monoxide" -> CommunityMaterial.Icon3.cmd_molecule_co
-            "current" -> CommunityMaterial.Icon.cmd_current_ac
-            "data_rate" -> CommunityMaterial.Icon3.cmd_transmission_tower
-            "data_size" -> CommunityMaterial.Icon.cmd_database
-            "date" -> CommunityMaterial.Icon.cmd_calendar
-            "distance" -> CommunityMaterial.Icon.cmd_arrow_left_right
-            "duration" -> CommunityMaterial.Icon3.cmd_progress_clock
-            "energy" -> CommunityMaterial.Icon2.cmd_lightning_bolt
-            "frequency", "voltage" -> CommunityMaterial.Icon3.cmd_sine_wave
-            "gas" -> CommunityMaterial.Icon3.cmd_meter_gas
-            "humidity", "moisture" -> CommunityMaterial.Icon3.cmd_water_percent
-            "illuminance" -> CommunityMaterial.Icon.cmd_brightness_5
-            "irradiance" -> CommunityMaterial.Icon3.cmd_sun_wireless
-            "monetary" -> CommunityMaterial.Icon.cmd_cash
+
+            "carbon_dioxide" -> Icon3.cmd_molecule_co2
+            "carbon_monoxide" -> Icon3.cmd_molecule_co
+            "current" -> Icon.cmd_current_ac
+            "data_rate" -> Icon3.cmd_transmission_tower
+            "data_size" -> Icon.cmd_database
+            "date" -> Icon.cmd_calendar
+            "distance" -> Icon.cmd_arrow_left_right
+            "duration" -> Icon3.cmd_progress_clock
+            "energy" -> Icon2.cmd_lightning_bolt
+            "frequency", "voltage" -> Icon3.cmd_sine_wave
+            "gas" -> Icon3.cmd_meter_gas
+            "humidity", "moisture" -> Icon3.cmd_water_percent
+            "illuminance" -> Icon.cmd_brightness_5
+            "irradiance" -> Icon3.cmd_sun_wireless
+            "monetary" -> Icon.cmd_cash
             "nitrogen_dioxide",
             "nitrogen_monoxide",
             "nitrous_oxide",
@@ -702,20 +754,22 @@ private fun sensorIcon(state: String?, entity: Entity<Map<String, Any?>>): IIcon
             "pm10",
             "pm25",
             "sulphur_dioxide",
-            "volatile_organic_compounds" -> CommunityMaterial.Icon3.cmd_molecule
-            "power_factor" -> CommunityMaterial.Icon.cmd_angle_acute
-            "precipitation" -> CommunityMaterial.Icon3.cmd_weather_rainy
-            "precipitation_intensity" -> CommunityMaterial.Icon3.cmd_weather_pouring
-            "pressure" -> CommunityMaterial.Icon2.cmd_gauge
-            "signal_strength" -> CommunityMaterial.Icon3.cmd_wifi
-            "sound_pressure" -> CommunityMaterial.Icon.cmd_ear_hearing
-            "speed" -> CommunityMaterial.Icon3.cmd_speedometer
-            "temperature" -> CommunityMaterial.Icon3.cmd_thermometer
-            "timestamp" -> CommunityMaterial.Icon.cmd_clock
-            "volume" -> CommunityMaterial.Icon.cmd_car_coolant_level
-            "water" -> CommunityMaterial.Icon3.cmd_water
-            "weight" -> CommunityMaterial.Icon3.cmd_weight
-            "wind_speed" -> CommunityMaterial.Icon3.cmd_weather_windy
+            "volatile_organic_compounds",
+            -> Icon3.cmd_molecule
+
+            "power_factor" -> Icon.cmd_angle_acute
+            "precipitation" -> Icon3.cmd_weather_rainy
+            "precipitation_intensity" -> Icon3.cmd_weather_pouring
+            "pressure" -> Icon2.cmd_gauge
+            "signal_strength" -> Icon3.cmd_wifi
+            "sound_pressure" -> Icon.cmd_ear_hearing
+            "speed" -> Icon3.cmd_speedometer
+            "temperature" -> Icon3.cmd_thermometer
+            "timestamp" -> Icon.cmd_clock
+            "volume" -> Icon.cmd_car_coolant_level
+            "water" -> Icon3.cmd_water
+            "weight" -> Icon3.cmd_weight
+            "wind_speed" -> Icon3.cmd_weather_windy
             else -> null
         }
     }
@@ -723,30 +777,32 @@ private fun sensorIcon(state: String?, entity: Entity<Map<String, Any?>>): IIcon
     if (icon == null) {
         val unitOfMeasurement = entity.attributes["unit_of_measurement"]
         if (unitOfMeasurement != null && unitOfMeasurement in listOf("°C", "°F")) {
-            icon = CommunityMaterial.Icon3.cmd_thermometer
+            icon = Icon3.cmd_thermometer
         }
     }
 
-    return icon ?: CommunityMaterial.Icon.cmd_eye
+    return icon ?: Icon.cmd_eye
 }
 
-suspend fun <T> Entity<T>.onPressed(
-    integrationRepository: IntegrationRepository
-) {
+suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
     val action = when (domain) {
         "lock" -> {
             if (state == "unlocked") "lock" else "unlock"
         }
+
         "alarm_control_panel" -> {
             if (state != "disarmed") "alarm_disarm" else "alarm_arm_away"
         }
+
         in EntityExt.DOMAINS_PRESS -> "press"
         "fan",
         "input_boolean",
         "script",
-        "switch" -> {
+        "switch",
+        -> {
             if (state == "on") "turn_off" else "turn_on"
         }
+
         "scene" -> "turn_on"
         else -> "toggle"
     }
@@ -754,7 +810,7 @@ suspend fun <T> Entity<T>.onPressed(
     integrationRepository.callAction(
         domain = this.domain,
         action = action,
-        actionData = hashMapOf("entity_id" to entityId)
+        actionData = hashMapOf("entity_id" to entityId),
     )
 }
 
@@ -763,10 +819,7 @@ suspend fun <T> Entity<T>.onPressed(
  * speed up the execution.
  * @throws IntegrationException on network errors
  */
-suspend fun onEntityPressedWithoutState(
-    entityId: String,
-    integrationRepository: IntegrationRepository
-) {
+suspend fun onEntityPressedWithoutState(entityId: String, integrationRepository: IntegrationRepository) {
     val domain = entityId.split(".")[0]
     val action = when (domain) {
         "lock" -> {
@@ -777,6 +830,7 @@ suspend fun onEntityPressedWithoutState(
             }
             if (lockEntity?.state == "locked") "unlock" else "lock"
         }
+
         in EntityExt.DOMAINS_PRESS -> "press"
         in EntityExt.DOMAINS_TOGGLE -> "toggle"
         else -> "turn_on"
@@ -784,41 +838,178 @@ suspend fun onEntityPressedWithoutState(
     integrationRepository.callAction(
         domain = domain,
         action = action,
-        actionData = hashMapOf("entity_id" to entityId)
+        actionData = hashMapOf("entity_id" to entityId),
     )
 }
 
-val <T> Entity<T>.friendlyName: String
-    get() = (attributes as? Map<*, *>)?.get("friendly_name")?.toString() ?: entityId
+val Entity.friendlyName: String
+    get() = attributes["friendly_name"]?.toString() ?: entityId
 
-fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions? = null, appendUnitOfMeasurement: Boolean = false): String {
-    val attributes = this.attributes as Map<String, Any?>
+fun Entity.friendlyState(
+    context: Context,
+    options: EntityRegistryOptions? = null,
+    appendUnitOfMeasurement: Boolean = false,
+): String {
+    val attributes = this.attributes
 
     var friendlyState = when (domain) {
         "binary_sensor" -> {
             // https://github.com/home-assistant/core/blob/dev/homeassistant/components/binary_sensor/strings.json#L113
             when (attributes["device_class"]) {
-                "battery" -> if (state == "on") context.getString(commonR.string.state_low) else context.getString(commonR.string.state_normal)
-                "battery_charging" -> if (state == "on") context.getString(commonR.string.state_charging) else context.getString(commonR.string.state_not_charging)
-                "cold" -> if (state == "on") context.getString(commonR.string.state_cold) else context.getString(commonR.string.state_off)
-                "connectivity" -> if (state == "on") context.getString(commonR.string.state_connected) else context.getString(commonR.string.state_disconnected)
-                "door", "window", "garage_door", "opening" -> if (state == "on") context.getString(commonR.string.state_open) else context.getString(commonR.string.state_closed)
-                "gas" -> if (state == "on") context.getString(commonR.string.state_detected) else context.getString(commonR.string.state_clear)
-                "heat" -> if (state == "on") context.getString(commonR.string.state_hot) else context.getString(commonR.string.state_off)
-                "light" -> if (state == "on") context.getString(commonR.string.state_light_detected) else context.getString(commonR.string.state_no_light)
-                "lock" -> if (state == "on") context.getString(commonR.string.state_unlocked) else context.getString(commonR.string.state_locked)
-                "moisture" -> if (state == "on") context.getString(commonR.string.state_wet) else context.getString(commonR.string.state_dry)
-                "moving" -> if (state == "on") context.getString(commonR.string.state_moving) else context.getString(commonR.string.state_not_moving)
-                "plug" -> if (state == "on") context.getString(commonR.string.state_plugged_in) else context.getString(commonR.string.state_unplugged)
-                "presence" -> if (state == "on") context.getString(commonR.string.state_home) else context.getString(commonR.string.state_not_home)
-                "problem" -> if (state == "on") context.getString(commonR.string.state_problem) else context.getString(commonR.string.state_ok)
-                "running" -> if (state == "on") context.getString(commonR.string.state_running) else context.getString(commonR.string.state_not_running)
-                "safety" -> if (state == "on") context.getString(commonR.string.state_unsafe) else context.getString(commonR.string.state_safe)
-                "tamper" -> if (state == "on") context.getString(commonR.string.state_tampering_detected) else context.getString(commonR.string.state_off)
-                "update" -> if (state == "on") context.getString(commonR.string.state_update_available) else context.getString(commonR.string.state_up_to_date)
-                else -> if (state == "on") context.getString(commonR.string.state_on) else context.getString(commonR.string.state_off)
+                "battery" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_low)
+                } else {
+                    context.getString(commonR.string.state_normal)
+                }
+
+                "battery_charging" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_charging)
+                } else {
+                    context.getString(commonR.string.state_not_charging)
+                }
+
+                "cold" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_cold)
+                } else {
+                    context.getString(commonR.string.state_off)
+                }
+
+                "connectivity" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_connected)
+                } else {
+                    context.getString(commonR.string.state_disconnected)
+                }
+
+                "door", "window", "garage_door", "opening" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_open)
+                } else {
+                    context.getString(commonR.string.state_closed)
+                }
+
+                "gas" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_detected)
+                } else {
+                    context.getString(commonR.string.state_clear)
+                }
+
+                "heat" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_hot)
+                } else {
+                    context.getString(commonR.string.state_off)
+                }
+
+                "light" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_light_detected)
+                } else {
+                    context.getString(commonR.string.state_no_light)
+                }
+
+                "lock" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_unlocked)
+                } else {
+                    context.getString(commonR.string.state_locked)
+                }
+
+                "moisture" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_wet)
+                } else {
+                    context.getString(commonR.string.state_dry)
+                }
+
+                "moving" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_moving)
+                } else {
+                    context.getString(commonR.string.state_not_moving)
+                }
+
+                "plug" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_plugged_in)
+                } else {
+                    context.getString(commonR.string.state_unplugged)
+                }
+
+                "presence" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_home)
+                } else {
+                    context.getString(commonR.string.state_not_home)
+                }
+
+                "problem" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_problem)
+                } else {
+                    context.getString(commonR.string.state_ok)
+                }
+
+                "running" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_running)
+                } else {
+                    context.getString(commonR.string.state_not_running)
+                }
+
+                "safety" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_unsafe)
+                } else {
+                    context.getString(commonR.string.state_safe)
+                }
+
+                "tamper" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_tampering_detected)
+                } else {
+                    context.getString(commonR.string.state_off)
+                }
+
+                "update" -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_update_available)
+                } else {
+                    context.getString(commonR.string.state_up_to_date)
+                }
+
+                else -> if (state ==
+                    "on"
+                ) {
+                    context.getString(commonR.string.state_on)
+                } else {
+                    context.getString(commonR.string.state_off)
+                }
             }
         }
+
         else -> {
             // https://github.com/home-assistant/frontend/blob/dev/src/common/entity/get_states.ts#L5
             when (state) {
@@ -896,9 +1087,11 @@ fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions
                 stateInMillis,
                 System.currentTimeMillis(),
                 0,
-                DateUtils.FORMAT_ABBREV_ALL
+                DateUtils.FORMAT_ABBREV_ALL,
             ).toString()
-        } catch (e: DateTimeParseException) { /* Not a timestamp */ }
+        } catch (e: DateTimeParseException) {
+            /* Not a timestamp */
+        }
     }
     if (
         friendlyState == state &&
@@ -917,7 +1110,7 @@ fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions
     }
 
     if (appendUnitOfMeasurement) {
-        val unit = (attributes as? Map<*, *>)?.get("unit_of_measurement")?.toString()
+        val unit = attributes["unit_of_measurement"]?.toString()
 
         if (unit?.isNotBlank() == true) {
             return "$friendlyState $unit"
@@ -927,9 +1120,9 @@ fun <T> Entity<T>.friendlyState(context: Context, options: EntityRegistryOptions
     return friendlyState
 }
 
-fun <T> Entity<T>.canSupportPrecision() = domain == "sensor" && state.toDoubleOrNull() != null
+fun Entity.canSupportPrecision() = domain == "sensor" && state.toDoubleOrNull() != null
 
-fun <T> Entity<T>.isExecuting() = when (state) {
+fun Entity.isExecuting() = when (state) {
     "arming" -> true
     "buffering" -> true
     "closing" -> true
@@ -941,7 +1134,7 @@ fun <T> Entity<T>.isExecuting() = when (state) {
     else -> false
 }
 
-fun <T> Entity<T>.isActive() = when {
+fun Entity.isActive() = when {
     // https://github.com/home-assistant/frontend/blob/dev/src/common/entity/state_active.ts
     (domain in listOf("button", "input_button", "event", "scene")) -> state != "unavailable"
     (state == "unavailable" || state == "unknown") -> false

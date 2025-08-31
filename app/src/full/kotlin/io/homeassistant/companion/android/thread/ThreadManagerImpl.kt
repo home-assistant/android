@@ -15,6 +15,7 @@ import com.google.android.gms.threadnetwork.ThreadNetworkStatusCodes
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
+import io.homeassistant.companion.android.common.util.isAutomotive
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -25,15 +26,15 @@ import timber.log.Timber
 
 class ThreadManagerImpl @Inject constructor(
     private val serverManager: ServerManager,
-    private val packageManager: PackageManager
+    private val packageManager: PackageManager,
 ) : ThreadManager {
     companion object {
         // ID is a placeholder used in previous app versions / for older Home Assistant versions
         private const val BORDER_AGENT_ID = "0000000000000001"
     }
 
-    override fun appSupportsThread(): Boolean =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 && !packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    override fun appSupportsThread(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 &&
+        !packageManager.isAutomotive()
 
     override suspend fun coreSupportsThread(serverId: Int): Boolean {
         if (!serverManager.isRegistered() || serverManager.getServer(serverId)?.user?.isAdmin != true) return false
@@ -50,7 +51,7 @@ class ThreadManagerImpl @Inject constructor(
         context: Context,
         serverId: Int,
         exportOnly: Boolean,
-        scope: CoroutineScope
+        scope: CoroutineScope,
     ): ThreadManager.SyncResult {
         if (!appSupportsThread()) return ThreadManager.SyncResult.AppUnsupported
         if (!coreSupportsThread(serverId)) return ThreadManager.SyncResult.ServerUnsupported
@@ -62,9 +63,7 @@ class ThreadManagerImpl @Inject constructor(
         }
     }
 
-    private suspend fun exportSyncPreferredDataset(
-        context: Context
-    ): ThreadManager.SyncResult {
+    private suspend fun exportSyncPreferredDataset(context: Context): ThreadManager.SyncResult {
         val getDeviceDataset = try {
             getPreferredDatasetFromDevice(context)
         } catch (e: ApiException) {
@@ -93,7 +92,7 @@ class ThreadManagerImpl @Inject constructor(
     private suspend fun fullSyncPreferredDataset(
         context: Context,
         serverId: Int,
-        scope: CoroutineScope
+        scope: CoroutineScope,
     ): ThreadManager.SyncResult {
         deleteOrphanedThreadCredentials(context, serverId)
 
@@ -105,7 +104,12 @@ class ThreadManagerImpl @Inject constructor(
 
         return if (deviceThreadIntent == null && coreThreadDataset != null) {
             try {
-                importDatasetFromServer(context, coreThreadDataset.datasetId, coreThreadDataset.preferredBorderAgentId, serverId)
+                importDatasetFromServer(
+                    context,
+                    coreThreadDataset.datasetId,
+                    coreThreadDataset.preferredBorderAgentId,
+                    serverId,
+                )
                 coreThreadDataset.preferredBorderAgentId?.let {
                     serverManager.integrationRepository(serverId).setThreadBorderAgentIds(listOf(it))
                 } // else added using placeholder, will be removed when core is updated
@@ -121,9 +125,13 @@ class ThreadManagerImpl @Inject constructor(
         } else if (deviceThreadIntent != null && coreThreadDataset != null) {
             try {
                 val coreIsDevicePreferred = isPreferredDatasetByDevice(context, coreThreadDataset.datasetId, serverId)
-                Timber.d("Thread: device ${if (coreIsDevicePreferred) "prefers" else "doesn't prefer" } core preferred dataset")
+                Timber.d(
+                    "Thread: device ${if (coreIsDevicePreferred) "prefers" else "doesn't prefer" } core preferred dataset",
+                )
                 val appIsDevicePreferred = coreIsDevicePreferred || appAddedIsPreferredCredentials(context)
-                Timber.d("Thread: device ${if (appIsDevicePreferred) "prefers" else "doesn't prefer" } dataset from app")
+                Timber.d(
+                    "Thread: device ${if (appIsDevicePreferred) "prefers" else "doesn't prefer" } dataset from app",
+                )
 
                 var exportFromDevice = false
                 var updated: Boolean? = null
@@ -145,14 +153,19 @@ class ThreadManagerImpl @Inject constructor(
                                         Timber.e(e, "Unable to delete credential for border agent ID $baId")
                                     }
                                 }
-                                importDatasetFromServer(context, coreThreadDataset.datasetId, coreThreadDataset.preferredBorderAgentId, serverId)
+                                importDatasetFromServer(
+                                    context,
+                                    coreThreadDataset.datasetId,
+                                    coreThreadDataset.preferredBorderAgentId,
+                                    serverId,
+                                )
                                 serverManager.defaultServers.forEach {
                                     serverManager.integrationRepository(it.id).setThreadBorderAgentIds(
                                         if (it.id == serverId && coreThreadDataset.preferredBorderAgentId != null) {
                                             listOf(coreThreadDataset.preferredBorderAgentId!!)
                                         } else {
                                             emptyList()
-                                        }
+                                        },
                                     )
                                 }
                                 Timber.d("Thread update device completed: deleted ${localIds.size} datasets, updated 1")
@@ -184,11 +197,16 @@ class ThreadManagerImpl @Inject constructor(
                     matches = coreIsDevicePreferred,
                     fromApp = appIsDevicePreferred,
                     updated = updated,
-                    exportIntent = if (exportFromDevice) deviceThreadIntent else null
+                    exportIntent = if (exportFromDevice) deviceThreadIntent else null,
                 )
             } catch (e: Exception) {
                 Timber.e(e, "Thread device/core preferred comparison failed")
-                ThreadManager.SyncResult.AllHaveCredentials(matches = null, fromApp = null, updated = null, exportIntent = null)
+                ThreadManager.SyncResult.AllHaveCredentials(
+                    matches = null,
+                    fromApp = null,
+                    updated = null,
+                    exportIntent = null,
+                )
             }
         } else {
             ThreadManager.SyncResult.NoneHaveCredentials
@@ -203,7 +221,7 @@ class ThreadManagerImpl @Inject constructor(
         context: Context,
         datasetId: String,
         preferredBorderAgentId: String?,
-        serverId: Int
+        serverId: Int,
     ) {
         val tlv = serverManager.webSocketRepository(serverId).getThreadDatasetTlv(datasetId)?.tlvAsByteArray
         if (tlv != null) {
@@ -215,7 +233,8 @@ class ThreadManagerImpl @Inject constructor(
             val threadBorderAgent = ThreadBorderAgent.newBuilder(idAsBytes).build()
             val threadNetworkCredentials = ThreadNetworkCredentials.fromActiveOperationalDataset(tlv)
             suspendCoroutine { cont ->
-                ThreadNetwork.getClient(context).addCredentials(threadBorderAgent, threadNetworkCredentials)
+                ThreadNetwork.getNetworkClient(context)
+                    .addCredentials(threadBorderAgent, threadNetworkCredentials)
                     .addOnSuccessListener { cont.resume(Unit) }
                     .addOnFailureListener { cont.resumeWithException(it) }
             }
@@ -224,7 +243,7 @@ class ThreadManagerImpl @Inject constructor(
 
     override suspend fun getPreferredDatasetFromDevice(context: Context): IntentSender? = suspendCoroutine { cont ->
         if (appSupportsThread()) {
-            ThreadNetwork.getClient(context)
+            ThreadNetwork.getNetworkClient(context)
                 .preferredCredentials
                 .addOnSuccessListener { cont.resume(it.intentSender) }
                 .addOnFailureListener { cont.resumeWithException(it) }
@@ -245,7 +264,7 @@ class ThreadManagerImpl @Inject constructor(
 
     private suspend fun appAddedIsPreferredCredentials(context: Context): Boolean {
         val appCredentials = suspendCoroutine { cont ->
-            ThreadNetwork.getClient(context)
+            ThreadNetwork.getNetworkClient(context)
                 .allCredentials
                 .addOnSuccessListener { cont.resume(it) }
                 .addOnFailureListener { cont.resume(null) }
@@ -254,7 +273,11 @@ class ThreadManagerImpl @Inject constructor(
             appCredentials?.any {
                 val isPreferred = isPreferredCredentials(context, it)
                 if (isPreferred) {
-                    Timber.d("Thread device prefers app added dataset: ${it.networkName} (PAN ${it.panId}, EXTPAN ${String(it.extendedPanId)})")
+                    Timber.d(
+                        "Thread device prefers app added dataset: ${it.networkName} (PAN ${it.panId}, EXTPAN ${String(
+                            it.extendedPanId,
+                        )})",
+                    )
                 }
                 isPreferred
             } ?: false
@@ -264,18 +287,21 @@ class ThreadManagerImpl @Inject constructor(
         }
     }
 
-    private suspend fun isPreferredCredentials(context: Context, credentials: ThreadNetworkCredentials): Boolean = suspendCoroutine { cont ->
-        ThreadNetwork.getClient(context)
-            .isPreferredCredentials(credentials)
-            .addOnSuccessListener { cont.resume(it == IsPreferredCredentialsResult.PREFERRED_CREDENTIALS_MATCHED) }
-            .addOnFailureListener { cont.resumeWithException(it) }
-    }
+    private suspend fun isPreferredCredentials(context: Context, credentials: ThreadNetworkCredentials): Boolean =
+        suspendCoroutine { cont ->
+            ThreadNetwork.getNetworkClient(context)
+                .isPreferredCredentials(credentials)
+                .addOnSuccessListener { cont.resume(it == IsPreferredCredentialsResult.PREFERRED_CREDENTIALS_MATCHED) }
+                .addOnFailureListener { cont.resumeWithException(it) }
+        }
 
     override suspend fun sendThreadDatasetExportResult(result: ActivityResult, serverId: Int): String? {
         if (result.resultCode == Activity.RESULT_OK && coreSupportsThread(serverId)) {
             val threadNetworkCredentials = ThreadNetworkCredentials.fromIntentSenderResultData(result.data!!)
             try {
-                val added = serverManager.webSocketRepository(serverId).addThreadDataset(threadNetworkCredentials.activeOperationalDataset)
+                val added = serverManager.webSocketRepository(
+                    serverId,
+                ).addThreadDataset(threadNetworkCredentials.activeOperationalDataset)
                 if (added) return threadNetworkCredentials.networkName
             } catch (e: Exception) {
                 Timber.e(e, "Error while executing server new Thread credentials request")
@@ -288,7 +314,7 @@ class ThreadManagerImpl @Inject constructor(
         if (serverManager.defaultServers.all { it.version?.isAtLeast(2023, 9) == true }) {
             try {
                 deleteThreadCredential(context, BORDER_AGENT_ID)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Expected, it may not exist
             }
         }
@@ -310,7 +336,7 @@ class ThreadManagerImpl @Inject constructor(
     private suspend fun deleteThreadCredential(context: Context, borderAgentId: String) = suspendCoroutine { cont ->
         val idAsBytes = borderAgentId.let { if (it.length == 16) it.toByteArray() else it.hexToByteArray() }
         val threadBorderAgent = ThreadBorderAgent.newBuilder(idAsBytes).build()
-        ThreadNetwork.getClient(context)
+        ThreadNetwork.getNetworkClient(context)
             .removeCredentials(threadBorderAgent)
             .addOnSuccessListener { cont.resume(true) }
             .addOnFailureListener { cont.resumeWithException(it) }

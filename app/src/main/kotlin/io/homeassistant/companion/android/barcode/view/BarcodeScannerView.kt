@@ -1,20 +1,18 @@
 package io.homeassistant.companion.android.barcode.view
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
@@ -23,6 +21,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarDuration
+import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarResult
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
@@ -42,7 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -56,8 +54,13 @@ import com.journeyapps.barcodescanner.CaptureManager
 import com.journeyapps.barcodescanner.DecoratedBarcodeView
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.util.compose.darkColorBackground
+import io.homeassistant.companion.android.util.compose.safeScreenHeight
+import io.homeassistant.companion.android.util.compose.screenWidth
 import io.homeassistant.companion.android.util.getActivity
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
+import io.homeassistant.companion.android.util.safeTopWindowInsets
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun BarcodeScannerView(
     title: String,
@@ -69,7 +72,7 @@ fun BarcodeScannerView(
     requestPermission: () -> Unit,
     onResult: (String, BarcodeFormat) -> Unit,
     onCancel: (Boolean) -> Unit,
-    resultTimeoutMillis: Long = 1500L
+    resultTimeoutMillis: Long = 1500L,
 ) {
     val context = LocalContext.current
     val barcodeView = remember {
@@ -101,7 +104,7 @@ fun BarcodeScannerView(
     Box {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
-            factory = { barcodeView }
+            factory = { barcodeView },
         )
         if (hasPermission) {
             LifecycleResumeEffect("barcodeView") {
@@ -114,13 +117,11 @@ fun BarcodeScannerView(
 
         BoxWithConstraints(
             modifier = Modifier
-                .safeDrawingPadding()
-                .fillMaxSize()
+                .fillMaxSize(),
         ) {
-            val configuration = LocalConfiguration.current
-            val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-            val screenHeight = configuration.screenHeightDp.dp - systemBarsPadding.calculateTopPadding() - systemBarsPadding.calculateBottomPadding()
-            val screenWidth = configuration.screenWidthDp.dp
+            val screenHeight = safeScreenHeight()
+            val screenWidth = screenWidth()
+
             val cutoutSize = minOf(minOf(screenHeight, screenWidth) - 48.dp, 320.dp)
 
             val scaffoldState = rememberScaffoldState()
@@ -129,7 +130,7 @@ fun BarcodeScannerView(
                     scaffoldState.snackbarHostState.showSnackbar(
                         context.getString(commonR.string.missing_camera_permission),
                         context.getString(commonR.string.settings),
-                        SnackbarDuration.Indefinite
+                        SnackbarDuration.Indefinite,
                     ).let { result ->
                         if (result == SnackbarResult.ActionPerformed) {
                             requestPermission()
@@ -141,6 +142,12 @@ fun BarcodeScannerView(
             BarcodeScannerOverlay(modifier = Modifier.fillMaxSize(), cutout = cutoutSize)
             Scaffold(
                 scaffoldState = scaffoldState,
+                snackbarHost = {
+                    SnackbarHost(
+                        hostState = scaffoldState.snackbarHostState,
+                        modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets()),
+                    )
+                },
                 topBar = {
                     TopAppBar(
                         title = {},
@@ -149,15 +156,16 @@ fun BarcodeScannerView(
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = stringResource(commonR.string.cancel),
-                                    tint = Color.White
+                                    tint = Color.White,
                                 )
                             }
                         },
                         backgroundColor = Color.Transparent,
-                        elevation = 0.dp
+                        windowInsets = safeTopWindowInsets(),
+                        elevation = 0.dp,
                     )
                 },
-                backgroundColor = Color.Transparent
+                backgroundColor = Color.Transparent,
             ) { paddingValues ->
                 Column(
                     modifier = Modifier
@@ -165,17 +173,17 @@ fun BarcodeScannerView(
                         .padding(paddingValues)
                         .padding(horizontal = 16.dp)
                         .padding(top = 32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
                         text = title,
                         color = Color.White,
-                        style = MaterialTheme.typography.h6
+                        style = MaterialTheme.typography.h6,
                     )
                     Text(
                         text = subtitle,
                         color = Color.White,
-                        style = MaterialTheme.typography.subtitle1
+                        style = MaterialTheme.typography.subtitle1,
                     )
                     action?.let {
                         Spacer(Modifier.height(32.dp))
@@ -204,7 +212,7 @@ fun BarcodeScannerView(
                             barcodeView.setTorchOff()
                         }
                     },
-                    modifier = Modifier.offset(offsetX, offsetY)
+                    modifier = Modifier.offset(offsetX, offsetY),
                 )
             }
         }
@@ -216,10 +224,7 @@ fun BarcodeScannerView(
  * The button size fits with the overlay radius.
  */
 @Composable
-fun FlashlightButton(
-    onToggle: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun FlashlightButton(onToggle: (Boolean) -> Unit, modifier: Modifier = Modifier) {
     var flashlightOn by rememberSaveable { mutableStateOf(false) }
     OutlinedButton(
         modifier = modifier.size(48.dp),
@@ -231,12 +236,12 @@ fun FlashlightButton(
         onClick = {
             onToggle(!flashlightOn)
             flashlightOn = !flashlightOn
-        }
+        },
     ) {
         Icon(
             imageVector = if (flashlightOn) Icons.Default.FlashlightOff else Icons.Default.FlashlightOn,
             contentDescription = stringResource(commonR.string.toggle_flashlight),
-            tint = Color.White
+            tint = Color.White,
         )
     }
 }

@@ -1,7 +1,12 @@
 package io.homeassistant.companion.android.launch
 
-interface LaunchView {
-    fun displayWebview()
+import androidx.annotation.StringRes
 
-    fun displayOnBoarding(sessionConnected: Boolean)
+interface LaunchView {
+    suspend fun displayWebView()
+
+    fun displayOnBoarding(sessionConnected: Boolean, serverUrlToOnboard: String? = null)
+
+    fun displayAlertMessageDialog(@StringRes stringResId: Int)
+    fun dismissDialog()
 }

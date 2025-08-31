@@ -32,7 +32,6 @@ import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.webview.WebViewActivity
-import java.lang.IllegalStateException
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -44,17 +43,21 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-class WebsocketManager(
-    appContext: Context,
-    workerParams: WorkerParameters
-) : CoroutineWorker(appContext, workerParams) {
+class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
+    CoroutineWorker(appContext, workerParams) {
 
     companion object {
         private const val TAG = "WebSockManager"
         private const val SOURCE = "Websocket"
         private const val NOTIFICATION_ID = 65423
         private const val NOTIFICATION_RESTRICTED_ID = 65424
-        private val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.FLAVOR == "full") WebsocketSetting.NEVER else WebsocketSetting.ALWAYS
+        private val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.FLAVOR ==
+            "full"
+        ) {
+            WebsocketSetting.NEVER
+        } else {
+            WebsocketSetting.ALWAYS
+        }
 
         fun start(context: Context) {
             val websocketNotifications =
@@ -68,13 +71,13 @@ class WebsocketManager(
                 workManager.enqueueUniquePeriodicWork(
                     TAG,
                     ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
-                    websocketNotifications
+                    websocketNotifications,
                 )
             } else {
                 workManager.enqueueUniquePeriodicWork(
                     TAG,
                     ExistingPeriodicWorkPolicy.KEEP,
-                    websocketNotifications
+                    websocketNotifications,
                 )
             }
         }
@@ -124,9 +127,9 @@ class WebsocketManager(
         return@withContext Result.success()
     }
 
-    private fun shouldWeRun(): Boolean = serverManager.defaultServers.any { shouldRunForServer(it.id) }
+    private suspend fun shouldWeRun(): Boolean = serverManager.defaultServers.any { shouldRunForServer(it.id) }
 
-    private fun shouldRunForServer(serverId: Int): Boolean {
+    private suspend fun shouldRunForServer(serverId: Int): Boolean {
         val server = serverManager.getServer(serverId) ?: return false
         val setting = settingsDao.get(serverId)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
         val isHome = server.connection.isInternal(requiresUrl = false)
@@ -187,7 +190,10 @@ class WebsocketManager(
                                 flattened["action_${i + 1}_key"] = action["action"].toString()
                                 flattened["action_${i + 1}_title"] = action["title"].toString()
                                 action["uri"]?.let { uri -> flattened["action_${i + 1}_uri"] = uri.toString() }
-                                action["behavior"]?.let { behavior -> flattened["action_${i + 1}_behavior"] = behavior.toString() }
+                                action["behavior"]?.let { behavior ->
+                                    flattened["action_${i + 1}_behavior"] =
+                                        behavior.toString()
+                                }
                             }
                         }
                     } else {
@@ -218,7 +224,7 @@ class WebsocketManager(
             val notificationChannel = NotificationChannel(
                 CHANNEL_WEBSOCKET,
                 applicationContext.getString(R.string.websocket_setting_name),
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_LOW,
             )
             notificationManager.createNotificationChannel(notificationChannel)
         }
@@ -231,11 +237,10 @@ class WebsocketManager(
             applicationContext,
             0,
             intent,
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE,
         )
 
-        val settingIntent = SettingsActivity.newInstance(applicationContext)
-        settingIntent.putExtra("fragment", "websocket")
+        val settingIntent = SettingsActivity.newInstance(applicationContext, SettingsActivity.Deeplink.Websocket)
         settingIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         settingIntent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         settingIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
@@ -243,7 +248,7 @@ class WebsocketManager(
             applicationContext,
             0,
             settingIntent,
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE,
         )
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_WEBSOCKET)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
@@ -255,7 +260,7 @@ class WebsocketManager(
             .addAction(
                 io.homeassistant.companion.android.R.drawable.ic_websocket,
                 applicationContext.getString(R.string.settings),
-                settingPendingIntent
+                settingPendingIntent,
             )
             .build()
         return try {
@@ -275,7 +280,7 @@ class WebsocketManager(
                     val restrictedNotificationChannel = NotificationChannel(
                         CHANNEL_WEBSOCKET_ISSUES,
                         applicationContext.getString(R.string.websocket_notification_issues),
-                        NotificationManager.IMPORTANCE_DEFAULT
+                        NotificationManager.IMPORTANCE_DEFAULT,
                     )
                     notificationManager.createNotificationChannel(restrictedNotificationChannel)
                 }

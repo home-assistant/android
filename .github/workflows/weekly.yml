@@ -9,11 +9,13 @@ jobs:
     name: Tag Weekly Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Tag Weekly Release
         env:
@@ -28,8 +30,19 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'onPush.yml',
-              ref: 'master',
+              ref: 'main',
               inputs: {
                 "beta": "true",
               },
+            })
+
+      - name: Trigger Prepare Next Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'prepareNextRelease.yml',
+              ref: 'main',
             })

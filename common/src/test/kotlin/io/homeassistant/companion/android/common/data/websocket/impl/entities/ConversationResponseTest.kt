@@ -1,14 +1,10 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import io.homeassistant.companion.android.common.util.jacksonObjectMapperForHACore
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class ConversationResponseTest {
-
-    private val objectMapper: ObjectMapper = jacksonObjectMapperForHACore()
 
     @Test
     fun `deserialize ConversationResponse with missing continueConversation field`() {
@@ -27,7 +23,7 @@ class ConversationResponseTest {
             }
         """.trimIndent()
         // Act
-        val deserializedResponse: ConversationResponse = objectMapper.readValue(json)
+        val deserializedResponse: ConversationResponse = kotlinJsonMapper.decodeFromString(json)
 
         // Assert
         assertEquals("01JP0CHJ5YP97SFZAKH1Y6SXNQ", deserializedResponse.conversationId)
@@ -52,7 +48,7 @@ class ConversationResponseTest {
             }
         """.trimIndent()
         // Act
-        val deserializedResponse: ConversationResponse = objectMapper.readValue(json)
+        val deserializedResponse: ConversationResponse = kotlinJsonMapper.decodeFromString(json)
 
         // Assert
         assertEquals("01JP0CHJ5YP97SFZAKH1Y6SXNQ", deserializedResponse.conversationId)
@@ -78,7 +74,7 @@ class ConversationResponseTest {
         """.trimIndent()
 
         // Act
-        val deserializedResponse: ConversationResponse = objectMapper.readValue(json)
+        val deserializedResponse: ConversationResponse = kotlinJsonMapper.decodeFromString(json)
 
         // Assert
         assertEquals("01JP0CHJ5YP97SFZAKH1Y6SXNQ", deserializedResponse.conversationId)

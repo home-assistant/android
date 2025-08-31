@@ -1,11 +1,10 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import io.homeassistant.companion.android.common.util.MapAnySerializer
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
 
-data class AssistPipelineEvent(
-    val type: String,
-    val data: AssistPipelineEventData?
-)
+data class AssistPipelineEvent(val type: String, val data: AssistPipelineEventData?)
 
 object AssistPipelineEventType {
     const val RUN_START = "run-start"
@@ -22,45 +21,37 @@ object AssistPipelineEventType {
 
 interface AssistPipelineEventData
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class AssistPipelineRunStart(
     val pipeline: String,
     val language: String,
-    val runnerData: Map<String, Any?>
+    // TODO replace the map https://github.com/home-assistant/android/issues/5341
+    @Serializable(with = MapAnySerializer::class)
+    val runnerData: Map<String, @Polymorphic Any?>,
 ) : AssistPipelineEventData
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class AssistPipelineSttEnd(
-    val sttOutput: Map<String, Any?>
+    // TODO Replace the map https://github.com/home-assistant/android/issues/5341
+    @Serializable(with = MapAnySerializer::class)
+    val sttOutput: Map<String, @Polymorphic Any?>,
 ) : AssistPipelineEventData
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class AssistPipelineIntentStart(
-    val engine: String,
-    val language: String,
-    val intentInput: String
-) : AssistPipelineEventData
+@Serializable
+data class AssistPipelineIntentStart(val engine: String, val language: String, val intentInput: String) :
+    AssistPipelineEventData
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class AssistPipelineIntentProgress(
-    val chatLogDelta: AssistChatLogDelta?
-) : AssistPipelineEventData
+@Serializable
+data class AssistPipelineIntentProgress(val chatLogDelta: AssistChatLogDelta?) : AssistPipelineEventData
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class AssistChatLogDelta(val content: String?)
+@Serializable
+data class AssistChatLogDelta(val content: String? = null)
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class AssistPipelineIntentEnd(
-    val intentOutput: ConversationResponse
-) : AssistPipelineEventData
+@Serializable
+data class AssistPipelineIntentEnd(val intentOutput: ConversationResponse) : AssistPipelineEventData
 
-@JsonIgnoreProperties
-data class AssistPipelineTtsEnd(
-    val ttsOutput: TtsOutputResponse
-) : AssistPipelineEventData
+@Serializable
+data class AssistPipelineTtsEnd(val ttsOutput: TtsOutputResponse) : AssistPipelineEventData
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class AssistPipelineError(
-    val code: String?,
-    val message: String?
-) : AssistPipelineEventData
+@Serializable
+data class AssistPipelineError(val code: String? = null, val message: String? = null) : AssistPipelineEventData
