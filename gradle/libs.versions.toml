@@ -147,7 +147,7 @@ car-core = { module = "androidx.car.app:app", version.ref = "car-versions" }
 car-automotive = { module = "androidx.car.app:app-automotive", version.ref = "car-versions" }
 car-projected = { module = "androidx.car.app:app-projected", version.ref = "car-versions" }
 changeLog = { module = "com.github.AppDevNext:ChangeLog", version.ref = "changeLog" }
-coil-oktthp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+coil-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 coil-views = { module = "io.coil-kt.coil3:coil", version.ref = "coil" }
 community-material-typeface = { module = "com.mikepenz:community-material-typeface", version.ref = "community-material-typeface" }
@@ -249,7 +249,7 @@ androidx-test =["androidx-test-core", "androidx-test-ext", "androidx-test-rules"
 androidx-compose-ui-test = ["compose-ui-test", "compose-ui-testManifest"]
 androidx-glance = ["androidx-glance-appwidget", "androidx-glance-appwidget-preview", "androidx-glance-material", "androidx-glance-preview"]
 androidx-glance-testing = ["androidx-glance-testing", "androidx-glance-appwidget-testing"]
-coil = ["coil-views", "coil-oktthp", "coil-svg"]
+coil = ["coil-views", "coil-okhttp", "coil-svg"]
 media3 = ["media3-exoplayer", "media3-exoplayer-hls", "media3-ui-compose", "media3-session"]
 paging = ["paging-runtime", "paging-compose"]
 wear-tiles = ["wear-tiles", "wear-protolayout-main", "wear-protolayout-expression", "wear-protolayout-material"]
