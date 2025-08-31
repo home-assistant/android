@@ -78,13 +78,12 @@ tools-desugar-jdk-libs = "2.1.5"
 turbine = "1.2.1"
 watchfaceComplicationsDataSourceKtx = "1.2.1"
 wear = "1.3.0"
-wear-compose-foundation = "1.4.1"
-wear-compose-material = "1.0.0-alpha37"
+wear-compose = "1.5.0"
 wear-protolayout = "1.3.0"
 wear-tiles = "1.5.0"
 wear-tooling = "1.0.0"
 wearPhoneInteractions = "1.1.0"
-wearInput = "1.2.0-beta01"
+wearInput = "1.2.0-rc01"
 webkit = "1.14.0"
 wear-remote-interactions = "1.1.0"
 workRuntimeKtx = "2.10.3"
@@ -231,9 +230,9 @@ timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 tools-desugar-jdk = { module = "com.android.tools:desugar_jdk_libs", version.ref = "tools-desugar-jdk-libs" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 wear = { module = "androidx.wear:wear", version.ref = "wear" }
-wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wear-compose-foundation" }
-wear-compose-material = { module = "androidx.wear.compose:compose-material3", version.ref = "wear-compose-material" }
-wear-compose-navigation = { module = "androidx.wear.compose:compose-navigation", version.ref = "wear-compose-foundation" }
+wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wear-compose" }
+wear-compose-material = { module = "androidx.wear.compose:compose-material3", version.ref = "wear-compose" }
+wear-compose-navigation = { module = "androidx.wear.compose:compose-navigation", version.ref = "wear-compose" }
 wear-phone-interactions = { module = "androidx.wear:wear-phone-interactions", version.ref = "wearPhoneInteractions" }
 wear-input = { module = "androidx.wear:wear-input", version.ref = "wearInput" }
 wear-protolayout-expression = { module = "androidx.wear.protolayout:protolayout-expression", version.ref = "wear-protolayout" }
