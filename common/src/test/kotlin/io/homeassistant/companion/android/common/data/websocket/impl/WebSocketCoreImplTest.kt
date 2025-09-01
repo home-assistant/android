@@ -86,7 +86,7 @@ class WebSocketCoreImplTest {
 
         mockConnection = mockk(relaxed = true)
         coEvery { mockServerManager.getServer(any<Int>()) } returns testServer
-        every { mockServerManager.authenticationRepository(testServerId) } returns mockAuthenticationRepository
+        coEvery { mockServerManager.authenticationRepository(testServerId) } returns mockAuthenticationRepository
         coEvery { mockAuthenticationRepository.retrieveAccessToken() } returns "mock_access_token"
         // The implementation use a background scope to properly handle async messages, to not block the test
         // we are injecting a background scope to properly control it within the tests, the scope will close itself at the end of the test

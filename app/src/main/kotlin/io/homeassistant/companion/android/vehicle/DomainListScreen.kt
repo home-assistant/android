@@ -11,7 +11,6 @@ import androidx.lifecycle.lifecycleScope
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -28,7 +27,6 @@ import kotlinx.coroutines.launch
 class DomainListScreen(
     carContext: CarContext,
     val serverManager: ServerManager,
-    val integrationRepository: IntegrationRepository,
     private val serverId: StateFlow<Int>,
     private val allEntities: Flow<Map<String, Entity>>,
     private val prefsRepository: PrefsRepository,
