@@ -30,8 +30,7 @@ abstract class LaunchPresenterBase(
      *
      * **Note:** Using a dedicated scope like this means that the underlying Activity might not be
      * destroyed immediately if these background tasks are still running. This is a trade-off
-     * for improved UI responsiveness in scenarios with potential network delays. If we
-     * introduce a new server state like disable we could maybe bring this back in the flow.
+     * for improved UI responsiveness in scenarios with potential network delays.
      *
      * We use a [SupervisorJob] on purpose because it ensures that if one task fails, it won't
      * impact the others.
