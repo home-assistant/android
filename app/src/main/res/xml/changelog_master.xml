@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2025.8.10 - Main" versioncode="3">
+    <release version="2025.9.1 - Main" versioncode="3">
         <change>Gesture settings for the main Home Assistant UI added, with new gestures and actions</change>
         <change>Health Connect sensors now require permission to access health data in the background</change>
         <change>Downloading snapshots from camera card is now working</change>
         <change>Bug fixes and dependency updates</change>
         <change>&lt;b&gt;Note:&lt;/b&gt; This is the last app release supporting Android 5.0 and 5.1</change>
     </release>
-    <release version="2025.8.10 - Wear" versioncode="2">
+    <release version="2025.9.1 - Wear" versioncode="2">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2025.8.10 - Automotive" versioncode="1">
+    <release version="2025.9.1 - Automotive" versioncode="1">
         <change>Gesture settings for the native (dashboard) Home Assistant UI added, with new gestures and actions</change>
         <change>Downloading snapshots from camera card is now working</change>
         <change>Bug fixes and dependency updates</change>
