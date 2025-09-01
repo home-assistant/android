@@ -1273,7 +1273,7 @@ class LocationSensorManager :
                                     Timber.d(
                                         "Location accurate enough, all done with high accuracy.",
                                     )
-                                    sensorWorkerScope.launch {
+                                    ioScope.launch {
                                         locationResult.lastLocation?.let {
                                             getEnabledServers(
                                                 latestContext,
@@ -1295,7 +1295,7 @@ class LocationSensorManager :
                                         "No location was accurate enough, sending our last location anyway",
                                     )
                                     if (locationResult.lastLocation!!.accuracy <= minAccuracy * 2) {
-                                        sensorWorkerScope.launch {
+                                        ioScope.launch {
                                             getEnabledServers(
                                                 latestContext,
                                                 singleAccurateLocation,
