@@ -77,7 +77,7 @@ fun getChangeServerGridItem(
 fun getNavigationGridItem(
     carContext: CarContext,
     screenManager: ScreenManager,
-    integrationRepository: IntegrationRepository,
+    integrationRepositoryProvider: suspend () -> IntegrationRepository,
     allEntities: Flow<Map<String, Entity>>,
     entityRegistry: List<EntityRegistryResponse>?,
 ): GridItem.Builder {
@@ -100,7 +100,7 @@ fun getNavigationGridItem(
             screenManager.push(
                 MapVehicleScreen(
                     carContext,
-                    integrationRepository,
+                    integrationRepositoryProvider,
                     allEntities.map {
                         it.values.filter { entity ->
                             entity.domain in MAP_DOMAINS &&
@@ -158,6 +158,7 @@ fun getDomainList(
                 domainIsEmpty = it.isEmpty()
             }
         }
+        // TODO most probably this is always false since the launch will update the boolean after we actually test
         if (!domainIsEmpty) {
             listBuilder.addItem(
                 GridItem.Builder().apply {
@@ -174,21 +175,23 @@ fun getDomainList(
                 }
                     .setTitle(friendlyDomain)
                     .setOnClickListener {
-                        Timber.i("Domain:$domain clicked")
-                        screenManager.push(
-                            EntityGridVehicleScreen(
-                                carContext,
-                                serverManager,
-                                serverId,
-                                prefsRepository,
-                                serverManager.integrationRepository(serverId.value),
-                                friendlyDomain,
-                                entityRegistry,
-                                domains,
-                                entityList,
-                                allEntities,
-                            ) { },
-                        )
+                        lifecycleScope.launch {
+                            Timber.i("Domain:$domain clicked")
+                            screenManager.push(
+                                EntityGridVehicleScreen(
+                                    carContext,
+                                    serverManager,
+                                    serverId,
+                                    prefsRepository,
+                                    { serverManager.integrationRepository(serverId.value) },
+                                    friendlyDomain,
+                                    entityRegistry,
+                                    domains,
+                                    entityList,
+                                    allEntities,
+                                ) { },
+                            )
+                        }
                     }
                     .build(),
             )
@@ -204,7 +207,6 @@ fun getDomainsGridItem(
     carContext: CarContext,
     screenManager: ScreenManager,
     serverManager: ServerManager,
-    integrationRepository: IntegrationRepository,
     serverId: StateFlow<Int>,
     allEntities: Flow<Map<String, Entity>>,
     prefsRepository: PrefsRepository,
@@ -230,7 +232,6 @@ fun getDomainsGridItem(
                 DomainListScreen(
                     carContext,
                     serverManager,
-                    integrationRepository,
                     serverId,
                     allEntities,
                     prefsRepository,

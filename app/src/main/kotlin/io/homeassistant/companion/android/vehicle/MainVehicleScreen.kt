@@ -136,7 +136,7 @@ class MainVehicleScreen(
                 serverManager,
                 serverId,
                 prefsRepository,
-                serverManager.integrationRepository(serverId.value),
+                { serverManager.integrationRepository(serverId.value) },
                 carContext.getString(commonR.string.favorites),
                 entityRegistry,
                 domains,
@@ -163,7 +163,7 @@ class MainVehicleScreen(
                 getNavigationGridItem(
                     carContext,
                     screenManager,
-                    serverManager.integrationRepository(serverId.value),
+                    { serverManager.integrationRepository(serverId.value) },
                     allEntities,
                     entityRegistry,
                 ).build(),
