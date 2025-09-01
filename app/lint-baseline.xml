@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.12.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.12.1)" variant="all" version="8.12.1">
+<issues format="6" by="lint 8.12.2" type="baseline" client="gradle" dependencies="false" name="AGP (8.12.2)" variant="all" version="8.12.2">
 
     <issue
         id="MissingPermission"
@@ -886,17 +886,6 @@
     <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                                Uri.parse(&quot;geo:$lat,$lon&quot;),"
-        errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/vehicle/EntityGridVehicleScreen.kt"
-            line="186"
-            column="49"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
         errorLine1="            Intent(Intent.ACTION_VIEW, Uri.parse(resources.getString(commonR.string.privacy_url))).also {"
         errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -914,17 +903,6 @@
             file="src/main/kotlin/io/homeassistant/companion/android/settings/developer/location/views/LocationTrackingView.kt"
             line="248"
             column="45"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                Uri.parse(&quot;geo:${pair.second[0]},${pair.second[1]}&quot;),"
-        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/vehicle/MapVehicleScreen.kt"
-            line="134"
-            column="33"/>
     </issue>
 
     <issue
