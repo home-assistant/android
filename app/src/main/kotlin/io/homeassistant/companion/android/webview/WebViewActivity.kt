@@ -238,7 +238,7 @@ class WebViewActivity :
     private var clearHistory = false
     private var moreInfoEntity = ""
     private val moreInfoMutex = Mutex()
-    private var currentAutoplay: Boolean = false
+    private var currentAutoplay: Boolean? = null
     private var downloadFileUrl = ""
     private var downloadFileContentDisposition = ""
     private var downloadFileMimetype = ""
@@ -352,7 +352,9 @@ class WebViewActivity :
             )
 
             lifecycleScope.launch {
-                settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
+                currentAutoplay = presenter.isAutoPlayVideoEnabled().apply {
+                    settings.mediaPlaybackRequiresUserGesture = !this
+                }
             }
 
             webViewClient = object : TLSWebViewClient(keyChainRepository) {
@@ -629,8 +631,6 @@ class WebViewActivity :
             if (presenter.isKeepScreenOnEnabled()) {
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
-
-            currentAutoplay = presenter.isAutoPlayVideoEnabled()
 
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 presenter.getMatterThreadStepFlow().collect {
@@ -1011,8 +1011,11 @@ class WebViewActivity :
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
-            if (currentAutoplay != presenter.isAutoPlayVideoEnabled()) {
-                recreate()
+            currentAutoplay?.let {
+                // if it is null it means that the settings were not called yet so we should not recreate
+                if (currentAutoplay != presenter.isAutoPlayVideoEnabled()) {
+                    recreate()
+                }
             }
 
             appLocked.value = presenter.isAppLocked()
@@ -1021,9 +1024,10 @@ class WebViewActivity :
 
         setWebViewZoom()
 
-        SensorWorker.start(this)
-        WebsocketManager.start(this)
         lifecycleScope.launch {
+            SensorWorker.start(this@WebViewActivity)
+            WebsocketManager.start(this@WebViewActivity)
+
             WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || presenter.isWebViewDebugEnabled())
 
             requestedOrientation = when (presenter.getScreenOrientation()) {
