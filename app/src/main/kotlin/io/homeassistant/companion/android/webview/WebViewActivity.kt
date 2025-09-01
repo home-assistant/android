@@ -1011,11 +1011,9 @@ class WebViewActivity :
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
-            currentAutoplay?.let {
-                // if it is null it means that the settings were not called yet so we should not recreate
-                if (currentAutoplay != presenter.isAutoPlayVideoEnabled()) {
-                    recreate()
-                }
+            // if null it means that the settings were not yet read so we should not recreate
+            if (currentAutoplay != null && currentAutoplay != presenter.isAutoPlayVideoEnabled()) {
+                recreate()
             }
 
             appLocked.value = presenter.isAppLocked()
