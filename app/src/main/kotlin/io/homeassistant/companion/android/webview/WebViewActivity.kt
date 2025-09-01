@@ -415,8 +415,14 @@ class WebViewActivity :
                     authenticationDialog(handler, host, resourceURL, realm, authError)
                 }
 
-                override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
-                    Timber.e("onReceivedSslError: $error")
+                override fun onReceivedSslError(view: WebView? ,handler: SslErrorHandler? ,error: SslError?) {
+                    val url = error?.url ?: ""
+                    Timber.e("onReceivedSslError: $url -> $error")
+                    if (url.contains("googletagmanager.com")) {
+                        Timber.w("Ignoring SSL error for non-critical resource: $url")
+                        handler?.proceed()
+                        return
+                    }
                     showError(
                         ErrorType.SSL,
                         error,
