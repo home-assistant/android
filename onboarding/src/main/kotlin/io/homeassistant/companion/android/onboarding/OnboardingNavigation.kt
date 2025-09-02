@@ -6,6 +6,9 @@ import androidx.navigation.NavOptions
 import androidx.navigation.navigation
 import io.homeassistant.companion.android.HAStartDestinationRoute
 import io.homeassistant.companion.android.compose.navigateToUri
+import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
+import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.serverDiscoveryScreen
+import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscoveryHelp
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.welcomeScreen
 import kotlinx.serialization.Serializable
@@ -29,10 +32,18 @@ internal fun NavGraphBuilder.onboarding(
 ) {
     navigation<OnboardingRoute>(startDestination = WelcomeRoute) {
         welcomeScreen(
-            onConnectClick = {},
+            onConnectClick = navController::navigateToServerDiscovery,
             onLearnMoreClick = {
                 navController.navigateToUri("https://home-assistant.io")
             },
+        )
+        serverDiscoveryScreen(
+            onConnectClick = {
+                // TODO navigate to connection with URL
+            },
+            onBackClick = navController::popBackStack,
+            onHelpClick = navController::navigateToServerDiscoveryHelp,
+            onManualSetupClick = {}, // TODO navigate to manual setup
         )
     }
 }
