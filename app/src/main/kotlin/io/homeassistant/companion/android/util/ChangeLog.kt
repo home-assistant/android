@@ -45,16 +45,13 @@ open class ChangeLog @Inject constructor(
 
         // Ensure UI operations happen on Main thread
         withContext(Dispatchers.Main) {
-            if (isDarkTheme) {
-                val darkThemeChangeLog = createDarkThemeChangeLog(context)
-                if ((!darkThemeChangeLog.isFirstRunEver && darkThemeChangeLog.isFirstRun) || forceShow) {
-                    darkThemeChangeLog.fullLogDialog.show()
-                }
+            val changeLog = if (isDarkTheme) {
+                createDarkThemeChangeLog(context)
             } else {
-                val changeLog = createChangeLog(context)
-                if ((!changeLog.isFirstRunEver && changeLog.isFirstRun) || forceShow) {
-                    changeLog.fullLogDialog.show()
-                }
+                createChangeLog(context)
+            }
+            if ((!changeLog.isFirstRunEver && changeLog.isFirstRun) || forceShow) {
+                changeLog.fullLogDialog.show()
             }
         }
     }
