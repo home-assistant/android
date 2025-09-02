@@ -14,7 +14,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,11 +31,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
+import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.theme.HASpacing
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
@@ -66,6 +70,7 @@ fun HAComposeCatalogScreen() {
                 buttonsWithIcon(variant = currentVariant)
                 buttonsWithBigContent(variant = currentVariant)
                 textStyles()
+                input()
             }
         }
     }
@@ -250,6 +255,102 @@ private fun LazyListScope.textStyles() {
                 text = "Button",
                 style = HATextStyle.Button,
                 modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+private fun LazyListScope.input() {
+    catalogSection(title = "Input") {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            var value1 by remember { mutableStateOf("") }
+            var value2 by remember { mutableStateOf("") }
+            var value3 by remember { mutableStateOf("") }
+            var value4 by remember { mutableStateOf("") }
+            var value5 by remember { mutableStateOf("") }
+
+            HATextField(
+                value = value1,
+                onValueChange = { value1 = it },
+                trailingIcon = {
+                    if (value1.isNotBlank()) {
+                        IconButton(onClick = { value1 = "" }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = null,
+                            )
+                        }
+                    }
+                },
+            )
+            HATextField(
+                value = value2,
+                onValueChange = { value2 = it },
+                placeholder = {
+                    Text(
+                        text = "Placeholder",
+                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                    )
+                },
+            )
+            HATextField(
+                value = value3,
+                onValueChange = { value3 = it },
+                label = {
+                    Text(
+                        text = "Label",
+                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                    )
+                },
+            )
+            HATextField(
+                value = value4,
+                onValueChange = { value4 = it },
+                label = {
+                    Text(
+                        text = "Label",
+                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                    )
+                },
+                placeholder = {
+                    Text(
+                        text = "Placeholder",
+                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                    )
+                },
+            )
+            HATextField(
+                value = value5,
+                onValueChange = { value5 = it },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = null,
+                    )
+                },
+                label = {
+                    Text(
+                        text = "Label",
+                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                    )
+                },
+                placeholder = {
+                    Text(
+                        text = "Placeholder",
+                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                    )
+                },
+                isError = value5.isNotBlank(),
+                supportingText = {
+                    if (value5.isNotBlank()) {
+                        Text(
+                            text = "Supporting text",
+                            style = HATextStyle.BodyMedium.copy(color = Color.Unspecified),
+                        )
+                    }
+                },
             )
         }
     }
