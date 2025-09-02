@@ -16,7 +16,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -52,8 +51,8 @@ class LauncherViewModelTest {
         val server = mockk<Server>(relaxed = true)
         coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns server
         every { serverManager.defaultServers } returns listOf(server)
-        every { serverManager.integrationRepository(any()) } returns integrationRepository
-        every { serverManager.webSocketRepository(any()) } returns webSocketRepository
+        coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
+        coEvery { serverManager.webSocketRepository(any()) } returns webSocketRepository
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
         val networkStateFlow = MutableStateFlow(NetworkState.READY_LOCAL)
@@ -67,8 +66,8 @@ class LauncherViewModelTest {
         assertEquals(0, networkStateFlow.subscriptionCount.value)
 
         // verify resync registration
-        verify(exactly = 1) { serverManager.integrationRepository(any()) }
         coVerify(exactly = 1) {
+            serverManager.integrationRepository(any())
             integrationRepository.updateRegistration(any())
             integrationRepository.getConfig()
             webSocketRepository.getCurrentUser()
@@ -84,8 +83,8 @@ class LauncherViewModelTest {
         every { notActiveServer.id } returns 1
         coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns activeServer
         every { serverManager.defaultServers } returns listOf(activeServer, notActiveServer)
-        every { serverManager.integrationRepository(any()) } returns integrationRepository
-        every { serverManager.webSocketRepository(any()) } returns webSocketRepository
+        coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
+        coEvery { serverManager.webSocketRepository(any()) } returns webSocketRepository
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
         val networkStateFlow = MutableStateFlow(NetworkState.READY_REMOTE)
@@ -99,7 +98,7 @@ class LauncherViewModelTest {
         assertEquals(0, networkStateFlow.subscriptionCount.value)
 
         // verify resync registration
-        verify(exactly = 1) {
+        coVerify(exactly = 1) {
             serverManager.integrationRepository(0)
             serverManager.integrationRepository(1)
         }
