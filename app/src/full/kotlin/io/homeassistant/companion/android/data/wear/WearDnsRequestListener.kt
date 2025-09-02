@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.data.wear
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.util.toHexString
+import java.net.UnknownHostException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -29,7 +31,11 @@ class WearDnsRequestListener : WearableListenerService() {
 
     private suspend fun dnsRequest(request: ByteArray): ByteArray = withContext(Dispatchers.IO) {
         val hostname = String(request, Charsets.UTF_8)
-        Dns.SYSTEM.lookup(hostname).mapNotNull { it.hostAddress }.joinToString(",").encodeToByteArray()
+        try {
+            Dns.SYSTEM.lookup(hostname).joinToString(",") { it.address.toHexString() }.encodeToByteArray()
+        } catch (uhe: UnknownHostException) {
+            byteArrayOf()
+        }
     }
 
     override fun onDestroy() {

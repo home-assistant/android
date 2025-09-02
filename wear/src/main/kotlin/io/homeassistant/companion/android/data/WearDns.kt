@@ -14,10 +14,19 @@ import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 import okhttp3.Dns
+import okio.ByteString.Companion.decodeHex
+import timber.log.Timber
 
 /**
  * Wear specific implementation of Dns that defaults to the System DNS,
  * but can fall back to relying on mobile Dns to resolve dns issues.
+ *
+ * The request is made via the Wearable Data Layer, specifically MessageClient
+ * sendRequest with path "/network/dnsLookup"
+ *
+ * This implementation caches both positive and negative DNS lookup results for 5 minutes
+ * to minimize redundant lookups and reduce network traffic, especially when falling back
+ * to mobile DNS.
  */
 class WearDns @Inject constructor(
     @ApplicationContext private val appContext: Context,
@@ -59,6 +68,8 @@ class WearDns @Inject constructor(
 
             return addresses
         } catch (e2: Exception) {
+            Timber.v(e, "DNS resolution using the system DNS failed, fallback onto mobile DNS lookup.")
+
             e2.addSuppressed(e)
 
             dnsHelperCache[hostname] = NegativeCacheHit(e2, now)
@@ -85,16 +96,19 @@ class WearDns @Inject constructor(
             throw UnknownHostException("Mobile helper unable to resolve $hostname")
         }
 
-        @Suppress("BlockingMethodInNonBlockingContext")
-        return listOf(InetAddress.getByAddress(hostname, response))
+        val addresses = response.decodeToString().split(",").map {
+            InetAddress.getByAddress(hostname, it.decodeHex().toByteArray())
+        }
+
+        return addresses
     }
 
     sealed interface CacheResult {
         val storedAt: Instant
     }
 
-    data class NegativeCacheHit(val exception: Exception, override val storedAt: Instant) : CacheResult
-    data class PositiveCacheHit(val value: List<InetAddress>, override val storedAt: Instant) : CacheResult
+    private data class NegativeCacheHit(val exception: Exception, override val storedAt: Instant) : CacheResult
+    private data class PositiveCacheHit(val value: List<InetAddress>, override val storedAt: Instant) : CacheResult
 
     companion object {
         private const val CAPABILITY_DNS_VIA_MOBILE = "mobile_network_helper"
