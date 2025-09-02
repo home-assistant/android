@@ -5,9 +5,12 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.network.NetworkState
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -16,6 +19,25 @@ abstract class LaunchPresenterBase(
     internal val serverManager: ServerManager,
     private val networkStatusMonitor: NetworkStatusMonitor,
 ) : LaunchPresenter {
+
+    /**
+     * A dedicated [CoroutineScope] to perform background tasks that should not block the UI.
+     * This is crucial for operations like server resynchronization, especially when dealing with
+     * multiple servers where one might be unresponsive.
+     *
+     * By launching tasks in this scope, we ensure that the UI remains responsive and is displayed
+     * promptly, even if a server connection times out.
+     *
+     * **Note:** Using a dedicated scope like this means that the underlying Activity might not be
+     * destroyed immediately if these background tasks are still running. This is a trade-off
+     * for improved UI responsiveness in scenarios with potential network delays.
+     *
+     * We use a [SupervisorJob] on purpose because it ensures that if one task fails, it won't
+     * impact the others.
+     *
+     * See https://github.com/home-assistant/android/issues/5689#issuecomment-3241605990
+     */
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override suspend fun onViewReady(serverUrlToOnboard: String?) {
         // Remove any invalid servers (incomplete, partly migrated from another device)
@@ -54,7 +76,9 @@ abstract class LaunchPresenterBase(
         return when (state) {
             NetworkState.READY_LOCAL, NetworkState.READY_REMOTE -> {
                 view.dismissDialog()
-                resyncRegistration()
+                ioScope.launch {
+                    resyncRegistration()
+                }
                 view.displayWebView()
                 true
             }
@@ -78,6 +102,6 @@ abstract class LaunchPresenterBase(
 
     override fun hasMultipleServers(): Boolean = serverManager.defaultServers.size > 1
 
-    // TODO: This should probably go in settings?
+    // TODO: This should be replaced by a worker https://github.com/home-assistant/android/issues/5724
     internal abstract suspend fun resyncRegistration()
 }

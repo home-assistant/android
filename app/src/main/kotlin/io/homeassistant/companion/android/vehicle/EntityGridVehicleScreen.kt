@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.vehicle
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
@@ -14,6 +13,7 @@ import androidx.car.app.model.GridItem
 import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.ItemList
 import androidx.car.app.model.Template
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -54,7 +54,7 @@ class EntityGridVehicleScreen(
     val serverManager: ServerManager,
     val serverId: StateFlow<Int>,
     val prefsRepository: PrefsRepository,
-    val integrationRepository: IntegrationRepository,
+    val integrationRepositoryProvider: suspend () -> IntegrationRepository,
     val title: String,
     private val entityRegistry: List<EntityRegistryResponse>?,
     private val domains: MutableSet<String>,
@@ -102,7 +102,7 @@ class EntityGridVehicleScreen(
                 getNavigationGridItem(
                     carContext,
                     screenManager,
-                    integrationRepository,
+                    integrationRepositoryProvider,
                     allEntities,
                     entityRegistry,
                 ).build(),
@@ -113,7 +113,6 @@ class EntityGridVehicleScreen(
                         carContext,
                         screenManager,
                         serverManager,
-                        integrationRepository,
                         serverId,
                         allEntities,
                         prefsRepository,
@@ -183,7 +182,7 @@ class EntityGridVehicleScreen(
                                         if (lat != null && lon != null) {
                                             val intent = Intent(
                                                 CarContext.ACTION_NAVIGATE,
-                                                Uri.parse("geo:$lat,$lon"),
+                                                "geo:$lat,$lon".toUri(),
                                             )
                                             carContext.startCarApp(intent)
                                         }
@@ -192,7 +191,7 @@ class EntityGridVehicleScreen(
 
                                 in SUPPORTED_DOMAINS -> {
                                     lifecycleScope.launch {
-                                        entity.onPressed(integrationRepository)
+                                        entity.onPressed(integrationRepositoryProvider())
                                     }
                                 }
 

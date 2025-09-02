@@ -125,10 +125,10 @@ class ServerManagerImpl @Inject constructor(
         }
     }
 
-    private fun activeServerId(): Int? = runBlocking {
+    private suspend fun activeServerId(): Int? {
         val pref = localStorage.getInt(PREF_ACTIVE_SERVER)
 
-        if (pref != null && mutableServers[pref] != null) {
+        return if (pref != null && mutableServers[pref] != null) {
             pref
         } else {
             mutableServers.keys.maxOfOrNull { it }
@@ -203,30 +203,33 @@ class ServerManagerImpl @Inject constructor(
         mutableServers.remove(id)
     }
 
-    override fun authenticationRepository(serverId: Int): AuthenticationRepository {
+    override suspend fun authenticationRepository(serverId: Int): AuthenticationRepository {
         val id = if (serverId == SERVER_ID_ACTIVE) activeServerId() else serverId
         return authenticationRepos[id] ?: run {
             if (id == null || mutableServers[id] == null) throw IllegalArgumentException("No server for ID")
-            authenticationRepos[id] = authenticationRepositoryFactory.create(id)
-            authenticationRepos[id]!!
+            val repository = authenticationRepositoryFactory.create(id)
+            authenticationRepos[id] = repository
+            checkNotNull(authenticationRepos[id]) { "Should not be null since we've just called create ($repository)" }
         }
     }
 
-    override fun integrationRepository(serverId: Int): IntegrationRepository {
+    override suspend fun integrationRepository(serverId: Int): IntegrationRepository {
         val id = if (serverId == SERVER_ID_ACTIVE) activeServerId() else serverId
         return integrationRepos[id] ?: run {
             if (id == null || mutableServers[id] == null) throw IllegalArgumentException("No server for ID")
-            integrationRepos[id] = integrationRepositoryFactory.create(id)
-            integrationRepos[id]!!
+            val repository = integrationRepositoryFactory.create(id)
+            integrationRepos[id] = repository
+            checkNotNull(integrationRepos[id]) { "Should not be null since we've just called create ($repository)" }
         }
     }
 
-    override fun webSocketRepository(serverId: Int): WebSocketRepository {
+    override suspend fun webSocketRepository(serverId: Int): WebSocketRepository {
         val id = if (serverId == SERVER_ID_ACTIVE) activeServerId() else serverId
         return webSocketRepos[id] ?: run {
             if (id == null || mutableServers[id] == null) throw IllegalArgumentException("No server for ID")
-            webSocketRepos[id] = webSocketRepositoryFactory.create(id)
-            webSocketRepos[id]!!
+            val repository = webSocketRepositoryFactory.create(id)
+            webSocketRepos[id] = repository
+            checkNotNull(webSocketRepos[id]) { "Should not be null since we've just caled create ($repository)" }
         }
     }
 }

@@ -5,14 +5,14 @@
 accompanist = "0.37.3"
 activity-compose = "1.10.1"
 androidBeaconLibrary = "2.21.1"
-androidGradlePlugin = "8.12.1"
+androidGradlePlugin = "8.12.2"
 androidSdk-compile = "36"
 androidSdk-min = "21"
 androidSdk-target = "36"
 androidSdk-automotive-min = "29"
 androidSdk-wear-min = "26"
 androidSdk-wear-target = "34"
-androidTools = "31.12.1"
+androidTools = "31.12.2"
 androidxHiltNavigationCompose = "1.2.0"
 androidxTestCore = "1.7.0"
 androidxTestExt = "1.3.0"
@@ -24,7 +24,7 @@ blurView = "version-2.0.6"
 car-versions = "1.7.0"
 changeLog = "3.7.1"
 community-material-typeface = "7.0.96.1-kotlin"
-compose-bom = "2025.08.00"
+compose-bom = "2025.08.01"
 composeLintChecks = "1.4.2"
 connectClient = "1.1.0-rc03"
 constraintlayout = "2.2.1"
@@ -52,7 +52,7 @@ kotlinx-serialization = "1.9.0"
 ksp = "2.2.10-2.0.2"
 ktlint = "13.1.0"
 leakcanaryAndroid = "2.14"
-lifecycle = "2.9.2"
+lifecycle = "2.9.3"
 material = "1.12.0"
 media = "1.7.1"
 media3 = "1.8.0"
@@ -69,24 +69,23 @@ preference-ktx = "1.2.1"
 recyclerview = "1.4.0"
 reorderable = "3.0.0"
 retrofit-bom = "3.0.0"
-robolectric = "4.15.1" # Check if robolectric supports a more recent version of the SDK on each update
-robolectric-target-sdk = "35"
+robolectric = "4.16" # Check if robolectric supports a more recent version of the SDK on each update
+robolectric-target-sdk = "36"
 room = "2.7.2"
 runtimeLint = "1.9.0"
 screenshot = "0.0.1-alpha11"
-sentry-android = "8.19.1"
+sentry-android = "8.20.0"
 timber = "5.0.1"
 tools-desugar-jdk-libs = "2.1.5"
 turbine = "1.2.1"
 watchfaceComplicationsDataSourceKtx = "1.2.1"
 wear = "1.3.0"
-wear-compose-foundation = "1.4.1"
-wear-compose-material = "1.0.0-alpha37"
+wear-compose = "1.5.0"
 wear-protolayout = "1.3.0"
 wear-tiles = "1.5.0"
 wear-tooling = "1.0.0"
 wearPhoneInteractions = "1.1.0"
-wearInput = "1.2.0-beta01"
+wearInput = "1.2.0-rc01"
 webkit = "1.14.0"
 wear-remote-interactions = "1.1.0"
 workRuntime = "2.10.3"
@@ -237,9 +236,9 @@ timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 tools-desugar-jdk = { module = "com.android.tools:desugar_jdk_libs", version.ref = "tools-desugar-jdk-libs" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 wear = { module = "androidx.wear:wear", version.ref = "wear" }
-wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wear-compose-foundation" }
-wear-compose-material = { module = "androidx.wear.compose:compose-material3", version.ref = "wear-compose-material" }
-wear-compose-navigation = { module = "androidx.wear.compose:compose-navigation", version.ref = "wear-compose-foundation" }
+wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wear-compose" }
+wear-compose-material = { module = "androidx.wear.compose:compose-material3", version.ref = "wear-compose" }
+wear-compose-navigation = { module = "androidx.wear.compose:compose-navigation", version.ref = "wear-compose" }
 wear-phone-interactions = { module = "androidx.wear:wear-phone-interactions", version.ref = "wearPhoneInteractions" }
 wear-input = { module = "androidx.wear:wear-input", version.ref = "wearInput" }
 wear-protolayout-expression = { module = "androidx.wear.protolayout:protolayout-expression", version.ref = "wear-protolayout" }
