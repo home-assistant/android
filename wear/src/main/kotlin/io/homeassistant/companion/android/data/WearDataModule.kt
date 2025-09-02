@@ -5,7 +5,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dagger.multibindings.IntoSet
-import io.homeassistant.companion.android.common.data.OkHttpConfigurator
+import io.homeassistant.companion.android.di.OkHttpConfigurator
 import javax.inject.Singleton
 import okhttp3.OkHttpClient
 
