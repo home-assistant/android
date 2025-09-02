@@ -9,6 +9,7 @@ import androidx.compose.runtime.produceState
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.HAStartDestinationRoute
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.compose.HAApp
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
