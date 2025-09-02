@@ -416,12 +416,23 @@ class WebViewActivity :
                 }
 
                 override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
+                    val failingUrl = error?.url ?: ""
+                    val activeHost = Uri.parse(
+                        serverManager.getServer(presenter.getActiveServer())?.connection?.getUrl(false)
+                    ).host ?: ""
+                
+                    if (Uri.parse(failingUrl).host != activeHost) {
+                        Timber.w("SSL error for external resource: $failingUrl")
+                        Toast.makeText(
+                            this,
+                            getString(R.string.webview_error_SSL_EXTERNAL_RESOURCE, Uri.parse(failingUrl).host),
+                            Toast.LENGTH_LONG
+                        ).show()
+                        handler?.proceed()
+                        return
+                    }
                     Timber.e("onReceivedSslError: $error")
-                    showError(
-                        ErrorType.SSL,
-                        error,
-                        null,
-                    )
+                    showError(ErrorType.SSL, error, null)
                 }
 
                 override fun onRenderProcessGone(view: WebView?, handler: RenderProcessGoneDetail?): Boolean {
