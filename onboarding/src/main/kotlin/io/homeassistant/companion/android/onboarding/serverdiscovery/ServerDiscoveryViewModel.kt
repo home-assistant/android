@@ -71,6 +71,13 @@ internal class ServerDiscoveryViewModel @Inject constructor(val searcher: HomeAs
 
     /**
      * A flow that emits the current [DiscoveryState] of the server discovery process.
+     *
+     * The discovery process includes the following delays:
+     * - [DELAY_BEFORE_DISPLAY_DISCOVERY]: No discovery events are emitted before this delay.
+     * - [DELAY_AFTER_FIRST_DISCOVERY]: Applied after the first server is discovered ([ServerDiscovered]),
+     * before any subsequent [ServersDiscovered].
+     *
+     * If no server is found after [TIMEOUT_NO_SERVER_FOUND], the state transitions to [NoServerFound].
      */
     val discoveryFlow = _discoveryFlow.asStateFlow()
 
