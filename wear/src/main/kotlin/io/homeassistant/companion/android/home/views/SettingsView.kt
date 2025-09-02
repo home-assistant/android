@@ -76,6 +76,8 @@ fun SettingsView(
     onClickThermostatTiles: () -> Unit,
     onAssistantAppAllowed: (Boolean) -> Unit,
     onClickNotifications: () -> Unit,
+    isMobileDnsFallback: Boolean,
+    setMobileDnsFallback: (Boolean) -> Unit,
 ) {
     WearAppTheme {
         ThemeLazyColumn {
@@ -245,6 +247,30 @@ fun SettingsView(
             }
             item {
                 ListHeader(
+                    id = commonR.string.networking,
+                )
+            }
+            item {
+                SwitchButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    checked = isMobileDnsFallback,
+                    onCheckedChange = { setMobileDnsFallback(it) },
+                    label = { Text(stringResource(commonR.string.mobile_dns_fallback)) },
+                    enabled = favorites.isNotEmpty(),
+                    icon = {
+                        Image(
+                            asset = CommunityMaterial.Icon.cmd_cellphone_link,
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
+                        )
+                    },
+                    colors = getSwitchButtonColors(),
+                )
+            }
+            item {
+                ListHeader(commonR.string.application_version)
+            }
+            item {
+                ListHeader(
                     id = commonR.string.account,
                 )
             }
@@ -259,9 +285,6 @@ fun SettingsView(
                         contentColor = Color.Black,
                     ),
                 )
-            }
-            item {
-                ListHeader(commonR.string.application_version)
             }
             item {
                 Text(
@@ -296,5 +319,7 @@ private fun PreviewSettingsView() {
         onClickThermostatTiles = {},
         onAssistantAppAllowed = {},
         onClickNotifications = {},
+        isMobileDnsFallback = false,
+        setMobileDnsFallback = {},
     )
 }

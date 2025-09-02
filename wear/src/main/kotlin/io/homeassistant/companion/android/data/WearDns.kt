@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.time.Instant
@@ -19,7 +20,8 @@ import okhttp3.Dns
  * but can fall back to relying on mobile Dns to resolve dns issues.
  */
 class WearDns @Inject constructor(
-    @ApplicationContext private val appContext: Context
+    @ApplicationContext private val appContext: Context,
+    private val wearPrefsRepository: WearPrefsRepository,
 ) : Dns {
     private val dnsHelperCache = ConcurrentHashMap<String, CacheResult>()
 
@@ -27,14 +29,17 @@ class WearDns @Inject constructor(
         return try {
             Dns.SYSTEM.lookup(hostname)
         } catch (e: UnknownHostException) {
-            return runBlocking { attemptLookupViaMobile(hostname, e) }
+            return runBlocking {
+                if (wearPrefsRepository.getMobileDnsFallback()) {
+                    attemptLookupViaMobile(hostname, e)
+                } else {
+                    throw e
+                }
+            }
         }
     }
 
-    private suspend fun attemptLookupViaMobile(
-        hostname: String,
-        e: Exception
-    ): List<InetAddress>? {
+    private suspend fun attemptLookupViaMobile(hostname: String, e: Exception): List<InetAddress> {
         val now = Instant.now()
 
         val cached = dnsHelperCache[hostname]
@@ -46,7 +51,8 @@ class WearDns @Inject constructor(
         }
 
         try {
-            val nodeId = nodeIdWithDns() ?: return null
+            val nodeId = nodeIdWithDns()
+                ?: throw UnknownHostException("No Mobile DNS helper registered. Unable to resolve $hostname")
             val addresses = dnsViaMobile(nodeId, hostname)
 
             dnsHelperCache[hostname] = PositiveCacheHit(addresses, now)
@@ -62,7 +68,8 @@ class WearDns @Inject constructor(
     }
 
     private suspend fun nodeIdWithDns(): String? {
-        val capability = Wearable.getCapabilityClient(appContext).getCapability(CAPABILITY_DNS_VIA_MOBILE, CapabilityClient.FILTER_REACHABLE).await()
+        val capability = Wearable.getCapabilityClient(appContext)
+            .getCapability(CAPABILITY_DNS_VIA_MOBILE, CapabilityClient.FILTER_REACHABLE).await()
 
         return capability.nodes.firstNotNullOfOrNull { it.id }
     }
@@ -71,7 +78,7 @@ class WearDns @Inject constructor(
         val response = Wearable.getMessageClient(appContext).sendRequest(
             nodeId,
             REQUEST_DNS_VIA_MOBILE,
-            hostname.toByteArray()
+            hostname.toByteArray(),
         ).await()
 
         if (response.isEmpty()) {
@@ -80,10 +87,6 @@ class WearDns @Inject constructor(
 
         @Suppress("BlockingMethodInNonBlockingContext")
         return listOf(InetAddress.getByAddress(hostname, response))
-    }
-
-    private fun couldBeWearDnsIssue(e: Exception): Boolean {
-        return e is UnknownHostException
     }
 
     sealed interface CacheResult {
@@ -95,6 +98,6 @@ class WearDns @Inject constructor(
 
     companion object {
         private const val CAPABILITY_DNS_VIA_MOBILE = "mobile_network_helper"
-        private const val REQUEST_DNS_VIA_MOBILE = "/dnsLookup"
+        private const val REQUEST_DNS_VIA_MOBILE = "/network/dnsLookup"
     }
 }

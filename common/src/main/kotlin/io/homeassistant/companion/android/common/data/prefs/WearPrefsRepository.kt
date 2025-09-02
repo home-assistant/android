@@ -20,4 +20,6 @@ interface WearPrefsRepository {
     suspend fun setWearToastConfirmation(enabled: Boolean)
     suspend fun getWearFavoritesOnly(): Boolean
     suspend fun setWearFavoritesOnly(enabled: Boolean)
+    suspend fun setMobileDnsFallback(enabled: Boolean)
+    suspend fun getMobileDnsFallback(): Boolean
 }

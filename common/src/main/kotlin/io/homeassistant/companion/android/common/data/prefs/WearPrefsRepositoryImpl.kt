@@ -28,6 +28,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
         private const val PREF_WEAR_HAPTIC_FEEDBACK = "wear_haptic_feedback"
         private const val PREF_WEAR_TOAST_CONFIRMATION = "wear_toast_confirmation"
         private const val PREF_WEAR_FAVORITES_ONLY = "wear_favorites_only"
+        private const val PREF_WEAR_MOBILE_DNS_FALLBACK = "wear_mobile_dns_fallback"
 
         private const val UNKNOWN_TEMPLATE_TILE_ID = -1
     }
@@ -222,5 +223,13 @@ class WearPrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setWearFavoritesOnly(enabled: Boolean) {
         localStorage.putBoolean(PREF_WEAR_FAVORITES_ONLY, enabled)
+    }
+
+    override suspend fun getMobileDnsFallback(): Boolean {
+        return localStorage.getBoolean(PREF_WEAR_MOBILE_DNS_FALLBACK)
+    }
+
+    override suspend fun setMobileDnsFallback(enabled: Boolean) {
+        localStorage.putBoolean(PREF_WEAR_MOBILE_DNS_FALLBACK, enabled)
     }
 }

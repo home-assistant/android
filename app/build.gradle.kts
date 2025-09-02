@@ -39,6 +39,8 @@ firebaseAppDistribution {
 dependencies {
     // Most of the dependencies are coming from the convention plugin to avoid duplication with `:automotive` module.
     "fullImplementation"(libs.car.projected)
+
+    implementation(libs.androidx.lifecycle.service)
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.

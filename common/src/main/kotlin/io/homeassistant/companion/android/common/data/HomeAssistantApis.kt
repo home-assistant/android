@@ -7,6 +7,7 @@ import android.webkit.CookieManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.di.OkHttpConfigurator
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import okhttp3.MediaType.Companion.toMediaType
@@ -65,7 +66,7 @@ class HomeAssistantApis @Inject constructor(
 
         tlsHelper.setupOkHttpClientSSLSocketFactory(builder)
 
-        configurers.forEach {
+        configurators.forEach {
             it(builder)
         }
 

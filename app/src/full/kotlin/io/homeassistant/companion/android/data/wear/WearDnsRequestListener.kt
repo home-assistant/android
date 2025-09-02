@@ -9,23 +9,27 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.tasks.asTask
+import kotlinx.coroutines.withContext
 import okhttp3.Dns
+import timber.log.Timber
 
 @AndroidEntryPoint
-class WearDataListener : WearableListenerService() {
+class WearDnsRequestListener : WearableListenerService() {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onRequest(nodeId: String, path: String, request: ByteArray): Task<ByteArray>? {
-        if (path == "/dnsLookup") {
-            val hostname = String(request, Charsets.UTF_8)
-            return mainScope.async(Dispatchers.IO) {
-                Dns.SYSTEM.lookup(hostname).first().address
-            }.asTask()
+        if (path == "/network/dnsLookup") {
+            return mainScope.async { dnsRequest(request) }.asTask()
         } else {
             Timber.w("Received a path ($path) that is not supported by this listener. Check the manifest intent-filter")
             return null
         }
+    }
+
+    private suspend fun dnsRequest(request: ByteArray): ByteArray = withContext(Dispatchers.IO) {
+        val hostname = String(request, Charsets.UTF_8)
+        Dns.SYSTEM.lookup(hostname).mapNotNull { it.hostAddress }.joinToString(",").encodeToByteArray()
     }
 
     override fun onDestroy() {
