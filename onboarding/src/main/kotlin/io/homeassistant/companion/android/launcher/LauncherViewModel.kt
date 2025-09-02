@@ -111,6 +111,7 @@ internal class LauncherViewModel @Inject constructor(
         }
     }
 
+    // TODO replace this with https://github.com/home-assistant/android/pull/5727
     private suspend fun resyncRegistration() = coroutineScope {
         serverManager.defaultServers.forEach { server ->
             launch {
