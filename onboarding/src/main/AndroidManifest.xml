@@ -3,7 +3,7 @@
 
     <application>
         <activity
-            android:name="io.homeassistant.companion.android.Launcher"
+            android:name="io.homeassistant.companion.android.launcher.LauncherActivity"
             android:exported="true"
             android:label="Onboarding WIP"
             android:taskAffinity="io.homeassistant.companion.android.onboarding.wip">

@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android
+package io.homeassistant.companion.android.launcher
 
 import androidx.lifecycle.ViewModel
 import androidx.room.concurrent.AtomicBoolean

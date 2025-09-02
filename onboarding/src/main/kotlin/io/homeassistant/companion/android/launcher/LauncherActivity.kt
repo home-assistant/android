@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android
+package io.homeassistant.companion.android.launcher
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -13,7 +13,7 @@ import io.homeassistant.companion.android.common.compose.theme.HATheme
  * Main entry point of the application, it manages the splash screen.
  */
 @AndroidEntryPoint
-class Launcher : AppCompatActivity() {
+class LauncherActivity : AppCompatActivity() {
     private val viewModel: LauncherViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {

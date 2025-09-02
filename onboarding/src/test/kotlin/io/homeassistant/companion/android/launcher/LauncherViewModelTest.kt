@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android
+package io.homeassistant.companion.android.launcher
 
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertFalse
