@@ -258,7 +258,7 @@ fun SettingsView(
                     label = { Text(stringResource(commonR.string.mobile_dns_fallback)) },
                     icon = {
                         Image(
-                            asset = CommunityMaterial.Icon.cmd_cellphone_link,
+                            asset = CommunityMaterial.Icon.cmd_cellphone,
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
