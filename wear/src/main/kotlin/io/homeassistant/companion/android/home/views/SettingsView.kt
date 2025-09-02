@@ -256,7 +256,6 @@ fun SettingsView(
                     checked = isMobileDnsFallback,
                     onCheckedChange = { setMobileDnsFallback(it) },
                     label = { Text(stringResource(commonR.string.mobile_dns_fallback)) },
-                    enabled = favorites.isNotEmpty(),
                     icon = {
                         Image(
                             asset = CommunityMaterial.Icon.cmd_cellphone_link,
