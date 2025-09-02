@@ -138,7 +138,7 @@ class MainViewModel @Inject constructor(
     var areNotificationsAllowed by mutableStateOf(false)
         private set
 
-    var isMobileDnsFallback by mutableStateOf(false)
+    var isWearMobileDnsFallback by mutableStateOf(false)
         private set
 
     init {
@@ -168,7 +168,7 @@ class MainViewModel @Inject constructor(
             templateTiles.clear()
             templateTiles.putAll(homePresenter.getAllTemplateTiles())
             isFavoritesOnly = homePresenter.getWearFavoritesOnly()
-            isMobileDnsFallback = homePresenter.getMobileDnsFallback()
+            isWearMobileDnsFallback = homePresenter.getMobileDnsFallback()
 
             val assistantAppComponent = ComponentName(
                 BuildConfig.APPLICATION_ID,
@@ -538,7 +538,7 @@ class MainViewModel @Inject constructor(
     fun setMobileDnsFallback(enabled: Boolean) {
         viewModelScope.launch {
             homePresenter.setMobileDnsFallback(enabled)
-            isMobileDnsFallback = enabled
+            isWearMobileDnsFallback = enabled
         }
     }
 

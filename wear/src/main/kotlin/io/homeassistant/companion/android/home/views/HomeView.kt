@@ -195,7 +195,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                             },
                         )
                     },
-                    isMobileDnsFallback = mainViewModel.isMobileDnsFallback,
+                    isMobileDnsFallback = mainViewModel.isWearMobileDnsFallback,
                     setMobileDnsFallback = { mainViewModel.setMobileDnsFallback(it) },
                 )
             }
