@@ -101,6 +101,11 @@
         <Preference
             android:key="background"
             android:title="@string/background_access_title"/>
+        <SwitchPreferenceCompat
+            android:key="block_external_domains_enabled"
+            android:title="@string/pref_block_external_domains_title"
+            android:summary="@string/pref_block_external_domains_summary"
+            android:defaultValue="false" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/notifications"

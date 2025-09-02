@@ -119,6 +119,11 @@ interface PrefsRepository {
 
     suspend fun setChangeLogPopupEnabled(enabled: Boolean)
 
+    suspend fun isBlockExternalDomainsEnabled(): Boolean
+
+    suspend fun setBlockExternalDomainsEnabled(enabled: Boolean)
+
+
     /** Clean up any app-level preferences that might reference servers */
     suspend fun removeServer(serverId: Int)
 }

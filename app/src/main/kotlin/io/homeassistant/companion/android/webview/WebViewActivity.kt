@@ -415,25 +415,44 @@ class WebViewActivity :
                     authenticationDialog(handler, host, resourceURL, realm, authError)
                 }
 
+                private fun showFriendlySslErrorScreen(friendly: String, technical: String) {
+                    val intent = Intent(this, FriendlyErrorActivity::class.java).apply {
+                        putExtra(FriendlyErrorActivity.EXTRA_FRIENDLY, friendly)
+                        putExtra(FriendlyErrorActivity.EXTRA_TECHNICAL, technical)
+                    }
+                    startActivity(intent)
+                }
+
+                private fun isBlockedExternalDomain(host: String): Boolean {
+                    if (!prefsRepository.isBlockExternalDomainsEnabled()) return false
+                    return DomainBlocklist.getBlockedDomains(this).contains(host)
+                }
+
                 override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
-                    val failingUrl = error?.url ?: ""
-                    val activeHost = Uri.parse(
-                        serverManager.getServer(presenter.getActiveServer())?.connection?.getUrl(false)
-                    ).host ?: ""
-                
-                    if (Uri.parse(failingUrl).host != activeHost) {
-                        Timber.w("SSL error for external resource: $failingUrl")
-                        Toast.makeText(
-                            this,
-                            getString(R.string.webview_error_SSL_EXTERNAL_RESOURCE, Uri.parse(failingUrl).host),
-                            Toast.LENGTH_LONG
-                        ).show()
-                        handler?.proceed()
+                    val failingUrl = error?.url.orEmpty()
+                    val failingHost = DomainBlocklist.normalize(Uri.parse(failingUrl).host.orEmpty())
+                    val activeHost = DomainBlocklist.normalize(
+                        Uri.parse(
+                            serverManager.getServer(presenter.getActiveServer())
+                                ?.connection?.getUrl(false)
+                        ).host.orEmpty()
+                    )
+
+                    if (isBlockedExternalDomain(failingHost)) {
+                        Timber.i("Blocked external resource: $failingHost")
+                        handler?.cancel()
                         return
                     }
-                    Timber.e("onReceivedSslError: $error")
-                    showError(ErrorType.SSL, error, null)
-                }
+
+                    if (failingHost != activeHost) {
+                        Timber.w("SSL error for external resource: $failingUrl")
+                        showFriendlySslErrorScreen(
+                            getString(R.string.error_cannot_connect),
+                            getString(R.string.webview_error_ssl_external_resource, failingHost)
+                        )
+                        handler?.cancel()
+                        return
+                    }
 
                 override fun onRenderProcessGone(view: WebView?, handler: RenderProcessGoneDetail?): Boolean {
                     Timber.e("onRenderProcessGone: webView crashed")
