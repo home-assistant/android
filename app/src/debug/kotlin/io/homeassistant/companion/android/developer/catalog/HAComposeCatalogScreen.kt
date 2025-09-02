@@ -16,7 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.outlined.Rectangle
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -326,7 +326,7 @@ private fun LazyListScope.input() {
                 onValueChange = { value5 = it },
                 leadingIcon = {
                     Icon(
-                        imageVector = Icons.Outlined.Rectangle,
+                        imageVector = Icons.Outlined.Info,
                         contentDescription = null,
                     )
                 },
