@@ -181,7 +181,6 @@ private fun EmptyContent() {
 private fun ListContent(todoItems: List<TodoItemState>, displayComplete: Boolean) {
     LazyColumn {
         if (todoItems.any { !it.done }) {
-            item { HeaderItem(glanceStringResource(commonR.string.widget_todo_active)) }
             todoItems.filter { !it.done }.forEach {
                 item { TodoItem(it) }
             }
