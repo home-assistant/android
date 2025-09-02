@@ -27,7 +27,7 @@ class TodoWidgetToggleActionsTest {
         val dao = mockk<TodoWidgetDao>()
         val webSocketRepository = mockk<WebSocketRepository>()
         val serverManager = mockk<ServerManager>().apply {
-            every { webSocketRepository(any()) } returns webSocketRepository
+            coEvery { webSocketRepository(any()) } returns webSocketRepository
         }
 
         override fun serverManager(): ServerManager = serverManager

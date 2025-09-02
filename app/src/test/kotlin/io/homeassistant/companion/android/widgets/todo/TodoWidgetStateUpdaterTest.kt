@@ -13,7 +13,6 @@ import io.mockk.coEvery
 import io.mockk.coJustAwait
 import io.mockk.coJustRun
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
@@ -30,8 +29,8 @@ class TodoWidgetStateUpdaterTest {
     private val integrationRepository = mockk<IntegrationRepository>()
     private val webSocketRepository = mockk<WebSocketRepository>()
     private val serverManager = mockk<ServerManager>().apply {
-        every { integrationRepository(any()) } returns integrationRepository
-        every { webSocketRepository(any()) } returns webSocketRepository
+        coEvery { integrationRepository(any()) } returns integrationRepository
+        coEvery { webSocketRepository(any()) } returns webSocketRepository
     }
     private val updater = TodoWidgetStateUpdater(dao, serverManager)
 

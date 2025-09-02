@@ -202,7 +202,7 @@ class HomePresenterImpl @Inject constructor(
 
     override suspend fun getServerId(): Int? = serverManager.getServer()?.id
 
-    override fun getWebSocketState(): WebSocketState? {
+    override suspend fun getWebSocketState(): WebSocketState? {
         return serverManager.webSocketRepository().getConnectionState()
     }
 

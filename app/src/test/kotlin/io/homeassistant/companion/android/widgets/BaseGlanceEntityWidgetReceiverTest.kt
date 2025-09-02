@@ -115,7 +115,7 @@ class BaseGlanceEntityWidgetReceiverTest {
         coEvery { glanceManager.getGlanceIds(mockedWidget.javaClass) } returns glanceIds
         every { glanceManager.getAppWidgetId(any()) } answers { firstArg<FakeGlanceId>().id }
         coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
-        every { mockedServerManager.integrationRepository(any()) } returns integrationRepository
+        coEvery { mockedServerManager.integrationRepository(any()) } returns integrationRepository
         coEvery { integrationRepository.getEntityUpdates(listOf("entity1")) } returns channelFlow {
             close()
         }
@@ -153,7 +153,7 @@ class BaseGlanceEntityWidgetReceiverTest {
         every { glanceManager.getGlanceIdBy(any<Int>()) } answers { FakeGlanceId(firstArg()) }
         coJustRun { mockedWidget.update(context, any()) }
         coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
-        every { mockedServerManager.integrationRepository(any()) } returns integrationRepository
+        coEvery { mockedServerManager.integrationRepository(any()) } returns integrationRepository
         coEvery { integrationRepository.getEntityUpdates(listOf("entity1")) } returns channelFlow {
             widget1EntityProducer = this
             awaitClose()
@@ -226,7 +226,7 @@ class BaseGlanceEntityWidgetReceiverTest {
         coEvery { glanceManager.getGlanceIds(mockedWidget.javaClass) } returns glanceIds
         every { glanceManager.getAppWidgetId(any()) } answers { firstArg<FakeGlanceId>().id }
         coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
-        every { mockedServerManager.integrationRepository(any()) } returns integrationRepository
+        coEvery { mockedServerManager.integrationRepository(any()) } returns integrationRepository
         coEvery { integrationRepository.getEntityUpdates(listOf("entity1")) } returns channelFlow {
             producer = this
             awaitClose()
