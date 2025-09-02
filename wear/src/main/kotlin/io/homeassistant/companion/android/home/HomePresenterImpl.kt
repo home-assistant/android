@@ -1,9 +1,8 @@
 package io.homeassistant.companion.android.home
 
-import io.homeassistant.companion.android.BuildConfig
+import androidx.work.WorkManager
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
-import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
@@ -16,8 +15,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.De
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
+import io.homeassistant.companion.android.common.util.ResyncRegistrationWorker.Companion.enqueueResyncRegistration
 import io.homeassistant.companion.android.data.SimplifiedEntity
-import io.homeassistant.companion.android.onboarding.getMessagingToken
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +27,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class HomePresenterImpl @Inject constructor(
+    private val workManager: WorkManager,
     private val serverManager: ServerManager,
     private val wearPrefsRepository: WearPrefsRepository,
 ) : HomePresenter {
@@ -67,7 +67,7 @@ class HomePresenterImpl @Inject constructor(
                 serverManager.isRegistered() &&
                 serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
             ) {
-                resyncRegistration()
+                workManager.enqueueResyncRegistration()
             } else {
                 view.displayOnBoarding()
             }
@@ -176,26 +176,6 @@ class HomePresenterImpl @Inject constructor(
 
     override fun onFinish() {
         mainScope.cancel()
-    }
-
-    private fun resyncRegistration() {
-        serverManager.defaultServers.forEach {
-            mainScope.launch {
-                try {
-                    serverManager.integrationRepository(it.id).updateRegistration(
-                        DeviceRegistration(
-                            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                            null,
-                            getMessagingToken(),
-                            false,
-                        ),
-                    )
-                    serverManager.webSocketRepository(it.id).getCurrentUser() // Update cached data
-                } catch (e: Exception) {
-                    Timber.e(e, "Issue updating Registration")
-                }
-            }
-        }
     }
 
     override suspend fun isConnected(): Boolean = serverManager.isRegistered()
