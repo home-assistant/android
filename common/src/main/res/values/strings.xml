@@ -1037,6 +1037,7 @@
     <string name="webview_error_SSL_INVALID">A generic SSL error occurred when loading Home Assistant, please review the Home Assistant certificate or the connection settings and try again.</string>
     <string name="webview_error_SSL_NOTYETVALID">The Home Assistant certificate is not yet valid, please review the Home Assistant certificate or the connection settings and try again.</string>
     <string name="webview_error_SSL_UNTRUSTED">The Home Assistant certificate authority is not trusted, please review the Home Assistant certificate or the connection settings and try again.</string>
+    <string name="webview_error_SSL_EXTERNAL_RESOURCE">SSL error while loading resource from %1$s.</string>
     <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again. We will attempt to try another provided URL when you select Refresh.</string>
     <string name="welcome_hass_desc">This app connects to your Home Assistant server and allows integrating data about you and your phone.\n\nHome Assistant is free and open source home automation software with a focus on local control and privacy.</string>
     <string name="welcome_hass">Welcome to Home Assistant Companion!</string>
