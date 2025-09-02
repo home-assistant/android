@@ -22,8 +22,8 @@
             android:id="@+id/advancedButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/error_advanced"
-            android:contentDescription="@string/error_advanced" />
+            android:text="@string/more_info"
+            android:contentDescription="@string/more_info" />
 
         <TextView
             android:id="@+id/technicalText"
