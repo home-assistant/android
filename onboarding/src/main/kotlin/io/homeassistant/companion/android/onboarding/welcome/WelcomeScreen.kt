@@ -29,6 +29,8 @@ import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.compose.HAPreviews
 import io.homeassistant.companion.android.onboarding.R
 
+private val ICON_SIZE = 120.dp
+
 @Composable
 internal fun WelcomeScreen(onConnectClick: () -> Unit, onLearnMoreClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
@@ -47,8 +49,7 @@ internal fun WelcomeScreen(onConnectClick: () -> Unit, onLearnMoreClick: () -> U
         Image(
             imageVector = ImageVector.vectorResource(R.drawable.ic_home_assistant_branding),
             contentDescription = stringResource(R.string.home_assistant_branding_icon_content_description),
-            // TODO should be in a variable
-            modifier = Modifier.size(120.dp),
+            modifier = Modifier.size(ICON_SIZE),
         )
         WelcomeText()
 
