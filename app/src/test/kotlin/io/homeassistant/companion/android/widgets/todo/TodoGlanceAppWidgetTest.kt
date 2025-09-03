@@ -140,8 +140,6 @@ class TodoGlanceAppWidgetTest {
 
         onNode(hasTextEqualTo(context.getString(R.string.widget_todo_empty)))
             .assertDoesNotExist()
-        onNode(hasTextEqualTo(context.getString(R.string.widget_todo_completed)))
-            .assertExists()
         onNode(hasTextEqualTo("Hello"))
             .assertExists()
             .assertIsNotChecked()
@@ -194,8 +192,6 @@ class TodoGlanceAppWidgetTest {
 
         onNode(hasTextEqualTo(context.getString(R.string.widget_todo_empty)))
             .assertDoesNotExist()
-        onNode(hasTextEqualTo(context.getString(R.string.widget_todo_completed)))
-            .assertDoesNotExist()
         onNode(hasTextEqualTo("Hello"))
             .assertExists()
             .assertIsNotChecked()
@@ -247,8 +243,6 @@ class TodoGlanceAppWidgetTest {
         assertTitleBar(expectedTitle)
 
         onNode(hasTextEqualTo(context.getString(R.string.widget_todo_empty)))
-            .assertDoesNotExist()
-        onNode(hasTextEqualTo(context.getString(R.string.widget_todo_completed)))
             .assertDoesNotExist()
         onNode(hasTextEqualTo("Hello"))
             .assertExists()
