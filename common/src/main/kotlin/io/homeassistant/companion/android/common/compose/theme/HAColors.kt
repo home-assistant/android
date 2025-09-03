@@ -297,6 +297,7 @@ class HAColorScheme(
 
     val colorBorderDangerNormal: Color,
 
+    val colorOverlayModal: Color,
 ) {
 
     fun textField(): TextFieldColors {
@@ -628,6 +629,8 @@ val DarkHAColorScheme = HAColorScheme(
 
     colorBorderNeutralQuiet = HAColors.Neutral40,
     colorBorderDangerNormal = HAColors.Red50,
+
+    colorOverlayModal = HAColors.Black.copy(alpha = 0.25f),
 )
 
 val LightHAColorScheme = HAColorScheme(
@@ -699,6 +702,8 @@ val LightHAColorScheme = HAColorScheme(
 
     colorBorderNeutralQuiet = HAColors.Neutral80,
     colorBorderDangerNormal = HAColors.Red70,
+
+    colorOverlayModal = HAColors.Black.copy(alpha = 0.25f),
 )
 
 val LocalHAColorScheme = staticCompositionLocalOf { LightHAColorScheme }
