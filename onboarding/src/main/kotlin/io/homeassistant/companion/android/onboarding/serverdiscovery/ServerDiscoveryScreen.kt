@@ -41,10 +41,9 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -64,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
 import io.homeassistant.companion.android.common.compose.theme.HABrandColors
@@ -141,10 +141,10 @@ private fun OneServerFound(
     onDismiss: () -> Unit,
     discoveryState: DiscoveryState,
 ) {
-    val bottomSheetState = rememberModalBottomSheetState()
+    val bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = false)
     // Use a cached state to be able to use the animation from the modal otherwise if we simply use if(visible)
     // the animation is not played correctly.
-    var serverDiscoveredCached by remember { mutableStateOf<ServerDiscovered?>(null) }
+    var serverDiscoveredCached by remember { mutableStateOf(discoveryState as? ServerDiscovered) }
 
     LaunchedEffect(discoveryState) {
         if (discoveryState is ServerDiscovered) {
@@ -156,13 +156,12 @@ private fun OneServerFound(
     }
 
     serverDiscoveredCached?.let { serverDiscovered ->
-        ModalBottomSheet(
-            sheetState = bottomSheetState,
+        HAModalBottomSheet(
+            bottomSheetState = bottomSheetState,
             onDismissRequest = {
                 serverDiscoveredCached = null
                 onDismiss()
             },
-            shape = RoundedCornerShape(topStart = HARadius.X3L, topEnd = HARadius.X3L),
         ) {
             Column(
                 modifier = Modifier
