@@ -43,13 +43,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -124,13 +126,11 @@ internal fun ServerDiscoveryScreen(
             onManualSetupClick = onManualSetupClick,
         )
 
-        if (discoveryState is ServerDiscovered) {
-            OneServerFound(
-                onConnectClick = onConnectClick,
-                onDismiss = onDismissOneServerFound,
-                serverDiscovered = discoveryState,
-            )
-        }
+        OneServerFound(
+            onConnectClick = onConnectClick,
+            onDismiss = onDismissOneServerFound,
+            discoveryState = discoveryState,
+        )
     }
 }
 
@@ -139,47 +139,64 @@ internal fun ServerDiscoveryScreen(
 private fun OneServerFound(
     onConnectClick: (serverUrl: URL) -> Unit,
     onDismiss: () -> Unit,
-    serverDiscovered: ServerDiscovered,
+    discoveryState: DiscoveryState,
 ) {
-    val bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = false, initialValue = SheetValue.Expanded)
+    val bottomSheetState = rememberModalBottomSheetState()
+    // Use a cached state to be able to use the animation from the modal otherwise if we simply use if(visible)
+    // the animation is not played correctly.
+    var serverDiscoveredCached by remember { mutableStateOf<ServerDiscovered?>(null) }
 
-    ModalBottomSheet(
-        sheetState = bottomSheetState,
-        onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(topStart = HARadius.M, topEnd = HARadius.M),
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(horizontal = HASpacing.XL)
-                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(HASpacing.XL),
+    LaunchedEffect(discoveryState) {
+        if (discoveryState is ServerDiscovered) {
+            serverDiscoveredCached = discoveryState
+        } else {
+            bottomSheetState.hide()
+            serverDiscoveredCached = null
+        }
+    }
+
+    serverDiscoveredCached?.let { serverDiscovered ->
+        ModalBottomSheet(
+            sheetState = bottomSheetState,
+            onDismissRequest = {
+                serverDiscoveredCached = null
+                onDismiss()
+            },
+            shape = RoundedCornerShape(topStart = HARadius.X3L, topEnd = HARadius.X3L),
         ) {
-            Text(
-                text = serverDiscovered.name,
-                style = HATextStyle.Headline,
-            )
-            Icon(
-                imageVector = Icons.Default.Storage,
-                contentDescription = null,
+            Column(
                 modifier = Modifier
-                    .size(64.dp), // TODO define the right size to use
-                // TODO change the color with proper token
-                tint = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
-            )
-            Text(
-                text = serverDiscovered.url.toString(),
-                style = HATextStyle.Body,
-                modifier = Modifier.padding(vertical = HASpacing.S),
-            )
-            HAAccentButton(
-                text = stringResource(R.string.welcome_connect_to_ha),
-                onClick = {
-                    onConnectClick(serverDiscovered.url)
-                },
-                modifier = Modifier.padding(bottom = HASpacing.XL),
-            )
+                    .padding(horizontal = HASpacing.XL)
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(HASpacing.XL),
+            ) {
+                Text(
+                    text = serverDiscovered.name,
+                    style = HATextStyle.Headline,
+                )
+                Icon(
+                    imageVector = Icons.Default.Storage,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(ICON_SIZE), // TODO double check the size of the icon within the modal
+                    // TODO change the color with proper token
+                    tint = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
+                )
+                Text(
+                    text = serverDiscovered.url.toString(),
+                    style = HATextStyle.Body,
+                    modifier = Modifier.padding(vertical = HASpacing.S),
+                )
+                HAAccentButton(
+                    text = stringResource(R.string.welcome_connect_to_ha),
+                    onClick = {
+                        onConnectClick(serverDiscovered.url)
+                    },
+                    modifier = Modifier.padding(bottom = HASpacing.XL),
+                )
+            }
         }
     }
 }
