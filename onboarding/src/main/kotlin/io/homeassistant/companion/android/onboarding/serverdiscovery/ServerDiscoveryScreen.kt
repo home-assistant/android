@@ -66,6 +66,7 @@ import io.homeassistant.companion.android.common.compose.composable.HAPlainButto
 import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
 import io.homeassistant.companion.android.common.compose.theme.HABrandColors
 import io.homeassistant.companion.android.common.compose.theme.HARadius
+import io.homeassistant.companion.android.common.compose.theme.HASize
 import io.homeassistant.companion.android.common.compose.theme.HASpacing
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
@@ -75,6 +76,8 @@ import io.homeassistant.companion.android.compose.HAPreviews
 import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
 import java.net.URL
+
+private val ICON_SIZE = 64.dp
 
 @Composable
 internal fun ServerDiscoveryScreen(
@@ -263,7 +266,7 @@ private fun ServerItemContent(server: ServerDiscovered, onConnectClick: (URL) ->
             imageVector = ImageVector.vectorResource(R.drawable.ic_home_assistant_branding),
             contentDescription = null,
             modifier = Modifier
-                .size(64.dp) // TODO variable?
+                .size(ICON_SIZE)
                 .padding(vertical = HASpacing.XS, horizontal = HASpacing.M),
         )
         Column(
@@ -339,14 +342,14 @@ private fun AnimatedIcon() {
             modifier = Modifier
                 .size(80.dp)
                 .align(Alignment.Center)
-                .background(HABrandColors.Blue, CircleShape), // TODO change the color with proper token
+                .background(HABrandColors.Blue, CircleShape), // TODO we might want to use a semantic token?
         ) {
             Icon(
                 imageVector = ImageVector.vectorResource(commonR.drawable.ic_stat_ic_notification_blue),
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .size(40.dp), // TODO validate the size
+                    .size(HASize.X5L),
                 tint = HABrandColors.Background,
             )
         }
