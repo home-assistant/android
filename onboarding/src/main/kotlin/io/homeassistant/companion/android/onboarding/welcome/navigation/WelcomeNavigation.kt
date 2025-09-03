@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.onboarding.welcome.navigation
 
-import androidx.compose.ui.platform.AndroidUriHandler
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -17,7 +16,6 @@ internal fun NavController.navigateToWelcome(navOptions: NavOptions? = null) {
 
 internal fun NavController.navigateToLearnMore() {
     // TODO not sure it's the best way to do this or even the place to do this
-    AndroidUriHandler(context).openUri("https://home-assistant.io")
 }
 
 internal fun NavGraphBuilder.welcomeScreen(onConnectClick: () -> Unit, onLearnMoreClick: () -> Unit) {
