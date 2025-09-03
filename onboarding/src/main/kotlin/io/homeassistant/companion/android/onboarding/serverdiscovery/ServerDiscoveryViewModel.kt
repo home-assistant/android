@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
-import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.util.delayFirst
 import java.net.URL
 import javax.inject.Inject
@@ -149,8 +148,7 @@ internal class ServerDiscoveryViewModel @Inject constructor(val searcher: HomeAs
             if (it is ServerDiscovered) {
                 ServersDiscovered(listOf(it))
             } else {
-                FailFast.fail { "This function should not be called when the state is not ServerDiscovered" }
-                it as? ServersDiscovered ?: Started
+                it
             }
         }
     }
