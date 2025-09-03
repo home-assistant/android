@@ -39,6 +39,41 @@ object HASpacing {
 }
 
 /**
+ * Object defining general size constants for Home Assistant UI components.
+ */
+object HASize {
+    /** Extra extra small size (8dp, equivalent to 0.5rem). */
+    val X2S = 8.dp
+
+    /** Extra small size (10dp, equivalent to 0.625rem). */
+    val XS = 10.dp
+
+    /** Small size (12dp, equivalent to 0.75rem). */
+    val S = 12.dp
+
+    /** Medium size (14dp, equivalent to 0.875rem). */
+    val M = 14.dp
+
+    /** Large size (16dp, equivalent to 1rem). */
+    val L = 16.dp
+
+    /** Extra large size (20dp, equivalent to 1.25rem). */
+    val XL = 20.dp
+
+    /** Extra extra large size (24dp, equivalent to 1.5rem). */
+    val X2L = 24.dp
+
+    /** Extra extra extra large size (28dp, equivalent to 1.75rem). */
+    val X3L = 28.dp
+
+    /** Extra extra extra extra large size (32dp, equivalent to 2rem). */
+    val X4L = 32.dp
+
+    /** Extra extra extra extra extra large size (40dp, equivalent to 2.5rem). */
+    val X5L = 40.dp
+}
+
+/**
  * Object defining radius constants for Home Assistant UI components.
  */
 object HARadius {
