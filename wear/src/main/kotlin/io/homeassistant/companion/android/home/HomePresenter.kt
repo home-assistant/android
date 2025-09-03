@@ -54,6 +54,4 @@ interface HomePresenter {
 
     suspend fun getWearFavoritesOnly(): Boolean
     suspend fun setWearFavoritesOnly(enabled: Boolean)
-    suspend fun setMobileDnsFallback(enabled: Boolean)
-    suspend fun getMobileDnsFallback(): Boolean
 }

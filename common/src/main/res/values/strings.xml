@@ -1272,7 +1272,6 @@
     <string name="not_registered">Please open the Home Assistant app and log in to start using Assist</string>
     <string name="ha_assist">HA: Assist</string>
     <string name="only_favorites">Only show favorites</string>
-    <string name="mobile_dns_fallback">Mobile DNS Fallback</string>
     <string name="beacon_scanning">Beacon monitor scanning</string>
     <string name="basic_sensor_name_car_fuel_type">Car fuel type</string>
     <string name="sensor_description_car_fuel_type">List of available fuel types for the connected car</string>
@@ -1426,5 +1425,4 @@
     <string name="default_launcher_prompt_def">Open settings to choose your default home app. Currently set to %s.</string>
     <string name="unknown_launcher_label">unknown app</string>
     <string name="open_settings">Open settings</string>
-    <string name="networking">Networking</string>
 </resources>

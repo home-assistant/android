@@ -4,7 +4,6 @@ import android.content.Context
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.qualifiers.ApplicationContext
-import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.time.Instant
@@ -28,10 +27,7 @@ import timber.log.Timber
  * to minimize redundant lookups and reduce network traffic, especially when falling back
  * to mobile DNS.
  */
-class WearDns @Inject constructor(
-    @ApplicationContext private val appContext: Context,
-    private val wearPrefsRepository: WearPrefsRepository,
-) : Dns {
+class WearDns @Inject constructor(@ApplicationContext private val appContext: Context) : Dns {
     private val dnsHelperCache = ConcurrentHashMap<String, CacheResult>()
 
     override fun lookup(hostname: String): List<InetAddress> {
@@ -39,11 +35,7 @@ class WearDns @Inject constructor(
             Dns.SYSTEM.lookup(hostname)
         } catch (e: UnknownHostException) {
             return runBlocking {
-                if (wearPrefsRepository.getMobileDnsFallback()) {
-                    attemptLookupViaMobile(hostname, e)
-                } else {
-                    throw e
-                }
+                attemptLookupViaMobile(hostname, e)
             }
         }
     }

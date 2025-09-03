@@ -287,12 +287,4 @@ class HomePresenterImpl @Inject constructor(
     override suspend fun setWearFavoritesOnly(enabled: Boolean) {
         wearPrefsRepository.setWearFavoritesOnly(enabled)
     }
-
-    override suspend fun getMobileDnsFallback(): Boolean {
-        return wearPrefsRepository.getMobileDnsFallback()
-    }
-
-    override suspend fun setMobileDnsFallback(enabled: Boolean) {
-        wearPrefsRepository.setMobileDnsFallback(enabled)
-    }
 }

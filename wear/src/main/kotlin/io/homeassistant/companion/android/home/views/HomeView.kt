@@ -195,8 +195,6 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                             },
                         )
                     },
-                    isMobileDnsFallback = mainViewModel.isWearMobileDnsFallback,
-                    setMobileDnsFallback = { mainViewModel.setMobileDnsFallback(it) },
                 )
             }
             composable(SCREEN_SET_FAVORITES) {

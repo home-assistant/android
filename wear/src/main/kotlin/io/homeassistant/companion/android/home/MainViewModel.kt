@@ -138,9 +138,6 @@ class MainViewModel @Inject constructor(
     var areNotificationsAllowed by mutableStateOf(false)
         private set
 
-    var isWearMobileDnsFallback by mutableStateOf(false)
-        private set
-
     init {
         viewModelScope.launch {
             favoriteCaches.addAll(favoriteCachesDao.getAll())
@@ -168,7 +165,6 @@ class MainViewModel @Inject constructor(
             templateTiles.clear()
             templateTiles.putAll(homePresenter.getAllTemplateTiles())
             isFavoritesOnly = homePresenter.getWearFavoritesOnly()
-            isWearMobileDnsFallback = homePresenter.getMobileDnsFallback()
 
             val assistantAppComponent = ComponentName(
                 BuildConfig.APPLICATION_ID,
@@ -532,13 +528,6 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             homePresenter.setWearFavoritesOnly(enabled)
             isFavoritesOnly = enabled
-        }
-    }
-
-    fun setMobileDnsFallback(enabled: Boolean) {
-        viewModelScope.launch {
-            homePresenter.setMobileDnsFallback(enabled)
-            isWearMobileDnsFallback = enabled
         }
     }
 
