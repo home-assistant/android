@@ -291,6 +291,8 @@ class HAColorScheme(
     val colorTextDisabled: Color,
 
     val colorBorderPrimaryNormal: Color,
+    val colorBroderPrimaryLoud: Color,
+
     val colorBorderNeutralQuiet: Color,
 
     val colorBorderDangerNormal: Color,
@@ -622,6 +624,8 @@ val DarkHAColorScheme = HAColorScheme(
     colorTextDisabled = HAColors.Neutral60,
 
     colorBorderPrimaryNormal = HAColors.Primary50,
+    colorBroderPrimaryLoud = HAColors.Primary70,
+
     colorBorderNeutralQuiet = HAColors.Neutral40,
     colorBorderDangerNormal = HAColors.Red50,
 )
@@ -691,6 +695,8 @@ val LightHAColorScheme = HAColorScheme(
     colorTextDisabled = HAColors.Neutral60,
 
     colorBorderPrimaryNormal = HAColors.Primary70,
+    colorBroderPrimaryLoud = HAColors.Primary40,
+
     colorBorderNeutralQuiet = HAColors.Neutral80,
     colorBorderDangerNormal = HAColors.Red70,
 )
