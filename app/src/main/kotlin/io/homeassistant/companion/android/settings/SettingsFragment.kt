@@ -336,8 +336,22 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
         }
 
         findPreference<Preference>("changelog_prompt")?.setOnPreferenceClickListener {
-            presenter.showChangeLog(requireContext())
+            lifecycleScope.launch {
+                presenter.showChangeLog(requireContext())
+            }
             true
+        }
+
+        findPreference<SwitchPreference>("change_log_popup_enabled")?.let {
+            lifecycleScope.launch {
+                it.isChecked = presenter.isChangeLogPopupEnabled()
+            }
+            it.setOnPreferenceChangeListener { _, newValue ->
+                lifecycleScope.launch {
+                    presenter.setChangeLogPopupEnabled(newValue as Boolean)
+                }
+                true
+            }
         }
 
         findPreference<Preference>("version")?.let {

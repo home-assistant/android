@@ -115,6 +115,10 @@ interface PrefsRepository {
 
     suspend fun setGestureAction(gesture: HAGesture, action: GestureAction)
 
+    suspend fun isChangeLogPopupEnabled(): Boolean
+
+    suspend fun setChangeLogPopupEnabled(enabled: Boolean)
+
     /** Clean up any app-level preferences that might reference servers */
     suspend fun removeServer(serverId: Int)
 }
