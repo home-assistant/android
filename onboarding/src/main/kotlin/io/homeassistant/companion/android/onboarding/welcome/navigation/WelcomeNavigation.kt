@@ -14,10 +14,6 @@ internal fun NavController.navigateToWelcome(navOptions: NavOptions? = null) {
     navigate(route = WelcomeRoute, navOptions)
 }
 
-internal fun NavController.navigateToLearnMore() {
-    // TODO not sure it's the best way to do this or even the place to do this
-}
-
 internal fun NavGraphBuilder.welcomeScreen(onConnectClick: () -> Unit, onLearnMoreClick: () -> Unit) {
     composable<WelcomeRoute> {
         WelcomeScreen(onConnectClick = onConnectClick, onLearnMoreClick = onLearnMoreClick)
