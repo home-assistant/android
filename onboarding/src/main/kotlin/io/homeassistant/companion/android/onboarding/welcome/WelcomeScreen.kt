@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -26,10 +27,12 @@ import io.homeassistant.companion.android.common.compose.composable.HAPlainButto
 import io.homeassistant.companion.android.common.compose.theme.HASpacing
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.compose.HAPreviews
 import io.homeassistant.companion.android.onboarding.R
 
 private val ICON_SIZE = 120.dp
+private val MaxTextWidth = MaxButtonWidth
 
 @Composable
 internal fun WelcomeScreen(onConnectClick: () -> Unit, onLearnMoreClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -64,11 +67,13 @@ private fun ColumnScope.WelcomeText() {
     Text(
         text = stringResource(R.string.welcome_home_assistant_title),
         style = HATextStyle.Headline,
+        modifier = Modifier.widthIn(max = MaxTextWidth),
     )
 
     Text(
         text = stringResource(R.string.welcome_details),
         style = HATextStyle.Body,
+        modifier = Modifier.widthIn(max = MaxTextWidth),
     )
 }
 
