@@ -321,6 +321,13 @@ class PrefsRepositoryImpl @Inject constructor(
         return localStorage().getBooleanOrNull(PREF_CHANGE_LOG_POPUP_ENABLED) ?: true
     }
 
+    override suspend fun isBlockExternalDomainsEnabled(): Boolean =
+        prefs.getBoolean("block_external_domains_enabled", false)
+
+    override suspend fun setBlockExternalDomainsEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("block_external_domains_enabled", enabled).apply()
+    }
+
     override suspend fun setChangeLogPopupEnabled(enabled: Boolean) {
         localStorage().putBoolean(PREF_CHANGE_LOG_POPUP_ENABLED, enabled)
     }
