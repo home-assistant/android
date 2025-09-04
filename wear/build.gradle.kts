@@ -65,4 +65,5 @@ dependencies {
     androidTestImplementation(libs.bundles.androidx.test)
     testImplementation(libs.bundles.androidx.test)
     testImplementation(libs.androidx.test.core)
+    testImplementation(libs.conscrypt.openjdk.uber)
 }

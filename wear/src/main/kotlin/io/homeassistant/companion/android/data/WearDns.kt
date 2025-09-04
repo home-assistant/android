@@ -1,9 +1,8 @@
 package io.homeassistant.companion.android.data
 
-import android.content.Context
 import com.google.android.gms.wearable.CapabilityClient
+import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.time.Instant
@@ -27,7 +26,10 @@ import timber.log.Timber
  * to minimize redundant lookups and reduce network traffic, especially when falling back
  * to mobile DNS.
  */
-class WearDns @Inject constructor(@ApplicationContext private val appContext: Context) : Dns {
+class WearDns @Inject constructor(
+    private val messageClient: MessageClient,
+    private val capabilityClient: CapabilityClient,
+) : Dns {
     private val dnsHelperCache = ConcurrentHashMap<String, CacheResult>()
 
     override fun lookup(hostname: String): List<InetAddress> {
@@ -71,14 +73,14 @@ class WearDns @Inject constructor(@ApplicationContext private val appContext: Co
     }
 
     private suspend fun nodeIdWithDns(): String? {
-        val capability = Wearable.getCapabilityClient(appContext)
+        val capability = capabilityClient
             .getCapability(CAPABILITY_DNS_VIA_MOBILE, CapabilityClient.FILTER_REACHABLE).await()
 
         return capability.nodes.firstNotNullOfOrNull { it.id }
     }
 
     private suspend fun dnsViaMobile(nodeId: String, hostname: String): List<InetAddress> {
-        val response = Wearable.getMessageClient(appContext).sendRequest(
+        val response = messageClient.sendRequest(
             nodeId,
             REQUEST_DNS_VIA_MOBILE,
             hostname.toByteArray(),

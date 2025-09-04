@@ -1,8 +1,13 @@
 package io.homeassistant.companion.android.data
 
+import android.content.Context
+import com.google.android.gms.wearable.CapabilityClient
+import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.Wearable
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dagger.multibindings.IntoSet
 import io.homeassistant.companion.android.di.OkHttpConfigurator
@@ -20,4 +25,11 @@ object WearDataModule {
             builder.dns(wearDns)
         }
     }
+
+    @Provides
+    fun bindMessageClient(@ApplicationContext context: Context): MessageClient = Wearable.getMessageClient(context)
+
+    @Provides
+    fun bindCapabilityClient(@ApplicationContext context: Context): CapabilityClient =
+        Wearable.getCapabilityClient(context)
 }
