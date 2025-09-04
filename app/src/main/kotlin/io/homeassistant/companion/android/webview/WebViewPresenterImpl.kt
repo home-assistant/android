@@ -6,9 +6,10 @@ import android.content.Context
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.net.Uri
 import androidx.activity.result.ActivityResult
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
+import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
@@ -41,7 +42,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import timber.log.Timber
@@ -103,7 +103,7 @@ class WebViewPresenterImpl @Inject constructor(
                     return@launch
                 }
             } catch (e: IllegalArgumentException) {
-                Timber.w("Unable to get server session state, not continuing")
+                Timber.w(e, "Unable to get server session state, not continuing")
                 return@launch
             }
 
@@ -135,7 +135,7 @@ class WebViewPresenterImpl @Inject constructor(
                 oldUrl?.port != url?.port
             ) {
                 view.loadUrl(
-                    url = Uri.parse(url.toString())
+                    url = url.toString().toUri()
                         .buildUpon()
                         .appendQueryParameter("external_auth", "1")
                         .build()
@@ -278,28 +278,28 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun isFullScreen(): Boolean = runBlocking {
-        prefsRepository.isFullScreenEnabled()
+    override suspend fun isFullScreen(): Boolean {
+        return prefsRepository.isFullScreenEnabled()
     }
 
-    override fun getScreenOrientation(): String? = runBlocking {
-        prefsRepository.getScreenOrientation()
+    override suspend fun getScreenOrientation(): String? {
+        return prefsRepository.getScreenOrientation()
     }
 
-    override fun isKeepScreenOnEnabled(): Boolean = runBlocking {
-        prefsRepository.isKeepScreenOnEnabled()
+    override suspend fun isKeepScreenOnEnabled(): Boolean {
+        return prefsRepository.isKeepScreenOnEnabled()
     }
 
-    override fun getPageZoomLevel(): Int = runBlocking {
-        prefsRepository.getPageZoomLevel()
+    override suspend fun getPageZoomLevel(): Int {
+        return prefsRepository.getPageZoomLevel()
     }
 
-    override fun isPinchToZoomEnabled(): Boolean = runBlocking {
-        prefsRepository.isPinchToZoomEnabled()
+    override suspend fun isPinchToZoomEnabled(): Boolean {
+        return prefsRepository.isPinchToZoomEnabled()
     }
 
-    override fun isWebViewDebugEnabled(): Boolean = runBlocking {
-        prefsRepository.isWebViewDebugEnabled()
+    override suspend fun isWebViewDebugEnabled(): Boolean {
+        return prefsRepository.isWebViewDebugEnabled()
     }
 
     override suspend fun isAppLocked(): Boolean = if (serverManager.isRegistered()) {
@@ -313,30 +313,24 @@ class WebViewPresenterImpl @Inject constructor(
         false
     }
 
-    override fun setAppActive(active: Boolean) = runBlocking {
+    override suspend fun setAppActive(active: Boolean) {
         serverManager.getServer(serverId)?.let {
             try {
                 serverManager.integrationRepository(serverId).setAppActive(active)
             } catch (e: IllegalStateException) {
-                Timber.w("Cannot set app active $active for server $serverId")
+                Timber.w(e, "Cannot set app active $active for server $serverId")
                 Unit
             }
         } ?: Unit
         if (!active) stopScanningForImprov(true)
     }
 
-    override fun isLockEnabled(): Boolean = runBlocking {
-        serverManager.getServer(serverId)?.let {
-            serverManager.authenticationRepository(serverId).isLockEnabled()
-        } ?: false
+    override suspend fun isAutoPlayVideoEnabled(): Boolean {
+        return prefsRepository.isAutoPlayVideoEnabled()
     }
 
-    override fun isAutoPlayVideoEnabled(): Boolean = runBlocking {
-        prefsRepository.isAutoPlayVideoEnabled()
-    }
-
-    override fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean = runBlocking {
-        prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()
+    override suspend fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean {
+        return prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()
     }
 
     override fun onExternalBusMessage(message: JSONObject) {
@@ -350,12 +344,6 @@ class WebViewPresenterImpl @Inject constructor(
         return gesture?.let { prefsRepository.getGestureAction(it) } ?: GestureAction.NONE
     }
 
-    override fun sessionTimeOut(): Int = runBlocking {
-        serverManager.getServer(serverId)?.let {
-            serverManager.integrationRepository(serverId).getSessionTimeOut()
-        } ?: 0
-    }
-
     override fun onStart(context: Context) {
         matterUseCase.suppressDiscoveryBottomSheet(context)
     }
@@ -367,8 +355,8 @@ class WebViewPresenterImpl @Inject constructor(
     override suspend fun isSsidUsed(): Boolean =
         serverManager.getServer(serverId)?.connection?.internalSsids?.isNotEmpty() == true
 
-    override fun getAuthorizationHeader(): String = runBlocking {
-        serverManager.getServer(serverId)?.let {
+    override suspend fun getAuthorizationHeader(): String {
+        return serverManager.getServer(serverId)?.let {
             serverManager.authenticationRepository(serverId).buildBearerToken()
         } ?: ""
     }
@@ -405,7 +393,7 @@ class WebViewPresenterImpl @Inject constructor(
                 m.group(3)!!.toInt(),
             )
         } else {
-            Color.parseColor(colorString)
+            colorString.toColorInt()
         }
     }
 
@@ -539,7 +527,7 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override fun shouldRequestImprovPermission(): String? {
-        var returnPermissions = try {
+        val returnPermissions = try {
             improvRepository.getRequiredPermissions().filter {
                 ContextCompat.checkSelfPermission(view as Context, it) != PackageManager.PERMISSION_GRANTED
             }
