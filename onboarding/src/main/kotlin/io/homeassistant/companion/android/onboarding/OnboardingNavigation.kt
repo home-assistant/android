@@ -7,7 +7,6 @@ import androidx.navigation.navigation
 import io.homeassistant.companion.android.HAStartDestinationRoute
 import io.homeassistant.companion.android.compose.navigateToUri
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
-import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscoveryHelp
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.serverDiscoveryScreen
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.welcomeScreen
@@ -34,7 +33,7 @@ internal fun NavGraphBuilder.onboarding(
         welcomeScreen(
             onConnectClick = navController::navigateToServerDiscovery,
             onLearnMoreClick = {
-                navController.navigateToUri("https://home-assistant.io")
+                navController.navigateToUri("https://www.home-assistant.io")
             },
         )
         serverDiscoveryScreen(
@@ -42,7 +41,9 @@ internal fun NavGraphBuilder.onboarding(
                 // TODO navigate to connection with URL
             },
             onBackClick = navController::popBackStack,
-            onHelpClick = navController::navigateToServerDiscoveryHelp,
+            onHelpClick = {
+                navController.navigateToUri("https://www.home-assistant.io/installation/")
+            },
             onManualSetupClick = {}, // TODO navigate to manual setup
         )
     }
