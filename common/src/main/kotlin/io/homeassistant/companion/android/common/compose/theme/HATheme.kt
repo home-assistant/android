@@ -36,8 +36,9 @@ fun HATheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () 
 }
 
 /**
- * Small Wrapper around [HATheme] to handle the background color for screenshots/preview, to test individual screen we
- * need to set the background color manually.
+ * Small wrapper around [HATheme] for previews/screenshot tests which:
+ * - applies the theme
+ * - adds a container with a background color around the content
  */
 @SuppressLint("ComposeModifierMissing")
 @Composable
