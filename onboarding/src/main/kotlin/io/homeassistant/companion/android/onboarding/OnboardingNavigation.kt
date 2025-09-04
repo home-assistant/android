@@ -7,8 +7,8 @@ import androidx.navigation.navigation
 import io.homeassistant.companion.android.HAStartDestinationRoute
 import io.homeassistant.companion.android.compose.navigateToUri
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
-import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.serverDiscoveryScreen
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscoveryHelp
+import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.serverDiscoveryScreen
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.welcomeScreen
 import kotlinx.serialization.Serializable

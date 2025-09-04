@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -38,7 +39,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Storage
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -56,13 +56,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
@@ -71,15 +75,18 @@ import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HASize
 import io.homeassistant.companion.android.common.compose.theme.HASpacing
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
-import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.compose.HAPreviews
+import io.homeassistant.companion.android.compose.alpha
 import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
 import java.net.URL
 
 private val ICON_SIZE = 64.dp
+private val MaxContentWidth = MaxButtonWidth
 
 @Composable
 internal fun ServerDiscoveryScreen(
@@ -189,11 +196,11 @@ private fun OneServerFound(
                     modifier = Modifier.padding(vertical = HASpacing.S),
                 )
                 HAAccentButton(
-                    text = stringResource(R.string.welcome_connect_to_ha),
+                    text = stringResource(R.string.server_discovery_connect),
                     onClick = {
                         onConnectClick(serverDiscovered.url)
                     },
-                    modifier = Modifier.padding(bottom = HASpacing.XL),
+                    modifier = Modifier.padding(bottom = HASpacing.XL).fillMaxWidth(),
                 )
             }
         }
@@ -240,6 +247,7 @@ private fun ColumnScope.ServersDiscoveredContent(state: ServersDiscovered, onCon
             .weight(1f)
             .padding(top = HASpacing.X2L)
             .padding(horizontal = HASpacing.M),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         items(state.servers) { server ->
             ServerItemContent(server, onConnectClick)
@@ -251,7 +259,7 @@ private fun ColumnScope.ServersDiscoveredContent(state: ServersDiscovered, onCon
                     .fillMaxWidth()
                     .padding(HASpacing.X2L),
             ) {
-                CircularProgressIndicator()
+                HALoading()
             }
         }
     }
@@ -262,6 +270,7 @@ private fun ServerItemContent(server: ServerDiscovered, onConnectClick: (URL) ->
     val rowShape = RoundedCornerShape(size = HARadius.XL)
     Row(
         modifier = modifier
+            .widthIn(max = MaxContentWidth)
             .fillMaxWidth()
             .padding(vertical = HASpacing.XS)
             .border(
@@ -275,6 +284,7 @@ private fun ServerItemContent(server: ServerDiscovered, onConnectClick: (URL) ->
                 onClick = {
                     onConnectClick(server.url)
                 },
+                role = Role.Button,
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -311,7 +321,7 @@ private fun ColumnScope.ScanningForServer(discoveryState: DiscoveryState) {
     AnimatedIcon()
     Spacer(modifier = Modifier.weight(positionPercentage))
 
-    val alpha: Float by animateFloatAsState(
+    val currentAlpha: Float by animateFloatAsState(
         targetValue = if (discoveryState == NoServerFound) 1f else 0f,
         animationSpec = tween(
             durationMillis = 2000,
@@ -327,7 +337,10 @@ private fun ColumnScope.ScanningForServer(discoveryState: DiscoveryState) {
                 vertical = HASpacing.S,
                 horizontal = HASpacing.M,
             )
-            .alpha(alpha),
+            .alpha(currentAlpha)
+            .semantics {
+                alpha = currentAlpha
+            }.widthIn(max = MaxContentWidth),
     )
 
     Spacer(modifier = Modifier.weight(1f - 2f * positionPercentage))
@@ -349,6 +362,7 @@ private fun AnimatedIcon() {
         Image(
             imageVector = ImageVector.vectorResource(R.drawable.dots),
             contentDescription = null,
+            colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorBorderPrimaryLoud),
             modifier = Modifier
                 .size(220.dp)
                 .align(Alignment.Center)
@@ -375,7 +389,7 @@ private fun AnimatedIcon() {
 @HAPreviews
 @Composable
 private fun ServerDiscoveryScreenPreview_scanning() {
-    HATheme {
+    HAThemeForPreview {
         ServerDiscoveryScreen(
             discoveryState = Started,
             onConnectClick = {},
@@ -390,7 +404,7 @@ private fun ServerDiscoveryScreenPreview_scanning() {
 @HAPreviews
 @Composable
 private fun ServerDiscoveryScreenPreview_no_server_found() {
-    HATheme {
+    HAThemeForPreview {
         ServerDiscoveryScreen(
             discoveryState = NoServerFound,
             onConnectClick = {},
@@ -405,7 +419,7 @@ private fun ServerDiscoveryScreenPreview_no_server_found() {
 @HAPreviews
 @Composable
 private fun ServerDiscoveryScreenPreview_with_one_server() {
-    HATheme {
+    HAThemeForPreview {
         ServerDiscoveryScreen(
             discoveryState = ServerDiscovered(
                 "hello",
@@ -424,7 +438,7 @@ private fun ServerDiscoveryScreenPreview_with_one_server() {
 @HAPreviews
 @Composable
 private fun ServerDiscoveryScreenPreview_with_multiple_servers() {
-    HATheme {
+    HAThemeForPreview {
         ServerDiscoveryScreen(
             discoveryState = ServersDiscovered(
                 listOf(
@@ -435,7 +449,7 @@ private fun ServerDiscoveryScreenPreview_with_multiple_servers() {
                     ),
                     ServerDiscovered(
                         "world",
-                        URL("http://my.homeassistant.io"),
+                        URL("http://my.homeassistant.very.long.url.for.testing.with.many.sub.domains.org"),
                         HomeAssistantVersion(2042, 1, 42),
                     ),
                 ),

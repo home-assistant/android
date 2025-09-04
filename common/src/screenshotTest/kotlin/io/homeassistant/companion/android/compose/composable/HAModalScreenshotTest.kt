@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.Density
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
-import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 
 class HAModalScreenshotTest {
 
@@ -36,7 +36,7 @@ class HAModalScreenshotTest {
     @Composable
     private fun HAModalBottomSheetTest(sheetValue: SheetValue) {
         // TODO update to HAThemeForPreview once https://github.com/home-assistant/android/pull/5733 is merged
-        HATheme {
+        HAThemeForPreview {
             HAModalBottomSheet(
                 bottomSheetState = SheetState(
                     skipPartiallyExpanded = false,
