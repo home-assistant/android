@@ -25,7 +25,7 @@ import io.homeassistant.companion.android.common.compose.composable.HAAccentButt
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HASpacing
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
-import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.compose.HAPreviews
 import io.homeassistant.companion.android.onboarding.R
 
@@ -89,7 +89,7 @@ private fun ColumnScope.BottomButtons(onConnectClick: () -> Unit, onLearnMoreCli
 @HAPreviews
 @Composable
 private fun WelcomeScreenPreview() {
-    HATheme {
+    HAThemeForPreview {
         WelcomeScreen(onConnectClick = {}, onLearnMoreClick = {})
     }
 }
