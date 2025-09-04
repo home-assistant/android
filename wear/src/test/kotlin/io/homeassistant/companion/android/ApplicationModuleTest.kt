@@ -50,7 +50,7 @@ class ApplicationModuleTest {
     }
 
     @Test
-    fun `Given injected push websocket support when checking the value it is true`() {
+    fun `Given injected push websocket support when checking the value it is false`() {
         val currentValue = websocketSupport
         assertNotNull(currentValue)
         assertFalse(currentValue)

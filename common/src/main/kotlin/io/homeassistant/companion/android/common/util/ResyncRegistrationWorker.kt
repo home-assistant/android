@@ -22,7 +22,7 @@ import timber.log.Timber
 /**
  * A worker that will resync the device registration with all connected servers.
  * This is used to ensure that the device registration is up to date with the latest app version
- * and push token. It also updates retrieves the config and current user to update the local cache.
+ * and push token. It also retrieves the server config and current user to update the local cache.
  */
 class ResyncRegistrationWorker(context: Context, params: WorkerParameters) :
     CoroutineWorker(context.applicationContext, params) {
@@ -30,9 +30,8 @@ class ResyncRegistrationWorker(context: Context, params: WorkerParameters) :
     companion object {
 
         /**
-         * We could use androidx hilt compiler and work library to avoid having to deal with the entry point,
-         * but there is an ongoing bug that cause a StackOverflow when we apply the compiler to the project that
-         * prevent us from using it at the moment https://github.com/google/dagger/issues/4702.
+         * A bug in the AndroidX Hilt compiler that caused a StackOverflow in our codebase
+         * tracked in https://github.com/google/dagger/issues/4702 forces us to use an entry point.
          */
         @EntryPoint
         @InstallIn(SingletonComponent::class)
@@ -62,7 +61,10 @@ class ResyncRegistrationWorker(context: Context, params: WorkerParameters) :
             val entryPoints = EntryPoints.get(applicationContext, ResyncRegistrationWorkerEntryPoint::class.java)
             val serverManager = entryPoints.serverManager()
 
-            if (!serverManager.isRegistered()) return@coroutineScope Result.failure()
+            if (!serverManager.isRegistered()) {
+                Timber.i("No server registered, skipping registration update")
+                return@coroutineScope Result.success()
+            }
 
             var result = Result.success()
             serverManager.defaultServers.map {

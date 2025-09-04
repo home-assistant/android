@@ -52,12 +52,12 @@ class ResyncRegistrationWorkerTest {
     }
 
     @Test
-    fun `Given no servers registered when doWork then return failure`() = runTest {
+    fun `Given no servers registered when doWork then return success`() = runTest {
         coEvery { serverManager.isRegistered() } returns false
 
         val result = worker.doWork()
 
-        assertEquals(ListenableWorker.Result.failure(), result)
+        assertEquals(ListenableWorker.Result.success(), result)
         coVerify(exactly = 0) { serverManager.defaultServers }
     }
 
@@ -68,7 +68,6 @@ class ResyncRegistrationWorkerTest {
 
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.defaultServers } returns listOf(server1, server2)
-        // coEvery { integrationRepository.updateRegistration(any()) } just Runs
 
         val result = worker.doWork()
 
@@ -104,10 +103,39 @@ class ResyncRegistrationWorkerTest {
             serverManager.integrationRepository(2)
             serverManager.webSocketRepository(2)
         }
+        coVerify(exactly = 0) {
+            serverManager.webSocketRepository(1)
+        }
         coVerify(exactly = 1) {
             integrationRepository.updateRegistration(any())
             integrationRepository.getConfig()
             webSocketRepository.getCurrentUser()
+        }
+    }
+
+    @Test
+    fun `Given servers registered but one throws while getting websocket repository when doWork then return failure and update registration and cache only for one server`() = runTest {
+        val server1 = mockk<Server>(relaxed = true).apply { every { id } returns 1 }
+        val server2 = mockk<Server>(relaxed = true).apply { every { id } returns 2 }
+
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.defaultServers } returns listOf(server1, server2)
+
+        coEvery { serverManager.webSocketRepository(1) } throws IllegalStateException()
+
+        val result = worker.doWork()
+
+        assertEquals(ListenableWorker.Result.failure(), result)
+        coVerify(exactly = 1) {
+            serverManager.integrationRepository(1)
+            serverManager.integrationRepository(2)
+            serverManager.webSocketRepository(1)
+            serverManager.webSocketRepository(2)
+            webSocketRepository.getCurrentUser()
+        }
+        coVerify(exactly = 2) {
+            integrationRepository.updateRegistration(any())
+            integrationRepository.getConfig()
         }
     }
 

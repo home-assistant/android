@@ -42,6 +42,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ge
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.MessagingToken
+import io.homeassistant.companion.android.common.util.isNullOrBlank
 import io.homeassistant.companion.android.database.server.Server
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
@@ -731,7 +732,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val pushToken = deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
 
         val appData = mutableMapOf<String, Any>("push_websocket_channel" to deviceRegistration.pushWebsocket)
-        if (pushToken != null && !pushToken.isBlank()) {
+        if (!pushToken.isNullOrBlank()) {
             appData["push_url"] = PUSH_URL
             appData["push_token"] = pushToken
         }
