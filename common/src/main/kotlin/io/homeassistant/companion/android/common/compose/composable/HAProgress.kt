@@ -20,7 +20,7 @@ fun HALoading(modifier: Modifier = Modifier, strokeWidth: Dp = ProgressIndicator
     CircularProgressIndicator(
         modifier = modifier,
         strokeWidth = strokeWidth,
-        color = LocalHAColorScheme.current.colorBroderPrimaryLoud,
+        color = LocalHAColorScheme.current.colorBorderPrimaryLoud,
         trackColor = LocalHAColorScheme.current.colorBorderNeutralQuiet,
     )
 }
@@ -42,7 +42,7 @@ fun HAProgress(
         progress = progress,
         modifier = modifier,
         strokeWidth = strokeWidth,
-        color = LocalHAColorScheme.current.colorBroderPrimaryLoud,
+        color = LocalHAColorScheme.current.colorBorderPrimaryLoud,
         trackColor = LocalHAColorScheme.current.colorBorderNeutralQuiet,
         gapSize = (-10).dp, // Remove the strokeCap of the background
     )
