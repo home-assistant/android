@@ -1,19 +1,19 @@
 package io.homeassistant.companion.android.onboarding.serverdiscovery
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.android.tools.screenshot.PreviewTest
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
-import io.homeassistant.companion.android.compose.HAThemeScreenshot
+import io.homeassistant.companion.android.compose.HAPreviews
 import java.net.URL
 
 class ServerDiscoveryScreenshotTest {
 
     @PreviewTest
-    @PreviewLightDark
+    @HAPreviews
     @Composable
     fun `ServerDiscoveryScreen scanning`() {
-        HAThemeScreenshot {
+        HAThemeForPreview {
             ServerDiscoveryScreen(
                 discoveryState = Started,
                 onConnectClick = {},
@@ -26,10 +26,10 @@ class ServerDiscoveryScreenshotTest {
     }
 
     @PreviewTest
-    @PreviewLightDark
+    @HAPreviews
     @Composable
     fun `ServerDiscoveryScreen no server found`() {
-        HAThemeScreenshot {
+        HAThemeForPreview {
             ServerDiscoveryScreen(
                 discoveryState = NoServerFound,
                 onConnectClick = {},
@@ -42,10 +42,10 @@ class ServerDiscoveryScreenshotTest {
     }
 
     @PreviewTest
-    @PreviewLightDark
+    @HAPreviews
     @Composable
     fun `ServerDiscoveryScreen with one server found`() {
-        HAThemeScreenshot {
+        HAThemeForPreview {
             ServerDiscoveryScreen(
                 discoveryState = ServerDiscovered(
                     "hello",
@@ -62,10 +62,10 @@ class ServerDiscoveryScreenshotTest {
     }
 
     @PreviewTest
-    @PreviewLightDark
+    @HAPreviews
     @Composable
     fun `ServerDiscoveryScreen with multiple servers found`() {
-        HAThemeScreenshot {
+        HAThemeForPreview {
             ServerDiscoveryScreen(
                 discoveryState = ServersDiscovered(
                     listOf(
