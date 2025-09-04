@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.theme.HASpacing
-import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 
 class HATextFieldScreenshotTest {
 
@@ -26,7 +26,7 @@ class HATextFieldScreenshotTest {
     @PreviewTest
     @Composable
     fun `HATextField`() {
-        HATheme {
+        HAThemeForPreview {
             Column {
                 HATextFieldForTest("Hello")
                 HATextFieldForTest("")
@@ -38,7 +38,7 @@ class HATextFieldScreenshotTest {
     @PreviewTest
     @Composable
     fun `HATextField with label`() {
-        HATheme {
+        HAThemeForPreview {
             Column {
                 HATextFieldForTest("Hello", label = "Label")
                 HATextFieldForTest("", label = "Label")
@@ -50,7 +50,7 @@ class HATextFieldScreenshotTest {
     @PreviewTest
     @Composable
     fun `HATextField with placeholder`() {
-        HATheme {
+        HAThemeForPreview {
             Column {
                 HATextFieldForTest("Value write on top of placeholder", placeholder = "Placeholder")
                 HATextFieldForTest("", placeholder = "Placeholder")
@@ -62,7 +62,7 @@ class HATextFieldScreenshotTest {
     @PreviewTest
     @Composable
     fun `HATextField with error`() {
-        HATheme {
+        HAThemeForPreview {
             Column {
                 HATextFieldForTest("Hello", label = "Label", errorText = "Error with label")
                 HATextFieldForTest("Hello", errorText = "Error without label")

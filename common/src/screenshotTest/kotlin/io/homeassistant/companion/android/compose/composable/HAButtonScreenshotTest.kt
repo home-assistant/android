@@ -10,7 +10,7 @@ import io.homeassistant.companion.android.common.compose.composable.ButtonVarian
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
-import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 
 private class VariantProvider : PreviewParameterProvider<ButtonVariant> {
     override val values: Sequence<ButtonVariant> = ButtonVariant.entries.asSequence()
@@ -22,7 +22,7 @@ class HAButtonScreenshotTest {
     @PreviewTest
     @Composable
     fun `HAAccentButton`(@PreviewParameter(VariantProvider::class) variant: ButtonVariant) {
-        HATheme {
+        HAThemeForPreview {
             Row {
                 HAAccentButton(
                     variant = variant,
@@ -44,7 +44,7 @@ class HAButtonScreenshotTest {
     @PreviewTest
     @Composable
     fun `HAFilledButton`(@PreviewParameter(VariantProvider::class) variant: ButtonVariant) {
-        HATheme {
+        HAThemeForPreview {
             Row {
                 HAFilledButton(
                     variant = variant,
@@ -66,7 +66,7 @@ class HAButtonScreenshotTest {
     @PreviewTest
     @Composable
     fun `HAPlainButton`(@PreviewParameter(VariantProvider::class) variant: ButtonVariant) {
-        HATheme {
+        HAThemeForPreview {
             Row {
                 HAPlainButton(
                     variant = variant,
