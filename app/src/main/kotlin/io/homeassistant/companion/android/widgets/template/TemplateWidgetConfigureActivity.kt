@@ -84,6 +84,10 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity<TemplateWidg
         lifecycleScope.launch {
             val templateWidget = dao.get(appWidgetId)
 
+            if (templateWidget?.serverId != null) {
+                // Set server ID early for template rendering
+                selectedServerId = templateWidget.serverId
+            }
             setupServerSelect(templateWidget?.serverId)
 
             if (templateWidget != null) {
@@ -202,15 +206,21 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity<TemplateWidg
     }
 
     private fun renderTemplateText(template: String) {
+        val serverId = selectedServerId
+        if (serverId == null) {
+            Timber.w("Not rendering template because server is not set")
+            return
+        }
+
         lifecycleScope.launch {
             var templateText: String?
             var enabled: Boolean
             withContext(Dispatchers.IO) {
                 try {
                     templateText =
-                        serverManager.integrationRepository(
-                            selectedServerId!!,
-                        ).renderTemplate(template, mapOf()).toString()
+                        serverManager.integrationRepository(serverId)
+                            .renderTemplate(template, mapOf())
+                            .toString()
                     enabled = true
                 } catch (e: Exception) {
                     Timber.e(e, "Exception while rendering template")
