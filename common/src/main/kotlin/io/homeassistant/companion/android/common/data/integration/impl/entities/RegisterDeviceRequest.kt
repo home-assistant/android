@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.integration.impl.entities
 
+import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import kotlin.reflect.jvm.jvmName
 import kotlinx.serialization.KSerializer
@@ -19,7 +20,7 @@ import kotlinx.serialization.json.JsonEncoder
 data class RegisterDeviceRequest(
     var appId: String? = null,
     var appName: String? = null,
-    val appVersion: String? = null,
+    val appVersion: AppVersion? = null,
     val deviceName: String? = null,
     val manufacturer: String? = null,
     val model: String? = null,
@@ -57,7 +58,7 @@ private object RegisterDeviceRequestSerializer : KSerializer<RegisterDeviceReque
             with(value) {
                 if (appId != null) encodeStringElement(descriptor, 0, appId!!)
                 if (appName != null) encodeStringElement(descriptor, 1, appName!!)
-                if (appVersion != null) encodeStringElement(descriptor, 2, appVersion)
+                if (appVersion != null) encodeStringElement(descriptor, 2, appVersion.value)
                 if (deviceName != null) encodeStringElement(descriptor, 3, deviceName)
                 if (manufacturer != null) encodeStringElement(descriptor, 4, manufacturer)
                 if (model != null) encodeStringElement(descriptor, 5, model)
@@ -104,7 +105,7 @@ private object RegisterDeviceRequestSerializer : KSerializer<RegisterDeviceReque
             RegisterDeviceRequest(
                 appId = appId,
                 appName = appName,
-                appVersion = appVersion,
+                appVersion = appVersion?.let { AppVersion.from(rawVersion = it) },
                 deviceName = deviceName,
                 manufacturer = manufacturer,
                 model = model,
