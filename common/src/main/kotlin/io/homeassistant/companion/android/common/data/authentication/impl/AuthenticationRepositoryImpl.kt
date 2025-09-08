@@ -13,7 +13,7 @@ import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.di.qualifiers.NamedInstallId
-import io.homeassistant.companion.android.di.qualifiers.NamedSession
+import io.homeassistant.companion.android.di.qualifiers.NamedSessionStorage
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
 
@@ -21,7 +21,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     private val authenticationService: AuthenticationService,
     private val serverManager: ServerManager,
     @Assisted private val serverId: Int,
-    @NamedSession private val localStorage: LocalStorage,
+    @NamedSessionStorage private val localStorage: LocalStorage,
     @NamedInstallId private val installId: SuspendProvider<String>,
 ) : AuthenticationRepository {
 

@@ -42,7 +42,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ge
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.di.qualifiers.NamedDeviceId
-import io.homeassistant.companion.android.di.qualifiers.NamedIntegration
+import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedModel
 import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
 import io.homeassistant.companion.android.di.qualifiers.NamedManufacturer
@@ -58,12 +58,11 @@ import okhttp3.ResponseBody
 import retrofit2.Response
 import timber.log.Timber
 
-
 class IntegrationRepositoryImpl @AssistedInject constructor(
     private val integrationService: IntegrationService,
     private val serverManager: ServerManager,
     @Assisted private val serverId: Int,
-    @NamedIntegration private val localStorage: LocalStorage,
+    @NamedIntegrationStorage private val localStorage: LocalStorage,
     @NamedManufacturer private val manufacturer: String,
     @NamedModel private val model: String,
     @NamedOsVersion private val osVersion: String,

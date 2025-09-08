@@ -7,28 +7,28 @@ import javax.inject.Qualifier
  */
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-annotation class NamedSession
+annotation class NamedSessionStorage
 
 /**
  * Qualifier for [LocalStorage] dependencies related to Home Assistant integration.
  */
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-annotation class NamedIntegration
+annotation class NamedIntegrationStorage
 
 /**
  * Qualifier for [LocalStorage] dependencies related to application themes.
  */
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-annotation class NamedThemes
+annotation class NamedThemesStorage
 
 /**
  * Qualifier for [LocalStorage] dependencies specific to Wear OS functionality.
  */
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-annotation class NamedWear
+annotation class NamedWearStorage
 
 /**
  * Qualifier for a [String] dependency providing device manufacturer information.
