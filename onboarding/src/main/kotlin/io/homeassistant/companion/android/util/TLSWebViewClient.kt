@@ -46,7 +46,6 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
         return null
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     override fun onReceivedClientCertRequest(view: WebView, request: ClientCertRequest) {
         Timber.d("onReceivedClientCertRequest invoked looking for cert in local storage or ask the user for it")
         // Let the WebViewActivity know the endpoint requires TLS Client Auth
