@@ -6,14 +6,14 @@ import io.homeassistant.companion.android.common.data.prefs.impl.entities.Templa
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.toStringList
 import javax.inject.Inject
-import javax.inject.Named
+import io.homeassistant.companion.android.di.qualifiers.*
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
 
 class WearPrefsRepositoryImpl @Inject constructor(
-    @Named("wear") private val localStorage: LocalStorage,
-    @Named("integration") private val integrationStorage: LocalStorage,
+    @param:WearQualifier private val localStorage: LocalStorage,
+    @param:IntegrationQualifier private val integrationStorage: LocalStorage,
 ) : WearPrefsRepository {
 
     companion object {

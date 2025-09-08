@@ -30,8 +30,8 @@ import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.getSharedPreferencesSuspend
 import io.homeassistant.companion.android.common.util.tts.AndroidTextToSpeechEngine
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
+import io.homeassistant.companion.android.di.qualifiers.*
 import java.util.UUID
-import javax.inject.Named
 import javax.inject.Singleton
 import okhttp3.OkHttpClient
 
@@ -55,51 +55,51 @@ abstract class DataModule {
         fun providesOkHttpClient(homeAssistantApis: HomeAssistantApis): OkHttpClient = homeAssistantApis.okHttpClient
 
         @Provides
-        @Named("session")
+        @SessionQualifier
         @Singleton
         fun provideSessionLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferencesSuspend("session_0")
         }
 
         @Provides
-        @Named("integration")
+        @IntegrationQualifier
         @Singleton
         fun provideIntegrationLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferencesSuspend("integration_0")
         }
 
         @Provides
-        @Named("themes")
+        @ThemesQualifier
         @Singleton
         fun providePrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferencesSuspend("themes_0")
         }
 
         @Provides
-        @Named("wear")
+        @WearQualifier
         @Singleton
         fun provideWearPrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferencesSuspend("wear_0")
         }
 
         @Provides
-        @Named("manufacturer")
+        @ManufacturerQualifier
         @Singleton
         fun provideDeviceManufacturer(): String = Build.MANUFACTURER
 
         @Provides
-        @Named("model")
+        @ModelQualifier
         @Singleton
         fun provideDeviceModel(): String = Build.MODEL
 
         @Provides
-        @Named("osVersion")
+        @OsVersionQualifier
         @Singleton
         fun provideDeviceOsVersion() = Build.VERSION.SDK_INT.toString()
 
         @SuppressLint("HardwareIds")
         @Provides
-        @Named("deviceId")
+        @DeviceIdQualifier
         @Singleton
         fun provideDeviceId(@ApplicationContext appContext: Context) = Settings.Secure.getString(
             appContext.contentResolver,
@@ -107,7 +107,7 @@ abstract class DataModule {
         )
 
         @Provides
-        @Named("installId")
+        @InstallIdQualifier
         @Singleton
         fun provideInstallId(@ApplicationContext appContext: Context) = SuspendProvider {
             val storage = provideSessionLocalStorage(appContext)

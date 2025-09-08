@@ -53,16 +53,18 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.ResponseBody
 import retrofit2.Response
 import timber.log.Timber
+import io.homeassistant.companion.android.di.qualifiers.*
+
 
 class IntegrationRepositoryImpl @AssistedInject constructor(
     private val integrationService: IntegrationService,
     private val serverManager: ServerManager,
     @Assisted private val serverId: Int,
-    @Named("integration") private val localStorage: LocalStorage,
-    @Named("manufacturer") private val manufacturer: String,
-    @Named("model") private val model: String,
-    @Named("osVersion") private val osVersion: String,
-    @Named("deviceId") private val deviceId: String,
+    @param:IntegrationQualifier private val localStorage: LocalStorage,
+    @param:ManufacturerQualifier private val manufacturer: String,
+    @param:ModelQualifier private val model: String,
+    @param:OsVersionQualifier private val osVersion: String,
+    @param:DeviceIdQualifier private val deviceId: String,
 ) : IntegrationRepository {
 
     companion object {

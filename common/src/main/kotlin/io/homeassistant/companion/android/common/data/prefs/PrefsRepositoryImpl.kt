@@ -5,9 +5,9 @@ import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
+import io.homeassistant.companion.android.di.qualifiers.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
-import javax.inject.Named
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -98,8 +98,8 @@ private class LocalStorageWithMigration(
 }
 
 class PrefsRepositoryImpl @Inject constructor(
-    @Named("themes") localStorage: LocalStorage,
-    @Named("integration") integrationStorage: LocalStorage,
+    @param:ThemesQualifier localStorage: LocalStorage,
+    @param:IntegrationQualifier integrationStorage: LocalStorage,
 ) : PrefsRepository {
 
     private val localStorage = LocalStorageWithMigration(localStorage, integrationStorage)
