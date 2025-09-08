@@ -49,7 +49,7 @@ jobs:
           git push -f origin weekly_changelog_bump
 
       - name: Create or update change log update PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           VERSION: ${{ env.VERSION }}
         with:
