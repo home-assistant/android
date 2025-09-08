@@ -6,6 +6,8 @@ import androidx.navigation.NavOptions
 import androidx.navigation.navigation
 import io.homeassistant.companion.android.HAStartDestinationRoute
 import io.homeassistant.companion.android.compose.navigateToUri
+import io.homeassistant.companion.android.onboarding.connection.navigation.connectionScreen
+import io.homeassistant.companion.android.onboarding.connection.navigation.navigateToConnection
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.manualServerScreen
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.navigateToManualServer
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
@@ -41,7 +43,7 @@ internal fun NavGraphBuilder.onboarding(
         )
         serverDiscoveryScreen(
             onConnectClick = {
-                // TODO navigate to connection with URL
+                navController.navigateToConnection(it.toString())
             },
             onBackClick = navController::popBackStack,
             onManualSetupClick = navController::navigateToManualServer,
@@ -53,12 +55,19 @@ internal fun NavGraphBuilder.onboarding(
         manualServerScreen(
             onBackClick = navController::popBackStack,
             onConnectTo = {
-                // TODO navigate to connection with URL
+                navController.navigateToConnection(it.toString())
             },
             onHelpClick = {
                 // TODO validate the URL to use
                 navController.navigateToUri("https://www.home-assistant.io/installation/")
             },
+        )
+        connectionScreen(
+            onAuthenticated = {
+                // TODO goes to the name your device screen
+            },
+            onShowSnackbar = onShowSnackbar,
+            onBackPressed = navController::popBackStack,
         )
     }
 }
