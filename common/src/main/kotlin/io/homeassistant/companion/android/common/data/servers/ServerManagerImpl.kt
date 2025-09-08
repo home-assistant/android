@@ -18,9 +18,8 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerDao
 import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.settings.SettingsDao
-import io.homeassistant.companion.android.di.qualifiers.SessionQualifier
+import io.homeassistant.companion.android.di.qualifiers.NamedSession
 import javax.inject.Inject
-import javax.inject.Named
 import kotlin.math.min
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +40,7 @@ class ServerManagerImpl @Inject constructor(
     private val settingsDao: SettingsDao,
     private val wifiHelper: WifiHelper,
     private val networkHelper: NetworkHelper,
-    @SessionQualifier private val localStorage: LocalStorage,
+    @NamedSession private val localStorage: LocalStorage,
 ) : ServerManager {
 
     private val ioScope = CoroutineScope(Dispatchers.IO + Job())

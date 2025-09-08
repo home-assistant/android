@@ -55,51 +55,51 @@ abstract class DataModule {
         fun providesOkHttpClient(homeAssistantApis: HomeAssistantApis): OkHttpClient = homeAssistantApis.okHttpClient
 
         @Provides
-        @SessionQualifier
+        @NamedSession
         @Singleton
         fun provideSessionLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferencesSuspend("session_0")
         }
 
         @Provides
-        @IntegrationQualifier
+        @NamedIntegration
         @Singleton
         fun provideIntegrationLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferencesSuspend("integration_0")
         }
 
         @Provides
-        @ThemesQualifier
+        @NamedThemes
         @Singleton
         fun providePrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferencesSuspend("themes_0")
         }
 
         @Provides
-        @WearQualifier
+        @NamedWear
         @Singleton
         fun provideWearPrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferencesSuspend("wear_0")
         }
 
         @Provides
-        @ManufacturerQualifier
+        @NamedManufacturer
         @Singleton
         fun provideDeviceManufacturer(): String = Build.MANUFACTURER
 
         @Provides
-        @ModelQualifier
+        @NamedModel
         @Singleton
         fun provideDeviceModel(): String = Build.MODEL
 
         @Provides
-        @OsVersionQualifier
+        @NamedOsVersion
         @Singleton
         fun provideDeviceOsVersion() = Build.VERSION.SDK_INT.toString()
 
         @SuppressLint("HardwareIds")
         @Provides
-        @DeviceIdQualifier
+        @NamedDeviceId
         @Singleton
         fun provideDeviceId(@ApplicationContext appContext: Context) = Settings.Secure.getString(
             appContext.contentResolver,
@@ -107,7 +107,7 @@ abstract class DataModule {
         )
 
         @Provides
-        @InstallIdQualifier
+        @NamedInstallId
         @Singleton
         fun provideInstallId(@ApplicationContext appContext: Context) = SuspendProvider {
             val storage = provideSessionLocalStorage(appContext)

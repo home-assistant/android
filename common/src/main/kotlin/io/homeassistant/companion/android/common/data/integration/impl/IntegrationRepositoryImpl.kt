@@ -41,8 +41,12 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.di.qualifiers.NamedDeviceId
+import io.homeassistant.companion.android.di.qualifiers.NamedIntegration
+import io.homeassistant.companion.android.di.qualifiers.NamedModel
+import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
+import io.homeassistant.companion.android.di.qualifiers.NamedManufacturer
 import java.util.concurrent.TimeUnit
-import javax.inject.Named
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
@@ -53,18 +57,17 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.ResponseBody
 import retrofit2.Response
 import timber.log.Timber
-import io.homeassistant.companion.android.di.qualifiers.*
 
 
 class IntegrationRepositoryImpl @AssistedInject constructor(
     private val integrationService: IntegrationService,
     private val serverManager: ServerManager,
     @Assisted private val serverId: Int,
-    @param:IntegrationQualifier private val localStorage: LocalStorage,
-    @param:ManufacturerQualifier private val manufacturer: String,
-    @param:ModelQualifier private val model: String,
-    @param:OsVersionQualifier private val osVersion: String,
-    @param:DeviceIdQualifier private val deviceId: String,
+    @NamedIntegration private val localStorage: LocalStorage,
+    @NamedManufacturer private val manufacturer: String,
+    @NamedModel private val model: String,
+    @NamedOsVersion private val osVersion: String,
+    @NamedDeviceId private val deviceId: String,
 ) : IntegrationRepository {
 
     companion object {
