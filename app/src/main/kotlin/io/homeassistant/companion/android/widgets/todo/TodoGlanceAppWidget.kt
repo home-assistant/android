@@ -181,13 +181,11 @@ private fun EmptyContent() {
 private fun ListContent(todoItems: List<TodoItemState>, displayComplete: Boolean) {
     LazyColumn {
         if (todoItems.any { !it.done }) {
-            item { HeaderItem(glanceStringResource(commonR.string.widget_todo_active)) }
             todoItems.filter { !it.done }.forEach {
                 item { TodoItem(it) }
             }
         }
         if (displayComplete && todoItems.any { it.done }) {
-            item { HeaderItem(glanceStringResource(commonR.string.widget_todo_completed)) }
             todoItems.filter { it.done }.forEach {
                 item { TodoItem(it) }
             }
@@ -246,15 +244,6 @@ private fun TodoItem(todoItem: TodoItemState) {
         // The checkbox comes with an embedded padding that we cannot modify of 6.5.dp we add 9.5.dp to align with the rest of the screen at 16dp.
         // 4.dp at the end is to avoid that the scrollbar go over the text
         modifier = GlanceModifier.padding(vertical = 8.dp).padding(start = 9.5.dp, end = 4.dp),
-    )
-}
-
-@Composable
-private fun HeaderItem(name: String) {
-    Text(
-        text = name,
-        style = HomeAssistantGlanceTypography.bodyLarge,
-        modifier = GlanceModifier.padding(horizontal = 16.dp, vertical = 8.dp),
     )
 }
 
