@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.util
 
 import io.homeassistant.companion.android.common.util.AppVersion.Companion.from
+import kotlinx.serialization.Serializable
 
 private val versionRegex = """^.* \(\d+\)$""".toRegex()
 
@@ -13,6 +14,7 @@ private val versionRegex = """^.* \(\d+\)$""".toRegex()
  * @property value The string representation of the app version.
  * @throws FailFastException (in debug builds only) if the provided version string does not match the expected pattern.
  */
+@Serializable
 @JvmInline
 value class AppVersion private constructor(val value: String) {
     init {

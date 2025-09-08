@@ -2,12 +2,14 @@ package io.homeassistant.companion.android.common.util
 
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
+import kotlinx.serialization.Serializable
 
 /**
  * Holds the messaging token, to enforce strong typing in the application.
  *
  * @property value The messaging token string.
  */
+@Serializable
 @JvmInline
 value class MessagingToken(val value: String) {
     fun isBlank(): Boolean = value.isBlank()
