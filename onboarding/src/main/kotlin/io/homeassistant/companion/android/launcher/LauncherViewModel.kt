@@ -2,15 +2,15 @@ package io.homeassistant.companion.android.launcher
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.WorkManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.authentication.SessionState
-import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.network.NetworkState
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.ResyncRegistrationWorker.Companion.enqueueResyncRegistration
 import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collect
@@ -40,6 +40,7 @@ internal sealed interface LauncherNavigationEvent {
  */
 @HiltViewModel
 internal class LauncherViewModel @Inject constructor(
+    private val workManager: WorkManager,
     private val serverManager: ServerManager,
     private val networkStatusMonitor: NetworkStatusMonitor,
 ) : ViewModel() {
@@ -95,7 +96,7 @@ internal class LauncherViewModel @Inject constructor(
         Timber.i("Current network state $state")
         return when (state) {
             NetworkState.READY_LOCAL, NetworkState.READY_REMOTE -> {
-                resyncRegistration()
+                workManager.enqueueResyncRegistration()
                 _navigationEventsFlow.emit(LauncherNavigationEvent.Frontend)
                 true
             }
@@ -107,29 +108,6 @@ internal class LauncherViewModel @Inject constructor(
             NetworkState.UNAVAILABLE -> {
                 // TODO Make a page that simply show the message R.string.error_connection_failed_no_network
                 false
-            }
-        }
-    }
-
-    // TODO replace this with https://github.com/home-assistant/android/pull/5727
-    private suspend fun resyncRegistration() = coroutineScope {
-        serverManager.defaultServers.forEach { server ->
-            launch {
-                try {
-                    val integrationRepository = serverManager.integrationRepository(server.id)
-                    integrationRepository.updateRegistration(
-                        DeviceRegistration(
-                            // TODO when in :app use ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})
-                            "ONBOARDING_WIP",
-                            null,
-                            null, // TODO when in :app use getMessagingToken()
-                        ),
-                    )
-                    integrationRepository.getConfig() // Update cached data
-                    serverManager.webSocketRepository(server.id).getCurrentUser() // Update cached data
-                } catch (e: Exception) {
-                    Timber.e(e, "Issue updating Registration for server ${server.id}")
-                }
             }
         }
     }
