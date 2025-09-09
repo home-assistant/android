@@ -30,8 +30,16 @@ import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.getSharedPreferencesSuspend
 import io.homeassistant.companion.android.common.util.tts.AndroidTextToSpeechEngine
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
+import io.homeassistant.companion.android.di.qualifiers.NamedDeviceId
+import io.homeassistant.companion.android.di.qualifiers.NamedInstallId
+import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
+import io.homeassistant.companion.android.di.qualifiers.NamedManufacturer
+import io.homeassistant.companion.android.di.qualifiers.NamedModel
+import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
+import io.homeassistant.companion.android.di.qualifiers.NamedSessionStorage
+import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
+import io.homeassistant.companion.android.di.qualifiers.NamedWearStorage
 import java.util.UUID
-import javax.inject.Named
 import javax.inject.Singleton
 import okhttp3.OkHttpClient
 
@@ -55,51 +63,51 @@ abstract class DataModule {
         fun providesOkHttpClient(homeAssistantApis: HomeAssistantApis): OkHttpClient = homeAssistantApis.okHttpClient
 
         @Provides
-        @Named("session")
+        @NamedSessionStorage
         @Singleton
         fun provideSessionLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferencesSuspend("session_0")
         }
 
         @Provides
-        @Named("integration")
+        @NamedIntegrationStorage
         @Singleton
         fun provideIntegrationLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferencesSuspend("integration_0")
         }
 
         @Provides
-        @Named("themes")
+        @NamedThemesStorage
         @Singleton
         fun providePrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferencesSuspend("themes_0")
         }
 
         @Provides
-        @Named("wear")
+        @NamedWearStorage
         @Singleton
         fun provideWearPrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferencesSuspend("wear_0")
         }
 
         @Provides
-        @Named("manufacturer")
+        @NamedManufacturer
         @Singleton
         fun provideDeviceManufacturer(): String = Build.MANUFACTURER
 
         @Provides
-        @Named("model")
+        @NamedModel
         @Singleton
         fun provideDeviceModel(): String = Build.MODEL
 
         @Provides
-        @Named("osVersion")
+        @NamedOsVersion
         @Singleton
         fun provideDeviceOsVersion() = Build.VERSION.SDK_INT.toString()
 
         @SuppressLint("HardwareIds")
         @Provides
-        @Named("deviceId")
+        @NamedDeviceId
         @Singleton
         fun provideDeviceId(@ApplicationContext appContext: Context) = Settings.Secure.getString(
             appContext.contentResolver,
@@ -107,7 +115,7 @@ abstract class DataModule {
         )
 
         @Provides
-        @Named("installId")
+        @NamedInstallId
         @Singleton
         fun provideInstallId(@ApplicationContext appContext: Context) = SuspendProvider {
             val storage = provideSessionLocalStorage(appContext)
