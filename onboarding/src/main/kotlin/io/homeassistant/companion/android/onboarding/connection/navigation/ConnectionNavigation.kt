@@ -22,7 +22,7 @@ internal fun NavController.navigateToConnection(url: String, navOptions: NavOpti
 }
 
 internal fun NavGraphBuilder.connectionScreen(
-    onAuthenticated: () -> Unit,
+    onAuthenticated: (url: String, authCode: String) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onBackPressed: () -> Unit,
 ) {
@@ -47,7 +47,7 @@ internal fun NavGraphBuilder.connectionScreen(
 @VisibleForTesting
 internal fun HandleConnectionNavigationEvents(
     viewModel: ConnectionViewModel,
-    onAuthenticated: () -> Unit,
+    onAuthenticated: (url: String, authCode: String) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onBackPressed: () -> Unit,
 ) {
@@ -55,7 +55,7 @@ internal fun HandleConnectionNavigationEvents(
     LaunchedEffect(viewModel) {
         viewModel.navigationEventsFlow.collect {
             when (it) {
-                is ConnectionNavigationEvent.Authenticated -> onAuthenticated()
+                is ConnectionNavigationEvent.Authenticated -> onAuthenticated(it.url, it.authCode)
                 is ConnectionNavigationEvent.Error -> {
                     // TODO use full screen error when available
                     onShowSnackbar(

@@ -49,9 +49,10 @@ internal sealed interface ConnectionNavigationEvent {
 
     /**
      * Emitted when authentication is successful and the code is available
+     * @property url The URL of the Home Assistant instance
      * @param authCode The authorization code returned by Home Assistant
      */
-    data class Authenticated(val authCode: String) : ConnectionNavigationEvent
+    data class Authenticated(val url: String, val authCode: String) : ConnectionNavigationEvent
 }
 
 private const val AUTH_CALLBACK_SCHEME = "homeassistant"
@@ -215,7 +216,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
 
         return if (url.scheme == AUTH_CALLBACK_SCHEME && url.host == AUTH_CALLBACK_HOST && !code.isNullOrBlank()) {
             viewModelScope.launch {
-                _navigationEventsFlow.emit(ConnectionNavigationEvent.Authenticated(code))
+                _navigationEventsFlow.emit(ConnectionNavigationEvent.Authenticated(rawUrl, code))
             }
             true
         } else {

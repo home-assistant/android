@@ -63,7 +63,7 @@ internal fun NavGraphBuilder.onboarding(
             },
         )
         connectionScreen(
-            onAuthenticated = {
+            onAuthenticated = { url, authCode ->
                 // TODO goes to the name your device screen
             },
             onShowSnackbar = onShowSnackbar,
