@@ -67,7 +67,7 @@ internal fun NavGraphBuilder.onboarding(
                 // TODO goes to the name your device screen
             },
             onShowSnackbar = onShowSnackbar,
-            onBackPressed = navController::popBackStack,
+            onBackClick = navController::popBackStack,
         )
     }
 }
