@@ -1,11 +1,11 @@
 package io.homeassistant.companion.android.launcher
 
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import io.homeassistant.companion.android.common.data.authentication.SessionState
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.network.NetworkState
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
@@ -16,6 +16,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -32,10 +33,13 @@ import timber.log.Timber
 class LauncherViewModelTest {
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val networkStatusMonitor: NetworkStatusMonitor = mockk(relaxed = true)
+
+    private val workManager: WorkManager = mockk()
+
     private lateinit var viewModel: LauncherViewModel
 
     private fun createViewModel() {
-        viewModel = LauncherViewModel(serverManager, networkStatusMonitor)
+        viewModel = LauncherViewModel(workManager, serverManager, networkStatusMonitor)
     }
 
     @BeforeEach
@@ -46,13 +50,12 @@ class LauncherViewModelTest {
 
     @Test
     fun `Given active server connected and registered, when network is READY_LOCAL, then navigate to frontend and resync registration`() = runTest {
-        val integrationRepository = mockk<IntegrationRepository>(relaxed = true)
-        val webSocketRepository = mockk<WebSocketRepository>(relaxed = true)
         val server = mockk<Server>(relaxed = true)
+
+        every { workManager.enqueue(any<OneTimeWorkRequest>()) } returns mockk()
+
         coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns server
         every { serverManager.defaultServers } returns listOf(server)
-        coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
-        coEvery { serverManager.webSocketRepository(any()) } returns webSocketRepository
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
         val networkStateFlow = MutableStateFlow(NetworkState.READY_LOCAL)
@@ -66,25 +69,21 @@ class LauncherViewModelTest {
         assertEquals(0, networkStateFlow.subscriptionCount.value)
 
         // verify resync registration
-        coVerify(exactly = 1) {
-            serverManager.integrationRepository(any())
-            integrationRepository.updateRegistration(any())
-            integrationRepository.getConfig()
-            webSocketRepository.getCurrentUser()
+        verify(exactly = 1) {
+            workManager.enqueue(any<OneTimeWorkRequest>())
         }
     }
 
     @Test
     fun `Given active server connected and registered and another one not active, when network is READY_REMOTE, then navigate to frontend and resync registrations`() = runTest {
-        val integrationRepository = mockk<IntegrationRepository>(relaxed = true)
-        val webSocketRepository = mockk<WebSocketRepository>(relaxed = true)
         val activeServer = mockk<Server>(relaxed = true)
         val notActiveServer = mockk<Server>(relaxed = true)
+
+        every { workManager.enqueue(any<OneTimeWorkRequest>()) } returns mockk()
+
         every { notActiveServer.id } returns 1
         coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns activeServer
         every { serverManager.defaultServers } returns listOf(activeServer, notActiveServer)
-        coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
-        coEvery { serverManager.webSocketRepository(any()) } returns webSocketRepository
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
         val networkStateFlow = MutableStateFlow(NetworkState.READY_REMOTE)
@@ -98,14 +97,8 @@ class LauncherViewModelTest {
         assertEquals(0, networkStateFlow.subscriptionCount.value)
 
         // verify resync registration
-        coVerify(exactly = 1) {
-            serverManager.integrationRepository(0)
-            serverManager.integrationRepository(1)
-        }
-        coVerify(exactly = 2) {
-            integrationRepository.updateRegistration(any())
-            integrationRepository.getConfig()
-            webSocketRepository.getCurrentUser()
+        verify(exactly = 1) {
+            workManager.enqueue(any<OneTimeWorkRequest>())
         }
     }
 
@@ -144,6 +137,9 @@ class LauncherViewModelTest {
     @Test
     fun `Given active server connected and registered, when network is CONNECTING then READY, then navigate to frontend`() = runTest {
         val server = mockk<Server>(relaxed = true)
+
+        every { workManager.enqueue(any<OneTimeWorkRequest>()) } returns mockk()
+
         coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns server
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
@@ -161,6 +157,11 @@ class LauncherViewModelTest {
         assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
         assertEquals(LauncherNavigationEvent.Frontend, viewModel.navigationEventsFlow.replayCache.first())
         assertEquals(0, networkStateFlow.subscriptionCount.value)
+
+        // verify resync registration
+        verify(exactly = 1) {
+            workManager.enqueue(any<OneTimeWorkRequest>())
+        }
     }
 
     @Test
