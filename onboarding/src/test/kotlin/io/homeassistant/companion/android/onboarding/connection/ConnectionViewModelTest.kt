@@ -118,6 +118,7 @@ class ConnectionViewModelTest {
             val event = navigationEventsFlow.awaitItem()
             assertTrue(event is ConnectionNavigationEvent.Authenticated)
             assertEquals(authCode, (event as ConnectionNavigationEvent.Authenticated).authCode)
+            assertEquals("http://homeassistant.local:8123", event.url)
         }
     }
 

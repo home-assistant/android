@@ -50,13 +50,15 @@ class ConnectionNavigationTest {
             every { navigationEventsFlow } returns sharedFlow
         }
 
-        var onAuthenticated = false
+        var onAuthenticatedUrl: String? = null
+        var onAuthenticatedCode: String? = null
 
         composeTestRule.setContent {
             HandleConnectionNavigationEvents(
                 viewModel,
-                onAuthenticated = {
-                    onAuthenticated = true
+                onAuthenticated = { url, authCode ->
+                    onAuthenticatedUrl = url
+                    onAuthenticatedCode = authCode
                 },
                 onShowSnackbar = { _, _ ->
                     true
@@ -66,9 +68,13 @@ class ConnectionNavigationTest {
             )
         }
 
-        sharedFlow.emit(ConnectionNavigationEvent.Authenticated("code"))
+        val event = ConnectionNavigationEvent.Authenticated("url", "code")
+            .apply {
+                sharedFlow.emit(this)
+            }
 
-        assertTrue(onAuthenticated)
+        assertEquals(event.url, onAuthenticatedUrl)
+        assertEquals(event.authCode, onAuthenticatedCode)
     }
 
     @Test
@@ -85,7 +91,7 @@ class ConnectionNavigationTest {
         composeTestRule.setContent {
             HandleConnectionNavigationEvents(
                 viewModel,
-                onAuthenticated = {},
+                onAuthenticated = { _, _ -> },
                 onShowSnackbar = { message, _ ->
                     errorMessage = message
                     true
