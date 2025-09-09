@@ -39,7 +39,6 @@ import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
 import io.homeassistant.companion.android.di.qualifiers.NamedSessionStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedWearStorage
-
 import java.util.UUID
 import javax.inject.Singleton
 import okhttp3.OkHttpClient
