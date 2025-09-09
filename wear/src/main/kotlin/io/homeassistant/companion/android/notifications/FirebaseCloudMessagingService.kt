@@ -5,6 +5,7 @@ import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.MessagingToken
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,7 +50,7 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
                     try {
                         serverManager.integrationRepository(it.id).updateRegistration(
                             deviceRegistration = DeviceRegistration(
-                                pushToken = token,
+                                pushToken = MessagingToken(token),
                                 pushWebsocket = false,
                             ),
                             allowReregistration = false,

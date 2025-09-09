@@ -5,6 +5,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -34,6 +35,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.long
 import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.modules.plus
+import kotlinx.serialization.serializer
+import kotlinx.serialization.serializerOrNull
 import org.json.JSONArray
 
 fun JSONArray.toStringList(): List<String> = List(length()) { i ->
@@ -180,7 +183,7 @@ object MapAnySerializer : KSerializer<Map<String, Any?>> {
     @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: Encoder, value: Map<String, Any?>) {
         val jsonEncoder = encoder as? JsonEncoder ?: error("MapAnySerializer can only be used with JSON")
-        val jsonObject = JsonObject(value.mapValues { (_, v) -> toJsonElement(v) })
+        val jsonObject = JsonObject(value.mapValues { (_, v) -> toJsonElement(jsonEncoder, v) })
         jsonEncoder.encodeJsonElement(jsonObject)
     }
 
@@ -201,7 +204,7 @@ object AnySerializer : KSerializer<Any?> {
 
     override fun serialize(encoder: Encoder, value: Any?) {
         val jsonEncoder = encoder as? JsonEncoder ?: error("AnySerializer can only be used with JSON")
-        jsonEncoder.encodeJsonElement(toJsonElement(value))
+        jsonEncoder.encodeJsonElement(toJsonElement(jsonEncoder, value))
     }
 
     override fun deserialize(decoder: Decoder): Any? {
@@ -221,30 +224,44 @@ private fun parseJsonElement(element: JsonElement): Any? {
             element.floatOrNull != null -> element.float
             else -> null
         }
+
         is JsonObject -> element.mapValues { (_, v) -> parseJsonElement(v) }
         is JsonArray -> element.map { parseJsonElement(it) }
     }
 }
 
-private fun toJsonElement(value: Any?): JsonElement {
-    return when (value) {
-        null -> JsonNull
-        is String -> JsonPrimitive(value)
-        is Boolean -> JsonPrimitive(value)
-        is Number -> JsonPrimitive(value)
-        is Map<*, *> -> JsonObject(
-            value.mapNotNull { (key, v) ->
-                if (key is String) {
-                    key to toJsonElement(
-                        v,
-                    )
-                } else {
-                    throw IllegalArgumentException("Unsupported type: ${key?.javaClass} as map key")
-                }
-            }.toMap(),
-        )
-        is List<*> -> JsonArray(value.map { toJsonElement(it) })
-        is Array<*> -> JsonArray(value.map { toJsonElement(it) })
-        else -> throw IllegalArgumentException("Unsupported type: ${value::class}")
+@OptIn(InternalSerializationApi::class)
+private fun toJsonElement(encoder: JsonEncoder, value: Any?): JsonElement {
+    if (value == null) return JsonNull
+
+    // Try to get a serializer compiled or built-in.
+    val serializer = value::class.serializerOrNull()
+
+    return if (serializer != null) {
+        encoder.json.encodeToJsonElement(value::class.serializer() as KSerializer<Any>, value)
+    } else {
+        when (value) {
+            is String -> JsonPrimitive(value)
+            is Boolean -> JsonPrimitive(value)
+            is Number -> JsonPrimitive(value)
+            is Map<*, *> -> JsonObject(
+                value.mapNotNull { (key, v) ->
+                    if (key is String) {
+                        key to toJsonElement(
+                            encoder,
+                            v,
+                        )
+                    } else {
+                        throw IllegalArgumentException("Unsupported type: ${key?.javaClass} as map key")
+                    }
+                }.toMap(),
+            )
+
+            is List<*> -> JsonArray(value.map { toJsonElement(encoder, it) })
+            is Array<*> -> JsonArray(value.map { toJsonElement(encoder, it) })
+            else -> {
+                throw IllegalArgumentException("Unsupported type: ${value::class}")
+            }
+        }
     }
 }
