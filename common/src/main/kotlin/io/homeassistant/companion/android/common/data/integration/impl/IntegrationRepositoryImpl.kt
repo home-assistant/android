@@ -39,7 +39,10 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.util.MessagingToken
+import io.homeassistant.companion.android.common.util.isNullOrBlank
 import io.homeassistant.companion.android.database.server.Server
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
@@ -168,21 +171,21 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun getRegistration(): DeviceRegistration {
         return DeviceRegistration(
-            localStorage.getString(PREF_APP_VERSION),
+            localStorage.getString(PREF_APP_VERSION)?.let { AppVersion.from(rawVersion = it) },
             server().deviceName,
-            localStorage.getString(PREF_PUSH_TOKEN),
+            localStorage.getString(PREF_PUSH_TOKEN)?.let { MessagingToken(it) },
         )
     }
 
     private suspend fun persistDeviceRegistration(deviceRegistration: DeviceRegistration) {
         if (deviceRegistration.appVersion != null) {
-            localStorage.putString(PREF_APP_VERSION, deviceRegistration.appVersion)
+            localStorage.putString(PREF_APP_VERSION, deviceRegistration.appVersion.value)
         }
         if (deviceRegistration.deviceName != null) {
             serverManager.updateServer(server().copy(deviceName = deviceRegistration.deviceName))
         }
-        if (deviceRegistration.pushToken != null) {
-            localStorage.putString(PREF_PUSH_TOKEN, deviceRegistration.pushToken)
+        deviceRegistration.pushToken?.let {
+            localStorage.putString(PREF_PUSH_TOKEN, it.value)
         }
     }
 

@@ -19,6 +19,9 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.AppVersion
+import io.homeassistant.companion.android.common.util.MessagingToken
+import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
@@ -28,7 +31,6 @@ import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.onboarding.OnboardApp
-import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.settings.SettingViewModel
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
@@ -68,6 +70,9 @@ class LaunchActivity :
 
     @Inject
     lateinit var sensorDao: SensorDao
+
+    @Inject
+    lateinit var messagingTokenProvider: MessagingTokenProvider
 
     private val mainScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -172,7 +177,7 @@ class LaunchActivity :
         mainScope.launch {
             if (result != null) {
                 val (url, authCode, deviceName, deviceTrackingEnabled, notificationsEnabled) = result
-                val messagingToken = getMessagingToken()
+                val messagingToken = messagingTokenProvider()
                 if (messagingToken.isBlank() && BuildConfig.FLAVOR == "full") {
                     AlertDialog.Builder(this@LaunchActivity)
                         .setTitle(commonR.string.firebase_error_title)
@@ -210,7 +215,7 @@ class LaunchActivity :
         url: String,
         authCode: String,
         deviceName: String,
-        messagingToken: String,
+        messagingToken: MessagingToken,
         deviceTrackingEnabled: Boolean,
         notificationsEnabled: Boolean,
     ) {
@@ -230,7 +235,7 @@ class LaunchActivity :
             serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
             serverManager.integrationRepository(serverId).registerDevice(
                 DeviceRegistration(
-                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    AppVersion.from(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
                     deviceName,
                     messagingToken,
                 ),

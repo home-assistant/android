@@ -1,43 +1,30 @@
 package io.homeassistant.companion.android.launch
 
+import android.content.Context
+import androidx.work.WorkManager
+import dagger.hilt.android.qualifiers.ActivityContext
+import dagger.hilt.android.scopes.ActivityScoped
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.network.NetworkState
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import kotlinx.coroutines.CoroutineScope
+import io.homeassistant.companion.android.common.util.ResyncRegistrationWorker.Companion.enqueueResyncRegistration
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.takeWhile
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-abstract class LaunchPresenterBase(
-    private val view: LaunchView,
+@ActivityScoped
+class LaunchPresenterImpl @Inject constructor(
+    private val workManager: WorkManager,
+    @ActivityContext context: Context,
     internal val serverManager: ServerManager,
     private val networkStatusMonitor: NetworkStatusMonitor,
 ) : LaunchPresenter {
-
-    /**
-     * A dedicated [CoroutineScope] to perform background tasks that should not block the UI.
-     * This is crucial for operations like server resynchronization, especially when dealing with
-     * multiple servers where one might be unresponsive.
-     *
-     * By launching tasks in this scope, we ensure that the UI remains responsive and is displayed
-     * promptly, even if a server connection times out.
-     *
-     * **Note:** Using a dedicated scope like this means that the underlying Activity might not be
-     * destroyed immediately if these background tasks are still running. This is a trade-off
-     * for improved UI responsiveness in scenarios with potential network delays.
-     *
-     * We use a [SupervisorJob] on purpose because it ensures that if one task fails, it won't
-     * impact the others.
-     *
-     * See https://github.com/home-assistant/android/issues/5689#issuecomment-3241605990
-     */
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val view: LaunchView = context as LaunchView
 
     override suspend fun onViewReady(serverUrlToOnboard: String?) {
         // Remove any invalid servers (incomplete, partly migrated from another device)
@@ -76,9 +63,7 @@ abstract class LaunchPresenterBase(
         return when (state) {
             NetworkState.READY_LOCAL, NetworkState.READY_REMOTE -> {
                 view.dismissDialog()
-                ioScope.launch {
-                    resyncRegistration()
-                }
+                workManager.enqueueResyncRegistration()
                 view.displayWebView()
                 true
             }
@@ -101,7 +86,4 @@ abstract class LaunchPresenterBase(
     }
 
     override fun hasMultipleServers(): Boolean = serverManager.defaultServers.size > 1
-
-    // TODO: This should be replaced by a worker https://github.com/home-assistant/android/issues/5724
-    internal abstract suspend fun resyncRegistration()
 }
