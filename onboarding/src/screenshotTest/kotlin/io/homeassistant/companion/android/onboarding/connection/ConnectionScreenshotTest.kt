@@ -17,7 +17,7 @@ class ConnectionScreenshotTest {
                 url = "https://www.example.com",
                 isLoading = true,
                 webViewClient = WebViewClient(),
-                onBackPressed = {},
+                onBackClick = {},
             )
         }
     }
@@ -31,7 +31,7 @@ class ConnectionScreenshotTest {
                 url = "https://www.example.com",
                 isLoading = false,
                 webViewClient = WebViewClient(),
-                onBackPressed = {},
+                onBackClick = {},
             )
         }
     }

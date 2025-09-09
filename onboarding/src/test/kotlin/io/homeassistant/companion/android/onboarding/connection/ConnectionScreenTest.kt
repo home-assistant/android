@@ -42,7 +42,7 @@ class ConnectionScreenTest {
         composeTestRule.apply {
             setContent {
                 ConnectionScreen(
-                    onBackPressed = {},
+                    onBackClick = {},
                     isLoading = true,
                     url = "",
                     webViewClient = WebViewClient(),
@@ -57,7 +57,7 @@ class ConnectionScreenTest {
         composeTestRule.apply {
             setContent {
                 ConnectionScreen(
-                    onBackPressed = {},
+                    onBackClick = {},
                     isLoading = false,
                     url = "",
                     webViewClient = WebViewClient(),
@@ -68,12 +68,12 @@ class ConnectionScreenTest {
     }
 
     @Test
-    fun `Given ConnectionScreen when pressing back then triggers onBackPressed`() {
+    fun `Given ConnectionScreen when pressing back then triggers onBackClick`() {
         var backPressed = false
         composeTestRule.apply {
             setContent {
                 ConnectionScreen(
-                    onBackPressed = {
+                    onBackClick = {
                         backPressed = true
                     },
                     isLoading = false,

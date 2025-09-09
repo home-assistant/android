@@ -24,7 +24,7 @@ internal fun NavController.navigateToConnection(url: String, navOptions: NavOpti
 internal fun NavGraphBuilder.connectionScreen(
     onAuthenticated: (url: String, authCode: String) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
-    onBackPressed: () -> Unit,
+    onBackClick: () -> Unit,
 ) {
     composable<ConnectionRoute> {
         val viewModel: ConnectionViewModel = hiltViewModel()
@@ -33,12 +33,12 @@ internal fun NavGraphBuilder.connectionScreen(
             viewModel = viewModel,
             onAuthenticated = onAuthenticated,
             onShowSnackbar = onShowSnackbar,
-            onBackPressed = onBackPressed,
+            onBackClick = onBackClick,
         )
 
         ConnectionScreen(
             viewModel = viewModel,
-            onBackPressed = onBackPressed,
+            onBackClick = onBackClick,
         )
     }
 }
@@ -49,7 +49,7 @@ internal fun HandleConnectionNavigationEvents(
     viewModel: ConnectionViewModel,
     onAuthenticated: (url: String, authCode: String) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
-    onBackPressed: () -> Unit,
+    onBackClick: () -> Unit,
 ) {
     val context = LocalContext.current
     LaunchedEffect(viewModel) {
@@ -69,7 +69,7 @@ internal fun HandleConnectionNavigationEvents(
                         },
                         null,
                     )
-                    onBackPressed()
+                    onBackClick()
                 }
             }
         }
