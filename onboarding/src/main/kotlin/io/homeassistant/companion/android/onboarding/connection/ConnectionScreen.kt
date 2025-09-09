@@ -27,11 +27,7 @@ import io.homeassistant.companion.android.loading.LoadingScreen
 @VisibleForTesting const val CONNECTION_SCREEN_TAG = "connection_screen"
 
 @Composable
-internal fun ConnectionScreen(
-    onBackPressed: () -> Unit,
-    viewModel: ConnectionViewModel,
-    modifier: Modifier = Modifier,
-) {
+internal fun ConnectionScreen(onBackClick: () -> Unit, viewModel: ConnectionViewModel, modifier: Modifier = Modifier) {
     val url by viewModel.urlFlow.collectAsState()
     val isLoading by viewModel.isLoadingFlow.collectAsState()
 
@@ -39,7 +35,7 @@ internal fun ConnectionScreen(
         url = url,
         isLoading = isLoading,
         webViewClient = viewModel.webViewClient,
-        onBackPressed = onBackPressed,
+        onBackClick = onBackClick,
         modifier = modifier,
     )
 }
@@ -49,7 +45,7 @@ internal fun ConnectionScreen(
     url: String?,
     isLoading: Boolean,
     webViewClient: WebViewClient,
-    onBackPressed: () -> Unit,
+    onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.testTag(CONNECTION_SCREEN_TAG)) {
@@ -70,7 +66,7 @@ internal fun ConnectionScreen(
                     this.webViewClient = webViewClient
                     loadUrl(url)
                 },
-                onBackPressed = onBackPressed,
+                onBackPressed = onBackClick,
             )
         } ?: FailFast.fail { "ConnectionScreen: url is null" }
         if (isLoading) {
@@ -87,7 +83,7 @@ private fun ConnectionScreenPreview() {
             url = "https://www.home-assistant.io",
             isLoading = false,
             webViewClient = WebViewClient(),
-            onBackPressed = {},
+            onBackClick = {},
             modifier = Modifier.fillMaxSize(),
         )
     }

@@ -63,7 +63,7 @@ class ConnectionNavigationTest {
                 onShowSnackbar = { _, _ ->
                     true
                 },
-                onBackPressed = {
+                onBackClick = {
                 },
             )
         }
@@ -78,7 +78,7 @@ class ConnectionNavigationTest {
     }
 
     @Test
-    fun `Given HandleConnectionNavigationEvents when viewModel emits Error then invoke onShowSnackbar and onBackPressed`() = runTest {
+    fun `Given HandleConnectionNavigationEvents when viewModel emits Error then invoke onShowSnackbar and onBackClick`() = runTest {
         val sharedFlow = MutableSharedFlow<ConnectionNavigationEvent>()
 
         val viewModel = mockk<ConnectionViewModel> {
@@ -96,7 +96,7 @@ class ConnectionNavigationTest {
                     errorMessage = message
                     true
                 },
-                onBackPressed = {
+                onBackClick = {
                     backPressed = true
                 },
             )
