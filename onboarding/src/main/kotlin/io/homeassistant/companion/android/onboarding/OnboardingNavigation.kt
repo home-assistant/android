@@ -91,8 +91,16 @@ internal fun NavGraphBuilder.onboarding(
             onBackClick = navController::popBackStack,
             onDeviceNamed = { serverId ->
                 // TODO if external URL or cloud URL available go to Location otherwise go to local first
-                // TODO maybe clear the back stack (verify with Bruno what to do here)
-                navController.navigateToLocalFirst()
+                navController.navigateToLocalFirst(
+                    navOptions {
+                        // We don't want to come back to name your device once the device
+                        // is named since the auth_code has already been used.
+                        // TODO might be an issue when using deeplink since WelcomeRoute might not be in the back stack entries
+                        popUpTo<WelcomeRoute> {
+                            inclusive = true
+                        }
+                    },
+                )
             },
             onShowSnackbar = onShowSnackbar,
             onHelpClick = {
@@ -104,8 +112,7 @@ internal fun NavGraphBuilder.onboarding(
             onNextClick = {
                 // TODO go to location permission screen
             },
-            // TODO verify backstack behavior since iOS is disabling back starting from this screen since we've registered the device
-            onBackClick = navController::popBackStack,
+            // We don't have back button since after name your device the device is registered
         )
     }
 }
