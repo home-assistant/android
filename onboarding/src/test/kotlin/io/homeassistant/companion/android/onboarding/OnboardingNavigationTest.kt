@@ -261,15 +261,14 @@ internal class OnboardingNavigationTest {
             assertEquals(instanceUrl, route?.url)
             assertEquals("super_code", route?.authCode)
 
-            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
         }
     }
 
-    // TODO update test name when we decide where back should lead
     @Test
-    fun `Given device named when pressing next then show LocalFirst then goes back to NameYourDevice`() = runTest {
+    fun `Given device named when pressing next then show LocalFirst then goes back stop the app`() = runTest {
         val instanceUrl = "http://ha.local"
         composeTestRule.apply {
             navController.navigateToNameYourDevice(instanceUrl, "code")
@@ -278,8 +277,10 @@ internal class OnboardingNavigationTest {
             onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().performClick()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
 
-            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performClick()
-            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
+            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+
+            // The back stack is unchanged in this situation, but in reality the app is in background
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
         }
     }
 

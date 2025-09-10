@@ -12,10 +12,7 @@ class LocalFirstScreenshotTest {
     @Composable
     fun `LocalFirstContent empty`() {
         HAThemeForPreview {
-            LocalFirstScreen(
-                onBackClick = {},
-                onNextClick = {},
-            )
+            LocalFirstScreen(onNextClick = {})
         }
     }
 }

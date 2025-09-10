@@ -23,16 +23,15 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.compose.HAPreviews
-import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
 
 private val MaxContentWidth = MaxButtonWidth
 
 @Composable
-internal fun LocalFirstScreen(onBackClick: () -> Unit, onNextClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun LocalFirstScreen(onNextClick: () -> Unit, modifier: Modifier = Modifier) {
     Scaffold(
         modifier = modifier,
-        topBar = { HATopBar(onBackClick = onBackClick) },
+
     ) { contentPadding ->
         LocalFirstContent(
             onNextClick = onNextClick,
@@ -83,6 +82,6 @@ private fun LocalFirstContent(onNextClick: () -> Unit, modifier: Modifier = Modi
 @Composable
 private fun LocalFirstScreenPreview() {
     HAThemeForPreview {
-        LocalFirstScreen(onNextClick = {}, onBackClick = {})
+        LocalFirstScreen(onNextClick = {})
     }
 }

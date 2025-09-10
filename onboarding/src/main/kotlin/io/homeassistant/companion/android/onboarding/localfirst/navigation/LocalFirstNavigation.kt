@@ -14,10 +14,9 @@ internal fun NavController.navigateToLocalFirst(navOptions: NavOptions? = null) 
     navigate(LocalFirstRoute, navOptions = navOptions)
 }
 
-internal fun NavGraphBuilder.localFirstScreen(onBackClick: () -> Unit, onNextClick: () -> Unit) {
+internal fun NavGraphBuilder.localFirstScreen(onNextClick: () -> Unit) {
     composable<LocalFirstRoute> {
         LocalFirstScreen(
-            onBackClick = onBackClick,
             onNextClick = onNextClick,
         )
     }
