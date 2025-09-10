@@ -10,6 +10,8 @@ import io.homeassistant.companion.android.compose.navigateToUri
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.onboarding.connection.navigation.connectionScreen
 import io.homeassistant.companion.android.onboarding.connection.navigation.navigateToConnection
+import io.homeassistant.companion.android.onboarding.localfirst.navigation.localFirstScreen
+import io.homeassistant.companion.android.onboarding.localfirst.navigation.navigateToLocalFirst
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.manualServerScreen
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.navigateToManualServer
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.nameYourDeviceScreen
@@ -89,12 +91,21 @@ internal fun NavGraphBuilder.onboarding(
             onBackClick = navController::popBackStack,
             onDeviceNamed = { serverId ->
                 // TODO if external URL or cloud URL available go to Location otherwise go to local first
+                // TODO maybe clear the back stack (verify with Bruno what to do here)
+                navController.navigateToLocalFirst()
             },
             onShowSnackbar = onShowSnackbar,
             onHelpClick = {
                 // TODO validate the URL to use
                 navController.navigateToUri("https://www.home-assistant.io/installation/")
             },
+        )
+        localFirstScreen(
+            onNextClick = {
+                // TODO go to location permission screen
+            },
+            // TODO verify backstack behavior since iOS is disabling back starting from this screen since we've registered the device
+            onBackClick = navController::popBackStack,
         )
     }
 }
