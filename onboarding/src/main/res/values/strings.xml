@@ -16,4 +16,7 @@
     <string name="manual_server_wrong_url">Invalid Home\u00A0Assistant address</string>
     <string name="connection_screen_malformed_url">Verify that your Home\u00A0Assistant address is correct</string>
     <string name="clear_text">Clear text</string>
+    <string name="local_first_title">Local by default.\nRemote when you’re ready.</string>
+    <string name="local_first_content">Your Home\u00A0Assistant is only accessible on your home network. To control your smart home from anywhere, you can set up remote access later in your settings.\nFor now, you\'re securely connected to your local network.</string>
+    <string name="local_first_next">Got it</string>
 </resources>
