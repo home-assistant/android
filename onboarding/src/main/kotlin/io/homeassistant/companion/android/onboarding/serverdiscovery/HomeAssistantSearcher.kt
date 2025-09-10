@@ -95,7 +95,6 @@ internal class HomeAssistantSearcherImpl @Inject constructor(
      */
     private val nsdDiscoveryFlow: Flow<NsdServiceInfo> = callbackFlow {
         val listener = getDiscoveryListener()
-        Timber.e("Hello subscribe !!")
 
         nsdManager.discoverServices(
             SERVICE_TYPE,
