@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.connection
 
+import android.content.Intent
 import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
@@ -12,6 +13,7 @@ import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.annotation.VisibleForTesting
+import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -72,6 +74,8 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         keyChainRepository: KeyChainRepository,
     ) : this(savedStateHandle.toRoute<ConnectionRoute>().url, keyChainRepository)
 
+    private val rawUri: Uri = rawUrl.toUri()
+
     private val _navigationEventsFlow = MutableSharedFlow<ConnectionNavigationEvent>(replay = 1)
     val navigationEventsFlow = _navigationEventsFlow.asSharedFlow()
 
@@ -88,7 +92,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         }
 
         override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-            return request?.url?.let { shouldRedirect(it) } ?: false
+            return request?.url?.let { shouldRedirect(view, it) } ?: false
         }
 
         @RequiresApi(Build.VERSION_CODES.M)
@@ -211,7 +215,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         }
     }
 
-    private fun shouldRedirect(url: Uri): Boolean {
+    private fun shouldRedirect(view: WebView?, url: Uri): Boolean {
         val code = url.getQueryParameter("code")
 
         return if (url.scheme == AUTH_CALLBACK_SCHEME && url.host == AUTH_CALLBACK_HOST && !code.isNullOrBlank()) {
@@ -219,9 +223,14 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                 _navigationEventsFlow.emit(ConnectionNavigationEvent.Authenticated(rawUrl, code))
             }
             true
+        } else if (view != null && url.host != rawUri.host) {
+            Timber.d("$url is not from the server, opening it on external browser.")
+            // We don't want to open the URL within the application if it's not for the same host.
+            // Otherwise the user might be able to leave the onboarding and not being able to come back.
+            // A good exemple is clicking on the `help` or `forget password` button on the login page.
+            view.context.startActivity(Intent(Intent.ACTION_VIEW, url))
+            true
         } else {
-            // TODO we should probably open any other links not related to auth in the external browser
-            // for instance when we click on Help within the login screen
             false
         }
     }
