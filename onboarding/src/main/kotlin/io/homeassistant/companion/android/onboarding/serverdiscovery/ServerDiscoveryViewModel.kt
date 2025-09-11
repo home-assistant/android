@@ -65,7 +65,7 @@ data class ServersDiscovered(val servers: List<ServerDiscovered>) : DiscoverySta
  */
 @OptIn(FlowPreview::class)
 @HiltViewModel
-internal class ServerDiscoveryViewModel @Inject constructor(val searcher: HomeAssistantSearcher) : ViewModel() {
+internal class ServerDiscoveryViewModel @Inject constructor(private val searcher: HomeAssistantSearcher) : ViewModel() {
     private val _discoveryFlow = MutableStateFlow<DiscoveryState>(Started)
 
     /**
