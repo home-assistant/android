@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.connection
 
+import android.content.Context
 import android.net.Uri
 import android.net.http.SslError
 import android.webkit.WebResourceError
@@ -21,6 +22,9 @@ import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Exten
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.verify
+import java.net.URL
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -168,6 +172,51 @@ class ConnectionViewModelTest {
             )
 
             assertFalse(result)
+            navigationEventsFlow.expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given unmatching uri and webview not null when shouldRedirect is invoked then open in external browser and return true`() = runTest {
+        val callbackUri = mockk<Uri> {
+            every { scheme } returns "http"
+            every { host } returns "google"
+            every { getQueryParameter("code") } returns "not_related_code"
+        }
+
+        mockkStatic(Uri::class)
+        every { Uri.parse(any()) } answers {
+            val uriString = firstArg<String>()
+            val javaURL = URL(uriString)
+            return@answers mockk<Uri> {
+                every { this@mockk.toString() } returns uriString
+                every { host } returns javaURL.host
+            }
+        }
+
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository)
+
+        val context = mockk<Context>(relaxUnitFun = true)
+
+        val view = mockk<WebView> {
+            every { this@mockk.context } returns context
+        }
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            val result = viewModel.webViewClient.shouldOverrideUrlLoading(
+                view,
+                mockk<WebResourceRequest> {
+                    every { url } returns callbackUri
+                },
+            )
+
+            assertTrue(result)
+            verify {
+                // We can't verify the url that is going to be use since `Intent` in test is not supported
+                context.startActivity(any())
+            }
             navigationEventsFlow.expectNoEvents()
         }
     }
