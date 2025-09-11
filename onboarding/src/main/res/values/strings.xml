@@ -8,4 +8,8 @@
     <string name="welcome_details">Allows you to access your Home\u00A0Assistant server on the go. It runs locally in your home via a device like the Home\u00A0Assistant\u00A0Green or Raspberry\u00A0Pi.</string>
     <string name="welcome_connect_to_ha">Connect to my Home\u00A0Assistant server</string>
     <string name="welcome_learn_more">Learn more</string>
+    <string name="manual_server_title">What is your Home\u00A0Assistant address?</string>
+    <string name="manual_server_connect">Connect</string>
+    <string name="manual_server_clear_url">Clear server url</string>
+    <string name="manual_server_wrong_url">Invalid Home\u00A0Assistant address</string>
 </resources>
