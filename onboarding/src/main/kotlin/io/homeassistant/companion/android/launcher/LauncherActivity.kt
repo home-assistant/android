@@ -40,7 +40,7 @@ class LauncherActivity : AppCompatActivity() {
                 val startDestinationState =
                     produceState<HAStartDestinationRoute?>(null, viewModel) {
                         value = when (viewModel.navigationEventsFlow.first()) {
-                            LauncherNavigationEvent.Frontend -> FrontendRoute
+                            LauncherNavigationEvent.Frontend -> FrontendRoute()
                             LauncherNavigationEvent.Onboarding -> OnboardingRoute
                         }
                     }
