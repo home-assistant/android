@@ -12,10 +12,10 @@ import io.homeassistant.companion.android.onboarding.locationsharing.LocationSha
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data object LocationSharingRoute
+internal data class LocationSharingRoute(val serverId: Int)
 
-internal fun NavController.navigateToLocationSharing(navOptions: NavOptions? = null) {
-    navigate(LocationSharingRoute, navOptions = navOptions)
+internal fun NavController.navigateToLocationSharing(serverId: Int, navOptions: NavOptions? = null) {
+    navigate(LocationSharingRoute(serverId), navOptions = navOptions)
 }
 
 internal fun NavGraphBuilder.locationSharingScreen(onHelpClick: () -> Unit, onGotoNextScreen: () -> Unit) {

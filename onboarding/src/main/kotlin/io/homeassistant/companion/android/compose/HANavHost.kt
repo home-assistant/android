@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.compose
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -10,7 +11,6 @@ import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.loading.navigation.LoadingRoute
 import io.homeassistant.companion.android.loading.navigation.loadingScreen
 import io.homeassistant.companion.android.onboarding.onboarding
-import timber.log.Timber
 
 /**
  * Navigation host for the main application.
@@ -33,6 +33,8 @@ internal fun HANavHost(
     startDestination: HAStartDestinationRoute?,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
 ) {
+    val activity = LocalActivity.current
+
     startDestination?.let {
         NavHost(
             navController = navController,
@@ -43,8 +45,9 @@ internal fun HANavHost(
                 navController,
                 onShowSnackbar = onShowSnackbar,
                 onOnboardingDone = {
-                    Timber.e("Done")
                     navController.navigateToFrontend()
+                    // TODO remove this finish when the frontend is not an activity anymore
+                    activity?.finish()
                 },
             )
             frontendScreen()

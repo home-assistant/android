@@ -16,6 +16,8 @@ import io.homeassistant.companion.android.onboarding.connection.navigation.navig
 import io.homeassistant.companion.android.onboarding.localfirst.navigation.LocalFirstRoute
 import io.homeassistant.companion.android.onboarding.localfirst.navigation.localFirstScreen
 import io.homeassistant.companion.android.onboarding.localfirst.navigation.navigateToLocalFirst
+import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.locationForSecureConnectionScreen
+import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.navigateToLocationForSecureConnection
 import io.homeassistant.companion.android.onboarding.locationsharing.locationPermissions
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.LocationSharingRoute
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.locationSharingScreen
@@ -29,7 +31,6 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.welcomeScreen
 import kotlinx.serialization.Serializable
-import timber.log.Timber
 
 @Serializable
 internal data object OnboardingRoute : HAStartDestinationRoute
@@ -99,6 +100,7 @@ internal fun NavGraphBuilder.onboarding(
             onDeviceNamed = { serverId ->
                 // TODO if external URL or cloud URL available go to Location otherwise go to local first
                 navController.navigateToLocalFirst(
+                    serverId = serverId,
                     navOptions {
                         // We don't want to come back to name your device once the device
                         // is named since the auth_code has already been used.
@@ -116,24 +118,13 @@ internal fun NavGraphBuilder.onboarding(
             },
         )
         localFirstScreen(
-            onNextClick = {
-                val context = navController.context
-                val shouldAskPermission = locationPermissions.fastAny {
-                    ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_DENIED
-                }
-
-                if (shouldAskPermission) {
-                    navController.navigateToLocationSharing(
-                        navOptions {
-                            popUpTo<LocalFirstRoute> { inclusive = true }
-                        },
-                    )
-                } else {
-                    // TODO maybe clean up to WelcomeRoute
-                    // Cleanup stack
-                    navController.popBackStack(LocalFirstRoute, true)
-                    onOnboardingDone()
-                }
+            onNextClick = { serverId ->
+                navController.navigateToLocationSharing(
+                    serverId = serverId,
+                    navOptions {
+                        popUpTo<LocalFirstRoute> { inclusive = true }
+                    },
+                )
             },
             // We don't have back button since after name your device the device is registered
         )
@@ -144,16 +135,33 @@ internal fun NavGraphBuilder.onboarding(
                 navController.navigateToUri("https://www.home-assistant.io/installation/")
             },
             onGotoNextScreen = {
-                Timber.e("Hello go to next screen")
-                // TODO maybe clean up to WelcomeRoute
-                // Cleanup stack
-                navController.popBackStack(LocationSharingRoute, true)
-                onOnboardingDone()
+                val context = navController.context
+                val shouldAskPermission = locationPermissions.fastAny {
+                    ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_DENIED
+                }
+
+                if (shouldAskPermission) {
+                    navController.navigateToLocationForSecureConnection(
+                        navOptions {
+                            popUpTo<LocationSharingRoute> { inclusive = true }
+                        },
+                    )
+                } else {
+                    onOnboardingDone()
+                }
             },
             // We don't have back button since after name your device the device is registered
         )
 
-        // locationForInternalUrl()
+        locationForSecureConnectionScreen(
+            onHelpClick = {
+                // TODO validate the URL to use
+                navController.navigateToUri("https://www.home-assistant.io/installation/")
+            },
+            onGotoNextScreen = {
+                onOnboardingDone()
+            },
+        )
 
         // TODO ask for background permission or keep it in location sharing screen
     }
