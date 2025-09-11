@@ -43,6 +43,8 @@ fun Context.isAutomotive(): Boolean {
 /**
  * If the app is not already ignoring battery optimizations, this function will open the system
  * settings page to allow the user to grant this permission.
+ *
+ * TODO this should not be exposed to the wear module https://github.com/home-assistant/android/discussions/5771
  */
 fun Context.maybeAskForIgnoringBatteryOptimizations() {
     if (!isIgnoringBatteryOptimizations()) {
@@ -58,6 +60,7 @@ fun Context.maybeAskForIgnoringBatteryOptimizations() {
 /**
  * Checks if the app is ignoring battery optimizations.
  *
+ * TODO this should not be exposed to the wear module https://github.com/home-assistant/android/discussions/5771
  * @return `true` if the app is ignoring battery optimizations, `false` otherwise.
  */
 fun Context.isIgnoringBatteryOptimizations(): Boolean {
