@@ -1,7 +1,13 @@
 package io.homeassistant.companion.android.common.util
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
+import androidx.core.content.getSystemService
+import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -32,4 +38,31 @@ suspend fun Context.getSharedPreferencesSuspend(name: String, mode: Int = Contex
  */
 fun Context.isAutomotive(): Boolean {
     return packageManager.isAutomotive()
+}
+
+/**
+ * If the app is not already ignoring battery optimizations, this function will open the system
+ * settings page to allow the user to grant this permission.
+ */
+fun Context.maybeAskForIgnoringBatteryOptimizations() {
+    if (!isIgnoringBatteryOptimizations()) {
+        startActivity(
+            Intent(
+                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                "package:$packageName".toUri(),
+            ),
+        )
+    }
+}
+
+/**
+ * Checks if the app is ignoring battery optimizations.
+ *
+ * @return `true` if the app is ignoring battery optimizations, `false` otherwise.
+ */
+fun Context.isIgnoringBatteryOptimizations(): Boolean {
+    return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
+        getSystemService<PowerManager>()
+            ?.isIgnoringBatteryOptimizations(packageName ?: "")
+            ?: false
 }
