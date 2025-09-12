@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.onboarding.locationsharing
 
-import android.Manifest
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,7 +19,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HASpacing
@@ -29,25 +27,21 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.compose.HAPreviews
 import io.homeassistant.companion.android.compose.composable.HATopBar
+import io.homeassistant.companion.android.compose.rememberLocationPermission
 import io.homeassistant.companion.android.onboarding.R
-
-// TODO move this into a more common location
-internal val locationPermissions = listOf(
-    Manifest.permission.ACCESS_FINE_LOCATION,
-    Manifest.permission.ACCESS_COARSE_LOCATION,
-)
 
 private val MaxContentWidth = MaxButtonWidth
 
 @Composable
 internal fun LocationSharingScreen(
     onHelpClick: () -> Unit,
+    onGoToNextScreen: () -> Unit,
     viewModel: LocationSharingViewModel,
     modifier: Modifier = Modifier,
 ) {
     LocationSharingScreen(
         onHelpClick = onHelpClick,
-        onGoToNextScreen = viewModel::onGoToNextScreen,
+        onGoToNextScreen = onGoToNextScreen,
         onLocationSharingResponse = viewModel::setupLocationSensor,
         modifier = modifier,
     )
@@ -119,9 +113,9 @@ private fun ColumnScope.BottomButtons(
     onGoToNextScreen: () -> Unit,
     onLocationSharingResponse: (enabled: Boolean) -> Unit,
 ) {
-    val permissions = rememberMultiplePermissionsState(
-        locationPermissions,
-        onPermissionsResult = {
+    val permissions = rememberLocationPermission(
+        onPermissionResult = {
+            // We ignore the result and proceed even if the user reject the permission and we should proceed
             onGoToNextScreen()
         },
     )

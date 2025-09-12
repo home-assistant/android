@@ -9,6 +9,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.navOptions
 import androidx.navigation.navigation
 import io.homeassistant.companion.android.HAStartDestinationRoute
+import io.homeassistant.companion.android.compose.locationPermissions
 import io.homeassistant.companion.android.compose.navigateToUri
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.onboarding.connection.navigation.connectionScreen
@@ -18,7 +19,6 @@ import io.homeassistant.companion.android.onboarding.localfirst.navigation.local
 import io.homeassistant.companion.android.onboarding.localfirst.navigation.navigateToLocalFirst
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.locationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.navigateToLocationForSecureConnection
-import io.homeassistant.companion.android.onboarding.locationsharing.locationPermissions
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.LocationSharingRoute
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.locationSharingScreen
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.navigateToLocationSharing
@@ -128,13 +128,12 @@ internal fun NavGraphBuilder.onboarding(
             },
             // We don't have back button since after name your device the device is registered
         )
-        // TODO Always ask location permission when
         locationSharingScreen(
             onHelpClick = {
                 // TODO validate the URL to use
                 navController.navigateToUri("https://www.home-assistant.io/installation/")
             },
-            onGotoNextScreen = {
+            onGotoNextScreen = { serverId ->
                 val context = navController.context
                 val shouldAskPermission = locationPermissions.fastAny {
                     ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_DENIED
@@ -142,6 +141,7 @@ internal fun NavGraphBuilder.onboarding(
 
                 if (shouldAskPermission) {
                     navController.navigateToLocationForSecureConnection(
+                        serverId = serverId,
                         navOptions {
                             popUpTo<LocationSharingRoute> { inclusive = true }
                         },
@@ -158,11 +158,12 @@ internal fun NavGraphBuilder.onboarding(
                 // TODO validate the URL to use
                 navController.navigateToUri("https://www.home-assistant.io/installation/")
             },
-            onGotoNextScreen = {
+            onGotoNextScreen = { serverId ->
                 onOnboardingDone()
             },
+            onShowSnackbar = onShowSnackbar,
         )
 
-        // TODO ask for background permission or keep it in location sharing screen
+        // TODO ask for background permission (using the next extension) on the dashboard with the notification permission
     }
 }
