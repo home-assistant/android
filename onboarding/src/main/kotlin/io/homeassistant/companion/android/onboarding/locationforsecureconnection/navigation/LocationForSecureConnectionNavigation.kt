@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation
 
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -17,6 +18,7 @@ internal fun NavController.navigateToLocationForSecureConnection(navOptions: Nav
 internal fun NavGraphBuilder.locationForSecureConnectionScreen(onHelpClick: () -> Unit, onGotoNextScreen: () -> Unit) {
     composable<LocationForSecureConnectionRoute> {
         LocationForSecureConnectionScreen(
+            viewModel = hiltViewModel(),
             onHelpClick = onHelpClick,
         )
     }

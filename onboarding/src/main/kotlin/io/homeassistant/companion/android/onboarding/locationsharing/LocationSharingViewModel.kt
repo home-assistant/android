@@ -17,6 +17,11 @@ internal sealed interface LocationSharingNavigationEvent {
     data object GoToNextScreen : LocationSharingNavigationEvent
 }
 
+// TODO tomorrow
+// Finish the second screen
+// Write all the tests needed
+// VM + navigation + screen + screenshots
+
 @HiltViewModel
 internal class LocationSharingViewModel @VisibleForTesting constructor(
     private val serverId: Int,

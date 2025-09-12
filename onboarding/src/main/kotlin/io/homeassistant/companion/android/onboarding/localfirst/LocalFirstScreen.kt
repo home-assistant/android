@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.theme.HASpacing
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
@@ -50,6 +52,10 @@ private fun LocalFirstContent(onNextClick: () -> Unit, modifier: Modifier = Modi
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(HASpacing.XL),
     ) {
+        // Fake Space at the top since we don't have a topbar on this screen.
+        // It makes the image bellow perfectly aligned with the other screens.
+        Spacer(modifier = Modifier.height(64.dp - HASpacing.XL))
+
         Image(
             modifier = Modifier.padding(top = HASpacing.XL),
             imageVector = ImageVector.vectorResource(R.drawable.ic_no_remote),

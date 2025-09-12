@@ -4,6 +4,7 @@ import android.Manifest
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -30,6 +31,7 @@ import io.homeassistant.companion.android.compose.HAPreviews
 import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
 
+// TODO move this into a more common location
 internal val locationPermissions = listOf(
     Manifest.permission.ACCESS_FINE_LOCATION,
     Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -71,7 +73,6 @@ internal fun LocationSharingScreen(
 }
 
 @Composable
-@OptIn(ExperimentalPermissionsApi::class)
 private fun LocationSharingContent(
     onGoToNextScreen: () -> Unit,
     onLocationSharingResponse: (enabled: Boolean) -> Unit,
@@ -105,30 +106,42 @@ private fun LocationSharingContent(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        val permissions = rememberMultiplePermissionsState(
-            locationPermissions,
-            onPermissionsResult = {
-                onGoToNextScreen()
-            },
-        )
-
-        HAAccentButton(
-            text = stringResource(R.string.location_sharing_share),
-            onClick = {
-                onLocationSharingResponse(true)
-                permissions.launchMultiplePermissionRequest()
-            },
-        )
-
-        HAPlainButton(
-            text = stringResource(R.string.location_sharing_no_share),
-            onClick = {
-                onLocationSharingResponse(false)
-                onGoToNextScreen()
-            },
-            modifier = Modifier.padding(bottom = HASpacing.XL),
+        BottomButtons(
+            onGoToNextScreen = onGoToNextScreen,
+            onLocationSharingResponse = onLocationSharingResponse,
         )
     }
+}
+
+@Composable
+@OptIn(ExperimentalPermissionsApi::class)
+private fun ColumnScope.BottomButtons(
+    onGoToNextScreen: () -> Unit,
+    onLocationSharingResponse: (enabled: Boolean) -> Unit,
+) {
+    val permissions = rememberMultiplePermissionsState(
+        locationPermissions,
+        onPermissionsResult = {
+            onGoToNextScreen()
+        },
+    )
+
+    HAAccentButton(
+        text = stringResource(R.string.location_sharing_share),
+        onClick = {
+            onLocationSharingResponse(true)
+            permissions.launchMultiplePermissionRequest()
+        },
+    )
+
+    HAPlainButton(
+        text = stringResource(R.string.location_sharing_no_share),
+        onClick = {
+            onLocationSharingResponse(false)
+            onGoToNextScreen()
+        },
+        modifier = Modifier.padding(bottom = HASpacing.XL),
+    )
 }
 
 @HAPreviews
