@@ -44,7 +44,10 @@ import io.homeassistant.companion.android.common.compose.composable.HAFilledButt
 import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HAProgress
+import io.homeassistant.companion.android.common.compose.composable.HARadioGroup
 import io.homeassistant.companion.android.common.compose.composable.HATextField
+import io.homeassistant.companion.android.common.compose.composable.RadioOption
+import io.homeassistant.companion.android.common.compose.composable.rememberSelectedOption
 import io.homeassistant.companion.android.common.compose.theme.HASize
 import io.homeassistant.companion.android.common.compose.theme.HASpacing
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
@@ -77,6 +80,7 @@ fun HAComposeCatalogScreen() {
                 buttonSection(variant = currentVariant, enabled = false)
                 buttonsWithIcon(variant = currentVariant)
                 buttonsWithBigContent(variant = currentVariant)
+                radioGroupSection()
                 textStyles()
                 input()
                 progress()
@@ -377,11 +381,47 @@ private fun LazyListScope.progress() {
                 )
             HAProgress(
                 { animatedProgress },
-                modifier = Modifier.clickable(onClick = {
-                    progress = 1f
-                }),
+                modifier = Modifier.clickable(
+                    onClick = {
+                        progress = 1f
+                    },
+                ),
             )
         }
+    }
+}
+
+private fun LazyListScope.radioGroupSection() {
+    catalogSection(title = "Radio group") {
+        var selectedOption by rememberSelectedOption<String>()
+
+        HARadioGroup(
+            options = listOf(
+                RadioOption(
+                    "key1",
+                    "Title",
+                    "SubTitle",
+                ),
+                RadioOption(
+                    "key2",
+                    "Title2",
+                ),
+                RadioOption(
+                    "key3",
+                    "Title2",
+                    enabled = false,
+                ),
+                RadioOption(
+                    "key3",
+                    "Very long text, to verifiy that nothing is broken when it is displayed within the bounds.",
+                    enabled = false,
+                ),
+            ),
+            onSelect = {
+                selectedOption = it
+            },
+            selectedOption = selectedOption,
+        )
     }
 }
 
