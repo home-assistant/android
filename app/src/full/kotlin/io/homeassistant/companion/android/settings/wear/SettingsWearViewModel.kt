@@ -14,6 +14,8 @@ import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
+import com.google.android.gms.wearable.Node
+import com.google.android.gms.wearable.NodeClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,6 +33,7 @@ import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -44,19 +47,27 @@ import kotlinx.serialization.SerializationException
 import timber.log.Timber
 
 @HiltViewModel
-@SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
 class SettingsWearViewModel @Inject constructor(private val serverManager: ServerManager, application: Application) :
     AndroidViewModel(application),
     DataClient.OnDataChangedListener {
 
     companion object {
         private const val CAPABILITY_WEAR_SENDS_CONFIG = "sends_config"
+
+        // Name of capability listed in Wear app's wear.xml.
+        // IMPORTANT NOTE: This should be named differently than your Phone app's capability.
+        const val CAPABILITY_WEAR_APP = "verify_wear_app"
     }
 
     private val _hasData = MutableStateFlow(false)
     val hasData = _hasData.asStateFlow()
     private val _isAuthenticated = MutableStateFlow(false)
     val isAuthenticated = _isAuthenticated.asStateFlow()
+    private val _wearNodesWithApp: MutableStateFlow<Set<Node>> = MutableStateFlow(setOf<Node>())
+    val wearNodesWithApp = _wearNodesWithApp.asStateFlow()
+    private val _allConnectedNodes: MutableStateFlow<List<Node>> = MutableStateFlow(listOf<Node>())
+    val allConnectedNodes = _allConnectedNodes.asStateFlow()
+
     private var authenticateId: String? = null
     private var serverId = 0
     private var remoteServerId = 0
@@ -299,6 +310,7 @@ class SettingsWearViewModel @Inject constructor(private val serverManager: Serve
                         "/config" -> {
                             onLoadConfigFromWear(DataMapItem.fromDataItem(item).dataMap)
                         }
+
                         WearDataMessages.PATH_LOGIN_RESULT -> {
                             onAuthenticateResult(DataMapItem.fromDataItem(item).dataMap)
                         }
@@ -389,6 +401,7 @@ class SettingsWearViewModel @Inject constructor(private val serverManager: Serve
             }
         }
     }
+
     private fun onAuthenticateResult(data: DataMap) = viewModelScope.launch {
         val id = data.getString(WearDataMessages.KEY_ID, "")
         if (id != authenticateId) return@launch
@@ -409,6 +422,43 @@ class SettingsWearViewModel @Inject constructor(private val serverManager: Serve
     private fun watchConnectionError(app: HomeAssistantApplication) {
         viewModelScope.launch {
             _resultSnackbar.emit(app.getString(commonR.string.failed_watch_connection))
+        }
+    }
+
+    fun updateWearNodesWithApp(nodes: Set<Node>) {
+        _wearNodesWithApp.value = nodes
+    }
+
+    suspend fun findWearDevicesWithApp(capabilityClient: CapabilityClient?) {
+        try {
+            val capabilityInfo = capabilityClient
+                ?.getCapability(CAPABILITY_WEAR_APP, CapabilityClient.FILTER_ALL)
+                ?.await()
+
+            capabilityInfo?.nodes?.let { nodes ->
+                _wearNodesWithApp.value = nodes
+            }
+            Timber.d("Capable Nodes: ${wearNodesWithApp.value}")
+        } catch (cancellationException: CancellationException) {
+            // Request was cancelled normally
+            throw cancellationException
+        } catch (throwable: Throwable) {
+            Timber.d(throwable, "Capability request failed to return any results.")
+        }
+    }
+
+    suspend fun findAllWearDevices(nodeClient: NodeClient?) {
+        try {
+            val connectedNodes = nodeClient?.connectedNodes?.await()
+
+            if (connectedNodes != null) {
+                _allConnectedNodes.value = connectedNodes
+            }
+        } catch (cancellationException: CancellationException) {
+            // Request was cancelled normally
+            throw cancellationException
+        } catch (throwable: Throwable) {
+            Timber.d(throwable, "Node request failed to return any results.")
         }
     }
 }
