@@ -14,6 +14,7 @@
           <option value=":app:assembleDebug" />
           <option value=":wear:assembleDebug" />
           <option value=":automotive:assembleDebug" />
+          <option value=":onboarding:assembleDebug" />
         </list>
       </option>
       <option name="vmOptions" />
