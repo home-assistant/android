@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.common.compose.composable
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -74,7 +73,7 @@ fun <T> rememberSelectedOption(option: RadioOption<T>? = null): MutableState<Rad
  * @param onSelect A callback function that is invoked when a radio option is selected.
  *                 It receives the selected [RadioOption] as a parameter.
  * @param modifier An optional [Modifier] to be applied to the radio group.
- * @param selectedOption The currently selected [RadioOption]. If `null`, no option is selected.
+ * @param selectionKey The key associated to the currently selected [RadioOption]. If `null`, no option is selected.
  * @param spaceBy The vertical spacing between radio buttons. Defaults to [HASpacing.XL].
  */
 @Composable
@@ -82,7 +81,7 @@ fun <T> HARadioGroup(
     @SuppressLint("ComposeUnstableCollections") options: List<RadioOption<T>>,
     onSelect: (RadioOption<T>) -> Unit,
     modifier: Modifier = Modifier,
-    selectedOption: RadioOption<T>? = null,
+    selectionKey: T? = null,
     spaceBy: Dp = HASpacing.XL,
 ) {
     Column(
@@ -95,7 +94,7 @@ fun <T> HARadioGroup(
             HARadioButton(
                 headline = option.headline,
                 secondary = option.secondary,
-                isSelected = (selectedOption == option),
+                isSelected = (selectionKey == option.selectionKey),
                 onSelect = {
                     onSelect(option)
                 },
@@ -103,6 +102,36 @@ fun <T> HARadioGroup(
             )
         }
     }
+}
+
+/**
+ * A composable function that displays a group of radio buttons.
+ * Each radio button is represented by a [RadioOption] and can have a headline, secondary text,
+ * and an enabled state. Only one radio button can be selected at a time.
+ *
+ * @param T The type of the value associated with each radio option.
+ * @param options A list of [RadioOption] objects representing the choices available.
+ * @param onSelect A callback function that is invoked when a radio option is selected.
+ *                 It receives the selected [RadioOption] as a parameter.
+ * @param modifier An optional [Modifier] to be applied to the radio group.
+ * @param selectedOption The currently selected [RadioOption]. If `null`, no option is selected.
+ * @param spaceBy The vertical spacing between radio buttons. Defaults to [HASpacing.XL].
+ */
+@Composable
+fun <T> HARadioGroup(
+    @SuppressLint("ComposeUnstableCollections") options: List<RadioOption<T>>,
+    onSelect: (RadioOption<T>) -> Unit,
+    modifier: Modifier = Modifier,
+    selectedOption: RadioOption<T>? = null,
+    spaceBy: Dp = HASpacing.XL,
+) {
+    HARadioGroup(
+        options = options,
+        onSelect = onSelect,
+        modifier = modifier,
+        selectionKey = selectedOption?.selectionKey,
+        spaceBy = spaceBy,
+    )
 }
 
 @Composable
@@ -143,7 +172,7 @@ private fun HARadioButton(
             .selectable(
                 enabled = enabled,
                 selected = isSelected,
-                interactionSource = remember { MutableInteractionSource() },
+                interactionSource = null,
                 indication = ripple(color = LocalHAColorScheme.current.colorFillNeutralQuietHover),
                 onClick = onSelect,
                 role = Role.RadioButton,

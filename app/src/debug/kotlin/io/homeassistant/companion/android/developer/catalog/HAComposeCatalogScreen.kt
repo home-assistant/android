@@ -420,7 +420,7 @@ private fun LazyListScope.radioGroupSection() {
             onSelect = {
                 selectedOption = it
             },
-            selectedOption = selectedOption,
+            selectionKey = selectedOption?.selectionKey,
         )
     }
 }
