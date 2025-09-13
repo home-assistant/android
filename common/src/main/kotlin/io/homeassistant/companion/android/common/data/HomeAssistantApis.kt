@@ -7,6 +7,7 @@ import android.webkit.CookieManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.di.OkHttpConfigurator
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import okhttp3.MediaType.Companion.toMediaType
@@ -18,6 +19,7 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 class HomeAssistantApis @Inject constructor(
     private val tlsHelper: TLSHelper,
     @ApplicationContext private val appContext: Context,
+    private val configurators: Set<@JvmSuppressWildcards OkHttpConfigurator>,
 ) {
     companion object {
         private const val LOCAL_HOST = "http://localhost/"
@@ -28,6 +30,7 @@ class HomeAssistantApis @Inject constructor(
         private const val CALL_TIMEOUT = 30L
         private const val READ_TIMEOUT = 30L
     }
+
     private fun configureOkHttpClient(builder: OkHttpClient.Builder): OkHttpClient.Builder {
         if (BuildConfig.DEBUG) {
             builder.addInterceptor(
@@ -62,6 +65,10 @@ class HomeAssistantApis @Inject constructor(
         builder.readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
 
         tlsHelper.setupOkHttpClientSSLSocketFactory(builder)
+
+        configurators.forEach {
+            it(builder)
+        }
 
         return builder
     }

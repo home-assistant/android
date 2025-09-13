@@ -41,6 +41,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "implementation"(libs.appcompat)
                     "implementation"(libs.androidx.lifecycle.runtime.ktx)
+                    "implementation"(libs.androidx.lifecycle.service)
                     "implementation"(libs.constraintlayout)
                     "implementation"(libs.recyclerview)
                     "implementation"(libs.preference.ktx)
