@@ -1,18 +1,24 @@
+@file:OptIn(ExperimentalTime::class)
+
 package io.homeassistant.companion.android.data
 
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.MessageClient
-import com.google.android.gms.wearable.Wearable
+import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.CAPABILITY_DNS_VIA_MOBILE
+import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.decodeResult
+import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.encodeRequest
+import io.homeassistant.companion.android.common.util.WearDataMessages.PATH_DNS_LOOKUP
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 import okhttp3.Dns
-import okio.ByteString.Companion.decodeHex
 import timber.log.Timber
 
 /**
@@ -29,6 +35,7 @@ import timber.log.Timber
 class WearDns @Inject constructor(
     private val messageClient: MessageClient,
     private val capabilityClient: CapabilityClient,
+    private val clock: Clock,
 ) : Dns {
     private val dnsHelperCache = ConcurrentHashMap<String, CacheResult>()
 
@@ -43,10 +50,10 @@ class WearDns @Inject constructor(
     }
 
     private suspend fun attemptLookupViaMobile(hostname: String, e: Exception): List<InetAddress> {
-        val now = Instant.now()
+        val now = clock.now()
 
         val cached = dnsHelperCache[hostname]
-        if (cached != null && cached.storedAt.plus(5L, ChronoUnit.MINUTES) > now) {
+        if (cached != null && cached.storedAt + 5.minutes > now) {
             when (cached) {
                 is NegativeCacheHit -> throw cached.exception
                 is PositiveCacheHit -> return cached.value
@@ -82,17 +89,15 @@ class WearDns @Inject constructor(
     private suspend fun dnsViaMobile(nodeId: String, hostname: String): List<InetAddress> {
         val response = messageClient.sendRequest(
             nodeId,
-            REQUEST_DNS_VIA_MOBILE,
-            hostname.toByteArray(),
+            PATH_DNS_LOOKUP,
+            hostname.encodeRequest(),
         ).await()
 
         if (response.isEmpty()) {
             throw UnknownHostException("Mobile helper unable to resolve $hostname")
         }
 
-        val addresses = response.decodeToString().split(",").map {
-            InetAddress.getByAddress(hostname, it.decodeHex().toByteArray())
-        }
+        val addresses = response.decodeResult(hostname)
 
         return addresses
     }
@@ -103,9 +108,4 @@ class WearDns @Inject constructor(
 
     private data class NegativeCacheHit(val exception: Exception, override val storedAt: Instant) : CacheResult
     private data class PositiveCacheHit(val value: List<InetAddress>, override val storedAt: Instant) : CacheResult
-
-    companion object {
-        private const val CAPABILITY_DNS_VIA_MOBILE = "mobile_network_helper"
-        private const val REQUEST_DNS_VIA_MOBILE = "/network/dnsLookup"
-    }
 }

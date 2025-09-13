@@ -1,11 +1,10 @@
-package io.homeassistant.companion.android.data
+package io.homeassistant.companion.android.shadows
 
 import java.net.InetAddress
 import okhttp3.Dns
 import org.robolectric.annotation.Implementation
 import org.robolectric.annotation.Implements
 import org.robolectric.shadow.api.Shadow
-
 
 @Implements(className = "okhttp3.Dns\$Companion\$DnsSystem", isInAndroidSdk = false)
 class ShadowDnsSystem {

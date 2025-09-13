@@ -1,7 +1,11 @@
 package io.homeassistant.companion.android.common.util
 
+import java.net.InetAddress
+import okio.ByteString.Companion.decodeHex
+
 object WearDataMessages {
     const val PATH_LOGIN_RESULT = "/loginResult"
+    const val PATH_DNS_LOOKUP = "/network/dnsLookup"
 
     const val KEY_ID = "id"
     const val KEY_SUCCESS = "success"
@@ -20,4 +24,20 @@ object WearDataMessages {
     const val CONFIG_TEMPLATE_TILES = "templateTiles"
 
     const val LOGIN_RESULT_EXCEPTION = "exception"
+
+    object DnsLookup {
+        val CAPABILITY_DNS_VIA_MOBILE = "mobile_network_helper"
+
+        fun List<InetAddress>.encodeResult(): ByteArray = joinToString(",") {
+            it.address.toHexString()
+        }.encodeToByteArray()
+
+        fun ByteArray.decodeResult(hostname: String): List<InetAddress> = decodeToString().split(",").map {
+            InetAddress.getByAddress(hostname, it.decodeHex().toByteArray())
+        }
+
+        fun String.encodeRequest(): ByteArray = toByteArray()
+
+        fun ByteArray.decodeRequest(): String = decodeToString()
+    }
 }
