@@ -67,8 +67,8 @@ class HARadioGroupScreenshotTest {
                         "Title2",
                     ),
                     RadioOption(
-                        "key3",
-                        "Title2",
+                        "key4",
+                        "Title3",
                         enabled = false,
                     ),
                 ),
