@@ -38,49 +38,65 @@ class WearDnsTest {
 
     @Test
     fun `defaults to system dns`() {
+        // given
         val shadowDns = shadowOf(Dns.SYSTEM)
         shadowDns.results["homeassistant.local"] = Result.success(listOf(homeAssistantLocal))
 
+        // when
         val results = dns.lookup("homeassistant.local")
+
+        // then
         assertEquals(homeAssistantLocal, results.single())
     }
 
     @Test
     fun `falls back to mobile dns when present`() {
+        // given
         val shadowDns = shadowOf(Dns.SYSTEM)
         shadowDns.results["homeassistant.local"] = Result.failure(UnknownHostException())
 
         capabilityClient.capabilities[CAPABILITY_DNS_VIA_MOBILE] = setOf("1234")
         messageClient.onRequest = { listOf(homeAssistantLocal).encodeResult() }
 
+        // when
         val results = dns.lookup("homeassistant.local")
+
+        // then
         assertEquals(homeAssistantLocal, results.single())
     }
 
     @Test
     fun `still fails when not present`() {
+        // given
         val shadowDns = shadowOf(Dns.SYSTEM)
         shadowDns.results["homeassistant.local"] = Result.failure(UnknownHostException())
 
         capabilityClient.capabilities[CAPABILITY_DNS_VIA_MOBILE] = setOf()
 
+        // when
         val exception = assertThrows<UnknownHostException> {
             dns.lookup("homeassistant.local")
         }
+
+        // then
         assertEquals("No Mobile DNS helper registered. Unable to resolve homeassistant.local", exception.message)
     }
 
     @Test
     fun `still fails when mobile fails`() {
+        // given
         val shadowDns = shadowOf(Dns.SYSTEM)
         shadowDns.results["homeassistant.local"] = Result.failure(UnknownHostException())
 
         capabilityClient.capabilities[CAPABILITY_DNS_VIA_MOBILE] = setOf("1234")
         messageClient.onRequest = { byteArrayOf() }
 
+        // when
         val exception = assertThrows<UnknownHostException> {
             dns.lookup("homeassistant.local")
         }
+
+        // then
         assertEquals("Mobile helper unable to resolve homeassistant.local", exception.message)
     }
 }
