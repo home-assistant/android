@@ -5,26 +5,30 @@ import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.toStringList
+import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
+import io.homeassistant.companion.android.di.qualifiers.NamedWearStorage
 import javax.inject.Inject
-import javax.inject.Named
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
 
 class WearPrefsRepositoryImpl @Inject constructor(
-    @Named("wear") private val localStorage: LocalStorage,
-    @Named("integration") private val integrationStorage: LocalStorage,
+    @NamedWearStorage private val localStorage: LocalStorage,
+    @NamedIntegrationStorage private val integrationStorage: LocalStorage,
 ) : WearPrefsRepository {
 
     companion object {
-        @VisibleForTesting const val MIGRATION_PREF = "migration"
+        @VisibleForTesting
+        const val MIGRATION_PREF = "migration"
 
-        @VisibleForTesting const val MIGRATION_VERSION = 2
+        @VisibleForTesting
+        const val MIGRATION_VERSION = 2
 
         private const val PREF_TILE_SHORTCUTS = "tile_shortcuts_list"
         private const val PREF_SHOW_TILE_SHORTCUTS_TEXT = "show_tile_shortcuts_text"
 
-        @VisibleForTesting const val PREF_TILE_TEMPLATES = "tile_templates"
+        @VisibleForTesting
+        const val PREF_TILE_TEMPLATES = "tile_templates"
         private const val PREF_WEAR_HAPTIC_FEEDBACK = "wear_haptic_feedback"
         private const val PREF_WEAR_TOAST_CONFIRMATION = "wear_toast_confirmation"
         private const val PREF_WEAR_FAVORITES_ONLY = "wear_favorites_only"

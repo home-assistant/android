@@ -39,10 +39,17 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.util.MessagingToken
+import io.homeassistant.companion.android.common.util.isNullOrBlank
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.di.qualifiers.NamedDeviceId
+import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
+import io.homeassistant.companion.android.di.qualifiers.NamedManufacturer
+import io.homeassistant.companion.android.di.qualifiers.NamedModel
+import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
 import java.util.concurrent.TimeUnit
-import javax.inject.Named
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
@@ -58,11 +65,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     private val integrationService: IntegrationService,
     private val serverManager: ServerManager,
     @Assisted private val serverId: Int,
-    @Named("integration") private val localStorage: LocalStorage,
-    @Named("manufacturer") private val manufacturer: String,
-    @Named("model") private val model: String,
-    @Named("osVersion") private val osVersion: String,
-    @Named("deviceId") private val deviceId: String,
+    @NamedIntegrationStorage private val localStorage: LocalStorage,
+    @NamedManufacturer private val manufacturer: String,
+    @NamedModel private val model: String,
+    @NamedOsVersion private val osVersion: String,
+    @NamedDeviceId private val deviceId: String,
 ) : IntegrationRepository {
 
     companion object {
@@ -168,21 +175,21 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun getRegistration(): DeviceRegistration {
         return DeviceRegistration(
-            localStorage.getString(PREF_APP_VERSION),
+            localStorage.getString(PREF_APP_VERSION)?.let { AppVersion.from(rawVersion = it) },
             server().deviceName,
-            localStorage.getString(PREF_PUSH_TOKEN),
+            localStorage.getString(PREF_PUSH_TOKEN)?.let { MessagingToken(it) },
         )
     }
 
     private suspend fun persistDeviceRegistration(deviceRegistration: DeviceRegistration) {
         if (deviceRegistration.appVersion != null) {
-            localStorage.putString(PREF_APP_VERSION, deviceRegistration.appVersion)
+            localStorage.putString(PREF_APP_VERSION, deviceRegistration.appVersion.value)
         }
         if (deviceRegistration.deviceName != null) {
             serverManager.updateServer(server().copy(deviceName = deviceRegistration.deviceName))
         }
-        if (deviceRegistration.pushToken != null) {
-            localStorage.putString(PREF_PUSH_TOKEN, deviceRegistration.pushToken)
+        deviceRegistration.pushToken?.let {
+            localStorage.putString(PREF_PUSH_TOKEN, it.value)
         }
     }
 
