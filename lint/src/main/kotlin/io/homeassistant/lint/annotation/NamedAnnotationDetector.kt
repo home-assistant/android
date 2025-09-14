@@ -31,10 +31,12 @@ object NamedAnnotationDetector {
         implementation = Implementation(
             IssueDetector::class.java,
             Scope.JAVA_FILE_SCOPE,
-        )
+        ),
     )
 
-    class IssueDetector : Detector(), SourceCodeScanner {
+    class IssueDetector :
+        Detector(),
+        SourceCodeScanner {
         override fun getApplicableUastTypes() = listOf(UAnnotation::class.java)
 
         override fun createUastHandler(context: JavaContext): UElementHandler {
@@ -45,7 +47,7 @@ object NamedAnnotationDetector {
                             ISSUE,
                             node,
                             context.getLocation(node),
-                            "Usage of @Named is discouraged. Use a custom qualifier annotation instead."
+                            "Usage of @Named is discouraged. Use a custom qualifier annotation instead.",
                         )
                     }
                 }
@@ -53,4 +55,3 @@ object NamedAnnotationDetector {
         }
     }
 }
-
