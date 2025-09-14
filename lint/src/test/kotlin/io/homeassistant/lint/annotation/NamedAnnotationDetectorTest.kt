@@ -79,7 +79,7 @@ class NamedAnnotationDetectorTest {
                     @Named("server_url") private val serverUrl: String
                     ~~~~~~~~~~~~~~~~~~~~
                 1 error
-                """.trimIndent()
+                """.trimIndent(),
             )
     }
 

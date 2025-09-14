@@ -30,7 +30,7 @@ object NamedAnnotationDetector {
         severity = Severity.ERROR,
         implementation = Implementation(
             IssueDetector::class.java,
-            Scope.JAVA_FILE_SCOPE
+            Scope.JAVA_FILE_SCOPE,
         )
     )
 
