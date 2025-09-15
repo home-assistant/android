@@ -33,10 +33,8 @@ internal sealed interface LauncherNavigationEvent {
  * and verifies the presence of an active, registered, and connected server.
  *
  * If no such server is found, or if an error occurs during this check (e.g., network connectivity issues),
- * it emits [LauncherNavigationEvent.Onboarding]. Otherwise, it proceeds to resync all server
- * registrations and emits [LauncherNavigationEvent.Frontend].
- *
- * Call [shouldShowSplashScreen] to determine when to hide the application's splash screen.
+ * it emits [LauncherNavigationEvent.Onboarding]. Otherwise, it schedule a resync of all server
+ * registrations asynchronously and emits [LauncherNavigationEvent.Frontend].
  */
 @HiltViewModel
 internal class LauncherViewModel @Inject constructor(
@@ -69,6 +67,9 @@ internal class LauncherViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Determine when to hide the application's splash screen.
+     */
     fun shouldShowSplashScreen(): Boolean = navigationEventsFlow.replayCache.isEmpty()
 
     private suspend fun getActiveServerConnectedAndRegistered(): Server? {

@@ -10,7 +10,7 @@ class HAAppScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `HAApp no start destination`() {
+    fun `HAApp no start destination shows loading screen`() {
         HAThemeForPreview {
             HAApp(navController = rememberNavController(), startDestination = null)
         }

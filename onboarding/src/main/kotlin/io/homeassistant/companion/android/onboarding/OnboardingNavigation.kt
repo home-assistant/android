@@ -18,7 +18,7 @@ internal fun NavController.navigateToOnboarding(navOptions: NavOptions? = null) 
 }
 
 /**
- * Adds the onboarding graph to the [NavGraphBuilder].It is dedicated for onboarding it can be accessed either by using the
+ * Adds the onboarding graph to the [NavGraphBuilder]. It is dedicated to onboarding and can be accessed by using the
  * route [OnboardingRoute], the start destination of this graph is [WelcomeRoute].
  *
  * TODO update docs when the rest of the graph is ready.
