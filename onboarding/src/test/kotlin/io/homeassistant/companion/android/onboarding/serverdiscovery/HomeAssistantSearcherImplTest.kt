@@ -169,7 +169,7 @@ class HomeAssistantSearcherImplTest {
     }
 
     @Test
-    fun `Given one discoverable instance impossible to resolve when discoveredInstanceFlow is called then nothing is emit`() = runTest {
+    fun `Given one discoverable instance impossible to resolve when discoveredInstanceFlow is called then nothing is emitted`() = runTest {
         val discoveryListener = slot<NsdManager.DiscoveryListener>()
         val resolveListener = slot<NsdManager.ResolveListener>()
         val serviceInfo = createNsdServiceInfo()
@@ -187,7 +187,7 @@ class HomeAssistantSearcherImplTest {
     }
 
     @Test
-    fun `Given one discoverable instance with null service when discoveredInstanceFlow is called then nothing is emit`() = runTest {
+    fun `Given one discoverable instance with null service when discoveredInstanceFlow is called then nothing is emitted`() = runTest {
         val discoveryListener = slot<NsdManager.DiscoveryListener>()
         val resolveListener = slot<NsdManager.ResolveListener>()
 

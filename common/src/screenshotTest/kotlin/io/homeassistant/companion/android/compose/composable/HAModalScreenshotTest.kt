@@ -44,7 +44,7 @@ class HAModalScreenshotTest {
                     initialValue = sheetValue,
                 ),
             ) {
-                Text("Hello :wave:", style = HATextStyle.Headline)
+                Text("Hello 👋", style = HATextStyle.Headline)
             }
         }
     }

@@ -50,8 +50,7 @@ internal fun <T> Flow<T>.delayFirst(delayDuration: Duration, clock: Clock = Cloc
  * while the first item is being delayed.
  *
  * Unlike using `onStart { delay(duration) }`, which postpones the start of the entire flow,
- * this operator allows the upstream flow to start immediately, and only delays the downstream
- *
+ * this operator allows the upstream flow to start immediately, and only delays the downstream flow.
  *
  * @param delayDuration The duration to delay the first item.
  */

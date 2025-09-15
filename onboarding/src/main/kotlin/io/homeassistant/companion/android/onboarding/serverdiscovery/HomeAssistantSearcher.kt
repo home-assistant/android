@@ -66,7 +66,7 @@ internal class HomeAssistantSearcherImpl @Inject constructor(
 
     override fun discoveredInstanceFlow(): Flow<HomeAssistantInstance> {
         FailFast.failWhen(hasCollector.get()) {
-            "Something has already call instancesFlow() and didn't close the flow yet."
+            "Something has already called discoveredInstanceFlow() and didn't close the flow yet."
         }
 
         return serviceFlow
@@ -184,7 +184,7 @@ private fun ProducerScope<NsdServiceInfo>.getDiscoveryListener(): NsdManager.Dis
             serviceInfo?.let {
                 Timber.i("Service discovery found HA: $serviceInfo")
                 trySend(serviceInfo)
-            } ?: Timber.w("Service found but is null skipping")
+            } ?: Timber.w("Service found but info is null, skipping")
         }
 
         override fun onServiceLost(serviceInfo: NsdServiceInfo?) {
@@ -196,7 +196,7 @@ private fun ProducerScope<NsdServiceInfo>.getDiscoveryListener(): NsdManager.Dis
         }
 
         override fun onStopDiscoveryFailed(serviceType: String?, errorCode: Int) {
-            Timber.e("Stop discovery failed: Error code:$errorCode")
+            Timber.e("Stop discovery failed with error code $errorCode")
         }
     }
 }
