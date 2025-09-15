@@ -20,7 +20,7 @@ object NamedAnnotationDetector {
         id = "NoNamedAnnotation",
         briefDescription = "Avoid using @Named annotation",
         explanation = """
-            Using the @Named annotation for dependency injection is discouraged.
+            Using the @Named annotation for dependency injection is forbidden.
             Instead, create custom, type-safe qualifier annotations. Custom qualifiers
             prevent typos and allow the compiler to catch errors, whereas @Named uses
             string-based lookups which are prone to runtime errors.
