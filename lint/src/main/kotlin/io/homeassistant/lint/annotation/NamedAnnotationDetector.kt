@@ -47,7 +47,7 @@ object NamedAnnotationDetector {
                             ISSUE,
                             node,
                             context.getLocation(node),
-                            "Usage of @Named is discouraged. Use a custom qualifier annotation instead.",
+                            "Usage of @Named is forbidden. Use a custom qualifier annotation instead.",
                         )
                     }
                 }
