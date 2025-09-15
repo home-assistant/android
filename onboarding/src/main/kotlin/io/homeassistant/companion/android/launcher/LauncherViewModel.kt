@@ -20,8 +20,8 @@ import timber.log.Timber
 
 /**
  * Sealed interface for navigation events that can occur in the launcher.
- * These events are used to determine where the user should be navigated
- * within the app upon launch.
+ * These events are used to determine where the app should navigate to
+ * after launching.
  */
 internal sealed interface LauncherNavigationEvent {
     data object Frontend : LauncherNavigationEvent

@@ -135,7 +135,7 @@ class LauncherViewModelTest {
     }
 
     @Test
-    fun `Given active server connected and registered, when network is CONNECTING then READY, then navigate to frontend`() = runTest {
+    fun `Given active server connected and registered, when network is CONNECTING then READY, then navigate to frontend and resync registrations`() = runTest {
         val server = mockk<Server>(relaxed = true)
 
         every { workManager.enqueue(any<OneTimeWorkRequest>()) } returns mockk()
