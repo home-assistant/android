@@ -61,6 +61,9 @@ import okhttp3.ResponseBody
 import retrofit2.Response
 import timber.log.Timber
 
+private const val PUSH_URL = BuildConfig.PUSH_URL
+private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
+
 class IntegrationRepositoryImpl @AssistedInject constructor(
     private val integrationService: IntegrationService,
     private val serverManager: ServerManager,
@@ -76,7 +79,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val APP_ID = "io.homeassistant.companion.android"
         private const val APP_NAME = "Home Assistant"
         private const val OS_NAME = "Android"
-        private const val PUSH_URL = BuildConfig.PUSH_URL
 
         // Note: _not_ server-specific
         private const val PREF_APP_VERSION = "app_version"
@@ -95,8 +97,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val PREF_LAST_USED_PIPELINE_ID = "last_used_pipeline"
         private const val PREF_LAST_USED_PIPELINE_STT = "last_used_pipeline_stt"
         private const val PREF_THREAD_BORDER_AGENT_IDS = "thread_border_agent_ids"
-        private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
-
         private const val APPLOCK_TIMEOUT_GRACE_MS = 1000
     }
 
