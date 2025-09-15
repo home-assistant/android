@@ -14,14 +14,14 @@ runs:
 
     - name: Upload SARIF results
       if: ${{ !cancelled() && hashFiles('merged_results.sarif') != '' }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: ${{ inputs.category }}_sarif_results
         path: merged_results.sarif
 
     - name: Upload ${{ inputs.category }} reports (SARIF)
       if: ${{ !cancelled() && hashFiles('merged_results.sarif') != '' }}
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@192325c86100d080feab897ff886c34abd4c83a3 # v3
       with:
         sarif_file: "./merged_results.sarif"
         category: ${{ inputs.category }}
