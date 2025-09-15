@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.ComposeNavigator
@@ -71,7 +72,7 @@ class OnboardingNavigationTest {
     fun `Given no action when starting the app then show Welcome`() {
         assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
         composeTestRule.apply {
-            onNodeWithText(stringResource(R.string.welcome_learn_more)).performClick()
+            onNodeWithText(stringResource(R.string.welcome_learn_more)).performScrollTo().assertIsDisplayed().performClick()
             verify { any<NavController>().navigateToUri("https://www.home-assistant.io") }
         }
     }
