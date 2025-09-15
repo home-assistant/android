@@ -37,7 +37,7 @@ class WearDnsTest {
     val homeAssistantLocal = InetAddress.getByAddress("homeassistant.local", byteArrayOf(192.toByte(), 168.toByte(), 0, 23))
 
     @Test
-    fun `defaults to system dns`() {
+    fun `Given a hostname when making DNS lookup then returns DNS entry`() {
         // given
         val shadowDns = shadowOf(Dns.SYSTEM)
         shadowDns.results["homeassistant.local"] = Result.success(listOf(homeAssistantLocal))

@@ -28,16 +28,16 @@ object WearDataMessages {
     object DnsLookup {
         val CAPABILITY_DNS_VIA_MOBILE = "mobile_network_helper"
 
-        fun List<InetAddress>.encodeResult(): ByteArray = joinToString(",") {
+        fun List<InetAddress>.encodeDNSResult(): ByteArray = joinToString(",") {
             it.address.toHexString()
         }.encodeToByteArray()
 
-        fun ByteArray.decodeResult(hostname: String): List<InetAddress> = decodeToString().split(",").map {
+        fun ByteArray.decodeDNSResult(hostname: String): List<InetAddress> = decodeToString().split(",").map {
             InetAddress.getByAddress(hostname, it.decodeHex().toByteArray())
         }
 
-        fun String.encodeRequest(): ByteArray = toByteArray()
+        fun String.encodeDNSRequest(): ByteArray = toByteArray()
 
-        fun ByteArray.decodeRequest(): String = decodeToString()
+        fun ByteArray.decodeDNSRequest(): String = decodeToString()
     }
 }
