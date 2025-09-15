@@ -118,7 +118,7 @@ class SettingsWearActivity :
     }
 
     private fun openWearDeviceSettings() {
-        val wearNodesWithApp = settingsWearViewModel.wearNodesWithApp.value
+        val wearNodesWithApp = settingsWearViewModel.getNodesWithApp()
         if (wearNodesWithApp.isEmpty()) {
             Timber.d("No wear nodes with app")
         }
@@ -129,11 +129,7 @@ class SettingsWearActivity :
     }
 
     private fun openPlayStoreOnWearDevicesWithoutApp() {
-        val wearNodesWithApp = settingsWearViewModel.wearNodesWithApp.value ?: return
-        val allConnectedNodes = settingsWearViewModel.allConnectedNodes.value ?: return
-
-        // Determine the list of nodes (wear devices) that don't have the app installed yet.
-        val nodesWithoutApp = allConnectedNodes - wearNodesWithApp
+        val nodesWithoutApp = settingsWearViewModel.getNodesWithoutApp()
 
         Timber.d("Number of nodes without app: " + nodesWithoutApp.size)
         val intent = Intent(Intent.ACTION_VIEW)

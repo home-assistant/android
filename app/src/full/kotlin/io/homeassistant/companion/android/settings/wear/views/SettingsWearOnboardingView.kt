@@ -11,10 +11,6 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -28,7 +24,6 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
-import timber.log.Timber
 
 @Composable
 internal fun SettingsWearOnboardingView(
@@ -37,41 +32,19 @@ internal fun SettingsWearOnboardingView(
     onFinishInstallOnDevices: () -> Unit,
     onBackClicked: () -> Unit,
 ) {
-    var infoTextResource by remember { mutableIntStateOf(commonR.string.message_checking) }
-    var shouldDisplayRemoteAppInstallButton by remember { mutableStateOf(false) }
-    val wearNodesWithApp by settingsWearViewModel.wearNodesWithApp.collectAsStateWithLifecycle()
-    val allConnectedNodes by settingsWearViewModel.allConnectedNodes.collectAsStateWithLifecycle()
+    val uiState by settingsWearViewModel.settingsWearOnboardingViewUiState.collectAsStateWithLifecycle(
+        SettingsWearViewModel.SettingsWearOnboardingViewUiState(),
+    )
 
-    Timber.d("Waiting on Results for both connected nodes and nodes with app")
-    when {
-        allConnectedNodes.isEmpty() -> {
-            Timber.d("No devices")
-            infoTextResource = commonR.string.message_no_connected_nodes
-            shouldDisplayRemoteAppInstallButton = true
-        }
-
-        wearNodesWithApp.isEmpty() -> {
-            Timber.d("Missing on all devices")
-            infoTextResource = commonR.string.message_missing_all
-            shouldDisplayRemoteAppInstallButton = true
-        }
-
-        wearNodesWithApp.size < allConnectedNodes.size -> {
-            Timber.d("Installed on some devices")
-            onFinishInstallOnDevices.invoke()
-        }
-
-        else -> {
-            Timber.d("Installed on all devices")
-            onFinishInstallOnDevices.invoke()
-        }
+    if (uiState.installedOnDevices) {
+        onFinishInstallOnDevices()
     }
 
     SettingsWearOnboardingViewContent(
-        infoTextResource,
-        shouldDisplayRemoteAppInstallButton,
-        onInstallOnWearDeviceClicked,
-        onBackClicked,
+        infoTextTitleResource = uiState.infoTextResourceId,
+        shouldDisplayRemoteAppInstallButton = uiState.shouldShowRemoteInstallButton,
+        onInstallOnWearDeviceClicked = onInstallOnWearDeviceClicked,
+        onBackClicked = onBackClicked,
     )
 }
 
