@@ -56,7 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -349,20 +349,27 @@ private fun ColumnScope.ScanningForServer(discoveryState: DiscoveryState) {
 @Composable
 private fun AnimatedIcon() {
     Box(modifier = Modifier.padding(HASpacing.S)) {
-        val infiniteTransition = rememberInfiniteTransition(label = "dots_rotation")
-        val rotation by infiniteTransition.animateFloat(
+        val rotation by rememberInfiniteTransition(label = "dots_rotation").animateFloat(
             initialValue = 0f,
             targetValue = 360f,
             animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 20000, easing = LinearEasing),
+                animation = tween(durationMillis = 5000, easing = LinearEasing),
                 repeatMode = RepeatMode.Restart,
             ),
             label = "dots_rotation_value",
         )
+        val pulse by rememberInfiniteTransition(label = "icon_pulse").animateFloat(
+            initialValue = 1f,
+            targetValue = 1.15f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 800, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+            label = "icon_pulse_value",
+        )
         Image(
             imageVector = ImageVector.vectorResource(R.drawable.dots),
             contentDescription = null,
-            colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorBorderPrimaryLoud),
             modifier = Modifier
                 .size(220.dp)
                 .align(Alignment.Center)
@@ -371,6 +378,7 @@ private fun AnimatedIcon() {
         Box(
             modifier = Modifier
                 .size(80.dp)
+                .scale(pulse)
                 .align(Alignment.Center)
                 .background(HABrandColors.Blue, CircleShape), // TODO we might want to use a semantic token?
         ) {
@@ -379,7 +387,8 @@ private fun AnimatedIcon() {
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .size(HASize.X5L),
+                    .size(HASize.X5L)
+                    .scale(pulse),
                 tint = HABrandColors.Background,
             )
         }
