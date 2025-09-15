@@ -1548,7 +1548,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="203"
+            line="202"
             column="17"/>
     </issue>
 
@@ -1559,7 +1559,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="216"
+            line="215"
             column="17"/>
     </issue>
 
@@ -1570,7 +1570,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="249"
+            line="248"
             column="13"/>
     </issue>
 
@@ -1581,7 +1581,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="287"
+            line="286"
             column="29"/>
     </issue>
 
@@ -1592,7 +1592,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="387"
+            line="386"
             column="17"/>
     </issue>
 
@@ -1603,7 +1603,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="387"
+            line="386"
             column="17"/>
     </issue>
 
@@ -1614,7 +1614,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="420"
+            line="419"
             column="13"/>
     </issue>
 
@@ -1625,7 +1625,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="532"
+            line="531"
             column="13"/>
     </issue>
 
@@ -1636,7 +1636,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="542"
+            line="541"
             column="17"/>
     </issue>
 
@@ -1647,7 +1647,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="542"
+            line="541"
             column="17"/>
     </issue>
 
@@ -1658,7 +1658,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="570"
+            line="569"
             column="13"/>
     </issue>
 
@@ -2850,7 +2850,7 @@
         errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/onboarding/integration/MobileAppIntegrationFragment.kt"
-            line="180"
+            line="177"
             column="49"/>
     </issue>
 
@@ -2883,7 +2883,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="337"
+            line="336"
             column="52"/>
     </issue>
 
@@ -2894,7 +2894,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="337"
+            line="336"
             column="52"/>
     </issue>
 
@@ -2905,7 +2905,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="374"
+            line="373"
             column="52"/>
     </issue>
 
@@ -2916,7 +2916,7 @@
         errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="374"
+            line="373"
             column="52"/>
     </issue>
 
