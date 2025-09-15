@@ -5,8 +5,8 @@ package io.homeassistant.companion.android.data
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.MessageClient
 import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.CAPABILITY_DNS_VIA_MOBILE
-import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.decodeResult
-import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.encodeRequest
+import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.decodeDNSResult
+import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.encodeDNSRequest
 import io.homeassistant.companion.android.common.util.WearDataMessages.PATH_DNS_LOOKUP
 import java.net.InetAddress
 import java.net.UnknownHostException
@@ -38,6 +38,7 @@ class WearDns @Inject constructor(
     private val clock: Clock,
 ) : Dns {
     private val dnsHelperCache = ConcurrentHashMap<String, CacheResult>()
+    val cacheLifetime = DefaultCacheLifetime
 
     override fun lookup(hostname: String): List<InetAddress> {
         return try {
@@ -53,7 +54,7 @@ class WearDns @Inject constructor(
         val now = clock.now()
 
         val cached = dnsHelperCache[hostname]
-        if (cached != null && cached.storedAt + 5.minutes > now) {
+        if (cached != null && cached.storedAt + cacheLifetime > now) {
             when (cached) {
                 is NegativeCacheHit -> throw cached.exception
                 is PositiveCacheHit -> return cached.value
@@ -90,14 +91,14 @@ class WearDns @Inject constructor(
         val response = messageClient.sendRequest(
             nodeId,
             PATH_DNS_LOOKUP,
-            hostname.encodeRequest(),
+            hostname.encodeDNSRequest(),
         ).await()
 
         if (response.isEmpty()) {
             throw UnknownHostException("Mobile helper unable to resolve $hostname")
         }
 
-        val addresses = response.decodeResult(hostname)
+        val addresses = response.decodeDNSResult(hostname)
 
         return addresses
     }
@@ -108,4 +109,8 @@ class WearDns @Inject constructor(
 
     private data class NegativeCacheHit(val exception: Exception, override val storedAt: Instant) : CacheResult
     private data class PositiveCacheHit(val value: List<InetAddress>, override val storedAt: Instant) : CacheResult
+
+    companion object {
+        val DefaultCacheLifetime = 5.minutes
+    }
 }

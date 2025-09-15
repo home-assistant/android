@@ -42,8 +42,6 @@ import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedWearStorage
 import java.util.UUID
 import javax.inject.Singleton
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import okhttp3.OkHttpClient
 
 @Module
@@ -137,11 +135,6 @@ abstract class DataModule {
         @Singleton
         fun providesTextToSpeechClient(@ApplicationContext appContext: Context): TextToSpeechClient =
             TextToSpeechClient(appContext, AndroidTextToSpeechEngine(appContext))
-
-        @OptIn(ExperimentalTime::class)
-        @Provides
-        @Singleton
-        fun clock(): Clock = Clock.System
     }
 
     @Binds
