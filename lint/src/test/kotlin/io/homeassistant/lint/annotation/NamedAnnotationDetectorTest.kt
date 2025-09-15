@@ -75,7 +75,7 @@ class NamedAnnotationDetectorTest {
             .run()
             .expect(
                 """
-                src/io/homeassistant/companion/android/data/MyRepository.kt:7: Error: Usage of @Named is discouraged. Use a custom qualifier annotation instead. [NoNamedAnnotation]
+                src/io/homeassistant/companion/android/data/MyRepository.kt:7: Error: Usage of @Named is forbidden. Use a custom qualifier annotation instead. [NoNamedAnnotation]
                     @Named("server_url") private val serverUrl: String
                     ~~~~~~~~~~~~~~~~~~~~
                 1 error
