@@ -110,16 +110,15 @@ abstract class AppSensorManagerBase : SensorManager {
                     app_standby_bucket,
                     app_importance,
                 )
-            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) ->
-                listOf(
-                    currentVersion,
-                    app_rx_gb,
-                    app_tx_gb,
-                    app_memory,
-                    app_inactive,
-                    app_importance,
-                )
-            else -> listOf(currentVersion, app_rx_gb, app_tx_gb, app_memory, app_importance)
+
+            else -> listOf(
+                currentVersion,
+                app_rx_gb,
+                app_tx_gb,
+                app_memory,
+                app_inactive,
+                app_importance,
+            )
         }
     }
 
@@ -134,12 +133,10 @@ abstract class AppSensorManagerBase : SensorManager {
         updateAppRxGb(context, myUid)
         updateAppTxGb(context, myUid)
         updateImportanceCheck(context)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val usageStatsManager = context.getSystemService<UsageStatsManager>()!!
-            updateAppInactive(context, usageStatsManager)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                updateAppStandbyBucket(context, usageStatsManager)
-            }
+        val usageStatsManager = context.getSystemService<UsageStatsManager>()!!
+        updateAppInactive(context, usageStatsManager)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            updateAppStandbyBucket(context, usageStatsManager)
         }
     }
 
@@ -225,7 +222,6 @@ abstract class AppSensorManagerBase : SensorManager {
         )
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     private suspend fun updateAppInactive(context: Context, usageStatsManager: UsageStatsManager) {
         if (!isEnabled(context, app_inactive)) {
             return

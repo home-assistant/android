@@ -165,16 +165,15 @@ open class HomeAssistantApplication :
         }
 
         // Update doze mode immediately on supported devices
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            ContextCompat.registerReceiver(
-                this,
-                sensorReceiver,
-                IntentFilter().apply {
-                    addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
-                },
-                ContextCompat.RECEIVER_EXPORTED,
-            )
-        }
+
+        ContextCompat.registerReceiver(
+            this,
+            sensorReceiver,
+            IntentFilter().apply {
+                addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
+            },
+            ContextCompat.RECEIVER_EXPORTED,
+        )
 
         // This will trigger an update any time the wifi state has changed
         ContextCompat.registerReceiver(
@@ -248,14 +247,12 @@ open class HomeAssistantApplication :
         }
 
         // Add receiver for DND changes on devices that support it
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            ContextCompat.registerReceiver(
-                this,
-                sensorReceiver,
-                IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED),
-                ContextCompat.RECEIVER_EXPORTED,
-            )
-        }
+        ContextCompat.registerReceiver(
+            this,
+            sensorReceiver,
+            IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED),
+            ContextCompat.RECEIVER_EXPORTED,
+        )
 
         ContextCompat.registerReceiver(
             this,
