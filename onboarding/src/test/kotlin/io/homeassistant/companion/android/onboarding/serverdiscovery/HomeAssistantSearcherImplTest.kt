@@ -138,6 +138,24 @@ class HomeAssistantSearcherImplTest {
         }
     }
 
+    @Test
+    fun `Given one discoverable instance impossible to resolve when discoveredInstanceFlow is called then nothing is emitted`() = runTest {
+        val discoveryListener = slot<NsdManager.DiscoveryListener>()
+        val resolveListener = slot<NsdManager.ResolveListener>()
+        val serviceInfo = createNsdServiceInfo()
+
+        captureListeners(discoveryListener, resolveListener)
+
+        discoveredInstanceFlow {
+            discoveryListener.captured.onServiceFound(serviceInfo)
+            resolveListener.captured.onResolveFailed(serviceInfo, 0)
+
+            expectNoEvents()
+        }
+
+        verifyDiscoveryStartedAndStopped(discoveryListener.captured, resolveListener.captured)
+    }
+
     @ParameterizedTest
     @CsvSource(
         nullValues = ["null"],
@@ -148,7 +166,7 @@ class HomeAssistantSearcherImplTest {
             "malformed://localhost:8123,null",
         ],
     )
-    fun `Given one discoverable instance with wrong attributes when discoveredInstanceFlow is called then nothing is emit`(
+    fun `Given one discoverable instance with wrong attributes when discoveredInstanceFlow is called then nothing is emitted`(
         baseUrl: String?,
         version: String?,
     ) = runTest {
@@ -161,24 +179,6 @@ class HomeAssistantSearcherImplTest {
         discoveredInstanceFlow {
             discoveryListener.captured.onServiceFound(serviceInfo)
             resolveListener.captured.onServiceResolved(serviceInfo)
-
-            expectNoEvents()
-        }
-
-        verifyDiscoveryStartedAndStopped(discoveryListener.captured, resolveListener.captured)
-    }
-
-    @Test
-    fun `Given one discoverable instance impossible to resolve when discoveredInstanceFlow is called then nothing is emitted`() = runTest {
-        val discoveryListener = slot<NsdManager.DiscoveryListener>()
-        val resolveListener = slot<NsdManager.ResolveListener>()
-        val serviceInfo = createNsdServiceInfo()
-
-        captureListeners(discoveryListener, resolveListener)
-
-        discoveredInstanceFlow {
-            discoveryListener.captured.onServiceFound(serviceInfo)
-            resolveListener.captured.onResolveFailed(serviceInfo, 0)
 
             expectNoEvents()
         }
@@ -253,7 +253,7 @@ class HomeAssistantSearcherImplTest {
 
         assertTrue(HomeAssistantSearcherImpl.hasCollector.get())
 
-        assertEquals("Something has already call instancesFlow() and didn't close the flow yet.", caughtException?.message)
+        assertEquals("Something has already called discoveredInstanceFlow() and didn't close the flow yet.", caughtException?.message)
     }
 
     private fun captureListeners(discoveryListener: CapturingSlot<NsdManager.DiscoveryListener>, resolveListener: CapturingSlot<NsdManager.ResolveListener>) {

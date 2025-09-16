@@ -48,13 +48,13 @@ class ServerDiscoveryViewModelTest {
     }
 
     @Test
-    fun `Given initial state when view model created then state is Started`() = runTest {
+    fun `Given view model created then discoveryFlow initially holds Started`() = runTest {
         createViewModel()
         assertEquals(Started, viewModel.discoveryFlow.value)
     }
 
     @Test
-    fun `Given no servers found within TIMEOUT_NO_SERVER_FOUND when view model created then state is NoServerFound`() = runTest {
+    fun `Given no servers discovered when collecting from discoveryFlow then discoveryFlow emits Started then NoServerFound after TIMEOUT_NO_SERVER_FOUND`() = runTest {
         createViewModel()
 
         viewModel.discoveryFlow.test {
@@ -65,33 +65,17 @@ class ServerDiscoveryViewModelTest {
     }
 
     @Test
-    fun `Given one servers found before DELAY_BEFORE_DISPLAY_DISCOVERY when view model created then state is Started`() = runTest {
+    fun `Given one server discovered before DELAY_BEFORE_DISPLAY_DISCOVERY when collecting from discoveryFlow then discoveryFlow emits Started then ServerDiscovered after DELAY_BEFORE_DISPLAY_DISCOVERY`() = runTest {
         createViewModel()
         val instance = HomeAssistantInstance("Server 1", URL("http://server1.local:8123"), testHAVersion)
 
         viewModel.discoveryFlow.test {
             discoveredInstanceFlow.emit(instance)
-            assertEquals(Started, expectMostRecentItem())
+            assertEquals(Started, expectMostRecentItem()) // ServerDiscovered is delayed
             advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY)
             runCurrent()
             val discoveredState = expectMostRecentItem()
             assertTrue(discoveredState is ServerDiscovered)
-        }
-    }
-
-    @Test
-    fun `Given one server found before TIMEOUT when view model created then state is ServerDiscovered`() = runTest {
-        createViewModel()
-        val instance = HomeAssistantInstance("Server 1", URL("http://server1.local:8123"), testHAVersion)
-
-        viewModel.discoveryFlow.test {
-            assertEquals(Started, awaitItem())
-
-            discoveredInstanceFlow.emit(instance)
-            runCurrent()
-            val discoveredState = awaitItem()
-            assertTrue(discoveredState is ServerDiscovered)
-            assertEquals(instance.name, (discoveredState as ServerDiscovered).name)
 
             advanceTimeBy(DELAY_AFTER_FIRST_DISCOVERY)
             runCurrent()
@@ -100,7 +84,7 @@ class ServerDiscoveryViewModelTest {
     }
 
     @Test
-    fun `Given one server found after TIMEOUT when view model created then state is ServerDiscovered`() = runTest {
+    fun `Given TIMEOUT_NO_SERVER_FOUND occurs without discoveries when a server is found later then discoveryFlow emits Started then NoServerFound then ServerDiscovered`() = runTest {
         createViewModel()
         val instance = HomeAssistantInstance("Server 1", URL("http://server1.local:8123"), testHAVersion)
 
@@ -125,7 +109,7 @@ class ServerDiscoveryViewModelTest {
     }
 
     @Test
-    fun `Given multiple servers found when view model created then state is first ServerDiscovered then after DELAY_AFTER_FIRST_DISCOVERY ServersDiscovered`() = runTest {
+    fun `Given multiple servers discovered when collecting from discoveryFlow then discoveryFlow emits Started then ServerDiscovered then ServersDiscovered after DELAY_AFTER_FIRST_DISCOVERY`() = runTest {
         createViewModel()
         val instance1 = HomeAssistantInstance("Server 1", URL("http://server1.local:8123"), testHAVersion)
         val instance2 = HomeAssistantInstance("Server 2", URL("http://server2.local:8123"), testHAVersion)
@@ -155,7 +139,7 @@ class ServerDiscoveryViewModelTest {
     }
 
     @Test
-    fun `Given one server found when onDismissOneServerFound is invoked then transitions from ServerDiscovered to ServersDiscovered`() = runTest {
+    fun `Given discoveryFlow emitted Started then ServerDiscovered when onDismissOneServerFound is invoked then discoveryFlow emits ServersDiscovered`() = runTest {
         createViewModel()
         val instance = HomeAssistantInstance("Test Server", URL("http://test.local:8123"), testHAVersion)
 
@@ -179,7 +163,7 @@ class ServerDiscoveryViewModelTest {
     }
 
     @Test
-    fun `Given discovery failed exception when viewModel is created then return Started and NoServerFound after TIMEOUT_NO_SERVER_FOUND`() = runTest {
+    fun `Given discovery process throws an exception when collecting from discoveryFlow then discoveryFlow emits Started then NoServerFound after TIMEOUT_NO_SERVER_FOUND`() = runTest {
         every { searcher.discoveredInstanceFlow() } returns flow {
             throw DiscoveryFailedException("Test Exception")
         }

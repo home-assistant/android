@@ -43,7 +43,7 @@ internal fun <T> Flow<T>.delayFirst(delayDuration: Duration, clock: Clock = Cloc
 }
 
 /**
- * Delays the emission of the first item from the upstream flow by the specified [delayDuration].
+ * Delays the first emission of items from the upstream flow by the specified [delayDuration].
  * Subsequent items are emitted without delay. This is useful when you want to delay the
  * initial processing of a flow without delaying the start of the upstream flow itself.
  * It also adds a buffer to the flow to ensure that the upstream flow can continue emitting items
@@ -51,6 +51,14 @@ internal fun <T> Flow<T>.delayFirst(delayDuration: Duration, clock: Clock = Cloc
  *
  * Unlike using `onStart { delay(duration) }`, which postpones the start of the entire flow,
  * this operator allows the upstream flow to start immediately, and only delays the downstream flow.
+ *
+ * For example, if we have the following emissions from the upstream flow with a `delayDuration` of 500ms:
+ * - `item0` at t0 = 0ms
+ * - `item1` at t1 = 100ms
+ * - `item2` at t2 = 550ms
+ * Then the downstream flow would receive:
+ * - `item0` and `item1` at t = 500ms (buffered and emitted immediately after the initial delay)
+ * - `item2` at t = 550ms (emitted immediately as it arrives after the initial delay period)
  *
  * @param delayDuration The duration to delay the first item.
  */

@@ -35,7 +35,6 @@ class HAModalScreenshotTest {
 
     @Composable
     private fun HAModalBottomSheetTest(sheetValue: SheetValue) {
-        // TODO update to HAThemeForPreview once https://github.com/home-assistant/android/pull/5733 is merged
         HAThemeForPreview {
             HAModalBottomSheet(
                 bottomSheetState = SheetState(
