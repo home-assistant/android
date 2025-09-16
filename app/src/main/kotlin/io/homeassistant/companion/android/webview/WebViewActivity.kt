@@ -1673,14 +1673,14 @@ class WebViewActivity :
             }
 
             "http", "https" -> {
-                val request = DownloadManager.Request(uri)
-                    .setMimeType(mimetype)
-                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    .setDestinationInExternalPublicDir(
-                        Environment.DIRECTORY_DOWNLOADS,
-                        URLUtil.guessFileName(url, contentDisposition, mimetype),
-                    )
-                lifecycleScope.launch {
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val request = DownloadManager.Request(uri)
+                        .setMimeType(mimetype)
+                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                        .setDestinationInExternalPublicDir(
+                            Environment.DIRECTORY_DOWNLOADS,
+                            URLUtil.guessFileName(url, contentDisposition, mimetype),
+                        )
                     val server = serverManager.getServer(presenter.getActiveServer())
                     if (url.startsWith(server?.connection?.getUrl(true).toString()) ||
                         url.startsWith(server?.connection?.getUrl(false).toString())
