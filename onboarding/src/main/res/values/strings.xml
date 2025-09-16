@@ -19,4 +19,8 @@
     <string name="local_first_title">Local by default.\nRemote when you’re ready.</string>
     <string name="local_first_content">Your Home\u00A0Assistant is only accessible on your home network. To control your smart home from anywhere, you can set up remote access later in your settings.\n\nFor now, you\'re securely connected to your local network.</string>
     <string name="local_first_next">Got it</string>
+    <string name="location_sharing_title">Use this device\'s location for automations</string>
+    <string name="location_sharing_content">Location sharing enables powerful automations, such as turning off the heating when you leave home. This option shares the device\'s location only with your Home Assistant system.\n\nThis data stays in your home and is never sent to third parties. It also helps strengthen the security of your connection to Home Assistant.</string>
+    <string name="location_sharing_share">Share with my location</string>
+    <string name="location_sharing_no_share">Do not share my location</string>
 </resources>
