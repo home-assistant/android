@@ -26,6 +26,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -48,34 +50,11 @@ class LauncherViewModelTest {
         ConsoleLogTree.verbose = true
     }
 
-    @Test
-    fun `Given active server connected and registered, when network is READY_LOCAL, then navigate to frontend and resync registration`() = runTest {
-        val server = mockk<Server>(relaxed = true)
-
-        every { workManager.enqueue(any<OneTimeWorkRequest>()) } returns mockk()
-
-        coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns server
-        every { serverManager.defaultServers } returns listOf(server)
-        coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
-        val networkStateFlow = MutableStateFlow(NetworkState.READY_LOCAL)
-        coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
-
-        createViewModel()
-        advanceUntilIdle()
-
-        assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Frontend, viewModel.navigationEventsFlow.replayCache.first())
-        assertEquals(0, networkStateFlow.subscriptionCount.value)
-
-        // verify resync registration
-        verify(exactly = 1) {
-            workManager.enqueue(any<OneTimeWorkRequest>())
-        }
-    }
-
-    @Test
-    fun `Given active server connected and registered and another one not active, when network is READY_REMOTE, then navigate to frontend and resync registrations`() = runTest {
+    @ParameterizedTest
+    @EnumSource(NetworkState::class, names = ["READY_LOCAL", "READY_REMOTE"])
+    fun `Given active server connected and registered, when network is READY, then navigate to frontend and resync registration`(
+        state: NetworkState,
+    ) = runTest {
         val activeServer = mockk<Server>(relaxed = true)
         val notActiveServer = mockk<Server>(relaxed = true)
 
@@ -86,7 +65,7 @@ class LauncherViewModelTest {
         every { serverManager.defaultServers } returns listOf(activeServer, notActiveServer)
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
-        val networkStateFlow = MutableStateFlow(NetworkState.READY_REMOTE)
+        val networkStateFlow = MutableStateFlow(state)
         coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
 
         createViewModel()

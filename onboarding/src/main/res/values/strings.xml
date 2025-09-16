@@ -2,7 +2,7 @@
     <string name="home_assistant_branding_icon_content_description">Home\u00A0Assistant branding icon</string>
     <string name="loading_content_description">Loading</string>
     <string name="welcome_home_assistant_title">Home\u00A0Assistant\nCompanion app</string>
-    <string name="welcome_details">Access your Home\u00A0Assistant server on the go using this app.\n\nHome\u00A0Assistant is open source, advocates for privacy and It runs locally in your home.</string>
+    <string name="welcome_details">Access your Home\u00A0Assistant server on the go using this app.\n\nHome\u00A0Assistant is open source, advocates for privacy and runs locally in your home.</string>
     <string name="welcome_connect_to_ha">Connect to my Home\u00A0Assistant server</string>
     <string name="welcome_learn_more">Learn more</string>
 </resources>

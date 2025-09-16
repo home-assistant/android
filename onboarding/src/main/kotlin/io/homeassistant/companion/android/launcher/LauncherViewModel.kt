@@ -33,7 +33,7 @@ internal sealed interface LauncherNavigationEvent {
  * and verifies the presence of an active, registered, and connected server.
  *
  * If no such server is found, or if an error occurs during this check (e.g., network connectivity issues),
- * it emits [LauncherNavigationEvent.Onboarding]. Otherwise, it schedule a resync of all server
+ * it emits [LauncherNavigationEvent.Onboarding]. Otherwise, it schedules a resync of all server
  * registrations asynchronously and emits [LauncherNavigationEvent.Frontend].
  */
 @HiltViewModel
