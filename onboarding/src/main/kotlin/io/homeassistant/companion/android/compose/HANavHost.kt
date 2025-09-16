@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.compose
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import io.homeassistant.companion.android.HAStartDestinationRoute
 import io.homeassistant.companion.android.frontend.navigation.frontendScreen
+import io.homeassistant.companion.android.frontend.navigation.navigateToFrontend
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.loading.navigation.LoadingRoute
 import io.homeassistant.companion.android.loading.navigation.loadingScreen
@@ -31,6 +33,8 @@ internal fun HANavHost(
     startDestination: HAStartDestinationRoute?,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
 ) {
+    val activity = LocalActivity.current
+
     startDestination?.let {
         NavHost(
             navController = navController,
@@ -40,6 +44,11 @@ internal fun HANavHost(
             onboarding(
                 navController,
                 onShowSnackbar = onShowSnackbar,
+                onOnboardingDone = {
+                    navController.navigateToFrontend()
+                    // TODO remove this finish when the frontend is not an activity anymore
+                    activity?.finish()
+                },
             )
             frontendScreen(navController)
         }
