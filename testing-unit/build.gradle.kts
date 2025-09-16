@@ -27,4 +27,8 @@ dependencies {
 
     implementation(platform(libs.junit.bom))
     implementation(libs.junit.jupiter)
+    implementation(libs.junit.vintage.engine)
+    implementation(libs.kotlinx.coroutines.test)
+    implementation(platform(libs.compose.bom))
+    implementation(libs.bundles.androidx.compose.ui.test)
 }
