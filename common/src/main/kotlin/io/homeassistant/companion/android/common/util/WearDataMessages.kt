@@ -5,7 +5,6 @@ import okio.ByteString.Companion.decodeHex
 
 object WearDataMessages {
     const val PATH_LOGIN_RESULT = "/loginResult"
-    const val PATH_DNS_LOOKUP = "/network/dnsLookup"
 
     const val KEY_ID = "id"
     const val KEY_SUCCESS = "success"
@@ -27,6 +26,7 @@ object WearDataMessages {
 
     object DnsLookup {
         val CAPABILITY_DNS_VIA_MOBILE = "mobile_network_helper"
+        val PATH_DNS_LOOKUP = "/network/dnsLookup"
 
         fun List<InetAddress>.encodeDNSResult(): ByteArray = joinToString(",") {
             it.address.toHexString()

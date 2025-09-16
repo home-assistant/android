@@ -5,9 +5,9 @@ package io.homeassistant.companion.android.data
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.MessageClient
 import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.CAPABILITY_DNS_VIA_MOBILE
+import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.PATH_DNS_LOOKUP
 import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.decodeDNSResult
 import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.encodeDNSRequest
-import io.homeassistant.companion.android.common.util.WearDataMessages.PATH_DNS_LOOKUP
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.ConcurrentHashMap

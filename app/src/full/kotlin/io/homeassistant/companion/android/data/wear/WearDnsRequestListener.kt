@@ -2,9 +2,9 @@ package io.homeassistant.companion.android.data.wear
 
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.WearableListenerService
-import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.decodeRequest
-import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.encodeResult
-import io.homeassistant.companion.android.common.util.WearDataMessages.PATH_DNS_LOOKUP
+import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.PATH_DNS_LOOKUP
+import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.decodeDNSRequest
+import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.encodeDNSResult
 import java.net.UnknownHostException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,10 +29,10 @@ class WearDnsRequestListener : WearableListenerService() {
         }
     }
 
-    private suspend fun dnsRequest(request: ByteArray): ByteArray = withContext(Dispatchers.IO) {
-        val hostname = request.decodeRequest()
+    internal suspend fun dnsRequest(request: ByteArray): ByteArray = withContext(Dispatchers.IO) {
+        val hostname = request.decodeDNSRequest()
         try {
-            Dns.SYSTEM.lookup(hostname).encodeResult()
+            Dns.SYSTEM.lookup(hostname).encodeDNSResult()
         } catch (uhe: UnknownHostException) {
             Timber.d(uhe, "UnknownHostException for Wear DNS query: $hostname")
             byteArrayOf()
