@@ -1,6 +1,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Theme.LaunchScreen.Base is necessary because on higher API levels it will be overridden to paint the status or navigation bar -->
-    <style name="Theme.LaunchScreen.Base" parent="Theme.MaterialComponents.DayNight.NoActionBar"/>
+    <style name="Theme.LaunchScreen.Base" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@color/colorLaunchScreenBackground</item>
+        <item name="android:windowLightStatusBar">@bool/isLightMode</item>
+    </style>
 
     <style name="Theme.LaunchScreen" parent="Theme.LaunchScreen.Base">
         <item name="android:background">@drawable/launch_screen_background</item>
@@ -21,7 +24,10 @@
         <item name="bottomSheetDialogTheme">@style/ThemeOverlay.HomeAssistant.BottomSheetDialog</item>
     </style>
 
-    <style name="Theme.HomeAssistant.Config" parent="Theme.HomeAssistant" />
+    <style name="Theme.HomeAssistant.Config" parent="Theme.HomeAssistant">
+        <item name="android:statusBarColor">@color/colorBackground</item>
+        <item name="android:windowLightStatusBar">@bool/isLightMode</item>
+    </style>
 
     <style name="Theme.HomeAssistant.Assist" parent="Theme.HomeAssistant" >
         <item name="android:windowIsTranslucent">true</item>

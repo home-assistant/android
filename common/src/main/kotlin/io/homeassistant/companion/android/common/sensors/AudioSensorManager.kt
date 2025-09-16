@@ -270,19 +270,14 @@ class AudioSensorManager : SensorManager {
         }
 
         var isHeadphones = false
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val audioDevices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
-            for (deviceInfo in audioDevices) {
-                if (deviceInfo.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
-                    deviceInfo.type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
-                    deviceInfo.type == AudioDeviceInfo.TYPE_USB_HEADSET
-                ) {
-                    isHeadphones = true
-                }
+        val audioDevices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+        for (deviceInfo in audioDevices) {
+            if (deviceInfo.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
+                deviceInfo.type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
+                deviceInfo.type == AudioDeviceInfo.TYPE_USB_HEADSET
+            ) {
+                isHeadphones = true
             }
-        } else {
-            @Suppress("DEPRECATION")
-            isHeadphones = audioManager.isWiredHeadsetOn
         }
 
         val icon = if (isHeadphones) "mdi:headphones" else "mdi:headphones-off"

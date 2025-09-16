@@ -221,11 +221,7 @@ class ActivitySensorManager :
     }
 
     override fun hasSensor(context: Context): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            !context.isAutomotive()
-        } else {
-            true
-        }
+        return !context.isAutomotive()
     }
 
     override suspend fun requestSensorUpdate(context: Context) {
