@@ -84,6 +84,7 @@ import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositor
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
@@ -110,6 +111,7 @@ import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
+import io.homeassistant.companion.android.webview.externalbus.ExternalConfigResponse
 import io.homeassistant.companion.android.webview.externalbus.NavigateTo
 import io.homeassistant.companion.android.webview.externalbus.ShowSidebar
 import javax.inject.Inject
@@ -207,6 +209,9 @@ class WebViewActivity :
     @Inject
     @NamedKeyChain
     lateinit var keyChainRepository: KeyChainRepository
+
+    @Inject
+    lateinit var appVersionProvider: AppVersionProvider
 
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
@@ -761,25 +766,13 @@ class WebViewActivity :
                                             0
                                         }
                                     sendExternalBusMessage(
-                                        ExternalBusMessage(
+                                        ExternalConfigResponse(
                                             id = JSONObject(message).get("id"),
-                                            type = "result",
-                                            success = true,
-                                            result = JSONObject(
-                                                mapOf(
-                                                    "hasSettingsScreen" to true,
-                                                    "canWriteTag" to hasNfc,
-                                                    "hasExoPlayer" to true,
-                                                    "canCommissionMatter" to canCommissionMatter,
-                                                    "canImportThreadCredentials" to canExportThread,
-                                                    "hasAssist" to true,
-                                                    "hasBarCodeScanner" to hasBarCodeScanner,
-                                                    "canSetupImprov" to true,
-                                                ),
-                                            ),
-                                            callback = {
-                                                Timber.d("Callback $it")
-                                            },
+                                            hasNfc = hasNfc,
+                                            canCommissionMatter = canCommissionMatter,
+                                            canExportThread = canExportThread,
+                                            hasBarCodeScanner = hasBarCodeScanner,
+                                            appVersion = appVersionProvider(),
                                         ),
                                     )
 
