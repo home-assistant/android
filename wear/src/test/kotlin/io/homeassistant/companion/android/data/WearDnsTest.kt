@@ -54,7 +54,7 @@ class WearDnsTest {
     }
 
     @Test
-    fun `falls back to mobile dns when present`() {
+    fun `Given a hostname when making DNS lookup then falls back to mobile dns when present`() {
         // given
         val shadowDns = shadowOf(Dns.SYSTEM)
         shadowDns.results["homeassistant.local"] = Result.failure(UnknownHostException())
@@ -70,7 +70,7 @@ class WearDnsTest {
     }
 
     @Test
-    fun `still fails when not present`() {
+    fun `Given a hostname when making DNS lookup then fails when mobile not present`() {
         // given
         val shadowDns = shadowOf(Dns.SYSTEM)
         shadowDns.results["homeassistant.local"] = Result.failure(UnknownHostException())
@@ -87,7 +87,7 @@ class WearDnsTest {
     }
 
     @Test
-    fun `still fails when mobile fails`() {
+    fun `Given a hostname when making DNS lookup then fails when mobile fails`() {
         // given
         val shadowDns = shadowOf(Dns.SYSTEM)
         shadowDns.results["homeassistant.local"] = Result.failure(UnknownHostException())

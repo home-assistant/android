@@ -25,8 +25,8 @@ object WearDataMessages {
     const val LOGIN_RESULT_EXCEPTION = "exception"
 
     object DnsLookup {
-        val CAPABILITY_DNS_VIA_MOBILE = "mobile_network_helper"
-        val PATH_DNS_LOOKUP = "/network/dnsLookup"
+        const val CAPABILITY_DNS_VIA_MOBILE = "mobile_network_helper"
+        const val PATH_DNS_LOOKUP = "/network/dnsLookup"
 
         fun List<InetAddress>.encodeDNSResult(): ByteArray = joinToString(",") {
             it.address.toHexString()

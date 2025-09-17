@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.data.wear
 
+import androidx.annotation.VisibleForTesting
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.WearableListenerService
 import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.PATH_DNS_LOOKUP
@@ -29,6 +30,7 @@ class WearDnsRequestListener : WearableListenerService() {
         }
     }
 
+    @VisibleForTesting
     internal suspend fun dnsRequest(request: ByteArray): ByteArray = withContext(Dispatchers.IO) {
         val hostname = request.decodeDNSRequest()
         try {

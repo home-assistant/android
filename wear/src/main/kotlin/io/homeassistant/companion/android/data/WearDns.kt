@@ -21,6 +21,8 @@ import kotlinx.coroutines.tasks.await
 import okhttp3.Dns
 import timber.log.Timber
 
+private val DefaultCacheLifetime = 5.minutes
+
 /**
  * Wear specific implementation of Dns that defaults to the System DNS,
  * but can fall back to relying on mobile Dns to resolve dns issues.
@@ -109,8 +111,4 @@ class WearDns @Inject constructor(
 
     private data class NegativeCacheHit(val exception: Exception, override val storedAt: Instant) : CacheResult
     private data class PositiveCacheHit(val value: List<InetAddress>, override val storedAt: Instant) : CacheResult
-
-    companion object {
-        val DefaultCacheLifetime = 5.minutes
-    }
 }
