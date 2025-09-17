@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -130,7 +131,7 @@ class ServerDiscoveryScreenTest {
 
             onNodeWithText(stringResource(R.string.searching_home_network)).assertIsDisplayed()
 
-            onNodeWithText(stringResource(commonR.string.manual_setup)).assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.manual_setup)).performScrollTo().assertIsDisplayed().performClick()
             assertTrue(manualSetupClicked)
 
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).assertIsDisplayed().performClick()
