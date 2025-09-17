@@ -21,14 +21,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
@@ -41,6 +42,10 @@ import io.homeassistant.companion.android.compose.HAPreviews
 import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
 import java.net.URL
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.delay
+
+private val delayBeforeError = 500.milliseconds
 
 @Composable
 internal fun ManualServerScreen(
@@ -112,7 +117,7 @@ private fun ManualServerContent(
         Image(
             modifier = Modifier
                 .padding(top = HASpacing.XL),
-            imageVector = ImageVector.vectorResource(R.drawable.ic_manual_server),
+            painter = painterResource(R.drawable.ic_manual_server),
             contentDescription = null,
         )
         Text(
@@ -148,7 +153,7 @@ private fun ServerUrlTextField(
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
-    val isError = serverUrl.isNotBlank() && !isServerUrlValid
+    var isError by remember { mutableStateOf(serverUrl.isNotEmpty() && !isServerUrlValid) }
 
     HATextField(
         value = serverUrl,
@@ -176,7 +181,7 @@ private fun ServerUrlTextField(
                 if (isServerUrlValid) {
                     onConnectClick()
                 }
-                // This is going to hide the keyboard in any case
+                // This is going to hide the keyboard and clear focus on the text field
                 defaultKeyboardAction(ImeAction.Done)
             },
         ),
@@ -195,6 +200,16 @@ private fun ServerUrlTextField(
     // Request focus on the text field when the screen is shown
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
+    }
+
+    // delay the display of the error if the user is typing
+    LaunchedEffect(serverUrl) {
+        if (serverUrl.isEmpty() || isServerUrlValid) {
+            isError = false
+            return@LaunchedEffect
+        }
+        delay(delayBeforeError)
+        isError = true
     }
 }
 
