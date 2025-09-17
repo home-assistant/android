@@ -6,9 +6,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -27,9 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
@@ -75,6 +73,7 @@ internal fun NameYourDeviceScreen(
     Scaffold(
         modifier = modifier,
         topBar = { HATopBar(onHelpClick = onHelpClick, onBackClick = onBackClick) },
+        contentWindowInsets = WindowInsets.safeDrawing,
     ) { contentPadding ->
         NameYourDeviceContent(
             deviceName = deviceName,
@@ -98,14 +97,13 @@ private fun NameYourDeviceContent(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = HASpacing.M)
-            .windowInsetsPadding(WindowInsets.ime)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(HASpacing.XL),
     ) {
         Image(
             modifier = Modifier.padding(top = HASpacing.XL),
-            imageVector = ImageVector.vectorResource(R.drawable.ic_name_tag),
+            painter = painterResource(R.drawable.ic_name_tag),
             contentDescription = null,
         )
         Text(
@@ -131,7 +129,7 @@ private fun NameYourDeviceContent(
             onClick = onSaveClick,
             enabled = saveClickable,
             modifier = Modifier
-                .padding(vertical = HASpacing.XL),
+                .padding(bottom = HASpacing.XL),
         )
     }
 }
