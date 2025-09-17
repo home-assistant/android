@@ -6,9 +6,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -81,6 +80,7 @@ internal fun ManualServerScreen(
     Scaffold(
         modifier = modifier,
         topBar = { HATopBar(onHelpClick = onHelpClick, onBackClick = onBackClick) },
+        contentWindowInsets = WindowInsets.safeDrawing,
     ) { contentPadding ->
         ManualServerContent(
             onConnectClick = onConnectClick,
@@ -89,7 +89,6 @@ internal fun ManualServerScreen(
             isServerUrlValid = isServerUrlValid,
             modifier = Modifier
                 .padding(contentPadding),
-
         )
     }
 }
@@ -106,7 +105,6 @@ private fun ManualServerContent(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = HASpacing.M)
-            .windowInsetsPadding(WindowInsets.ime)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(HASpacing.XL),
@@ -136,7 +134,7 @@ private fun ManualServerContent(
             onClick = onConnectClick,
             enabled = isServerUrlValid,
             modifier = Modifier
-                .padding(vertical = HASpacing.XL),
+                .padding(bottom = HASpacing.XL),
         )
     }
 }
