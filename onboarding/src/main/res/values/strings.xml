@@ -9,7 +9,7 @@
     <string name="welcome_connect_to_ha">Connect to my Home\u00A0Assistant server</string>
     <string name="welcome_learn_more">Learn more</string>
     <string name="name_your_device_title">How would you like to name this device?</string>
-    <string name="name_your_device_content">This is used to identify your device in your Home\u00A0Assistant.</string>
+    <string name="name_your_device_content">This is used to identify your device.</string>
     <string name="name_your_device_save">Save</string>
     <string name="name_your_device_clear_name">Clear device name</string>
     <string name="manual_server_title">What is your Home\u00A0Assistant address?</string>
