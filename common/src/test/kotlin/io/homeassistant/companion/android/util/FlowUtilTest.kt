@@ -82,6 +82,31 @@ class FlowUtilTest {
             }
     }
 
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun `Given events after delay when consuming then no delay should apply`() = runTest {
+        val channel = Channel<Int>(Channel.UNLIMITED)
+        val fakeClock = FakeClock()
+
+        channel.consumeAsFlow()
+            .delayFirst(90.seconds, fakeClock).test {
+                expectNoEvents()
+                advanceTimeBy(90.seconds)
+                runCurrent()
+                // We need to modify the clock manually since it is not advancing with advanceTimeBy
+                fakeClock.currentInstant = fakeClock.currentInstant.plus(90.seconds)
+
+                val timeBeforeSend = testScheduler.currentTime
+                channel.trySend(1)
+                runCurrent()
+                assertEquals(1, awaitItem())
+                // We want to assert that the item is sent right away
+                assertEquals(0, testScheduler.currentTime - timeBeforeSend)
+                channel.close()
+                awaitComplete()
+            }
+    }
+
     @Test
     fun `Given no event when consuming then should complete`() = runTest {
         flowOf<Int>()

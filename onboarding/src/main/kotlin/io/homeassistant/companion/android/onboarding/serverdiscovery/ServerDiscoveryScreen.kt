@@ -25,14 +25,13 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -242,27 +241,21 @@ private fun ScreenContent(
 
 @Composable
 private fun ColumnScope.ServersDiscoveredContent(state: ServersDiscovered, onConnectClick: (URL) -> Unit) {
-    LazyColumn(
-        modifier = Modifier
-            .weight(1f)
-            .padding(top = HASpacing.X2L)
-            .padding(horizontal = HASpacing.M),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        items(state.servers) { server ->
-            ServerItemContent(server, onConnectClick)
-        }
-        item {
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(HASpacing.X2L),
-            ) {
-                HALoading()
-            }
-        }
+    Spacer(modifier = Modifier.height(HASpacing.X2L))
+    // We are not using a LazyColumn here to avoid dealing with nested scroll, it is not an issue since
+    // `servers` should remains quite small.
+    state.servers.forEach { server ->
+        ServerItemContent(server, onConnectClick)
     }
+    Row(
+        horizontalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(HASpacing.X2L),
+    ) {
+        HALoading()
+    }
+    Spacer(modifier = Modifier.weight(1f))
 }
 
 @Composable
