@@ -2,6 +2,7 @@
 
 package io.homeassistant.companion.android.data
 
+import androidx.annotation.VisibleForTesting
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.MessageClient
 import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.CAPABILITY_DNS_VIA_MOBILE
@@ -34,17 +35,26 @@ private val DefaultCacheLifetime = 5.minutes
  * to minimize redundant lookups and reduce network traffic, especially when falling back
  * to mobile DNS.
  */
-class WearDns @Inject constructor(
+class WearDns @VisibleForTesting constructor(
     private val messageClient: MessageClient,
     private val capabilityClient: CapabilityClient,
     private val clock: Clock,
+    private val dns: Dns,
 ) : Dns {
+
+    @Inject
+    constructor(
+        messageClient: MessageClient,
+        capabilityClient: CapabilityClient,
+        clock: Clock,
+    ) : this(messageClient, capabilityClient, clock, Dns.SYSTEM)
+
     private val dnsHelperCache = ConcurrentHashMap<String, CacheResult>()
     val cacheLifetime = DefaultCacheLifetime
 
     override fun lookup(hostname: String): List<InetAddress> {
         return try {
-            Dns.SYSTEM.lookup(hostname)
+            dns.lookup(hostname)
         } catch (e: UnknownHostException) {
             return runBlocking {
                 attemptLookupViaMobile(hostname, e)

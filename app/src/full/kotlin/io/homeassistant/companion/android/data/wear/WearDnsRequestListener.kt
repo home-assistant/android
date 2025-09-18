@@ -17,7 +17,8 @@ import kotlinx.coroutines.withContext
 import okhttp3.Dns
 import timber.log.Timber
 
-class WearDnsRequestListener : WearableListenerService() {
+class WearDnsRequestListener @VisibleForTesting constructor(private val dns: Dns = Dns.SYSTEM) :
+    WearableListenerService() {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -34,7 +35,7 @@ class WearDnsRequestListener : WearableListenerService() {
     internal suspend fun dnsRequest(request: ByteArray): ByteArray = withContext(Dispatchers.IO) {
         val hostname = request.decodeDNSRequest()
         try {
-            Dns.SYSTEM.lookup(hostname).encodeDNSResult()
+            dns.lookup(hostname).encodeDNSResult()
         } catch (uhe: UnknownHostException) {
             Timber.d(uhe, "UnknownHostException for Wear DNS query: $hostname")
             byteArrayOf()

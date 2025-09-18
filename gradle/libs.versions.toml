@@ -27,7 +27,6 @@ community-material-typeface = "7.0.96.1-kotlin"
 compose-bom = "2025.09.00"
 composeLintChecks = "1.4.2"
 connectClient = "1.1.0-rc03"
-conscryptOpenjdkUber = "2.5.2"
 constraintlayout = "2.2.1"
 coreKtx = "1.17.0"
 core-splashscreen = "1.1.0-rc01"
@@ -170,7 +169,6 @@ compose-ui = { module = "androidx.compose.ui:ui" }
 compose-uiTooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-test = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 compose-ui-testManifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
-conscrypt-openjdk-uber = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "conscryptOpenjdkUber" }
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "core-splashscreen" }
 core-remoteviews = { module = "androidx.core:core-remoteviews", version.ref = "core-remoteviews" }
