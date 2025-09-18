@@ -1,7 +1,8 @@
 package io.homeassistant.companion.android.compose
 
+import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.content.res.Configuration.UI_MODE_TYPE_NORMAL
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 
 /**
  * Multipreview annotation that represents various device sizes. Add this annotation to a composable
@@ -29,7 +30,8 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
     name = "tablet",
     device = "spec:width=1280dp,height=800dp,dpi=320,orientation=portrait",
     group = "tablet",
+    uiMode = UI_MODE_NIGHT_YES or UI_MODE_TYPE_NORMAL,
 ) // Pixel tablet
 // @Preview(name = "tablet_landscape", device = "spec:width=1280dp,height=800dp,dpi=320", group = "tablet") // Pixel tablet
-@PreviewLightDark
+// @PreviewLightDark
 annotation class HAPreviews

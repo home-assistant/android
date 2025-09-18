@@ -6,6 +6,7 @@
             android:name="io.homeassistant.companion.android.launcher.LauncherActivity"
             android:exported="true"
             android:label="Onboarding WIP"
+            android:windowSoftInputMode="adjustResize"
             android:taskAffinity="io.homeassistant.companion.android.onboarding.wip">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
