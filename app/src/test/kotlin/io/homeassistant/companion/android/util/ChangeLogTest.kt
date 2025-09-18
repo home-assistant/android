@@ -4,22 +4,20 @@ import android.app.AlertDialog
 import android.content.Context
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.themes.NightModeManager
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 class ChangeLogTest {
     private val context = mockk<Context>(relaxed = true)
     private val prefsRepository = mockk<PrefsRepository>()
@@ -28,11 +26,9 @@ class ChangeLogTest {
     private val darkThemeChangeLog = mockk<DarkThemeChangeLog>(relaxed = true)
     private val dialog = mockk<AlertDialog>(relaxed = true)
     private lateinit var changeLog: TestableChangeLog
-    private val testDispatcher = StandardTestDispatcher()
 
     @BeforeEach
     fun setup() {
-        Dispatchers.setMain(testDispatcher)
         coEvery { nightModeManager.getCurrentNightMode() } returns NightModeTheme.LIGHT
         every { hannesChangeLog.fullLogDialog } returns dialog
         every { hannesChangeLog.isFirstRun } returns true
@@ -42,11 +38,6 @@ class ChangeLogTest {
         every { darkThemeChangeLog.isFirstRunEver } returns false
 
         changeLog = TestableChangeLog(nightModeManager, prefsRepository, hannesChangeLog, darkThemeChangeLog)
-    }
-
-    @AfterEach
-    fun tearDown() {
-        Dispatchers.resetMain()
     }
 
     @Test
