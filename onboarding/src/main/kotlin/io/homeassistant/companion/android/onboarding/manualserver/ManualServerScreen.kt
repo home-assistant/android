@@ -178,6 +178,7 @@ private fun ServerUrlTextField(
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(
             onDone = {
+                focusRequester.freeFocus()
                 if (isServerUrlValid) {
                     onConnectClick()
                 }
