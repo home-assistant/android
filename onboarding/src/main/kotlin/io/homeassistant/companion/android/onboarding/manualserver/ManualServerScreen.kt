@@ -117,6 +117,7 @@ private fun ManualServerContent(
         Image(
             modifier = Modifier
                 .padding(top = HASpacing.XL),
+            // Use painterResource instead of vector resource for API < 24 since it has gradients
             painter = painterResource(R.drawable.ic_manual_server),
             contentDescription = null,
         )
