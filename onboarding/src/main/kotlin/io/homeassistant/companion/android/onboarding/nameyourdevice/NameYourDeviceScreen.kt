@@ -103,6 +103,7 @@ private fun NameYourDeviceContent(
     ) {
         Image(
             modifier = Modifier.padding(top = HASpacing.XL),
+            // Use painterResource instead of vector resource for API < 24 since it has gradients
             painter = painterResource(R.drawable.ic_name_tag),
             contentDescription = null,
         )
@@ -160,10 +161,11 @@ private fun DeviceNameTextField(
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(
             onDone = {
+                focusRequester.freeFocus()
                 if (saveClickable) {
                     onSaveClick()
                 }
-                // This is going to hide the keyboard in any case
+                // This is going to hide the keyboard and clear focus on the text field
                 defaultKeyboardAction(ImeAction.Done)
             },
         ),
