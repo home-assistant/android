@@ -11,6 +11,8 @@ import io.homeassistant.companion.android.common.data.integration.PushWebsocketS
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import javax.inject.Singleton
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -34,4 +36,9 @@ object ApplicationModule {
     fun providesPushWebsocketSupport(): Boolean {
         return true
     }
+
+    @OptIn(ExperimentalTime::class)
+    @Provides
+    @Singleton
+    fun clock(): Clock = Clock.System
 }

@@ -27,6 +27,7 @@ community-material-typeface = "7.0.96.1-kotlin"
 compose-bom = "2025.09.00"
 composeLintChecks = "1.4.2"
 connectClient = "1.1.0-rc03"
+conscryptOpenjdkUber = "2.5.2"
 constraintlayout = "2.2.1"
 coreKtx = "1.17.0"
 core-splashscreen = "1.1.0-rc01"
@@ -119,6 +120,7 @@ activity-compose = { module = "androidx.activity:activity-compose", version.ref 
 activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity-compose" }
 android-beacon-library = { module = "org.altbeacon:android-beacon-library", version.ref = "androidBeaconLibrary" }
 android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
+androidx-lifecycle-service = { module = "androidx.lifecycle:lifecycle-service", version.ref = "lifecycle" }
 compose-screenshot-gradle-plugin = { group = "com.android.compose.screenshot", name = "screenshot-test-gradle-plugin", version.ref = "screenshot" }
 androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
 androidx-glance-material = { module = "androidx.glance:glance-material", version.ref = "glance" }
@@ -151,7 +153,7 @@ car-core = { module = "androidx.car.app:app", version.ref = "car-versions" }
 car-automotive = { module = "androidx.car.app:app-automotive", version.ref = "car-versions" }
 car-projected = { module = "androidx.car.app:app-projected", version.ref = "car-versions" }
 changeLog = { module = "com.github.AppDevNext:ChangeLog", version.ref = "changeLog" }
-coil-oktthp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+coil-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 coil-views = { module = "io.coil-kt.coil3:coil", version.ref = "coil" }
 community-material-typeface = { module = "com.mikepenz:community-material-typeface", version.ref = "community-material-typeface" }
@@ -168,6 +170,7 @@ compose-ui = { module = "androidx.compose.ui:ui" }
 compose-uiTooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-test = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 compose-ui-testManifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+conscrypt-openjdk-uber = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "conscryptOpenjdkUber" }
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "core-splashscreen" }
 core-remoteviews = { module = "androidx.core:core-remoteviews", version.ref = "core-remoteviews" }
@@ -255,7 +258,7 @@ androidx-test =["androidx-test-core", "androidx-test-ext", "androidx-test-rules"
 androidx-compose-ui-test = ["compose-ui-test", "compose-ui-testManifest"]
 androidx-glance = ["androidx-glance-appwidget", "androidx-glance-appwidget-preview", "androidx-glance-material", "androidx-glance-preview"]
 androidx-glance-testing = ["androidx-glance-testing", "androidx-glance-appwidget-testing"]
-coil = ["coil-views", "coil-oktthp", "coil-svg"]
+coil = ["coil-views", "coil-okhttp", "coil-svg"]
 media3 = ["media3-exoplayer", "media3-exoplayer-hls", "media3-ui-compose", "media3-session"]
 paging = ["paging-runtime", "paging-compose"]
 wear-tiles = ["wear-tiles", "wear-protolayout-main", "wear-protolayout-expression", "wear-protolayout-material"]
