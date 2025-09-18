@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.connection.navigation
 
+import android.net.Uri
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,6 +26,7 @@ internal fun NavGraphBuilder.connectionScreen(
     onAuthenticated: (url: String, authCode: String) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onBackClick: () -> Unit,
+    onOpenExternalLink: (url: Uri) -> Unit,
 ) {
     composable<ConnectionRoute> {
         val viewModel: ConnectionViewModel = hiltViewModel()
@@ -34,6 +36,7 @@ internal fun NavGraphBuilder.connectionScreen(
             onAuthenticated = onAuthenticated,
             onShowSnackbar = onShowSnackbar,
             onBackClick = onBackClick,
+            onOpenExternalLink = onOpenExternalLink,
         )
 
         ConnectionScreen(
@@ -50,6 +53,7 @@ internal fun HandleConnectionNavigationEvents(
     onAuthenticated: (url: String, authCode: String) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onBackClick: () -> Unit,
+    onOpenExternalLink: (url: Uri) -> Unit,
 ) {
     val context = LocalContext.current
     LaunchedEffect(viewModel) {
@@ -71,6 +75,7 @@ internal fun HandleConnectionNavigationEvents(
                     )
                     onBackClick()
                 }
+                is ConnectionNavigationEvent.OpenExternalLink -> onOpenExternalLink(it.url)
             }
         }
     }

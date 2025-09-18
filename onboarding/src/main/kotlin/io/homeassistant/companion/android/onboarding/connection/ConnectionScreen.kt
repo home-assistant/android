@@ -19,12 +19,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.compose.HAPreviews
 import io.homeassistant.companion.android.compose.composable.HAWebView
 import io.homeassistant.companion.android.loading.LoadingScreen
+import timber.log.Timber
 
-@VisibleForTesting const val CONNECTION_SCREEN_TAG = "connection_screen"
+@VisibleForTesting
+const val CONNECTION_SCREEN_TAG = "connection_screen"
 
 @Composable
 internal fun ConnectionScreen(onBackClick: () -> Unit, viewModel: ConnectionViewModel, modifier: Modifier = Modifier) {
@@ -68,7 +69,7 @@ internal fun ConnectionScreen(
                 },
                 onBackPressed = onBackClick,
             )
-        } ?: FailFast.fail { "ConnectionScreen: url is null" }
+        } ?: Timber.i("ConnectionScreen: url is null")
         if (isLoading) {
             LoadingScreen(modifier = Modifier.fillMaxSize())
         }

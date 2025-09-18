@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.onboarding.connection
 
-import android.content.Intent
 import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
@@ -51,10 +50,23 @@ internal sealed interface ConnectionNavigationEvent {
 
     /**
      * Emitted when authentication is successful and the code is available
+     *
      * @property url The URL of the Home Assistant instance
      * @param authCode The authorization code returned by Home Assistant
      */
     data class Authenticated(val url: String, val authCode: String) : ConnectionNavigationEvent
+
+    /**
+     * Emitted when a link is not from the server that we are connecting to,
+     * allowing it to be opened in an external browser.
+     *
+     * We don't want to open the URL within the application if it's not for the same host.
+     * Otherwise the user might be able to leave the onboarding and not being able to come back.
+     * A good exemple is clicking on the `help` or `forget password` button on the login page.
+     *
+     * @property url The [Uri] of the link to open.
+     */
+    data class OpenExternalLink(val url: Uri) : ConnectionNavigationEvent
 }
 
 private const val AUTH_CALLBACK_SCHEME = "homeassistant"
@@ -74,7 +86,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         keyChainRepository: KeyChainRepository,
     ) : this(savedStateHandle.toRoute<ConnectionRoute>().url, keyChainRepository)
 
-    private val rawUri: Uri = rawUrl.toUri()
+    private val rawUri: Uri by lazy { rawUrl.toUri() }
 
     private val _navigationEventsFlow = MutableSharedFlow<ConnectionNavigationEvent>(replay = 1)
     val navigationEventsFlow = _navigationEventsFlow.asSharedFlow()
@@ -92,7 +104,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         }
 
         override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-            return request?.url?.let { shouldRedirect(view, it) } ?: false
+            return request?.url?.let { interceptRedirectIfRequired(it) } ?: false
         }
 
         @RequiresApi(Build.VERSION_CODES.M)
@@ -215,23 +227,27 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         }
     }
 
-    private fun shouldRedirect(view: WebView?, url: Uri): Boolean {
+    private fun interceptRedirectIfRequired(url: Uri): Boolean {
         val code = url.getQueryParameter("code")
 
-        return if (url.scheme == AUTH_CALLBACK_SCHEME && url.host == AUTH_CALLBACK_HOST && !code.isNullOrBlank()) {
-            viewModelScope.launch {
-                _navigationEventsFlow.emit(ConnectionNavigationEvent.Authenticated(rawUrl, code))
+        return if (url.scheme == AUTH_CALLBACK_SCHEME && url.host == AUTH_CALLBACK_HOST) {
+            if (!code.isNullOrBlank()) {
+                viewModelScope.launch {
+                    _navigationEventsFlow.emit(ConnectionNavigationEvent.Authenticated(rawUrl, code))
+                }
+                true // Intercepted: Authentication successful
+            } else {
+                Timber.w("Auth code is missing from the auth callback")
+                false // Not intercepted: Auth code missing
             }
-            true
-        } else if (view != null && url.host != rawUri.host) {
+        } else if (url.host != rawUri.host) {
             Timber.d("$url is not from the server, opening it on external browser.")
-            // We don't want to open the URL within the application if it's not for the same host.
-            // Otherwise the user might be able to leave the onboarding and not being able to come back.
-            // A good exemple is clicking on the `help` or `forget password` button on the login page.
-            view.context.startActivity(Intent(Intent.ACTION_VIEW, url))
-            true
+            viewModelScope.launch {
+                _navigationEventsFlow.emit(ConnectionNavigationEvent.OpenExternalLink(url))
+            }
+            true // Intercepted: External link
         } else {
-            false
+            false // Default: Not intercepted
         }
     }
 }
