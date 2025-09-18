@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.connection
 
+import android.net.Uri
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -65,6 +66,7 @@ class ConnectionNavigationTest {
                 },
                 onBackClick = {
                 },
+                onOpenExternalLink = {},
             )
         }
 
@@ -75,6 +77,41 @@ class ConnectionNavigationTest {
 
         assertEquals(event.url, onAuthenticatedUrl)
         assertEquals(event.authCode, onAuthenticatedCode)
+    }
+
+    @Test
+    fun `Given HandleConnectionNavigationEvents when viewModel emits OpenExternalLink then invoke onOpenExternalLink`() = runTest {
+        val sharedFlow = MutableSharedFlow<ConnectionNavigationEvent>()
+
+        val viewModel = mockk<ConnectionViewModel> {
+            every { navigationEventsFlow } returns sharedFlow
+        }
+        val uri = mockk<Uri>()
+
+        var onOpenExternalLink: Uri? = null
+
+        composeTestRule.setContent {
+            HandleConnectionNavigationEvents(
+                viewModel,
+                onAuthenticated = { _, _ ->
+                },
+                onShowSnackbar = { _, _ ->
+                    true
+                },
+                onBackClick = {
+                },
+                onOpenExternalLink = {
+                    onOpenExternalLink = it
+                },
+            )
+        }
+
+        val event = ConnectionNavigationEvent.OpenExternalLink(uri)
+            .apply {
+                sharedFlow.emit(this)
+            }
+
+        assertEquals(event.url, onOpenExternalLink)
     }
 
     @Test
@@ -99,6 +136,7 @@ class ConnectionNavigationTest {
                 onBackClick = {
                     backPressed = true
                 },
+                onOpenExternalLink = {},
             )
         }
 

@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.onboarding.connection
 
-import android.content.Context
 import android.net.Uri
 import android.net.http.SslError
 import android.webkit.WebResourceError
@@ -15,6 +14,7 @@ import android.webkit.WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME
 import androidx.annotation.StringRes
 import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
@@ -23,7 +23,6 @@ import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
-import io.mockk.verify
 import java.net.URL
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -66,7 +65,7 @@ class ConnectionViewModelTest {
             assertTrue(isLoadingFlow.awaitItem())
             assertEquals(null, urlFlow.awaitItem())
 
-            val expectedAuthUrl = "$baseUrl/auth/authorize?response_type=code&client_id=https://home-assistant.io/android&redirect_uri=homeassistant://auth-callback"
+            val expectedAuthUrl = "$baseUrl/auth/authorize?response_type=code&client_id=${AuthenticationService.CLIENT_ID}&redirect_uri=homeassistant://auth-callback"
             advanceUntilIdle()
 
             assertEquals(expectedAuthUrl, urlFlow.awaitItem())
@@ -75,7 +74,7 @@ class ConnectionViewModelTest {
 
             assertFalse(isLoadingFlow.awaitItem())
 
-            navigationEventsFlow.expectNoEvents() // No errors expected
+            navigationEventsFlow.expectNoEvents() // No authenticated or error events expected
         }
     }
 
@@ -134,30 +133,7 @@ class ConnectionViewModelTest {
             every { getQueryParameter("code") } returns null
         }
 
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository)
-
-        turbineScope {
-            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
-
-            val result = viewModel.webViewClient.shouldOverrideUrlLoading(
-                null,
-                mockk<WebResourceRequest> {
-                    every { url } returns callbackUri
-                },
-            )
-
-            assertFalse(result)
-            navigationEventsFlow.expectNoEvents()
-        }
-    }
-
-    @Test
-    fun `Given non auth callback uri when shouldRedirect then no event and returns false`() = runTest {
-        val callbackUri = mockk<Uri> {
-            every { scheme } returns "http"
-            every { host } returns "google"
-            every { getQueryParameter("code") } returns "not_related_code"
-        }
+        mockUriParse()
 
         val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository)
 
@@ -184,39 +160,25 @@ class ConnectionViewModelTest {
             every { getQueryParameter("code") } returns "not_related_code"
         }
 
-        mockkStatic(Uri::class)
-        every { Uri.parse(any()) } answers {
-            val uriString = firstArg<String>()
-            val javaURL = URL(uriString)
-            return@answers mockk<Uri> {
-                every { this@mockk.toString() } returns uriString
-                every { host } returns javaURL.host
-            }
-        }
+        mockUriParse()
 
         val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository)
-
-        val context = mockk<Context>(relaxUnitFun = true)
-
-        val view = mockk<WebView> {
-            every { this@mockk.context } returns context
-        }
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
 
             val result = viewModel.webViewClient.shouldOverrideUrlLoading(
-                view,
+                null,
                 mockk<WebResourceRequest> {
                     every { url } returns callbackUri
                 },
             )
 
             assertTrue(result)
-            verify {
-                // We can't verify the url that is going to be use since `Intent` in test is not supported
-                context.startActivity(any())
-            }
+            val event = navigationEventsFlow.awaitItem()
+            assertTrue(event is ConnectionNavigationEvent.OpenExternalLink)
+            assertEquals(callbackUri, (event as ConnectionNavigationEvent.OpenExternalLink).url)
+
             navigationEventsFlow.expectNoEvents()
         }
     }
@@ -265,7 +227,7 @@ class ConnectionViewModelTest {
 
             val request = mockk<WebResourceRequest> {
                 every { url } returns mockk<Uri> {
-                    every { this@mockk.toString() } returns "http://homeassistant.local:8123/auth/authorize?response_type=code&client_id=https://home-assistant.io/android&redirect_uri=homeassistant://auth-callback"
+                    every { this@mockk.toString() } returns "http://homeassistant.local:8123/auth/authorize?response_type=code&client_id=${AuthenticationService.CLIENT_ID}&redirect_uri=homeassistant://auth-callback"
                 }
             }
 
@@ -387,6 +349,18 @@ class ConnectionViewModelTest {
             assertTrue(event.formatArgs.isEmpty())
         } else {
             assertEquals(formatArgs.toList(), event.formatArgs.toList())
+        }
+    }
+
+    private fun mockUriParse() {
+        mockkStatic(Uri::class)
+        every { Uri.parse(any()) } answers {
+            val uriString = firstArg<String>()
+            val javaURL = URL(uriString)
+            return@answers mockk<Uri> {
+                every { this@mockk.toString() } returns uriString
+                every { host } returns javaURL.host
+            }
         }
     }
 }

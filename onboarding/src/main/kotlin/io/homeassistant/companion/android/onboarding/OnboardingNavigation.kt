@@ -68,6 +68,9 @@ internal fun NavGraphBuilder.onboarding(
             },
             onShowSnackbar = onShowSnackbar,
             onBackClick = navController::popBackStack,
+            onOpenExternalLink = {
+                navController.navigateToUri(it.toString())
+            },
         )
     }
 }
