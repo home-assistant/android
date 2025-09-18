@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package io.homeassistant.companion.android.shadows
+package io.homeassistant.companion.android.fakes
 
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime

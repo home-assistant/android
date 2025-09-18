@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.shadows
+package io.homeassistant.companion.android.fakes
 
 import android.app.Activity
 import com.google.android.gms.tasks.OnFailureListener

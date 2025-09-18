@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.shadows
+package io.homeassistant.companion.android.fakes
 
 import android.content.Context
 import android.net.Uri
