@@ -12,4 +12,5 @@
     <string name="manual_server_connect">Connect</string>
     <string name="manual_server_clear_url">Clear server url</string>
     <string name="manual_server_wrong_url">Invalid Home\u00A0Assistant address</string>
+    <string name="connection_screen_malformed_url">Verify that your Home\u00A0Assistant address is correct</string>
 </resources>
