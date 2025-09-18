@@ -9,6 +9,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -147,7 +148,7 @@ class ManualServerScreenTest {
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).assertIsDisplayed().performClick()
             assertTrue(helpClicked)
 
-            onNodeWithText(stringResource(R.string.manual_server_connect)).assertIsDisplayed()
+            onNodeWithText(stringResource(R.string.manual_server_connect)).performScrollTo().assertIsDisplayed()
 
             dsl()
         }
