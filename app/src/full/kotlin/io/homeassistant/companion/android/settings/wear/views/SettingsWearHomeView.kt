@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.wear.views
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.IconButton
 import androidx.compose.material.TopAppBar

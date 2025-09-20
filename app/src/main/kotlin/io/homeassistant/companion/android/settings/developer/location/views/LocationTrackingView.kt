@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.developer.location.views
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState

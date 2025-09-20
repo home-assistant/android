@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.sensor
 
 import android.content.Intent
-import android.net.Uri
 import androidx.core.net.toUri
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R as commonR
