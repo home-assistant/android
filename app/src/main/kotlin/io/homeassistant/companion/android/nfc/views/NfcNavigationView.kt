@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.core.net.toUri
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -74,13 +75,15 @@ fun LoadNfcView(viewModel: NfcViewModel, startDestination: String, pressedUpAtRo
             TopAppBar(
                 title = { Text(stringResource(commonR.string.nfc_title_settings)) },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        if (canNavigateUp.value) {
-                            navController.navigateUp()
-                        } else {
-                            pressedUpAtRoot()
-                        }
-                    }) {
+                    IconButton(
+                        onClick = {
+                            if (canNavigateUp.value) {
+                                navController.navigateUp()
+                            } else {
+                                pressedUpAtRoot()
+                            }
+                        },
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                             contentDescription = stringResource(commonR.string.navigate_up),
@@ -88,14 +91,16 @@ fun LoadNfcView(viewModel: NfcViewModel, startDestination: String, pressedUpAtRo
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        val intent =
-                            Intent(
-                                Intent.ACTION_VIEW,
-                                Uri.parse("https://companion.home-assistant.io/docs/integrations/universal-links"),
-                            )
-                        context.startActivity(intent)
-                    }) {
+                    IconButton(
+                        onClick = {
+                            val intent =
+                                Intent(
+                                    Intent.ACTION_VIEW,
+                                    "https://companion.home-assistant.io/docs/integrations/universal-links".toUri(),
+                                )
+                            context.startActivity(intent)
+                        },
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
                             contentDescription = stringResource(commonR.string.get_help),

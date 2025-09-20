@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -174,7 +175,7 @@ class MobileAppIntegrationFragment : Fragment() {
     }
 
     private fun openPrivacyPolicy() {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(getString(commonR.string.privacy_url)))
+        val intent = Intent(Intent.ACTION_VIEW, getString(commonR.string.privacy_url).toUri())
         startActivity(intent)
     }
 }

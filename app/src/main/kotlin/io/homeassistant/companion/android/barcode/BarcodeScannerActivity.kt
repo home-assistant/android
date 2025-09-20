@@ -14,6 +14,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -133,7 +134,7 @@ class BarcodeScannerActivity : BaseActivity() {
         if (inContext) {
             cameraPermission.launch(Manifest.permission.CAMERA)
         } else {
-            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()))
             requestSilently = true // Reset state to trigger new in context dialog/check when resumed
         }
     }

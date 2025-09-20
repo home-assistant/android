@@ -206,7 +206,7 @@ class SettingsWearActivity :
         Timber.d("Number of nodes without app: " + nodesWithoutApp.size)
         val intent = Intent(Intent.ACTION_VIEW)
             .addCategory(Intent.CATEGORY_BROWSABLE)
-            .setData(Uri.parse(PLAY_STORE_APP_URI))
+            .setData(PLAY_STORE_APP_URI.toUri())
 
         // In parallel, start remote activity requests for all wear devices that don't have the app installed yet.
         nodesWithoutApp.forEach { node ->
