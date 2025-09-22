@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
  * @param value the input text to be shown in the text field
  * @param onValueChange the callback that is triggered when the value is updated.
  * @param modifier the [Modifier] to be applied to this text field
+ * @param enabled controls the enabled state of this text field
  * @param isError indicates if the text field's current value is in error. If set to true, the
  * text field will adjust based on the color of the theme [io.homeassistant.companion.android.common.compose.theme.HATheme]
  * @param label the optional label to be displayed inside the text field container.
@@ -43,6 +44,7 @@ fun HATextField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     isError: Boolean = false,
     label: @Composable (() -> Unit)? = null,
     placeholder: @Composable (() -> Unit)? = null,
@@ -54,6 +56,7 @@ fun HATextField(
 ) {
     // TODO probably replace the text composable by strings to control the applied style
     OutlinedTextField(
+        enabled = enabled,
         value = value,
         onValueChange = onValueChange,
         supportingText = supportingText,
