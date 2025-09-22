@@ -15,9 +15,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
@@ -82,7 +81,8 @@ private fun LocationSharingContent(
     ) {
         Image(
             modifier = Modifier.padding(top = HASpacing.XL),
-            imageVector = ImageVector.vectorResource(R.drawable.ic_location_tracking),
+            // Use painterResource instead of vector resource for API < 24 since it has gradients
+            painter = painterResource(R.drawable.ic_location_tracking),
             contentDescription = null,
         )
 
