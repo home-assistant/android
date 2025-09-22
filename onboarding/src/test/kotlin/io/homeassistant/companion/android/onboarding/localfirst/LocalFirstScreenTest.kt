@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -48,7 +49,7 @@ class LocalFirstScreenTest {
 
             onNodeWithText(stringResource(R.string.local_first_title)).assertIsDisplayed()
             onNodeWithText(stringResource(R.string.local_first_content)).assertIsDisplayed()
-            onNodeWithText(stringResource(R.string.local_first_next)).assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(R.string.local_first_next)).performScrollTo().assertIsDisplayed().performClick()
             assertTrue(nextClicked)
         }
     }
