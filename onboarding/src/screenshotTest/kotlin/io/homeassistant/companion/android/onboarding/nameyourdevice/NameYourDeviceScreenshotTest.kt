@@ -1,10 +1,9 @@
-package io.homeassistant.companion.android.onboarding.namyourdevice
+package io.homeassistant.companion.android.onboarding.nameyourdevice
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.compose.HAPreviews
-import io.homeassistant.companion.android.onboarding.nameyourdevice.NameYourDeviceScreen
 
 class NameYourDeviceScreenshotTest {
     @PreviewTest
