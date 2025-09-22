@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -72,6 +73,11 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
 
     private val _isValidNameFlow = MutableStateFlow(isValidName(deviceNameFlow.value))
     val isValidNameFlow = _isValidNameFlow.asStateFlow()
+    private val _isSaving = MutableStateFlow(false)
+    val isSaving = _isSaving.asStateFlow()
+    val isSaveClickable = combine(isSaving, isValidNameFlow) { isSaving, isValidName ->
+        !isSaving && isValidName
+    }
 
     fun onDeviceNameChange(name: String) {
         _deviceNameFlow.update { name }
@@ -81,6 +87,7 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
     fun onSaveClick() {
         viewModelScope.launch {
             try {
+                _isSaving.emit(true)
                 val serverId = addServer()
                 _navigationEventsFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved(serverId))
             } catch (e: Exception) {
@@ -92,6 +99,8 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
                     else -> commonR.string.webview_error
                 }
                 _navigationEventsFlow.emit(NameYourDeviceNavigationEvent.Error(messageRes))
+            } finally {
+                _isSaving.emit(false)
             }
         }
     }

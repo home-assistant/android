@@ -17,6 +17,7 @@ class NameYourDeviceScreenshotTest {
                 deviceName = "",
                 onDeviceNameChange = {},
                 saveClickable = false,
+                deviceNameEditable = true,
                 onSaveClick = {},
                 onHelpClick = {},
             )
@@ -33,6 +34,7 @@ class NameYourDeviceScreenshotTest {
                 deviceName = "Superman",
                 onDeviceNameChange = {},
                 saveClickable = true,
+                deviceNameEditable = true,
                 onSaveClick = {},
                 onHelpClick = {},
             )

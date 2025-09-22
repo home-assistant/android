@@ -7,9 +7,11 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -21,6 +23,7 @@ import io.homeassistant.companion.android.testing.unit.stringResource
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -46,7 +49,7 @@ class NameYourDeviceScreenTest {
     @Test
     fun `Given empty screen when interacting with the view then handle interactions`() {
         composeTestRule.apply {
-            testScreen("", false) {
+            testScreen("", saveClickable = false, deviceNameEditable = true) {
                 onNodeWithText(stringResource(R.string.name_your_device_save)).assertIsNotEnabled()
 
                 onNodeWithContentDescription(stringResource(R.string.name_your_device_clear_name)).assertIsNotDisplayed()
@@ -57,14 +60,39 @@ class NameYourDeviceScreenTest {
     @Test
     fun `Given screen with device name when interacting with the view then handle interactions`() {
         composeTestRule.apply {
-            testScreen("Pixel 42", true) {
+            testScreen("Pixel 42", saveClickable = true, deviceNameEditable = true) {
                 onNodeWithText(stringResource(R.string.name_your_device_save))
                     .performScrollTo() // We need to scroll to the button since it is not visible because of the spacer on tests
                     .assertIsDisplayed().assertIsEnabled().performClick()
                 assertTrue(saveClicked)
 
+                onNodeWithText("Pixel 42").assertIsDisplayed()
+
+                onNodeWithTag(DEVICE_NAME_TEXT_FIELD_TAG).assertIsDisplayed().assertIsEnabled().performTextInput("Hello ")
+                assertEquals("Hello Pixel 42", changedName)
+
                 onNodeWithContentDescription(stringResource(R.string.name_your_device_clear_name)).assertIsDisplayed().performClick()
                 assertTrue(changedName?.isEmpty() == true)
+            }
+        }
+    }
+
+    @Test
+    fun `Given screen with device name and saving when deviceNameEditable is false then handle interactions`() {
+        composeTestRule.apply {
+            testScreen("Pixel 42", saveClickable = false, deviceNameEditable = false) {
+                onNodeWithText(stringResource(R.string.name_your_device_save))
+                    .performScrollTo() // We need to scroll to the button since it is not visible because of the spacer on tests
+                    .assertIsDisplayed().assertIsNotEnabled()
+
+                onNodeWithTag(DEVICE_NAME_TEXT_FIELD_TAG).assertIsDisplayed().assertIsNotEnabled()
+                onNodeWithText("Pixel 42").assertIsDisplayed()
+
+                // Set fake data to see if click actually does something. In this test it shouldn't do anything since it is disabled
+                changedName = "dummy data"
+
+                onNodeWithContentDescription(stringResource(R.string.name_your_device_clear_name)).assertIsDisplayed().performClick()
+                assertEquals("dummy data", changedName)
             }
         }
     }
@@ -77,7 +105,7 @@ class NameYourDeviceScreenTest {
         var changedName: String? = null
     }
 
-    private fun AndroidComposeTestRule<*, *>.testScreen(deviceName: String, saveClickable: Boolean, block: TestHelper.() -> Unit) {
+    private fun AndroidComposeTestRule<*, *>.testScreen(deviceName: String, saveClickable: Boolean, deviceNameEditable: Boolean, block: TestHelper.() -> Unit) {
         TestHelper().apply {
             setContent {
                 NameYourDeviceScreen(
@@ -86,8 +114,8 @@ class NameYourDeviceScreenTest {
                     deviceName = deviceName,
                     onDeviceNameChange = { changedName = it },
                     saveClickable = saveClickable,
+                    deviceNameEditable = deviceNameEditable,
                     onSaveClick = {
-                        Timber.e("clicked")
                         saveClicked = true
                     },
                 )

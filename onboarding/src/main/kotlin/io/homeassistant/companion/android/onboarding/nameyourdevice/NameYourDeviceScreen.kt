@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.nameyourdevice
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -39,6 +41,8 @@ import io.homeassistant.companion.android.compose.HAPreviews
 import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
 
+@VisibleForTesting internal const val DEVICE_NAME_TEXT_FIELD_TAG = "device_name_text_field"
+
 @Composable
 internal fun NameYourDeviceScreen(
     onBackClick: () -> Unit,
@@ -47,7 +51,8 @@ internal fun NameYourDeviceScreen(
     modifier: Modifier = Modifier,
 ) {
     val deviceName by viewModel.deviceNameFlow.collectAsStateWithLifecycle()
-    val saveClickable by viewModel.isValidNameFlow.collectAsStateWithLifecycle()
+    val saveClickable by viewModel.isSaveClickable.collectAsStateWithLifecycle(false)
+    val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
 
     NameYourDeviceScreen(
         onBackClick = onBackClick,
@@ -55,6 +60,7 @@ internal fun NameYourDeviceScreen(
         deviceName = deviceName,
         onDeviceNameChange = viewModel::onDeviceNameChange,
         saveClickable = saveClickable,
+        deviceNameEditable = !isSaving,
         onSaveClick = viewModel::onSaveClick,
         modifier = modifier,
     )
@@ -67,6 +73,7 @@ internal fun NameYourDeviceScreen(
     deviceName: String,
     onDeviceNameChange: (String) -> Unit,
     saveClickable: Boolean,
+    deviceNameEditable: Boolean,
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -79,6 +86,7 @@ internal fun NameYourDeviceScreen(
             deviceName = deviceName,
             onDeviceNameChange = onDeviceNameChange,
             saveClickable = saveClickable,
+            deviceNameEditable = deviceNameEditable,
             onSaveClick = onSaveClick,
             modifier = Modifier.padding(contentPadding),
         )
@@ -90,6 +98,7 @@ private fun NameYourDeviceContent(
     deviceName: String,
     onDeviceNameChange: (String) -> Unit,
     saveClickable: Boolean,
+    deviceNameEditable: Boolean,
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -121,6 +130,7 @@ private fun NameYourDeviceContent(
             onDeviceNameChange = onDeviceNameChange,
             saveClickable = saveClickable,
             onSaveClick = onSaveClick,
+            deviceNameEditable = deviceNameEditable,
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -140,6 +150,7 @@ private fun DeviceNameTextField(
     deviceName: String,
     onDeviceNameChange: (String) -> Unit,
     saveClickable: Boolean,
+    deviceNameEditable: Boolean,
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -150,7 +161,7 @@ private fun DeviceNameTextField(
         onValueChange = onDeviceNameChange,
         trailingIcon = {
             if (deviceName.isNotEmpty()) {
-                IconButton(onClick = { onDeviceNameChange("") }) {
+                IconButton(onClick = { onDeviceNameChange("") }, enabled = deviceNameEditable) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = stringResource(R.string.name_your_device_clear_name),
@@ -169,8 +180,10 @@ private fun DeviceNameTextField(
                 defaultKeyboardAction(ImeAction.Done)
             },
         ),
+        enabled = deviceNameEditable,
         modifier = modifier
-            .focusRequester(focusRequester),
+            .focusRequester(focusRequester)
+            .testTag(DEVICE_NAME_TEXT_FIELD_TAG),
     )
     // Request focus on the text field when the screen is shown
     LaunchedEffect(Unit) {
@@ -188,6 +201,7 @@ private fun NameYourDeviceScreenPreview() {
             deviceName = "Superman",
             onDeviceNameChange = {},
             saveClickable = true,
+            deviceNameEditable = true,
             onSaveClick = {},
         )
     }

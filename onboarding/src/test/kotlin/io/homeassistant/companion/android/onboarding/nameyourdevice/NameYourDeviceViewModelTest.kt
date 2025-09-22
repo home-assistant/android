@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.nameyourdevice
 
+import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
@@ -75,8 +76,17 @@ class NameYourDeviceViewModelTest {
     }
 
     @Test
-    fun `Given viewModelInitialized when observingIsValidNameFlow then emits true`() = runTest {
-        assertTrue(viewModel.isValidNameFlow.value)
+    fun `Given viewModelInitialized when isValidNameFlow then emits true`() = runTest {
+        viewModel.isValidNameFlow.test {
+            assertTrue(awaitItem())
+        }
+    }
+
+    @Test
+    fun `Given viewModelInitialized when isSaveClickable then emits true`() = runTest {
+        viewModel.isSaveClickable.test {
+            assertTrue(awaitItem())
+        }
     }
 
     @Test
@@ -338,6 +348,52 @@ class NameYourDeviceViewModelTest {
             assertError(navEvents.awaitItem(), commonR.string.webview_error_SSL_INVALID)
         }
     }
+
+    @Test
+    fun `Given adding server when onSaveClick then isSaving flow is properly updated`() = runTest {
+        viewModel.isSaving.test {
+            assertFalse(awaitItem())
+            coEvery { serverManager.addServer(any()) } coAnswers {
+                assertTrue(awaitItem())
+                throw RuntimeException("Failed to add server")
+            }
+            viewModel.onSaveClick()
+            advanceUntilIdle()
+            assertFalse(awaitItem())
+        }
+    }
+
+    @Test
+    fun `Given currently saving when isSaveClickable collecting then isSaveClickable is updating accordingly`() = runTest {
+        viewModel.isSaveClickable.test {
+            assertTrue(awaitItem())
+            coEvery { serverManager.addServer(any()) } coAnswers {
+                assertFalse(awaitItem())
+                throw RuntimeException("Failed to add server")
+            }
+            viewModel.onSaveClick()
+            advanceUntilIdle()
+            assertTrue(awaitItem())
+            coVerify { serverManager.addServer(any()) }
+        }
+    }
+
+    @Test
+    fun `Given updating device name when isSaveClickable collecting then isSaveClickable is updating according to isValidDeviceName`() = runTest {
+        viewModel.isSaveClickable.test {
+            assertTrue(awaitItem())
+
+            viewModel.onDeviceNameChange("")
+            advanceUntilIdle()
+            assertFalse(awaitItem())
+
+            viewModel.onDeviceNameChange("valid")
+            advanceUntilIdle()
+            assertTrue(awaitItem())
+        }
+    }
+
+    // TODO update SVGs
 
     private fun assertError(event: NameYourDeviceNavigationEvent, expectedResId: Int) {
         assertTrue(event is NameYourDeviceNavigationEvent.Error)
