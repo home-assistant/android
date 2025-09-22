@@ -23,9 +23,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
@@ -168,7 +167,8 @@ private fun LocationForSecureConnectionContent(
 private fun ColumnScope.Header() {
     Image(
         modifier = Modifier.padding(top = HASpacing.XL),
-        imageVector = ImageVector.vectorResource(R.drawable.ic_location_secure),
+        // Use painterResource instead of vector resource for API < 24 since it has gradients
+        painter = painterResource(R.drawable.ic_location_secure),
         contentDescription = null,
     )
 
@@ -202,7 +202,8 @@ private fun Hint(modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
-            imageVector = ImageVector.vectorResource(R.drawable.ic_casita),
+            // Use painterResource instead of vector resource for API < 24
+            painter = painterResource(R.drawable.ic_casita),
             colorFilter = ColorFilter.tint(HABrandColors.Blue),
             contentDescription = null,
         )
