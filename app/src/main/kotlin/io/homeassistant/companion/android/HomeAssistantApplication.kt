@@ -165,7 +165,6 @@ open class HomeAssistantApplication :
         }
 
         // Update doze mode immediately on supported devices
-
         ContextCompat.registerReceiver(
             this,
             sensorReceiver,
