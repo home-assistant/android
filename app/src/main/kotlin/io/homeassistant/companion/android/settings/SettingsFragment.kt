@@ -7,7 +7,6 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -16,6 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
+import androidx.core.net.toUri
 import androidx.fragment.app.commit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -333,7 +333,7 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
                 ).replace("-minimal", "")}"
             }
             it.summary = link
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+            it.intent = Intent(Intent.ACTION_VIEW, link.toUri())
         }
 
         findPreference<Preference>("changelog_prompt")?.setOnPreferenceClickListener {
@@ -370,7 +370,7 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
 
         findPreference<Preference>("privacy")?.let {
             it.summary = "https://www.home-assistant.io/privacy/"
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(it.summary.toString()))
+            it.intent = Intent(Intent.ACTION_VIEW, it.summary.toString().toUri())
         }
 
         findPreference<Preference>("developer")?.setOnPreferenceClickListener {

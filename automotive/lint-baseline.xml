@@ -1548,7 +1548,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="202"
+            line="203"
             column="17"/>
     </issue>
 
@@ -1559,7 +1559,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="215"
+            line="216"
             column="17"/>
     </issue>
 
@@ -1570,7 +1570,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="248"
+            line="249"
             column="13"/>
     </issue>
 
@@ -1581,7 +1581,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="286"
+            line="287"
             column="29"/>
     </issue>
 
@@ -1592,7 +1592,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="386"
+            line="387"
             column="17"/>
     </issue>
 
@@ -1603,7 +1603,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="386"
+            line="387"
             column="17"/>
     </issue>
 
@@ -1614,7 +1614,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="419"
+            line="420"
             column="13"/>
     </issue>
 
@@ -1625,7 +1625,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="531"
+            line="532"
             column="13"/>
     </issue>
 
@@ -1636,7 +1636,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="541"
+            line="542"
             column="17"/>
     </issue>
 
@@ -1647,7 +1647,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="541"
+            line="542"
             column="17"/>
     </issue>
 
@@ -1658,7 +1658,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="569"
+            line="570"
             column="13"/>
     </issue>
 
@@ -2274,7 +2274,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="251"
+            line="256"
             column="13"/>
     </issue>
 
@@ -2285,7 +2285,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="507"
+            line="512"
             column="21"/>
     </issue>
 
@@ -2296,7 +2296,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="508"
+            line="513"
             column="21"/>
     </issue>
 
@@ -2307,7 +2307,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="538"
+            line="543"
             column="25"/>
     </issue>
 
@@ -2318,7 +2318,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="538"
+            line="543"
             column="25"/>
     </issue>
 
@@ -2329,7 +2329,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="623"
+            line="628"
             column="13"/>
     </issue>
 
@@ -2340,7 +2340,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1204"
+            line="1197"
             column="21"/>
     </issue>
 
@@ -2351,7 +2351,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1323"
+            line="1316"
             column="17"/>
     </issue>
 
@@ -2808,138 +2808,6 @@
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
             line="171"
             column="13"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse(&quot;package:$packageName&quot;)))"
-        errorLine2="                                                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/barcode/BarcodeScannerActivity.kt"
-            line="136"
-            column="80"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            Intent(Intent.ACTION_VIEW, Uri.parse(resources.getString(commonR.string.privacy_url))).also {"
-        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/settings/sensor/HealthConnectPermissionActivity.kt"
-            line="18"
-            column="40"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                            Uri.parse(&quot;geo:$latlng?q=$latlng(Home+Assistant)&quot;),"
-        errorLine2="                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/developer/location/views/LocationTrackingView.kt"
-            line="248"
-            column="45"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(getString(commonR.string.privacy_url)))"
-        errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/onboarding/integration/MobileAppIntegrationFragment.kt"
-            line="177"
-            column="49"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                Uri.parse(&quot;https://companion.home-assistant.io/docs/integrations/universal-links&quot;),"
-        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/nfc/views/NfcNavigationView.kt"
-            line="95"
-            column="33"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                    Uri.parse(&quot;package:${context.packageName}&quot;),"
-        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="126"
-            column="37"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))"
-        errorLine2="                                                   ~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="336"
-            column="52"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))"
-        errorLine2="                                                   ~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="336"
-            column="52"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(it.summary.toString()))"
-        errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="373"
-            column="52"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(it.summary.toString()))"
-        errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="373"
-            column="52"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            .setData(Uri.parse(PLAY_STORE_APP_URI))"
-        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/settings/wear/SettingsWearActivity.kt"
-            line="209"
-            column="22"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(docsLink))"
-        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/settings/wear/views/SettingsWearHomeView.kt"
-            line="121"
-            column="61"/>
     </issue>
 
     <issue
