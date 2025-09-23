@@ -81,7 +81,7 @@ class HAAppTest {
 
     @Test
     fun `Given HAApp when navigate to Welcome then show Welcome`() {
-        setApp(OnboardingRoute)
+        setApp(OnboardingRoute())
         composeTestRule.apply {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
             onNodeWithText(stringResource(R.string.welcome_home_assistant_title)).assertIsDisplayed()

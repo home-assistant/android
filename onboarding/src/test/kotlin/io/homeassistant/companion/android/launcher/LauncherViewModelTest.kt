@@ -40,8 +40,8 @@ class LauncherViewModelTest {
 
     private lateinit var viewModel: LauncherViewModel
 
-    private fun createViewModel() {
-        viewModel = LauncherViewModel(workManager, serverManager, networkStatusMonitor)
+    private fun createViewModel(initialDeepLink: LauncherActivity.DeepLink? = null) {
+        viewModel = LauncherViewModel(initialDeepLink, workManager, serverManager, networkStatusMonitor)
     }
 
     @BeforeEach
@@ -72,7 +72,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Frontend, viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Frontend(null, ServerManager.SERVER_ID_ACTIVE), viewModel.navigationEventsFlow.replayCache.first())
         assertEquals(0, networkStateFlow.subscriptionCount.value)
 
         // verify resync registration
@@ -134,7 +134,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Frontend, viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Frontend(null, ServerManager.SERVER_ID_ACTIVE), viewModel.navigationEventsFlow.replayCache.first())
         assertEquals(0, networkStateFlow.subscriptionCount.value)
 
         // verify resync registration
@@ -150,7 +150,7 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertEquals(LauncherNavigationEvent.Onboarding, viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test
@@ -163,7 +163,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Onboarding, viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test
@@ -177,7 +177,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Onboarding, viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test
@@ -190,7 +190,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Onboarding, viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test
@@ -248,7 +248,31 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertEquals(LauncherNavigationEvent.Onboarding, viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null), viewModel.navigationEventsFlow.replayCache.first())
         assertTrue(!viewModel.shouldShowSplashScreen())
+    }
+
+    @Test
+    fun `Given initial deep link is Invite when creating viewModel, then navigate to onboarding with the server url`() = runTest {
+        createViewModel(LauncherActivity.DeepLink.Invite("http://homeassistant.io"))
+        advanceUntilIdle()
+        assertEquals(LauncherNavigationEvent.Onboarding("http://homeassistant.io"), viewModel.navigationEventsFlow.replayCache.first())
+    }
+
+    @Test
+    fun `Given initial deep link is NavigateTo when creating viewModel, then navigate to frontend with the server id and path`() = runTest {
+        val serverId = 42
+        val server = mockk<Server>(relaxed = true)
+        every { workManager.enqueue(any<OneTimeWorkRequest>()) } returns mockk()
+
+        coEvery { serverManager.getServer(serverId) } returns server
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
+        val networkStateFlow = MutableStateFlow(NetworkState.READY_REMOTE)
+        coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
+
+        createViewModel(LauncherActivity.DeepLink.NavigateTo("/path", serverId))
+        advanceUntilIdle()
+        assertEquals(LauncherNavigationEvent.Frontend("/path", serverId), viewModel.navigationEventsFlow.replayCache.first())
     }
 }

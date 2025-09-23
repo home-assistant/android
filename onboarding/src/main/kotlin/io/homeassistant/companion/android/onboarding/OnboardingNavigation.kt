@@ -33,10 +33,10 @@ import io.homeassistant.companion.android.onboarding.welcome.navigation.welcomeS
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data object OnboardingRoute : HAStartDestinationRoute
+internal data class OnboardingRoute(val serverToOnboard: String? = null) : HAStartDestinationRoute
 
-internal fun NavController.navigateToOnboarding(navOptions: NavOptions? = null) {
-    navigate(OnboardingRoute, navOptions)
+internal fun NavController.navigateToOnboarding(serverToOnboard: String? = null, navOptions: NavOptions? = null) {
+    navigate(OnboardingRoute(serverToOnboard), navOptions)
 }
 
 /**
@@ -49,10 +49,17 @@ internal fun NavGraphBuilder.onboarding(
     navController: NavController,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onOnboardingDone: () -> Unit,
+    serverToOnboard: String?,
 ) {
     navigation<OnboardingRoute>(startDestination = WelcomeRoute) {
         welcomeScreen(
-            onConnectClick = navController::navigateToServerDiscovery,
+            onConnectClick = {
+                if (serverToOnboard != null) {
+                    navController.navigateToConnection(serverToOnboard)
+                } else {
+                    navController.navigateToServerDiscovery()
+                }
+            },
             onLearnMoreClick = {
                 // TODO validate the URL to use
                 navController.navigateToUri("https://www.home-assistant.io")
