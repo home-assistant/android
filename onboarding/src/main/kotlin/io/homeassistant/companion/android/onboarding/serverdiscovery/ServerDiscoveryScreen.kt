@@ -49,6 +49,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,6 +84,7 @@ import io.homeassistant.companion.android.compose.alpha
 import io.homeassistant.companion.android.compose.composable.HATopBar
 import io.homeassistant.companion.android.onboarding.R
 import java.net.URL
+import kotlinx.coroutines.launch
 
 private val ICON_SIZE = 64.dp
 private val MaxContentWidth = MaxButtonWidth
@@ -152,6 +154,8 @@ private fun OneServerFound(
     // the animation is not played correctly.
     var serverDiscoveredCached by remember { mutableStateOf(discoveryState as? ServerDiscovered) }
 
+    val coroutineScope = rememberCoroutineScope()
+
     LaunchedEffect(discoveryState) {
         if (discoveryState is ServerDiscovered) {
             serverDiscoveredCached = discoveryState
@@ -197,7 +201,10 @@ private fun OneServerFound(
                 HAAccentButton(
                     text = stringResource(R.string.server_discovery_connect),
                     onClick = {
-                        onConnectClick(serverDiscovered.url)
+                        coroutineScope.launch {
+                            bottomSheetState.hide()
+                            onConnectClick(serverDiscovered.url)
+                        }
                     },
                     modifier = Modifier.padding(bottom = HASpacing.XL).fillMaxWidth(),
                 )

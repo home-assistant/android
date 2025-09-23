@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.compose.navigateToUri
 import io.homeassistant.companion.android.onboarding.connection.CONNECTION_SCREEN_TAG
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.ManualServerRoute
+import io.homeassistant.companion.android.onboarding.serverdiscovery.DELAY_BEFORE_DISPLAY_DISCOVERY
 import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssistantInstance
 import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssistantSearcher
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDiscoveryModule
@@ -181,7 +182,7 @@ internal class OnboardingNavigationTest {
             verify { any<NavController>().navigateToUri("https://www.home-assistant.io/installation/") }
 
             // Wait for the screen to update based on the instance given in instanceChannel
-            waitUntilAtLeastOneExists(hasText(instanceUrl))
+            waitUntilAtLeastOneExists(hasText(instanceUrl), timeoutMillis = DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds)
 
             onNodeWithText(instanceUrl).assertIsDisplayed()
 
