@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.tiles
 
-import androidx.core.content.ContextCompat
 import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ColorBuilders
 import androidx.wear.protolayout.DimensionBuilders
@@ -12,9 +11,6 @@ import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.protolayout.TimelineBuilders.Timeline
 import androidx.wear.protolayout.material.Button
 import androidx.wear.protolayout.material.ButtonColors
-import androidx.wear.protolayout.material.ChipColors
-import androidx.wear.protolayout.material.Colors
-import androidx.wear.protolayout.material.CompactChip
 import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
@@ -31,7 +27,6 @@ import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.ThermostatTile
-import io.homeassistant.companion.android.home.HomeActivity
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -99,7 +94,8 @@ class ThermostatTile : TileService() {
                             requestParams,
                             commonR.string.thermostat_tile_no_entity_yet,
                             OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE,
-                        )).build()
+                        ),
+                    ).build()
                 } else {
                     try {
                         val entity = tileConfig.entityId?.let {

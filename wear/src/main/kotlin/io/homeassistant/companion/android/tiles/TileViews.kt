@@ -87,7 +87,7 @@ fun primaryLayoutTimeline(
         ContextCompat.getColor(context, android.R.color.white),
     )
     val chipColors = ChipColors.primaryChipColors(theme)
-    val chipAction = ModifiersBuilders.Clickable.Builder()
+    val chipAction = Clickable.Builder()
         .setId("action")
         .setOnClick(action)
         .build()
@@ -150,7 +150,7 @@ fun getRefreshButton(): LayoutElementBuilders.Arc = LayoutElementBuilders.Arc.Bu
 fun getRefreshModifiers(): ModifiersBuilders.Modifiers {
     return ModifiersBuilders.Modifiers.Builder()
         .setClickable(
-            ModifiersBuilders.Clickable.Builder()
+            Clickable.Builder()
                 .setOnClick(
                     ActionBuilders.LoadAction.Builder().build(),
                 )
@@ -165,7 +165,7 @@ fun getNotConfiguredTimeline(
     requestParams: RequestBuilders.TileRequest,
     tileString: Int,
     launchMode: String,
-    ): Timeline {
+): Timeline {
     val theme = Colors(
         ContextCompat.getColor(context, commonR.color.colorPrimary),
         ContextCompat.getColor(context, commonR.color.colorOnPrimary),

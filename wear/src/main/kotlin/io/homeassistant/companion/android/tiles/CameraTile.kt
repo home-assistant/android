@@ -88,7 +88,7 @@ class CameraTile : TileService() {
                                 requestParams,
                                 commonR.string.camera_tile_no_entity_yet,
                                 OpenTileSettingsActivity.CONFIG_CAMERA_TILE,
-                                )
+                            )
                         } else {
                             timeline(
                                 requestParams.deviceConfiguration.screenWidthDp,
