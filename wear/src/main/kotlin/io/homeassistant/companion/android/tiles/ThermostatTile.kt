@@ -93,7 +93,13 @@ class ThermostatTile : TileService() {
                 ).build()
             } else {
                 if (tileConfig?.entityId.isNullOrBlank()) {
-                    tile.setTileTimeline(getNotConfiguredTimeline(requestParams)).build()
+                    tile.setTileTimeline(
+                        getNotConfiguredTimeline(
+                            this@ThermostatTile,
+                            requestParams,
+                            commonR.string.thermostat_tile_no_entity_yet,
+                            OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE,
+                        )).build()
                 } else {
                     try {
                         val entity = tileConfig.entityId?.let {
@@ -332,51 +338,5 @@ class ThermostatTile : TileService() {
                 ),
             )
             .build()
-    }
-
-    private fun getNotConfiguredTimeline(requestParams: RequestBuilders.TileRequest): Timeline {
-        val theme = Colors(
-            ContextCompat.getColor(this@ThermostatTile, commonR.color.colorPrimary),
-            ContextCompat.getColor(this@ThermostatTile, commonR.color.colorOnPrimary),
-            ContextCompat.getColor(this@ThermostatTile, R.color.colorOverlay),
-            ContextCompat.getColor(this@ThermostatTile, android.R.color.white),
-        )
-        val chipColors = ChipColors.primaryChipColors(theme)
-        val notConfiguredTimeline = Timeline.fromLayoutElement(
-            LayoutElementBuilders.Column.Builder()
-                .addContent(
-                    LayoutElementBuilders.Text.Builder()
-                        .setText(getString(commonR.string.thermostat_tile_no_entity_yet))
-                        .setMaxLines(10)
-                        .build(),
-                )
-                .addContent(
-                    LayoutElementBuilders.Spacer.Builder()
-                        .setHeight(DimensionBuilders.dp(10f)).build(),
-                )
-                .addContent(
-                    LayoutElementBuilders.Row.Builder()
-                        .addContent(
-                            CompactChip.Builder(
-                                this@ThermostatTile,
-                                Clickable.Builder()
-                                    .setOnClick(
-                                        HomeActivity.getLaunchAction(
-                                            this@ThermostatTile.packageName,
-                                            requestParams.tileId,
-                                            OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE,
-                                        ),
-                                    )
-                                    .build(),
-                                requestParams.deviceConfiguration,
-                            )
-                                .setTextContent(getString(commonR.string.open_settings))
-                                .setChipColors(chipColors)
-                                .build(),
-                        ).build(),
-                )
-                .build(),
-        )
-        return notConfiguredTimeline
     }
 }
