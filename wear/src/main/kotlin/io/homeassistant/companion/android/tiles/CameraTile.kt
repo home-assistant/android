@@ -83,7 +83,12 @@ class CameraTile : TileService() {
                 .setTileTimeline(
                     if (serverManager.isRegistered()) {
                         if (tileConfig?.entityId.isNullOrBlank()) {
-                            getNotConfiguredTimeline(this@CameraTile, requestParams)
+                            getNotConfiguredTimeline(
+                                this@CameraTile,
+                                requestParams,
+                                commonR.string.camera_tile_no_entity_yet,
+                                OpenTileSettingsActivity.CONFIG_CAMERA_TILE,
+                                )
                         } else {
                             timeline(
                                 requestParams.deviceConfiguration.screenWidthDp,

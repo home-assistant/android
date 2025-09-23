@@ -160,7 +160,12 @@ fun getRefreshModifiers(): ModifiersBuilders.Modifiers {
         .build()
 }
 
-fun getNotConfiguredTimeline(context: Context, requestParams: RequestBuilders.TileRequest): Timeline {
+fun getNotConfiguredTimeline(
+    context: Context,
+    requestParams: RequestBuilders.TileRequest,
+    tileString: Int,
+    launchMode: String,
+    ): Timeline {
     val theme = Colors(
         ContextCompat.getColor(context, commonR.color.colorPrimary),
         ContextCompat.getColor(context, commonR.color.colorOnPrimary),
@@ -172,7 +177,7 @@ fun getNotConfiguredTimeline(context: Context, requestParams: RequestBuilders.Ti
         LayoutElementBuilders.Column.Builder()
             .addContent(
                 LayoutElementBuilders.Text.Builder()
-                    .setText(context.getString(commonR.string.camera_tile_no_entity_yet))
+                    .setText(context.getString(tileString))
                     .setMaxLines(10)
                     .build(),
             )
@@ -190,7 +195,7 @@ fun getNotConfiguredTimeline(context: Context, requestParams: RequestBuilders.Ti
                                     HomeActivity.getLaunchAction(
                                         context.packageName,
                                         requestParams.tileId,
-                                        OpenTileSettingsActivity.CONFIG_CAMERA_TILE,
+                                        launchMode,
                                     ),
                                 )
                                 .build(),
