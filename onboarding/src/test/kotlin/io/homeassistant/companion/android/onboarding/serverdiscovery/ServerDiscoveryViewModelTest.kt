@@ -139,6 +139,41 @@ class ServerDiscoveryViewModelTest {
     }
 
     @Test
+    fun `Given multiple servers discovered multiple times when collecting from discoveryFlow then discoveryFlow emits ServersDiscovered without duplicates and only once`() = runTest {
+        createViewModel()
+        val instance1 = HomeAssistantInstance("Server 1", URL("http://server1.local:8123"), testHAVersion)
+        val instance2 = HomeAssistantInstance("Server 2", URL("http://server2.local:8123"), testHAVersion)
+
+        viewModel.discoveryFlow.test {
+            assertEquals(Started, awaitItem())
+
+            discoveredInstanceFlow.emit(instance1)
+            runCurrent()
+
+            discoveredInstanceFlow.emit(instance2)
+            runCurrent()
+
+            // First item
+            awaitItem()
+
+            advanceTimeBy(DELAY_AFTER_FIRST_DISCOVERY)
+            runCurrent()
+
+            // All the servers
+            awaitItem()
+
+            discoveredInstanceFlow.emit(instance1)
+            runCurrent()
+
+            discoveredInstanceFlow.emit(instance2)
+            runCurrent()
+
+            // Not getting the duplicates
+            expectNoEvents()
+        }
+    }
+
+    @Test
     fun `Given discoveryFlow emitted Started then ServerDiscovered when onDismissOneServerFound is invoked then discoveryFlow emits ServersDiscovered`() = runTest {
         createViewModel()
         val instance = HomeAssistantInstance("Test Server", URL("http://test.local:8123"), testHAVersion)

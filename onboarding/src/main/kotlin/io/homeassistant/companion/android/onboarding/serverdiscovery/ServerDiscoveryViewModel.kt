@@ -110,7 +110,15 @@ internal class ServerDiscoveryViewModel @Inject constructor(private val searcher
 
         _discoveryFlow.update {
             when (it) {
-                is ServersDiscovered -> it.copy(servers = it.servers + serverDiscovered)
+                is ServersDiscovered -> {
+                    // Avoid duplicates if the server was already found
+                    if (it.servers.contains(serverDiscovered)) {
+                        it
+                    } else {
+                        it.copy(servers = it.servers + serverDiscovered)
+                    }
+                }
+
                 is ServerDiscovered -> ServersDiscovered(
                     listOf(
                         it,
