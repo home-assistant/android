@@ -6,7 +6,6 @@ import androidx.navigation.ActivityNavigator
 import androidx.navigation.ActivityNavigatorDestinationBuilder
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import androidx.navigation.get
