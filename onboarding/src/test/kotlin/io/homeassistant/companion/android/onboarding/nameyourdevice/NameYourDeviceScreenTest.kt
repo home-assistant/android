@@ -52,7 +52,7 @@ class NameYourDeviceScreenTest {
             testScreen("", saveClickable = false, deviceNameEditable = true) {
                 onNodeWithText(stringResource(R.string.name_your_device_save)).assertIsNotEnabled()
 
-                onNodeWithContentDescription(stringResource(R.string.name_your_device_clear_name)).assertIsNotDisplayed()
+                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsNotDisplayed()
             }
         }
     }
@@ -71,7 +71,7 @@ class NameYourDeviceScreenTest {
                 onNodeWithTag(DEVICE_NAME_TEXT_FIELD_TAG).assertIsDisplayed().assertIsEnabled().performTextInput("Hello ")
                 assertEquals("Hello Pixel 42", changedName)
 
-                onNodeWithContentDescription(stringResource(R.string.name_your_device_clear_name)).assertIsDisplayed().performClick()
+                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsDisplayed().performClick()
                 assertTrue(changedName?.isEmpty() == true)
             }
         }
@@ -91,7 +91,7 @@ class NameYourDeviceScreenTest {
                 // Set fake data to see if click actually does something. In this test it shouldn't do anything since it is disabled
                 changedName = "dummy data"
 
-                onNodeWithContentDescription(stringResource(R.string.name_your_device_clear_name)).assertIsDisplayed().performClick()
+                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsDisplayed().performClick()
                 assertEquals("dummy data", changedName)
             }
         }

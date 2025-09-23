@@ -20,13 +20,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -164,7 +162,7 @@ private fun DeviceNameTextField(
                 IconButton(onClick = { onDeviceNameChange("") }, enabled = deviceNameEditable) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.name_your_device_clear_name),
+                        contentDescription = stringResource(R.string.clear_text),
                     )
                 }
             }
@@ -181,14 +179,8 @@ private fun DeviceNameTextField(
             },
         ),
         enabled = deviceNameEditable,
-        modifier = modifier
-            .focusRequester(focusRequester)
-            .testTag(DEVICE_NAME_TEXT_FIELD_TAG),
+        modifier = modifier.testTag(DEVICE_NAME_TEXT_FIELD_TAG),
     )
-    // Request focus on the text field when the screen is shown
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
 }
 
 @HAPreviews
@@ -206,6 +198,3 @@ private fun NameYourDeviceScreenPreview() {
         )
     }
 }
-
-// TODO check that we call device registration with the name set
-// TODO write all the tests

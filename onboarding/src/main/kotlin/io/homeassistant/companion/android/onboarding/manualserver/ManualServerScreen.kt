@@ -164,7 +164,7 @@ private fun ServerUrlTextField(
                 IconButton(onClick = { onServerUrlChange("") }) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.manual_server_clear_url),
+                        contentDescription = stringResource(R.string.clear_text),
                     )
                 }
             }

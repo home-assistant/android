@@ -110,7 +110,6 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
     }
 
     private fun isValidName(name: String): Boolean {
-        // TODO ?
         return name.isNotEmpty()
     }
 

@@ -56,7 +56,7 @@ class ManualServerScreenTest {
                 onNodeWithText(stringResource(R.string.manual_server_wrong_url)).assertIsNotDisplayed()
 
                 onNodeWithText("http://homeassistant.local:8123").assertIsDisplayed()
-                onNodeWithContentDescription(stringResource(R.string.manual_server_clear_url)).assertIsNotDisplayed()
+                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsNotDisplayed()
             }
         }
     }
@@ -73,7 +73,7 @@ class ManualServerScreenTest {
                 onNodeWithText(stringResource(R.string.manual_server_wrong_url)).assertIsDisplayed()
 
                 onNodeWithText(invalidUrl).assertIsDisplayed()
-                onNodeWithContentDescription(stringResource(R.string.manual_server_clear_url)).assertIsDisplayed().performClick()
+                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsDisplayed().performClick()
                 assertEquals("", changedUrl)
             }
         }
@@ -115,7 +115,7 @@ class ManualServerScreenTest {
                 onNodeWithText(validUrl).assertIsDisplayed().performTextInput("hello")
                 assertEquals("hellohttp://openhomefoundation.org", changedUrl)
 
-                onNodeWithContentDescription(stringResource(R.string.manual_server_clear_url)).assertIsDisplayed().performClick()
+                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsDisplayed().performClick()
                 assertEquals("", changedUrl)
             }
         }
