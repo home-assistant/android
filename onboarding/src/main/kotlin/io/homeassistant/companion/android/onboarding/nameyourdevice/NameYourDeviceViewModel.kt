@@ -73,9 +73,9 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
 
     private val _isValidNameFlow = MutableStateFlow(isValidName(deviceNameFlow.value))
     val isValidNameFlow = _isValidNameFlow.asStateFlow()
-    private val _isSaving = MutableStateFlow(false)
-    val isSaving = _isSaving.asStateFlow()
-    val isSaveClickable = combine(isSaving, isValidNameFlow) { isSaving, isValidName ->
+    private val _isSavingFlow = MutableStateFlow(false)
+    val isSavingFlow = _isSavingFlow.asStateFlow()
+    val isSaveClickableFlow = combine(isSavingFlow, isValidNameFlow) { isSaving, isValidName ->
         !isSaving && isValidName
     }
 
@@ -87,7 +87,7 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
     fun onSaveClick() {
         viewModelScope.launch {
             try {
-                _isSaving.emit(true)
+                _isSavingFlow.emit(true)
                 val serverId = addServer()
                 _navigationEventsFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved(serverId))
             } catch (e: Exception) {
@@ -100,7 +100,7 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
                 }
                 _navigationEventsFlow.emit(NameYourDeviceNavigationEvent.Error(messageRes))
             } finally {
-                _isSaving.emit(false)
+                _isSavingFlow.emit(false)
             }
         }
     }

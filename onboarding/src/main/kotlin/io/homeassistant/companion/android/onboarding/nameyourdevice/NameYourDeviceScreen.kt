@@ -49,8 +49,8 @@ internal fun NameYourDeviceScreen(
     modifier: Modifier = Modifier,
 ) {
     val deviceName by viewModel.deviceNameFlow.collectAsStateWithLifecycle()
-    val saveClickable by viewModel.isSaveClickable.collectAsStateWithLifecycle(false)
-    val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
+    val saveClickable by viewModel.isSaveClickableFlow.collectAsStateWithLifecycle(false)
+    val isSaving by viewModel.isSavingFlow.collectAsStateWithLifecycle()
 
     NameYourDeviceScreen(
         onBackClick = onBackClick,

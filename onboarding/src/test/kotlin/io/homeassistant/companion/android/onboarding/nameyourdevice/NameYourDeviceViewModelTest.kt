@@ -83,8 +83,8 @@ class NameYourDeviceViewModelTest {
     }
 
     @Test
-    fun `Given viewModelInitialized when isSaveClickable then emits true`() = runTest {
-        viewModel.isSaveClickable.test {
+    fun `Given viewModelInitialized when isSaveClickableFlow then emits true`() = runTest {
+        viewModel.isSaveClickableFlow.test {
             assertTrue(awaitItem())
         }
     }
@@ -350,8 +350,8 @@ class NameYourDeviceViewModelTest {
     }
 
     @Test
-    fun `Given adding server when onSaveClick then isSaving flow is properly updated`() = runTest {
-        viewModel.isSaving.test {
+    fun `Given adding server when onSaveClick then isSavingFlow is properly updated`() = runTest {
+        viewModel.isSavingFlow.test {
             assertFalse(awaitItem())
             coEvery { serverManager.addServer(any()) } coAnswers {
                 assertTrue(awaitItem())
@@ -364,8 +364,8 @@ class NameYourDeviceViewModelTest {
     }
 
     @Test
-    fun `Given currently saving when isSaveClickable collecting then isSaveClickable is updating accordingly`() = runTest {
-        viewModel.isSaveClickable.test {
+    fun `Given currently saving when isSaveClickableFlow collecting then isSaveClickable is updating accordingly`() = runTest {
+        viewModel.isSaveClickableFlow.test {
             assertTrue(awaitItem())
             coEvery { serverManager.addServer(any()) } coAnswers {
                 assertFalse(awaitItem())
@@ -379,8 +379,8 @@ class NameYourDeviceViewModelTest {
     }
 
     @Test
-    fun `Given updating device name when isSaveClickable collecting then isSaveClickable is updating according to isValidDeviceName`() = runTest {
-        viewModel.isSaveClickable.test {
+    fun `Given updating device name when isSaveClickableFlow collecting then isSaveClickable is updating according to isValidDeviceName`() = runTest {
+        viewModel.isSaveClickableFlow.test {
             assertTrue(awaitItem())
 
             viewModel.onDeviceNameChange("")
