@@ -6,6 +6,8 @@ import androidx.navigation.NavOptions
 import androidx.navigation.navigation
 import io.homeassistant.companion.android.HAStartDestinationRoute
 import io.homeassistant.companion.android.compose.navigateToUri
+import io.homeassistant.companion.android.onboarding.manualserver.navigation.manualServerScreen
+import io.homeassistant.companion.android.onboarding.manualserver.navigation.navigateToManualServer
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.serverDiscoveryScreen
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
@@ -33,6 +35,7 @@ internal fun NavGraphBuilder.onboarding(
         welcomeScreen(
             onConnectClick = navController::navigateToServerDiscovery,
             onLearnMoreClick = {
+                // TODO validate the URL to use
                 navController.navigateToUri("https://www.home-assistant.io")
             },
         )
@@ -41,10 +44,21 @@ internal fun NavGraphBuilder.onboarding(
                 // TODO navigate to connection with URL
             },
             onBackClick = navController::popBackStack,
+            onManualSetupClick = navController::navigateToManualServer,
             onHelpClick = {
+                // TODO validate the URL to use
                 navController.navigateToUri("https://www.home-assistant.io/installation/")
             },
-            onManualSetupClick = {}, // TODO navigate to manual setup
+        )
+        manualServerScreen(
+            onBackClick = navController::popBackStack,
+            onConnectTo = {
+                // TODO navigate to connection with URL
+            },
+            onHelpClick = {
+                // TODO validate the URL to use
+                navController.navigateToUri("https://www.home-assistant.io/installation/")
+            },
         )
     }
 }

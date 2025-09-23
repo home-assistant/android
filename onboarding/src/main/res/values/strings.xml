@@ -8,4 +8,8 @@
     <string name="welcome_details">Access your Home\u00A0Assistant server on the go using this app.\n\nHome\u00A0Assistant is open source, advocates for privacy and runs locally in your home.</string>
     <string name="welcome_connect_to_ha">Connect to my Home\u00A0Assistant server</string>
     <string name="welcome_learn_more">Learn more</string>
+    <string name="manual_server_title">What is your Home\u00A0Assistant address?</string>
+    <string name="manual_server_connect">Connect</string>
+    <string name="manual_server_clear_url">Clear server url</string>
+    <string name="manual_server_wrong_url">Invalid Home\u00A0Assistant address</string>
 </resources>

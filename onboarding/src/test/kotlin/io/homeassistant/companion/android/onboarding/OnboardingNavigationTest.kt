@@ -18,7 +18,9 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.compose.navigateToUri
+import io.homeassistant.companion.android.onboarding.manualserver.navigation.ManualServerRoute
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
+import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.mockk.Runs
@@ -88,6 +90,23 @@ class OnboardingNavigationTest {
 
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).assertIsDisplayed().performClick()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given clicking enter manual address button when discovering server then show ManualServer then back goes to ServerDiscovery`() {
+        composeTestRule.apply {
+            navController.navigateToServerDiscovery()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
+            onNodeWithText(stringResource(commonR.string.manual_setup)).assertIsDisplayed().performClick()
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
+
+            onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
+            verify { any<NavController>().navigateToUri("https://www.home-assistant.io/installation/") }
+
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).assertIsDisplayed().performClick()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
         }
     }
 }
