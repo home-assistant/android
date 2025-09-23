@@ -5,10 +5,12 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
+import io.homeassistant.companion.android.compose.composable.HA_WEBVIEW_TAG
 import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.stringResource
@@ -38,16 +40,34 @@ class ConnectionScreenTest {
     }
 
     @Test
+    fun `Given ConnectionScreen when url is null then webview is not displayed`() {
+        composeTestRule.apply {
+            setContent {
+                ConnectionScreen(
+                    onBackClick = {},
+                    isLoading = false,
+                    isError = false,
+                    url = null,
+                    webViewClient = WebViewClient(),
+                )
+            }
+            onNodeWithTag(HA_WEBVIEW_TAG).assertIsNotDisplayed()
+        }
+    }
+
+    @Test
     fun `Given ConnectionScreen when isLoading then show loading`() {
         composeTestRule.apply {
             setContent {
                 ConnectionScreen(
                     onBackClick = {},
                     isLoading = true,
+                    isError = false,
                     url = "",
                     webViewClient = WebViewClient(),
                 )
             }
+            onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
             onNodeWithContentDescription(stringResource(R.string.loading_content_description)).assertIsDisplayed()
         }
     }
@@ -59,10 +79,30 @@ class ConnectionScreenTest {
                 ConnectionScreen(
                     onBackClick = {},
                     isLoading = false,
+                    isError = false,
                     url = "",
                     webViewClient = WebViewClient(),
                 )
             }
+            onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
+            onNodeWithContentDescription(stringResource(R.string.loading_content_description)).assertIsNotDisplayed()
+        }
+    }
+
+    @Test
+    fun `Given ConnectionScreen when isError is true then don't show webview and show placeholder`() {
+        composeTestRule.apply {
+            setContent {
+                ConnectionScreen(
+                    onBackClick = {},
+                    isLoading = false,
+                    isError = true,
+                    url = "",
+                    webViewClient = WebViewClient(),
+                )
+            }
+            onNodeWithTag(HA_WEBVIEW_TAG).assertIsNotDisplayed()
+            onNodeWithTag(CONNECTION_SCREEN_ERROR_PLACEHOLDER_TAG).assertIsDisplayed()
             onNodeWithContentDescription(stringResource(R.string.loading_content_description)).assertIsNotDisplayed()
         }
     }
@@ -77,6 +117,7 @@ class ConnectionScreenTest {
                         backPressed = true
                     },
                     isLoading = false,
+                    isError = false,
                     url = "",
                     webViewClient = WebViewClient(),
                 )

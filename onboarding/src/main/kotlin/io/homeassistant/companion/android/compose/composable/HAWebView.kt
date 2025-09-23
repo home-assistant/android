@@ -6,17 +6,21 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.FrameLayout
 import androidx.activity.compose.BackHandler
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.viewinterop.AndroidView
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import timber.log.Timber
 
 // TODO remove this in favor of the one in the :app (or move WebView in common but it means having webview library on the wear module)
+
+@VisibleForTesting const val HA_WEBVIEW_TAG = "ha_web_view_tag"
 
 @Composable
 fun HAWebView(
@@ -41,7 +45,7 @@ fun HAWebView(
                 configure(this)
             }
         },
-        modifier = modifier,
+        modifier = modifier.testTag(HA_WEBVIEW_TAG),
     )
 
     // TODO do this in :app

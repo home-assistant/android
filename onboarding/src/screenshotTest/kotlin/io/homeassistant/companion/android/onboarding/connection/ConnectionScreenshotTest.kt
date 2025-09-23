@@ -16,6 +16,7 @@ class ConnectionScreenshotTest {
             ConnectionScreen(
                 url = "https://www.example.com",
                 isLoading = true,
+                isError = false,
                 webViewClient = WebViewClient(),
                 onBackClick = {},
             )
@@ -30,6 +31,22 @@ class ConnectionScreenshotTest {
             ConnectionScreen(
                 url = "https://www.example.com",
                 isLoading = false,
+                isError = false,
+                webViewClient = WebViewClient(),
+                onBackClick = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `ConnectionScreen error`() {
+        HAThemeForPreview {
+            ConnectionScreen(
+                url = "https://www.example.com",
+                isLoading = false,
+                isError = true,
                 webViewClient = WebViewClient(),
                 onBackClick = {},
             )
