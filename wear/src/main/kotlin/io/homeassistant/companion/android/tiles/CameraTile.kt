@@ -2,19 +2,14 @@ package io.homeassistant.companion.android.tiles
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import androidx.core.content.ContextCompat
 import androidx.wear.protolayout.DimensionBuilders
 import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.LayoutElementBuilders.CONTENT_SCALE_MODE_FIT
-import androidx.wear.protolayout.ModifiersBuilders.Clickable
 import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.ResourceBuilders.ImageResource
 import androidx.wear.protolayout.ResourceBuilders.InlineImageResource
 import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.protolayout.TimelineBuilders.Timeline
-import androidx.wear.protolayout.material.ChipColors
-import androidx.wear.protolayout.material.Colors
-import androidx.wear.protolayout.material.CompactChip
 import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.TileBuilders.Tile
@@ -27,7 +22,6 @@ import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.CameraTile
-import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.util.UrlUtil
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeUnit
@@ -89,7 +83,7 @@ class CameraTile : TileService() {
                 .setTileTimeline(
                     if (serverManager.isRegistered()) {
                         if (tileConfig?.entityId.isNullOrBlank()) {
-                            getNotConfiguredTimeline(requestParams)
+                            getNotConfiguredTimeline(this@CameraTile, requestParams)
                         } else {
                             timeline(
                                 requestParams.deviceConfiguration.screenWidthDp,
@@ -265,50 +259,4 @@ class CameraTile : TileService() {
             setModifiers(getRefreshModifiers())
         }.build(),
     )
-
-    private fun getNotConfiguredTimeline(requestParams: RequestBuilders.TileRequest): Timeline {
-        val theme = Colors(
-            ContextCompat.getColor(this@CameraTile, commonR.color.colorPrimary),
-            ContextCompat.getColor(this@CameraTile, commonR.color.colorOnPrimary),
-            ContextCompat.getColor(this@CameraTile, R.color.colorOverlay),
-            ContextCompat.getColor(this@CameraTile, android.R.color.white),
-        )
-        val chipColors = ChipColors.primaryChipColors(theme)
-        val notConfiguredTimeline = Timeline.fromLayoutElement(
-            LayoutElementBuilders.Column.Builder()
-                .addContent(
-                    LayoutElementBuilders.Text.Builder()
-                        .setText(getString(commonR.string.camera_tile_no_entity_yet))
-                        .setMaxLines(10)
-                        .build(),
-                )
-                .addContent(
-                    LayoutElementBuilders.Spacer.Builder()
-                        .setHeight(DimensionBuilders.dp(10f)).build(),
-                )
-                .addContent(
-                    LayoutElementBuilders.Row.Builder()
-                        .addContent(
-                            CompactChip.Builder(
-                                this@CameraTile,
-                                Clickable.Builder()
-                                    .setOnClick(
-                                        HomeActivity.getLaunchAction(
-                                            this@CameraTile.packageName,
-                                            requestParams.tileId,
-                                            OpenTileSettingsActivity.CONFIG_CAMERA_TILE,
-                                        ),
-                                    )
-                                    .build(),
-                                requestParams.deviceConfiguration,
-                            )
-                                .setTextContent(getString(commonR.string.open_settings))
-                                .setChipColors(chipColors)
-                                .build(),
-                        ).build(),
-                )
-                .build(),
-        )
-        return notConfiguredTimeline
-    }
 }
