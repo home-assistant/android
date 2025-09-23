@@ -153,8 +153,8 @@ class LocationForSecureConnectionScreenTest {
 
             onNodeWithText(stringResource(R.string.location_secure_connection_title)).assertIsDisplayed()
             onNodeWithText(stringResource(R.string.location_secure_connection_content)).assertIsDisplayed()
-            onNodeWithText(stringResource(R.string.location_secure_connection_most_secure)).assertIsDisplayed()
-            onNodeWithText(stringResource(R.string.location_secure_connection_less_secure)).assertIsDisplayed()
+            onNodeWithText(stringResource(R.string.location_secure_connection_most_secure)).performScrollTo().assertIsDisplayed()
+            onNodeWithText(stringResource(R.string.location_secure_connection_less_secure)).performScrollTo().assertIsDisplayed()
             onNodeWithText(stringResource(R.string.location_secure_connection_hint)).performScrollTo().assertIsDisplayed()
 
             block()
