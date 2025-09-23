@@ -109,6 +109,8 @@ internal class OnboardingNavigationTest {
         }
         every { deviceNameFlow } returns MutableStateFlow("Test")
         every { isValidNameFlow } returns MutableStateFlow(true)
+        every { isSaveClickableFlow } returns MutableStateFlow(true)
+        every { isSavingFlow } returns MutableStateFlow(false)
     }
 
     private val instanceChannel = Channel<HomeAssistantInstance>()
@@ -274,7 +276,7 @@ internal class OnboardingNavigationTest {
             navController.navigateToNameYourDevice(instanceUrl, "code")
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
 
-            onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().performClick()
+            onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
 
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
