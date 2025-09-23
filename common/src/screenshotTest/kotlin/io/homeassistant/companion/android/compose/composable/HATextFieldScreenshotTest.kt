@@ -70,9 +70,23 @@ class HATextFieldScreenshotTest {
         }
     }
 
+    @PreviewLightDark
+    @PreviewTest
+    @Composable
+    fun `HATextField disabled`() {
+        HAThemeForPreview {
+            Column {
+                HATextFieldForTest("Hello", label = "Label", enabled = false)
+                HATextFieldForTest("Hello", errorText = "Error without label", enabled = false)
+                HATextFieldForTest("", placeholder = "Placeholder", enabled = false)
+            }
+        }
+    }
+
     @Composable
     private fun HATextFieldForTest(
         value: String,
+        enabled: Boolean = true,
         label: String? = null,
         placeholder: String? = null,
         errorText: String? = null,
@@ -80,6 +94,7 @@ class HATextFieldScreenshotTest {
         HATextField(
             // For some reason in test we need to fix the height and to avoid weird cut we fix it to a big value
             modifier = Modifier.height(120.dp),
+            enabled = enabled,
             value = value,
             onValueChange = {},
             label = label?.let { { Text(label) } },
