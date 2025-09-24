@@ -118,7 +118,7 @@ internal class OnboardingNavigationTest {
         val nameYourDeviceNavigationFlow = MutableSharedFlow<NameYourDeviceNavigationEvent>()
         every { navigationEventsFlow } returns nameYourDeviceNavigationFlow
         every { onSaveClick() } coAnswers {
-            nameYourDeviceNavigationFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved(42))
+            nameYourDeviceNavigationFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved(42, false))
         }
         every { deviceNameFlow } returns MutableStateFlow("Test")
         every { isValidNameFlow } returns MutableStateFlow(true)
@@ -313,7 +313,7 @@ internal class OnboardingNavigationTest {
     @Test
     fun `Given LocalFirst when pressing next then show LocationSharing then goes back stop the app`() {
         composeTestRule.apply {
-            navController.navigateToLocalFirst(42)
+            navController.navigateToLocalFirst(42, true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
             onNodeWithText(stringResource(R.string.local_first_next)).performScrollTo().performClick()
 
@@ -327,9 +327,9 @@ internal class OnboardingNavigationTest {
     }
 
     @Test
-    fun `Given LocationSharing when agreeing to share then onboarding is done`() {
+    fun `Given LocationSharing when agreeing with plain text access to share then onboarding is done`() {
         composeTestRule.apply {
-            navController.navigateToLocationSharing(42)
+            navController.navigateToLocationSharing(42, true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
 
             mockkStatic(ContextCompat::class)
@@ -342,9 +342,24 @@ internal class OnboardingNavigationTest {
     }
 
     @Test
-    fun `Given LocationSharing when denying to share then goes to LocationForSecureConnection then goes back stop the app`() {
+    fun `Given LocationSharing when agreeing without plain text access to share then onboarding is done`() {
         composeTestRule.apply {
-            navController.navigateToLocationSharing(42)
+            navController.navigateToLocationSharing(42, false)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
+
+            mockkStatic(ContextCompat::class)
+            every { ContextCompat.checkSelfPermission(any(), any()) } returns PackageManager.PERMISSION_GRANTED
+
+            onNodeWithText(stringResource(R.string.location_sharing_share)).performScrollTo().performClick()
+
+            assertTrue(onboardingDone)
+        }
+    }
+
+    @Test
+    fun `Given LocationSharing when denying to share with plain text access then goes to LocationForSecureConnection then goes back stop the app`() {
+        composeTestRule.apply {
+            navController.navigateToLocationSharing(42, true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
 
             mockkStatic(ContextCompat::class)
@@ -358,6 +373,20 @@ internal class OnboardingNavigationTest {
 
             // In the test scenario since we never opened NameYourDevice the stack still contains Welcome
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given LocationSharing when denying to share without plain text access then onboarding is done`() {
+        composeTestRule.apply {
+            navController.navigateToLocationSharing(42, false)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
+
+            mockkStatic(ContextCompat::class)
+            every { ContextCompat.checkSelfPermission(any(), any()) } returns PackageManager.PERMISSION_DENIED
+
+            onNodeWithText(stringResource(R.string.location_sharing_no_share)).performScrollTo().performClick()
+            assertTrue(onboardingDone)
         }
     }
 

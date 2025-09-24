@@ -10,18 +10,26 @@ import io.homeassistant.companion.android.onboarding.locationsharing.LocationSha
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data class LocationSharingRoute(val serverId: Int)
+internal data class LocationSharingRoute(val serverId: Int, val hasPlainTextAccess: Boolean)
 
-internal fun NavController.navigateToLocationSharing(serverId: Int, navOptions: NavOptions? = null) {
-    navigate(LocationSharingRoute(serverId), navOptions = navOptions)
+internal fun NavController.navigateToLocationSharing(
+    serverId: Int,
+    hasPlainTextAccess: Boolean,
+    navOptions: NavOptions? = null,
+) {
+    navigate(LocationSharingRoute(serverId, hasPlainTextAccess), navOptions = navOptions)
 }
 
-internal fun NavGraphBuilder.locationSharingScreen(onHelpClick: () -> Unit, onGotoNextScreen: (serverId: Int) -> Unit) {
+internal fun NavGraphBuilder.locationSharingScreen(
+    onHelpClick: () -> Unit,
+    onGotoNextScreen: (serverId: Int, hasPlainTextAccess: Boolean) -> Unit,
+) {
     composable<LocationSharingRoute> {
         LocationSharingScreen(
             onHelpClick = onHelpClick,
             onGoToNextScreen = {
-                onGotoNextScreen(it.toRoute<LocationSharingRoute>().serverId)
+                val route = it.toRoute<LocationSharingRoute>()
+                onGotoNextScreen(route.serverId, route.hasPlainTextAccess)
             },
             viewModel = hiltViewModel(),
         )
