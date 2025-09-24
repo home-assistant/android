@@ -17,6 +17,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.testing.TestNavHostController
+import androidx.navigation.toRoute
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -27,7 +28,10 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.compose.navigateToUri
 import io.homeassistant.companion.android.onboarding.connection.CONNECTION_SCREEN_TAG
+import io.homeassistant.companion.android.onboarding.connection.ConnectionNavigationEvent
+import io.homeassistant.companion.android.onboarding.connection.ConnectionViewModel
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.ManualServerRoute
+import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.NameYourDeviceRoute
 import io.homeassistant.companion.android.onboarding.serverdiscovery.DELAY_BEFORE_DISPLAY_DISCOVERY
 import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssistantInstance
 import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssistantSearcher
@@ -40,16 +44,21 @@ import io.homeassistant.companion.android.testing.unit.stringResource
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
+import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.verify
 import java.net.URL
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -73,6 +82,16 @@ internal class OnboardingNavigationTest {
         override fun discoveredInstanceFlow(): Flow<HomeAssistantInstance> {
             return instanceChannel.consumeAsFlow()
         }
+    }
+
+    private val connectionNavigationEventFlow = MutableSharedFlow<ConnectionNavigationEvent>()
+
+    @BindValue
+    @JvmField
+    val connectionViewModel: ConnectionViewModel = mockk(relaxed = true) {
+        every { urlFlow } returns MutableStateFlow("http://homeassistant.local:8123")
+        every { isLoadingFlow } returns MutableStateFlow(false)
+        every { navigationEventsFlow } returns connectionNavigationEventFlow
     }
 
     private val instanceChannel = Channel<HomeAssistantInstance>()
@@ -189,6 +208,41 @@ internal class OnboardingNavigationTest {
             onNodeWithText(stringResource(R.string.server_discovery_connect)).performClick()
 
             onNodeWithTag(CONNECTION_SCREEN_TAG).assertIsDisplayed()
+
+            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
+        }
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun `Given a server discovered and connecting when authenticated then show NameYourDevice then back goes to ServerDiscovery not ConnectionScreen`() = runTest {
+        val instanceUrl = "http://ha.local"
+        composeTestRule.apply {
+            navController.navigateToServerDiscovery()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
+            onNodeWithText(stringResource(commonR.string.manual_setup)).assertIsDisplayed()
+
+            instanceChannel.trySend(HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)))
+
+            // Wait for the screen to update based on the instance given in instanceChannel
+            waitUntilAtLeastOneExists(hasText(instanceUrl))
+
+            onNodeWithText(instanceUrl).assertIsDisplayed()
+
+            onNodeWithText(stringResource(R.string.server_discovery_connect)).performClick()
+
+            onNodeWithTag(CONNECTION_SCREEN_TAG).assertIsDisplayed()
+
+            assertTrue(connectionNavigationEventFlow.subscriptionCount.value == 1)
+            connectionNavigationEventFlow.emit(ConnectionNavigationEvent.Authenticated(instanceUrl, "super_code"))
+
+            waitUntilAtLeastOneExists(hasText(stringResource(R.string.name_your_device_title)))
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
+            val route = navController.currentBackStackEntry?.toRoute<NameYourDeviceRoute>()
+            assertEquals(instanceUrl, route?.url)
+            assertEquals("super_code", route?.authCode)
 
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
 

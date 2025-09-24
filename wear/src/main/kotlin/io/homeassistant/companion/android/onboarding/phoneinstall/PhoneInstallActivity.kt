@@ -2,10 +2,10 @@ package io.homeassistant.companion.android.onboarding.phoneinstall
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import androidx.wear.activity.ConfirmationActivity
 import androidx.wear.remote.interactions.RemoteActivityHelper
@@ -55,7 +55,7 @@ class PhoneInstallActivity : AppCompatActivity() {
                     Intent(Intent.ACTION_VIEW).apply {
                         addCategory(Intent.CATEGORY_DEFAULT)
                         addCategory(Intent.CATEGORY_BROWSABLE)
-                        data = Uri.parse("https://play.google.com/store/apps/details?id=${BuildConfig.APPLICATION_ID}")
+                        data = "https://play.google.com/store/apps/details?id=${BuildConfig.APPLICATION_ID}".toUri()
                     },
                     // A Wear device only has one companion device so this is not needed
                     null,
