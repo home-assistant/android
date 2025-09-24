@@ -1,10 +1,16 @@
 package io.homeassistant.companion.android.compose
 
+import android.content.pm.PackageManager
+import androidx.activity.compose.LocalActivity
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.navigation.ActivityNavigator
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -16,15 +22,19 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HAStartDestinationRoute
 import io.homeassistant.companion.android.HiltComponentActivity
+import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendActivityRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.R
+import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.navigateToLocationForSecureConnection
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.stringResource
+import io.mockk.every
 import io.mockk.spyk
 import io.mockk.verify
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -56,24 +66,31 @@ class HAAppTest {
 
     lateinit var activityNavigator: ActivityNavigator
 
-    private fun setApp(startDestination: HAStartDestinationRoute?) {
+    private fun testApp(startDestination: HAStartDestinationRoute?, isAutomotive: Boolean = false, testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit) {
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
             activityNavigator = spyk(ActivityNavigator(composeTestRule.activity))
             navController.navigatorProvider.addNavigator(ComposeNavigator())
             navController.navigatorProvider.addNavigator(activityNavigator)
 
-            HAApp(
-                navController = navController,
-                startDestination = startDestination,
-            )
+            val spyActivity = spyk(composeTestRule.activity)
+            val spyPackageManager = spyk(composeTestRule.activity.packageManager)
+            every { spyActivity.packageManager } returns spyPackageManager
+            every { spyPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) } returns isAutomotive
+
+            CompositionLocalProvider(LocalActivity provides spyActivity) {
+                HAApp(
+                    navController = navController,
+                    startDestination = startDestination,
+                )
+            }
         }
+        runTest { composeTestRule.testContent() }
     }
 
     @Test
     fun `Given HAApp when no start destination then show loading`() {
-        setApp(null)
-        composeTestRule.apply {
+        testApp(null) {
             assertNull(navController.currentBackStackEntry)
             onNodeWithContentDescription(stringResource(R.string.loading_content_description)).assertIsDisplayed()
         }
@@ -81,8 +98,7 @@ class HAAppTest {
 
     @Test
     fun `Given HAApp when navigate to Welcome then show Welcome`() {
-        setApp(OnboardingRoute())
-        composeTestRule.apply {
+        testApp(OnboardingRoute()) {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
             onNodeWithText(stringResource(R.string.welcome_home_assistant_title)).assertIsDisplayed()
             onNodeWithText(stringResource(R.string.welcome_details)).assertIsDisplayed()
@@ -94,8 +110,7 @@ class HAAppTest {
 
     @Test
     fun `Given HAApp when navigate to Frontend then navigate to FrontEndActivity and finish current activity`() {
-        setApp(FrontendRoute())
-        composeTestRule.apply {
+        testApp(FrontendRoute()) {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
             verify(exactly = 1) {
                 activityNavigator.navigate(
@@ -109,6 +124,39 @@ class HAAppTest {
             }
             // TODO remove this once we are using WebViewActivity anymore
             assertTrue(activity.isFinishing)
+        }
+    }
+
+    @Test
+    fun `Given onboarding done then navigate to FrontEnd`() {
+        testApp(OnboardingRoute()) {
+            navController.navigateToLocationForSecureConnection(42)
+
+            onNodeWithText(stringResource(R.string.location_secure_connection_less_secure)).performScrollTo().performClick()
+            onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().assertIsEnabled().assertIsDisplayed().performClick()
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given onboarding done on automotive then navigate to Automotive screen`() {
+        testApp(OnboardingRoute(), isAutomotive = true) {
+            navController.navigateToLocationForSecureConnection(42)
+
+            onNodeWithText(stringResource(R.string.location_secure_connection_less_secure)).performScrollTo().performClick()
+            onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().assertIsEnabled().assertIsDisplayed().performClick()
+
+            verify(exactly = 1) {
+                activityNavigator.navigate(
+                    match {
+                        it.route == AutomotiveRoute.serializer().descriptor.serialName
+                    },
+                    any<SavedState>(),
+                    any(),
+                    any(),
+                )
+            }
         }
     }
 }
