@@ -95,7 +95,6 @@ internal fun NavGraphBuilder.onboarding(
                     navOptions {
                         // We don't want to come back to name your device once the device
                         // is named since the auth_code has already been used.
-                        // TODO might be an issue when using deeplink since WelcomeRoute might not be in the back stack entries
                         popUpTo<WelcomeRoute> {
                             inclusive = true
                         }

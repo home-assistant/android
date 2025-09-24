@@ -38,7 +38,7 @@ class LocalFirstScreenTest {
     }
 
     @Test
-    fun `Given empty screen when interacting with it then invoke proper callback`() {
+    fun `Given empty screen when clicking next then it invokes onNextClick`() {
         composeTestRule.apply {
             var nextClicked = false
             setContent {
