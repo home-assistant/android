@@ -100,10 +100,11 @@ internal fun NavGraphBuilder.onboarding(
         )
         nameYourDeviceScreen(
             onBackClick = navController::popBackStack,
-            onDeviceNamed = { serverId ->
+            onDeviceNamed = { serverId, hasPlainTextAccess ->
                 // TODO if external URL or cloud URL available go to Location otherwise go to local first
                 navController.navigateToLocalFirst(
                     serverId = serverId,
+                    hasPlainTextAccess = hasPlainTextAccess,
                     navOptions {
                         // We don't want to come back to name your device once the device
                         // is named since the auth_code has already been used.
@@ -120,9 +121,10 @@ internal fun NavGraphBuilder.onboarding(
             },
         )
         localFirstScreen(
-            onNextClick = { serverId ->
+            onNextClick = { serverId, hasPlainTextAccess ->
                 navController.navigateToLocationSharing(
                     serverId = serverId,
+                    hasPlainTextAccess = hasPlainTextAccess,
                     navOptions {
                         popUpTo<LocalFirstRoute> { inclusive = true }
                     },
@@ -135,13 +137,13 @@ internal fun NavGraphBuilder.onboarding(
                 // TODO validate the URL to use
                 navController.navigateToUri("https://www.home-assistant.io/installation/")
             },
-            onGotoNextScreen = { serverId ->
+            onGotoNextScreen = { serverId, hasPlainTextAccess ->
                 val context = navController.context
                 val shouldAskPermission = locationPermissions.fastAny {
                     ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_DENIED
                 }
 
-                if (shouldAskPermission) {
+                if (shouldAskPermission && hasPlainTextAccess) {
                     navController.navigateToLocationForSecureConnection(
                         serverId = serverId,
                         navOptions {
@@ -164,6 +166,7 @@ internal fun NavGraphBuilder.onboarding(
                 onOnboardingDone()
             },
             onShowSnackbar = onShowSnackbar,
+            // We don't have back button since after name your device the device is registered
         )
 
         // TODO ask for background permission (using the next extension) on the dashboard with the notification permission

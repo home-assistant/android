@@ -23,7 +23,7 @@ internal fun NavController.navigateToNameYourDevice(url: String, authCode: Strin
 
 internal fun NavGraphBuilder.nameYourDeviceScreen(
     onBackClick: () -> Unit,
-    onDeviceNamed: (serverId: Int) -> Unit,
+    onDeviceNamed: (serverId: Int, hasPlainTextAccess: Boolean) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onHelpClick: () -> Unit,
 ) {
@@ -49,7 +49,7 @@ internal fun NavGraphBuilder.nameYourDeviceScreen(
 @VisibleForTesting
 internal fun HandleNameYourDeviceNavigationEvents(
     viewModel: NameYourDeviceViewModel,
-    onDeviceNamed: (serverId: Int) -> Unit,
+    onDeviceNamed: (serverId: Int, hasPlainTextAccess: Boolean) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onBackClick: () -> Unit,
 ) {
@@ -58,7 +58,7 @@ internal fun HandleNameYourDeviceNavigationEvents(
     LaunchedEffect(viewModel) {
         viewModel.navigationEventsFlow.collect {
             when (it) {
-                is NameYourDeviceNavigationEvent.DeviceNameSaved -> onDeviceNamed(it.serverId)
+                is NameYourDeviceNavigationEvent.DeviceNameSaved -> onDeviceNamed(it.serverId, it.hasPlainTextAccess)
                 is NameYourDeviceNavigationEvent.Error -> {
                     onShowSnackbar(context.getString(it.messageRes), null)
                     onBackClick()

@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.onboarding.locationsharing
 
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
@@ -23,11 +21,7 @@ import timber.log.Timber
 class LocationSharingViewModelTest {
     private val serverId = 42
     private val sensorDao: SensorDao = mockk(relaxUnitFun = true)
-    private val integrationRepository: IntegrationRepository = mockk()
 
-    private val serverManager: ServerManager = mockk {
-        coEvery { integrationRepository(serverId) } returns integrationRepository
-    }
     private lateinit var viewModel: LocationSharingViewModel
 
     private val locationSensorIds = listOf(
@@ -44,7 +38,6 @@ class LocationSharingViewModelTest {
         viewModel = LocationSharingViewModel(
             serverId = serverId,
             sensorDao = sensorDao,
-            serverManager = serverManager,
         )
     }
 
@@ -63,8 +56,6 @@ class LocationSharingViewModelTest {
                 serverId = serverId,
                 enabled = enabled,
             )
-            serverManager.integrationRepository(serverId)
-            integrationRepository.setAllowInsecureConnection(!enabled)
         }
     }
 
@@ -83,30 +74,6 @@ class LocationSharingViewModelTest {
                 serverId = serverId,
                 enabled = enabled,
             )
-        }
-        coVerify(exactly = 0) {
-            serverManager.integrationRepository(serverId)
-            integrationRepository.setAllowInsecureConnection(any())
-        }
-    }
-
-    @Test
-    fun `Given integrationRepository throws exception When setupLocationSensor is called Then exception is caught`() = runTest {
-        val enabled = true
-        val exception = RuntimeException("Test exception from integrationRepository")
-        coEvery { integrationRepository.setAllowInsecureConnection(any()) } throws exception
-
-        viewModel.setupLocationSensor(enabled)
-        runCurrent()
-
-        coVerify {
-            sensorDao.setSensorsEnabled(
-                sensorIds = locationSensorIds,
-                serverId = serverId,
-                enabled = enabled,
-            )
-            serverManager.integrationRepository(serverId)
-            integrationRepository.setAllowInsecureConnection(!enabled)
         }
     }
 }

@@ -56,7 +56,7 @@ class NameYourDeviceViewModelTest {
     @BeforeEach
     fun setup() {
         Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true // Enable verbose logging for tests if needed
+        ConsoleLogTree.verbose = true
 
         coEvery { serverManager.authenticationRepository(any()) } returns authRepository
         coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
@@ -181,6 +181,8 @@ class NameYourDeviceViewModelTest {
             val event = navEvents.awaitItem()
             assertTrue(event is NameYourDeviceNavigationEvent.DeviceNameSaved)
             assertEquals(testServerId, (event as NameYourDeviceNavigationEvent.DeviceNameSaved).serverId)
+            // Based on default url used in this test
+            assertTrue(event.hasPlainTextAccess)
 
             coVerify {
                 integrationRepository.registerDevice(
@@ -191,6 +193,44 @@ class NameYourDeviceViewModelTest {
                     ),
                 )
             }
+        }
+    }
+
+    @Test
+    fun `Given secure url when onSaveClick then emits DeviceNameSaved with hasPlainTextAccess to false`() = runTest {
+        viewModel = NameYourDeviceViewModel(
+            NameYourDeviceRoute("https://super-secure", "auth_code"),
+            serverManager,
+            appVersionProvider,
+            messagingTokenProvider,
+            defaultName = DEFAULT_DEVICE_NAME,
+        )
+
+        val testServerId = 1
+        val tempServerId = 0
+        coEvery { serverManager.addServer(any()) } returns tempServerId
+        coEvery { authRepository.registerAuthorizationCode("auth_code") } just Runs
+        coEvery {
+            integrationRepository.registerDevice(
+                DeviceRegistration(
+                    appVersionProvider(),
+                    DEFAULT_DEVICE_NAME,
+                    messagingTokenProvider(),
+                ),
+            )
+        } just Runs
+        coEvery { serverManager.convertTemporaryServer(tempServerId) } returns testServerId
+
+        turbineScope {
+            val navEvents = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            viewModel.onSaveClick()
+            advanceUntilIdle()
+
+            val event = navEvents.awaitItem()
+            assertTrue(event is NameYourDeviceNavigationEvent.DeviceNameSaved)
+            assertEquals(testServerId, (event as NameYourDeviceNavigationEvent.DeviceNameSaved).serverId)
+            assertFalse(event.hasPlainTextAccess)
         }
     }
 
@@ -392,8 +432,6 @@ class NameYourDeviceViewModelTest {
             assertTrue(awaitItem())
         }
     }
-
-    // TODO update SVGs
 
     private fun assertError(event: NameYourDeviceNavigationEvent, expectedResId: Int) {
         assertTrue(event is NameYourDeviceNavigationEvent.Error)
