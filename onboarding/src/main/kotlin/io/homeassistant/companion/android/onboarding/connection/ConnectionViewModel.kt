@@ -97,8 +97,8 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     private val _isLoadingFlow = MutableStateFlow(true)
     val isLoadingFlow = _isLoadingFlow.asStateFlow()
 
-    private val _isError = MutableStateFlow(false)
-    val isError = _isError.asStateFlow()
+    private val _isErrorFlow = MutableStateFlow(false)
+    val isErrorFlow = _isErrorFlow.asStateFlow()
 
     val webViewClient: WebViewClient = object : TLSWebViewClient(keyChainRepository) {
         override fun onPageFinished(view: WebView?, url: String?) {
@@ -249,7 +249,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
 
     private fun onError(error: ConnectionNavigationEvent.Error) {
         viewModelScope.launch {
-            _isError.emit(true)
+            _isErrorFlow.emit(true)
             _navigationEventsFlow.emit(error)
         }
     }

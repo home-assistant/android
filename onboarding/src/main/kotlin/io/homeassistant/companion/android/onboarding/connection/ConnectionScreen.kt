@@ -43,7 +43,7 @@ private val ICON_SIZE = 64.dp
 internal fun ConnectionScreen(onBackClick: () -> Unit, viewModel: ConnectionViewModel, modifier: Modifier = Modifier) {
     val url by viewModel.urlFlow.collectAsState()
     val isLoading by viewModel.isLoadingFlow.collectAsState()
-    val isError by viewModel.isError.collectAsState()
+    val isError by viewModel.isErrorFlow.collectAsState()
 
     ConnectionScreen(
         url = url,

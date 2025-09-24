@@ -92,6 +92,7 @@ internal class OnboardingNavigationTest {
         every { urlFlow } returns MutableStateFlow("http://homeassistant.local:8123")
         every { isLoadingFlow } returns MutableStateFlow(false)
         every { navigationEventsFlow } returns connectionNavigationEventFlow
+        every { isErrorFlow } returns MutableStateFlow(false)
     }
 
     private val instanceChannel = Channel<HomeAssistantInstance>()
@@ -227,7 +228,7 @@ internal class OnboardingNavigationTest {
             instanceChannel.trySend(HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)))
 
             // Wait for the screen to update based on the instance given in instanceChannel
-            waitUntilAtLeastOneExists(hasText(instanceUrl))
+            waitUntilAtLeastOneExists(hasText(instanceUrl), timeoutMillis = DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds)
 
             onNodeWithText(instanceUrl).assertIsDisplayed()
 
