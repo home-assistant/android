@@ -97,6 +97,9 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     private val _isLoadingFlow = MutableStateFlow(true)
     val isLoadingFlow = _isLoadingFlow.asStateFlow()
 
+    private val _isErrorFlow = MutableStateFlow(false)
+    val isErrorFlow = _isErrorFlow.asStateFlow()
+
     val webViewClient: WebViewClient = object : TLSWebViewClient(keyChainRepository) {
         override fun onPageFinished(view: WebView?, url: String?) {
             super.onPageFinished(view, url)
@@ -113,7 +116,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
             Timber.e("onReceivedError: Status Code: ${error?.errorCode} Description: ${error?.description}")
 
             if (request?.url?.toString() == urlFlow.value) {
-                val event = when (error?.errorCode) {
+                val error = when (error?.errorCode) {
                     ERROR_FAILED_SSL_HANDSHAKE -> ConnectionNavigationEvent.Error(
                         commonR.string.webview_error_FAILED_SSL_HANDSHAKE,
                     )
@@ -136,9 +139,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                     )
                 }
 
-                viewModelScope.launch {
-                    _navigationEventsFlow.emit(event)
-                }
+                onError(error)
             }
         }
 
@@ -169,9 +170,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                             ?: view?.context?.getString(commonR.string.no_description),
                     )
                 }
-                viewModelScope.launch {
-                    _navigationEventsFlow.emit(error)
-                }
+                onError(error)
             }
         }
 
@@ -187,10 +186,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                 SslError.SSL_UNTRUSTED -> commonR.string.webview_error_SSL_UNTRUSTED
                 else -> commonR.string.error_ssl
             }
-
-            viewModelScope.launch {
-                _navigationEventsFlow.emit(ConnectionNavigationEvent.Error(messageRes))
-            }
+            onError(ConnectionNavigationEvent.Error(messageRes))
         }
     }
 
@@ -223,7 +219,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
             )
         } catch (e: Exception) {
             Timber.e(e, "Unable to build authentication URL")
-            _navigationEventsFlow.emit(ConnectionNavigationEvent.Error(R.string.connection_screen_malformed_url))
+            onError(ConnectionNavigationEvent.Error(R.string.connection_screen_malformed_url))
         }
     }
 
@@ -248,6 +244,13 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
             true // Intercepted: External link
         } else {
             false // Default: Not intercepted
+        }
+    }
+
+    private fun onError(error: ConnectionNavigationEvent.Error) {
+        viewModelScope.launch {
+            _isErrorFlow.emit(true)
+            _navigationEventsFlow.emit(error)
         }
     }
 }

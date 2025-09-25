@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -27,13 +29,17 @@ internal fun LoadingScreen(modifier: Modifier = Modifier) {
     ) {
         Image(
             imageVector = ImageVector.vectorResource(R.drawable.ic_home_assistant_branding),
-            contentDescription = stringResource(R.string.loading_content_description),
+            contentDescription = null,
             modifier = Modifier.size(ICON_SIZE),
         )
+        val contentDescriptionLoading = stringResource(R.string.loading_content_description)
         HALoading(
             modifier = Modifier
                 .padding(bottom = maxHeight / 8)
-                .align(Alignment.BottomCenter),
+                .align(Alignment.BottomCenter)
+                .semantics {
+                    contentDescription = contentDescriptionLoading
+                },
         )
     }
 }

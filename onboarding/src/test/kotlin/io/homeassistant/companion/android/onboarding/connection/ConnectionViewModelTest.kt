@@ -62,6 +62,7 @@ class ConnectionViewModelTest {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
 
             // Initial state
+            assertFalse(viewModel.isErrorFlow.value)
             assertTrue(isLoadingFlow.awaitItem())
             assertEquals(null, urlFlow.awaitItem())
 
@@ -73,6 +74,7 @@ class ConnectionViewModelTest {
             viewModel.webViewClient.onPageFinished(mockk(), null)
 
             assertFalse(isLoadingFlow.awaitItem())
+            assertFalse(viewModel.isErrorFlow.value)
 
             navigationEventsFlow.expectNoEvents() // No authenticated or error events expected
         }
@@ -91,6 +93,7 @@ class ConnectionViewModelTest {
             assertNull(urlFlow.awaitItem())
 
             assertError(navigationEventsFlow.awaitItem(), R.string.connection_screen_malformed_url)
+            assertTrue(viewModel.isErrorFlow.value)
 
             urlFlow.expectNoEvents()
         }
@@ -122,6 +125,7 @@ class ConnectionViewModelTest {
             assertTrue(event is ConnectionNavigationEvent.Authenticated)
             assertEquals(authCode, (event as ConnectionNavigationEvent.Authenticated).authCode)
             assertEquals("http://homeassistant.local:8123", event.url)
+            assertFalse(viewModel.isErrorFlow.value)
         }
     }
 
@@ -149,6 +153,7 @@ class ConnectionViewModelTest {
 
             assertFalse(result)
             navigationEventsFlow.expectNoEvents()
+            assertFalse(viewModel.isErrorFlow.value)
         }
     }
 
@@ -180,6 +185,7 @@ class ConnectionViewModelTest {
             assertEquals(callbackUri, (event as ConnectionNavigationEvent.OpenExternalLink).url)
 
             navigationEventsFlow.expectNoEvents()
+            assertFalse(viewModel.isErrorFlow.value)
         }
     }
 
@@ -201,6 +207,7 @@ class ConnectionViewModelTest {
                     },
                 )
                 assertError(navigationEventsFlow.awaitItem(), messageRes)
+                assertTrue(viewModel.isErrorFlow.value)
             }
 
             testError(SslError.SSL_DATE_INVALID, commonR.string.webview_error_SSL_DATE_INVALID)
@@ -238,6 +245,7 @@ class ConnectionViewModelTest {
             webViewClient.isCertificateChainValid = false
             webViewClient.onReceivedHttpError(null, request, null)
             assertError(navigationEventsFlow.awaitItem(), commonR.string.tls_cert_expired_message)
+            assertTrue(viewModel.isErrorFlow.value)
 
             // Cert not found
             webViewClient.isTLSClientAuthNeeded = true
@@ -251,6 +259,7 @@ class ConnectionViewModelTest {
                 },
             )
             assertError(navigationEventsFlow.awaitItem(), commonR.string.tls_cert_not_found_message)
+            assertTrue(viewModel.isErrorFlow.value)
 
             // Generic error
             webViewClient.isTLSClientAuthNeeded = false
@@ -264,6 +273,7 @@ class ConnectionViewModelTest {
                 },
             )
             assertError(navigationEventsFlow.awaitItem(), commonR.string.error_http_generic, 418, "I'm a teapot")
+            assertTrue(viewModel.isErrorFlow.value)
 
             // Generic error without reason
             webViewClient.isTLSClientAuthNeeded = false
@@ -281,6 +291,7 @@ class ConnectionViewModelTest {
                 },
             )
             assertError(navigationEventsFlow.awaitItem(), commonR.string.error_http_generic, 418, "No description")
+            assertTrue(viewModel.isErrorFlow.value)
         }
     }
 
@@ -316,6 +327,7 @@ class ConnectionViewModelTest {
                 } else {
                     assertError(navigationEventsFlow.awaitItem(), messageRes)
                 }
+                assertTrue(viewModel.isErrorFlow.value)
             }
 
             testError(ERROR_FAILED_SSL_HANDSHAKE, commonR.string.webview_error_FAILED_SSL_HANDSHAKE)
@@ -339,6 +351,7 @@ class ConnectionViewModelTest {
                 },
             )
             assertError(navigationEventsFlow.awaitItem(), commonR.string.error_http_generic, -1, "No description")
+            assertTrue(viewModel.isErrorFlow.value)
         }
     }
 

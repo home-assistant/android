@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.compose
 
+import android.annotation.SuppressLint
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.content.res.Configuration.UI_MODE_TYPE_NORMAL
 import androidx.compose.ui.tooling.preview.Preview
@@ -16,16 +17,17 @@ import androidx.compose.ui.tooling.preview.Preview
 //    device = "spec:width=411.4dp,height=923.4dp,orientation=landscape",
 //    group = "phone",
 // ) // Pixel 9
-@Preview(
-    name = "small_phone",
-    device = "spec:width=360dp,height=640dp,dpi=480,orientation=landscape",
-    group = "phone",
-) // Nexus 5
+// @Preview(
+//    name = "small_phone",
+//    device = "spec:width=360dp,height=640dp,dpi=480,orientation=landscape",
+//    group = "phone",
+// ) // Nexus 5
 // @Preview(
 //    name = "foldable",
 //    device = "spec:width=851.7dp,height=882.9dp,dpi=390,orientation=landscape",
 //    group = "phone",
 // ) // Pixel 9 Pro fold
+@SuppressLint("ComposePreviewNaming")
 @Preview(
     name = "tablet",
     device = "spec:width=1280dp,height=800dp,dpi=320,orientation=portrait",

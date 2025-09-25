@@ -26,7 +26,7 @@ import timber.log.Timber
 val TIMEOUT_NO_SERVER_FOUND = 5.seconds
 
 @VisibleForTesting
-val DELAY_BEFORE_DISPLAY_DISCOVERY = 1.seconds
+val DELAY_BEFORE_DISPLAY_DISCOVERY = 1.5.seconds
 
 @VisibleForTesting
 val DELAY_AFTER_FIRST_DISCOVERY = 5.seconds

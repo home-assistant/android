@@ -80,6 +80,7 @@ class ServerDiscoveryScreenTest {
                 onNodeWithText(serverName).assertIsDisplayed()
                 onNodeWithText(stringResource(R.string.server_discovery_connect)).performClick()
 
+                composeTestRule.mainClock.advanceTimeUntil { connectClickedWithUrl != null }
                 assertEquals(url, connectClickedWithUrl)
             }
         }
