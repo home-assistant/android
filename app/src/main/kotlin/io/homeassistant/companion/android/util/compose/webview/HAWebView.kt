@@ -74,7 +74,7 @@ fun HAWebView(
             }
         },
         onRelease = {
-            Timber.d("OnRelease webview stop loading")
+            Timber.d("onRelease WebView, stopping loading")
             it.stopLoading()
         },
         modifier = modifier,
