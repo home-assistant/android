@@ -169,6 +169,7 @@ private fun ServerUrlTextField(
                 }
             }
         },
+        maxLines = 1,
         placeholder = {
             Text(
                 text = "http://homeassistant.local:8123",

@@ -30,4 +30,8 @@
     <string name="location_secure_connection_hint">This data will never be shared with the Home Assistant project or third parties.</string>
     <string name="location_secure_connection_next">Next</string>
     <string name="location_secure_connection_discard_permission">You rejected the location permission, you should then choose the Less secure option.</string>
+    <string name="wear_mtls_no_filename">No filename</string>
+    <string name="wear_mtls_content">"Your Home Assistant instance requires TLS client certificate authentication, select a TLS client certificate file to install it on your Wear OS device."</string>
+    <string name="wear_mtls_next">"Next"</string>
+    <string name="wear_mtls_open_error">"This password doesn't open this file."</string>
 </resources>
