@@ -47,7 +47,7 @@ fun HAWebView(
         },
         modifier = modifier.testTag(HA_WEBVIEW_TAG),
         onRelease = {
-            Timber.d("OnRelease webview stop loading")
+            Timber.d("onRelease WebView, stopping loading")
             it.stopLoading()
             webview = null
         },
