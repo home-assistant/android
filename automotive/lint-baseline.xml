@@ -2490,50 +2490,6 @@
     </issue>
 
     <issue
-        id="AutoboxingStateCreation"
-        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
-        errorLine1="    var serverId by mutableStateOf(ServerManager.SERVER_ID_ACTIVE)"
-        errorLine2="                    ~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/assist/AssistShortcutViewModel.kt"
-            line="19"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="AutoboxingStateCreation"
-        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
-        errorLine1="    var selectedServerId by mutableStateOf(ServerManager.SERVER_ID_ACTIVE)"
-        errorLine2="                            ~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/qs/ManageTilesViewModel.kt"
-            line="148"
-            column="29"/>
-    </issue>
-
-    <issue
-        id="AutoboxingStateCreation"
-        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
-        errorLine1="    var submitButtonLabel by mutableStateOf(commonR.string.tile_save)"
-        errorLine2="                             ~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/qs/ManageTilesViewModel.kt"
-            line="155"
-            column="30"/>
-    </issue>
-
-    <issue
-        id="AutoboxingStateCreation"
-        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
-        errorLine1="    var serverId by mutableStateOf(0)"
-        errorLine2="                    ~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/matter/MatterCommissioningViewModel.kt"
-            line="40"
-            column="21"/>
-    </issue>
-
-    <issue
         id="DisableBaselineAlignment"
         message="Set `android:baselineAligned=&quot;false&quot;` on this element for better performance"
         errorLine1="    &lt;LinearLayout"
