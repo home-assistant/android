@@ -18,6 +18,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -53,6 +55,7 @@ import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.n
 import io.homeassistant.companion.android.onboarding.serverdiscovery.DELAY_BEFORE_DISPLAY_DISCOVERY
 import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssistantInstance
 import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssistantSearcher
+import io.homeassistant.companion.android.onboarding.serverdiscovery.ONE_SERVER_FOUND_MODAL_TAG
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDiscoveryModule
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
@@ -219,7 +222,7 @@ internal class OnboardingNavigationTest {
         testNavigation {
             navController.navigateToServerDiscovery()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
-            onNodeWithText(stringResource(commonR.string.manual_setup)).assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.manual_setup)).performScrollTo().assertIsDisplayed().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
 
@@ -236,7 +239,7 @@ internal class OnboardingNavigationTest {
         testNavigation {
             navController.navigateToServerDiscovery()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
-            onNodeWithText(stringResource(commonR.string.manual_setup)).assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.manual_setup)).performScrollTo().assertIsDisplayed().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
 
@@ -245,7 +248,7 @@ internal class OnboardingNavigationTest {
 
             onNodeWithText("http://homeassistant.local:8123").performTextInput("http://ha.local")
 
-            onNodeWithText(stringResource(commonR.string.connect)).assertIsEnabled().performClick()
+            onNodeWithText(stringResource(commonR.string.connect)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
             onNodeWithTag(CONNECTION_SCREEN_TAG).assertIsDisplayed()
@@ -263,7 +266,7 @@ internal class OnboardingNavigationTest {
         testNavigation {
             navController.navigateToServerDiscovery()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
-            onNodeWithText(stringResource(commonR.string.manual_setup)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.manual_setup)).performScrollTo().assertIsDisplayed()
 
             instanceChannel.trySend(HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)))
 
@@ -273,9 +276,17 @@ internal class OnboardingNavigationTest {
             // Wait for the screen to update based on the instance given in instanceChannel
             waitUntilAtLeastOneExists(hasText(instanceUrl), timeoutMillis = DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds)
 
+            onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).performTouchInput {
+                swipeUp(startY = bottom * 0.9f, endY = centerY, durationMillis = 200)
+            }
+
+            waitForIdle()
+
             onNodeWithText(instanceUrl).assertIsDisplayed()
 
-            onNodeWithText(stringResource(R.string.server_discovery_connect)).performClick()
+            onNodeWithText(stringResource(R.string.server_discovery_connect)).assertIsDisplayed().performClick()
+
+            waitForIdle()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
 
@@ -294,7 +305,7 @@ internal class OnboardingNavigationTest {
         testNavigation {
             navController.navigateToServerDiscovery()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
-            onNodeWithText(stringResource(commonR.string.manual_setup)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.manual_setup)).performScrollTo().assertIsDisplayed()
 
             instanceChannel.trySend(HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)))
 
