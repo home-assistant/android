@@ -5,6 +5,9 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import io.homeassistant.companion.android.HAStartDestinationRoute
+import io.homeassistant.companion.android.automotive.navigation.carAppActivity
+import io.homeassistant.companion.android.automotive.navigation.navigateToCarAppActivity
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.frontend.navigation.frontendScreen
 import io.homeassistant.companion.android.frontend.navigation.navigateToFrontend
 import io.homeassistant.companion.android.loading.LoadingScreen
@@ -34,7 +37,7 @@ internal fun HANavHost(
     startDestination: HAStartDestinationRoute?,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
 ) {
-    val activity = LocalActivity.current
+    val isAutomotive = LocalActivity.current?.isAutomotive() == true
 
     startDestination?.let {
         NavHost(
@@ -46,13 +49,18 @@ internal fun HANavHost(
                 navController,
                 onShowSnackbar = onShowSnackbar,
                 onOnboardingDone = {
-                    navController.navigateToFrontend()
-                    // TODO remove this finish when the frontend is not an activity anymore
-                    activity?.finish()
+                    if (isAutomotive) {
+                        navController.navigateToCarAppActivity()
+                    } else {
+                        navController.navigateToFrontend()
+                    }
                 },
                 serverToOnboard = (startDestination as? OnboardingRoute)?.serverToOnboard,
             )
             frontendScreen(navController)
+            if (isAutomotive) {
+                carAppActivity(navController)
+            }
         }
     } ?: LoadingScreen()
 }

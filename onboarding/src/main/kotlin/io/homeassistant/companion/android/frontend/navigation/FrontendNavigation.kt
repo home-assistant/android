@@ -30,7 +30,7 @@ internal fun NavController.navigateToFrontend(
     serverId: Int = SERVER_ID_ACTIVE,
     navOptions: NavOptions? = null,
 ) {
-    navigate(FrontendActivityRoute(path, serverId), navOptions)
+    navigate(FrontendRoute(path, serverId), navOptions)
 }
 
 /**
@@ -47,7 +47,7 @@ internal fun NavController.navigateToFrontend(
 internal fun NavGraphBuilder.frontendScreen(navController: NavController) {
     composable<FrontendRoute> {
         val dummy = it.toRoute<FrontendRoute>()
-        navController.navigateToFrontend(dummy.path, dummy.serverId)
+        navController.navigate(FrontendActivityRoute(dummy.path, dummy.serverId))
         val activity = LocalActivity.current
         activity?.finish()
     }
