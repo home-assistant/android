@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.CameraTile
+import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.util.UrlUtil
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeUnit
@@ -83,11 +84,19 @@ class CameraTile : TileService() {
                 .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(freshness))
                 .setTileTimeline(
                     if (serverManager.isRegistered()) {
-                        timeline(
-                            requestParams.deviceConfiguration.screenWidthDp,
-                            requestParams.deviceConfiguration.screenHeightDp,
-                            tileConfig?.entityId.isNullOrBlank(),
-                        )
+                        if (tileConfig?.entityId.isNullOrBlank()) {
+                            getNotConfiguredTimeline(
+                                this@CameraTile,
+                                requestParams,
+                                commonR.string.camera_tile_no_entity_yet,
+                                HomeActivity.Companion.LaunchMode.CameraTile,
+                            )
+                        } else {
+                            timeline(
+                                requestParams.deviceConfiguration.screenWidthDp,
+                                requestParams.deviceConfiguration.screenHeightDp,
+                            )
+                        }
                     } else {
                         loggedOutTimeline(
                             this@CameraTile,
@@ -127,7 +136,7 @@ class CameraTile : TileService() {
                         withContext(Dispatchers.IO) {
                             val response = okHttpClient.newCall(Request.Builder().url(url).build()).execute()
                             byteArray = response.body.byteStream().readBytes()
-                            byteArray?.let {
+                            byteArray.let {
                                 var bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
                                 if (bitmap.width > maxWidth || bitmap.height > maxHeight) {
                                     Timber.d(
@@ -240,26 +249,17 @@ class CameraTile : TileService() {
         serviceScope.cancel()
     }
 
-    private fun timeline(width: Int, height: Int, requiresSetup: Boolean): Timeline = Timeline.fromLayoutElement(
+    private fun timeline(width: Int, height: Int): Timeline = Timeline.fromLayoutElement(
         LayoutElementBuilders.Box.Builder().apply {
             // Camera image
-            if (requiresSetup) {
-                addContent(
-                    LayoutElementBuilders.Text.Builder()
-                        .setText(getString(commonR.string.camera_tile_no_entity_yet))
-                        .setMaxLines(10)
-                        .build(),
-                )
-            } else {
-                addContent(
-                    LayoutElementBuilders.Image.Builder()
-                        .setResourceId(RESOURCE_SNAPSHOT)
-                        .setWidth(DimensionBuilders.dp(width.toFloat()))
-                        .setHeight(DimensionBuilders.dp(height.toFloat()))
-                        .setContentScaleMode(CONTENT_SCALE_MODE_FIT)
-                        .build(),
-                )
-            }
+            addContent(
+                LayoutElementBuilders.Image.Builder()
+                    .setResourceId(RESOURCE_SNAPSHOT)
+                    .setWidth(DimensionBuilders.dp(width.toFloat()))
+                    .setHeight(DimensionBuilders.dp(height.toFloat()))
+                    .setContentScaleMode(CONTENT_SCALE_MODE_FIT)
+                    .build(),
+            )
             // Refresh button
             addContent(getRefreshButton())
             // Click: refresh
