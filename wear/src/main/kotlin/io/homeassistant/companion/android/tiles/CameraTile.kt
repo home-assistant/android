@@ -135,33 +135,31 @@ class CameraTile : TileService() {
                         withContext(Dispatchers.IO) {
                             val response = okHttpClient.newCall(Request.Builder().url(url).build()).execute()
                             byteArray = response.body.byteStream().readBytes()
-                            byteArray.let {
-                                var bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
-                                if (bitmap.width > maxWidth || bitmap.height > maxHeight) {
-                                    Timber.d(
-                                        "Scaling camera snapshot to fit screen (${bitmap.width}x${bitmap.height} to ${maxWidth.toInt()}x${maxHeight.toInt()} max)",
+                            var bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+                            if (bitmap.width > maxWidth || bitmap.height > maxHeight) {
+                                Timber.d(
+                                    "Scaling camera snapshot to fit screen (${bitmap.width}x${bitmap.height} to ${maxWidth.toInt()}x${maxHeight.toInt()} max)",
+                                )
+                                val currentRatio = (bitmap.width.toFloat() / bitmap.height.toFloat())
+                                val screenRatio = (
+                                    requestParams.deviceConfiguration.screenWidthDp.toFloat() /
+                                        requestParams.deviceConfiguration.screenHeightDp.toFloat()
                                     )
-                                    val currentRatio = (bitmap.width.toFloat() / bitmap.height.toFloat())
-                                    val screenRatio = (
-                                        requestParams.deviceConfiguration.screenWidthDp.toFloat() /
-                                            requestParams.deviceConfiguration.screenHeightDp.toFloat()
-                                        )
-                                    imageWidth = maxWidth.toInt()
-                                    imageHeight = maxHeight.toInt()
-                                    if (currentRatio > screenRatio) {
-                                        imageWidth = (maxHeight * currentRatio).toInt()
-                                    } else {
-                                        imageHeight = (maxWidth / currentRatio).toInt()
-                                    }
-                                    bitmap = Bitmap.createScaledBitmap(bitmap, imageWidth, imageHeight, true)
-                                    ByteArrayOutputStream().use { stream ->
-                                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
-                                        byteArray = stream.toByteArray()
-                                    }
+                                imageWidth = maxWidth.toInt()
+                                imageHeight = maxHeight.toInt()
+                                if (currentRatio > screenRatio) {
+                                    imageWidth = (maxHeight * currentRatio).toInt()
                                 } else {
-                                    imageWidth = bitmap.width
-                                    imageHeight = bitmap.height
+                                    imageHeight = (maxWidth / currentRatio).toInt()
                                 }
+                                bitmap = Bitmap.createScaledBitmap(bitmap, imageWidth, imageHeight, true)
+                                ByteArrayOutputStream().use { stream ->
+                                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                                    byteArray = stream.toByteArray()
+                                }
+                            } else {
+                                imageWidth = bitmap.width
+                                imageHeight = bitmap.height
                             }
                             response.close()
                         }
