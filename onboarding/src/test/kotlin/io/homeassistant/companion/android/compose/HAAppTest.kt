@@ -4,12 +4,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
+import androidx.navigation.ActivityNavigator
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.testing.TestNavHostController
+import androidx.savedstate.SavedState
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -21,6 +22,8 @@ import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.stringResource
+import io.mockk.spyk
+import io.mockk.verify
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -50,10 +53,14 @@ class HAAppTest {
         ConsoleLogTree.verbose = true
     }
 
+    lateinit var activityNavigator: ActivityNavigator
+
     private fun setApp(startDestination: HAStartDestinationRoute?) {
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
+            activityNavigator = spyk(ActivityNavigator(composeTestRule.activity))
             navController.navigatorProvider.addNavigator(ComposeNavigator())
+            navController.navigatorProvider.addNavigator(activityNavigator)
 
             HAApp(
                 navController = navController,
@@ -86,10 +93,19 @@ class HAAppTest {
 
     @Test
     fun `Given HAApp when navigate to Welcome then show Frontend`() {
-        setApp(FrontendRoute)
+        setApp(FrontendRoute())
         composeTestRule.apply {
-            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
-            onNodeWithTag("frontend_placeholder").assertIsDisplayed()
+            assertNull(navController.currentBackStackEntry?.destination?.route)
+            verify(exactly = 1) {
+                activityNavigator.navigate(
+                    match {
+                        it.route == FrontendRoute.serializer().descriptor.serialName + "?path={path}&server={server}"
+                    },
+                    any<SavedState>(),
+                    any(),
+                    any(),
+                )
+            }
         }
     }
 }

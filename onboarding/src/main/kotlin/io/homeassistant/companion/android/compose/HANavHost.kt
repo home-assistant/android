@@ -41,7 +41,7 @@ internal fun HANavHost(
                 navController,
                 onShowSnackbar = onShowSnackbar,
             )
-            frontendScreen()
+            frontendScreen(navController)
         }
     } ?: LoadingScreen()
 }
