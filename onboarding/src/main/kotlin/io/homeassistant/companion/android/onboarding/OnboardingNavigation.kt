@@ -10,6 +10,8 @@ import io.homeassistant.companion.android.compose.navigateToUri
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.onboarding.connection.navigation.connectionScreen
 import io.homeassistant.companion.android.onboarding.connection.navigation.navigateToConnection
+import io.homeassistant.companion.android.onboarding.localfirst.navigation.localFirstScreen
+import io.homeassistant.companion.android.onboarding.localfirst.navigation.navigateToLocalFirst
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.manualServerScreen
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.navigateToManualServer
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.nameYourDeviceScreen
@@ -89,12 +91,27 @@ internal fun NavGraphBuilder.onboarding(
             onBackClick = navController::popBackStack,
             onDeviceNamed = { serverId ->
                 // TODO if external URL or cloud URL available go to Location otherwise go to local first
+                navController.navigateToLocalFirst(
+                    navOptions {
+                        // We don't want to come back to name your device once the device
+                        // is named since the auth_code has already been used.
+                        popUpTo<WelcomeRoute> {
+                            inclusive = true
+                        }
+                    },
+                )
             },
             onShowSnackbar = onShowSnackbar,
             onHelpClick = {
                 // TODO validate the URL to use
                 navController.navigateToUri("https://www.home-assistant.io/installation/")
             },
+        )
+        localFirstScreen(
+            onNextClick = {
+                // TODO go to location permission screen
+            },
+            // We don't have back button since after name your device the device is registered
         )
     }
 }

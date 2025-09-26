@@ -30,8 +30,12 @@ import io.homeassistant.companion.android.compose.navigateToUri
 import io.homeassistant.companion.android.onboarding.connection.CONNECTION_SCREEN_TAG
 import io.homeassistant.companion.android.onboarding.connection.ConnectionNavigationEvent
 import io.homeassistant.companion.android.onboarding.connection.ConnectionViewModel
+import io.homeassistant.companion.android.onboarding.localfirst.navigation.LocalFirstRoute
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.ManualServerRoute
+import io.homeassistant.companion.android.onboarding.nameyourdevice.NameYourDeviceNavigationEvent
+import io.homeassistant.companion.android.onboarding.nameyourdevice.NameYourDeviceViewModel
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.NameYourDeviceRoute
+import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.navigateToNameYourDevice
 import io.homeassistant.companion.android.onboarding.serverdiscovery.DELAY_BEFORE_DISPLAY_DISCOVERY
 import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssistantInstance
 import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssistantSearcher
@@ -93,6 +97,20 @@ internal class OnboardingNavigationTest {
         every { isLoadingFlow } returns MutableStateFlow(false)
         every { navigationEventsFlow } returns connectionNavigationEventFlow
         every { isErrorFlow } returns MutableStateFlow(false)
+    }
+
+    @BindValue
+    @JvmField
+    val nameYourDeviceViewModel: NameYourDeviceViewModel = mockk(relaxed = true) {
+        val nameYourDeviceNavigationFlow = MutableSharedFlow<NameYourDeviceNavigationEvent>()
+        every { navigationEventsFlow } returns nameYourDeviceNavigationFlow
+        every { onSaveClick() } coAnswers {
+            nameYourDeviceNavigationFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved(42))
+        }
+        every { deviceNameFlow } returns MutableStateFlow("Test")
+        every { isValidNameFlow } returns MutableStateFlow(true)
+        every { isSaveClickableFlow } returns MutableStateFlow(true)
+        every { isSavingFlow } returns MutableStateFlow(false)
     }
 
     private val instanceChannel = Channel<HomeAssistantInstance>()
@@ -245,9 +263,26 @@ internal class OnboardingNavigationTest {
             assertEquals(instanceUrl, route?.url)
             assertEquals("super_code", route?.authCode)
 
-            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given device named when pressing next then show LocalFirst then goes back stop the app`() = runTest {
+        val instanceUrl = "http://ha.local"
+        composeTestRule.apply {
+            navController.navigateToNameYourDevice(instanceUrl, "code")
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
+
+            onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
+
+            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+
+            // The back stack is unchanged in this situation, but in reality the app is in background
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
         }
     }
 
