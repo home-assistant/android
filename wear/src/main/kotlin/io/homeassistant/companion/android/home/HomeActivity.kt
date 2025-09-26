@@ -54,7 +54,13 @@ class HomeActivity :
                 putExtra(EXTRA_FROM_ONBOARDING, fromOnboarding)
             }
         }
-        fun getLaunchAction(packageName: String, tileId: Int, launchMode: String): ActionBuilders.LaunchAction {
+
+        sealed class LaunchMode(val mode: String) {
+            object ThermostatTile : LaunchMode(OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE)
+            object CameraTile : LaunchMode(OpenTileSettingsActivity.CONFIG_CAMERA_TILE)
+        }
+
+        fun getLaunchAction(packageName: String, tileId: Int, launchMode: LaunchMode): ActionBuilders.LaunchAction {
             val androidActivity = ActionBuilders.AndroidActivity.Builder()
                 .setPackageName(packageName)
                 .setClassName(
@@ -63,7 +69,7 @@ class HomeActivity :
                 .addKeyToExtraMapping(
                     LAUNCH_MODE,
                     ActionBuilders.AndroidStringExtra.Builder().setValue(
-                        launchMode,
+                        launchMode.mode,
                     )
                         .build(),
                 )

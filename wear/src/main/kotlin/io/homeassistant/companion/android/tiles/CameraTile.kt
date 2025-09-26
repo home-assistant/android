@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.CameraTile
+import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.util.UrlUtil
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeUnit
@@ -87,7 +88,7 @@ class CameraTile : TileService() {
                                 this@CameraTile,
                                 requestParams,
                                 commonR.string.camera_tile_no_entity_yet,
-                                OpenTileSettingsActivity.CONFIG_CAMERA_TILE,
+                                HomeActivity.Companion.LaunchMode.CameraTile,
                             )
                         } else {
                             timeline(

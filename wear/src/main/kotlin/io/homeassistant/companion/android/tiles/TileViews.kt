@@ -164,7 +164,7 @@ fun getNotConfiguredTimeline(
     context: Context,
     requestParams: RequestBuilders.TileRequest,
     tileString: Int,
-    launchMode: String,
+    launchMode: HomeActivity.Companion.LaunchMode,
 ): Timeline {
     val theme = Colors(
         ContextCompat.getColor(context, commonR.color.colorPrimary),
