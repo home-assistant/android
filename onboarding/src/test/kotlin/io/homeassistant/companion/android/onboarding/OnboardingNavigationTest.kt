@@ -10,6 +10,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -17,6 +18,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -37,6 +40,7 @@ import io.homeassistant.companion.android.compose.navigateToUri
 import io.homeassistant.companion.android.onboarding.connection.CONNECTION_SCREEN_TAG
 import io.homeassistant.companion.android.onboarding.connection.ConnectionNavigationEvent
 import io.homeassistant.companion.android.onboarding.connection.ConnectionViewModel
+import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.onboarding.localfirst.navigation.LocalFirstRoute
 import io.homeassistant.companion.android.onboarding.localfirst.navigation.navigateToLocalFirst
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.LocationForSecureConnectionRoute
@@ -51,6 +55,7 @@ import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.n
 import io.homeassistant.companion.android.onboarding.serverdiscovery.DELAY_BEFORE_DISPLAY_DISCOVERY
 import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssistantInstance
 import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssistantSearcher
+import io.homeassistant.companion.android.onboarding.serverdiscovery.ONE_SERVER_FOUND_MODAL_TAG
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDiscoveryModule
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
@@ -139,7 +144,9 @@ internal class OnboardingNavigationTest {
 
         mockkStatic(NavController::navigateToUri)
         every { any<NavController>().navigateToUri(any()) } just Runs
+    }
 
+    private fun setContent(serverToOnboard: String? = null) {
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
             navController.navigatorProvider.addNavigator(ComposeNavigator())
@@ -151,7 +158,7 @@ internal class OnboardingNavigationTest {
             ) {
                 NavHost(
                     navController = navController,
-                    startDestination = OnboardingRoute,
+                    startDestination = OnboardingRoute(),
                 ) {
                     onboarding(
                         navController,
@@ -159,16 +166,24 @@ internal class OnboardingNavigationTest {
                         onOnboardingDone = {
                             onboardingDone = true
                         },
+                        serverToOnboard = serverToOnboard,
                     )
                 }
             }
         }
     }
 
+    private fun testNavigation(serverToOnboard: String? = null, testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit) {
+        setContent(serverToOnboard)
+        runTest {
+            composeTestRule.testContent()
+        }
+    }
+
     @Test
     fun `Given no action when starting the app then show Welcome`() {
-        assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
-        composeTestRule.apply {
+        testNavigation {
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
             onNodeWithText(stringResource(R.string.welcome_learn_more)).performScrollTo().assertIsDisplayed().performClick()
             verify { any<NavController>().navigateToUri("https://www.home-assistant.io") }
         }
@@ -176,7 +191,7 @@ internal class OnboardingNavigationTest {
 
     @Test
     fun `Given clicking on connect button when starting the onboarding then show ServerDiscovery then back goes to Welcome`() {
-        composeTestRule.apply {
+        testNavigation {
             onNodeWithText(stringResource(R.string.welcome_connect_to_ha)).assertIsDisplayed().performClick()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
 
@@ -189,11 +204,25 @@ internal class OnboardingNavigationTest {
     }
 
     @Test
+    fun `Given clicking on connect button with server to onboard when starting the onboarding then show Connection screen then back goes to Welcome`() {
+        testNavigation("http://homeassistant.local") {
+            onNodeWithText(stringResource(R.string.welcome_connect_to_ha)).assertIsDisplayed().performClick()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
+
+            onNodeWithTag(CONNECTION_SCREEN_TAG).assertIsDisplayed()
+
+            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
+        }
+    }
+
+    @Test
     fun `Given clicking enter manual address button when discovering server then show ManualServer then back goes to ServerDiscovery`() {
-        composeTestRule.apply {
+        testNavigation {
             navController.navigateToServerDiscovery()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
-            onNodeWithText(stringResource(commonR.string.manual_setup)).assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.manual_setup)).performScrollTo().assertIsDisplayed().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
 
@@ -207,10 +236,10 @@ internal class OnboardingNavigationTest {
 
     @Test
     fun `Given enter manual address when setting url and clicking connect then show ConnectScreen then back goes to ManualServer`() {
-        composeTestRule.apply {
+        testNavigation {
             navController.navigateToServerDiscovery()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
-            onNodeWithText(stringResource(commonR.string.manual_setup)).assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.manual_setup)).performScrollTo().assertIsDisplayed().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
 
@@ -219,8 +248,9 @@ internal class OnboardingNavigationTest {
 
             onNodeWithText("http://homeassistant.local:8123").performTextInput("http://ha.local")
 
-            onNodeWithText(stringResource(commonR.string.connect)).assertIsEnabled().performClick()
+            onNodeWithText(stringResource(commonR.string.connect)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
 
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
             onNodeWithTag(CONNECTION_SCREEN_TAG).assertIsDisplayed()
 
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
@@ -233,10 +263,10 @@ internal class OnboardingNavigationTest {
     @Test
     fun `Given a server discovered when clicking on it then show ConnectScreen then back goes to ServerDiscovery`() {
         val instanceUrl = "http://ha.local"
-        composeTestRule.apply {
+        testNavigation {
             navController.navigateToServerDiscovery()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
-            onNodeWithText(stringResource(commonR.string.manual_setup)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.manual_setup)).performScrollTo().assertIsDisplayed()
 
             instanceChannel.trySend(HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)))
 
@@ -246,9 +276,19 @@ internal class OnboardingNavigationTest {
             // Wait for the screen to update based on the instance given in instanceChannel
             waitUntilAtLeastOneExists(hasText(instanceUrl), timeoutMillis = DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds)
 
+            onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).performTouchInput {
+                swipeUp(startY = bottom * 0.9f, endY = centerY, durationMillis = 200)
+            }
+
+            waitForIdle()
+
             onNodeWithText(instanceUrl).assertIsDisplayed()
 
-            onNodeWithText(stringResource(R.string.server_discovery_connect)).performClick()
+            onNodeWithText(stringResource(R.string.server_discovery_connect)).assertIsDisplayed().performClick()
+
+            waitForIdle()
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
 
             onNodeWithTag(CONNECTION_SCREEN_TAG).assertIsDisplayed()
 
@@ -260,12 +300,12 @@ internal class OnboardingNavigationTest {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun `Given a server discovered and connecting when authenticated then show NameYourDevice then back goes to ServerDiscovery not ConnectionScreen`() = runTest {
+    fun `Given a server discovered and connecting when authenticated then show NameYourDevice then back goes to ServerDiscovery not ConnectionScreen`() {
         val instanceUrl = "http://ha.local"
-        composeTestRule.apply {
+        testNavigation {
             navController.navigateToServerDiscovery()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
-            onNodeWithText(stringResource(commonR.string.manual_setup)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.manual_setup)).performScrollTo().assertIsDisplayed()
 
             instanceChannel.trySend(HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)))
 
@@ -294,9 +334,9 @@ internal class OnboardingNavigationTest {
     }
 
     @Test
-    fun `Given device named when pressing next then show LocalFirst then goes back stop the app`() = runTest {
+    fun `Given device named when pressing next then show LocalFirst then goes back stop the app`() {
         val instanceUrl = "http://ha.local"
-        composeTestRule.apply {
+        testNavigation {
             navController.navigateToNameYourDevice(instanceUrl, "code")
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
 
@@ -312,7 +352,7 @@ internal class OnboardingNavigationTest {
 
     @Test
     fun `Given LocalFirst when pressing next then show LocationSharing then goes back stop the app`() {
-        composeTestRule.apply {
+        testNavigation {
             navController.navigateToLocalFirst(42, true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
             onNodeWithText(stringResource(R.string.local_first_next)).performScrollTo().performClick()
@@ -328,7 +368,7 @@ internal class OnboardingNavigationTest {
 
     @Test
     fun `Given LocationSharing when agreeing with plain text access to share then onboarding is done`() {
-        composeTestRule.apply {
+        testNavigation {
             navController.navigateToLocationSharing(42, true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
 
@@ -343,7 +383,7 @@ internal class OnboardingNavigationTest {
 
     @Test
     fun `Given LocationSharing when agreeing without plain text access to share then onboarding is done`() {
-        composeTestRule.apply {
+        testNavigation {
             navController.navigateToLocationSharing(42, false)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
 
@@ -358,7 +398,7 @@ internal class OnboardingNavigationTest {
 
     @Test
     fun `Given LocationSharing when denying to share with plain text access then goes to LocationForSecureConnection then goes back stop the app`() {
-        composeTestRule.apply {
+        testNavigation {
             navController.navigateToLocationSharing(42, true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
 
@@ -378,7 +418,7 @@ internal class OnboardingNavigationTest {
 
     @Test
     fun `Given LocationSharing when denying to share without plain text access then onboarding is done`() {
-        composeTestRule.apply {
+        testNavigation {
             navController.navigateToLocationSharing(42, false)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
 
@@ -392,7 +432,7 @@ internal class OnboardingNavigationTest {
 
     @Test
     fun `Given LocationForSecureConnection when agreeing to share then onboarding is done`() {
-        composeTestRule.apply {
+        testNavigation {
             navController.navigateToLocationForSecureConnection(42)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
 

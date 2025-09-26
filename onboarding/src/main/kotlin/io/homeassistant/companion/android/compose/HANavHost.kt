@@ -10,6 +10,7 @@ import io.homeassistant.companion.android.frontend.navigation.navigateToFrontend
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.loading.navigation.LoadingRoute
 import io.homeassistant.companion.android.loading.navigation.loadingScreen
+import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.onboarding
 
 /**
@@ -49,6 +50,7 @@ internal fun HANavHost(
                     // TODO remove this finish when the frontend is not an activity anymore
                     activity?.finish()
                 },
+                serverToOnboard = (startDestination as? OnboardingRoute)?.serverToOnboard,
             )
             frontendScreen(navController)
         }

@@ -20,15 +20,19 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.launcher.LauncherActivity
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 import kotlinx.coroutines.launch
+
+private val USE_NEW_LAUNCHER by lazy { BuildConfig.DEBUG }
 
 @AndroidEntryPoint
 class LinkActivity : BaseActivity() {
@@ -67,7 +71,16 @@ class LinkActivity : BaseActivity() {
                 when (val destination = linkHandler.handleLink(dataUri)) {
                     LinkDestination.NoDestination -> finish()
                     is LinkDestination.Onboarding -> {
-                        startActivity(LaunchActivity.newInstance(this@LinkActivity, destination.serverUrl))
+                        if (USE_NEW_LAUNCHER) {
+                            startActivity(
+                                LauncherActivity.newInstance(
+                                    this@LinkActivity,
+                                    LauncherActivity.DeepLink.Invite(destination.serverUrl),
+                                ),
+                            )
+                        } else {
+                            startActivity(LaunchActivity.newInstance(this@LinkActivity, destination.serverUrl))
+                        }
                         finish()
                     }
 
@@ -83,7 +96,16 @@ class LinkActivity : BaseActivity() {
         if (serverManager.defaultServers.size > 1) {
             openServerChooser(path)
         } else {
-            startActivity(WebViewActivity.newInstance(context = this, path = path))
+            if (USE_NEW_LAUNCHER) {
+                startActivity(
+                    LauncherActivity.newInstance(
+                        this,
+                        LauncherActivity.DeepLink.NavigateTo(path, ServerManager.SERVER_ID_ACTIVE),
+                    ),
+                )
+            } else {
+                startActivity(WebViewActivity.newInstance(context = this, path = path))
+            }
             finish()
         }
     }
@@ -91,13 +113,25 @@ class LinkActivity : BaseActivity() {
     private fun openServerChooser(path: String) {
         supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
             if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
-                startActivity(
-                    WebViewActivity.newInstance(
-                        context = this,
-                        path = path,
-                        serverId = bundle.getInt(ServerChooserFragment.RESULT_SERVER),
-                    ),
-                )
+                if (USE_NEW_LAUNCHER) {
+                    startActivity(
+                        LauncherActivity.newInstance(
+                            this,
+                            LauncherActivity.DeepLink.NavigateTo(
+                                path,
+                                bundle.getInt(ServerChooserFragment.RESULT_SERVER),
+                            ),
+                        ),
+                    )
+                } else {
+                    startActivity(
+                        WebViewActivity.newInstance(
+                            context = this,
+                            path = path,
+                            serverId = bundle.getInt(ServerChooserFragment.RESULT_SERVER),
+                        ),
+                    )
+                }
                 finish()
             }
             supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
@@ -118,7 +152,9 @@ fun LinkActivityScreen() {
             Image(
                 imageVector = ImageVector.vectorResource(R.drawable.app_icon_launch),
                 contentDescription = null,
-                modifier = Modifier.size(112.dp).align(Alignment.Center),
+                modifier = Modifier
+                    .size(112.dp)
+                    .align(Alignment.Center),
             )
         }
     }
