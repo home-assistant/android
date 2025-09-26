@@ -8,7 +8,6 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.annotation.VisibleForTesting
@@ -53,8 +52,10 @@ internal sealed interface ConnectionNavigationEvent {
      *
      * @property url The URL of the Home Assistant instance
      * @param authCode The authorization code returned by Home Assistant
+     * @param requiredMTLS The authentication required the use of mTLS
      */
-    data class Authenticated(val url: String, val authCode: String) : ConnectionNavigationEvent
+    data class Authenticated(val url: String, val authCode: String, val requiredMTLS: Boolean) :
+        ConnectionNavigationEvent
 
     /**
      * Emitted when a link is not from the server that we are connecting to,
@@ -100,7 +101,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     private val _isErrorFlow = MutableStateFlow(false)
     val isErrorFlow = _isErrorFlow.asStateFlow()
 
-    val webViewClient: WebViewClient = object : TLSWebViewClient(keyChainRepository) {
+    val webViewClient: TLSWebViewClient = object : TLSWebViewClient(keyChainRepository) {
         override fun onPageFinished(view: WebView?, url: String?) {
             super.onPageFinished(view, url)
             _isLoadingFlow.update { false }
@@ -229,7 +230,13 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         return if (url.scheme == AUTH_CALLBACK_SCHEME && url.host == AUTH_CALLBACK_HOST) {
             if (!code.isNullOrBlank()) {
                 viewModelScope.launch {
-                    _navigationEventsFlow.emit(ConnectionNavigationEvent.Authenticated(rawUrl, code))
+                    _navigationEventsFlow.emit(
+                        ConnectionNavigationEvent.Authenticated(
+                            url = rawUrl,
+                            authCode = code,
+                            requiredMTLS = webViewClient.isTLSClientAuthNeeded,
+                        ),
+                    )
                 }
                 true // Intercepted: Authentication successful
             } else {

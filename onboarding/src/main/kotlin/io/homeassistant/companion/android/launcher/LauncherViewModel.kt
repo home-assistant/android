@@ -28,6 +28,7 @@ import timber.log.Timber
 internal sealed interface LauncherNavigationEvent {
     data class Frontend(val path: String?, val serverId: Int) : LauncherNavigationEvent
     data class Onboarding(val url: String?) : LauncherNavigationEvent
+    data class WearOnboarding(val wearName: String, val serverToOnboard: String?) : LauncherNavigationEvent
 }
 
 /**
@@ -65,6 +66,11 @@ internal class LauncherViewModel @AssistedInject constructor(
         when (initialDeepLink) {
             is LauncherActivity.DeepLink.Invite -> navigateToOnboarding(initialDeepLink.url)
             is LauncherActivity.DeepLink.NavigateTo -> connectToServer(initialDeepLink.serverId, initialDeepLink.path)
+            is LauncherActivity.DeepLink.WearOnboarding -> navigateToWearOnboarding(
+                wearName = initialDeepLink.wearName,
+                url = initialDeepLink.url,
+            )
+
             null -> connectToServer(ServerManager.SERVER_ID_ACTIVE, null)
         }
     }
@@ -94,6 +100,10 @@ internal class LauncherViewModel @AssistedInject constructor(
             serverManager.isRegistered() &&
                 serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
         }
+    }
+
+    private suspend fun navigateToWearOnboarding(wearName: String, url: String? = null) {
+        _navigationEventsFlow.emit(LauncherNavigationEvent.WearOnboarding(wearName = wearName, serverToOnboard = url))
     }
 
     private suspend fun navigateToOnboarding(url: String? = null) {

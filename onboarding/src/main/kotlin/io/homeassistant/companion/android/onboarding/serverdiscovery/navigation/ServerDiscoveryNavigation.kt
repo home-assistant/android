@@ -10,10 +10,13 @@ import java.net.URL
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data object ServerDiscoveryRoute
+internal data class ServerDiscoveryRoute(val addExistingInstances: Boolean)
 
-internal fun NavController.navigateToServerDiscovery(navOptions: NavOptions? = null) {
-    navigate(route = ServerDiscoveryRoute, navOptions)
+internal fun NavController.navigateToServerDiscovery(
+    addExistingInstances: Boolean = false,
+    navOptions: NavOptions? = null,
+) {
+    navigate(route = ServerDiscoveryRoute(addExistingInstances), navOptions)
 }
 
 internal fun NavGraphBuilder.serverDiscoveryScreen(

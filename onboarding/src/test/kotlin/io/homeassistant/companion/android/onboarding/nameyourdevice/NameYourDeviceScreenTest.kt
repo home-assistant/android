@@ -18,6 +18,7 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.R
+import io.homeassistant.companion.android.onboarding.nameyourweardevice.WEAR_DEVICE_NAME_TEXT_FIELD_TAG
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.stringResource
 import org.junit.Before
@@ -68,7 +69,7 @@ class NameYourDeviceScreenTest {
 
                 onNodeWithText("Pixel 42").assertIsDisplayed()
 
-                onNodeWithTag(DEVICE_NAME_TEXT_FIELD_TAG).assertIsDisplayed().assertIsEnabled().performTextInput("Hello ")
+                onNodeWithTag(WEAR_DEVICE_NAME_TEXT_FIELD_TAG).assertIsDisplayed().assertIsEnabled().performTextInput("Hello ")
                 assertEquals("Hello Pixel 42", changedName)
 
                 onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsDisplayed().performClick()
@@ -85,7 +86,7 @@ class NameYourDeviceScreenTest {
                     .performScrollTo() // We need to scroll to the button since it is not visible because of the spacer on tests
                     .assertIsDisplayed().assertIsNotEnabled()
 
-                onNodeWithTag(DEVICE_NAME_TEXT_FIELD_TAG).assertIsDisplayed().assertIsNotEnabled()
+                onNodeWithTag(WEAR_DEVICE_NAME_TEXT_FIELD_TAG).assertIsDisplayed().assertIsNotEnabled()
                 onNodeWithText("Pixel 42").assertIsDisplayed()
 
                 // Set fake data to see if click actually does something. In this test it shouldn't do anything since it is disabled
