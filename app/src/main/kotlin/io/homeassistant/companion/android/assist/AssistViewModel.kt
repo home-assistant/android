@@ -187,7 +187,7 @@ class AssistViewModel @Inject constructor(
     fun changePipeline(serverId: Int, id: String) = viewModelScope.launch {
         if (serverId == selectedServerId && id == selectedPipeline?.id) return@launch
 
-        stopRecording()
+        stopRecording(sendRecorded = false)
         stopPlayback()
 
         selectedServerId = serverId
@@ -247,7 +247,7 @@ class AssistViewModel @Inject constructor(
                 inputMode = AssistInputMode.TEXT
             }
             AssistInputMode.VOICE_ACTIVE -> {
-                stopRecording()
+                stopRecording(sendRecorded = false)
                 inputMode = AssistInputMode.TEXT
             }
         }

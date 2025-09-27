@@ -170,7 +170,7 @@ class ConversationViewModel @Inject constructor(
     fun changePipeline(id: String) = viewModelScope.launch {
         if (id == currentPipeline?.id) return@launch
 
-        stopRecording()
+        stopRecording(sendRecorded = false)
         stopPlayback()
 
         setPipeline(id)
