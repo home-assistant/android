@@ -9,6 +9,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.VisualTransformation
 import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
@@ -53,6 +54,8 @@ fun HATextField(
     leadingIcon: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
+    maxLines: Int = Int.MAX_VALUE,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     // TODO probably replace the text composable by strings to control the applied style
     OutlinedTextField(
@@ -63,12 +66,14 @@ fun HATextField(
         trailingIcon = trailingIcon,
         leadingIcon = leadingIcon,
         shape = RoundedCornerShape(size = HARadius.M),
+        maxLines = maxLines,
         // The color is controlled from the [colors] attribute
         textStyle = HATextStyle.UserInput.copy(color = Color.Unspecified),
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
         placeholder = placeholder,
         isError = isError,
+        visualTransformation = visualTransformation,
         label = label,
         colors = LocalHAColorScheme.current.textField(),
         modifier = modifier

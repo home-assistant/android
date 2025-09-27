@@ -21,6 +21,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.compose.theme.HAButtonColors
 import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HASpacing
@@ -30,7 +33,6 @@ import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.compose.theme.defaultRippleAlpha
 
 private val buttonShape = RoundedCornerShape(size = HARadius.Pill)
-private val buttonContentPadding = PaddingValues(vertical = HASpacing.M)
 
 /**
  * Defines the visual styling variants for Home Assistant buttons.
@@ -51,6 +53,12 @@ enum class ButtonVariant {
 
     /** A button style indicating a successful operation or positive outcome. */
     SUCCESS,
+}
+
+enum class ButtonSize(val value: Dp) {
+    SMALL(32.dp),
+    MEDIUM(40.dp),
+    LARGE(56.dp),
 }
 
 /**
@@ -74,6 +82,9 @@ fun HAAccentButton(
     modifier: Modifier = Modifier,
     variant: ButtonVariant = ButtonVariant.PRIMARY,
     enabled: Boolean = true,
+    size: ButtonSize = ButtonSize.LARGE,
+    textOverflow: TextOverflow = TextOverflow.Clip,
+    maxLines: Int = Int.MAX_VALUE,
     prefix: @Composable (BoxScope.() -> Unit)? = null,
     suffix: @Composable (BoxScope.() -> Unit)? = null,
 ) {
@@ -87,6 +98,9 @@ fun HAAccentButton(
         enabled = enabled,
         prefix = prefix,
         suffix = suffix,
+        textOverflow = textOverflow,
+        maxLines = maxLines,
+        size = size,
     )
 }
 
@@ -110,7 +124,10 @@ fun HAFilledButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     variant: ButtonVariant = ButtonVariant.PRIMARY,
+    size: ButtonSize = ButtonSize.LARGE,
     enabled: Boolean = true,
+    textOverflow: TextOverflow = TextOverflow.Clip,
+    maxLines: Int = Int.MAX_VALUE,
     prefix: @Composable (BoxScope.() -> Unit)? = null,
     suffix: @Composable (BoxScope.() -> Unit)? = null,
 ) {
@@ -124,6 +141,9 @@ fun HAFilledButton(
         enabled = enabled,
         prefix = prefix,
         suffix = suffix,
+        textOverflow = textOverflow,
+        maxLines = maxLines,
+        size = size,
     )
 }
 
@@ -146,8 +166,11 @@ fun HAPlainButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    size: ButtonSize = ButtonSize.LARGE,
     variant: ButtonVariant = ButtonVariant.PRIMARY,
     enabled: Boolean = true,
+    textOverflow: TextOverflow = TextOverflow.Clip,
+    maxLines: Int = Int.MAX_VALUE,
     prefix: @Composable (BoxScope.() -> Unit)? = null,
     suffix: @Composable (BoxScope.() -> Unit)? = null,
 ) {
@@ -158,14 +181,18 @@ fun HAPlainButton(
             onClick = onClick,
             enabled = enabled,
             colors = colors.buttonColors,
-            modifier = modifier.widthIn(max = MaxButtonWidth),
-            contentPadding = buttonContentPadding,
+            modifier = modifier
+                .heightIn(min = size.value)
+                .widthIn(max = MaxButtonWidth),
+            contentPadding = PaddingValues.Zero,
             shape = buttonShape,
         ) {
             ButtonContent(
                 text = text,
                 prefix = prefix,
                 suffix = suffix,
+                textOverflow = textOverflow,
+                maxLines = maxLines,
             )
         }
     }
@@ -176,10 +203,13 @@ private fun HABaseButton(
     text: String,
     onClick: () -> Unit,
     colors: HAButtonColors,
+    size: ButtonSize,
+    enabled: Boolean,
+    textOverflow: TextOverflow,
+    maxLines: Int,
+    prefix: @Composable (BoxScope.() -> Unit)?,
+    suffix: @Composable (BoxScope.() -> Unit)?,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    prefix: @Composable (BoxScope.() -> Unit)? = null,
-    suffix: @Composable (BoxScope.() -> Unit)? = null,
 ) {
     RippleConfigurationLocalProvider(colors) {
         Button(
@@ -187,15 +217,17 @@ private fun HABaseButton(
             enabled = enabled,
             colors = colors.buttonColors,
             modifier = modifier
-                .heightIn(min = HASpacing.XL)
+                .heightIn(min = size.value)
                 .widthIn(max = MaxButtonWidth),
-            contentPadding = buttonContentPadding,
+            contentPadding = PaddingValues.Zero,
             shape = buttonShape,
         ) {
             ButtonContent(
                 text = text,
                 prefix = prefix,
                 suffix = suffix,
+                textOverflow = textOverflow,
+                maxLines = maxLines,
             )
         }
     }
@@ -253,17 +285,23 @@ private fun RowScope.ButtonContent(
     text: String,
     prefix: @Composable (BoxScope.() -> Unit)?,
     suffix: @Composable (BoxScope.() -> Unit)?,
+    textOverflow: TextOverflow,
+    maxLines: Int,
 ) {
     ButtonDecorator(ButtonDecoratorType.PREFIX, prefix)
     Text(
         text = text,
         style = HATextStyle.Button,
+        maxLines = maxLines,
+        overflow = textOverflow,
         modifier = Modifier
             .padding(
                 // Adjust padding based on the presence of prefix/suffix
                 start = if (prefix != null) HASpacing.X2S else HASpacing.M,
                 end = if (suffix != null) HASpacing.X2S else HASpacing.M,
             )
+            // Minimum padding when the text is multi-lines
+            .padding(vertical = HASpacing.X2S)
             .weight(1f, fill = false), // Allow text to take available space but not fill it
     )
     ButtonDecorator(ButtonDecoratorType.SUFFIX, suffix)
