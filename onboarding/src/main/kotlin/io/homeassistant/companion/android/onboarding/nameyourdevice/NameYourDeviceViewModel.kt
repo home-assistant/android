@@ -38,8 +38,9 @@ internal sealed interface NameYourDeviceNavigationEvent {
      * Represents the navigation event that is triggered when the device name is saved.
      *
      * @param serverId The ID of the server for which the device name was saved.
+     * @param hasPlainTextAccess Boolean that define if the current server has a plain text url
      */
-    data class DeviceNameSaved(val serverId: Int) : NameYourDeviceNavigationEvent
+    data class DeviceNameSaved(val serverId: Int, val hasPlainTextAccess: Boolean) : NameYourDeviceNavigationEvent
     data class Error(@StringRes val messageRes: Int) : NameYourDeviceNavigationEvent
 }
 
@@ -89,7 +90,12 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
             try {
                 _isSavingFlow.emit(true)
                 val serverId = addServer()
-                _navigationEventsFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved(serverId))
+                _navigationEventsFlow.emit(
+                    NameYourDeviceNavigationEvent.DeviceNameSaved(
+                        serverId,
+                        route.url.startsWith("http://"),
+                    ),
+                )
             } catch (e: Exception) {
                 Timber.e(e, "Error while adding server")
                 val messageRes = when {

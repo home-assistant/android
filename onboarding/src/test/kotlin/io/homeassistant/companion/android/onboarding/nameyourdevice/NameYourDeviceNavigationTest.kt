@@ -50,12 +50,14 @@ class NameYourDeviceNavigationTest {
         }
 
         var serverIdSet: Int? = null
+        var hasPlainTextAccessSet: Boolean? = null
 
         composeTestRule.setContent {
             HandleNameYourDeviceNavigationEvents(
                 viewModel,
-                onDeviceNamed = {
-                    serverIdSet = it
+                onDeviceNamed = { serverId, hasPlainTextAccess ->
+                    serverIdSet = serverId
+                    hasPlainTextAccessSet = hasPlainTextAccess
                 },
                 onShowSnackbar = { message, _ ->
                     true
@@ -64,11 +66,12 @@ class NameYourDeviceNavigationTest {
             )
         }
 
-        val event = NameYourDeviceNavigationEvent.DeviceNameSaved(42).apply {
+        val event = NameYourDeviceNavigationEvent.DeviceNameSaved(42, true).apply {
             sharedFlow.emit(this)
         }
 
         assertEquals(event.serverId, serverIdSet)
+        assertEquals(event.hasPlainTextAccess, hasPlainTextAccessSet)
     }
 
     @Test
@@ -84,7 +87,7 @@ class NameYourDeviceNavigationTest {
         composeTestRule.setContent {
             HandleNameYourDeviceNavigationEvents(
                 viewModel,
-                onDeviceNamed = {},
+                onDeviceNamed = { _, _ -> },
                 onShowSnackbar = { message, _ ->
                     errorMessage = message
                     true
