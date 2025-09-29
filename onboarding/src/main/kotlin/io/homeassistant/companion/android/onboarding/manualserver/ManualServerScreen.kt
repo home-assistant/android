@@ -197,6 +197,7 @@ private fun ServerUrlTextField(
             }
         },
         isError = isError,
+        maxLines = 1,
         modifier = modifier.focusRequester(focusRequester),
     )
     // Request focus on the text field when the screen is shown
