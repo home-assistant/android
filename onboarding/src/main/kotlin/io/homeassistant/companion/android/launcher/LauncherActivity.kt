@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.compose.HAApp
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
+import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
 import kotlinx.coroutines.flow.first
 import kotlinx.parcelize.Parcelize
 
@@ -36,6 +37,8 @@ class LauncherActivity : AppCompatActivity() {
     sealed interface DeepLink : Parcelable {
         data class Invite(val url: String) : DeepLink
         data class NavigateTo(val path: String?, val serverId: Int) : DeepLink
+
+        data class WearOnboarding(val wearName: String, val url: String?) : DeepLink
     }
 
     companion object {
@@ -80,7 +83,16 @@ class LauncherActivity : AppCompatActivity() {
                                     FrontendRoute(event.path, event.serverId)
                                 }
                             }
+
                             is LauncherNavigationEvent.Onboarding -> OnboardingRoute(event.url)
+                            is LauncherNavigationEvent.WearOnboarding -> {
+                                // TODO fail when not in FULL variant (maybe make a dedicated screen explaining that
+                                //  the wear only work with FULL variant)
+                                WearOnboardingRoute(
+                                    wearName = event.wearName,
+                                    serverToOnboard = event.serverToOnboard,
+                                )
+                            }
                         }
                     }
 

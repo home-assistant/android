@@ -275,4 +275,11 @@ class LauncherViewModelTest {
         advanceUntilIdle()
         assertEquals(LauncherNavigationEvent.Frontend("/path", serverId), viewModel.navigationEventsFlow.replayCache.first())
     }
+
+    @Test
+    fun `Given initial deep link is WearOnboarding when creating viewModel, then navigate to wear onboarding with the server url and wear name`() = runTest {
+        createViewModel(LauncherActivity.DeepLink.WearOnboarding("ha_wear", "http://ha"))
+        advanceUntilIdle()
+        assertEquals(LauncherNavigationEvent.WearOnboarding("ha_wear", "http://ha"), viewModel.navigationEventsFlow.replayCache.first())
+    }
 }

@@ -1,12 +1,11 @@
 package io.homeassistant.companion.android.onboarding.serverdiscovery
 
 import app.cash.turbine.test
-import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
+import io.homeassistant.companion.android.utils.mockServer
+import io.homeassistant.companion.android.utils.testHAVersion
 import io.mockk.every
 import io.mockk.mockk
 import java.net.URL
@@ -24,10 +23,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import timber.log.Timber
 
-private val testHAVersion = HomeAssistantVersion(2025, 1, 1)
-
 @OptIn(ExperimentalCoroutinesApi::class)
-class ServerDiscoveryViewModelTest {
+private class ServerDiscoveryViewModelTest {
 
     @RegisterExtension
     val mainDispatcherExtension = MainDispatcherJUnit5Extension(UnconfinedTestDispatcher())
@@ -247,16 +244,6 @@ class ServerDiscoveryViewModelTest {
             runCurrent()
 
             assertEquals(NoServerFound, awaitItem())
-        }
-    }
-
-    private fun mockServer(url: String?, haVersion: HomeAssistantVersion? = testHAVersion, name: String): Server {
-        return mockk<Server> {
-            every { connection } returns mockk<ServerConnectionInfo> {
-                every { getUrl(isInternal = false) } returns url?.let { URL(url) }
-                every { version } returns haVersion
-                every { friendlyName } returns name
-            }
         }
     }
 }

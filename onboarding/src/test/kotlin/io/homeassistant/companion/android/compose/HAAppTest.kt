@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -23,11 +24,15 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HAStartDestinationRoute
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
+import io.homeassistant.companion.android.compose.composable.HA_WEBVIEW_TAG
 import io.homeassistant.companion.android.frontend.navigation.FrontendActivityRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.R
+import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
+import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.navigateToLocationForSecureConnection
+import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.stringResource
@@ -89,7 +94,7 @@ class HAAppTest {
     }
 
     @Test
-    fun `Given HAApp when no start destination then show loading`() {
+    fun `Given no start start destination when starts then show loading`() {
         testApp(null) {
             assertNull(navController.currentBackStackEntry)
             onNodeWithContentDescription(stringResource(R.string.loading_content_description)).assertIsDisplayed()
@@ -97,7 +102,7 @@ class HAAppTest {
     }
 
     @Test
-    fun `Given HAApp when navigate to Welcome then show Welcome`() {
+    fun `Given OnboardingRoute as start when starts then show Welcome`() {
         testApp(OnboardingRoute()) {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
             onNodeWithText(stringResource(R.string.welcome_home_assistant_title)).assertIsDisplayed()
@@ -109,7 +114,7 @@ class HAAppTest {
     }
 
     @Test
-    fun `Given HAApp when navigate to Frontend then navigate to FrontEndActivity and finish current activity`() {
+    fun `Given FrontendRoute as start when starts then navigate to Frontend and finish current activity`() {
         testApp(FrontendRoute()) {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
             verify(exactly = 1) {
@@ -124,6 +129,22 @@ class HAAppTest {
             }
             // TODO remove this once we are using WebViewActivity anymore
             assertTrue(activity.isFinishing)
+        }
+    }
+
+    @Test
+    fun `Given WearOnboardingRoute with url to onboard as start when starts then navigate to ConnectionScreen`() {
+        testApp(WearOnboardingRoute("wear", "http://ha")) {
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
+            onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun `Given WearOnboardingRoute without as start when starts then navigate to ServerDiscoveryScreen`() {
+        testApp(WearOnboardingRoute("wear", null)) {
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
+            onNodeWithText(stringResource(R.string.searching_home_network)).assertIsDisplayed()
         }
     }
 
@@ -159,4 +180,6 @@ class HAAppTest {
             }
         }
     }
+
+    // TODO find a way to test the activity result since setResult is not exposed.
 }

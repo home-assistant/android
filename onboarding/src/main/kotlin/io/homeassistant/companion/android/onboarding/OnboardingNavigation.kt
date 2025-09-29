@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.onboarding
 
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.compose.ui.util.fastAny
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
@@ -26,6 +27,9 @@ import io.homeassistant.companion.android.onboarding.manualserver.navigation.man
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.navigateToManualServer
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.nameYourDeviceScreen
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.navigateToNameYourDevice
+import io.homeassistant.companion.android.onboarding.nameyourweardevice.navigation.nameYourWearDeviceScreen
+import io.homeassistant.companion.android.onboarding.nameyourweardevice.navigation.navigateToNameYourWearDevice
+import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.serverDiscoveryScreen
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
@@ -34,6 +38,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 internal data class OnboardingRoute(val serverToOnboard: String? = null) : HAStartDestinationRoute
+
+@Serializable
+internal data class WearOnboardingRoute(val wearName: String, val serverToOnboard: String? = null) :
+    HAStartDestinationRoute
 
 internal fun NavController.navigateToOnboarding(serverToOnboard: String? = null, navOptions: NavOptions? = null) {
     navigate(OnboardingRoute(serverToOnboard), navOptions)
@@ -54,10 +62,10 @@ internal fun NavGraphBuilder.onboarding(
     navigation<OnboardingRoute>(startDestination = WelcomeRoute) {
         welcomeScreen(
             onConnectClick = {
-                if (serverToOnboard != null) {
-                    navController.navigateToConnection(serverToOnboard)
-                } else {
+                if (serverToOnboard.isNullOrEmpty()) {
                     navController.navigateToServerDiscovery()
+                } else {
+                    navController.navigateToConnection(serverToOnboard)
                 }
             },
             onLearnMoreClick = {
@@ -65,46 +73,7 @@ internal fun NavGraphBuilder.onboarding(
                 navController.navigateToUri("https://www.home-assistant.io")
             },
         )
-        serverDiscoveryScreen(
-            onConnectClick = {
-                navController.navigateToConnection(it.toString())
-            },
-            onBackClick = navController::popBackStack,
-            onManualSetupClick = navController::navigateToManualServer,
-            onHelpClick = {
-                // TODO validate the URL to use
-                navController.navigateToUri("https://www.home-assistant.io/installation/")
-            },
-        )
-        manualServerScreen(
-            onBackClick = navController::popBackStack,
-            onConnectTo = {
-                navController.navigateToConnection(it.toString())
-            },
-            onHelpClick = {
-                // TODO validate the URL to use
-                navController.navigateToUri("https://www.home-assistant.io/installation/")
-            },
-        )
-        connectionScreen(
-            onAuthenticated = { url, authCode ->
-                navController.navigateToNameYourDevice(
-                    url = url,
-                    authCode = authCode,
-                    navOptions {
-                        // We don't want to come back to the connection screen if we navigate to the name your device screen
-                        popUpTo<ConnectionRoute> {
-                            inclusive = true
-                        }
-                    },
-                )
-            },
-            onShowSnackbar = onShowSnackbar,
-            onBackClick = navController::popBackStack,
-            onOpenExternalLink = {
-                navController.navigateToUri(it.toString())
-            },
-        )
+        commonScreens(navController = navController, onShowSnackbar = onShowSnackbar)
         nameYourDeviceScreen(
             onBackClick = navController::popBackStack,
             onDeviceNamed = { serverId, hasPlainTextAccess ->
@@ -163,7 +132,6 @@ internal fun NavGraphBuilder.onboarding(
             },
             // We don't have back button since after name your device the device is registered
         )
-
         locationForSecureConnectionScreen(
             onHelpClick = {
                 // TODO validate the URL to use
@@ -175,5 +143,108 @@ internal fun NavGraphBuilder.onboarding(
             onShowSnackbar = onShowSnackbar,
             // We don't have back button since after name your device the device is registered
         )
+    }
+}
+
+private fun NavGraphBuilder.commonScreens(
+    navController: NavController,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+    wearNameToOnboard: String? = null,
+) {
+    serverDiscoveryScreen(
+        onConnectClick = {
+            navController.navigateToConnection(it.toString())
+        },
+        onBackClick = navController::popBackStack,
+        onManualSetupClick = navController::navigateToManualServer,
+        onHelpClick = {
+            // TODO validate the URL to use
+            navController.navigateToUri("https://www.home-assistant.io/installation/")
+        },
+    )
+    manualServerScreen(
+        onBackClick = navController::popBackStack,
+        onConnectTo = {
+            navController.navigateToConnection(it.toString())
+        },
+        onHelpClick = {
+            // TODO validate the URL to use
+            navController.navigateToUri("https://www.home-assistant.io/installation/")
+        },
+    )
+    connectionScreen(
+        onAuthenticated = { url, authCode, requiredMTLS ->
+            val navOptions = navOptions {
+                // We don't want to come back to the connection screen if we navigate to the name your device screen
+                popUpTo<ConnectionRoute> {
+                    inclusive = true
+                }
+            }
+            if (wearNameToOnboard != null) {
+                navController.navigateToNameYourWearDevice(
+                    url = url,
+                    authCode = authCode,
+                    requiredMTLS = requiredMTLS,
+                    navOptions = navOptions,
+                    defaultDeviceName = wearNameToOnboard,
+                )
+            } else {
+                navController.navigateToNameYourDevice(
+                    url = url,
+                    authCode = authCode,
+                    navOptions = navOptions,
+                )
+            }
+        },
+        onShowSnackbar = onShowSnackbar,
+        onBackClick = navController::popBackStack,
+        onOpenExternalLink = {
+            navController.navigateToUri(it.toString())
+        },
+    )
+}
+
+internal fun NavGraphBuilder.wearOnboarding(
+    navController: NavController,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+    onOnboardingDone: (
+        deviceName: String,
+        serverUrl: String,
+        authCode: String,
+        certUri: Uri?,
+        certPassword: String?,
+    ) -> Unit,
+    serverToOnboard: String?,
+    wearNameToOnboard: String,
+) {
+    val startRoute = if (serverToOnboard.isNullOrEmpty()) {
+        ServerDiscoveryRoute(addExistingInstances = true)
+    } else {
+        ConnectionRoute(serverToOnboard)
+    }
+
+    navigation<WearOnboardingRoute>(startDestination = startRoute) {
+        // TODO discovery should be able to add existing system
+        commonScreens(
+            navController = navController,
+            onShowSnackbar = onShowSnackbar,
+            wearNameToOnboard = wearNameToOnboard,
+        )
+
+        nameYourWearDeviceScreen(
+            onBackClick = navController::popBackStack,
+            onDeviceNamed = { deviceName, serverUrl, authCode, neededMTLS ->
+                if (neededMTLS) {
+                    // TODO redirect to mTLS selection
+                } else {
+                    onOnboardingDone(deviceName, serverUrl, authCode, null, null)
+                }
+            },
+            onHelpClick = {
+                // TODO validate the URL to use
+                navController.navigateToUri("https://www.home-assistant.io/installation/")
+            },
+        )
+        // TODO probably make auth_code a value class to avoid string missmatch
     }
 }
