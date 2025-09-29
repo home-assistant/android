@@ -115,7 +115,7 @@ private fun ColumnScope.BottomButtons(
 ) {
     val permissions = rememberLocationPermission(
         onPermissionResult = {
-            // We ignore the result and proceed even if the user reject the permission and we should proceed
+            // We ignore the result and proceed even if the user rejected the permission
             onGoToNextScreen()
         },
     )

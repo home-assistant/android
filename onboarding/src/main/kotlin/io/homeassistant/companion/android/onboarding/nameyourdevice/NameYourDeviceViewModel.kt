@@ -38,7 +38,7 @@ internal sealed interface NameYourDeviceNavigationEvent {
      * Represents the navigation event that is triggered when the device name is saved.
      *
      * @param serverId The ID of the server for which the device name was saved.
-     * @param hasPlainTextAccess Boolean that define if the current server has a plain text url
+     * @param hasPlainTextAccess Boolean that defines if the server has a plain text URL.
      */
     data class DeviceNameSaved(val serverId: Int, val hasPlainTextAccess: Boolean) : NameYourDeviceNavigationEvent
     data class Error(@StringRes val messageRes: Int) : NameYourDeviceNavigationEvent
