@@ -197,17 +197,19 @@ abstract class AssistViewModelBase(
         } ?: false
     }
 
-    protected fun stopRecording() {
+    protected fun stopRecording(sendRecorded: Boolean = true) {
         audioRecorder.stopRecording()
         recorderJob?.cancel()
         recorderJob = null
         if (binaryHandlerId != null) {
             viewModelScope.launch {
-                recorderQueue?.forEach {
-                    sendVoiceData(it)
+                if (sendRecorded) {
+                    recorderQueue?.forEach {
+                        sendVoiceData(it)
+                    }
+                    sendVoiceData(byteArrayOf()) // Empty message to indicate end of recording
                 }
                 recorderQueue = null
-                sendVoiceData(byteArrayOf()) // Empty message to indicate end of recording
                 binaryHandlerId = null
             }
         } else {
