@@ -179,6 +179,7 @@ private fun DeviceNameTextField(
             },
         ),
         enabled = deviceNameEditable,
+        maxLines = 1,
         modifier = modifier.testTag(DEVICE_NAME_TEXT_FIELD_TAG),
     )
 }
