@@ -7,7 +7,7 @@ contact_links:
     url: https://github.com/home-assistant/developers.home-assistant/issues
     about: Please report any errors, missing information, or suggestions for the developer documentation here.
   - name: Request a feature for the Android application
-    url: https://github.com/orgs/home-assistant/discussions
+    url: https://github.com/orgs/home-assistant/discussions/new?category=android
     about: Request an new feature for the Android.
   - name: Problem with your dashboard
     url: https://github.com/home-assistant/frontend/issues
