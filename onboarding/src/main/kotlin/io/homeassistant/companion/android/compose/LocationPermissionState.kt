@@ -42,7 +42,6 @@ val locationPermissions: List<String> = foregroundLocationPermissions.run {
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun rememberLocationPermission(onPermissionResult: (Boolean) -> Unit): MultiplePermissionsState {
-    // TODO verify that we should ask on Q because we see R in some other functions
     val backgroundPermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         rememberPermissionState(
             Manifest.permission.ACCESS_BACKGROUND_LOCATION,
