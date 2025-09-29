@@ -168,7 +168,5 @@ internal fun NavGraphBuilder.onboarding(
             onShowSnackbar = onShowSnackbar,
             // We don't have back button since after name your device the device is registered
         )
-
-        // TODO ask for background permission (using the next extension) on the dashboard with the notification permission
     }
 }
