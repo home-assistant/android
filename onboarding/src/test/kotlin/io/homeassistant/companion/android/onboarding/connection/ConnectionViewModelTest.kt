@@ -99,8 +99,9 @@ class ConnectionViewModelTest {
         }
     }
 
-    @Test
-    fun `Given auth callback uri with code when shouldRedirect then emits Authenticated event and returns true`() = runTest {
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `Given auth callback uri with code when shouldRedirect then emits Authenticated event with mTLS status and returns true`(requireMTLS: Boolean) = runTest {
         val authCode = "test_auth_code"
         val callbackUri = mockk<Uri> {
             every { scheme } returns "homeassistant"
@@ -112,6 +113,8 @@ class ConnectionViewModelTest {
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            viewModel.webViewClient.isTLSClientAuthNeeded = requireMTLS
 
             val result = viewModel.webViewClient.shouldOverrideUrlLoading(
                 null,
@@ -125,6 +128,7 @@ class ConnectionViewModelTest {
             assertTrue(event is ConnectionNavigationEvent.Authenticated)
             assertEquals(authCode, (event as ConnectionNavigationEvent.Authenticated).authCode)
             assertEquals("http://homeassistant.local:8123", event.url)
+            assertEquals(requireMTLS, event.requiredMTLS)
             assertFalse(viewModel.isErrorFlow.value)
         }
     }
