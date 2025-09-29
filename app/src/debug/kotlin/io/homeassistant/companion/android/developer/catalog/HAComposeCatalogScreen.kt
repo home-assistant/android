@@ -37,7 +37,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import io.homeassistant.companion.android.common.compose.composable.ButtonSize
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
@@ -52,6 +55,9 @@ import io.homeassistant.companion.android.common.compose.theme.HASize
 import io.homeassistant.companion.android.common.compose.theme.HASpacing
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+
+private const val BIG_CONTENT =
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
 
 @Composable
 fun HAComposeCatalogScreen() {
@@ -144,24 +150,33 @@ private fun LazyListScope.catalogSection(title: String, content: @Composable () 
 private fun LazyListScope.buttonSection(variant: ButtonVariant, enabled: Boolean) {
     catalogSection(title = "Buttons ${if (enabled) "enabled" else "disabled"}") {
         CatalogRow {
-            HAAccentButton(
-                text = "Label",
-                enabled = enabled,
-                onClick = {},
-                variant = variant,
-            )
-            HAFilledButton(
-                text = "Label",
-                enabled = enabled,
-                onClick = {},
-                variant = variant,
-            )
-            HAPlainButton(
-                text = "Label",
-                enabled = enabled,
-                onClick = {},
-                variant = variant,
-            )
+            ButtonSize.entries.forEach {
+                HAAccentButton(
+                    text = "Label",
+                    enabled = enabled,
+                    onClick = {},
+                    variant = variant,
+                    size = it,
+                )
+            }
+            ButtonSize.entries.forEach {
+                HAFilledButton(
+                    text = "Label",
+                    enabled = enabled,
+                    onClick = {},
+                    variant = variant,
+                    size = it,
+                )
+            }
+            ButtonSize.entries.forEach {
+                HAPlainButton(
+                    text = "Label",
+                    enabled = enabled,
+                    onClick = {},
+                    variant = variant,
+                    size = it,
+                )
+            }
         }
     }
 }
@@ -210,30 +225,56 @@ private fun LazyListScope.buttonsWithIcon(variant: ButtonVariant) {
 }
 
 private fun LazyListScope.buttonsWithBigContent(variant: ButtonVariant) {
-    val content = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-
     catalogSection(title = "Button with big content") {
         CatalogRow {
             HAAccentButton(
-                text = content,
+                text = BIG_CONTENT,
+                onClick = {},
+                variant = variant,
+                prefix = { AddIcon() },
+                suffix = { AddIcon() },
+            )
+            HAAccentButton(
+                text = BIG_CONTENT,
+                onClick = {},
+                variant = variant,
+                prefix = { AddIcon() },
+                suffix = { AddIcon() },
+                maxLines = 1,
+                textOverflow = TextOverflow.Ellipsis,
+            )
+            HAFilledButton(
+                text = BIG_CONTENT,
                 onClick = {},
                 variant = variant,
                 prefix = { AddIcon() },
                 suffix = { AddIcon() },
             )
             HAFilledButton(
-                text = content,
+                text = BIG_CONTENT,
+                onClick = {},
+                variant = variant,
+                prefix = { AddIcon() },
+                suffix = { AddIcon() },
+
+                maxLines = 1,
+                textOverflow = TextOverflow.Ellipsis,
+            )
+            HAPlainButton(
+                text = BIG_CONTENT,
                 onClick = {},
                 variant = variant,
                 prefix = { AddIcon() },
                 suffix = { AddIcon() },
             )
             HAPlainButton(
-                text = content,
+                text = BIG_CONTENT,
                 onClick = {},
                 variant = variant,
                 prefix = { AddIcon() },
                 suffix = { AddIcon() },
+                maxLines = 1,
+                textOverflow = TextOverflow.Ellipsis,
             )
         }
     }
@@ -282,7 +323,8 @@ private fun LazyListScope.input() {
             var value2 by remember { mutableStateOf("") }
             var value3 by remember { mutableStateOf("") }
             var value4 by remember { mutableStateOf("") }
-            var value5 by remember { mutableStateOf("") }
+            var value5 by remember { mutableStateOf("error") }
+            var value6 by remember { mutableStateOf("super secret") }
 
             HATextField(
                 value = value1,
@@ -365,6 +407,40 @@ private fun LazyListScope.input() {
                     }
                 },
             )
+            HATextField(
+                value = BIG_CONTENT,
+                enabled = false,
+                onValueChange = { },
+                label = {
+                    Text(
+                        text = "Label",
+                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                    )
+                },
+                placeholder = {
+                    Text(
+                        text = "Placeholder",
+                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                    )
+                },
+            )
+            HATextField(
+                value = value6,
+                onValueChange = { value6 = it },
+                visualTransformation = PasswordVisualTransformation(),
+                label = {
+                    Text(
+                        text = "Password",
+                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                    )
+                },
+                placeholder = {
+                    Text(
+                        text = "Placeholder",
+                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                    )
+                },
+            )
         }
     }
 }
@@ -426,7 +502,7 @@ private fun LazyListScope.radioGroupSection() {
 }
 
 @Composable
-@Preview(showBackground = true, heightDp = 1500)
+@Preview(showBackground = true, heightDp = 2000, widthDp = 1000)
 private fun HAComposeCatalogScreenPreview() {
     HAComposeCatalogScreen()
 }
