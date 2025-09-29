@@ -22,6 +22,7 @@ fun HALoading(modifier: Modifier = Modifier, strokeWidth: Dp = ProgressIndicator
         strokeWidth = strokeWidth,
         color = LocalHAColorScheme.current.colorBorderPrimaryLoud,
         trackColor = LocalHAColorScheme.current.colorBorderNeutralQuiet,
+        gapSize = (-10).dp, // Remove the strokeCap of the background
     )
 }
 
