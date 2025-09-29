@@ -1,5 +1,10 @@
 package io.homeassistant.companion.android.onboarding
 
+import android.content.pm.PackageManager
+import androidx.activity.compose.LocalActivityResultRegistryOwner
+import androidx.activity.result.ActivityResultRegistry
+import androidx.activity.result.ActivityResultRegistryOwner
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
@@ -12,6 +17,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.ComposeNavigator
@@ -26,11 +32,17 @@ import dagger.hilt.android.testing.UninstallModules
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
+import io.homeassistant.companion.android.compose.LocationPermissionActivityResultRegistry
 import io.homeassistant.companion.android.compose.navigateToUri
 import io.homeassistant.companion.android.onboarding.connection.CONNECTION_SCREEN_TAG
 import io.homeassistant.companion.android.onboarding.connection.ConnectionNavigationEvent
 import io.homeassistant.companion.android.onboarding.connection.ConnectionViewModel
 import io.homeassistant.companion.android.onboarding.localfirst.navigation.LocalFirstRoute
+import io.homeassistant.companion.android.onboarding.localfirst.navigation.navigateToLocalFirst
+import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.LocationForSecureConnectionRoute
+import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.navigateToLocationForSecureConnection
+import io.homeassistant.companion.android.onboarding.locationsharing.navigation.LocationSharingRoute
+import io.homeassistant.companion.android.onboarding.locationsharing.navigation.navigateToLocationSharing
 import io.homeassistant.companion.android.onboarding.manualserver.navigation.ManualServerRoute
 import io.homeassistant.companion.android.onboarding.nameyourdevice.NameYourDeviceNavigationEvent
 import io.homeassistant.companion.android.onboarding.nameyourdevice.NameYourDeviceViewModel
@@ -63,6 +75,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -105,7 +118,7 @@ internal class OnboardingNavigationTest {
         val nameYourDeviceNavigationFlow = MutableSharedFlow<NameYourDeviceNavigationEvent>()
         every { navigationEventsFlow } returns nameYourDeviceNavigationFlow
         every { onSaveClick() } coAnswers {
-            nameYourDeviceNavigationFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved(42))
+            nameYourDeviceNavigationFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved(42, false))
         }
         every { deviceNameFlow } returns MutableStateFlow("Test")
         every { isValidNameFlow } returns MutableStateFlow(true)
@@ -116,6 +129,8 @@ internal class OnboardingNavigationTest {
     private val instanceChannel = Channel<HomeAssistantInstance>()
 
     private lateinit var navController: TestNavHostController
+
+    private var onboardingDone = false
 
     @Before
     fun setup() {
@@ -129,14 +144,23 @@ internal class OnboardingNavigationTest {
             navController = TestNavHostController(LocalContext.current)
             navController.navigatorProvider.addNavigator(ComposeNavigator())
 
-            NavHost(
-                navController = navController,
-                startDestination = OnboardingRoute,
+            CompositionLocalProvider(
+                LocalActivityResultRegistryOwner provides object : ActivityResultRegistryOwner {
+                    override val activityResultRegistry: ActivityResultRegistry = LocationPermissionActivityResultRegistry(true)
+                },
             ) {
-                onboarding(
-                    navController,
-                    onShowSnackbar = { message, action -> true },
-                )
+                NavHost(
+                    navController = navController,
+                    startDestination = OnboardingRoute,
+                ) {
+                    onboarding(
+                        navController,
+                        onShowSnackbar = { message, action -> true },
+                        onOnboardingDone = {
+                            onboardingDone = true
+                        },
+                    )
+                }
             }
         }
     }
@@ -283,6 +307,99 @@ internal class OnboardingNavigationTest {
 
             // The back stack is unchanged in this situation, but in reality the app is in background
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given LocalFirst when pressing next then show LocationSharing then goes back stop the app`() {
+        composeTestRule.apply {
+            navController.navigateToLocalFirst(42, true)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
+            onNodeWithText(stringResource(R.string.local_first_next)).performScrollTo().performClick()
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
+
+            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+
+            // In the test scenario since we never opened NameYourDevice the stack still contains Welcome
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given LocationSharing when agreeing with plain text access to share then onboarding is done`() {
+        composeTestRule.apply {
+            navController.navigateToLocationSharing(42, true)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
+
+            mockkStatic(ContextCompat::class)
+            every { ContextCompat.checkSelfPermission(any(), any()) } returns PackageManager.PERMISSION_GRANTED
+
+            onNodeWithText(stringResource(R.string.location_sharing_share)).performScrollTo().performClick()
+
+            assertTrue(onboardingDone)
+        }
+    }
+
+    @Test
+    fun `Given LocationSharing when agreeing without plain text access to share then onboarding is done`() {
+        composeTestRule.apply {
+            navController.navigateToLocationSharing(42, false)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
+
+            mockkStatic(ContextCompat::class)
+            every { ContextCompat.checkSelfPermission(any(), any()) } returns PackageManager.PERMISSION_GRANTED
+
+            onNodeWithText(stringResource(R.string.location_sharing_share)).performScrollTo().performClick()
+
+            assertTrue(onboardingDone)
+        }
+    }
+
+    @Test
+    fun `Given LocationSharing when denying to share with plain text access then goes to LocationForSecureConnection then goes back stop the app`() {
+        composeTestRule.apply {
+            navController.navigateToLocationSharing(42, true)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
+
+            mockkStatic(ContextCompat::class)
+            every { ContextCompat.checkSelfPermission(any(), any()) } returns PackageManager.PERMISSION_DENIED
+
+            onNodeWithText(stringResource(R.string.location_sharing_no_share)).performScrollTo().performClick()
+            assertFalse(onboardingDone)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
+
+            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+
+            // In the test scenario since we never opened NameYourDevice the stack still contains Welcome
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given LocationSharing when denying to share without plain text access then onboarding is done`() {
+        composeTestRule.apply {
+            navController.navigateToLocationSharing(42, false)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
+
+            mockkStatic(ContextCompat::class)
+            every { ContextCompat.checkSelfPermission(any(), any()) } returns PackageManager.PERMISSION_DENIED
+
+            onNodeWithText(stringResource(R.string.location_sharing_no_share)).performScrollTo().performClick()
+            assertTrue(onboardingDone)
+        }
+    }
+
+    @Test
+    fun `Given LocationForSecureConnection when agreeing to share then onboarding is done`() {
+        composeTestRule.apply {
+            navController.navigateToLocationForSecureConnection(42)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
+
+            onNodeWithText(stringResource(R.string.location_secure_connection_most_secure)).performScrollTo().performClick()
+            onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().performClick()
+
+            assertTrue(onboardingDone)
         }
     }
 
