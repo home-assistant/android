@@ -1,10 +1,14 @@
 package io.homeassistant.companion.android.onboarding.serverdiscovery
 
 import androidx.annotation.VisibleForTesting
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.util.delayFirst
 import java.net.URL
 import javax.inject.Inject
@@ -65,8 +69,20 @@ data class ServersDiscovered(val servers: List<ServerDiscovered>) : DiscoverySta
  */
 @OptIn(FlowPreview::class)
 @HiltViewModel
-internal class ServerDiscoveryViewModel @Inject constructor(private val searcher: HomeAssistantSearcher) : ViewModel() {
-    private val _discoveryFlow = MutableStateFlow<DiscoveryState>(Started)
+internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
+    addExistingInstances: Boolean,
+    private val searcher: HomeAssistantSearcher,
+    serverManager: ServerManager,
+) : ViewModel() {
+
+    @Inject
+    constructor(
+        savedStateHandle: SavedStateHandle,
+        searcher: HomeAssistantSearcher,
+        serverManager: ServerManager,
+    ) : this(savedStateHandle.toRoute<ServerDiscoveryRoute>().addExistingInstances, searcher, serverManager)
+
+    private val _discoveryFlow = MutableStateFlow(if (addExistingInstances) getInstances(serverManager) else Started)
 
     /**
      * A flow that emits the current [DiscoveryState] of the server discovery process.
@@ -160,4 +176,16 @@ internal class ServerDiscoveryViewModel @Inject constructor(private val searcher
             }
         }
     }
+}
+
+private fun getInstances(serverManager: ServerManager): DiscoveryState {
+    return serverManager.defaultServers
+        .mapNotNull { server ->
+            val url = server.connection.getUrl(isInternal = false) ?: return@mapNotNull null
+            val version = server.version ?: return@mapNotNull null
+            ServerDiscovered(server.friendlyName, url, version)
+        }
+        .takeIf { it.isNotEmpty() }
+        ?.let { ServersDiscovered(it) }
+        ?: Started
 }
