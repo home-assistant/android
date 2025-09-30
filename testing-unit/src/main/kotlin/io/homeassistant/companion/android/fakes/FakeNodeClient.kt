@@ -7,10 +7,10 @@ import com.google.android.gms.wearable.NodeClient
 
 class FakeNodeClient(context: Context) : NodeClient(context, Settings.Builder().build()) {
 
-    private var nodes = emptyList<String>()
+    private var nodes = emptyList<FakeNode>()
 
     fun setNodes(nodes: List<String>) {
-        this.nodes = nodes
+        this.nodes = nodes.mapTo(mutableListOf(), { FakeNode(it, it, true) })
     }
 
     override fun getCompanionPackageForNode(p0: String): Task<String?> {
@@ -18,7 +18,7 @@ class FakeNodeClient(context: Context) : NodeClient(context, Settings.Builder().
     }
 
     override fun getConnectedNodes(): Task<List<Node?>?> {
-        return FakeTask(Result.success(nodes.mapTo(mutableListOf()) { FakeNode(it, it, true) }))
+        return FakeTask(Result.success(nodes))
     }
 
     override fun getLocalNode(): Task<Node?> {

@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.wear
 import android.annotation.SuppressLint
 import android.app.Application
 import androidx.annotation.StringRes
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -71,8 +72,12 @@ class SettingsWearViewModel @Inject constructor(private val serverManager: Serve
     val hasData = _hasData.asStateFlow()
     private val _isAuthenticated = MutableStateFlow(false)
     val isAuthenticated = _isAuthenticated.asStateFlow()
-    private val wearNodesWithApp: MutableStateFlow<Set<Node>> = MutableStateFlow(setOf<Node>())
-    private val allConnectedNodes: MutableStateFlow<List<Node>> = MutableStateFlow(listOf<Node>())
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    val wearNodesWithApp: MutableStateFlow<Set<Node>> = MutableStateFlow(setOf<Node>())
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    val allConnectedNodes: MutableStateFlow<List<Node>> = MutableStateFlow(listOf<Node>())
 
     val settingsWearOnboardingViewUiState =
         combine(wearNodesWithApp, allConnectedNodes) { nodesWithApp, connectedNodes ->
