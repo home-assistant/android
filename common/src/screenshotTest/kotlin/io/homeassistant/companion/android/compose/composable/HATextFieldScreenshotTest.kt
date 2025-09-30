@@ -17,7 +17,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.compose.composable.HATextField
-import io.homeassistant.companion.android.common.compose.theme.HASpacing
+import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 
 class HATextFieldScreenshotTest {
@@ -113,9 +113,9 @@ class HATextFieldScreenshotTest {
             },
             trailingIcon = {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(HASpacing.XS),
+                    horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
                     modifier = Modifier.padding(
-                        end = HASpacing.M,
+                        end = HADimens.SPACE4,
                     ),
                 ) {
                     Icon(

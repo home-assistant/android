@@ -51,8 +51,8 @@ import io.homeassistant.companion.android.common.compose.composable.HARadioGroup
 import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.composable.RadioOption
 import io.homeassistant.companion.android.common.compose.composable.rememberSelectedOption
+import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HASize
-import io.homeassistant.companion.android.common.compose.theme.HASpacing
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 
@@ -67,10 +67,10 @@ fun HAComposeCatalogScreen() {
         Scaffold(
             contentWindowInsets = WindowInsets.safeDrawing.add(
                 WindowInsets(
-                    left = HASpacing.M,
-                    top = HASpacing.M,
-                    right = HASpacing.M,
-                    bottom = HASpacing.M,
+                    left = HADimens.SPACE4,
+                    top = HADimens.SPACE4,
+                    right = HADimens.SPACE4,
+                    bottom = HADimens.SPACE4,
                 ),
             ),
             topBar = {
@@ -80,7 +80,7 @@ fun HAComposeCatalogScreen() {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = it,
-                verticalArrangement = Arrangement.spacedBy(HASpacing.M),
+                verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
             ) {
                 buttonSection(variant = currentVariant, enabled = true)
                 buttonSection(variant = currentVariant, enabled = false)
@@ -99,7 +99,7 @@ fun HAComposeCatalogScreen() {
 private fun VariantDropdownMenu(onVariantClick: (ButtonVariant) -> Unit, modifier: Modifier) {
     var expanded by remember { mutableStateOf(false) }
 
-    Box(modifier = modifier.padding(HASpacing.M)) {
+    Box(modifier = modifier.padding(HADimens.SPACE4)) {
         IconButton(onClick = { expanded = !expanded }) {
             Icon(Icons.Default.MoreVert, contentDescription = "Select variant")
         }
@@ -131,8 +131,8 @@ private fun TopBar(onVariantClick: (ButtonVariant) -> Unit) {
 @Composable
 private fun CatalogRow(content: @Composable () -> Unit) {
     FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(HASpacing.M),
-        verticalArrangement = Arrangement.spacedBy(HASpacing.M),
+        horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
     ) {
         content()
     }
@@ -140,7 +140,7 @@ private fun CatalogRow(content: @Composable () -> Unit) {
 
 private fun LazyListScope.catalogSection(title: String, content: @Composable () -> Unit) {
     item {
-        Text(text = title, modifier = Modifier.padding(top = HASpacing.M), style = HATextStyle.Body)
+        Text(text = title, modifier = Modifier.padding(top = HADimens.SPACE4), style = HATextStyle.Body)
     }
     item {
         content()

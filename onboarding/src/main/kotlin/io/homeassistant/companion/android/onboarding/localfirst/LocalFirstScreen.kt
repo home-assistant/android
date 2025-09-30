@@ -19,7 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
-import io.homeassistant.companion.android.common.compose.theme.HASpacing
+import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
@@ -47,16 +47,16 @@ private fun LocalFirstContent(onNextClick: () -> Unit, modifier: Modifier = Modi
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = HASpacing.M),
+            .padding(horizontal = HADimens.SPACE4),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(HASpacing.XL),
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE6),
     ) {
         // Fake Space at the top since we don't have a topbar on this screen.
         // It makes the image bellow perfectly aligned with the other screens.
-        Spacer(modifier = Modifier.height(64.dp - HASpacing.XL))
+        Spacer(modifier = Modifier.height(64.dp - HADimens.SPACE6))
 
         Image(
-            modifier = Modifier.padding(top = HASpacing.XL),
+            modifier = Modifier.padding(top = HADimens.SPACE6),
             // Use painterResource instead of vector resource for API < 24 since it has gradients
             painter = painterResource(R.drawable.ic_no_remote),
             contentDescription = null,
@@ -79,7 +79,7 @@ private fun LocalFirstContent(onNextClick: () -> Unit, modifier: Modifier = Modi
         HAAccentButton(
             text = stringResource(R.string.local_first_next),
             onClick = onNextClick,
-            modifier = Modifier.padding(bottom = HASpacing.XL),
+            modifier = Modifier.padding(bottom = HADimens.SPACE6),
         )
     }
 }

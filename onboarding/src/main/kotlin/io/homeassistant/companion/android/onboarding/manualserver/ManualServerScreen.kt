@@ -34,7 +34,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HATextField
-import io.homeassistant.companion.android.common.compose.theme.HASpacing
+import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
@@ -109,14 +109,14 @@ private fun ManualServerContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = HASpacing.M)
+            .padding(horizontal = HADimens.SPACE4)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(HASpacing.XL),
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE6),
     ) {
         Image(
             modifier = Modifier
-                .padding(top = HASpacing.XL),
+                .padding(top = HADimens.SPACE6),
             // Use painterResource instead of vector resource for API < 24 since it has gradients
             painter = painterResource(R.drawable.ic_manual_server),
             contentDescription = null,
@@ -140,7 +140,7 @@ private fun ManualServerContent(
             onClick = onConnectClick,
             enabled = isServerUrlValid,
             modifier = Modifier
-                .padding(bottom = HASpacing.XL),
+                .padding(bottom = HADimens.SPACE6),
         )
     }
 }

@@ -24,7 +24,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
-import io.homeassistant.companion.android.common.compose.theme.HASpacing
+import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
@@ -41,9 +41,9 @@ internal fun WelcomeScreen(onConnectClick: () -> Unit, onLearnMoreClick: () -> U
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(horizontal = HASpacing.M),
+            .padding(horizontal = HADimens.SPACE4),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(HASpacing.XL),
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE6),
     ) {
         // We use spacer to position the image where we want when there is remaining space in the column using percentage
         val positionPercentage = 0.2f
@@ -87,7 +87,7 @@ private fun ColumnScope.BottomButtons(onConnectClick: () -> Unit, onLearnMoreCli
     HAPlainButton(
         text = stringResource(R.string.welcome_learn_more),
         onClick = onLearnMoreClick,
-        modifier = Modifier.padding(bottom = HASpacing.XL),
+        modifier = Modifier.padding(bottom = HADimens.SPACE6),
     )
 }
 

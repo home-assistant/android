@@ -32,8 +32,8 @@ import io.homeassistant.companion.android.common.compose.composable.HARadioGroup
 import io.homeassistant.companion.android.common.compose.composable.RadioOption
 import io.homeassistant.companion.android.common.compose.composable.rememberSelectedOption
 import io.homeassistant.companion.android.common.compose.theme.HABrandColors
+import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HARadius
-import io.homeassistant.companion.android.common.compose.theme.HASpacing
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
@@ -101,10 +101,10 @@ private fun LocationForSecureConnectionContent(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = HASpacing.M),
+            .padding(horizontal = HADimens.SPACE4),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(
-            HASpacing.XL,
+            HADimens.SPACE6,
         ),
     ) {
         val coroutineScope = rememberCoroutineScope()
@@ -158,7 +158,7 @@ private fun LocationForSecureConnectionContent(
                     onGoToNextScreen()
                 }
             },
-            modifier = Modifier.padding(bottom = HASpacing.XL),
+            modifier = Modifier.padding(bottom = HADimens.SPACE6),
         )
     }
 }
@@ -166,7 +166,7 @@ private fun LocationForSecureConnectionContent(
 @Composable
 private fun ColumnScope.Header() {
     Image(
-        modifier = Modifier.padding(top = HASpacing.XL),
+        modifier = Modifier.padding(top = HADimens.SPACE6),
         // Use painterResource instead of vector resource for API < 24 since it has gradients
         painter = painterResource(R.drawable.ic_location_secure),
         contentDescription = null,
@@ -197,8 +197,8 @@ private fun Hint(modifier: Modifier = Modifier) {
                     HARadius.XL,
                 ),
             )
-            .padding(HASpacing.M),
-        horizontalArrangement = Arrangement.spacedBy(HASpacing.XS),
+            .padding(HADimens.SPACE4),
+        horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(

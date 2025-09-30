@@ -28,8 +28,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HARadius
-import io.homeassistant.companion.android.common.compose.theme.HASpacing
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
@@ -74,7 +74,7 @@ fun <T> rememberSelectedOption(option: RadioOption<T>? = null): MutableState<Rad
  *                 It receives the selected [RadioOption] as a parameter.
  * @param modifier An optional [Modifier] to be applied to the radio group.
  * @param selectionKey The key associated to the currently selected [RadioOption]. If `null`, no option is selected.
- * @param spaceBy The vertical spacing between radio buttons. Defaults to [HASpacing.XL].
+ * @param spaceBy The vertical spacing between radio buttons. Defaults to [HADimens.SPACE6].
  */
 @Composable
 fun <T> HARadioGroup(
@@ -82,7 +82,7 @@ fun <T> HARadioGroup(
     onSelect: (RadioOption<T>) -> Unit,
     modifier: Modifier = Modifier,
     selectionKey: T? = null,
-    spaceBy: Dp = HASpacing.XL,
+    spaceBy: Dp = HADimens.SPACE6,
 ) {
     Column(
         modifier = modifier
@@ -115,7 +115,7 @@ fun <T> HARadioGroup(
  *                 It receives the selected [RadioOption] as a parameter.
  * @param modifier An optional [Modifier] to be applied to the radio group.
  * @param selectedOption The currently selected [RadioOption]. If `null`, no option is selected.
- * @param spaceBy The vertical spacing between radio buttons. Defaults to [HASpacing.XL].
+ * @param spaceBy The vertical spacing between radio buttons. Defaults to [HADimens.SPACE6].
  */
 @Composable
 fun <T> HARadioGroup(
@@ -123,7 +123,7 @@ fun <T> HARadioGroup(
     onSelect: (RadioOption<T>) -> Unit,
     modifier: Modifier = Modifier,
     selectedOption: RadioOption<T>? = null,
-    spaceBy: Dp = HASpacing.XL,
+    spaceBy: Dp = HADimens.SPACE6,
 ) {
     HARadioGroup(
         options = options,
@@ -177,7 +177,7 @@ private fun HARadioButton(
                 onClick = onSelect,
                 role = Role.RadioButton,
             )
-            .padding(HASpacing.S),
+            .padding(HADimens.SPACE3),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         RadioButton(
@@ -186,7 +186,7 @@ private fun HARadioButton(
             onClick = null,
             colors = radioButtonColors(),
         )
-        Column(modifier = Modifier.padding(start = HASpacing.XS)) {
+        Column(modifier = Modifier.padding(start = HADimens.SPACE2)) {
             val textColor = if (enabled) {
                 LocalHAColorScheme.current.colorTextPrimary
             } else {
