@@ -32,6 +32,8 @@ import io.homeassistant.companion.android.onboarding.nameyourweardevice.navigati
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.serverDiscoveryScreen
+import io.homeassistant.companion.android.onboarding.wearmtls.navigation.navigateToWearMTLS
+import io.homeassistant.companion.android.onboarding.wearmtls.navigation.wearMTLSScreen
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.welcomeScreen
 import kotlinx.serialization.Serializable
@@ -235,7 +237,11 @@ internal fun NavGraphBuilder.wearOnboarding(
             onBackClick = navController::popBackStack,
             onDeviceNamed = { deviceName, serverUrl, authCode, neededMTLS ->
                 if (neededMTLS) {
-                    // TODO redirect to mTLS selection
+                    navController.navigateToWearMTLS(
+                        deviceName = deviceName,
+                        serverUrl = serverUrl,
+                        authCode = authCode,
+                    )
                 } else {
                     onOnboardingDone(deviceName, serverUrl, authCode, null, null)
                 }
@@ -244,6 +250,16 @@ internal fun NavGraphBuilder.wearOnboarding(
                 // TODO validate the URL to use
                 navController.navigateToUri("https://www.home-assistant.io/installation/")
             },
+        )
+
+        wearMTLSScreen(
+            onBackClick = navController::popBackStack,
+            onHelpClick = {
+                navController.navigateToUri(
+                    "https://companion.home-assistant.io/docs/getting_started/#tls-client-authentication",
+                )
+            },
+            onNext = onOnboardingDone,
         )
         // TODO probably make auth_code a value class to avoid string missmatch
     }
