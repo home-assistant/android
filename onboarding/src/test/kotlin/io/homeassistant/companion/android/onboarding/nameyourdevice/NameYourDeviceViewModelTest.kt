@@ -12,7 +12,6 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.NameYourDeviceRoute
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -32,7 +31,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import retrofit2.HttpException
 import retrofit2.Response
-import timber.log.Timber
 
 private const val DEFAULT_DEVICE_NAME = "Pixel 42"
 
@@ -55,8 +53,10 @@ class NameYourDeviceViewModelTest {
 
     @BeforeEach
     fun setup() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
+        // Disable logging on CI since it generates too much logs and crash the action that loads the result
+        // https://github.com/home-assistant/android/issues/5846
+        // Timber.plant(ConsoleLogTree)
+        // ConsoleLogTree.verbose = true
 
         coEvery { serverManager.authenticationRepository(any()) } returns authRepository
         coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
