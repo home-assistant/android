@@ -38,6 +38,16 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+fun CarContext.getHeaderBuilder(@StringRes title: Int, action: Action = Action.BACK): Header.Builder =
+    getHeaderBuilder(getString(title), action)
+
+fun getHeaderBuilder(title: String, action: Action = Action.BACK): Header.Builder {
+    return Header.Builder().apply {
+        setTitle(title)
+        setStartHeaderAction(action)
+    }
+}
+
 fun getChangeServerGridItem(
     carContext: CarContext,
     screenManager: ScreenManager,
@@ -242,15 +252,5 @@ fun getDomainsGridItem(
                 ),
             )
         }
-    }
-}
-
-fun CarContext.getHeaderBuilder(@StringRes title: Int, action: Action = Action.BACK): Header.Builder =
-    getHeaderBuilder(getString(title), action)
-
-fun getHeaderBuilder(title: String, action: Action = Action.BACK): Header.Builder {
-    return Header.Builder().apply {
-        setTitle(title)
-        setStartHeaderAction(action)
     }
 }
