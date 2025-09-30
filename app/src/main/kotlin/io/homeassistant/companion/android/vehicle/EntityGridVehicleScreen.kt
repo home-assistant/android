@@ -6,7 +6,6 @@ import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.constraints.ConstraintManager
-import androidx.car.app.model.Action
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.GridItem
@@ -42,6 +41,7 @@ import io.homeassistant.companion.android.util.vehicle.canNavigate
 import io.homeassistant.companion.android.util.vehicle.getChangeServerGridItem
 import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getDomainsGridItem
+import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 import io.homeassistant.companion.android.util.vehicle.getNavigationGridItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -138,8 +138,7 @@ class EntityGridVehicleScreen(
         val entityGrid = getEntityGridItems(entities)
 
         return GridTemplate.Builder().apply {
-            setTitle(title)
-            setHeaderAction(Action.BACK)
+            setHeader(getHeaderBuilder(title).build())
             if (loading) {
                 setLoading(true)
             } else {

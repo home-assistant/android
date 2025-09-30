@@ -6,7 +6,6 @@ import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.constraints.ConstraintManager
-import androidx.car.app.model.Action
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.GridItem
@@ -30,6 +29,7 @@ import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.isActive
+import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -140,8 +140,7 @@ class MapVehicleScreen(
             }
 
         return GridTemplate.Builder().apply {
-            setTitle(carContext.getString(R.string.aa_navigation))
-            setHeaderAction(Action.BACK)
+            setHeader(carContext.getHeaderBuilder(commonR.string.aa_navigation).build())
             if (loading) {
                 setLoading(true)
             } else {
