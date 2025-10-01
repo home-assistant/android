@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.compose.composable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -19,7 +18,7 @@ class HASwitchScreenshotTest {
         HAThemeForPreview {
             Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
                 Row {
-                    Switch(true, onCheckedChange = {})
+                    HASwitch(true, onCheckedChange = {})
                     HASwitch(checked = false, onCheckedChange = {})
                 }
                 Row {
