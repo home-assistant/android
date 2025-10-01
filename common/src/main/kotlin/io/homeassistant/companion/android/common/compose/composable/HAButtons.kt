@@ -25,8 +25,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.compose.theme.HAButtonColors
+import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HARadius
-import io.homeassistant.companion.android.common.compose.theme.HASpacing
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
@@ -276,11 +276,11 @@ private fun RowScope.ButtonDecorator(type: ButtonDecoratorType, content: @Compos
                 .align(Alignment.CenterVertically)
                 .then(
                     when (type) {
-                        ButtonDecoratorType.PREFIX -> Modifier.padding(start = HASpacing.XS)
-                        ButtonDecoratorType.SUFFIX -> Modifier.padding(end = HASpacing.XS)
+                        ButtonDecoratorType.PREFIX -> Modifier.padding(start = HADimens.SPACE2)
+                        ButtonDecoratorType.SUFFIX -> Modifier.padding(end = HADimens.SPACE2)
                     },
                 )
-                .size(HASpacing.XL),
+                .size(HADimens.SPACE6),
             contentAlignment = Alignment.Center,
         ) {
             content()
@@ -309,12 +309,12 @@ private fun RowScope.ButtonContent(
         modifier = Modifier
             .padding(
                 // Adjust padding based on the presence of prefix/suffix
-                start = if (prefix != null) HASpacing.X2S else HASpacing.M,
-                end = if (suffix != null) HASpacing.X2S else HASpacing.M,
+                start = if (prefix != null) HADimens.SPACE1 else HADimens.SPACE4,
+                end = if (suffix != null) HADimens.SPACE1 else HADimens.SPACE4,
             )
             // Apply a small padding that is only visible when the text is going to be on multiple lines,
             // to avoid touching the border of the background.
-            .padding(vertical = HASpacing.X2S)
+            .padding(vertical = HADimens.SPACE1)
             .weight(1f, fill = false), // Allow text to take available space but not fill it
     )
     ButtonDecorator(ButtonDecoratorType.SUFFIX, suffix)

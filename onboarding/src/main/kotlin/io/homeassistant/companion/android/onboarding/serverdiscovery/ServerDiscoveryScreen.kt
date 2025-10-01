@@ -71,9 +71,9 @@ import io.homeassistant.companion.android.common.compose.composable.HAModalBotto
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
 import io.homeassistant.companion.android.common.compose.theme.HABrandColors
+import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HASize
-import io.homeassistant.companion.android.common.compose.theme.HASpacing
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
@@ -175,11 +175,11 @@ private fun OneServerFound(
         ) {
             Column(
                 modifier = Modifier
-                    .padding(horizontal = HASpacing.XL)
+                    .padding(horizontal = HADimens.SPACE6)
                     .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(HASpacing.XL),
+                verticalArrangement = Arrangement.spacedBy(HADimens.SPACE6),
             ) {
                 Text(
                     text = serverDiscovered.name,
@@ -196,7 +196,7 @@ private fun OneServerFound(
                 Text(
                     text = serverDiscovered.url.toString(),
                     style = HATextStyle.Body,
-                    modifier = Modifier.padding(vertical = HASpacing.S),
+                    modifier = Modifier.padding(vertical = HADimens.SPACE3),
                 )
                 HAAccentButton(
                     text = stringResource(R.string.server_discovery_connect),
@@ -206,7 +206,7 @@ private fun OneServerFound(
                             onConnectClick(serverDiscovered.url)
                         }
                     },
-                    modifier = Modifier.padding(bottom = HASpacing.XL).fillMaxWidth(),
+                    modifier = Modifier.padding(bottom = HADimens.SPACE6).fillMaxWidth(),
                 )
             }
         }
@@ -230,7 +230,7 @@ private fun ScreenContent(
         Text(
             text = stringResource(R.string.searching_home_network),
             style = HATextStyle.Headline,
-            modifier = Modifier.padding(top = HASpacing.XL),
+            modifier = Modifier.padding(top = HADimens.SPACE6),
         )
 
         when (discoveryState) {
@@ -241,14 +241,14 @@ private fun ScreenContent(
         HAPlainButton(
             text = stringResource(commonR.string.manual_setup),
             onClick = onManualSetupClick,
-            modifier = Modifier.padding(bottom = HASpacing.XL),
+            modifier = Modifier.padding(bottom = HADimens.SPACE6),
         )
     }
 }
 
 @Composable
 private fun ColumnScope.ServersDiscoveredContent(state: ServersDiscovered, onConnectClick: (URL) -> Unit) {
-    Spacer(modifier = Modifier.height(HASpacing.X2L))
+    Spacer(modifier = Modifier.height(HADimens.SPACE8))
     // We are not using a LazyColumn here to avoid dealing with nested scroll, it is not an issue since
     // `servers` should remains quite small.
     state.servers.forEach { server ->
@@ -258,7 +258,7 @@ private fun ColumnScope.ServersDiscoveredContent(state: ServersDiscovered, onCon
         horizontalArrangement = Arrangement.Center,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(HASpacing.X2L),
+            .padding(HADimens.SPACE8),
     ) {
         HALoading()
     }
@@ -272,7 +272,7 @@ private fun ServerItemContent(server: ServerDiscovered, onConnectClick: (URL) ->
         modifier = modifier
             .widthIn(max = MaxContentWidth)
             .fillMaxWidth()
-            .padding(vertical = HASpacing.XS)
+            .padding(vertical = HADimens.SPACE2)
             .border(
                 border = BorderStroke(HABorderWidth.S, LocalHAColorScheme.current.colorBorderNeutralQuiet),
                 shape = rowShape,
@@ -293,13 +293,13 @@ private fun ServerItemContent(server: ServerDiscovered, onConnectClick: (URL) ->
             contentDescription = null,
             modifier = Modifier
                 .size(ICON_SIZE)
-                .padding(vertical = HASpacing.XS, horizontal = HASpacing.M),
+                .padding(vertical = HADimens.SPACE2, horizontal = HADimens.SPACE4),
         )
         Column(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier
-                .padding(vertical = HASpacing.XS)
-                .padding(end = HASpacing.M),
+                .padding(vertical = HADimens.SPACE2)
+                .padding(end = HADimens.SPACE4),
         ) {
             Text(
                 text = server.name,
@@ -334,8 +334,8 @@ private fun ColumnScope.ScanningForServer(discoveryState: DiscoveryState) {
         style = HATextStyle.Body,
         modifier = Modifier
             .padding(
-                vertical = HASpacing.S,
-                horizontal = HASpacing.M,
+                vertical = HADimens.SPACE3,
+                horizontal = HADimens.SPACE4,
             )
             .alpha(currentAlpha)
             .semantics {
@@ -348,7 +348,7 @@ private fun ColumnScope.ScanningForServer(discoveryState: DiscoveryState) {
 
 @Composable
 private fun AnimatedIcon() {
-    Box(modifier = Modifier.padding(HASpacing.S)) {
+    Box(modifier = Modifier.padding(HADimens.SPACE3)) {
         val rotation by rememberInfiniteTransition(label = "dots_rotation").animateFloat(
             initialValue = 0f,
             targetValue = 360f,
