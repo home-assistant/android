@@ -48,6 +48,7 @@ import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HAProgress
 import io.homeassistant.companion.android.common.compose.composable.HARadioGroup
+import io.homeassistant.companion.android.common.compose.composable.HASwitch
 import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.composable.RadioOption
 import io.homeassistant.companion.android.common.compose.composable.rememberSelectedOption
@@ -86,6 +87,7 @@ fun HAComposeCatalogScreen() {
                 buttonSection(variant = currentVariant, enabled = false)
                 buttonsWithIcon(variant = currentVariant)
                 buttonsWithBigContent(variant = currentVariant)
+                switches()
                 radioGroupSection()
                 textStyles()
                 input()
@@ -498,6 +500,20 @@ private fun LazyListScope.radioGroupSection() {
             },
             selectionKey = selectedOption?.selectionKey,
         )
+    }
+}
+
+private fun LazyListScope.switches() {
+    catalogSection(title = "Switches") {
+        CatalogRow {
+            var isChecked by remember { mutableStateOf(false) }
+            HASwitch(checked = isChecked, onCheckedChange = {
+                isChecked = it
+            })
+            HASwitch(checked = !isChecked, onCheckedChange = {
+                isChecked = !it
+            })
+        }
     }
 }
 
