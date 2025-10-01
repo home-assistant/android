@@ -55,9 +55,9 @@ class HomeActivity :
             }
         }
 
-        sealed class LaunchMode(val mode: String) {
-            object ThermostatTile : LaunchMode(OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE)
-            object CameraTile : LaunchMode(OpenTileSettingsActivity.CONFIG_CAMERA_TILE)
+        sealed interface LaunchMode {
+            object ThermostatTile : LaunchMode
+            object CameraTile : LaunchMode
         }
 
         fun getLaunchAction(packageName: String, tileId: Int, launchMode: LaunchMode): ActionBuilders.LaunchAction {
@@ -69,7 +69,10 @@ class HomeActivity :
                 .addKeyToExtraMapping(
                     LAUNCH_MODE,
                     ActionBuilders.AndroidStringExtra.Builder().setValue(
-                        launchMode.mode,
+                        when (launchMode) {
+                            LaunchMode.ThermostatTile -> OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE
+                            LaunchMode.CameraTile -> OpenTileSettingsActivity.CONFIG_CAMERA_TILE
+                        },
                     )
                         .build(),
                 )
