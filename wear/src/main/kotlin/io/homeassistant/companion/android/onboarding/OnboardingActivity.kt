@@ -3,11 +3,11 @@ package io.homeassistant.companion.android.onboarding
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.wear.activity.ConfirmationActivity
@@ -121,7 +121,7 @@ class OnboardingActivity :
                     Intent(Intent.ACTION_VIEW).apply {
                         addCategory(Intent.CATEGORY_DEFAULT)
                         addCategory(Intent.CATEGORY_BROWSABLE)
-                        data = Uri.parse(url)
+                        data = url.toUri()
                     },
                     // A Wear device only has one companion device so this is not needed
                     null,
@@ -192,7 +192,7 @@ class OnboardingActivity :
 
     private fun findExistingInstances() {
         Timber.d("findExistingInstances")
-        Tasks.await(Wearable.getDataClient(this).getDataItems(Uri.parse("wear://*/home_assistant_instance"))).apply {
+        Tasks.await(Wearable.getDataClient(this).getDataItems("wear://*/home_assistant_instance".toUri())).apply {
             Timber.d("findExistingInstances: success, found ${this.count}")
             this.forEach { item ->
                 val instance = presenter.getInstance(DataMapItem.fromDataItem(item).dataMap)

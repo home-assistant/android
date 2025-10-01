@@ -84,6 +84,7 @@ import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositor
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
@@ -110,6 +111,7 @@ import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
+import io.homeassistant.companion.android.webview.externalbus.ExternalConfigResponse
 import io.homeassistant.companion.android.webview.externalbus.NavigateTo
 import io.homeassistant.companion.android.webview.externalbus.ShowSidebar
 import javax.inject.Inject
@@ -208,6 +210,9 @@ class WebViewActivity :
     @NamedKeyChain
     lateinit var keyChainRepository: KeyChainRepository
 
+    @Inject
+    lateinit var appVersionProvider: AppVersionProvider
+
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
     private lateinit var decor: FrameLayout
@@ -238,7 +243,7 @@ class WebViewActivity :
     private var clearHistory = false
     private var moreInfoEntity = ""
     private val moreInfoMutex = Mutex()
-    private var currentAutoplay: Boolean = false
+    private var currentAutoplay: Boolean? = null
     private var downloadFileUrl = ""
     private var downloadFileContentDisposition = ""
     private var downloadFileMimetype = ""
@@ -351,7 +356,12 @@ class WebViewActivity :
                 },
             )
 
-            settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
+            lifecycleScope.launch {
+                currentAutoplay = presenter.isAutoPlayVideoEnabled().apply {
+                    settings.mediaPlaybackRequiresUserGesture = !this
+                }
+            }
+
             webViewClient = object : TLSWebViewClient(keyChainRepository) {
                 @Deprecated("Deprecated in Java for SDK >= 23")
                 override fun onReceivedError(
@@ -588,8 +598,10 @@ class WebViewActivity :
 
                 override fun onHideCustomView() {
                     customViewFromWebView.value = null
-                    if (!presenter.isFullScreen()) {
-                        showSystemUI()
+                    lifecycleScope.launch {
+                        if (!presenter.isFullScreen()) {
+                            showSystemUI()
+                        }
                     }
                     isVideoFullScreen = false
                     super.onHideCustomView()
@@ -605,17 +617,13 @@ class WebViewActivity :
 
         window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
             if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0) {
-                if (presenter.isFullScreen()) {
-                    hideSystemUI()
+                lifecycleScope.launch {
+                    if (presenter.isFullScreen()) {
+                        hideSystemUI()
+                    }
                 }
             }
         }
-
-        if (presenter.isKeepScreenOnEnabled()) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        }
-
-        currentAutoplay = presenter.isAutoPlayVideoEnabled()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this)
@@ -625,6 +633,10 @@ class WebViewActivity :
         }
 
         lifecycleScope.launch {
+            if (presenter.isKeepScreenOnEnabled()) {
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 presenter.getMatterThreadStepFlow().collect {
                     Timber.d("Matter/Thread step changed to $it")
@@ -754,25 +766,13 @@ class WebViewActivity :
                                             0
                                         }
                                     sendExternalBusMessage(
-                                        ExternalBusMessage(
+                                        ExternalConfigResponse(
                                             id = JSONObject(message).get("id"),
-                                            type = "result",
-                                            success = true,
-                                            result = JSONObject(
-                                                mapOf(
-                                                    "hasSettingsScreen" to true,
-                                                    "canWriteTag" to hasNfc,
-                                                    "hasExoPlayer" to true,
-                                                    "canCommissionMatter" to canCommissionMatter,
-                                                    "canImportThreadCredentials" to canExportThread,
-                                                    "hasAssist" to true,
-                                                    "hasBarCodeScanner" to hasBarCodeScanner,
-                                                    "canSetupImprov" to true,
-                                                ),
-                                            ),
-                                            callback = {
-                                                Timber.d("Callback $it")
-                                            },
+                                            hasNfc = hasNfc,
+                                            canCommissionMatter = canCommissionMatter,
+                                            canExportThread = canExportThread,
+                                            hasBarCodeScanner = hasBarCodeScanner,
+                                            appVersion = appVersionProvider(),
                                         ),
                                     )
 
@@ -1003,43 +1003,47 @@ class WebViewActivity :
 
     override fun onResume() {
         super.onResume()
-        if (currentAutoplay != presenter.isAutoPlayVideoEnabled()) {
-            recreate()
-        }
-
         lifecycleScope.launch {
+            // if null it means that the settings were not yet read so we should not recreate
+            if (currentAutoplay != null && currentAutoplay != presenter.isAutoPlayVideoEnabled()) {
+                recreate()
+            }
+
             appLocked.value = presenter.isAppLocked()
             presenter.updateActiveServer()
         }
 
         setWebViewZoom()
 
-        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || presenter.isWebViewDebugEnabled())
-
-        requestedOrientation = when (presenter.getScreenOrientation()) {
-            getString(
-                R.string.screen_orientation_option_array_value_portrait,
-            ),
-            -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            getString(
-                R.string.screen_orientation_option_array_value_landscape,
-            ),
-            -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-        }
-
-        if (presenter.isKeepScreenOnEnabled()) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        } else {
-            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        }
-
-        SensorWorker.start(this)
-        WebsocketManager.start(this)
         lifecycleScope.launch {
+            SensorWorker.start(this@WebViewActivity)
+            WebsocketManager.start(this@WebViewActivity)
+
+            WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || presenter.isWebViewDebugEnabled())
+
+            requestedOrientation = when (presenter.getScreenOrientation()) {
+                getString(
+                    R.string.screen_orientation_option_array_value_portrait,
+                ),
+                -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
+                getString(
+                    R.string.screen_orientation_option_array_value_landscape,
+                ),
+                -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+
+                else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
+
+            if (presenter.isKeepScreenOnEnabled()) {
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            } else {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+
             checkAndWarnForDisabledLocation()
+            changeLog.showChangeLog(this@WebViewActivity, false)
         }
-        changeLog.showChangeLog(this, false)
 
         if (::loadedUrl.isInitialized) {
             waitForConnection()
@@ -1048,12 +1052,16 @@ class WebViewActivity :
 
     override fun onStop() {
         super.onStop()
-        openFirstViewOnDashboardIfNeeded()
+        lifecycleScope.launch {
+            openFirstViewOnDashboardIfNeeded()
+        }
     }
 
     override fun onPause() {
         super.onPause()
-        presenter.setAppActive(false)
+        lifecycleScope.launch {
+            presenter.setAppActive(false)
+        }
         if (!isFinishing && !isRelaunching) SensorReceiver.updateAllSensors(this)
     }
 
@@ -1231,7 +1239,9 @@ class WebViewActivity :
             Authenticator.SUCCESS -> {
                 Timber.d("Authentication successful, unlocking app")
                 appLocked.value = false
-                presenter.setAppActive(true)
+                lifecycleScope.launch {
+                    presenter.setAppActive(true)
+                }
             }
 
             Authenticator.CANCELED -> {
@@ -1297,7 +1307,9 @@ class WebViewActivity :
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        presenter.setAppActive(false)
+        lifecycleScope.launch {
+            presenter.setAppActive(false)
+        }
         videoHeight = decor.height
         val bounds = Rect(0, 0, 1920, 1080)
         if (isVideoFullScreen or isExoFullScreen) {
@@ -1654,14 +1666,14 @@ class WebViewActivity :
             }
 
             "http", "https" -> {
-                val request = DownloadManager.Request(uri)
-                    .setMimeType(mimetype)
-                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    .setDestinationInExternalPublicDir(
-                        Environment.DIRECTORY_DOWNLOADS,
-                        URLUtil.guessFileName(url, contentDisposition, mimetype),
-                    )
-                lifecycleScope.launch {
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val request = DownloadManager.Request(uri)
+                        .setMimeType(mimetype)
+                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                        .setDestinationInExternalPublicDir(
+                            Environment.DIRECTORY_DOWNLOADS,
+                            URLUtil.guessFileName(url, contentDisposition, mimetype),
+                        )
                     val server = serverManager.getServer(presenter.getActiveServer())
                     if (url.startsWith(server?.connection?.getUrl(true).toString()) ||
                         url.startsWith(server?.connection?.getUrl(false).toString())
@@ -1754,7 +1766,7 @@ class WebViewActivity :
         return super.dispatchKeyEvent(event)
     }
 
-    private fun setWebViewZoom() {
+    private fun setWebViewZoom() = lifecycleScope.launch {
         // Set base zoom level (percentage must be scaled to device density/percentage)
         webView.setInitialScale((resources.displayMetrics.density * presenter.getPageZoomLevel()).toInt())
 
@@ -1786,7 +1798,7 @@ class WebViewActivity :
         ) {}
     }
 
-    private fun openFirstViewOnDashboardIfNeeded() {
+    private suspend fun openFirstViewOnDashboardIfNeeded() {
         if (presenter.isAlwaysShowFirstViewOnAppStartEnabled() &&
             LifecycleHandler.isAppInBackground()
         ) {

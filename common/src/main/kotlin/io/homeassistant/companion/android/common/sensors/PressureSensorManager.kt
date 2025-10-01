@@ -27,7 +27,7 @@ class PressureSensorManager :
             commonR.string.sensor_name_pressure,
             commonR.string.sensor_description_pressure_sensor,
             "mdi:gauge",
-            deviceClass = "pressure",
+            deviceClass = "atmospheric_pressure",
             unitOfMeasurement = "hPa",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
         )

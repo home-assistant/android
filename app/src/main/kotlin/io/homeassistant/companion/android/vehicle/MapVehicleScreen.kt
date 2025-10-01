@@ -1,19 +1,18 @@
 package io.homeassistant.companion.android.vehicle
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.constraints.ConstraintManager
-import androidx.car.app.model.Action
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.GridItem
 import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.ItemList
 import androidx.car.app.model.Template
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -30,6 +29,7 @@ import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.isActive
+import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -37,7 +37,7 @@ import timber.log.Timber
 @RequiresApi(Build.VERSION_CODES.O)
 class MapVehicleScreen(
     carContext: CarContext,
-    val integrationRepository: IntegrationRepository,
+    val integrationRepositoryProvider: suspend () -> IntegrationRepository,
     private val entitiesFlow: Flow<List<Entity>>,
 ) : Screen(carContext) {
 
@@ -119,7 +119,7 @@ class MapVehicleScreen(
                             Timber.i("${pair.first.entityId} clicked")
                             lifecycleScope.launch {
                                 try {
-                                    integrationRepository.fireEvent(
+                                    integrationRepositoryProvider().fireEvent(
                                         "android.navigation_started",
                                         mapOf(
                                             "entity_id" to pair.first.entityId,
@@ -131,7 +131,7 @@ class MapVehicleScreen(
                             }
                             val intent = Intent(
                                 CarContext.ACTION_NAVIGATE,
-                                Uri.parse("geo:${pair.second[0]},${pair.second[1]}"),
+                                "geo:${pair.second[0]},${pair.second[1]}".toUri(),
                             )
                             carContext.startCarApp(intent)
                         }
@@ -140,8 +140,7 @@ class MapVehicleScreen(
             }
 
         return GridTemplate.Builder().apply {
-            setTitle(carContext.getString(R.string.aa_navigation))
-            setHeaderAction(Action.BACK)
+            setHeader(carContext.getHeaderBuilder(commonR.string.aa_navigation).build())
             if (loading) {
                 setLoading(true)
             } else {

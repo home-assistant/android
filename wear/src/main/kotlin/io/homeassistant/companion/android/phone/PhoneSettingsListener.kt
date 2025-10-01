@@ -13,7 +13,6 @@ import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositoryImpl
@@ -22,6 +21,8 @@ import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.AppVersionProvider
+import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.common.util.WearDataMessages
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
@@ -34,7 +35,6 @@ import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.replaceAll
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.HomePresenterImpl
-import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.tiles.CameraTile
 import io.homeassistant.companion.android.tiles.ConversationTile
 import io.homeassistant.companion.android.tiles.ShortcutsTile
@@ -73,6 +73,12 @@ class PhoneSettingsListener :
     @Inject
     @NamedKeyStore
     lateinit var keyStore: KeyChainRepository
+
+    @Inject
+    lateinit var appVersionProvider: AppVersionProvider
+
+    @Inject
+    lateinit var messagingTokenProvider: MessagingTokenProvider
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -202,9 +208,9 @@ class PhoneSettingsListener :
             serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
             serverManager.integrationRepository(serverId).registerDevice(
                 DeviceRegistration(
-                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    appVersionProvider(),
                     deviceName,
-                    getMessagingToken(),
+                    messagingTokenProvider(),
                     false,
                 ),
             )

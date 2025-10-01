@@ -7,16 +7,14 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.PowerManager
 import android.provider.OpenableColumns
-import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.content.getSystemService
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -24,6 +22,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.maybeAskForIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.onboarding.notifications.NotificationPermissionFragment
 import io.homeassistant.companion.android.sensors.LocationSensorManager
@@ -159,26 +158,7 @@ class MobileAppIntegrationFragment : Fragment() {
 
         val hasPermission = results.values.all { it }
         viewModel.setLocationTracking(hasPermission)
-        requestBackgroundAccess()
-    }
-
-    @SuppressLint("BatteryLife")
-    private fun requestBackgroundAccess() {
-        if (!isIgnoringBatteryOptimizations()) {
-            startActivity(
-                Intent(
-                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                    Uri.parse("package:${activity?.packageName}"),
-                ),
-            )
-        }
-    }
-
-    private fun isIgnoringBatteryOptimizations(): Boolean {
-        return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
-            context?.getSystemService<PowerManager>()
-                ?.isIgnoringBatteryOptimizations(activity?.packageName ?: "")
-                ?: false
+        context?.maybeAskForIgnoringBatteryOptimizations()
     }
 
     private fun onComplete() {
@@ -195,7 +175,7 @@ class MobileAppIntegrationFragment : Fragment() {
     }
 
     private fun openPrivacyPolicy() {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(getString(commonR.string.privacy_url)))
+        val intent = Intent(Intent.ACTION_VIEW, getString(commonR.string.privacy_url).toUri())
         startActivity(intent)
     }
 }

@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.common.compose.theme
 
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
@@ -230,6 +232,7 @@ class HAColorScheme(
     val colorFillPrimaryLoudHover: Color,
     val colorFillPrimaryNormalHover: Color,
     val colorFillPrimaryQuietHover: Color,
+    val colorFillPrimaryNormalActive: Color,
     val colorOnPrimaryLoud: Color,
     val colorOnPrimaryNormal: Color,
     val colorOnPrimaryQuiet: Color,
@@ -289,11 +292,83 @@ class HAColorScheme(
     val colorTextDisabled: Color,
 
     val colorBorderPrimaryNormal: Color,
+    val colorBorderPrimaryLoud: Color,
+
     val colorBorderNeutralQuiet: Color,
+    val colorBorderNeutralNormal: Color,
 
     val colorBorderDangerNormal: Color,
 
+    val colorOverlayModal: Color,
 ) {
+
+    fun textField(): TextFieldColors {
+        return TextFieldColors(
+            focusedTextColor = colorTextPrimary,
+            unfocusedTextColor = colorTextPrimary,
+            disabledTextColor = colorTextDisabled,
+            errorTextColor = colorOnDangerQuiet,
+
+            focusedContainerColor = colorSurfaceDefault,
+            unfocusedContainerColor = colorSurfaceDefault,
+            disabledContainerColor = colorFillDisabledNormalResting,
+            errorContainerColor = colorSurfaceDefault,
+
+            cursorColor = colorBorderPrimaryNormal,
+            errorCursorColor = colorBorderDangerNormal,
+
+            // TODO Change colors with design team (current value are picked approximatively)
+            textSelectionColors = TextSelectionColors(
+                handleColor = colorFillPrimaryLoudHover,
+                backgroundColor = colorFillPrimaryLoudResting,
+            ),
+
+            focusedIndicatorColor = colorBorderPrimaryNormal,
+            unfocusedIndicatorColor = colorBorderNeutralQuiet,
+            disabledIndicatorColor = colorFillDisabledLoudResting,
+            errorIndicatorColor = colorBorderDangerNormal,
+
+            focusedLeadingIconColor = colorOnNeutralQuiet,
+            unfocusedLeadingIconColor = colorOnNeutralQuiet,
+            disabledLeadingIconColor = colorOnNeutralQuiet,
+            errorLeadingIconColor = colorOnNeutralQuiet,
+
+            focusedTrailingIconColor = colorOnNeutralQuiet,
+            unfocusedTrailingIconColor = colorOnNeutralQuiet,
+            disabledTrailingIconColor = colorOnNeutralQuiet,
+            errorTrailingIconColor = colorOnNeutralQuiet,
+
+            focusedLabelColor = colorTextSecondary,
+            unfocusedLabelColor = colorTextSecondary,
+            disabledLabelColor = colorTextDisabled,
+            errorLabelColor = colorTextSecondary,
+
+            // TODO Verify colors with design team
+            focusedPlaceholderColor = colorTextPrimary,
+            unfocusedPlaceholderColor = colorTextPrimary,
+            disabledPlaceholderColor = colorTextPrimary,
+            errorPlaceholderColor = colorTextPrimary,
+
+            // TODO Verify colors with design team
+            focusedSupportingTextColor = colorTextPrimary,
+            unfocusedSupportingTextColor = colorTextPrimary,
+            disabledSupportingTextColor = colorTextDisabled,
+            errorSupportingTextColor = colorOnDangerQuiet,
+
+            // TODO Verify colors with design team
+            focusedPrefixColor = colorOnNeutralQuiet,
+            unfocusedPrefixColor = colorOnNeutralQuiet,
+            disabledPrefixColor = colorOnNeutralQuiet,
+            errorPrefixColor = colorOnNeutralQuiet,
+
+            // TODO Verify colors with design team
+            focusedSuffixColor = colorOnNeutralQuiet,
+            unfocusedSuffixColor = colorOnNeutralQuiet,
+            disabledSuffixColor = colorOnNeutralQuiet,
+            errorSuffixColor = colorOnNeutralQuiet,
+        )
+    }
+
     fun accentButtonColorsFromVariant(variant: ButtonVariant): HAButtonColors {
         return when (variant) {
             ButtonVariant.PRIMARY -> {
@@ -494,6 +569,7 @@ val DarkHAColorScheme = HAColorScheme(
     colorFillPrimaryLoudHover = HAColors.Primary30,
     colorFillPrimaryNormalHover = HAColors.Primary20,
     colorFillPrimaryQuietHover = HAColors.Primary10,
+    colorFillPrimaryNormalActive = HAColors.Primary10,
     colorOnPrimaryLoud = HAColors.White,
     colorOnPrimaryNormal = HAColors.Primary60,
     colorOnPrimaryQuiet = HAColors.Primary70,
@@ -552,8 +628,13 @@ val DarkHAColorScheme = HAColorScheme(
     colorTextDisabled = HAColors.Neutral60,
 
     colorBorderPrimaryNormal = HAColors.Primary50,
+    colorBorderPrimaryLoud = HAColors.Primary70,
+
     colorBorderNeutralQuiet = HAColors.Neutral40,
+    colorBorderNeutralNormal = HAColors.Neutral50,
     colorBorderDangerNormal = HAColors.Red50,
+
+    colorOverlayModal = HAColors.Black.copy(alpha = 0.25f),
 )
 
 val LightHAColorScheme = HAColorScheme(
@@ -563,6 +644,7 @@ val LightHAColorScheme = HAColorScheme(
     colorFillPrimaryLoudHover = HAColors.Primary30,
     colorFillPrimaryNormalHover = HAColors.Primary20,
     colorFillPrimaryQuietHover = HAColors.Primary90,
+    colorFillPrimaryNormalActive = HAColors.Primary90,
     colorOnPrimaryLoud = HAColors.White,
     colorOnPrimaryNormal = HAColors.Primary40,
     colorOnPrimaryQuiet = HAColors.Primary50,
@@ -621,8 +703,13 @@ val LightHAColorScheme = HAColorScheme(
     colorTextDisabled = HAColors.Neutral60,
 
     colorBorderPrimaryNormal = HAColors.Primary70,
+    colorBorderPrimaryLoud = HAColors.Primary40,
+
     colorBorderNeutralQuiet = HAColors.Neutral80,
+    colorBorderNeutralNormal = HAColors.Neutral70,
     colorBorderDangerNormal = HAColors.Red70,
+
+    colorOverlayModal = HAColors.Black.copy(alpha = 0.25f),
 )
 
 val LocalHAColorScheme = staticCompositionLocalOf { LightHAColorScheme }

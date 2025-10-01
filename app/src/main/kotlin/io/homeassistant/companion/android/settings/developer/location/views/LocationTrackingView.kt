@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.developer.location.views
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
@@ -47,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.app.ShareCompat
+import androidx.core.net.toUri
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -240,15 +240,17 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
                                 .padding(bottom = 8.dp),
                         ) {
                             if (item?.latitude != null && item.longitude != null) {
-                                IconButton(onClick = {
-                                    val latlng = "${item.latitude},${item.longitude}"
-                                    context.startActivity(
-                                        Intent(
-                                            Intent.ACTION_VIEW,
-                                            Uri.parse("geo:$latlng?q=$latlng(Home+Assistant)"),
-                                        ),
-                                    )
-                                }) {
+                                IconButton(
+                                    onClick = {
+                                        val latlng = "${item.latitude},${item.longitude}"
+                                        context.startActivity(
+                                            Intent(
+                                                Intent.ACTION_VIEW,
+                                                "geo:$latlng?q=$latlng(Home+Assistant)".toUri(),
+                                            ),
+                                        )
+                                    },
+                                ) {
                                     Image(
                                         asset = CommunityMaterial.Icon3.cmd_map,
                                         contentDescription = stringResource(commonR.string.show_on_map),
@@ -258,12 +260,14 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
                                 }
                                 Spacer(Modifier.width(16.dp))
                             }
-                            IconButton(onClick = {
-                                ShareCompat.IntentBuilder(context)
-                                    .setText(item?.toSharingString(serverName) ?: "")
-                                    .setType("text/plain")
-                                    .startChooser()
-                            }) {
+                            IconButton(
+                                onClick = {
+                                    ShareCompat.IntentBuilder(context)
+                                        .setText(item?.toSharingString(serverName) ?: "")
+                                        .setType("text/plain")
+                                        .startChooser()
+                                },
+                            ) {
                                 Image(
                                     asset = CommunityMaterial.Icon3.cmd_share_variant,
                                     contentDescription = stringResource(commonR.string.share_logs),

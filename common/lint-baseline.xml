@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.12.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.12.0)" variant="all" version="8.12.0">
+<issues format="6" by="lint 8.13.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.0)" variant="all" version="8.13.0">
 
     <issue
         id="MissingPermission"
@@ -47,7 +47,7 @@
 
     <issue
         id="PrivateResource"
-        message="Overriding `@string/state_off` which is marked as private in androidx.compose.ui:ui-android:1.9.0. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
+        message="Overriding `@string/state_off` which is marked as private in androidx.compose.ui:ui-android:1.9.2. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
         errorLine1="    &lt;string name=&quot;state_off&quot;>Off&lt;/string>"
         errorLine2="                  ~~~~~~~~~">
         <location
@@ -58,7 +58,7 @@
 
     <issue
         id="PrivateResource"
-        message="Overriding `@string/state_on` which is marked as private in androidx.compose.ui:ui-android:1.9.0. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
+        message="Overriding `@string/state_on` which is marked as private in androidx.compose.ui:ui-android:1.9.2. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
         errorLine1="    &lt;string name=&quot;state_on&quot;>On&lt;/string>"
         errorLine2="                  ~~~~~~~~">
         <location
@@ -200,35 +200,13 @@
     </issue>
 
     <issue
-        id="TypographyDashes"
-        message="Replace &quot;-&quot; with an &quot;en dash&quot; character (–, &amp;#8211;) ?"
-        errorLine1="    &lt;string name=&quot;sensor_description_bluetooth_ble_emitter&quot;>Send BLE iBeacon with configured interval, used to track presence around house, e.g. together with roomassistant, esp32-mqtt-room or espresence projects.\n\nWarning: this can affect battery life, particularly if the \&quot;Transmitter power\&quot; setting is set to High or \&quot;Advertise Mode\&quot; is set to Low latency.\n\nSettings allow for specifying:\n- \&quot;UUID\&quot; (standard UUID format), \&quot;Major\&quot; and \&quot;Minor\&quot; (should be 0 - 65535), to tailor identifiers and groups. The default Minor value 40004 has the special meaning of forcing the beacon to be recognized by the iBeacon Tracker integration\n- \&quot;Transmitter Power\&quot; and \&quot;Advertise Mode\&quot; to help to preserve battery life (use lowest values if possible)\n - \&quot;Measured Power\&quot; to specify power measured at 1m (initial default -59)\n\nIt is also possible to set beacons to only be transmitted when connected to a Home network, which may be desirable for privacy and battery life.\n\nNote:\nAdditionally a separate setting exists (\&quot;Enable Transmitter\&quot;) to stop or start transmitting.&lt;/string>"
-        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="640"
-            column="61"/>
-    </issue>
-
-    <issue
-        id="TypographyDashes"
-        message="Replace &quot;-&quot; with an &quot;en dash&quot; character (–, &amp;#8211;) ?"
-        errorLine1="    &lt;string name=&quot;sensor_description_bluetooth_ble_beacon_monitor&quot;>Scans for iBeacons and shows the IDs of nearby beacons and their distance in meters. A notification will be shown on the device when scanning is actively running.\n\nWarning: this can affect battery life, especially with a short \&quot;Scan Interval\&quot;.\n\nSettings allow for specifying:\n- \&quot;Filter Iterations\&quot; (should be 1 - 100, default: 10), higher values will result in more stable measurements but also less responsiveness.\n- \&quot;Filter RSSI Multiplier\&quot; (should be 1.0 - 2.0, default: 1.05), can be used to achieve more stable measurements when beacons are farther away. This will also affect responsiveness.\n- \&quot;Scan Interval\&quot; (default: 500) milliseconds between scans. Shorter intervals will drain the battery more quickly.\n- \&quot;Scan Period\&quot; (default: 1100) milliseconds to scan for beacons. Most beacons will send a signal every second so this value should be at least 1100ms.\n- \&quot;UUID Filter\&quot; allows to restrict the reported beacons by including (or excluding) those with the selected UUIDs.\n- \&quot;Exclude selected UUIDs\&quot;, if false (default) only the beacons with the selected UUIDs are reported. If true all beacons except the selected ones are reported. Not available when \&quot;UUID Filter\&quot; is empty.\n\nNote:\nAdditionally a separate setting exists (\&quot;Enable Beacon Monitor\&quot;) to stop or start scanning.&lt;/string>"
-        errorLine2="                                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="641"
-            column="68"/>
-    </issue>
-
-    <issue
         id="AvoidAnySerializer"
         message="Prefer polymorphic serializer over AnySerializer."
         errorLine1="            MapAnySerializer,"
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/authentication/impl/AuthenticationRepositoryImpl.kt"
-            line="76"
+            line="77"
             column="13"/>
     </issue>
 
@@ -263,17 +241,6 @@
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/websocket/impl/WebSocketCoreImpl.kt"
             line="273"
             column="69"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toColorInt` instead?"
-        errorLine1="            return Color.parseColor(colorString)"
-        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/notifications/NotificationFunctions.kt"
-            line="184"
-            column="20"/>
     </issue>
 
 </issues>

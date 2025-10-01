@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.12.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.12.0)" variant="all" version="8.12.0">
+<issues format="6" by="lint 8.13.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.0)" variant="all" version="8.13.0">
 
     <issue
         id="MissingPermission"
@@ -90,17 +90,6 @@
     </issue>
 
     <issue
-        id="SuspiciousImport"
-        message="Don&apos;t include `android.R` here; use a fully qualified name for each usage instead"
-        errorLine1="import android.R"
-        errorLine2="~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/camera/CameraWidgetConfigureActivity.kt"
-            line="3"
-            column="1"/>
-    </issue>
-
-    <issue
         id="MissingClass"
         message="Class referenced in the manifest, `com.google.android.gms.metadata.ModuleDependencies`, was not found in the project or the libraries"
         errorLine1="            android:name=&quot;com.google.android.gms.metadata.ModuleDependencies&quot;"
@@ -142,17 +131,6 @@
             file="src/main/kotlin/io/homeassistant/companion/android/controls/HaControlsProviderService.kt"
             line="44"
             column="25"/>
-    </issue>
-
-    <issue
-        id="NewApi"
-        message="Call requires API level 26 (current min is 21): `CarSensorManager`"
-        errorLine1="            CarSensorManager(),"
-        errorLine2="            ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/sensors/SensorReceiver.kt"
-            line="59"
-            column="13"/>
     </issue>
 
     <issue
@@ -404,7 +382,7 @@
         errorLine2="      ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/launch/LaunchActivity.kt"
-            line="51"
+            line="53"
             column="7"/>
     </issue>
 
@@ -498,45 +476,12 @@
 
     <issue
         id="ObsoleteSdkInt"
-        message="Unnecessary; `SDK_INT` is always >= 26"
-        errorLine1="        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {"
-        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/sensors/CarSensorManager.kt"
-            line="274"
-            column="20"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; `SDK_INT` is always >= 26"
-        errorLine1="        return isAutomotive || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &amp;&amp; BuildConfig.FLAVOR == &quot;full&quot;)"
-        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/sensors/CarSensorManager.kt"
-            line="285"
-            column="33"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; `SDK_INT` is always >= 26"
-        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/sensors/CarSensorManager.kt"
-            line="315"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
         message="Unnecessary; `Build.VERSION.SDK_INT >= Build.VERSION_CODES.O` is never true here"
         errorLine1="                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &amp;&amp;"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="524"
+            line="541"
             column="17"/>
     </issue>
 
@@ -547,19 +492,8 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="524"
+            line="541"
             column="17"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; `Build.VERSION.SDK_INT &lt; Build.VERSION_CODES.M` is never true here"
-        errorLine1="        if (Build.VERSION.SDK_INT &lt; Build.VERSION_CODES.M) {"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/TLSWebViewClient.kt"
-            line="52"
-            column="13"/>
     </issue>
 
     <issue
@@ -604,61 +538,6 @@
             file="src/main/res/layout/activity_onboarding.xml"
             line="2"
             column="1"/>
-    </issue>
-
-    <issue
-        id="AutoboxingStateCreation"
-        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
-        errorLine1="    var serverId by mutableStateOf(ServerManager.SERVER_ID_ACTIVE)"
-        errorLine2="                    ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/assist/AssistShortcutViewModel.kt"
-            line="19"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="AutoboxingStateCreation"
-        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
-        errorLine1="                        mutableStateOf(currentServerId()),"
-        errorLine2="                        ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="108"
-            column="25"/>
-    </issue>
-
-    <issue
-        id="AutoboxingStateCreation"
-        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
-        errorLine1="    var selectedServerId by mutableStateOf(ServerManager.SERVER_ID_ACTIVE)"
-        errorLine2="                            ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/qs/ManageTilesViewModel.kt"
-            line="148"
-            column="29"/>
-    </issue>
-
-    <issue
-        id="AutoboxingStateCreation"
-        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
-        errorLine1="    var submitButtonLabel by mutableStateOf(commonR.string.tile_save)"
-        errorLine2="                             ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/qs/ManageTilesViewModel.kt"
-            line="155"
-            column="30"/>
-    </issue>
-
-    <issue
-        id="AutoboxingStateCreation"
-        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
-        errorLine1="    var serverId by mutableStateOf(0)"
-        errorLine2="                    ~~~~~~~~~~~~~~">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/matter/MatterCommissioningViewModel.kt"
-            line="40"
-            column="21"/>
     </issue>
 
     <issue
@@ -934,205 +813,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="165"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse(&quot;package:$packageName&quot;)))"
-        errorLine2="                                                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/barcode/BarcodeScannerActivity.kt"
-            line="136"
-            column="80"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                                Uri.parse(&quot;geo:$lat,$lon&quot;),"
-        errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/vehicle/EntityGridVehicleScreen.kt"
-            line="186"
-            column="49"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            Intent(Intent.ACTION_VIEW, Uri.parse(resources.getString(commonR.string.privacy_url))).also {"
-        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/settings/sensor/HealthConnectPermissionActivity.kt"
-            line="18"
-            column="40"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                            Uri.parse(&quot;geo:$latlng?q=$latlng(Home+Assistant)&quot;),"
-        errorLine2="                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/developer/location/views/LocationTrackingView.kt"
-            line="248"
-            column="45"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                Uri.parse(&quot;geo:${pair.second[0]},${pair.second[1]}&quot;),"
-        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/vehicle/MapVehicleScreen.kt"
-            line="134"
-            column="33"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                    Uri.parse(&quot;package:${activity?.packageName}&quot;),"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/integration/MobileAppIntegrationFragment.kt"
             line="171"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(getString(commonR.string.privacy_url)))"
-        errorLine2="                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/integration/MobileAppIntegrationFragment.kt"
-            line="198"
-            column="49"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                Uri.parse(&quot;https://companion.home-assistant.io/docs/integrations/universal-links&quot;),"
-        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcNavigationView.kt"
-            line="95"
-            column="33"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                                    Uri.parse(&quot;package:${context.packageName}&quot;),"
-        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="126"
-            column="37"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))"
-        errorLine2="                                                   ~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="335"
-            column="52"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))"
-        errorLine2="                                                   ~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="335"
-            column="52"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(it.summary.toString()))"
-        errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="358"
-            column="52"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(it.summary.toString()))"
-        errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="358"
-            column="52"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                    Uri.parse(&quot;package:${activity?.packageName}&quot;),"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="557"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            .setData(Uri.parse(PLAY_STORE_APP_URI))"
-        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/settings/wear/SettingsWearActivity.kt"
-            line="209"
-            column="22"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(docsLink))"
-        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/settings/wear/views/SettingsWearHomeView.kt"
-            line="121"
-            column="61"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                    url = Uri.parse(url.toString())"
-        errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewPresenterImpl.kt"
-            line="138"
-            column="27"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toColorInt` instead?"
-        errorLine1="            Color.parseColor(colorString)"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/webview/WebViewPresenterImpl.kt"
-            line="408"
             column="13"/>
     </issue>
 
@@ -1176,7 +857,7 @@
         errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/template/TemplateWidgetConfigureActivity.kt"
-            line="91"
+            line="95"
             column="42"/>
     </issue>
 

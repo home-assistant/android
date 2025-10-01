@@ -5,9 +5,10 @@ import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
+import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
+import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
-import javax.inject.Named
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -41,6 +42,7 @@ private const val PREF_AUTO_FAVORITES = "auto_favorites"
 private const val PREF_LOCATION_HISTORY_DISABLED = "location_history"
 private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displayed"
 private const val PREF_GESTURE_ACTION_PREFIX = "gesture_action"
+private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
 
 /**
  * This class ensure that when we use the local storage in [PrefsRepositoryImpl] the migrations has been made
@@ -97,8 +99,8 @@ private class LocalStorageWithMigration(
 }
 
 class PrefsRepositoryImpl @Inject constructor(
-    @Named("themes") localStorage: LocalStorage,
-    @Named("integration") integrationStorage: LocalStorage,
+    @NamedThemesStorage localStorage: LocalStorage,
+    @NamedIntegrationStorage integrationStorage: LocalStorage,
 ) : PrefsRepository {
 
     private val localStorage = LocalStorageWithMigration(localStorage, integrationStorage)
@@ -314,6 +316,14 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setGestureAction(gesture: HAGesture, action: GestureAction) {
         localStorage().putString("${PREF_GESTURE_ACTION_PREFIX}_${gesture.name}", action.name)
+    }
+
+    override suspend fun isChangeLogPopupEnabled(): Boolean {
+        return localStorage().getBooleanOrNull(PREF_CHANGE_LOG_POPUP_ENABLED) ?: true
+    }
+
+    override suspend fun setChangeLogPopupEnabled(enabled: Boolean) {
+        localStorage().putBoolean(PREF_CHANGE_LOG_POPUP_ENABLED, enabled)
     }
 
     override suspend fun removeServer(serverId: Int) {

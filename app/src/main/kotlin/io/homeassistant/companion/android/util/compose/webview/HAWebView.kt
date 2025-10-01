@@ -73,6 +73,10 @@ fun HAWebView(
                 webView.settings.setNightModeTheme(it, uiMode)
             }
         },
+        onRelease = {
+            Timber.d("onRelease WebView, stopping loading")
+            it.stopLoading()
+        },
         modifier = modifier,
     )
 }

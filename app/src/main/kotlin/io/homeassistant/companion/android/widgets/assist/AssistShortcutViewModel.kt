@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.widgets.assist
 
 import android.app.Application
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -16,7 +17,7 @@ import kotlinx.coroutines.launch
 class AssistShortcutViewModel @Inject constructor(val serverManager: ServerManager, application: Application) :
     AndroidViewModel(application) {
 
-    var serverId by mutableStateOf(ServerManager.SERVER_ID_ACTIVE)
+    var serverId by mutableIntStateOf(ServerManager.SERVER_ID_ACTIVE)
         private set
 
     var servers by mutableStateOf(serverManager.defaultServers)

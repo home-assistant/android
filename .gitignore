@@ -297,6 +297,8 @@ obj/
 .idea/jarRepositories.xml
 .idea/navEditor.xml
 .idea/deviceManager.xml
+.idea/copilot.data.migration.*
+
 
 # Legacy Eclipse project files
 .cproject

@@ -7,16 +7,15 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.PowerManager
 import android.provider.Settings
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
+import androidx.core.net.toUri
 import androidx.fragment.app.commit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -32,6 +31,8 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.isAutomotive
+import io.homeassistant.companion.android.common.util.isIgnoringBatteryOptimizations
+import io.homeassistant.companion.android.common.util.maybeAskForIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardApp
@@ -332,12 +333,26 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
                 ).replace("-minimal", "")}"
             }
             it.summary = link
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+            it.intent = Intent(Intent.ACTION_VIEW, link.toUri())
         }
 
         findPreference<Preference>("changelog_prompt")?.setOnPreferenceClickListener {
-            presenter.showChangeLog(requireContext())
+            lifecycleScope.launch {
+                presenter.showChangeLog(requireContext())
+            }
             true
+        }
+
+        findPreference<SwitchPreference>("change_log_popup_enabled")?.let {
+            lifecycleScope.launch {
+                it.isChecked = presenter.isChangeLogPopupEnabled()
+            }
+            it.setOnPreferenceChangeListener { _, newValue ->
+                lifecycleScope.launch {
+                    presenter.setChangeLogPopupEnabled(newValue as Boolean)
+                }
+                true
+            }
         }
 
         findPreference<Preference>("version")?.let {
@@ -355,7 +370,7 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
 
         findPreference<Preference>("privacy")?.let {
             it.summary = "https://www.home-assistant.io/privacy/"
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(it.summary.toString()))
+            it.intent = Intent(Intent.ACTION_VIEW, it.summary.toString().toUri())
         }
 
         findPreference<Preference>("developer")?.setOnPreferenceClickListener {
@@ -441,7 +456,7 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
 
     private fun updateBackgroundAccessPref() {
         findPreference<Preference>("background")?.let {
-            if (isIgnoringBatteryOptimizations()) {
+            if (context?.isIgnoringBatteryOptimizations() == true) {
                 it.setSummary(commonR.string.background_access_enabled)
                 it.icon = AppCompatResources.getDrawable(requireContext(), R.drawable.ic_check)
                 it.setOnPreferenceClickListener {
@@ -451,7 +466,7 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
                 it.setSummary(commonR.string.background_access_disabled)
                 it.icon = AppCompatResources.getDrawable(requireContext(), R.drawable.ic_close)
                 it.setOnPreferenceClickListener {
-                    requestBackgroundAccess()
+                    context?.maybeAskForIgnoringBatteryOptimizations()
                     true
                 }
             }
@@ -550,18 +565,6 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
         }
     }
 
-    @SuppressLint("BatteryLife")
-    private fun requestBackgroundAccess() {
-        if (!isIgnoringBatteryOptimizations()) {
-            requestBackgroundAccessResult.launch(
-                Intent(
-                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                    Uri.parse("package:${activity?.packageName}"),
-                ),
-            )
-        }
-    }
-
     private fun openNotificationSettings() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             requestNotificationPermissionResult.launch(
@@ -570,13 +573,6 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
                 },
             )
         }
-    }
-
-    private fun isIgnoringBatteryOptimizations(): Boolean {
-        return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
-            context?.getSystemService<PowerManager>()
-                ?.isIgnoringBatteryOptimizations(requireActivity().packageName)
-                ?: false
     }
 
     private fun getDefaultLauncherInfo(): String {

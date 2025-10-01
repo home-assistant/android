@@ -27,7 +27,7 @@ interface HomePresenter {
 
     suspend fun isConnected(): Boolean
     suspend fun getServerId(): Int?
-    fun getWebSocketState(): WebSocketState?
+    suspend fun getWebSocketState(): WebSocketState?
 
     suspend fun getEntities(): List<Entity>?
     suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>?

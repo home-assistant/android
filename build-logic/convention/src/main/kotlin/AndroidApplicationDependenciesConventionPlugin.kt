@@ -26,6 +26,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
             extensions.getByType<ApplicationExtension>().apply {
                 dependencies {
                     "implementation"(project(":common"))
+                    "debugImplementation"(project(":onboarding"))
 
                     "implementation"(libs.blurView)
                     "implementation"(libs.haze)
@@ -40,6 +41,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "implementation"(libs.appcompat)
                     "implementation"(libs.androidx.lifecycle.runtime.ktx)
+                    "implementation"(libs.androidx.lifecycle.service)
                     "implementation"(libs.constraintlayout)
                     "implementation"(libs.recyclerview)
                     "implementation"(libs.preference.ktx)

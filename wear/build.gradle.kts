@@ -63,4 +63,6 @@ dependencies {
     implementation(libs.firebase.messaging)
 
     androidTestImplementation(libs.bundles.androidx.test)
+    testImplementation(libs.bundles.androidx.test)
+    testImplementation(libs.androidx.test.core)
 }

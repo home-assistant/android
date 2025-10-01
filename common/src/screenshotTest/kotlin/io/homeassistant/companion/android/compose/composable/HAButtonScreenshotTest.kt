@@ -6,11 +6,12 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.android.tools.screenshot.PreviewTest
+import io.homeassistant.companion.android.common.compose.composable.ButtonSize
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
-import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 
 private class VariantProvider : PreviewParameterProvider<ButtonVariant> {
     override val values: Sequence<ButtonVariant> = ButtonVariant.entries.asSequence()
@@ -22,13 +23,28 @@ class HAButtonScreenshotTest {
     @PreviewTest
     @Composable
     fun `HAAccentButton`(@PreviewParameter(VariantProvider::class) variant: ButtonVariant) {
-        HATheme {
+        HAThemeForPreview {
             Row {
                 HAAccentButton(
                     variant = variant,
                     text = "Label",
                     onClick = {},
                     enabled = true,
+                    size = ButtonSize.SMALL,
+                )
+                HAAccentButton(
+                    variant = variant,
+                    text = "Label",
+                    onClick = {},
+                    enabled = true,
+                    size = ButtonSize.MEDIUM,
+                )
+                HAAccentButton(
+                    variant = variant,
+                    text = "Label",
+                    onClick = {},
+                    enabled = true,
+                    size = ButtonSize.LARGE,
                 )
                 HAAccentButton(
                     variant = variant,
@@ -44,13 +60,28 @@ class HAButtonScreenshotTest {
     @PreviewTest
     @Composable
     fun `HAFilledButton`(@PreviewParameter(VariantProvider::class) variant: ButtonVariant) {
-        HATheme {
+        HAThemeForPreview {
             Row {
                 HAFilledButton(
                     variant = variant,
                     text = "Label",
                     onClick = {},
                     enabled = true,
+                    size = ButtonSize.SMALL,
+                )
+                HAFilledButton(
+                    variant = variant,
+                    text = "Label",
+                    onClick = {},
+                    enabled = true,
+                    size = ButtonSize.MEDIUM,
+                )
+                HAFilledButton(
+                    variant = variant,
+                    text = "Label",
+                    onClick = {},
+                    enabled = true,
+                    size = ButtonSize.LARGE,
                 )
                 HAFilledButton(
                     variant = variant,
@@ -66,13 +97,28 @@ class HAButtonScreenshotTest {
     @PreviewTest
     @Composable
     fun `HAPlainButton`(@PreviewParameter(VariantProvider::class) variant: ButtonVariant) {
-        HATheme {
+        HAThemeForPreview {
             Row {
                 HAPlainButton(
                     variant = variant,
                     text = "Label",
                     onClick = {},
                     enabled = true,
+                    size = ButtonSize.SMALL,
+                )
+                HAPlainButton(
+                    variant = variant,
+                    text = "Label",
+                    onClick = {},
+                    enabled = true,
+                    size = ButtonSize.MEDIUM,
+                )
+                HAPlainButton(
+                    variant = variant,
+                    text = "Label",
+                    onClick = {},
+                    enabled = true,
+                    size = ButtonSize.LARGE,
                 )
                 HAPlainButton(
                     variant = variant,

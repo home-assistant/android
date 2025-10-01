@@ -17,6 +17,8 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.AppVersion
+import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
@@ -29,7 +31,6 @@ import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.onboarding.OnboardApp
-import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.NightModeManager
@@ -55,6 +56,7 @@ class SettingsPresenterImpl @Inject constructor(
     private val changeLog: ChangeLog,
     private val settingsDao: SettingsDao,
     private val sensorDao: SensorDao,
+    private val messagingTokenProvider: MessagingTokenProvider,
 ) : PreferenceDataStore(),
     SettingsPresenter {
 
@@ -82,6 +84,7 @@ class SettingsPresenterImpl @Inject constructor(
             "crash_reporting" -> prefsRepository.isCrashReporting()
             "autoplay_video" -> prefsRepository.isAutoPlayVideoEnabled()
             "always_show_first_view_on_app_start" -> prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()
+            "change_log_popup_enabled" -> prefsRepository.isChangeLogPopupEnabled()
             "assist_voice_command_intent" -> {
                 val componentSetting = view.getPackageManager()?.getComponentEnabledSetting(voiceCommandAppComponent)
                 componentSetting != null && componentSetting != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
@@ -104,6 +107,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "crash_reporting" -> prefsRepository.setCrashReporting(value)
                 "autoplay_video" -> prefsRepository.setAutoPlayVideo(value)
                 "always_show_first_view_on_app_start" -> prefsRepository.setAlwaysShowFirstViewOnAppStart(value)
+                "change_log_popup_enabled" -> prefsRepository.setChangeLogPopupEnabled(value)
                 "assist_voice_command_intent" ->
                     view.getPackageManager()?.setComponentEnabledSetting(
                         voiceCommandAppComponent,
@@ -173,14 +177,22 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun showChangeLog(context: Context) {
+    override suspend fun showChangeLog(context: Context) {
         changeLog.showChangeLog(context, true)
+    }
+
+    override suspend fun isChangeLogPopupEnabled(): Boolean {
+        return prefsRepository.isChangeLogPopupEnabled()
+    }
+
+    override suspend fun setChangeLogPopupEnabled(enabled: Boolean) {
+        prefsRepository.setChangeLogPopupEnabled(enabled)
     }
 
     override suspend fun addServer(result: OnboardApp.Output?) {
         if (result != null) {
             val (url, authCode, deviceName, deviceTrackingEnabled, notificationsEnabled) = result
-            val messagingToken = getMessagingToken()
+            val messagingToken = messagingTokenProvider()
             var serverId: Int? = null
             try {
                 val formattedUrl = UrlUtil.formattedUrlString(url)
@@ -197,7 +209,7 @@ class SettingsPresenterImpl @Inject constructor(
                 serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
                 serverManager.integrationRepository(serverId).registerDevice(
                     DeviceRegistration(
-                        "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                        AppVersion.from(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
                         deviceName,
                         messagingToken,
                     ),

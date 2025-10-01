@@ -6,36 +6,63 @@ import androidx.compose.ui.unit.sp
 /**
  * Object defining spacing constants for Home Assistant UI components.
  */
-object HASpacing {
-    /** No spacing (0dp).*/
-    val None = 0.dp
+object HADimens {
+    val SPACE0 = 0.dp
+    val SPACE1 = 4.dp
+    val SPACE2 = 8.dp
+    val SPACE3 = 12.dp
+    val SPACE4 = 16.dp
+    val SPACE5 = 20.dp
+    val SPACE6 = 24.dp
+    val SPACE7 = 28.dp
+    val SPACE8 = 32.dp
+    val SPACE9 = 36.dp
+    val SPACE10 = 40.dp
+    val SPACE11 = 44.dp
+    val SPACE12 = 48.dp
+    val SPACE13 = 52.dp
+    val SPACE14 = 56.dp
+    val SPACE15 = 60.dp
+    val SPACE16 = 64.dp
+    val SPACE17 = 68.dp
+    val SPACE18 = 72.dp
+    val SPACE19 = 76.dp
+    val SPACE20 = 80.dp
+}
 
-    /** Extra extra extra small spacing (2dp, equivalent to 0.125rem). */
-    val X3S = 2.dp
+/**
+ * Object defining general size constants for Home Assistant UI components.
+ */
+object HASize {
+    /** Extra extra small size (8dp, equivalent to 0.5rem). */
+    val X2S = 8.dp
 
-    /** Extra extra small spacing (4dp, equivalent to 0.25rem). */
-    val X2S = 4.dp
+    /** Extra small size (10dp, equivalent to 0.625rem). */
+    val XS = 10.dp
 
-    /** Extra small spacing (8dp, equivalent to 0.5rem). */
-    val XS = 8.dp
-
-    /** Small spacing (12dp, equivalent to 0.75rem). */
+    /** Small size (12dp, equivalent to 0.75rem). */
     val S = 12.dp
 
-    /** Medium spacing (16dp, equivalent to 1rem). */
-    val M = 16.dp
+    /** Medium size (14dp, equivalent to 0.875rem). */
+    val M = 14.dp
 
-    /** Large spacing (20dp, equivalent to 1.25rem). */
-    val L = 20.dp
+    /** Large size (16dp, equivalent to 1rem). */
+    val L = 16.dp
 
-    /** Extra large spacing (24dp, equivalent to 1.5rem). */
-    val XL = 24.dp
+    /** Extra large size (20dp, equivalent to 1.25rem). */
+    val XL = 20.dp
 
-    /** Extra extra large spacing (32dp, equivalent to 2rem). */
-    val X2L = 32.dp
+    /** Extra extra large size (24dp, equivalent to 1.5rem). */
+    val X2L = 24.dp
 
-    /** Extra extra extra large spacing (48dp, equivalent to 3rem). */
-    val X3L = 48.dp
+    /** Extra extra extra large size (28dp, equivalent to 1.75rem). */
+    val X3L = 28.dp
+
+    /** Extra extra extra extra large size (32dp, equivalent to 2rem). */
+    val X4L = 32.dp
+
+    /** Extra extra extra extra extra large size (40dp, equivalent to 2.5rem). */
+    val X5L = 40.dp
 }
 
 /**

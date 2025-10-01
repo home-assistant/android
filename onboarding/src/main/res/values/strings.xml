@@ -1,0 +1,33 @@
+<resources>
+    <string name="home_assistant_branding_icon_content_description">Home\u00A0Assistant branding icon</string>
+    <string name="loading_content_description">Loading</string>
+    <string name="searching_home_network">Searching on\nhome network</string>
+    <string name="server_discovery_no_server_info">Check that your Home\u00A0Assistant server is powered on and you\'re connected to the same network. You can enter the address manually if you know it.</string>
+    <string name="server_discovery_connect">Connect</string>
+    <string name="welcome_home_assistant_title">Home\u00A0Assistant\nCompanion app</string>
+    <string name="welcome_details">Access your Home\u00A0Assistant server on the go using this app.\n\nHome\u00A0Assistant is open source, advocates for privacy and runs locally in your home.</string>
+    <string name="welcome_connect_to_ha">Connect to my Home\u00A0Assistant server</string>
+    <string name="welcome_learn_more">Learn more</string>
+    <string name="name_your_device_title">How would you like to name this device?</string>
+    <string name="name_your_device_content">This is used to identify your device.</string>
+    <string name="name_your_device_save">Save</string>
+    <string name="manual_server_title">What is your Home\u00A0Assistant address?</string>
+    <string name="manual_server_connect">Connect</string>
+    <string name="manual_server_wrong_url">Invalid Home\u00A0Assistant address</string>
+    <string name="connection_screen_malformed_url">Verify that your Home\u00A0Assistant address is correct</string>
+    <string name="clear_text">Clear text</string>
+    <string name="local_first_title">Local by default.\nRemote when you\'re ready.</string>
+    <string name="local_first_content">Your Home\u00A0Assistant is only accessible on your home network. To control your smart home from anywhere, you can set up remote access later in your settings.\n\nFor now, you\'re securely connected to your local network.</string>
+    <string name="local_first_next">Got it</string>
+    <string name="location_sharing_title">Use this device\'s location for automations</string>
+    <string name="location_sharing_content">Location sharing enables powerful automations, such as turning off the heating when you leave home. This option shares the device\'s location only with your Home Assistant system.\n\nThis data stays in your home and is never sent to third parties. It also helps strengthen the security of your connection to Home Assistant.</string>
+    <string name="location_sharing_share">Share my location</string>
+    <string name="location_sharing_no_share">Do not share my location</string>
+    <string name="location_secure_connection_title">Let us help secure your remote connection</string>
+    <string name="location_secure_connection_content">It appears that your connection is not encrypted (using HTTP). If the app knows when you\'re away from home, it can choose a more secure way to connect to your Home Assistant system if available. This requires location services to be enabled.</string>
+    <string name="location_secure_connection_most_secure">Most secure: Allow this app to know when you\'re home</string>
+    <string name="location_secure_connection_less_secure">Less secure: Do not allow this app to know when you\'re home</string>
+    <string name="location_secure_connection_hint">This data will never be shared with the Home Assistant project or third parties.</string>
+    <string name="location_secure_connection_next">Next</string>
+    <string name="location_secure_connection_discard_permission">Location permission denied. Allow access or choose the \'Less secure\' option.</string>
+</resources>

@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -37,7 +38,7 @@ class MatterCommissioningViewModel @Inject constructor(
     var step by mutableStateOf<CommissioningFlowStep>(CommissioningFlowStep.NotStarted)
         private set
 
-    var serverId by mutableStateOf(0)
+    var serverId by mutableIntStateOf(0)
         private set
 
     fun checkSetup(isNewDevice: Boolean) {

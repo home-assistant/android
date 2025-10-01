@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.12.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.12.0)" variant="all" version="8.12.0">
+<issues format="6" by="lint 8.13.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.0)" variant="all" version="8.13.0">
 
     <issue
         id="CustomSplashScreen"
@@ -19,7 +19,7 @@
         errorLine2="                ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="289"
+            line="290"
             column="17"/>
     </issue>
 
@@ -30,7 +30,7 @@
         errorLine2="                ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="291"
+            line="292"
             column="17"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="                ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="293"
+            line="294"
             column="17"/>
     </issue>
 
@@ -52,7 +52,7 @@
         errorLine2="                ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="295"
+            line="296"
             column="17"/>
     </issue>
 
@@ -341,7 +341,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="153"
+            line="154"
             column="35"/>
     </issue>
 
@@ -352,7 +352,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="174"
+            line="175"
             column="35"/>
     </issue>
 
@@ -363,7 +363,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="194"
+            line="195"
             column="35"/>
     </issue>
 
@@ -374,7 +374,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="228"
+            line="229"
             column="35"/>
     </issue>
 
@@ -416,8 +416,8 @@
     <issue
         id="WearRecents"
         message="Set `taskAffinity` for Wear activities to make them appear correctly in recents"
-        errorLine1="        &lt;activity android:name=&quot;.home.HomeActivity&quot; />"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="        &lt;activity android:name=&quot;.home.HomeActivity&quot;"
+        errorLine2="        ^">
         <location
             file="src/main/AndroidManifest.xml"
             line="66"
@@ -431,7 +431,7 @@
         errorLine2="        ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="67"
+            line="68"
             column="9"/>
     </issue>
 
@@ -442,7 +442,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="75"
+            line="76"
             column="9"/>
     </issue>
 
@@ -453,7 +453,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="76"
+            line="77"
             column="9"/>
     </issue>
 
@@ -464,7 +464,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="77"
+            line="78"
             column="9"/>
     </issue>
 
@@ -475,7 +475,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="78"
+            line="79"
             column="9"/>
     </issue>
 
@@ -486,7 +486,7 @@
         errorLine2="        ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="79"
+            line="80"
             column="9"/>
     </issue>
 
@@ -497,7 +497,7 @@
         errorLine2="        ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="88"
+            line="89"
             column="9"/>
     </issue>
 
@@ -508,7 +508,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="115"
+            line="116"
             column="9"/>
     </issue>
 
@@ -519,7 +519,7 @@
         errorLine2="        ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="117"
+            line="118"
             column="9"/>
     </issue>
 
@@ -552,7 +552,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/phone/PhoneSettingsListener.kt"
-            line="218"
+            line="224"
             column="35"/>
     </issue>
 
@@ -563,107 +563,8 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/phone/PhoneSettingsListener.kt"
-            line="218"
+            line="224"
             column="35"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `Bitmap.scale` instead?"
-        errorLine1="                                    bitmap = Bitmap.createScaledBitmap(bitmap, imageWidth, imageHeight, true)"
-        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/tiles/CameraTile.kt"
-            line="147"
-            column="46"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `Context.withStyledAttributes` instead?"
-        errorLine1="        val attributes = context.obtainStyledAttributes(attrs, R.styleable.LoadingView)"
-        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/LoadingView.kt"
-            line="16"
-            column="26"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                        Uri.parse(UrlUtil.buildAuthenticationUrl(url)),"
-        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/manual/ManualSetupPresenterImpl.kt"
-            line="46"
-            column="25"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                        data = Uri.parse(url)"
-        errorLine2="                               ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="124"
-            column="32"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                        data = Uri.parse(url)"
-        errorLine2="                               ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="124"
-            column="32"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="        Tasks.await(Wearable.getDataClient(this).getDataItems(Uri.parse(&quot;wear://*/home_assistant_instance&quot;))).apply {"
-        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="195"
-            column="63"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                        Uri.parse(UrlUtil.buildAuthenticationUrl(url)),"
-        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingPresenterImpl.kt"
-            line="56"
-            column="25"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                        data = Uri.parse(&quot;https://play.google.com/store/apps/details?id=${BuildConfig.APPLICATION_ID}&quot;)"
-        errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/phoneinstall/PhoneInstallActivity.kt"
-            line="58"
-            column="32"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                        data = Uri.parse(&quot;https://play.google.com/store/apps/details?id=${BuildConfig.APPLICATION_ID}&quot;)"
-        errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/onboarding/phoneinstall/PhoneInstallActivity.kt"
-            line="58"
-            column="32"/>
     </issue>
 
 </issues>
