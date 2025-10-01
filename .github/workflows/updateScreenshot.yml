@@ -31,3 +31,9 @@ jobs:
           git add .
           git commit -m "Update screenshots"
           git push
+
+
+# Wrong new lines
+
+
+
