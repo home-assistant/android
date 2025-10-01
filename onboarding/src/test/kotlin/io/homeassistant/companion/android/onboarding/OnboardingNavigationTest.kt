@@ -54,6 +54,8 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssista
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDiscoveryModule
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
+import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.SetHomeNetworkRoute
+import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.navigateToSetHomeNetworkRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.stringResource
@@ -327,7 +329,7 @@ internal class OnboardingNavigationTest {
     }
 
     @Test
-    fun `Given LocationSharing when agreeing with plain text access to share then onboarding is done`() {
+    fun `Given LocationSharing when agreeing with plain text access to share then show SetHomeNetwork`() {
         composeTestRule.apply {
             navController.navigateToLocationSharing(42, true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
@@ -337,7 +339,7 @@ internal class OnboardingNavigationTest {
 
             onNodeWithText(stringResource(R.string.location_sharing_share)).performScrollTo().performClick()
 
-            assertTrue(onboardingDone)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
         }
     }
 
@@ -391,7 +393,7 @@ internal class OnboardingNavigationTest {
     }
 
     @Test
-    fun `Given LocationForSecureConnection when agreeing to share then onboarding is done`() {
+    fun `Given LocationForSecureConnection when agreeing to share then show SetHomeNetwork`() {
         composeTestRule.apply {
             navController.navigateToLocationForSecureConnection(42)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
@@ -399,9 +401,19 @@ internal class OnboardingNavigationTest {
             onNodeWithText(stringResource(R.string.location_secure_connection_most_secure)).performScrollTo().performClick()
             onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().performClick()
 
-            assertTrue(onboardingDone)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
         }
     }
 
+    @Test
+    fun `Given SetHomeNetwork when going back then stop the app`() {
+        composeTestRule.apply {
+            navController.navigateToSetHomeNetworkRoute(42)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
+
+            onNodeWithText(stringResource(R.string.set_home_network_next)).performScrollTo().performClick()
+            assertTrue(onboardingDone)
+        }
+    }
     // TODO maybe split this file into multiples one dedicated to each screen
 }

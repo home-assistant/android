@@ -12,8 +12,7 @@ class LocationForSecureConnectionScreenshotTest {
     fun `LocationForSecureConnection empty`() {
         HAThemeForPreview {
             LocationForSecureConnectionScreen(
-                onAllowInsecureConnection = {},
-                onGoToNextScreen = {},
+                onAllowInsecureConnection = { _ -> },
                 onHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
             )

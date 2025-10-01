@@ -18,15 +18,15 @@ internal fun NavController.navigateToLocationForSecureConnection(serverId: Int, 
 
 internal fun NavGraphBuilder.locationForSecureConnectionScreen(
     onHelpClick: () -> Unit,
-    onGotoNextScreen: (serverId: Int) -> Unit,
+    onGotoNextScreen: (allowInsecureConnection: Boolean, serverId: Int) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
 ) {
     composable<LocationForSecureConnectionRoute> {
         LocationForSecureConnectionScreen(
             viewModel = hiltViewModel(),
             onHelpClick = onHelpClick,
-            onGoToNextScreen = {
-                onGotoNextScreen(it.toRoute<LocationForSecureConnectionRoute>().serverId)
+            onGoToNextScreen = { allowInsecureConnection ->
+                onGotoNextScreen(allowInsecureConnection, it.toRoute<LocationForSecureConnectionRoute>().serverId)
             },
             onShowSnackbar = onShowSnackbar,
         )

@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.onboarding.connection.navigation.navig
 import io.homeassistant.companion.android.onboarding.localfirst.navigation.LocalFirstRoute
 import io.homeassistant.companion.android.onboarding.localfirst.navigation.localFirstScreen
 import io.homeassistant.companion.android.onboarding.localfirst.navigation.navigateToLocalFirst
+import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.LocationForSecureConnectionRoute
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.locationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.navigateToLocationForSecureConnection
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.LocationSharingRoute
@@ -28,6 +29,8 @@ import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.n
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.navigateToNameYourDevice
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.serverDiscoveryScreen
+import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.navigateToSetHomeNetworkRoute
+import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.setHomeNetworkScreen
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.welcomeScreen
 import kotlinx.serialization.Serializable
@@ -143,13 +146,15 @@ internal fun NavGraphBuilder.onboarding(
                     ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_DENIED
                 }
 
-                if (shouldAskPermission && hasPlainTextAccess) {
-                    navController.navigateToLocationForSecureConnection(
-                        serverId = serverId,
-                        navOptions {
-                            popUpTo<LocationSharingRoute> { inclusive = true }
-                        },
-                    )
+                if (hasPlainTextAccess) {
+                    val navOptions = navOptions {
+                        popUpTo<LocationSharingRoute> { inclusive = true }
+                    }
+                    if (shouldAskPermission) {
+                        navController.navigateToLocationForSecureConnection(serverId = serverId, navOptions)
+                    } else {
+                        navController.navigateToSetHomeNetworkRoute(serverId = serverId, navOptions)
+                    }
                 } else {
                     onOnboardingDone()
                 }
@@ -162,11 +167,30 @@ internal fun NavGraphBuilder.onboarding(
                 // TODO validate the URL to use
                 navController.navigateToUri("https://www.home-assistant.io/installation/")
             },
-            onGotoNextScreen = { serverId ->
-                onOnboardingDone()
+            onGotoNextScreen = { allowInsecureConnection, serverId ->
+                if (allowInsecureConnection) {
+                    onOnboardingDone()
+                } else {
+                    navController.navigateToSetHomeNetworkRoute(
+                        serverId = serverId,
+                        navOptions {
+                            popUpTo<LocationForSecureConnectionRoute> { inclusive = true }
+                        },
+                    )
+                }
             },
             onShowSnackbar = onShowSnackbar,
             // We don't have back button since after name your device the device is registered
+        )
+
+        setHomeNetworkScreen(
+            onHelpClick = {
+                // TODO validate the URL to use
+                navController.navigateToUri("https://www.home-assistant.io/installation/")
+            },
+            onGotoNextScreen = {
+                onOnboardingDone()
+            },
         )
     }
 }
