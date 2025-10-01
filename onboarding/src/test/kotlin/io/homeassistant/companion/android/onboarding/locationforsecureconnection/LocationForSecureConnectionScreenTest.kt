@@ -27,7 +27,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertNull
 import org.junit.runner.RunWith
@@ -63,8 +62,7 @@ class LocationForSecureConnectionScreenTest {
                 onNodeWithText(stringResource(R.string.location_secure_connection_most_secure)).performScrollTo().performClick()
 
                 nextButton.assertIsEnabled().performClick()
-                assertFalse(allowInsecureConnection)
-                assertTrue(goToNextScreenClicked)
+                assertEquals(false, allowInsecureConnection)
                 assertNull(snackbarMessage)
             }
         }
@@ -82,8 +80,7 @@ class LocationForSecureConnectionScreenTest {
                 onNodeWithText(stringResource(R.string.location_secure_connection_less_secure)).performScrollTo().performClick()
 
                 nextButton.assertIsEnabled().performClick()
-                assertTrue(allowInsecureConnection)
-                assertTrue(goToNextScreenClicked)
+                assertEquals(true, allowInsecureConnection)
                 assertNull(snackbarMessage)
             }
         }
@@ -101,16 +98,15 @@ class LocationForSecureConnectionScreenTest {
                 onNodeWithText(stringResource(R.string.location_secure_connection_most_secure)).performScrollTo().performClick()
 
                 nextButton.assertIsEnabled().performClick()
-                assertFalse(allowInsecureConnection)
-                assertFalse(goToNextScreenClicked)
+                // The callback shouldn't be invoked since the permission is not granted
+                assertEquals(null, allowInsecureConnection)
                 assertEquals(stringResource(R.string.location_secure_connection_discard_permission), snackbarMessage)
 
                 // reset to make sure the snackbar is not shown again
                 snackbarMessage = null
 
                 nextButton.assertIsEnabled().performClick()
-                assertTrue(allowInsecureConnection)
-                assertTrue(goToNextScreenClicked)
+                assertEquals(true, allowInsecureConnection)
                 assertNull(snackbarMessage)
             }
         }
@@ -118,9 +114,7 @@ class LocationForSecureConnectionScreenTest {
 
     private class TestHelper {
         var helpClicked = false
-        var goToNextScreenClicked = false
-        var allowInsecureConnection = false
-
+        var allowInsecureConnection: Boolean? = null
         var snackbarMessage: String? = null
     }
 
@@ -138,7 +132,6 @@ class LocationForSecureConnectionScreenTest {
                 ) {
                     LocationForSecureConnectionScreen(
                         onHelpClick = { helpClicked = true },
-                        onGoToNextScreen = { goToNextScreenClicked = true },
                         onAllowInsecureConnection = { allowInsecureConnection = it },
                         onShowSnackbar = { message, _ ->
                             snackbarMessage = message

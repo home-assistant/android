@@ -30,4 +30,7 @@
     <string name="location_secure_connection_hint">This data will never be shared with the Home Assistant project or third parties.</string>
     <string name="location_secure_connection_next">Next</string>
     <string name="location_secure_connection_discard_permission">Location permission denied. Allow access or choose the \'Less secure\' option.</string>
+    <string name="set_home_network_title">Define your home network.</string>
+    <string name="set_home_network_content">Indicate when you\'re connected to your home network. This can be used to, for example, use the internal connection URL or disable the app lock when at home.</string>
+    <string name="set_home_network_next">Next</string>
 </resources>
