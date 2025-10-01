@@ -37,7 +37,6 @@ class LauncherActivity : AppCompatActivity() {
     }
 
     companion object {
-
         fun newInstance(context: Context, deepLink: DeepLink? = null): Intent {
             return Intent(context, LauncherActivity::class.java).apply {
                 if (deepLink != null) {
