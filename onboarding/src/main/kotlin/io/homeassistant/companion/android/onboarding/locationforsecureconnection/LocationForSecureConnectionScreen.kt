@@ -54,14 +54,16 @@ private enum class SelectionKey {
 @Composable
 internal fun LocationForSecureConnectionScreen(
     viewModel: LocationForSecureConnectionViewModel,
-    onGoToNextScreen: () -> Unit,
+    onGoToNextScreen: (allowInsecureConnection: Boolean) -> Unit,
     onHelpClick: () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
 ) {
     LocationForSecureConnectionScreen(
-        onAllowInsecureConnection = viewModel::allowInsecureConnection,
-        onGoToNextScreen = onGoToNextScreen,
+        onAllowInsecureConnection = { allowInsecureConnection ->
+            viewModel.allowInsecureConnection(allowInsecureConnection)
+            onGoToNextScreen(allowInsecureConnection)
+        },
         onHelpClick = onHelpClick,
         onShowSnackbar = onShowSnackbar,
         modifier = modifier,
@@ -71,7 +73,6 @@ internal fun LocationForSecureConnectionScreen(
 @Composable
 internal fun LocationForSecureConnectionScreen(
     onAllowInsecureConnection: (allowInsecureConnection: Boolean) -> Unit,
-    onGoToNextScreen: () -> Unit,
     onHelpClick: () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
@@ -82,7 +83,6 @@ internal fun LocationForSecureConnectionScreen(
     ) { contentPadding ->
         LocationForSecureConnectionContent(
             onAllowInsecureConnection = onAllowInsecureConnection,
-            onGoToNextScreen = onGoToNextScreen,
             onShowSnackbar = onShowSnackbar,
             modifier = Modifier.padding(contentPadding),
         )
@@ -93,7 +93,6 @@ internal fun LocationForSecureConnectionScreen(
 @Composable
 private fun LocationForSecureConnectionContent(
     onAllowInsecureConnection: (allowInsecureConnection: Boolean) -> Unit,
-    onGoToNextScreen: () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -120,7 +119,6 @@ private fun LocationForSecureConnectionContent(
             onPermissionResult = { permissionGranted ->
                 if (permissionGranted) {
                     onAllowInsecureConnection(false)
-                    onGoToNextScreen()
                 } else {
                     coroutineScope.launch {
                         onShowSnackbar(errorText, null)
@@ -155,7 +153,6 @@ private fun LocationForSecureConnectionContent(
                     permissions.launchMultiplePermissionRequest()
                 } else {
                     onAllowInsecureConnection(true)
-                    onGoToNextScreen()
                 }
             },
             modifier = Modifier.padding(bottom = HADimens.SPACE6),
@@ -220,7 +217,6 @@ private fun LocationForSecureConnectionScreenPreview() {
     HAThemeForPreview {
         LocationForSecureConnectionScreen(
             onAllowInsecureConnection = {},
-            onGoToNextScreen = {},
             onHelpClick = {},
             onShowSnackbar = { _, _ -> true },
         )
