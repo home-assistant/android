@@ -2,11 +2,14 @@ package io.homeassistant.companion.android.util.vehicle
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.annotation.StringRes
 import androidx.car.app.CarContext
 import androidx.car.app.ScreenManager
+import androidx.car.app.model.Action
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.GridItem
+import androidx.car.app.model.Header
 import androidx.car.app.model.ItemList
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.mikepenz.iconics.IconicsDrawable
@@ -34,6 +37,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import timber.log.Timber
+
+fun CarContext.getHeaderBuilder(@StringRes title: Int, action: Action = Action.BACK): Header.Builder =
+    getHeaderBuilder(getString(title), action)
+
+fun getHeaderBuilder(title: String, action: Action = Action.BACK): Header.Builder {
+    return Header.Builder().apply {
+        setTitle(title)
+        setStartHeaderAction(action)
+    }
+}
 
 fun getChangeServerGridItem(
     carContext: CarContext,

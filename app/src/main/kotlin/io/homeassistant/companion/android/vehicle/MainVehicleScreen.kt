@@ -4,7 +4,6 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.model.Action
-import androidx.car.app.model.ActionStrip
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.GridTemplate
@@ -30,6 +29,7 @@ import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.getChangeServerGridItem
 import io.homeassistant.companion.android.util.vehicle.getDomainList
+import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 import io.homeassistant.companion.android.util.vehicle.getNavigationGridItem
 import io.homeassistant.companion.android.util.vehicle.nativeModeAction
 import kotlinx.coroutines.Job
@@ -124,8 +124,12 @@ class MainVehicleScreen(
     override fun onGetTemplate(): Template {
         if (isLoggedIn != true) {
             return GridTemplate.Builder().apply {
-                setTitle(carContext.getString(commonR.string.app_name))
-                setHeaderAction(Action.APP_ICON)
+                setHeader(
+                    carContext.getHeaderBuilder(
+                        title = commonR.string.app_name,
+                        action = Action.APP_ICON,
+                    ).build(),
+                )
                 setLoading(true)
             }.build()
         }
@@ -195,16 +199,14 @@ class MainVehicleScreen(
                 onRefresh()
             }.build()
 
-        val actionStripBuilder = ActionStrip.Builder()
+        val headerBuilder = carContext.getHeaderBuilder(commonR.string.app_name, Action.APP_ICON)
         if (isAutomotive && !isDrivingOptimized && BuildConfig.FLAVOR != "full") {
-            actionStripBuilder.addAction(nativeModeAction(carContext))
+            headerBuilder.addEndHeaderAction(nativeModeAction(carContext))
         }
-        actionStripBuilder.addAction(refreshAction)
+        headerBuilder.addEndHeaderAction(refreshAction)
 
         return GridTemplate.Builder().apply {
-            setTitle(carContext.getString(commonR.string.app_name))
-            setHeaderAction(Action.APP_ICON)
-            setActionStrip(actionStripBuilder.build())
+            setHeader(headerBuilder.build())
             if (!domainsAdded) {
                 setLoading(true)
             } else {
