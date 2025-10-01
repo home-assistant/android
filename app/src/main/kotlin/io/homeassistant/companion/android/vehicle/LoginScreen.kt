@@ -35,9 +35,7 @@ class LoginScreen(context: CarContext, val serverManager: ServerManager) : Scree
                         serverManager.authenticationRepository()
                             .getSessionState() == SessionState.CONNECTED
                 }
-                if (isLoggedIn == true) {
-                    screenManager.pop()
-                }
+                screenManager.pop()
             }
         }
     }
