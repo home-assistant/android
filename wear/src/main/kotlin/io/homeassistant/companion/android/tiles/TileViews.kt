@@ -13,6 +13,7 @@ import androidx.wear.protolayout.ColorBuilders.argb
 import androidx.wear.protolayout.DimensionBuilders
 import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.ModifiersBuilders
+import androidx.wear.protolayout.ModifiersBuilders.Clickable
 import androidx.wear.protolayout.TimelineBuilders.Timeline
 import androidx.wear.protolayout.material.ChipColors
 import androidx.wear.protolayout.material.Colors
@@ -23,6 +24,7 @@ import androidx.wear.protolayout.material.layouts.PrimaryLayout
 import androidx.wear.tiles.RequestBuilders
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.splash.SplashActivity
 
 const val RESOURCE_REFRESH = "refresh"
@@ -85,7 +87,7 @@ fun primaryLayoutTimeline(
         ContextCompat.getColor(context, android.R.color.white),
     )
     val chipColors = ChipColors.primaryChipColors(theme)
-    val chipAction = ModifiersBuilders.Clickable.Builder()
+    val chipAction = Clickable.Builder()
         .setId("action")
         .setOnClick(action)
         .build()
@@ -148,7 +150,7 @@ fun getRefreshButton(): LayoutElementBuilders.Arc = LayoutElementBuilders.Arc.Bu
 fun getRefreshModifiers(): ModifiersBuilders.Modifiers {
     return ModifiersBuilders.Modifiers.Builder()
         .setClickable(
-            ModifiersBuilders.Clickable.Builder()
+            Clickable.Builder()
                 .setOnClick(
                     ActionBuilders.LoadAction.Builder().build(),
                 )
@@ -156,4 +158,55 @@ fun getRefreshModifiers(): ModifiersBuilders.Modifiers {
                 .build(),
         )
         .build()
+}
+
+fun getNotConfiguredTimeline(
+    context: Context,
+    requestParams: RequestBuilders.TileRequest,
+    @StringRes title: Int,
+    launchMode: HomeActivity.Companion.LaunchMode,
+): Timeline {
+    val theme = Colors(
+        ContextCompat.getColor(context, commonR.color.colorPrimary),
+        ContextCompat.getColor(context, commonR.color.colorOnPrimary),
+        ContextCompat.getColor(context, R.color.colorOverlay),
+        ContextCompat.getColor(context, android.R.color.white),
+    )
+    val chipColors = ChipColors.primaryChipColors(theme)
+    val notConfiguredTimeline = Timeline.fromLayoutElement(
+        LayoutElementBuilders.Column.Builder()
+            .addContent(
+                LayoutElementBuilders.Text.Builder()
+                    .setText(context.getString(title))
+                    .setMaxLines(10)
+                    .build(),
+            )
+            .addContent(
+                LayoutElementBuilders.Spacer.Builder()
+                    .setHeight(DimensionBuilders.dp(10f)).build(),
+            )
+            .addContent(
+                LayoutElementBuilders.Row.Builder()
+                    .addContent(
+                        CompactChip.Builder(
+                            context,
+                            Clickable.Builder()
+                                .setOnClick(
+                                    HomeActivity.getLaunchAction(
+                                        context.packageName,
+                                        requestParams.tileId,
+                                        launchMode,
+                                    ),
+                                )
+                                .build(),
+                            requestParams.deviceConfiguration,
+                        )
+                            .setTextContent(context.getString(commonR.string.open_settings))
+                            .setChipColors(chipColors)
+                            .build(),
+                    ).build(),
+            )
+            .build(),
+    )
+    return notConfiguredTimeline
 }

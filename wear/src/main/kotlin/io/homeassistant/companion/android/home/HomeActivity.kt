@@ -55,7 +55,12 @@ class HomeActivity :
             }
         }
 
-        fun getLaunchAction(packageName: String, tileId: Int): ActionBuilders.LaunchAction {
+        sealed interface LaunchMode {
+            object ThermostatTile : LaunchMode
+            object CameraTile : LaunchMode
+        }
+
+        fun getLaunchAction(packageName: String, tileId: Int, launchMode: LaunchMode): ActionBuilders.LaunchAction {
             val androidActivity = ActionBuilders.AndroidActivity.Builder()
                 .setPackageName(packageName)
                 .setClassName(
@@ -64,7 +69,10 @@ class HomeActivity :
                 .addKeyToExtraMapping(
                     LAUNCH_MODE,
                     ActionBuilders.AndroidStringExtra.Builder().setValue(
-                        OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE,
+                        when (launchMode) {
+                            LaunchMode.ThermostatTile -> OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE
+                            LaunchMode.CameraTile -> OpenTileSettingsActivity.CONFIG_CAMERA_TILE
+                        },
                     )
                         .build(),
                 )
@@ -114,12 +122,14 @@ class HomeActivity :
         super.onCreate(savedInstanceState)
         // Get rid of me!
         presenter.init(this)
-
-        if (intent.getStringExtra(LAUNCH_MODE) == OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE) {
+        val launchMode = intent.getStringExtra(LAUNCH_MODE)
+        if (launchMode == OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE ||
+            launchMode == OpenTileSettingsActivity.CONFIG_CAMERA_TILE
+        ) {
             startActivity(
                 OpenTileSettingsActivity.newInstance(
                     this@HomeActivity,
-                    OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE,
+                    launchMode,
                     intent.getIntExtra(OpenTileSettingsActivity.TILE_ID_KEY, 0),
                 ),
             )
