@@ -163,7 +163,7 @@ fun getRefreshModifiers(): ModifiersBuilders.Modifiers {
 fun getNotConfiguredTimeline(
     context: Context,
     requestParams: RequestBuilders.TileRequest,
-    tileString: Int,
+    @StringRes title: Int,
     launchMode: HomeActivity.Companion.LaunchMode,
 ): Timeline {
     val theme = Colors(
@@ -177,7 +177,7 @@ fun getNotConfiguredTimeline(
         LayoutElementBuilders.Column.Builder()
             .addContent(
                 LayoutElementBuilders.Text.Builder()
-                    .setText(context.getString(tileString))
+                    .setText(context.getString(title))
                     .setMaxLines(10)
                     .build(),
             )
