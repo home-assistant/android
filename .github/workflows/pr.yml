@@ -187,7 +187,22 @@ jobs:
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
+      - name: Generate dummy keystore
+        run: |
+          keytool -genkeypair -v \
+          -alias androiddebugkey \
+          -keyalg RSA \
+          -keysize 2048 \
+          -validity 10000 \
+          -keystore /home/runner/work/android/android/app/release_keystore.keystore \
+          -dname "CN=Android CI Debug, O=Android, C=FR" \
+          -storepass android \
+          -keypass android
       - name: Build Release
+        env:
+          KEYSTORE_ALIAS: androiddebugkey
+          KEYSTORE_ALIAS_PASSWORD: android
+          KEYSTORE_PASSWORD: android
         run: |
           ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
 
