@@ -17,6 +17,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.navigation.NavController
@@ -284,9 +285,12 @@ internal class WearOnboardingNavigationTest {
         val instanceUrl = "http://ha.local"
         val authCode = "super_code"
         testNavigation("http://ha") {
-            navController.navigateToNameYourWearDevice("name", instanceUrl, authCode, true)
+            val defaultDeviceName = "wear"
+            navController.navigateToNameYourWearDevice(defaultDeviceName, instanceUrl, authCode, true)
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourWearDeviceRoute>() == true)
+            val newDeviceName = "new wear"
+            onNodeWithText(defaultDeviceName).performScrollTo().assertIsDisplayed().performTextReplacement(newDeviceName)
 
             onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().performClick()
 
@@ -297,6 +301,8 @@ internal class WearOnboardingNavigationTest {
 
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performClick()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourWearDeviceRoute>() == true)
+
+            onNodeWithText(newDeviceName).performScrollTo().assertIsDisplayed()
         }
     }
 

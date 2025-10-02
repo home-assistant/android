@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.onboarding.nameyourweardevice.navigat
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -40,7 +40,11 @@ internal fun NavGraphBuilder.nameYourWearDeviceScreen(
 ) {
     composable<NameYourWearDeviceRoute> {
         val route = it.toRoute<NameYourWearDeviceRoute>()
-        var deviceName by remember { mutableStateOf(route.defaultDeviceName) }
+        // Use rememberSaveable to retain the device name across configuration changes or when navigating
+        // away and returning to this screen. This prevents the loss of user input and avoids reverting
+        // to the default device name.
+        // If the logic of the screen evolve we should consider introducing a viewModel instead.
+        var deviceName by rememberSaveable { mutableStateOf(route.defaultDeviceName) }
 
         NameYourDeviceScreen(
             onBackClick = onBackClick,
