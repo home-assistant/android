@@ -15,7 +15,9 @@ import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.HAStartDestinationRoute
+import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.compose.HAApp
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
@@ -71,7 +73,13 @@ class LauncherActivity : AppCompatActivity() {
                     produceState<HAStartDestinationRoute?>(null, viewModel) {
                         val event = viewModel.navigationEventsFlow.first()
                         value = when (event) {
-                            is LauncherNavigationEvent.Frontend -> FrontendRoute(event.path, event.serverId)
+                            is LauncherNavigationEvent.Frontend -> {
+                                if (isAutomotive()) {
+                                    AutomotiveRoute
+                                } else {
+                                    FrontendRoute(event.path, event.serverId)
+                                }
+                            }
                             is LauncherNavigationEvent.Onboarding -> OnboardingRoute(event.url)
                         }
                     }
