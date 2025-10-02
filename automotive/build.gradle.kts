@@ -64,8 +64,16 @@ android {
             }
         }
         getByName("debug") {
+            kotlin {
+                srcDirs("../app/src/debug/kotlin")
+            }
             res {
                 srcDirs("../app/src/debug/res")
+            }
+        }
+        getByName("release") {
+            kotlin {
+                srcDirs("../app/src/release/kotlin")
             }
         }
         getByName("androidTest") {
