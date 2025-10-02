@@ -5,7 +5,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContract
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.launcher.LauncherActivity
+import io.homeassistant.companion.android.launch.intentLauncherWearOnboarding
 
 class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>() {
 
@@ -84,13 +84,10 @@ class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>(
     }
 
     override fun createIntent(context: Context, input: Input): Intent {
-        if (input.isWatch && BuildConfig.DEBUG) {
-            return LauncherActivity.newInstance(
-                context,
-                deepLink = LauncherActivity.DeepLink.WearOnboarding(input.defaultDeviceName, input.url),
-            )
+        return if (input.isWatch && BuildConfig.DEBUG) {
+            context.intentLauncherWearOnboarding(input.defaultDeviceName, input.url)
         } else {
-            return Intent(context, OnboardingActivity::class.java).apply {
+            Intent(context, OnboardingActivity::class.java).apply {
                 putExtra(EXTRA_URL, input.url)
                 putExtra(EXTRA_DEFAULT_DEVICE_NAME, input.defaultDeviceName)
                 putExtra(EXTRA_LOCATION_TRACKING_POSSIBLE, input.locationTrackingPossible)
