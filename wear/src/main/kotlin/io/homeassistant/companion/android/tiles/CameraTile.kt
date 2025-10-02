@@ -153,7 +153,7 @@ class CameraTile : TileService() {
                                 } else {
                                     imageHeight = (maxWidth / currentRatio).toInt()
                                 }
-                                bitmap = Bitmap.createScaledBitmap(bitmap, imageWidth, imageHeight, true)
+                                bitmap = bitmap.scale(imageWidth, imageHeight)
                                 ByteArrayOutputStream().use { stream ->
                                     bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
                                     byteArray = stream.toByteArray()
