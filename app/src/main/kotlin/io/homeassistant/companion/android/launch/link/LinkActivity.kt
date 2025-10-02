@@ -25,7 +25,8 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.launch.LaunchActivity
-import io.homeassistant.companion.android.launcher.LauncherActivity
+import io.homeassistant.companion.android.launch.startLauncherForInvite
+import io.homeassistant.companion.android.launch.startLauncherWithNavigateTo
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -72,12 +73,7 @@ class LinkActivity : BaseActivity() {
                     LinkDestination.NoDestination -> finish()
                     is LinkDestination.Onboarding -> {
                         if (USE_NEW_LAUNCHER) {
-                            startActivity(
-                                LauncherActivity.newInstance(
-                                    this@LinkActivity,
-                                    LauncherActivity.DeepLink.Invite(destination.serverUrl),
-                                ),
-                            )
+                            startLauncherForInvite(destination.serverUrl)
                         } else {
                             startActivity(LaunchActivity.newInstance(this@LinkActivity, destination.serverUrl))
                         }
@@ -97,12 +93,7 @@ class LinkActivity : BaseActivity() {
             openServerChooser(path)
         } else {
             if (USE_NEW_LAUNCHER) {
-                startActivity(
-                    LauncherActivity.newInstance(
-                        this,
-                        LauncherActivity.DeepLink.NavigateTo(path, ServerManager.SERVER_ID_ACTIVE),
-                    ),
-                )
+                startLauncherWithNavigateTo(path, ServerManager.SERVER_ID_ACTIVE)
             } else {
                 startActivity(WebViewActivity.newInstance(context = this, path = path))
             }
@@ -114,15 +105,7 @@ class LinkActivity : BaseActivity() {
         supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
             if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
                 if (USE_NEW_LAUNCHER) {
-                    startActivity(
-                        LauncherActivity.newInstance(
-                            this,
-                            LauncherActivity.DeepLink.NavigateTo(
-                                path,
-                                bundle.getInt(ServerChooserFragment.RESULT_SERVER),
-                            ),
-                        ),
-                    )
+                    startLauncherWithNavigateTo(path, bundle.getInt(ServerChooserFragment.RESULT_SERVER))
                 } else {
                     startActivity(
                         WebViewActivity.newInstance(
