@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.serverdiscovery
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -58,6 +59,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
@@ -142,6 +144,9 @@ internal fun ServerDiscoveryScreen(
     }
 }
 
+@VisibleForTesting
+internal const val ONE_SERVER_FOUND_MODAL_TAG = "OneServerFoundModal"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun OneServerFound(
@@ -172,6 +177,7 @@ private fun OneServerFound(
                 serverDiscoveredCached = null
                 onDismiss()
             },
+            modifier = Modifier.testTag(ONE_SERVER_FOUND_MODAL_TAG),
         ) {
             Column(
                 modifier = Modifier
@@ -340,7 +346,8 @@ private fun ColumnScope.ScanningForServer(discoveryState: DiscoveryState) {
             .alpha(currentAlpha)
             .semantics {
                 alpha = currentAlpha
-            }.widthIn(max = MaxContentWidth),
+            }
+            .widthIn(max = MaxContentWidth),
     )
 
     Spacer(modifier = Modifier.weight(1f - 2f * positionPercentage))

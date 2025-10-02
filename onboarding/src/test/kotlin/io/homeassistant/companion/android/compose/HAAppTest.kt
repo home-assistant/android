@@ -16,6 +16,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HAStartDestinationRoute
 import io.homeassistant.companion.android.HiltComponentActivity
+import io.homeassistant.companion.android.frontend.navigation.FrontendActivityRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.R
@@ -80,7 +81,7 @@ class HAAppTest {
 
     @Test
     fun `Given HAApp when navigate to Welcome then show Welcome`() {
-        setApp(OnboardingRoute)
+        setApp(OnboardingRoute())
         composeTestRule.apply {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
             onNodeWithText(stringResource(R.string.welcome_home_assistant_title)).assertIsDisplayed()
@@ -92,20 +93,22 @@ class HAAppTest {
     }
 
     @Test
-    fun `Given HAApp when navigate to Welcome then show Frontend`() {
+    fun `Given HAApp when navigate to Frontend then navigate to FrontEndActivity and finish current activity`() {
         setApp(FrontendRoute())
         composeTestRule.apply {
-            assertNull(navController.currentBackStackEntry?.destination?.route)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
             verify(exactly = 1) {
                 activityNavigator.navigate(
                     match {
-                        it.route == FrontendRoute.serializer().descriptor.serialName + "?path={path}&server={server}"
+                        it.route == FrontendActivityRoute.serializer().descriptor.serialName + "?path={path}&server={server}"
                     },
                     any<SavedState>(),
                     any(),
                     any(),
                 )
             }
+            // TODO remove this once we are using WebViewActivity anymore
+            assertTrue(activity.isFinishing)
         }
     }
 }
