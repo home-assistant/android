@@ -1,9 +1,11 @@
 package io.homeassistant.companion.android.onboarding.serverdiscovery
 
 import app.cash.turbine.test
-import io.homeassistant.companion.android.common.data.HomeAssistantVersion
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
+import io.homeassistant.companion.android.utils.mockServer
+import io.homeassistant.companion.android.utils.testHAVersion
 import io.mockk.every
 import io.mockk.mockk
 import java.net.URL
@@ -21,15 +23,14 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import timber.log.Timber
 
-private val testHAVersion = HomeAssistantVersion(2025, 1, 1)
-
 @OptIn(ExperimentalCoroutinesApi::class)
-class ServerDiscoveryViewModelTest {
+private class ServerDiscoveryViewModelTest {
 
     @RegisterExtension
     val mainDispatcherExtension = MainDispatcherJUnit5Extension(UnconfinedTestDispatcher())
 
-    private lateinit var searcher: HomeAssistantSearcher
+    private val searcher: HomeAssistantSearcher = mockk()
+    private val serverManager: ServerManager = mockk()
     private lateinit var viewModel: ServerDiscoveryViewModel
 
     private val discoveredInstanceFlow = MutableSharedFlow<HomeAssistantInstance>()
@@ -39,17 +40,49 @@ class ServerDiscoveryViewModelTest {
         Timber.plant(ConsoleLogTree)
         ConsoleLogTree.verbose = true
 
-        searcher = mockk()
         every { searcher.discoveredInstanceFlow() } returns discoveredInstanceFlow
     }
 
-    private fun createViewModel() {
-        viewModel = ServerDiscoveryViewModel(searcher)
+    private fun createViewModel(addExistingInstances: Boolean = false) {
+        viewModel = ServerDiscoveryViewModel(addExistingInstances, searcher, serverManager)
     }
 
     @Test
     fun `Given view model created then discoveryFlow initially holds Started`() = runTest {
         createViewModel()
+        assertEquals(Started, viewModel.discoveryFlow.value)
+    }
+
+    @Test
+    fun `Given addExistingInstances is true with existing servers when view model created then discoveryFlow initially holds existing servers`() = runTest {
+        val server0 = mockServer("http://ha", haVersion = null, name = "server0")
+        val server1 = mockServer("http://ha", name = "server1")
+        val server2 = mockServer("http://ha", name = "server2")
+        val server3 = mockServer(null, name = "server3")
+
+        every { serverManager.defaultServers } returns listOf(
+            server0,
+            server1,
+            server2,
+            server3,
+        )
+        createViewModel(addExistingInstances = true)
+        assertEquals(
+            ServersDiscovered(
+                listOf(
+                    ServerDiscovered(server1.friendlyName, URL("http://ha"), testHAVersion),
+                    ServerDiscovered(server2.friendlyName, URL("http://ha"), testHAVersion),
+                ),
+            ),
+            viewModel.discoveryFlow.value,
+        )
+    }
+
+    @Test
+    fun `Given addExistingInstances is true with no servers when view model created then discoveryFlow initially holds Started`() = runTest {
+        every { serverManager.defaultServers } returns emptyList()
+
+        createViewModel(addExistingInstances = true)
         assertEquals(Started, viewModel.discoveryFlow.value)
     }
 

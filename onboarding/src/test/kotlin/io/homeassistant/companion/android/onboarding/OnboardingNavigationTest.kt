@@ -319,7 +319,7 @@ internal class OnboardingNavigationTest {
             onNodeWithTag(CONNECTION_SCREEN_TAG).assertIsDisplayed()
 
             assertTrue(connectionNavigationEventFlow.subscriptionCount.value == 1)
-            connectionNavigationEventFlow.emit(ConnectionNavigationEvent.Authenticated(instanceUrl, "super_code"))
+            connectionNavigationEventFlow.emit(ConnectionNavigationEvent.Authenticated(instanceUrl, "super_code", false))
 
             waitUntilAtLeastOneExists(hasText(stringResource(R.string.name_your_device_title)))
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)

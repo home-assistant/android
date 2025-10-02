@@ -23,7 +23,8 @@ internal data class FrontendActivityRoute(
 )
 
 @Serializable
-internal class FrontendRoute(val path: String? = null, val serverId: Int = SERVER_ID_ACTIVE) : HAStartDestinationRoute
+internal data class FrontendRoute(val path: String? = null, val serverId: Int = SERVER_ID_ACTIVE) :
+    HAStartDestinationRoute
 
 internal fun NavController.navigateToFrontend(
     path: String? = null,
