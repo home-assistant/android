@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.launch
 
 import android.content.Context
+import android.content.Intent
 import io.homeassistant.companion.android.common.util.FailFast
 
 /**
@@ -13,4 +14,9 @@ internal fun Context.startLauncherForInvite(serverToOnboard: String) {
 
 internal fun Context.startLauncherWithNavigateTo(path: String, serverId: Int) {
     FailFast.fail { "New Launcher is not available on release yet" }
+}
+
+internal fun Context.intentLauncherWearOnboarding(wearName: String, serverUrl: String?): Intent {
+    FailFast.fail { "New Launcher is not available on release yet" }
+    return Intent()
 }
