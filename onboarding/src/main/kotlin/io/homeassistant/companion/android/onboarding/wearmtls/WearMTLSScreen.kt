@@ -132,7 +132,12 @@ private fun WearMTLSContent(
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE6),
     ) {
         val getFile = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            onFileChange(uri)
+            // The URI will be null if the user cancelled the file selection.
+            // In this case, we don't want to invoke the callback, because that would override
+            // the currently selected file (if any).
+            if (uri != null) {
+                onFileChange(uri)
+            }
         }
 
         Header()

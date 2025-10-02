@@ -104,6 +104,22 @@ class WearMTLSScreenTest {
         }
     }
 
+    @Test
+    fun `Given selected cert when clicking selecting and cancel selection then initial selected file stays selected`() {
+        composeTestRule.apply {
+            val selectedUri = mockk<Uri>()
+            testScreen(selectedUri = selectedUri, onClickSelectedUri = null) {
+                // Manually set the selectedUri to verify that the click won't override the value with null
+                // since we are emulating that the user didn't pick any file by returning onClickSelectedUri=null.
+                uriSelected = selectedUri
+                // We use an empty filename otherwise the perform clicks clicks onto the clear icon ... This is due to the
+                // constraints on the small size of the screen under tests. But we can still test the behavior.
+                onNodeWithText(stringResource(commonR.string.select_file)).performScrollTo().assertIsDisplayed().performClick()
+                assertEquals(selectedUri, uriSelected)
+            }
+        }
+    }
+
     private class TestHelper {
         var backClicked = false
         var helpClicked = false
@@ -118,6 +134,7 @@ class WearMTLSScreenTest {
         currentPassword: String = "",
         isCertValidated: Boolean = false,
         isError: Boolean = false,
+        onClickSelectedUri: Uri? = selectedUri,
         block: TestHelper.() -> Unit,
     ) {
         TestHelper().apply {
@@ -126,7 +143,7 @@ class WearMTLSScreenTest {
                     LocalActivityResultRegistryOwner provides object : ActivityResultRegistryOwner {
                         override val activityResultRegistry: ActivityResultRegistry = object : ActivityResultRegistry() {
                             override fun <I, O> onLaunch(requestCode: Int, contract: ActivityResultContract<I, O>, input: I, options: ActivityOptionsCompat?) {
-                                dispatchResult(requestCode, selectedUri)
+                                dispatchResult(requestCode, onClickSelectedUri)
                             }
                         }
                     },
