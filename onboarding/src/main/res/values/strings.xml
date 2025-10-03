@@ -34,5 +34,5 @@
     <string name="wear_mtls_content">Your Home Assistant server requires TLS client certificate authentication. Select a TLS client certificate file to install it on your Wear OS device.</string>
     <string name="wear_mtls_next">Next</string>
     <string name="wear_mtls_open_error">This password does not open this file.</string>
-    <string name="wear_mtls_unselect_file">Unselect file</string>
+    <string name="wear_mtls_deselect_file">Deselect file</string>
 </resources>

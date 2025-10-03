@@ -222,7 +222,7 @@ private fun CertPicker(selectedFileName: String?, onSelectFileClicked: () -> Uni
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.wear_mtls_unselect_file),
+                        contentDescription = stringResource(R.string.wear_mtls_deselect_file),
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
