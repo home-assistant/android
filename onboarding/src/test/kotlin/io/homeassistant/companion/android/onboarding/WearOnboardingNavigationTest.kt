@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android
+package io.homeassistant.companion.android.onboarding
 
 import android.net.Uri
 import androidx.activity.compose.LocalActivityResultRegistryOwner
@@ -8,6 +8,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -16,6 +17,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.navigation.NavController
@@ -29,25 +31,28 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
+import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.compose.LocationPermissionActivityResultRegistry
 import io.homeassistant.companion.android.compose.composable.HA_WEBVIEW_TAG
 import io.homeassistant.companion.android.compose.navigateToUri
-import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
 import io.homeassistant.companion.android.onboarding.connection.CONNECTION_SCREEN_TAG
 import io.homeassistant.companion.android.onboarding.connection.ConnectionNavigationEvent
 import io.homeassistant.companion.android.onboarding.connection.ConnectionViewModel
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.onboarding.nameyourweardevice.navigation.NameYourWearDeviceRoute
+import io.homeassistant.companion.android.onboarding.nameyourweardevice.navigation.navigateToNameYourWearDevice
 import io.homeassistant.companion.android.onboarding.serverdiscovery.DELAY_BEFORE_DISPLAY_DISCOVERY
 import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssistantInstance
 import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssistantSearcher
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ONE_SERVER_FOUND_MODAL_TAG
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDiscoveryModule
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
-import io.homeassistant.companion.android.onboarding.wearOnboarding
+import io.homeassistant.companion.android.onboarding.wearmtls.WearMTLSUiState
+import io.homeassistant.companion.android.onboarding.wearmtls.WearMTLSViewModel
+import io.homeassistant.companion.android.onboarding.wearmtls.navigation.WearMTLSRoute
+import io.homeassistant.companion.android.onboarding.wearmtls.navigation.navigateToWearMTLS
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.mockk.Runs
@@ -69,12 +74,14 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import timber.log.Timber
 
 private const val WEAR_NAME = "super_ha_wear"
+private const val VALID_PASSWORD = "1234"
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
@@ -105,6 +112,23 @@ internal class WearOnboardingNavigationTest {
         every { isLoadingFlow } returns MutableStateFlow(false)
         every { navigationEventsFlow } returns connectionNavigationEventFlow
         every { isErrorFlow } returns MutableStateFlow(false)
+    }
+
+    private val selectedUri = mockk<Uri>()
+
+    @BindValue
+    @JvmField
+    val wearMTLSViewModel: WearMTLSViewModel = mockk(relaxed = true) {
+        // Bypass the validation of the cert
+        every { uiState } returns MutableStateFlow(
+            WearMTLSUiState(
+                selectedUri = selectedUri,
+                selectedFileName = "file",
+                currentPassword = VALID_PASSWORD,
+                isCertValidated = true,
+                showError = false,
+            ),
+        )
     }
 
     private val instanceChannel = Channel<HomeAssistantInstance>()
@@ -253,6 +277,55 @@ internal class WearOnboardingNavigationTest {
             assertEquals(authCode, authCode)
             assertEquals(null, certUri)
             assertEquals(null, certPassword)
+        }
+    }
+
+    @Test
+    fun `Given NameYourWearDevice with mTLS required when device is named then it opens WearMTLSScreen and then back goes to NameYourDevice`() {
+        val instanceUrl = "http://ha.local"
+        val authCode = "super_code"
+        testNavigation("http://ha") {
+            val defaultDeviceName = "wear"
+            navController.navigateToNameYourWearDevice(defaultDeviceName, instanceUrl, authCode, true)
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourWearDeviceRoute>() == true)
+            val newDeviceName = "new wear"
+            onNodeWithText(defaultDeviceName).performScrollTo().assertIsDisplayed().performTextReplacement(newDeviceName)
+
+            onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().performClick()
+
+            assertFalse(onboardingDone)
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WearMTLSRoute>() == true)
+            onNodeWithText(stringResource(R.string.wear_mtls_content)).assertIsDisplayed()
+
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performClick()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourWearDeviceRoute>() == true)
+
+            onNodeWithText(newDeviceName).performScrollTo().assertIsDisplayed()
+        }
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun `Given valid mTLS when clicking next then finishes the onboarding with proper parameters`() {
+        val instanceUrl = "http://ha.local"
+        val authCode = "super_code"
+        testNavigation("http://ha") {
+            navController.navigateToWearMTLS(WEAR_NAME, instanceUrl, authCode)
+            onNodeWithText(stringResource(R.string.wear_mtls_content)).assertIsDisplayed()
+
+            onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
+            verify { any<NavController>().navigateToUri("https://companion.home-assistant.io/docs/getting_started/#tls-client-authentication") }
+
+            onNodeWithText(stringResource(R.string.wear_mtls_next)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
+
+            assertTrue(onboardingDone)
+            assertEquals(WEAR_NAME, deviceName)
+            assertEquals(instanceUrl, serverUrl)
+            assertEquals(authCode, authCode)
+            assertEquals(selectedUri, certUri)
+            assertEquals(VALID_PASSWORD, certPassword)
         }
     }
 }
