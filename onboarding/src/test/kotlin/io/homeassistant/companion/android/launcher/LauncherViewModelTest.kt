@@ -253,8 +253,8 @@ class LauncherViewModelTest {
     }
 
     @Test
-    fun `Given initial deep link is Invite when creating viewModel, then navigate to onboarding with the server url`() = runTest {
-        createViewModel(LauncherActivity.DeepLink.Invite("http://homeassistant.io"))
+    fun `Given initial deep link is OpenOnboarding when creating viewModel, then navigate to onboarding with the server url`() = runTest {
+        createViewModel(LauncherActivity.DeepLink.OpenOnboarding("http://homeassistant.io"))
         advanceUntilIdle()
         assertEquals(LauncherNavigationEvent.Onboarding("http://homeassistant.io"), viewModel.navigationEventsFlow.replayCache.first())
     }
@@ -277,8 +277,8 @@ class LauncherViewModelTest {
     }
 
     @Test
-    fun `Given initial deep link is WearOnboarding when creating viewModel, then navigate to wear onboarding with the server url and wear name`() = runTest {
-        createViewModel(LauncherActivity.DeepLink.WearOnboarding("ha_wear", "http://ha"))
+    fun `Given initial deep link is OpenWearOnboarding when creating viewModel, then navigate to wear onboarding with the server url and wear name`() = runTest {
+        createViewModel(LauncherActivity.DeepLink.OpenWearOnboarding("ha_wear", "http://ha"))
         advanceUntilIdle()
         assertEquals(LauncherNavigationEvent.WearOnboarding("ha_wear", "http://ha"), viewModel.navigationEventsFlow.replayCache.first())
     }
