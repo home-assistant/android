@@ -42,7 +42,12 @@ class AssistActivity : BaseActivity() {
             serverId: Int = -1,
             pipelineId: String? = null,
             startListening: Boolean = true,
-            fromFrontend: Boolean = true,
+            fromFrontend: Boolean = true
+
+
+
+  
+
         ): Intent {
             return Intent(context, AssistActivity::class.java).apply {
                 putExtra(EXTRA_SERVER, serverId)
