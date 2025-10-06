@@ -39,7 +39,7 @@ class WearDnsRequestListenerTest {
     }
 
     @Test
-    @Disabled("This test is causing following tests to fail randomly without reason, we assume that it comes from the .asTask for coroutines-play-services library.")
+    @Disabled("This test causes subsequent tests to fail intermittently. Suspected issue with .asTask from coroutines-play-services library.")
     fun `Given a request with a DNS lookup path when a request is made then a task is returned`() {
         // Given
         val service = WearDnsRequestListener()
