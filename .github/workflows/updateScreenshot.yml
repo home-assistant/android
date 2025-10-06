@@ -11,7 +11,7 @@ on: # yamllint disable-line rule:truthy
   workflow_dispatch:
 
 permissions:
-  contents: none
+  contents: read
 
 jobs:
   update_screenshots:
