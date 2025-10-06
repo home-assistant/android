@@ -370,7 +370,7 @@ internal class OnboardingNavigationTest {
 
     @Test
     fun `Given LocationSharing when agreeing with plain text access to share then show SetHomeNetwork`() {
-        composeTestRule.apply {
+        testNavigation {
             navController.navigateToLocationSharing(42, true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
 
@@ -434,7 +434,7 @@ internal class OnboardingNavigationTest {
 
     @Test
     fun `Given LocationForSecureConnection when agreeing to share then show SetHomeNetwork`() {
-        composeTestRule.apply {
+        testNavigation {
             navController.navigateToLocationForSecureConnection(42)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
 
@@ -447,7 +447,7 @@ internal class OnboardingNavigationTest {
 
     @Test
     fun `Given SetHomeNetwork when going back then stop the app`() {
-        composeTestRule.apply {
+        testNavigation {
             navController.navigateToSetHomeNetworkRoute(42)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
 
