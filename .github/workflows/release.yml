@@ -8,6 +8,9 @@ on: # yamllint disable-line rule:truthy
 env:
   SUPPLY_UPLOAD_MAX_RETRIES: 5
 
+permissions:
+  contents: none
+
 jobs:
   play_promote_production:
     name: Play Publish Production

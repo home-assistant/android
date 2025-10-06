@@ -10,6 +10,9 @@ name: Update Screenshots
 on: # yamllint disable-line rule:truthy
   workflow_dispatch:
 
+permissions:
+  contents: none
+
 jobs:
   update_screenshots:
     runs-on: ubuntu-latest
