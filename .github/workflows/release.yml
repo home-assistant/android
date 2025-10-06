@@ -9,7 +9,7 @@ env:
   SUPPLY_UPLOAD_MAX_RETRIES: 5
 
 permissions:
-  contents: none
+  contents: read
 
 jobs:
   play_promote_production:
