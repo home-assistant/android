@@ -120,7 +120,7 @@ jobs:
         with:
           name: Screenshot test results
           path: |
-              **/build/test-results/**/TEST-*.xml
+            **/build/test-results/**/TEST-*.xml
 
       - name: Upload test results
         if: failure()
@@ -128,7 +128,7 @@ jobs:
         with:
           name: Screenshot test failure HTML report
           path: |
-              **/build/reports/screenshotTest/**
+            **/build/reports/screenshotTest/**
 
   pr_build:
     needs: [yamllint, lockfiles]
@@ -175,6 +175,37 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           path: ./**/*.apk
+
+  pr_build_release:
+    needs: [yamllint, lockfiles]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          mock-google-services: "true"
+      - name: Generate dummy keystore
+        run: |
+          keytool -genkeypair -v \
+          -alias androiddebugkey \
+          -keyalg RSA \
+          -keysize 2048 \
+          -validity 10000 \
+          -keystore /home/runner/work/android/android/ci_dummy_keystore.keystore \
+          -dname "CN=Android CI dummy, O=Android, C=FR" \
+          -storepass android \
+          -keypass android
+      - name: Build Release
+        env:
+          KEYSTORE_PATH: /home/runner/work/android/android/ci_dummy_keystore.keystore
+          KEYSTORE_ALIAS: androiddebugkey
+          KEYSTORE_ALIAS_PASSWORD: android
+          KEYSTORE_PASSWORD: android
+        run: |
+          ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
 
   unit_tests:
     name: "Unit Tests"
