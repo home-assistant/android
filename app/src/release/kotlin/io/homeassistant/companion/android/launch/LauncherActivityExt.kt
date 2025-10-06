@@ -20,3 +20,8 @@ internal fun Context.intentLauncherWearOnboarding(wearName: String, serverUrl: S
     FailFast.fail { "New Launcher is not available on release yet" }
     return Intent()
 }
+
+internal fun Context.intentLauncherOnboarding(url: String?): Intent {
+    FailFast.fail { "New Launcher is not available on release yet" }
+    return Intent()
+}

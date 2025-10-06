@@ -17,5 +17,9 @@ internal fun Context.startLauncherWithNavigateTo(path: String, serverId: Int) {
 }
 
 internal fun Context.intentLauncherWearOnboarding(wearName: String, serverUrl: String?): Intent {
-    return LauncherActivity.newInstance(this, LauncherActivity.DeepLink.WearOnboarding(wearName, serverUrl))
+    return LauncherActivity.newInstance(this, LauncherActivity.DeepLink.OpenWearOnboarding(wearName, serverUrl))
+}
+
+internal fun Context.intentLauncherOnboarding(url: String?): Intent {
+    return LauncherActivity.newInstance(this, LauncherActivity.DeepLink.OpenOnboarding(url))
 }
