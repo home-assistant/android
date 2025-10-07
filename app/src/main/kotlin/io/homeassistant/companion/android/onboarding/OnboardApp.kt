@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContract
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.launch.intentLauncherOnboarding
 import io.homeassistant.companion.android.launch.intentLauncherWearOnboarding
+import kotlinx.serialization.json.Json
 
 class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>() {
 
@@ -47,6 +48,13 @@ class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>(
         val discoveryOptions: DiscoveryOptions? = null,
         val mayRequireTlsClientCertificate: Boolean = false,
     )
+
+    class Home
+
+    fun main() {
+        val value = Json.encodeToString(Home())
+        println(value)
+    }
 
     data class Output(
         val url: String,
