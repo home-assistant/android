@@ -81,24 +81,33 @@ class LinkActivity : BaseActivity() {
                     }
 
                     is LinkDestination.Webview -> {
-                        navigateTo(destination.path)
+                        navigateTo(destination.path, destination.serverId)
                     }
                 }
             }
         }
     }
 
-    private fun navigateTo(path: String) {
-        if (serverManager.defaultServers.size > 1) {
-            openServerChooser(path)
-        } else {
-            if (USE_NEW_LAUNCHER) {
-                startLauncherWithNavigateTo(path, ServerManager.SERVER_ID_ACTIVE)
-            } else {
-                startActivity(WebViewActivity.newInstance(context = this, path = path))
+    private fun navigateTo(path: String, serverId: Int?) {
+        val effectiveServerId = serverId ?: run {
+            if (serverManager.defaultServers.size > 1) {
+                openServerChooser(path)
+                return
             }
-            finish()
+            ServerManager.SERVER_ID_ACTIVE
         }
+
+        if (USE_NEW_LAUNCHER) {
+            startLauncherWithNavigateTo(path, effectiveServerId)
+        } else {
+            val intent = if (serverId != null) {
+                WebViewActivity.newInstance(context = this, path = path, serverId = effectiveServerId)
+            } else {
+                WebViewActivity.newInstance(context = this, path = path)
+            }
+            startActivity(intent)
+        }
+        finish()
     }
 
     private fun openServerChooser(path: String) {
