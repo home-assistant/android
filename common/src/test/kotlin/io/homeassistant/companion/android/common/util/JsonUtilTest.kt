@@ -101,6 +101,7 @@ class JsonUtilTest {
             """{"key1":"value1","key2":true,"key3":1,"key4":9223372036854775807,"key5":1.0,"key6":null,"key7":[1,2,3],"key8":{"subkey1":"value1","subkey2":1,"subkey3":true},"key9":1.0,"key10":[4,5,6],"key11":{"str_value":"hello","int_value":1}}""".trimIndent(),
             json,
         )
+        fail { "This test should fail on purpose to test error reporting on CI" }
     }
 
     @Test
