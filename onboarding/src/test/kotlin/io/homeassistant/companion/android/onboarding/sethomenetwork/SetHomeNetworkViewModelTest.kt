@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.onboarding.sethomenetwork
 
-import android.net.ConnectivityManager
 import app.cash.turbine.test
+import io.homeassistant.companion.android.common.data.network.NetworkCapabilitiesChecker
 import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
@@ -33,7 +33,7 @@ private const val MOCK_INITIAL_WIFI_SSID_QUOTED = "\"MyHomeWifi\""
 class SetHomeNetworkViewModelTest {
 
     private val serverManager: ServerManager = mockk()
-    private val connectivityManager: ConnectivityManager = mockk()
+    private val networkCapabilitiesChecker: NetworkCapabilitiesChecker = mockk(relaxed = true)
     private val wifiHelper: WifiHelper = mockk()
     private lateinit var viewModel: SetHomeNetworkViewModel
 
@@ -41,16 +41,13 @@ class SetHomeNetworkViewModelTest {
     fun setup() {
         every { wifiHelper.getWifiSsid() } returns MOCK_INITIAL_WIFI_SSID_QUOTED
         every { serverManager.updateServer(any()) } just Runs
-        every { connectivityManager.getNetworkInfo(any<Int>()) } returns mockk {
-            every { isConnected } returns false
-        }
     }
 
     private fun initializeViewModel() {
         viewModel = SetHomeNetworkViewModel(
             serverId = MOCK_SERVER_ID,
             serverManager = serverManager,
-            connectivityManager = connectivityManager,
+            networkCapabilitiesChecker = networkCapabilitiesChecker,
             wifiHelper = wifiHelper,
         )
     }
@@ -70,9 +67,7 @@ class SetHomeNetworkViewModelTest {
 
     @Test
     fun `Given view model initialized and ethernet connected, when observing is using ethernet, then emits true`() {
-        every { connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET) } returns mockk {
-            every { isConnected } returns true
-        }
+        every { networkCapabilitiesChecker.hasEthernetConnection() } returns true
         initializeViewModel()
         assertTrue(viewModel.isUsingEthernet.value)
     }
@@ -85,9 +80,7 @@ class SetHomeNetworkViewModelTest {
 
     @Test
     fun `Given view model initialized and VPN connected, when observing is using VPN, then emits true`() = runTest {
-        every { connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_VPN) } returns mockk {
-            every { isConnected } returns true
-        }
+        every { networkCapabilitiesChecker.hasVPNConnection() } returns true
         initializeViewModel()
         assertTrue(viewModel.isUsingVpn.value)
     }

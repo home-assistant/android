@@ -1,14 +1,12 @@
 package io.homeassistant.companion.android.onboarding.sethomenetwork
 
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import android.os.Build
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.common.data.network.NetworkCapabilitiesChecker
 import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.SetHomeNetworkRoute
@@ -22,20 +20,20 @@ import timber.log.Timber
 class SetHomeNetworkViewModel @VisibleForTesting constructor(
     private val serverId: Int,
     private val serverManager: ServerManager,
-    connectivityManager: ConnectivityManager,
+    networkCapabilitiesChecker: NetworkCapabilitiesChecker,
     wifiHelper: WifiHelper,
 ) : ViewModel() {
 
     @Inject
     constructor(
-        connectivityManager: ConnectivityManager,
+        networkCapabilitiesChecker: NetworkCapabilitiesChecker,
         savedStateHandle: SavedStateHandle,
         serverManager: ServerManager,
         wifiHelper: WifiHelper,
     ) : this(
         serverId = savedStateHandle.toRoute<SetHomeNetworkRoute>().serverId,
         serverManager,
-        connectivityManager,
+        networkCapabilitiesChecker,
         wifiHelper,
     )
 
@@ -47,8 +45,8 @@ class SetHomeNetworkViewModel @VisibleForTesting constructor(
         MutableStateFlow(wifiHelper.getWifiSsid()?.removeSurrounding("\"") ?: "")
     val currentWifiNetwork = _currentWifiNetwork.asStateFlow()
 
-    val hasEthernetConnection: Boolean = connectivityManager.hasEthernetConnection()
-    val hasVPNConnection: Boolean = connectivityManager.hasVPNConnection()
+    val hasEthernetConnection: Boolean = networkCapabilitiesChecker.hasEthernetConnection()
+    val hasVPNConnection: Boolean = networkCapabilitiesChecker.hasVPNConnection()
 
     private val _isUsingEthernet = MutableStateFlow(hasEthernetConnection)
     val isUsingEthernet = _isUsingEthernet.asStateFlow()
@@ -85,27 +83,5 @@ class SetHomeNetworkViewModel @VisibleForTesting constructor(
                 )
             } ?: Timber.e("Server not found cannot set the connection information")
         }
-    }
-}
-
-@Suppress("DEPRECATION")
-private fun ConnectivityManager.hasEthernetConnection(): Boolean {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        allNetworks.any {
-            getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) == true
-        }
-    } else {
-        getNetworkInfo(ConnectivityManager.TYPE_ETHERNET)?.isConnected == true
-    }
-}
-
-@Suppress("DEPRECATION")
-private fun ConnectivityManager.hasVPNConnection(): Boolean {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        allNetworks.any {
-            getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
-        }
-    } else {
-        getNetworkInfo(ConnectivityManager.TYPE_VPN)?.isConnected == true
     }
 }
