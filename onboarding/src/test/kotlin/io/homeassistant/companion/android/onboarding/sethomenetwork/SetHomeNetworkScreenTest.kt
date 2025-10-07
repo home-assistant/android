@@ -46,7 +46,7 @@ class SetHomeNetworkScreenTest {
     }
 
     @Test
-    fun `Given no vpn and no ethernet when screen is displayed then show no options and handle interactions`() {
+    fun `Given no vpn and no ethernet when screen is displayed then only show Wi-Fi and handle interactions`() {
         composeTestRule.apply {
             testScreen("", showEthernet = false, showVpn = false) {
                 onNodeWithText(stringResource(commonR.string.manage_ssids_vpn)).assertIsNotDisplayed()
@@ -62,7 +62,7 @@ class SetHomeNetworkScreenTest {
     }
 
     @Test
-    fun `Given vpn and no ethernet when screen is displayed then show no options and handle interactions`() {
+    fun `Given vpn and no ethernet when screen is displayed then show Wi-Fi and vpn only and handle interactions`() {
         composeTestRule.apply {
             testScreen("", showEthernet = false, showVpn = true) {
                 onNodeWithText(stringResource(commonR.string.manage_ssids_vpn)).performScrollTo().assertIsDisplayed()
@@ -79,7 +79,7 @@ class SetHomeNetworkScreenTest {
     }
 
     @Test
-    fun `Given no vpn and ethernet when screen is displayed then show no options and handle interactions`() {
+    fun `Give ethernet and no vpn when screen is displayed then show Wi-Fi and ethernet only and handle interactions`() {
         composeTestRule.apply {
             testScreen("", showEthernet = true, showVpn = false) {
                 onNodeWithText(stringResource(commonR.string.manage_ssids_vpn)).assertIsNotDisplayed()
