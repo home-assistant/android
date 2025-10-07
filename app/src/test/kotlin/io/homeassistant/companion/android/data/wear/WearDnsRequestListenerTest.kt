@@ -4,10 +4,14 @@ import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup
 import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.decodeDNSResult
 import io.homeassistant.companion.android.common.util.WearDataMessages.DnsLookup.encodeDNSRequest
 import java.net.InetAddress
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import okhttp3.Dns
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
@@ -17,9 +21,11 @@ class WearDnsRequestListenerTest {
 
     private val homeAssistantLocal: InetAddress = InetAddress.getByAddress(testHostname, byteArrayOf(192.toByte(), 168.toByte(), 0, 23))
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `Given a hostname when a DNS request is made then the IP address is returned`() = runTest {
+    fun `Given a request with a DNS lookup path when a request is made the IP address is returned`() = runTest {
         // Given
+        val testScope = TestScope(UnconfinedTestDispatcher())
         val fakeDns = Dns {
             if (it == testHostname) {
                 listOf(homeAssistantLocal)
@@ -27,37 +33,26 @@ class WearDnsRequestListenerTest {
                 throw IllegalArgumentException("hostname not found")
             }
         }
-        val service = WearDnsRequestListener(fakeDns)
+        val service = WearDnsRequestListener(fakeDns, scope = testScope)
 
         // When
-        val response = service.dnsRequest(testHostname.encodeDNSRequest())
-        val addresses = response.decodeDNSResult(testHostname)
+        val task = service.onRequest("", PATH_DNS_LOOKUP, testHostname.encodeDNSRequest())
 
         // Then
+        assertNotNull(task)
+        val addresses = task.await().decodeDNSResult(testHostname)
         assertEquals(testHostname, addresses.single().hostName)
         assertEquals("192.168.0.23", addresses.single().hostAddress)
     }
 
     @Test
-    @Disabled("This test causes subsequent tests to fail intermittently. Suspected issue with .asTask from coroutines-play-services library.")
-    fun `Given a request with a DNS lookup path when a request is made then a task is returned`() {
-        // Given
-        val service = WearDnsRequestListener()
-
-        // When
-        val task = service.onRequest("", PATH_DNS_LOOKUP, "homeassistant.local".encodeDNSRequest())
-
-        // Then
-        assertNotNull(task)
-    }
-
-    @Test
     fun `Given a request without a DNS lookup path when a request is made then no task is returned`() {
         // Given
-        val service = WearDnsRequestListener()
+        val testScope = TestScope(StandardTestDispatcher())
+        val service = WearDnsRequestListener(scope = testScope)
 
         // When
-        val task = service.onRequest("", "", "homeassistant.local".encodeDNSRequest())
+        val task = service.onRequest("", "", testHostname.encodeDNSRequest())
 
         // Then
         assertNull(task)
