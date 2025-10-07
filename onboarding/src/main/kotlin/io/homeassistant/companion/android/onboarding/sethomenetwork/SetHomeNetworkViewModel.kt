@@ -76,7 +76,7 @@ class SetHomeNetworkViewModel @VisibleForTesting constructor(
                             internalVpn = isUsingVpn.value,
                             internalEthernet = isUsingEthernet.value,
                             // We don't want to add an empty network in the list
-                            internalSsids = currentWifiNetwork.takeIf { it.isNotBlank() }
+                            internalSsids = currentWifiNetwork.takeIf { it.isNotEmpty() }
                                 ?.let { listOf(currentWifiNetwork) } ?: emptyList(),
                         ),
                     ),
