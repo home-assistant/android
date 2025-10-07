@@ -89,8 +89,10 @@ class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>(
             if (input.isWatch) {
                 context.intentLauncherWearOnboarding(input.defaultDeviceName, input.url)
             } else {
-                context.intentLauncherOnboarding(input.url)
-                // TODO support discovery options HIDE_EXISTING
+                context.intentLauncherOnboarding(
+                    input.url,
+                    input.discoveryOptions == DiscoveryOptions.HIDE_EXISTING,
+                )
                 // TODO disable location tracking in minimal flavor
             }
         } else {

@@ -8,6 +8,7 @@ import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryMode
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.util.delayFirst
 import java.net.URL
@@ -19,6 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.timeout
@@ -70,7 +72,7 @@ data class ServersDiscovered(val servers: List<ServerDiscovered>) : DiscoverySta
 @OptIn(FlowPreview::class)
 @HiltViewModel
 internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
-    addExistingInstances: Boolean,
+    discoveryMode: ServerDiscoveryMode,
     private val searcher: HomeAssistantSearcher,
     serverManager: ServerManager,
 ) : ViewModel() {
@@ -80,9 +82,35 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
         savedStateHandle: SavedStateHandle,
         searcher: HomeAssistantSearcher,
         serverManager: ServerManager,
-    ) : this(savedStateHandle.toRoute<ServerDiscoveryRoute>().addExistingInstances, searcher, serverManager)
+    ) : this(savedStateHandle.toRoute<ServerDiscoveryRoute>().discoveryMode, searcher, serverManager)
 
-    private val _discoveryFlow = MutableStateFlow(if (addExistingInstances) getInstances(serverManager) else Started)
+    private val serversToIgnore = if (discoveryMode == ServerDiscoveryMode.HIDE_EXISTING) {
+        serverManager.defaultServers
+            .flatMap { server ->
+                with(server.connection) {
+                    listOf(internalUrl, externalUrl, cloudUrl)
+                }
+            }
+            .filterNotNull()
+            .mapNotNull { url ->
+                runCatching { URL(url) }
+                    .onFailure { Timber.d(it, "Invalid URL for: $url") }
+                    .getOrNull()
+            }
+    } else {
+        emptyList()
+    }
+
+    private val _discoveryFlow =
+        MutableStateFlow(
+            if (discoveryMode ==
+                ServerDiscoveryMode.ADD_EXISTING
+            ) {
+                getInstances(serverManager)
+            } else {
+                Started
+            },
+        )
 
     /**
      * A flow that emits the current [DiscoveryState] of the server discovery process.
@@ -107,6 +135,9 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
             try {
                 searcher.discoveredInstanceFlow()
                     .delayFirst(DELAY_BEFORE_DISPLAY_DISCOVERY)
+                    .filter { instanceFound ->
+                        serversToIgnore.none { it.isSameServer(instanceFound.url) }
+                    }
                     .collect { instanceFound ->
                         val serverDiscovered = ServerDiscovered(
                             instanceFound.name,
@@ -189,3 +220,6 @@ private fun getInstances(serverManager: ServerManager): DiscoveryState {
         ?.let { ServersDiscovered(it) }
         ?: Started
 }
+
+private fun URL.isSameServer(other: URL): Boolean =
+    protocol == other.protocol && host == other.host && port == other.port

@@ -48,6 +48,7 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssista
 import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssistantSearcher
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ONE_SERVER_FOUND_MODAL_TAG
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDiscoveryModule
+import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryMode
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.onboarding.wearmtls.WearMTLSUiState
 import io.homeassistant.companion.android.onboarding.wearmtls.WearMTLSViewModel
@@ -192,10 +193,10 @@ internal class WearOnboardingNavigationTest {
     }
 
     @Test
-    fun `Given no server to onboard when starting the navigation then opens ServerDiscoveryScreen`() {
+    fun `Given no server to onboard when starting the navigation then opens ServerDiscoveryScreen in ADD_EXISTING mode`() {
         testNavigation {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
-            assertTrue(navController.currentBackStackEntry?.toRoute<ServerDiscoveryRoute>()?.addExistingInstances == true)
+            assertTrue(navController.currentBackStackEntry?.toRoute<ServerDiscoveryRoute>()?.discoveryMode == ServerDiscoveryMode.ADD_EXISTING)
             onNodeWithText(stringResource(R.string.searching_home_network)).assertIsDisplayed()
         }
     }

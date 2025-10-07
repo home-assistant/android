@@ -30,6 +30,7 @@ import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.n
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.navigateToNameYourDevice
 import io.homeassistant.companion.android.onboarding.nameyourweardevice.navigation.nameYourWearDeviceScreen
 import io.homeassistant.companion.android.onboarding.nameyourweardevice.navigation.navigateToNameYourWearDevice
+import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryMode
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.serverDiscoveryScreen
@@ -41,15 +42,32 @@ import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeR
 import io.homeassistant.companion.android.onboarding.welcome.navigation.welcomeScreen
 import kotlinx.serialization.Serializable
 
+/**
+ * Navigation route for the main onboarding flow.
+ *
+ * @property serverToOnboard Optional server URL to onboard directly. If null, shows server discovery.
+ * @property hideExistingServer When true, hides already registered servers from discovery results.
+ */
 @Serializable
-internal data class OnboardingRoute(val serverToOnboard: String? = null) : HAStartDestinationRoute
+internal data class OnboardingRoute(val serverToOnboard: String? = null, val hideExistingServer: Boolean = false) :
+    HAStartDestinationRoute
 
+/**
+ * Navigation route for Wear OS device onboarding flow.
+ *
+ * @property wearName The name of the Wear device being onboarded.
+ * @property serverToOnboard Optional server URL to onboard directly. If null, shows server discovery with existing servers.
+ */
 @Serializable
 internal data class WearOnboardingRoute(val wearName: String, val serverToOnboard: String? = null) :
     HAStartDestinationRoute
 
-internal fun NavController.navigateToOnboarding(serverToOnboard: String? = null, navOptions: NavOptions? = null) {
-    navigate(OnboardingRoute(serverToOnboard), navOptions)
+internal fun NavController.navigateToOnboarding(
+    serverToOnboard: String? = null,
+    hideExistingServer: Boolean = false,
+    navOptions: NavOptions? = null,
+) {
+    navigate(OnboardingRoute(serverToOnboard, hideExistingServer), navOptions)
 }
 
 /**
@@ -63,12 +81,19 @@ internal fun NavGraphBuilder.onboarding(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onOnboardingDone: () -> Unit,
     serverToOnboard: String?,
+    hideExistingServer: Boolean,
 ) {
     navigation<OnboardingRoute>(startDestination = WelcomeRoute) {
         welcomeScreen(
             onConnectClick = {
                 if (serverToOnboard.isNullOrEmpty()) {
-                    navController.navigateToServerDiscovery()
+                    navController.navigateToServerDiscovery(
+                        discoveryMode = if (hideExistingServer) {
+                            ServerDiscoveryMode.HIDE_EXISTING
+                        } else {
+                            ServerDiscoveryMode.NORMAL
+                        },
+                    )
                 } else {
                     navController.navigateToConnection(serverToOnboard)
                 }
@@ -244,7 +269,7 @@ internal fun NavGraphBuilder.wearOnboarding(
     wearNameToOnboard: String,
 ) {
     val startRoute = if (serverToOnboard.isNullOrEmpty()) {
-        ServerDiscoveryRoute(addExistingInstances = true)
+        ServerDiscoveryRoute(discoveryMode = ServerDiscoveryMode.ADD_EXISTING)
     } else {
         ConnectionRoute(serverToOnboard)
     }

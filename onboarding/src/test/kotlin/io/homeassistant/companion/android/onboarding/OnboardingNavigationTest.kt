@@ -57,6 +57,7 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssista
 import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssistantSearcher
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ONE_SERVER_FOUND_MODAL_TAG
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDiscoveryModule
+import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryMode
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.SetHomeNetworkRoute
@@ -148,7 +149,7 @@ internal class OnboardingNavigationTest {
         every { any<NavController>().navigateToUri(any()) } just Runs
     }
 
-    private fun setContent(serverToOnboard: String? = null) {
+    private fun setContent(serverToOnboard: String? = null, hideExistingServer: Boolean = false) {
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
             navController.navigatorProvider.addNavigator(ComposeNavigator())
@@ -169,14 +170,15 @@ internal class OnboardingNavigationTest {
                             onboardingDone = true
                         },
                         serverToOnboard = serverToOnboard,
+                        hideExistingServer = hideExistingServer,
                     )
                 }
             }
         }
     }
 
-    private fun testNavigation(serverToOnboard: String? = null, testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit) {
-        setContent(serverToOnboard)
+    private fun testNavigation(serverToOnboard: String? = null, hideExistingServer: Boolean = false, testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit) {
+        setContent(serverToOnboard, hideExistingServer)
         runTest {
             composeTestRule.testContent()
         }
@@ -215,6 +217,18 @@ internal class OnboardingNavigationTest {
 
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
 
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given clicking on connect button with hide existing server and no server to onboard when starting the onboarding then show Discovery screen with existing server hidden then back goes to Welcome`() {
+        testNavigation(hideExistingServer = true) {
+            onNodeWithText(stringResource(R.string.welcome_connect_to_ha)).assertIsDisplayed().performClick()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
+            assertTrue(navController.currentBackStackEntry?.toRoute<ServerDiscoveryRoute>()?.discoveryMode == ServerDiscoveryMode.HIDE_EXISTING)
+
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).assertIsDisplayed().performClick()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
         }
     }

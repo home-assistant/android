@@ -62,6 +62,7 @@ internal fun HANavHost(
                     }
                 },
                 serverToOnboard = (startDestination as? OnboardingRoute)?.serverToOnboard,
+                hideExistingServer = (startDestination as? OnboardingRoute)?.hideExistingServer == true,
             )
             if (startDestination is WearOnboardingRoute) {
                 wearOnboarding(
