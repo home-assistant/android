@@ -19,6 +19,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.SettingsEthernet
+import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -28,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -147,6 +150,7 @@ private fun SetHomeNetworkContent(
                 isUsingVpn,
                 onUsingVpnChange,
                 text = stringResource(commonR.string.manage_ssids_vpn),
+                icon = Icons.Default.VpnKey,
                 testTag = VPN_TAG,
             )
         }
@@ -156,6 +160,7 @@ private fun SetHomeNetworkContent(
                 isUsingEthernet,
                 onUsingEthernetChange,
                 text = stringResource(commonR.string.manage_ssids_ethernet),
+                icon = Icons.Default.SettingsEthernet,
                 testTag = ETHERNET_TAG,
             )
         }
@@ -214,12 +219,24 @@ private fun WifiNetworkSSIDTextField(currentWifiNetwork: String, onCurrentWifiNe
 }
 
 @Composable
-private fun SelectableOption(checked: Boolean, onCheckedChange: (Boolean) -> Unit, text: String, testTag: String) {
+private fun SelectableOption(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    text: String,
+    testTag: String,
+    icon: ImageVector,
+) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.widthIn(max = MaxContentWidth),
     ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = LocalHAColorScheme.current.colorOnPrimaryNormal,
+        )
+
         Text(
             text = text,
             style = HATextStyle.Body.copy(textAlign = TextAlign.Start),
