@@ -8,12 +8,12 @@ plugins {
 
 java {
     sourceCompatibility = JavaVersion.toVersion(libs.versions.javaVersion.get())
-    targetCompatibility = JavaVersion.toVersion(libs.versions.javaVersion.get())
+    targetCompatibility = JavaVersion.toVersion(17)
 }
 
 kotlin {
     compilerOptions {
-        jvmTarget = JvmTarget.fromTarget(libs.versions.javaVersion.get())
+        jvmTarget = JvmTarget.fromTarget("17")
     }
 }
 
