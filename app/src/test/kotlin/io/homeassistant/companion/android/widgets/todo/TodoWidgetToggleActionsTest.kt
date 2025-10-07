@@ -19,7 +19,7 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.fail
 
 class TodoWidgetToggleActionsTest {
 
@@ -102,8 +102,11 @@ class TodoWidgetToggleActionsTest {
         coEvery { entryPoints.dao().get(widgetId) } returns todoItem
 
         // This is useful to validate that it calls update()
-        assertThrows<IllegalArgumentException>("Invalid Glance ID") {
+        try {
             action.onAction(mockk(), FakeGlanceId(widgetId), parameters)
+            fail { "onAction should fail with invalid glance ID" }
+        } catch (e: IllegalArgumentException) {
+            assertEquals("Invalid Glance ID", e.message)
         }
 
         coVerify(exactly = 1) {

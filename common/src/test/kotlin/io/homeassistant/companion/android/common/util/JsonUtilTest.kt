@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
-import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.fail
 
 class JsonUtilTest {
     @Test
@@ -107,7 +107,12 @@ class JsonUtilTest {
     fun `Given a map with an object when serializing then it throws`() {
         val map = mapOf<String, Any?>("key1" to Stub("value"))
 
-        assertThrows<IllegalArgumentException>("Unsupported type: ${Stub::class}") { kotlinJsonMapper.encodeToString(MapAnySerializer, map) }
+        try {
+            kotlinJsonMapper.encodeToString(MapAnySerializer, map)
+            fail { "encodeToString should fail with unsupported type" }
+        } catch (e: IllegalArgumentException) {
+            assertEquals("Unsupported type: ${Stub::class}", e.message)
+        }
     }
 }
 
