@@ -65,7 +65,7 @@ object HATextStyle {
         @Composable
         get() = TextStyle(
             fontStyle = FontStyle.Normal,
-            fontSize = HAFontSize.L,
+            fontSize = HAFontSize.M,
             lineHeight = HAFontSize.X2L,
             fontWeight = FontWeight.W500,
             textAlign = TextAlign.Center,
