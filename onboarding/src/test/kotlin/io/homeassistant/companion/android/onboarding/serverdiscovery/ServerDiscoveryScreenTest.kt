@@ -61,7 +61,7 @@ class ServerDiscoveryScreenTest {
     @Test
     fun `Given Started state when server discovery is displayed but cannot go back then navigateUp is hidden`() {
         composeTestRule.apply {
-            testScreen(Started) {
+            testScreen(Started, canGoBack = false) {
                 onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).assertIsNotDisplayed()
             }
         }

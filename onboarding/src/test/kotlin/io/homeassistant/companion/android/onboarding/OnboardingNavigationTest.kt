@@ -203,7 +203,7 @@ internal class OnboardingNavigationTest {
     }
 
     @Test
-    fun `Given OnboardingRoute with skipWelcome with urlToOnboard as start when starts then show ServerDiscovery and no back arrow`() {
+    fun `Given skipWelcome and urlToOnboard when starting then show ServerDiscovery and no back arrow`() {
         val url = "http://ha.org"
         testNavigation(skipWelcome = true, urlToOnboard = url) {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
