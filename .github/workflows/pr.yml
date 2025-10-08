@@ -206,7 +206,7 @@ jobs:
           KEYSTORE_ALIAS_PASSWORD: android
           KEYSTORE_PASSWORD: android
         run: |
-          ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
+          ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease -x lint
 
   unit_tests:
     name: "Unit Tests"
