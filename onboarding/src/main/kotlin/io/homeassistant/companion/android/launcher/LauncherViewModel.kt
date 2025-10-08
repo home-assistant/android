@@ -64,9 +64,9 @@ internal class LauncherViewModel @AssistedInject constructor(
 
     private suspend fun handleInitialState(initialDeepLink: LauncherActivity.DeepLink?) {
         when (initialDeepLink) {
-            is LauncherActivity.DeepLink.Invite -> navigateToOnboarding(initialDeepLink.url)
+            is LauncherActivity.DeepLink.OpenOnboarding -> navigateToOnboarding(initialDeepLink.url)
             is LauncherActivity.DeepLink.NavigateTo -> connectToServer(initialDeepLink.serverId, initialDeepLink.path)
-            is LauncherActivity.DeepLink.WearOnboarding -> navigateToWearOnboarding(
+            is LauncherActivity.DeepLink.OpenWearOnboarding -> navigateToWearOnboarding(
                 wearName = initialDeepLink.wearName,
                 url = initialDeepLink.url,
             )

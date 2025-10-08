@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContract
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.launch.intentLauncherOnboarding
 import io.homeassistant.companion.android.launch.intentLauncherWearOnboarding
 
 class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>() {
@@ -84,8 +85,14 @@ class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>(
     }
 
     override fun createIntent(context: Context, input: Input): Intent {
-        return if (input.isWatch && BuildConfig.DEBUG) {
-            context.intentLauncherWearOnboarding(input.defaultDeviceName, input.url)
+        return if (BuildConfig.DEBUG) {
+            if (input.isWatch) {
+                context.intentLauncherWearOnboarding(input.defaultDeviceName, input.url)
+            } else {
+                context.intentLauncherOnboarding(input.url)
+                // TODO support discovery options HIDE_EXISTING
+                // TODO disable location tracking in minimal flavor
+            }
         } else {
             Intent(context, OnboardingActivity::class.java).apply {
                 putExtra(EXTRA_URL, input.url)

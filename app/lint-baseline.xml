@@ -101,6 +101,17 @@
     </issue>
 
     <issue
+        id="MissingLeanbackLauncher"
+        message="Expecting an activity to have `android.intent.category.LEANBACK_LAUNCHER` intent filter"
+        errorLine1="&lt;manifest xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2=" ~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="2"
+            column="2"/>
+    </issue>
+
+    <issue
         id="DefaultLocale"
         message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
         errorLine1="                    &quot;&quot; + String.format(&quot;%8.5f&quot;, latitude) + &quot;  &quot; +"
@@ -564,6 +575,17 @@
 
     <issue
         id="UnusedResources"
+        message="The resource `R.drawable.app_icon_launch_screen` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable-v31/app_icon_launch_screen.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
         message="The resource `R.xml.changelog_master` appears to be unused"
         errorLine1="&lt;changelog xmlns:tools=&quot;http://schemas.android.com/tools&quot;"
         errorLine2="^">
@@ -619,6 +641,39 @@
 
     <issue
         id="UnusedResources"
+        message="The resource `R.drawable.launch_screen_background` appears to be unused"
+        errorLine1="&lt;layer-list xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/launch_screen_background.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.style.Theme_LaunchScreen_Base` appears to be unused"
+        errorLine1="    &lt;style name=&quot;Theme.LaunchScreen.Base&quot; parent=&quot;Theme.MaterialComponents.DayNight.NoActionBar&quot;/>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/styles.xml"
+            line="3"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.style.Theme_LaunchScreen` appears to be unused"
+        errorLine1="    &lt;style name=&quot;Theme.LaunchScreen&quot; parent=&quot;Theme.LaunchScreen.Base&quot;>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/styles.xml"
+            line="5"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
         message="The resource `R.style.TextAppearance_HomeAssistant_Title` appears to be unused"
         errorLine1="    &lt;style name=&quot;TextAppearance.HomeAssistant.Title&quot; parent=&quot;TextAppearance.MaterialComponents.Headline2&quot;>"
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
@@ -669,6 +724,17 @@
         <location
             file="src/main/res/values/styles.xml"
             line="61"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.style.Theme_HomeAssistant_Dialog_Alert_Launch` appears to be unused"
+        errorLine1="    &lt;style name=&quot;Theme.HomeAssistant.Dialog.Alert.Launch&quot; parent=&quot;Theme.HomeAssistant.Dialog.Alert&quot;>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/styles.xml"
+            line="81"
             column="12"/>
     </issue>
 

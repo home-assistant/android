@@ -8,7 +8,7 @@ import io.homeassistant.companion.android.common.util.FailFast
  * This file is temporary and will be removed once the new launcher is available.
  */
 
-internal fun Context.startLauncherForInvite(serverToOnboard: String) {
+internal fun Context.startLauncherOnboarding(serverToOnboard: String) {
     FailFast.fail { "New Launcher is not available on release yet" }
 }
 
@@ -17,6 +17,11 @@ internal fun Context.startLauncherWithNavigateTo(path: String, serverId: Int) {
 }
 
 internal fun Context.intentLauncherWearOnboarding(wearName: String, serverUrl: String?): Intent {
+    FailFast.fail { "New Launcher is not available on release yet" }
+    return Intent()
+}
+
+internal fun Context.intentLauncherOnboarding(url: String?): Intent {
     FailFast.fail { "New Launcher is not available on release yet" }
     return Intent()
 }

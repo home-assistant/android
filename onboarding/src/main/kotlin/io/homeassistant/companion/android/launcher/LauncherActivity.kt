@@ -35,10 +35,10 @@ private const val DEEP_LINK_KEY = "deep_link_key"
 class LauncherActivity : AppCompatActivity() {
     @Parcelize
     sealed interface DeepLink : Parcelable {
-        data class Invite(val url: String) : DeepLink
+        data class OpenOnboarding(val url: String?) : DeepLink
         data class NavigateTo(val path: String?, val serverId: Int) : DeepLink
 
-        data class WearOnboarding(val wearName: String, val url: String?) : DeepLink
+        data class OpenWearOnboarding(val wearName: String, val url: String?) : DeepLink
     }
 
     companion object {

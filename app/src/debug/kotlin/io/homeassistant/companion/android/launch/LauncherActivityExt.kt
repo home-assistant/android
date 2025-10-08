@@ -8,8 +8,8 @@ import io.homeassistant.companion.android.launcher.LauncherActivity
  * This file is temporary and will be removed once the new launcher is available.
  */
 
-internal fun Context.startLauncherForInvite(serverToOnboard: String) {
-    startActivity(LauncherActivity.newInstance(this, LauncherActivity.DeepLink.Invite(serverToOnboard)))
+internal fun Context.startLauncherOnboarding(serverToOnboard: String) {
+    startActivity(LauncherActivity.newInstance(this, LauncherActivity.DeepLink.OpenOnboarding(serverToOnboard)))
 }
 
 internal fun Context.startLauncherWithNavigateTo(path: String, serverId: Int) {
@@ -17,5 +17,9 @@ internal fun Context.startLauncherWithNavigateTo(path: String, serverId: Int) {
 }
 
 internal fun Context.intentLauncherWearOnboarding(wearName: String, serverUrl: String?): Intent {
-    return LauncherActivity.newInstance(this, LauncherActivity.DeepLink.WearOnboarding(wearName, serverUrl))
+    return LauncherActivity.newInstance(this, LauncherActivity.DeepLink.OpenWearOnboarding(wearName, serverUrl))
+}
+
+internal fun Context.intentLauncherOnboarding(url: String?): Intent {
+    return LauncherActivity.newInstance(this, LauncherActivity.DeepLink.OpenOnboarding(url))
 }

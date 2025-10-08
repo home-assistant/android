@@ -25,7 +25,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.launch.LaunchActivity
-import io.homeassistant.companion.android.launch.startLauncherForInvite
+import io.homeassistant.companion.android.launch.startLauncherOnboarding
 import io.homeassistant.companion.android.launch.startLauncherWithNavigateTo
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
@@ -73,7 +73,7 @@ class LinkActivity : BaseActivity() {
                     LinkDestination.NoDestination -> finish()
                     is LinkDestination.Onboarding -> {
                         if (USE_NEW_LAUNCHER) {
-                            startLauncherForInvite(destination.serverUrl)
+                            startLauncherOnboarding(destination.serverUrl)
                         } else {
                             startActivity(LaunchActivity.newInstance(this@LinkActivity, destination.serverUrl))
                         }
