@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     `java-library`
@@ -8,12 +9,25 @@ plugins {
 
 java {
     sourceCompatibility = JavaVersion.toVersion(libs.versions.javaVersion.get())
-    targetCompatibility = JavaVersion.toVersion(17)
+    targetCompatibility = JavaVersion.toVersion(libs.versions.javaVersion.get())
 }
 
 kotlin {
     compilerOptions {
-        jvmTarget = JvmTarget.fromTarget("17")
+        jvmTarget = JvmTarget.fromTarget(libs.versions.javaVersion.get())
+    }
+}
+
+// JUnit 6 requires JDK 17+ at runtime. We only set targetCompatibility/jvmTarget
+// for tests, not sourceCompatibility, because the test source code can still be written
+// using the lower Java version features while being compiled to run on JDK 17+.
+tasks.named<JavaCompile>("compileTestJava") {
+    targetCompatibility = JavaVersion.VERSION_17.toString()
+}
+
+tasks.named<KotlinCompile>("compileTestKotlin") {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
     }
 }
 
