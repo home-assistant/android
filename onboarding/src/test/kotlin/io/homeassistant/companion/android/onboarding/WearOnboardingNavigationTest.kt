@@ -152,7 +152,7 @@ internal class WearOnboardingNavigationTest {
         every { any<NavController>().navigateToUri(any()) } just Runs
     }
 
-    private fun setContent(serverToOnboard: String? = null) {
+    private fun setContent(urlToOnboard: String? = null) {
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
             navController.navigatorProvider.addNavigator(ComposeNavigator())
@@ -164,7 +164,7 @@ internal class WearOnboardingNavigationTest {
             ) {
                 NavHost(
                     navController = navController,
-                    startDestination = WearOnboardingRoute(wearName = WEAR_NAME, serverToOnboard = serverToOnboard),
+                    startDestination = WearOnboardingRoute(wearName = WEAR_NAME, urlToOnboard = urlToOnboard),
                 ) {
                     wearOnboarding(
                         navController,
@@ -177,7 +177,7 @@ internal class WearOnboardingNavigationTest {
                             this@WearOnboardingNavigationTest.certUri = certUri
                             this@WearOnboardingNavigationTest.certPassword = certPassword
                         },
-                        serverToOnboard = serverToOnboard,
+                        urlToOnboard = urlToOnboard,
                         wearNameToOnboard = WEAR_NAME,
                     )
                 }
@@ -185,8 +185,8 @@ internal class WearOnboardingNavigationTest {
         }
     }
 
-    private fun testNavigation(serverToOnboard: String? = null, testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit) {
-        setContent(serverToOnboard)
+    private fun testNavigation(urlToOnboard: String? = null, testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit) {
+        setContent(urlToOnboard)
         runTest {
             composeTestRule.testContent()
         }

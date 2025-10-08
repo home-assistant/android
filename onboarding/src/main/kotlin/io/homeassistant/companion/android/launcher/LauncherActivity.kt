@@ -40,10 +40,10 @@ class LauncherActivity : AppCompatActivity() {
     sealed interface DeepLink : Parcelable {
         /**
          * Opens the onboarding flow for a new Home Assistant server.
-         * @property url Optional server URL to connect to directly. If null, shows server discovery.
-         * @property hideExistingServer When true, hides already registered servers from discovery results.
+         * @property urlToOnboard Optional server URL to connect to directly. If null, shows server discovery.
+         * @property hideExistingServers When true, hides already registered servers from discovery results.
          */
-        data class OpenOnboarding(val url: String?, val hideExistingServer: Boolean) : DeepLink
+        data class OpenOnboarding(val urlToOnboard: String?, val hideExistingServers: Boolean) : DeepLink
 
         /**
          * Navigates to a specific path within the webview.
@@ -55,9 +55,9 @@ class LauncherActivity : AppCompatActivity() {
         /**
          * Opens the Wear OS device onboarding flow.
          * @property wearName The name of the Wear device being onboarded.
-         * @property url Optional server URL to connect to directly. If null, shows server discovery.
+         * @property urlToOnboard Optional server URL to connect to directly. If null, shows server discovery.
          */
-        data class OpenWearOnboarding(val wearName: String, val url: String?) : DeepLink
+        data class OpenWearOnboarding(val wearName: String, val urlToOnboard: String?) : DeepLink
     }
 
     companion object {
@@ -104,8 +104,8 @@ class LauncherActivity : AppCompatActivity() {
                             }
 
                             is LauncherNavigationEvent.Onboarding -> OnboardingRoute(
-                                event.url,
-                                event.hideExistingServer,
+                                event.urlToOnboard,
+                                event.hideExistingServers,
                             )
 
                             is LauncherNavigationEvent.WearOnboarding -> {
@@ -113,7 +113,7 @@ class LauncherActivity : AppCompatActivity() {
                                 //  the wear only work with FULL variant)
                                 WearOnboardingRoute(
                                     wearName = event.wearName,
-                                    serverToOnboard = event.url,
+                                    urlToOnboard = event.urlToOnboard,
                                 )
                             }
                         }

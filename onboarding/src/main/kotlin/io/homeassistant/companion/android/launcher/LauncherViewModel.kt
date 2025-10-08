@@ -27,8 +27,8 @@ import timber.log.Timber
  */
 internal sealed interface LauncherNavigationEvent {
     data class Frontend(val path: String?, val serverId: Int) : LauncherNavigationEvent
-    data class Onboarding(val url: String?, val hideExistingServer: Boolean) : LauncherNavigationEvent
-    data class WearOnboarding(val wearName: String, val url: String?) : LauncherNavigationEvent
+    data class Onboarding(val urlToOnboard: String?, val hideExistingServers: Boolean) : LauncherNavigationEvent
+    data class WearOnboarding(val wearName: String, val urlToOnboard: String?) : LauncherNavigationEvent
 }
 
 /**
@@ -65,8 +65,8 @@ internal class LauncherViewModel @AssistedInject constructor(
     private suspend fun handleInitialState(initialDeepLink: LauncherActivity.DeepLink?) {
         when (initialDeepLink) {
             is LauncherActivity.DeepLink.OpenOnboarding -> navigateToOnboarding(
-                initialDeepLink.url,
-                initialDeepLink.hideExistingServer,
+                initialDeepLink.urlToOnboard,
+                initialDeepLink.hideExistingServers,
             )
 
             is LauncherActivity.DeepLink.NavigateTo,
@@ -74,7 +74,7 @@ internal class LauncherViewModel @AssistedInject constructor(
 
             is LauncherActivity.DeepLink.OpenWearOnboarding -> navigateToWearOnboarding(
                 wearName = initialDeepLink.wearName,
-                url = initialDeepLink.url,
+                urlToOnboard = initialDeepLink.urlToOnboard,
             )
 
             null -> connectToServer(ServerManager.SERVER_ID_ACTIVE, null)
@@ -108,12 +108,14 @@ internal class LauncherViewModel @AssistedInject constructor(
         }
     }
 
-    private suspend fun navigateToWearOnboarding(wearName: String, url: String? = null) {
-        _navigationEventsFlow.emit(LauncherNavigationEvent.WearOnboarding(wearName = wearName, url = url))
+    private suspend fun navigateToWearOnboarding(wearName: String, urlToOnboard: String? = null) {
+        _navigationEventsFlow.emit(
+            LauncherNavigationEvent.WearOnboarding(wearName = wearName, urlToOnboard = urlToOnboard),
+        )
     }
 
-    private suspend fun navigateToOnboarding(url: String? = null, hideExistingServer: Boolean = false) {
-        _navigationEventsFlow.emit(LauncherNavigationEvent.Onboarding(url, hideExistingServer))
+    private suspend fun navigateToOnboarding(urlToOnboard: String? = null, hideExistingServers: Boolean = false) {
+        _navigationEventsFlow.emit(LauncherNavigationEvent.Onboarding(urlToOnboard, hideExistingServers))
     }
 
     private suspend fun cleanupServers() {

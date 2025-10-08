@@ -61,8 +61,8 @@ internal fun HANavHost(
                         navController.navigateToFrontend()
                     }
                 },
-                serverToOnboard = (startDestination as? OnboardingRoute)?.serverToOnboard,
-                hideExistingServer = (startDestination as? OnboardingRoute)?.hideExistingServer == true,
+                urlToOnboard = (startDestination as? OnboardingRoute)?.urlToOnboard,
+                hideExistingServers = (startDestination as? OnboardingRoute)?.hideExistingServers == true,
             )
             if (startDestination is WearOnboardingRoute) {
                 wearOnboarding(
@@ -89,7 +89,7 @@ internal fun HANavHost(
                         )
                         activity?.finish()
                     },
-                    serverToOnboard = startDestination.serverToOnboard,
+                    urlToOnboard = startDestination.urlToOnboard,
                     wearNameToOnboard = startDestination.wearName,
                 )
             }

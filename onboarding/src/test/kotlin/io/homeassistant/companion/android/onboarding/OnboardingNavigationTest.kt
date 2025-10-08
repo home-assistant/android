@@ -149,7 +149,7 @@ internal class OnboardingNavigationTest {
         every { any<NavController>().navigateToUri(any()) } just Runs
     }
 
-    private fun setContent(serverToOnboard: String? = null, hideExistingServer: Boolean = false) {
+    private fun setContent(urlToOnboard: String? = null, hideExistingServers: Boolean = false) {
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
             navController.navigatorProvider.addNavigator(ComposeNavigator())
@@ -169,16 +169,16 @@ internal class OnboardingNavigationTest {
                         onOnboardingDone = {
                             onboardingDone = true
                         },
-                        serverToOnboard = serverToOnboard,
-                        hideExistingServer = hideExistingServer,
+                        urlToOnboard = urlToOnboard,
+                        hideExistingServers = hideExistingServers,
                     )
                 }
             }
         }
     }
 
-    private fun testNavigation(serverToOnboard: String? = null, hideExistingServer: Boolean = false, testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit) {
-        setContent(serverToOnboard, hideExistingServer)
+    private fun testNavigation(urlToOnboard: String? = null, hideExistingServers: Boolean = false, testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit) {
+        setContent(urlToOnboard, hideExistingServers)
         runTest {
             composeTestRule.testContent()
         }
@@ -223,7 +223,7 @@ internal class OnboardingNavigationTest {
 
     @Test
     fun `Given clicking on connect button with hide existing server and no server to onboard when starting the onboarding then show Discovery screen with existing server hidden then back goes to Welcome`() {
-        testNavigation(hideExistingServer = true) {
+        testNavigation(hideExistingServers = true) {
             onNodeWithText(stringResource(R.string.welcome_connect_to_ha)).assertIsDisplayed().performClick()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
             assertTrue(navController.currentBackStackEntry?.toRoute<ServerDiscoveryRoute>()?.discoveryMode == ServerDiscoveryMode.HIDE_EXISTING)
