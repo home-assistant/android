@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.onboarding.sethomenetwork
 
 import app.cash.turbine.test
-import io.homeassistant.companion.android.common.data.network.NetworkCapabilitiesChecker
+import io.homeassistant.companion.android.common.data.network.NetworkHelper
 import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
@@ -33,7 +33,7 @@ private const val MOCK_INITIAL_WIFI_SSID_QUOTED = "\"MyHomeWifi\""
 class SetHomeNetworkViewModelTest {
 
     private val serverManager: ServerManager = mockk()
-    private val networkCapabilitiesChecker: NetworkCapabilitiesChecker = mockk(relaxed = true)
+    private val networkHelper: NetworkHelper = mockk(relaxed = true)
     private val wifiHelper: WifiHelper = mockk()
     private lateinit var viewModel: SetHomeNetworkViewModel
 
@@ -47,7 +47,7 @@ class SetHomeNetworkViewModelTest {
         viewModel = SetHomeNetworkViewModel(
             serverId = MOCK_SERVER_ID,
             serverManager = serverManager,
-            networkCapabilitiesChecker = networkCapabilitiesChecker,
+            networkHelper = networkHelper,
             wifiHelper = wifiHelper,
         )
     }
@@ -67,7 +67,7 @@ class SetHomeNetworkViewModelTest {
 
     @Test
     fun `Given view model initialized and ethernet connected, when observing is using ethernet, then emits true`() {
-        every { networkCapabilitiesChecker.hasEthernetConnection() } returns true
+        every { networkHelper.isUsingEthernet() } returns true
         initializeViewModel()
         assertTrue(viewModel.isUsingEthernet.value)
     }
@@ -80,7 +80,7 @@ class SetHomeNetworkViewModelTest {
 
     @Test
     fun `Given view model initialized and VPN connected, when observing is using VPN, then emits true`() = runTest {
-        every { networkCapabilitiesChecker.hasVPNConnection() } returns true
+        every { networkHelper.isUsingVpn() } returns true
         initializeViewModel()
         assertTrue(viewModel.isUsingVpn.value)
     }
