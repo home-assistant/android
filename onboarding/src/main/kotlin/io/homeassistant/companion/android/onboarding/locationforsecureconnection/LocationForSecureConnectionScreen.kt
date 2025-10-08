@@ -103,9 +103,7 @@ private fun LocationForSecureConnectionContent(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = HADimens.SPACE4),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(
-            HADimens.SPACE6,
-        ),
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE6),
     ) {
         val coroutineScope = rememberCoroutineScope()
         var selectedOption by rememberSelectedOption<SelectionKey>()
