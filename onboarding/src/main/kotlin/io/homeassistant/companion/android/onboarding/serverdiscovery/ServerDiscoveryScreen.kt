@@ -64,6 +64,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
@@ -230,7 +231,8 @@ private fun ScreenContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = HADimens.SPACE4),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -309,11 +311,11 @@ private fun ServerItemContent(server: ServerDiscovered, onConnectClick: (URL) ->
         ) {
             Text(
                 text = server.name,
-                style = HATextStyle.Body,
+                style = HATextStyle.Body.copy(textAlign = TextAlign.Start),
             )
             Text(
                 text = server.url.toString(),
-                style = HATextStyle.BodyMedium,
+                style = HATextStyle.BodyMedium.copy(textAlign = TextAlign.Start),
             )
         }
     }
