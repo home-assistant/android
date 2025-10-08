@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -79,7 +80,7 @@ private fun LocalFirstContent(onNextClick: () -> Unit, modifier: Modifier = Modi
         HAAccentButton(
             text = stringResource(R.string.local_first_next),
             onClick = onNextClick,
-            modifier = Modifier.padding(bottom = HADimens.SPACE6),
+            modifier = Modifier.fillMaxWidth().padding(bottom = HADimens.SPACE6),
         )
     }
 }
