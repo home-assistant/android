@@ -91,7 +91,8 @@ class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>(
             } else {
                 context.intentLauncherOnboarding(
                     input.url,
-                    input.discoveryOptions == DiscoveryOptions.HIDE_EXISTING,
+                    hideExistingServers = input.discoveryOptions == DiscoveryOptions.HIDE_EXISTING,
+                    skipWelcome = true,
                 )
                 // TODO disable location tracking in minimal flavor
             }

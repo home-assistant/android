@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.EnumSource
 import timber.log.Timber
 
@@ -150,7 +151,7 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertEquals(LauncherNavigationEvent.Onboarding(null, false), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test
@@ -163,7 +164,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Onboarding(null, false), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test
@@ -177,7 +178,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Onboarding(null, false), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test
@@ -190,7 +191,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Onboarding(null, false), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test
@@ -248,15 +249,22 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertEquals(LauncherNavigationEvent.Onboarding(null, false), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false), viewModel.navigationEventsFlow.replayCache.first())
         assertTrue(!viewModel.shouldShowSplashScreen())
     }
 
-    @Test
-    fun `Given initial deep link is OpenOnboarding when creating viewModel, then navigate to onboarding with the server url`() = runTest {
-        createViewModel(LauncherActivity.DeepLink.OpenOnboarding("http://homeassistant.io", true))
+    @ParameterizedTest
+    @CsvSource(
+        "false, true",
+        "true, false",
+    )
+    fun `Given initial deep link is OpenOnboarding when creating viewModel, then navigate to onboarding with the server url`(
+        hideExistingServers: Boolean,
+        skipWelcome: Boolean,
+    ) = runTest {
+        createViewModel(LauncherActivity.DeepLink.OpenOnboarding("http://homeassistant.io", hideExistingServers = hideExistingServers, skipWelcome = skipWelcome))
         advanceUntilIdle()
-        assertEquals(LauncherNavigationEvent.Onboarding("http://homeassistant.io", true), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding("http://homeassistant.io", hideExistingServers = hideExistingServers, skipWelcome = skipWelcome), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test

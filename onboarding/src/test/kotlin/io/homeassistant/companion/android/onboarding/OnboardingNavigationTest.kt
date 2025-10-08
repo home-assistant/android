@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -149,7 +150,7 @@ internal class OnboardingNavigationTest {
         every { any<NavController>().navigateToUri(any()) } just Runs
     }
 
-    private fun setContent(urlToOnboard: String? = null, hideExistingServers: Boolean = false) {
+    private fun setContent(urlToOnboard: String? = null, hideExistingServers: Boolean = false, skipWelcome: Boolean = false) {
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
             navController.navigatorProvider.addNavigator(ComposeNavigator())
@@ -171,14 +172,15 @@ internal class OnboardingNavigationTest {
                         },
                         urlToOnboard = urlToOnboard,
                         hideExistingServers = hideExistingServers,
+                        skipWelcome = skipWelcome,
                     )
                 }
             }
         }
     }
 
-    private fun testNavigation(urlToOnboard: String? = null, hideExistingServers: Boolean = false, testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit) {
-        setContent(urlToOnboard, hideExistingServers)
+    private fun testNavigation(urlToOnboard: String? = null, hideExistingServers: Boolean = false, skipWelcome: Boolean = false, testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit) {
+        setContent(urlToOnboard, hideExistingServers = hideExistingServers, skipWelcome = skipWelcome)
         runTest {
             composeTestRule.testContent()
         }
@@ -190,6 +192,24 @@ internal class OnboardingNavigationTest {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
             onNodeWithText(stringResource(R.string.welcome_learn_more)).performScrollTo().assertIsDisplayed().performClick()
             verify { any<NavController>().navigateToUri("https://www.home-assistant.io") }
+        }
+    }
+
+    @Test
+    fun `Given skipWelcome without urlToOnboard when starting then show ServerDiscovery`() {
+        testNavigation(skipWelcome = true) {
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given OnboardingRoute with skipWelcome with urlToOnboard as start when starts then show ServerDiscovery and no back arrow`() {
+        val url = "http://ha.org"
+        testNavigation(skipWelcome = true, urlToOnboard = url) {
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
+            assertEquals(url, navController.currentBackStackEntry?.toRoute<ConnectionRoute>()?.url)
+
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).assertIsNotDisplayed()
         }
     }
 

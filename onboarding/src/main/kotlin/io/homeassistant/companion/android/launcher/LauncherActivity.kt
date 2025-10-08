@@ -42,8 +42,14 @@ class LauncherActivity : AppCompatActivity() {
          * Opens the onboarding flow for a new Home Assistant server.
          * @property urlToOnboard Optional server URL to connect to directly. If null, shows server discovery.
          * @property hideExistingServers When true, hides already registered servers from discovery results.
+         * @property skipWelcome When true, skips the welcome screen and navigates directly to server discovery,
+         *  or to the connection screen if [urlToOnboard] is provided.
          */
-        data class OpenOnboarding(val urlToOnboard: String?, val hideExistingServers: Boolean) : DeepLink
+        data class OpenOnboarding(
+            val urlToOnboard: String?,
+            val hideExistingServers: Boolean,
+            val skipWelcome: Boolean,
+        ) : DeepLink
 
         /**
          * Navigates to a specific path within the webview.
@@ -105,7 +111,8 @@ class LauncherActivity : AppCompatActivity() {
 
                             is LauncherNavigationEvent.Onboarding -> OnboardingRoute(
                                 event.urlToOnboard,
-                                event.hideExistingServers,
+                                hideExistingServers = event.hideExistingServers,
+                                skipWelcome = event.skipWelcome,
                             )
 
                             is LauncherNavigationEvent.WearOnboarding -> {

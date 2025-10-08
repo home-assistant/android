@@ -48,10 +48,15 @@ import kotlinx.serialization.Serializable
  *
  * @property urlToOnboard Optional server URL to onboard directly. If null, shows server discovery.
  * @property hideExistingServers When true, hides already registered servers from discovery results.
+ * @property skipWelcome When true, skips the welcome screen and navigates directly to server discovery,
+ *  or to the connection screen if [urlToOnboard] is provided.
  */
 @Serializable
-internal data class OnboardingRoute(val urlToOnboard: String? = null, val hideExistingServers: Boolean = false) :
-    HAStartDestinationRoute
+internal data class OnboardingRoute(
+    val urlToOnboard: String? = null,
+    val hideExistingServers: Boolean = false,
+    val skipWelcome: Boolean = false,
+) : HAStartDestinationRoute
 
 /**
  * Navigation route for Wear OS device onboarding flow.
@@ -83,18 +88,25 @@ internal fun NavGraphBuilder.onboarding(
     onOnboardingDone: () -> Unit,
     urlToOnboard: String?,
     hideExistingServers: Boolean,
+    skipWelcome: Boolean,
 ) {
-    navigation<OnboardingRoute>(startDestination = WelcomeRoute) {
+    val serverDiscoveryMode = if (hideExistingServers) {
+        ServerDiscoveryMode.HIDE_EXISTING
+    } else {
+        ServerDiscoveryMode.NORMAL
+    }
+
+    val startDestination = when {
+        !skipWelcome -> WelcomeRoute
+        urlToOnboard.isNullOrEmpty() -> ServerDiscoveryRoute(serverDiscoveryMode)
+        else -> ConnectionRoute(urlToOnboard)
+    }
+
+    navigation<OnboardingRoute>(startDestination = startDestination) {
         welcomeScreen(
             onConnectClick = {
                 if (urlToOnboard.isNullOrEmpty()) {
-                    navController.navigateToServerDiscovery(
-                        discoveryMode = if (hideExistingServers) {
-                            ServerDiscoveryMode.HIDE_EXISTING
-                        } else {
-                            ServerDiscoveryMode.NORMAL
-                        },
-                    )
+                    navController.navigateToServerDiscovery(serverDiscoveryMode)
                 } else {
                     navController.navigateToConnection(urlToOnboard)
                 }
