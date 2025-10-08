@@ -40,6 +40,7 @@ import io.homeassistant.companion.android.onboarding.wearmtls.navigation.navigat
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.wearMTLSScreen
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.welcomeScreen
+import io.homeassistant.companion.android.util.canGoBack
 import kotlinx.serialization.Serializable
 
 /**
@@ -212,6 +213,7 @@ private fun NavGraphBuilder.commonScreens(
             // TODO validate the URL to use
             navController.navigateToUri("https://www.home-assistant.io/installation/")
         },
+        canGoBack = navController::canGoBack,
     )
     manualServerScreen(
         onBackClick = navController::popBackStack,

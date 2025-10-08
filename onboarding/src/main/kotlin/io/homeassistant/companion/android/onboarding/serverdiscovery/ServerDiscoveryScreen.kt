@@ -94,6 +94,7 @@ private val MaxContentWidth = MaxButtonWidth
 
 @Composable
 internal fun ServerDiscoveryScreen(
+    canGoBack: Boolean,
     onBackClick: () -> Unit,
     onConnectClick: (server: URL) -> Unit,
     onHelpClick: () -> Unit,
@@ -104,6 +105,7 @@ internal fun ServerDiscoveryScreen(
     val discoveryState by viewModel.discoveryFlow.collectAsStateWithLifecycle(Started)
 
     ServerDiscoveryScreen(
+        canGoBack = canGoBack,
         discoveryState = discoveryState,
         onBackClick = onBackClick,
         onConnectClick = onConnectClick,
@@ -116,6 +118,7 @@ internal fun ServerDiscoveryScreen(
 
 @Composable
 internal fun ServerDiscoveryScreen(
+    canGoBack: Boolean,
     discoveryState: DiscoveryState,
     onBackClick: () -> Unit,
     onConnectClick: (server: URL) -> Unit,
@@ -127,7 +130,7 @@ internal fun ServerDiscoveryScreen(
     Scaffold(
         modifier = modifier,
         topBar = {
-            HATopBar(onBackClick = onBackClick, onHelpClick = onHelpClick)
+            HATopBar(onBackClick = onBackClick.takeIf { canGoBack }, onHelpClick = onHelpClick)
         },
     ) { contentPadding ->
         ScreenContent(
@@ -409,6 +412,7 @@ private fun AnimatedIcon() {
 private fun ServerDiscoveryScreenPreview_scanning() {
     HAThemeForPreview {
         ServerDiscoveryScreen(
+            canGoBack = true,
             discoveryState = Started,
             onConnectClick = {},
             onManualSetupClick = {},
@@ -424,6 +428,7 @@ private fun ServerDiscoveryScreenPreview_scanning() {
 private fun ServerDiscoveryScreenPreview_no_server_found() {
     HAThemeForPreview {
         ServerDiscoveryScreen(
+            canGoBack = true,
             discoveryState = NoServerFound,
             onConnectClick = {},
             onManualSetupClick = {},
@@ -439,6 +444,7 @@ private fun ServerDiscoveryScreenPreview_no_server_found() {
 private fun ServerDiscoveryScreenPreview_with_one_server() {
     HAThemeForPreview {
         ServerDiscoveryScreen(
+            canGoBack = false,
             discoveryState = ServerDiscovered(
                 "hello",
                 URL("http://my.homeassistant.io"),
@@ -458,6 +464,7 @@ private fun ServerDiscoveryScreenPreview_with_one_server() {
 private fun ServerDiscoveryScreenPreview_with_multiple_servers() {
     HAThemeForPreview {
         ServerDiscoveryScreen(
+            canGoBack = true,
             discoveryState = ServersDiscovered(
                 listOf(
                     ServerDiscovered(
