@@ -103,9 +103,7 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
 
     private val _discoveryFlow =
         MutableStateFlow(
-            if (discoveryMode ==
-                ServerDiscoveryMode.ADD_EXISTING
-            ) {
+            if (discoveryMode == ServerDiscoveryMode.ADD_EXISTING) {
                 getInstances(serverManager)
             } else {
                 Started
