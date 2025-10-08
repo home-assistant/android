@@ -33,12 +33,31 @@ private const val DEEP_LINK_KEY = "deep_link_key"
  */
 @AndroidEntryPoint
 class LauncherActivity : AppCompatActivity() {
+    /**
+     * Represents deep link actions that can be passed to [LauncherActivity] to navigate to specific destinations.
+     */
     @Parcelize
     sealed interface DeepLink : Parcelable {
-        data class OpenOnboarding(val url: String?) : DeepLink
+        /**
+         * Opens the onboarding flow for a new Home Assistant server.
+         * @property urlToOnboard Optional server URL to connect to directly. If null, shows server discovery.
+         * @property hideExistingServers When true, hides already registered servers from discovery results.
+         */
+        data class OpenOnboarding(val urlToOnboard: String?, val hideExistingServers: Boolean) : DeepLink
+
+        /**
+         * Navigates to a specific path within the webview.
+         * @property path The path to navigate to within the Home Assistant interface.
+         * @property serverId The ID of the server to use for navigation.
+         */
         data class NavigateTo(val path: String?, val serverId: Int) : DeepLink
 
-        data class OpenWearOnboarding(val wearName: String, val url: String?) : DeepLink
+        /**
+         * Opens the Wear OS device onboarding flow.
+         * @property wearName The name of the Wear device being onboarded.
+         * @property urlToOnboard Optional server URL to connect to directly. If null, shows server discovery.
+         */
+        data class OpenWearOnboarding(val wearName: String, val urlToOnboard: String?) : DeepLink
     }
 
     companion object {
@@ -84,13 +103,17 @@ class LauncherActivity : AppCompatActivity() {
                                 }
                             }
 
-                            is LauncherNavigationEvent.Onboarding -> OnboardingRoute(event.url)
+                            is LauncherNavigationEvent.Onboarding -> OnboardingRoute(
+                                event.urlToOnboard,
+                                event.hideExistingServers,
+                            )
+
                             is LauncherNavigationEvent.WearOnboarding -> {
                                 // TODO fail when not in FULL variant (maybe make a dedicated screen explaining that
                                 //  the wear only work with FULL variant)
                                 WearOnboardingRoute(
                                     wearName = event.wearName,
-                                    serverToOnboard = event.serverToOnboard,
+                                    urlToOnboard = event.urlToOnboard,
                                 )
                             }
                         }

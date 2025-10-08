@@ -30,6 +30,7 @@ import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.n
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.navigateToNameYourDevice
 import io.homeassistant.companion.android.onboarding.nameyourweardevice.navigation.nameYourWearDeviceScreen
 import io.homeassistant.companion.android.onboarding.nameyourweardevice.navigation.navigateToNameYourWearDevice
+import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryMode
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.serverDiscoveryScreen
@@ -41,15 +42,32 @@ import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeR
 import io.homeassistant.companion.android.onboarding.welcome.navigation.welcomeScreen
 import kotlinx.serialization.Serializable
 
+/**
+ * Navigation route for the main onboarding flow.
+ *
+ * @property urlToOnboard Optional server URL to onboard directly. If null, shows server discovery.
+ * @property hideExistingServers When true, hides already registered servers from discovery results.
+ */
 @Serializable
-internal data class OnboardingRoute(val serverToOnboard: String? = null) : HAStartDestinationRoute
-
-@Serializable
-internal data class WearOnboardingRoute(val wearName: String, val serverToOnboard: String? = null) :
+internal data class OnboardingRoute(val urlToOnboard: String? = null, val hideExistingServers: Boolean = false) :
     HAStartDestinationRoute
 
-internal fun NavController.navigateToOnboarding(serverToOnboard: String? = null, navOptions: NavOptions? = null) {
-    navigate(OnboardingRoute(serverToOnboard), navOptions)
+/**
+ * Navigation route for Wear OS device onboarding flow.
+ *
+ * @property wearName The name of the Wear device being onboarded.
+ * @property urlToOnboard Optional server URL to onboard directly. If null, shows server discovery with existing servers.
+ */
+@Serializable
+internal data class WearOnboardingRoute(val wearName: String, val urlToOnboard: String? = null) :
+    HAStartDestinationRoute
+
+internal fun NavController.navigateToOnboarding(
+    urlToOnboard: String? = null,
+    hideExistingServers: Boolean = false,
+    navOptions: NavOptions? = null,
+) {
+    navigate(OnboardingRoute(urlToOnboard, hideExistingServers), navOptions)
 }
 
 /**
@@ -62,15 +80,22 @@ internal fun NavGraphBuilder.onboarding(
     navController: NavController,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onOnboardingDone: () -> Unit,
-    serverToOnboard: String?,
+    urlToOnboard: String?,
+    hideExistingServers: Boolean,
 ) {
     navigation<OnboardingRoute>(startDestination = WelcomeRoute) {
         welcomeScreen(
             onConnectClick = {
-                if (serverToOnboard.isNullOrEmpty()) {
-                    navController.navigateToServerDiscovery()
+                if (urlToOnboard.isNullOrEmpty()) {
+                    navController.navigateToServerDiscovery(
+                        discoveryMode = if (hideExistingServers) {
+                            ServerDiscoveryMode.HIDE_EXISTING
+                        } else {
+                            ServerDiscoveryMode.NORMAL
+                        },
+                    )
                 } else {
-                    navController.navigateToConnection(serverToOnboard)
+                    navController.navigateToConnection(urlToOnboard)
                 }
             },
             onLearnMoreClick = {
@@ -240,13 +265,13 @@ internal fun NavGraphBuilder.wearOnboarding(
         certUri: Uri?,
         certPassword: String?,
     ) -> Unit,
-    serverToOnboard: String?,
+    urlToOnboard: String?,
     wearNameToOnboard: String,
 ) {
-    val startRoute = if (serverToOnboard.isNullOrEmpty()) {
-        ServerDiscoveryRoute(addExistingInstances = true)
+    val startRoute = if (urlToOnboard.isNullOrEmpty()) {
+        ServerDiscoveryRoute(discoveryMode = ServerDiscoveryMode.ADD_EXISTING)
     } else {
-        ConnectionRoute(serverToOnboard)
+        ConnectionRoute(urlToOnboard)
     }
 
     navigation<WearOnboardingRoute>(startDestination = startRoute) {

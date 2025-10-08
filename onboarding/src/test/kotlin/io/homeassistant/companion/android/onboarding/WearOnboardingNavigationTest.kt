@@ -48,6 +48,7 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssista
 import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssistantSearcher
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ONE_SERVER_FOUND_MODAL_TAG
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDiscoveryModule
+import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryMode
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.onboarding.wearmtls.WearMTLSUiState
 import io.homeassistant.companion.android.onboarding.wearmtls.WearMTLSViewModel
@@ -151,7 +152,7 @@ internal class WearOnboardingNavigationTest {
         every { any<NavController>().navigateToUri(any()) } just Runs
     }
 
-    private fun setContent(serverToOnboard: String? = null) {
+    private fun setContent(urlToOnboard: String? = null) {
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
             navController.navigatorProvider.addNavigator(ComposeNavigator())
@@ -163,7 +164,7 @@ internal class WearOnboardingNavigationTest {
             ) {
                 NavHost(
                     navController = navController,
-                    startDestination = WearOnboardingRoute(wearName = WEAR_NAME, serverToOnboard = serverToOnboard),
+                    startDestination = WearOnboardingRoute(wearName = WEAR_NAME, urlToOnboard = urlToOnboard),
                 ) {
                     wearOnboarding(
                         navController,
@@ -176,7 +177,7 @@ internal class WearOnboardingNavigationTest {
                             this@WearOnboardingNavigationTest.certUri = certUri
                             this@WearOnboardingNavigationTest.certPassword = certPassword
                         },
-                        serverToOnboard = serverToOnboard,
+                        urlToOnboard = urlToOnboard,
                         wearNameToOnboard = WEAR_NAME,
                     )
                 }
@@ -184,18 +185,18 @@ internal class WearOnboardingNavigationTest {
         }
     }
 
-    private fun testNavigation(serverToOnboard: String? = null, testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit) {
-        setContent(serverToOnboard)
+    private fun testNavigation(urlToOnboard: String? = null, testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit) {
+        setContent(urlToOnboard)
         runTest {
             composeTestRule.testContent()
         }
     }
 
     @Test
-    fun `Given no server to onboard when starting the navigation then opens ServerDiscoveryScreen`() {
+    fun `Given no server to onboard when starting the navigation then opens ServerDiscoveryScreen in ADD_EXISTING mode`() {
         testNavigation {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
-            assertTrue(navController.currentBackStackEntry?.toRoute<ServerDiscoveryRoute>()?.addExistingInstances == true)
+            assertTrue(navController.currentBackStackEntry?.toRoute<ServerDiscoveryRoute>()?.discoveryMode == ServerDiscoveryMode.ADD_EXISTING)
             onNodeWithText(stringResource(R.string.searching_home_network)).assertIsDisplayed()
         }
     }

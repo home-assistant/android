@@ -9,12 +9,22 @@ import java.net.URL
 
 internal val testHAVersion = HomeAssistantVersion(2025, 1, 1)
 
-internal fun mockServer(url: String?, haVersion: HomeAssistantVersion? = testHAVersion, name: String): Server {
+internal fun mockServer(
+    url: String?,
+    name: String,
+    haVersion: HomeAssistantVersion? = testHAVersion,
+    externalUrl: String = url ?: "",
+    internalUrl: String? = null,
+    cloudUrl: String? = null,
+): Server {
     return mockk<Server> {
         every { connection } returns mockk<ServerConnectionInfo> {
             every { getUrl(isInternal = false) } returns url?.let { URL(url) }
             every { version } returns haVersion
             every { friendlyName } returns name
+            every { this@mockk.externalUrl } returns externalUrl
+            every { this@mockk.internalUrl } returns internalUrl
+            every { this@mockk.cloudUrl } returns cloudUrl
         }
     }
 }

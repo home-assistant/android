@@ -150,7 +150,7 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertEquals(LauncherNavigationEvent.Onboarding(null), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null, false), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test
@@ -163,7 +163,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Onboarding(null), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null, false), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test
@@ -177,7 +177,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Onboarding(null), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null, false), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test
@@ -190,7 +190,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Onboarding(null), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null, false), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test
@@ -248,15 +248,15 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertEquals(LauncherNavigationEvent.Onboarding(null), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null, false), viewModel.navigationEventsFlow.replayCache.first())
         assertTrue(!viewModel.shouldShowSplashScreen())
     }
 
     @Test
     fun `Given initial deep link is OpenOnboarding when creating viewModel, then navigate to onboarding with the server url`() = runTest {
-        createViewModel(LauncherActivity.DeepLink.OpenOnboarding("http://homeassistant.io"))
+        createViewModel(LauncherActivity.DeepLink.OpenOnboarding("http://homeassistant.io", true))
         advanceUntilIdle()
-        assertEquals(LauncherNavigationEvent.Onboarding("http://homeassistant.io"), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding("http://homeassistant.io", true), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test

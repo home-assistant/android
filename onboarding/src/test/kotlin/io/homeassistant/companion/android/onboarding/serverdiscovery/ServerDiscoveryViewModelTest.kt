@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.onboarding.serverdiscovery
 
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryMode
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.utils.mockServer
@@ -43,8 +44,8 @@ private class ServerDiscoveryViewModelTest {
         every { searcher.discoveredInstanceFlow() } returns discoveredInstanceFlow
     }
 
-    private fun createViewModel(addExistingInstances: Boolean = false) {
-        viewModel = ServerDiscoveryViewModel(addExistingInstances, searcher, serverManager)
+    private fun createViewModel(discoveryMode: ServerDiscoveryMode = ServerDiscoveryMode.NORMAL) {
+        viewModel = ServerDiscoveryViewModel(discoveryMode, searcher, serverManager)
     }
 
     @Test
@@ -54,7 +55,7 @@ private class ServerDiscoveryViewModelTest {
     }
 
     @Test
-    fun `Given addExistingInstances is true with existing servers when view model created then discoveryFlow initially holds existing servers`() = runTest {
+    fun `Given ADD_EXISTING mode with existing servers when view model created then discoveryFlow initially holds existing servers`() = runTest {
         val server0 = mockServer("http://ha", haVersion = null, name = "server0")
         val server1 = mockServer("http://ha", name = "server1")
         val server2 = mockServer("http://ha", name = "server2")
@@ -66,7 +67,7 @@ private class ServerDiscoveryViewModelTest {
             server2,
             server3,
         )
-        createViewModel(addExistingInstances = true)
+        createViewModel(ServerDiscoveryMode.ADD_EXISTING)
         assertEquals(
             ServersDiscovered(
                 listOf(
@@ -79,10 +80,10 @@ private class ServerDiscoveryViewModelTest {
     }
 
     @Test
-    fun `Given addExistingInstances is true with no servers when view model created then discoveryFlow initially holds Started`() = runTest {
+    fun `Given ADD_EXISTING mode with no servers when view model created then discoveryFlow initially holds Started`() = runTest {
         every { serverManager.defaultServers } returns emptyList()
 
-        createViewModel(addExistingInstances = true)
+        createViewModel(ServerDiscoveryMode.ADD_EXISTING)
         assertEquals(Started, viewModel.discoveryFlow.value)
     }
 
@@ -244,6 +245,52 @@ private class ServerDiscoveryViewModelTest {
             runCurrent()
 
             assertEquals(NoServerFound, awaitItem())
+        }
+    }
+
+    @Test
+    fun `Given HIDE_EXISTING mode with existing server when discovered server matches existing then discoveryFlow filters out matching server`() = runTest {
+        val existingServerUrl = "http://server1.local:8123"
+        every { serverManager.defaultServers } returns listOf(mockServer(existingServerUrl, name = "Existing Server"), mockServer(url = null, name = "Broken server"))
+
+        createViewModel(ServerDiscoveryMode.HIDE_EXISTING)
+
+        val matchingInstance = HomeAssistantInstance("Server 1", URL(existingServerUrl), testHAVersion)
+        val differentInstance = HomeAssistantInstance("Server 2", URL("http://server2.local:8123"), testHAVersion)
+        val differentProtocolInstance = HomeAssistantInstance("Server HTTPS", URL(existingServerUrl.replace("http", "https")), testHAVersion)
+        val differentPortInstance = HomeAssistantInstance("Server 8124", URL(existingServerUrl.replace("8123", "8124")), testHAVersion)
+
+        viewModel.discoveryFlow.test {
+            assertEquals(Started, awaitItem())
+
+            discoveredInstanceFlow.emit(matchingInstance)
+            runCurrent()
+
+            discoveredInstanceFlow.emit(differentInstance)
+            runCurrent()
+
+            discoveredInstanceFlow.emit(differentProtocolInstance)
+            runCurrent()
+
+            discoveredInstanceFlow.emit(differentPortInstance)
+            runCurrent()
+
+            awaitItem()
+            advanceTimeBy(DELAY_AFTER_FIRST_DISCOVERY)
+            awaitItem()
+            // Only the different instances should appear
+            val discoveredState = awaitItem()
+            assertEquals(
+                ServersDiscovered(
+                    listOf(
+                        ServerDiscovered(differentInstance.name, differentInstance.url, testHAVersion),
+                        ServerDiscovered(differentProtocolInstance.name, differentProtocolInstance.url, testHAVersion),
+                        ServerDiscovered(differentPortInstance.name, differentPortInstance.url, testHAVersion),
+                    ),
+                ),
+                discoveredState,
+            )
+            expectNoEvents()
         }
     }
 }
