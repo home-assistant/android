@@ -207,7 +207,7 @@ class LinkHandlerTest {
     }
 
     @Test
-    fun `Given navigate deep link with empty server param when invoking handleLink then returns Webview with default server`() = runTest {
+    fun `Given navigate deep link with registered server and empty server param when invoking handleLink then returns Webview with default server`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.getServer() } returns mockk {
             coEvery { id } returns 1
