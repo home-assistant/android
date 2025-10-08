@@ -205,6 +205,7 @@ jobs:
           KEYSTORE_ALIAS: androiddebugkey
           KEYSTORE_ALIAS_PASSWORD: android
           KEYSTORE_PASSWORD: android
+        # Disable lint tasks since we have a dedicated job for this in the workflow
         run: |
           ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease -x lint
 
