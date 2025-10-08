@@ -19,7 +19,6 @@ import kotlin.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 class WearDnsTest {
     private val context = mockk<Context> {
@@ -69,13 +68,14 @@ class WearDnsTest {
 
         capabilityClient.capabilities[CAPABILITY_DNS_VIA_MOBILE] = setOf()
 
-        // when
-        val exception = assertThrows<UnknownHostException> {
+        try {
+            // when
             wearDns.lookup("homeassistant.local")
+            fail { "Lookup should throw" }
+        } catch (exception: UnknownHostException) {
+            // then
+            assertEquals("No Mobile DNS helper registered. Unable to resolve homeassistant.local", exception.message)
         }
-
-        // then
-        assertEquals("No Mobile DNS helper registered. Unable to resolve homeassistant.local", exception.message)
     }
 
     @Test
@@ -86,13 +86,14 @@ class WearDnsTest {
         capabilityClient.capabilities[CAPABILITY_DNS_VIA_MOBILE] = setOf("1234")
         messageClient.onRequest = { byteArrayOf() }
 
-        // when
-        val exception = assertThrows<UnknownHostException> {
+        try {
+            // when
             wearDns.lookup("homeassistant.local")
+            fail { "Lookup should throw" }
+        } catch (exception: UnknownHostException) {
+            // then
+            assertEquals("Mobile helper unable to resolve homeassistant.local", exception.message)
         }
-
-        // then
-        assertEquals("Mobile helper unable to resolve homeassistant.local", exception.message)
     }
 
     @Test
@@ -151,12 +152,13 @@ class WearDnsTest {
 
         messageClient.onRequest = { listOf(homeAssistantLocal).encodeDNSResult() }
 
-        // when
-        val exception = assertThrows<UnknownHostException> {
+        try {
+            // when
             wearDns.lookup("homeassistant.local")
+            fail { "Lookup should throw" }
+        } catch (exception: UnknownHostException) {
+            // then
+            assertEquals("Mobile helper unable to resolve homeassistant.local", exception.message)
         }
-
-        // then
-        assertEquals("Mobile helper unable to resolve homeassistant.local", exception.message)
     }
 }
