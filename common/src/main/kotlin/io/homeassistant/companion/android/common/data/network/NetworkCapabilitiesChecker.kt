@@ -18,9 +18,27 @@ import javax.inject.Singleton
 @Singleton
 internal class NetworkCapabilitiesChecker @Inject constructor(private val connectivityManager: ConnectivityManager) {
 
+    /**
+     * Checks if the active network has the specified capability.
+     *
+     * For Android M (API 23) and above, checks the active network's capabilities.
+     * For older versions, always returns `false`.
+     *
+     * @param capability The capability constant from [NetworkCapabilities] (e.g., [NetworkCapabilities.NET_CAPABILITY_INTERNET])
+     * @return `true` if the active network has the capability, `false` otherwise
+     */
     fun hasCapability(capability: Int): Boolean = getActiveNetworkCapabilities()?.hasCapability(capability)
         ?: false
 
+    /**
+     * Checks if the active network uses the specified transport type.
+     *
+     * For Android M (API 23) and above, checks the active network's transport.
+     * For older versions, falls back to checking [NetworkInfo] type.
+     *
+     * @param transport The transport constant from [NetworkCapabilities] (e.g., [NetworkCapabilities.TRANSPORT_WIFI])
+     * @return `true` if the active network uses the transport, `false` otherwise
+     */
     fun hasTransport(transport: Int): Boolean = getActiveNetworkCapabilities()?.hasTransport(transport)
         ?: fallbackHasTransport(transport)
 

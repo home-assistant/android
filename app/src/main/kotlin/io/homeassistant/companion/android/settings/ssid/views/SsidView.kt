@@ -194,6 +194,15 @@ fun SsidView(
             }
         }
 
+        item("vpn") {
+            SsidSubheader(
+                title = stringResource(commonR.string.manage_ssids_vpn),
+                icon = Icons.Default.VpnKey,
+                checked = vpn,
+                onClicked = { onSetVpn(it) },
+            )
+        }
+
         item("ethernet") {
             Column {
                 Spacer(Modifier.height(16.dp))
@@ -204,15 +213,6 @@ fun SsidView(
                     onClicked = { onSetEthernet(it) },
                 )
             }
-        }
-
-        item("vpn") {
-            SsidSubheader(
-                title = stringResource(commonR.string.manage_ssids_vpn),
-                icon = Icons.Default.VpnKey,
-                checked = vpn,
-                onClicked = { onSetVpn(it) },
-            )
         }
 
         if (wifiSsids.isNotEmpty() || ethernet == true || vpn == true) {
