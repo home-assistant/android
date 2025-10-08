@@ -16,44 +16,7 @@ import javax.inject.Singleton
  * and provides fallback logic using [NetworkInfo] for older devices (pre-Marshmallow/API < 23).
  */
 @Singleton
-class NetworkCapabilitiesChecker @Inject constructor(private val connectivityManager: ConnectivityManager) {
-
-    /**
-     * Checks if the device is connected via Ethernet.
-     *
-     * For Android M (API 23) and above, iterates through all networks and checks if any
-     * has an Ethernet transport. For older versions, checks if the Ethernet network is connected.
-     *
-     * @return `true` if connected via Ethernet, `false` otherwise
-     */
-    fun hasEthernetConnection(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            connectivityManager.allNetworks.any {
-                connectivityManager.getNetworkCapabilities(it)
-                    ?.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) == true
-            }
-        } else {
-            connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET)?.isConnected == true
-        }
-    }
-
-    /**
-     * Checks if the device is connected via VPN.
-     *
-     * For Android M (API 23) and above, iterates through all networks and checks if any
-     * has a VPN transport. For older versions, checks if the VPN network is connected.
-     *
-     * @return `true` if connected via VPN, `false` otherwise
-     */
-    fun hasVPNConnection(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            connectivityManager.allNetworks.any {
-                connectivityManager.getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
-            }
-        } else {
-            connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_VPN)?.isConnected == true
-        }
-    }
+internal class NetworkCapabilitiesChecker @Inject constructor(private val connectivityManager: ConnectivityManager) {
 
     /**
      * Checks if the active network has the specified capability.

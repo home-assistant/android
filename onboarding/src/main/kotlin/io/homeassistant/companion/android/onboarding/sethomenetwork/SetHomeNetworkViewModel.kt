@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.common.data.network.NetworkCapabilitiesChecker
+import io.homeassistant.companion.android.common.data.network.NetworkHelper
 import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.SetHomeNetworkRoute
@@ -20,20 +20,20 @@ import timber.log.Timber
 class SetHomeNetworkViewModel @VisibleForTesting constructor(
     private val serverId: Int,
     private val serverManager: ServerManager,
-    networkCapabilitiesChecker: NetworkCapabilitiesChecker,
+    networkHelper: NetworkHelper,
     wifiHelper: WifiHelper,
 ) : ViewModel() {
 
     @Inject
     constructor(
-        networkCapabilitiesChecker: NetworkCapabilitiesChecker,
+        networkHelper: NetworkHelper,
         savedStateHandle: SavedStateHandle,
         serverManager: ServerManager,
         wifiHelper: WifiHelper,
     ) : this(
         serverId = savedStateHandle.toRoute<SetHomeNetworkRoute>().serverId,
         serverManager,
-        networkCapabilitiesChecker,
+        networkHelper,
         wifiHelper,
     )
 
@@ -45,8 +45,8 @@ class SetHomeNetworkViewModel @VisibleForTesting constructor(
         MutableStateFlow(wifiHelper.getWifiSsid()?.removeSurrounding("\"") ?: "")
     val currentWifiNetwork = _currentWifiNetwork.asStateFlow()
 
-    val hasEthernetConnection: Boolean = networkCapabilitiesChecker.hasEthernetConnection()
-    val hasVPNConnection: Boolean = networkCapabilitiesChecker.hasVPNConnection()
+    val hasEthernetConnection: Boolean = networkHelper.isUsingEthernet()
+    val hasVPNConnection: Boolean = networkHelper.isUsingVpn()
 
     private val _isUsingEthernet = MutableStateFlow(hasEthernetConnection)
     val isUsingEthernet = _isUsingEthernet.asStateFlow()
