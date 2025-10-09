@@ -200,24 +200,20 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     private suspend fun buildAuthUrl(base: String) {
         Timber.d("Building auth url based on $base")
         try {
-            val url = base.toHttpUrl()
-            val builder = if (url.host.endsWith("ui.nabu.casa", true)) {
+            val authUrl = with(base.toHttpUrl()) {
                 HttpUrl.Builder()
-                    .scheme(url.scheme)
-                    .host(url.host)
-                    .port(url.port)
-            } else {
-                url.newBuilder()
-            }
-            _urlFlow.emit(
-                builder
+                    .scheme(scheme)
+                    .host(host)
+                    .port(port)
                     .addPathSegments("auth/authorize")
                     .addEncodedQueryParameter("response_type", "code")
                     .addEncodedQueryParameter("client_id", AuthenticationService.CLIENT_ID)
                     .addEncodedQueryParameter("redirect_uri", AUTH_CALLBACK)
                     .build()
-                    .toString(),
-            )
+                    .toString()
+            }
+            Timber.d("Auth url is: $authUrl")
+            _urlFlow.emit(authUrl)
         } catch (e: Exception) {
             Timber.e(e, "Unable to build authentication URL")
             onError(ConnectionNavigationEvent.Error(R.string.connection_screen_malformed_url))
