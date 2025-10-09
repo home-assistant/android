@@ -36,7 +36,6 @@ internal fun NavController.navigateToServerDiscovery(
 }
 
 internal fun NavGraphBuilder.serverDiscoveryScreen(
-    canGoBack: () -> Boolean,
     onConnectClick: (server: URL) -> Unit,
     onBackClick: () -> Unit,
     onHelpClick: () -> Unit,
@@ -44,7 +43,6 @@ internal fun NavGraphBuilder.serverDiscoveryScreen(
 ) {
     composable<ServerDiscoveryRoute> {
         ServerDiscoveryScreen(
-            canGoBack = canGoBack(),
             onConnectClick = onConnectClick,
             onBackClick = onBackClick,
             onHelpClick = onHelpClick,

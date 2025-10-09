@@ -59,15 +59,6 @@ class ServerDiscoveryScreenTest {
     }
 
     @Test
-    fun `Given Started state when server discovery is displayed but cannot go back then navigateUp is hidden`() {
-        composeTestRule.apply {
-            testScreen(Started, canGoBack = false) {
-                onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).assertIsNotDisplayed()
-            }
-        }
-    }
-
-    @Test
     fun `Given NoServerFound state when server discovery is displayed then show loading and handle clicks`() {
         composeTestRule.apply {
             testScreen(NoServerFound) {
@@ -124,11 +115,10 @@ class ServerDiscoveryScreenTest {
         var connectClickedWithUrl: URL? = null
     }
 
-    private fun AndroidComposeTestRule<*, *>.testScreen(state: DiscoveryState, canGoBack: Boolean = true, dsl: TestHelper.() -> Unit = {}) {
+    private fun AndroidComposeTestRule<*, *>.testScreen(state: DiscoveryState, dsl: TestHelper.() -> Unit = {}) {
         TestHelper().apply {
             setContent {
                 ServerDiscoveryScreen(
-                    canGoBack = canGoBack,
                     discoveryState = state,
                     onBackClick = { backClicked = true },
                     onConnectClick = { connectClickedWithUrl = it },
@@ -145,10 +135,8 @@ class ServerDiscoveryScreenTest {
             onNodeWithText(stringResource(commonR.string.manual_setup)).performScrollTo().assertIsDisplayed().performClick()
             assertTrue(manualSetupClicked)
 
-            if (canGoBack) {
-                onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).assertIsDisplayed().performClick()
-                assertTrue(backClicked)
-            }
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).assertIsDisplayed().performClick()
+            assertTrue(backClicked)
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).assertIsDisplayed().performClick()
             assertTrue(helpClicked)

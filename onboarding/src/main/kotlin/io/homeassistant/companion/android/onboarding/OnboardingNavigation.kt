@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding
 
+import android.app.Activity
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.compose.ui.util.fastAny
@@ -219,13 +220,21 @@ private fun NavGraphBuilder.commonScreens(
         onConnectClick = {
             navController.navigateToConnection(it.toString())
         },
-        onBackClick = navController::popBackStack,
+        onBackClick = {
+            if (navController.canGoBack()) {
+                navController.popBackStack()
+            } else {
+                // This should only happens when we open the onboarding from the settings.
+                // Once we have a navigation graph for the whole app this could be dropped.
+                // For more context see: https://github.com/home-assistant/android/pull/5897#pullrequestreview-3316313923
+                (navController.context as? Activity)?.finish()
+            }
+        },
         onManualSetupClick = navController::navigateToManualServer,
         onHelpClick = {
             // TODO validate the URL to use
             navController.navigateToUri("https://www.home-assistant.io/installation/")
         },
-        canGoBack = navController::canGoBack,
     )
     manualServerScreen(
         onBackClick = navController::popBackStack,

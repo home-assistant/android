@@ -15,7 +15,6 @@ class ServerDiscoveryScreenshotTest {
     fun `ServerDiscoveryScreen scanning`() {
         HAThemeForPreview {
             ServerDiscoveryScreen(
-                canGoBack = true,
                 discoveryState = Started,
                 onConnectClick = {},
                 onManualSetupClick = {},
@@ -32,7 +31,6 @@ class ServerDiscoveryScreenshotTest {
     fun `ServerDiscoveryScreen no server found`() {
         HAThemeForPreview {
             ServerDiscoveryScreen(
-                canGoBack = false,
                 discoveryState = NoServerFound,
                 onConnectClick = {},
                 onManualSetupClick = {},
@@ -49,7 +47,6 @@ class ServerDiscoveryScreenshotTest {
     fun `ServerDiscoveryScreen with one server found`() {
         HAThemeForPreview {
             ServerDiscoveryScreen(
-                canGoBack = true,
                 discoveryState = ServerDiscovered(
                     "hello",
                     URL("http://my.homeassistant.io"),
@@ -70,7 +67,6 @@ class ServerDiscoveryScreenshotTest {
     fun `ServerDiscoveryScreen with multiple servers found`() {
         HAThemeForPreview {
             ServerDiscoveryScreen(
-                canGoBack = true,
                 discoveryState = ServersDiscovered(
                     listOf(
                         ServerDiscovered(
