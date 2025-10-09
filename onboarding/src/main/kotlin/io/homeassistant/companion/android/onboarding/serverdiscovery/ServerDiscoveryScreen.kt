@@ -46,7 +46,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -159,16 +158,13 @@ private fun OneServerFound(
     // the animation is not played correctly.
     var serverDiscoveredCached by remember { mutableStateOf(discoveryState as? ServerDiscovered) }
 
-    val coroutineScope = rememberCoroutineScope()
-
-    LaunchedEffect(discoveryState) {
-        if (discoveryState is ServerDiscovered) {
-            serverDiscoveredCached = discoveryState
-        } else {
-            bottomSheetState.hide()
-            serverDiscoveredCached = null
-        }
+    // If we get the ServerDiscovered we display the modal and we keep it even if the state change so that
+    // the user is in control of it.
+    if (discoveryState is ServerDiscovered) {
+        serverDiscoveredCached = discoveryState
     }
+
+    val coroutineScope = rememberCoroutineScope()
 
     serverDiscoveredCached?.let { serverDiscovered ->
         HAModalBottomSheet(

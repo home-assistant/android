@@ -49,16 +49,20 @@ private class ServerDiscoveryViewModelTest {
     }
 
     @Test
-    fun `Given view model created then discoveryFlow initially holds Started`() = runTest {
+    fun `Given view model created then discoveryFlow emits Started after DELAY_BEFORE_DISPLAY_DISCOVERY`() = runTest {
         createViewModel()
-        assertEquals(Started, viewModel.discoveryFlow.value)
+        viewModel.discoveryFlow.test {
+            expectNoEvents()
+            advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY)
+            assertEquals(Started, awaitItem())
+        }
     }
 
     @Test
-    fun `Given ADD_EXISTING mode with existing servers when view model created then discoveryFlow initially holds existing servers`() = runTest {
+    fun `Given ADD_EXISTING mode with existing servers when view model created then discoveryFlow emits existing servers after delay`() = runTest {
         val server0 = mockServer("http://ha", haVersion = null, name = "server0")
-        val server1 = mockServer("http://ha", name = "server1")
-        val server2 = mockServer("http://ha", name = "server2")
+        val server1 = mockServer("http://ha1.local:8123", name = "server1")
+        val server2 = mockServer("http://ha2.local:8123", name = "server2")
         val server3 = mockServer(null, name = "server3")
 
         every { serverManager.defaultServers } returns listOf(
@@ -68,23 +72,37 @@ private class ServerDiscoveryViewModelTest {
             server3,
         )
         createViewModel(ServerDiscoveryMode.ADD_EXISTING)
-        assertEquals(
-            ServersDiscovered(
-                listOf(
-                    ServerDiscovered(server1.friendlyName, URL("http://ha"), testHAVersion),
-                    ServerDiscovered(server2.friendlyName, URL("http://ha"), testHAVersion),
+
+        viewModel.discoveryFlow.test {
+            expectNoEvents()
+            advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY)
+            runCurrent()
+
+            val discoveredState = awaitItem()
+            assertEquals(
+                ServersDiscovered(
+                    listOf(
+                        ServerDiscovered(server1.friendlyName, URL("http://ha1.local:8123"), testHAVersion),
+                        ServerDiscovered(server2.friendlyName, URL("http://ha2.local:8123"), testHAVersion),
+                    ),
                 ),
-            ),
-            viewModel.discoveryFlow.value,
-        )
+                discoveredState,
+            )
+        }
     }
 
     @Test
-    fun `Given ADD_EXISTING mode with no servers when view model created then discoveryFlow initially holds Started`() = runTest {
+    fun `Given ADD_EXISTING mode with no servers when view model created then discoveryFlow emits Started after delay`() = runTest {
         every { serverManager.defaultServers } returns emptyList()
 
         createViewModel(ServerDiscoveryMode.ADD_EXISTING)
-        assertEquals(Started, viewModel.discoveryFlow.value)
+
+        viewModel.discoveryFlow.test {
+            expectNoEvents()
+            advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY)
+            runCurrent()
+            assertEquals(Started, awaitItem())
+        }
     }
 
     @Test
@@ -95,25 +113,6 @@ private class ServerDiscoveryViewModelTest {
             assertEquals(Started, awaitItem())
             advanceTimeBy(TIMEOUT_NO_SERVER_FOUND)
             assertEquals(NoServerFound, awaitItem())
-        }
-    }
-
-    @Test
-    fun `Given one server discovered before DELAY_BEFORE_DISPLAY_DISCOVERY when collecting from discoveryFlow then discoveryFlow emits Started then ServerDiscovered after DELAY_BEFORE_DISPLAY_DISCOVERY`() = runTest {
-        createViewModel()
-        val instance = HomeAssistantInstance("Server 1", URL("http://server1.local:8123"), testHAVersion)
-
-        viewModel.discoveryFlow.test {
-            discoveredInstanceFlow.emit(instance)
-            assertEquals(Started, expectMostRecentItem()) // ServerDiscovered is delayed
-            advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY)
-            runCurrent()
-            val discoveredState = expectMostRecentItem()
-            assertTrue(discoveredState is ServerDiscovered)
-
-            advanceTimeBy(DELAY_AFTER_FIRST_DISCOVERY)
-            runCurrent()
-            expectNoEvents()
         }
     }
 
@@ -135,15 +134,41 @@ private class ServerDiscoveryViewModelTest {
             val discoveredState = awaitItem()
             assertTrue(discoveredState is ServerDiscovered)
             assertEquals(instance.name, (discoveredState as ServerDiscovered).name)
-
-            advanceTimeBy(DELAY_AFTER_FIRST_DISCOVERY)
             runCurrent()
             expectNoEvents()
         }
     }
 
     @Test
-    fun `Given multiple servers discovered when collecting from discoveryFlow then discoveryFlow emits Started then ServerDiscovered then ServersDiscovered after DELAY_AFTER_FIRST_DISCOVERY`() = runTest {
+    fun `Given multiple servers discovered before delay when collecting from discoveryFlow then discoveryFlow emits only ServersDiscovered after delay`() = runTest {
+        createViewModel()
+        val instance1 = HomeAssistantInstance("Server 1", URL("http://server1.local:8123"), testHAVersion)
+        val instance2 = HomeAssistantInstance("Server 2", URL("http://server2.local:8123"), testHAVersion)
+
+        viewModel.discoveryFlow.test {
+            // Both instances discovered before delay
+            discoveredInstanceFlow.emit(instance1)
+            runCurrent()
+            discoveredInstanceFlow.emit(instance2)
+            runCurrent()
+
+            // delayFirstThrottle only emits the latest state after delay
+            expectNoEvents()
+            advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY)
+            runCurrent()
+
+            val discoveredState = awaitItem()
+            assertTrue(discoveredState is ServersDiscovered)
+            assertEquals(2, (discoveredState as ServersDiscovered).servers.size)
+            assertEquals(instance1.name, discoveredState.servers[0].name)
+            assertEquals(instance2.name, discoveredState.servers[1].name)
+
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given servers discovered after delay when collecting from discoveryFlow then discoveryFlow emits Started then ServerDiscovered then ServersDiscovered`() = runTest {
         createViewModel()
         val instance1 = HomeAssistantInstance("Server 1", URL("http://server1.local:8123"), testHAVersion)
         val instance2 = HomeAssistantInstance("Server 2", URL("http://server2.local:8123"), testHAVersion)
@@ -151,17 +176,17 @@ private class ServerDiscoveryViewModelTest {
         viewModel.discoveryFlow.test {
             assertEquals(Started, awaitItem())
 
+            // First instance discovered after delay
             discoveredInstanceFlow.emit(instance1)
-            runCurrent()
-
-            discoveredInstanceFlow.emit(instance2)
             runCurrent()
 
             val firstDiscoveredState = awaitItem()
             assertTrue(firstDiscoveredState is ServerDiscovered)
             assertEquals(instance1.name, (firstDiscoveredState as ServerDiscovered).name)
+            runCurrent()
 
-            advanceTimeBy(DELAY_AFTER_FIRST_DISCOVERY)
+            // Second instance discovered well after the first
+            discoveredInstanceFlow.emit(instance2)
             runCurrent()
 
             val secondDiscoveredState = awaitItem()
@@ -189,8 +214,6 @@ private class ServerDiscoveryViewModelTest {
 
             // First item
             awaitItem()
-
-            advanceTimeBy(DELAY_AFTER_FIRST_DISCOVERY)
             runCurrent()
 
             // All the servers
@@ -261,6 +284,7 @@ private class ServerDiscoveryViewModelTest {
         val differentPortInstance = HomeAssistantInstance("Server 8124", URL(existingServerUrl.replace("8123", "8124")), testHAVersion)
 
         viewModel.discoveryFlow.test {
+            advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY)
             assertEquals(Started, awaitItem())
 
             discoveredInstanceFlow.emit(matchingInstance)
@@ -276,7 +300,6 @@ private class ServerDiscoveryViewModelTest {
             runCurrent()
 
             awaitItem()
-            advanceTimeBy(DELAY_AFTER_FIRST_DISCOVERY)
             awaitItem()
             // Only the different instances should appear
             val discoveredState = awaitItem()
