@@ -143,8 +143,6 @@ private fun WearMTLSContent(
 
         Header()
 
-        Spacer(modifier = Modifier.weight(1f))
-
         CertPicker(
             selectedFileName = selectedFilename,
             onSelectFileClicked = {
