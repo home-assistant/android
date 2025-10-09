@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.wear
 
-import android.annotation.SuppressLint
 import android.app.Application
 import androidx.annotation.StringRes
 import androidx.annotation.VisibleForTesting
