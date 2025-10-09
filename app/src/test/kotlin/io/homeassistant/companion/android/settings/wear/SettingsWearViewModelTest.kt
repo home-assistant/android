@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.wear
 
+import android.app.Application
 import app.cash.turbine.turbineScope
 import com.google.android.gms.wearable.Node
 import io.homeassistant.companion.android.common.R as commonR
@@ -7,20 +8,19 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.fakes.FakeCapabilityClient
 import io.homeassistant.companion.android.fakes.FakeNodeClient
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import timber.log.Timber
 
-@RunWith(RobolectricTestRunner::class)
+private const val CAPABILITY_WEAR_APP = "verify_wear_app"
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsWearViewModelTest {
 
@@ -30,30 +30,33 @@ class SettingsWearViewModelTest {
     private lateinit var nodeClient: FakeNodeClient
     private lateinit var capabilityClient: FakeCapabilityClient
 
-    @Before
+    @BeforeEach
     fun setup() {
         Timber.plant(ConsoleLogTree)
         ConsoleLogTree.verbose = true
-        val context = RuntimeEnvironment.getApplication()
-        capabilityClient = FakeCapabilityClient(context)
+        val application = mockk<Application> {
+            every { applicationContext } returns this
+            every { packageManager } returns mockk()
+        }
+        capabilityClient = FakeCapabilityClient(application)
         capabilityClient.capabilities[CAPABILITY_WEAR_APP] = setOf("1234")
-        nodeClient = FakeNodeClient(context)
+        nodeClient = FakeNodeClient(application)
         nodeClient.setNodes(listOf("1234"))
-        viewModel = SettingsWearViewModel(serverManager, context)
+        viewModel = SettingsWearViewModel(serverManager, application)
     }
 
     @Test
-    fun `given viewModelInitialized when collecting wearNodesWithApp then emits emptySet`() {
+    fun `Given viewModel initialized when collecting wearNodesWithApp then emits empty set`() {
         assertEquals(emptySet<Node>(), viewModel.wearNodesWithApp.value)
     }
 
     @Test
-    fun `given viewModelInitialized when collecting allConnectedNodes then emits emptyList`() {
+    fun `Given viewModel initialized when collecting allConnectedNodes then emits empty list`() {
         assertEquals(emptyList<Node>(), viewModel.allConnectedNodes.value)
     }
 
     @Test
-    fun `Given when the view model is initialized, when settingsWearOnboardingViewUiState is created, ensure the initial state is correct`() = runTest {
+    fun `Given viewModel initialized when collecting settingsWearOnboardingViewUiState then initial state is correct`() = runTest {
         turbineScope {
             val uiState = viewModel.settingsWearOnboardingViewUiState.testIn(backgroundScope)
             // Initial State, This is from a combined flow
@@ -65,8 +68,8 @@ class SettingsWearViewModelTest {
     }
 
     @Test
-    fun `Given wear nodes with the companion app are present, when findAllWearDevicesWithApp() is called, then ensure wearNodesWithApp flow is updated with those nodes`() = runTest {
-        capabilityClient.setNodes(CAPABILITY_WEAR_APP, setOf("1234"))
+    fun `Given wear nodes with app present when findWearDevicesWithApp called then wearNodesWithApp flow emits these nodes`() = runTest {
+        capabilityClient.setNodes(CAPABILITY_WEAR_APP, setOf("1234", "567"))
 
         val expectedNodes = capabilityClient.nodes[CAPABILITY_WEAR_APP]
         viewModel.findWearDevicesWithApp(capabilityClient)
@@ -75,15 +78,19 @@ class SettingsWearViewModelTest {
     }
 
     @Test
-    fun `Given wear nodes are present, when findAllWearDevices() is called, then ensure allConnectedNodes flow is updated with those nodes`() = runTest {
+    fun `Given wear nodes present when findAllWearDevices called then allConnectedNodes flow emits these nodes`() = runTest {
+        nodeClient.setNodes(listOf("1", "2", "3"))
+
         val expectedNodes: List<Node?>? = nodeClient.connectedNodes.result
+        // Verify that the test is properly setup
+        assertEquals(3, expectedNodes?.size)
         viewModel.findAllWearDevices(nodeClient)
 
         assertEquals(expectedNodes, viewModel.allConnectedNodes.value)
     }
 
     @Test
-    fun `Given wear nodes are present without the companion app installed, when findAllWearDevices() is called, then ensure UI State Flow infoTextResourceId is updated to message_missing_all`() = runTest {
+    fun `Given wear nodes without app when findAllWearDevices called then UI state shows message_missing_all`() = runTest {
         turbineScope {
             val uiState = viewModel.settingsWearOnboardingViewUiState.testIn(backgroundScope)
             viewModel.findAllWearDevices(nodeClient)
@@ -99,7 +106,7 @@ class SettingsWearViewModelTest {
     }
 
     @Test
-    fun `Given all wear nodes have the companion app installed when findAllWearDevices() & findWearDevicesWithApp() are called then installedOnDevices is true`() = runTest {
+    fun `Given all wear nodes have app installed when findAllWearDevices and findWearDevicesWithApp called then installedOnDevices is true`() = runTest {
         turbineScope {
             val uiState = viewModel.settingsWearOnboardingViewUiState.testIn(backgroundScope)
             viewModel.findAllWearDevices(nodeClient)
@@ -110,7 +117,7 @@ class SettingsWearViewModelTest {
     }
 
     @Test
-    fun `Given some wear nodes have the companion app installed when findAllWearDevices() & findWearDevicesWithApp() are called then installedOnDevices is true`() = runTest {
+    fun `Given some wear nodes have app installed when findAllWearDevices and findWearDevicesWithApp called then installedOnDevices is true`() = runTest {
         turbineScope {
             val uiState = viewModel.settingsWearOnboardingViewUiState.testIn(backgroundScope)
             nodeClient.setNodes(listOf("123", "1234"))
@@ -127,9 +134,5 @@ class SettingsWearViewModelTest {
             val newState = uiState.expectMostRecentItem()
             assertTrue(newState.installedOnDevices)
         }
-    }
-
-    companion object {
-        private const val CAPABILITY_WEAR_APP = "verify_wear_app"
     }
 }
