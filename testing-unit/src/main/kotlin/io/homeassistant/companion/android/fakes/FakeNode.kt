@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.fakes
 
 import com.google.android.gms.wearable.Node
 
-class FakeNode(
+data class FakeNode(
     @JvmField
     val displayName: String,
     @JvmField

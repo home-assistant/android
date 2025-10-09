@@ -69,9 +69,9 @@ class SettingsWearViewModelTest {
 
     @Test
     fun `Given wear nodes with app present when findWearDevicesWithApp called then wearNodesWithApp flow emits these nodes`() = runTest {
-        capabilityClient.setNodes(CAPABILITY_WEAR_APP, setOf("1234", "567"))
+        capabilityClient.capabilities[CAPABILITY_WEAR_APP] = setOf("1234", "567")
 
-        val expectedNodes = capabilityClient.nodes[CAPABILITY_WEAR_APP]
+        val expectedNodes = capabilityClient.getNodes(CAPABILITY_WEAR_APP)
         viewModel.findWearDevicesWithApp(capabilityClient)
 
         assertEquals(expectedNodes, viewModel.wearNodesWithApp.value)
@@ -126,8 +126,8 @@ class SettingsWearViewModelTest {
             val expectedNodesWithoutApp = nodeClient.connectedNodes.result
             assertEquals(expectedNodesWithoutApp, viewModel.allConnectedNodes.value)
 
-            capabilityClient.setNodes(CAPABILITY_WEAR_APP, setOf("1234"))
-            val expectedNodesWithApp = capabilityClient.nodes[CAPABILITY_WEAR_APP]
+            capabilityClient.capabilities[CAPABILITY_WEAR_APP] = setOf("1234")
+            val expectedNodesWithApp = capabilityClient.getNodes(CAPABILITY_WEAR_APP)
             viewModel.findWearDevicesWithApp(capabilityClient)
             assertEquals(expectedNodesWithApp, viewModel.wearNodesWithApp.value)
 

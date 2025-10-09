@@ -10,7 +10,7 @@ class FakeNodeClient(context: Context) : NodeClient(context, Settings.Builder().
     private var nodes = emptyList<FakeNode>()
 
     fun setNodes(nodes: List<String>) {
-        this.nodes = nodes.mapTo(mutableListOf(), { FakeNode(it, it, true) })
+        this.nodes = nodes.mapTo(mutableListOf()) { FakeNode(it, it, true) }
     }
 
     override fun getCompanionPackageForNode(p0: String): Task<String?> {
