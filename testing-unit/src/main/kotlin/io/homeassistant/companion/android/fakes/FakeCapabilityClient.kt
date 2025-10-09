@@ -9,6 +9,10 @@ import com.google.android.gms.wearable.CapabilityInfo
 class FakeCapabilityClient(context: Context) : CapabilityClient(context, Settings.Builder().build()) {
     val capabilities: MutableMap<String, Set<String>> = mutableMapOf()
 
+    fun getNodes(capability: String): Set<FakeNode> {
+        return capabilities[capability].orEmpty().mapTo(mutableSetOf()) { FakeNode(it, it, true) }
+    }
+
     override fun addListener(listener: OnCapabilityChangedListener, capability: String): Task<Void?> {
         TODO("Not yet implemented")
     }
@@ -26,9 +30,14 @@ class FakeCapabilityClient(context: Context) : CapabilityClient(context, Setting
     }
 
     override fun getCapability(capability: String, nodeFilter: Int): Task<CapabilityInfo?> {
-        val nodes = capabilities[capability].orEmpty()
-
-        return FakeTask(Result.success(FakeCapabilityInfo(capability, nodes.mapTo(mutableSetOf()) { FakeNode(it, it, true) })))
+        return FakeTask(
+            Result.success(
+                FakeCapabilityInfo(
+                    capability,
+                    getNodes(capability),
+                ),
+            ),
+        )
     }
 
     override fun removeListener(listener: OnCapabilityChangedListener): Task<Boolean?> {
