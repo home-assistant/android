@@ -80,6 +80,24 @@ class ConnectionViewModelTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = ["http://homeassistant.local:8123", "https://cloud.ui.nabu.casa"])
+    fun `Given a valid http url with suffix when buildAuthUrl then urlFlow emits correct auth url with path stripped`(baseUrl: String) = runTest {
+        val suffix = "/hello?query=param&isHA=true#segment"
+        val viewModel = ConnectionViewModel("$baseUrl$suffix", keyChainRepository)
+
+        turbineScope {
+            val urlFlow = viewModel.urlFlow.testIn(backgroundScope)
+
+            assertEquals(null, urlFlow.awaitItem())
+
+            val expectedAuthUrl = "$baseUrl/auth/authorize?response_type=code&client_id=${AuthenticationService.CLIENT_ID}&redirect_uri=homeassistant://auth-callback"
+            advanceUntilIdle()
+
+            assertEquals(expectedAuthUrl, urlFlow.awaitItem())
+        }
+    }
+
     @Test
     fun `Given a malformed url when buildAuthUrl then navigationEventsFlow emits malformed url error`() = runTest {
         val malformedUrl = "not_a_url"
