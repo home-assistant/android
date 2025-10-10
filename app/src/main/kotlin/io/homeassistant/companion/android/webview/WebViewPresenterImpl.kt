@@ -142,6 +142,7 @@ class WebViewPresenterImpl @Inject constructor(
                         .toString(),
                     keepHistory = oldUrlForServer == urlForServer,
                     openInApp = url?.baseIsEqual(baseUrl) ?: false,
+                    serverHandleInsets = server?.version?.isAtLeast(2025, 10) == true,
                 )
             }
         }

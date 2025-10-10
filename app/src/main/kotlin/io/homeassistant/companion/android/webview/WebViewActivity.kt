@@ -20,6 +20,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
+import android.util.DisplayMetrics
 import android.util.Rational
 import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
@@ -47,13 +48,22 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.getSystemService
@@ -88,6 +98,7 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.common.util.applyInsets
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
@@ -248,6 +259,20 @@ class WebViewActivity :
     private var downloadFileContentDisposition = ""
     private var downloadFileMimetype = ""
     private val javascriptInterface = "externalApp"
+    private var serverHandleInsets = mutableStateOf(false)
+
+    private data class InsetsContext(
+        val windowInsets: WindowInsets,
+        val density: Density,
+        val displayMetrics: DisplayMetrics,
+        val layoutDirection: LayoutDirection,
+    ) {
+        fun applyInsets(webView: WebView) {
+            webView.applyInsets(windowInsets, density, displayMetrics, layoutDirection)
+        }
+    }
+
+    private var insetsContext: InsetsContext? = null
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -295,7 +320,15 @@ class WebViewActivity :
             val customViewFromWebView by remember { customViewFromWebView }
             val statusBarColor by remember { statusBarColor }
             val backgroundColor by remember { backgroundColor }
+            val serverHandleInsets by remember { serverHandleInsets }
             var nightModeTheme by remember { mutableStateOf<NightModeTheme?>(null) }
+
+            insetsContext = InsetsContext(
+                windowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout),
+                density = LocalDensity.current,
+                displayMetrics = LocalResources.current.displayMetrics,
+                layoutDirection = LocalLayoutDirection.current,
+            )
 
             LaunchedEffect(Unit) {
                 nightModeTheme = nightModeManager.getCurrentNightMode()
@@ -309,6 +342,7 @@ class WebViewActivity :
                 playerLeft = playerLeft,
                 currentAppLocked,
                 customViewFromWebView,
+                serverHandleInsets = serverHandleInsets,
                 nightModeTheme = nightModeTheme,
                 statusBarColor = statusBarColor,
                 backgroundColor = backgroundColor,
@@ -381,6 +415,11 @@ class WebViewActivity :
                         webView.clearHistory()
                         clearHistory = false
                     }
+
+                    if (serverHandleInsets.value) {
+                        insetsContext?.applyInsets(webView)
+                    }
+
                     setWebViewZoom()
                     if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
                         ioScope.launch {
@@ -1333,7 +1372,8 @@ class WebViewActivity :
         finish()
     }
 
-    override fun loadUrl(url: String, keepHistory: Boolean, openInApp: Boolean) {
+    override fun loadUrl(url: String, keepHistory: Boolean, openInApp: Boolean, serverHandleInsets: Boolean) {
+        this.serverHandleInsets.value = serverHandleInsets
         if (openInApp) {
             loadedUrl = url
             clearHistory = !keepHistory
@@ -1354,7 +1394,7 @@ class WebViewActivity :
         if (statusBarColor != 0) {
             this.statusBarColor.value = Color(statusBarColor)
         } else {
-            Timber.e("Cannot set status bar color. Skipping coloring...")
+            Timber.e("Skipping coloring status bar...")
         }
         if (backgroundColor != 0) {
             this.backgroundColor.value = Color(backgroundColor)
@@ -1518,7 +1558,7 @@ class WebViewActivity :
                         }
                         failedConnection = if (buttonRefreshesInternal) "internal" else "external"
                         if (url != null) {
-                            loadUrl(url = url, keepHistory = true, openInApp = true)
+                            loadUrl(url = url, keepHistory = true, openInApp = true, serverHandleInsets.value)
                         } else {
                             waitForConnection()
                         }
@@ -1792,7 +1832,7 @@ class WebViewActivity :
                     viewport['content'] = elements.join(',');
                 } else {
                     viewport['content'] = original_elements;
-                }           
+                }
             }
             """,
         ) {}
@@ -1894,7 +1934,7 @@ class WebViewActivity :
                                 .toString()
                         }
                         if (url != null) {
-                            loadUrl(url = url, keepHistory = true, openInApp = true)
+                            loadUrl(url = url, keepHistory = true, openInApp = true, serverHandleInsets.value)
                         }
                     }
                 }
