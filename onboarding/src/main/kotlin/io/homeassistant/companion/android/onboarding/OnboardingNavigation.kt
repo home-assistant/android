@@ -128,7 +128,7 @@ internal fun NavGraphBuilder.onboarding(
                     navOptions {
                         // We don't want to come back to name your device once the device
                         // is named since the auth_code has already been used.
-                        popUpTo<WelcomeRoute> {
+                        popUpTo(startDestination) {
                             inclusive = true
                         }
                     },
