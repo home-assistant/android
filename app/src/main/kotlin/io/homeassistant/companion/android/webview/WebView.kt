@@ -16,7 +16,7 @@ interface WebView {
         TIMEOUT_EXTERNAL_BUS,
     }
 
-    fun loadUrl(url: String, keepHistory: Boolean, openInApp: Boolean)
+    fun loadUrl(url: String, keepHistory: Boolean, openInApp: Boolean, serverHandleInsets: Boolean)
 
     fun setStatusBarAndBackgroundColor(statusBarColor: Int, backgroundColor: Int)
 

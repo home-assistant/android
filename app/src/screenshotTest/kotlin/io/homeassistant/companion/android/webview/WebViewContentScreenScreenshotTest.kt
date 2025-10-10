@@ -21,7 +21,26 @@ class WebViewContentScreenScreenshotTest {
             playerLeft = 0.dp,
             currentAppLocked = false,
             customViewFromWebView = null,
-        ) { }
+            onFullscreenClicked = { },
+            serverHandleInsets = false,
+        )
+    }
+
+    @PreviewTest
+    @Preview
+    @Composable
+    fun `WebView with app unlocked server handle insets`() {
+        WebViewContentScreen(
+            webView = null,
+            player = null,
+            playerSize = null,
+            playerTop = 0.dp,
+            playerLeft = 0.dp,
+            currentAppLocked = false,
+            customViewFromWebView = null,
+            onFullscreenClicked = { },
+            serverHandleInsets = true,
+        )
     }
 
     @PreviewTest
@@ -36,7 +55,9 @@ class WebViewContentScreenScreenshotTest {
             playerLeft = 0.dp,
             currentAppLocked = true,
             customViewFromWebView = null,
-        ) { }
+            onFullscreenClicked = { },
+            serverHandleInsets = false,
+        )
     }
 
     @PreviewTest
@@ -51,6 +72,8 @@ class WebViewContentScreenScreenshotTest {
             playerLeft = 10.dp,
             currentAppLocked = false,
             customViewFromWebView = null,
-        ) { }
+            onFullscreenClicked = { },
+            serverHandleInsets = false,
+        )
     }
 }

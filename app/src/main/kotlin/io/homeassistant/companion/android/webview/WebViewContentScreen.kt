@@ -51,6 +51,7 @@ internal fun WebViewContentScreen(
     playerLeft: Dp,
     currentAppLocked: Boolean,
     customViewFromWebView: View?,
+    serverHandleInsets: Boolean,
     nightModeTheme: NightModeTheme? = null,
     statusBarColor: Color? = null,
     backgroundColor: Color? = null,
@@ -62,7 +63,14 @@ internal fun WebViewContentScreen(
                 .fillMaxSize()
                 .background(colorResource(commonR.color.colorLaunchScreenBackground)),
         ) {
-            SafeHAWebView(webView, nightModeTheme, currentAppLocked, statusBarColor, backgroundColor)
+            SafeHAWebView(
+                webView,
+                nightModeTheme,
+                currentAppLocked,
+                statusBarColor,
+                backgroundColor,
+                serverHandleInsets,
+            )
 
             player?.let { player ->
                 playerSize?.let { playerSize ->
@@ -98,6 +106,7 @@ private fun SafeHAWebView(
     currentAppLocked: Boolean,
     statusBarColor: Color?,
     backgroundColor: Color?,
+    serverHandleInsets: Boolean,
 ) {
     // We add colored small spacer all around the WebView based on the `safeDrawing` insets.
     // TODO This should be disable when the frontend supports edge to edge
@@ -107,7 +116,7 @@ private fun SafeHAWebView(
     val insetsPaddingValues = insets.asPaddingValues()
 
     Column(modifier = if (currentAppLocked) Modifier.hazeEffect(style = HazeMaterials.thin()) else Modifier) {
-        statusBarColor?.Overlay(
+        statusBarColor?.takeIf { !serverHandleInsets }?.Overlay(
             modifier = Modifier
                 .height(insetsPaddingValues.calculateTopPadding())
                 .fillMaxWidth()
@@ -117,7 +126,7 @@ private fun SafeHAWebView(
         // The height is based on whatever is left between the statusBar and navigationBar
         Row(modifier = Modifier.weight(1f)) {
             // Left safe area
-            backgroundColor?.Overlay(
+            backgroundColor?.takeIf { !serverHandleInsets }?.Overlay(
                 modifier = Modifier
                     .fillMaxHeight()
                     .width(insetsPaddingValues.calculateLeftPadding(LayoutDirection.Ltr)),
@@ -132,13 +141,13 @@ private fun SafeHAWebView(
                     .background(Color.Transparent),
             )
             // Right safe area
-            backgroundColor?.Overlay(
+            backgroundColor?.takeIf { !serverHandleInsets }?.Overlay(
                 modifier = Modifier
                     .fillMaxHeight()
                     .width(insetsPaddingValues.calculateRightPadding(LayoutDirection.Ltr)),
             )
         }
-        backgroundColor?.Overlay(
+        backgroundColor?.takeIf { !serverHandleInsets }?.Overlay(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(insetsPaddingValues.calculateBottomPadding()),
@@ -165,5 +174,7 @@ private fun WebViewContentScreenPreview() {
         playerLeft = 0.dp,
         currentAppLocked = false,
         customViewFromWebView = null,
-    ) { }
+        onFullscreenClicked = { },
+        serverHandleInsets = false,
+    )
 }
