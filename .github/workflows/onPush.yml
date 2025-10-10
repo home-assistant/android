@@ -31,7 +31,7 @@ jobs:
 
       - uses: ruby/setup-ruby@0481980f17b760ef6bca5e8c55809102a0af1e5a # v1.263.0
         with:
-          ruby-version: "3.2"
+          ruby-version: "3.4.7"
           bundler-cache: true
 
       - uses: ./.github/actions/create-release-number
@@ -139,7 +139,7 @@ jobs:
 
       - uses: ruby/setup-ruby@0481980f17b760ef6bca5e8c55809102a0af1e5a # v1.263.0
         with:
-          ruby-version: "3.2"
+          ruby-version: "3.4.7"
           bundler-cache: true
 
       - uses: ./.github/actions/create-release-number
