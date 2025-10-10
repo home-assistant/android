@@ -6,6 +6,7 @@ import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -91,13 +92,12 @@ class LocationForSecureConnectionScreenTest {
         composeTestRule.apply {
             testScreen(false) {
                 val nextButton = onNodeWithText(stringResource(R.string.location_secure_connection_next))
-                    .performScrollTo()
-                    .assertIsDisplayed()
-                    .assertIsNotEnabled()
+                    .assertIsNotDisplayed()
 
                 onNodeWithText(stringResource(R.string.location_secure_connection_most_secure)).performScrollTo().performClick()
 
-                nextButton.assertIsEnabled().performClick()
+                // Should have scroll automatically to the end of the screen
+                nextButton.assertIsDisplayed().assertIsEnabled().performClick()
                 // The callback shouldn't be invoked since the permission is not granted
                 assertEquals(null, allowInsecureConnection)
                 assertEquals(stringResource(R.string.location_secure_connection_discard_permission), snackbarMessage)

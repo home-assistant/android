@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.onboarding.locationforsecureconnection
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.SpringSpec
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -97,10 +99,11 @@ private fun LocationForSecureConnectionContent(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val scrollState = rememberScrollState()
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(horizontal = HADimens.SPACE4),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE6),
@@ -139,6 +142,9 @@ private fun LocationForSecureConnectionContent(
             ),
             onSelect = {
                 selectedOption = it
+                coroutineScope.launch {
+                    scrollState.animateScrollTo(scrollState.maxValue, SpringSpec(stiffness = Spring.StiffnessMediumLow))
+                }
             },
             selectedOption = selectedOption,
         )
