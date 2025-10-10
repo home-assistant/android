@@ -5,7 +5,7 @@
     <string name="server_discovery_no_server_info">Check that your Home\u00A0Assistant server is powered on and you\'re connected to the same network. You can enter the address manually if you know it.</string>
     <string name="server_discovery_connect">Connect</string>
     <string name="welcome_home_assistant_title">Home\u00A0Assistant\nCompanion app</string>
-    <string name="welcome_details">Access your Home\u00A0Assistant server on the go.\n\nHome\u00A0Assistant is open source, advocates for privacy and runs locally in your home.</string>
+    <string name="welcome_details">Access your Home\u00A0Assistant server on the go.\n\nHome\u00A0Assistant is open source home automation that puts local control and privacy first. Powered by a worldwide community of tinkerers and DIY enthusiasts.</string>
     <string name="welcome_connect_to_ha">Connect to my Home\u00A0Assistant server</string>
     <string name="welcome_learn_more">Learn more</string>
     <string name="name_your_device_title">How would you like to name this device?</string>
