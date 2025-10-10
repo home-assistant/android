@@ -17,6 +17,7 @@ import androidx.navigation.ActivityNavigator
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.testing.TestNavHostController
+import androidx.navigation.toRoute
 import androidx.savedstate.SavedState
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -43,6 +44,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertNull
 import org.junit.runner.RunWith
@@ -102,7 +104,7 @@ class HAAppTest {
     }
 
     @Test
-    fun `Given OnboardingRoute as start when starts then show Welcome`() {
+    fun `Given default OnboardingRoute as start when starts then show Welcome`() {
         testApp(OnboardingRoute()) {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
             onNodeWithText(stringResource(R.string.welcome_home_assistant_title)).assertIsDisplayed()
@@ -110,6 +112,22 @@ class HAAppTest {
             onNodeWithContentDescription(stringResource(R.string.home_assistant_branding_icon_content_description)).assertIsDisplayed()
             onNodeWithText(stringResource(R.string.welcome_connect_to_ha)).performScrollTo().assertIsDisplayed()
             onNodeWithText(stringResource(R.string.welcome_learn_more)).performScrollTo().assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun `Given OnboardingRoute with skipWelcome without urlToOnboard as start when starts then show ServerDiscovery`() {
+        testApp(OnboardingRoute(skipWelcome = true)) {
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given OnboardingRoute with skipWelcome with urlToOnboard as start when starts then show ServerDiscovery`() {
+        val url = "http://ha.org"
+        testApp(OnboardingRoute(skipWelcome = true, urlToOnboard = url)) {
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
+            assertEquals(url, navController.currentBackStackEntry?.toRoute<ConnectionRoute>()?.url)
         }
     }
 

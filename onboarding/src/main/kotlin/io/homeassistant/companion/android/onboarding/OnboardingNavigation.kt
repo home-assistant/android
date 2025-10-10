@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding
 
+import android.app.Activity
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.compose.ui.util.fastAny
@@ -40,6 +41,7 @@ import io.homeassistant.companion.android.onboarding.wearmtls.navigation.navigat
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.wearMTLSScreen
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.welcomeScreen
+import io.homeassistant.companion.android.util.canGoBack
 import kotlinx.serialization.Serializable
 
 /**
@@ -47,10 +49,15 @@ import kotlinx.serialization.Serializable
  *
  * @property urlToOnboard Optional server URL to onboard directly. If null, shows server discovery.
  * @property hideExistingServers When true, hides already registered servers from discovery results.
+ * @property skipWelcome When true, skips the welcome screen and navigates directly to server discovery,
+ *  or to the connection screen if [urlToOnboard] is provided.
  */
 @Serializable
-internal data class OnboardingRoute(val urlToOnboard: String? = null, val hideExistingServers: Boolean = false) :
-    HAStartDestinationRoute
+internal data class OnboardingRoute(
+    val urlToOnboard: String? = null,
+    val hideExistingServers: Boolean = false,
+    val skipWelcome: Boolean = false,
+) : HAStartDestinationRoute
 
 /**
  * Navigation route for Wear OS device onboarding flow.
@@ -82,18 +89,25 @@ internal fun NavGraphBuilder.onboarding(
     onOnboardingDone: () -> Unit,
     urlToOnboard: String?,
     hideExistingServers: Boolean,
+    skipWelcome: Boolean,
 ) {
-    navigation<OnboardingRoute>(startDestination = WelcomeRoute) {
+    val serverDiscoveryMode = if (hideExistingServers) {
+        ServerDiscoveryMode.HIDE_EXISTING
+    } else {
+        ServerDiscoveryMode.NORMAL
+    }
+
+    val startDestination = when {
+        !skipWelcome -> WelcomeRoute
+        urlToOnboard.isNullOrEmpty() -> ServerDiscoveryRoute(serverDiscoveryMode)
+        else -> ConnectionRoute(urlToOnboard)
+    }
+
+    navigation<OnboardingRoute>(startDestination = startDestination) {
         welcomeScreen(
             onConnectClick = {
                 if (urlToOnboard.isNullOrEmpty()) {
-                    navController.navigateToServerDiscovery(
-                        discoveryMode = if (hideExistingServers) {
-                            ServerDiscoveryMode.HIDE_EXISTING
-                        } else {
-                            ServerDiscoveryMode.NORMAL
-                        },
-                    )
+                    navController.navigateToServerDiscovery(serverDiscoveryMode)
                 } else {
                     navController.navigateToConnection(urlToOnboard)
                 }
@@ -206,7 +220,16 @@ private fun NavGraphBuilder.commonScreens(
         onConnectClick = {
             navController.navigateToConnection(it.toString())
         },
-        onBackClick = navController::popBackStack,
+        onBackClick = {
+            if (navController.canGoBack()) {
+                navController.popBackStack()
+            } else {
+                // This should only happens when we open the onboarding from the settings.
+                // Once we have a navigation graph for the whole app this could be dropped.
+                // For more context see: https://github.com/home-assistant/android/pull/5897#pullrequestreview-3316313923
+                (navController.context as? Activity)?.finish()
+            }
+        },
         onManualSetupClick = navController::navigateToManualServer,
         onHelpClick = {
             // TODO validate the URL to use

@@ -27,7 +27,9 @@ import timber.log.Timber
  */
 internal sealed interface LauncherNavigationEvent {
     data class Frontend(val path: String?, val serverId: Int) : LauncherNavigationEvent
-    data class Onboarding(val urlToOnboard: String?, val hideExistingServers: Boolean) : LauncherNavigationEvent
+    data class Onboarding(val urlToOnboard: String?, val hideExistingServers: Boolean, val skipWelcome: Boolean) :
+        LauncherNavigationEvent
+
     data class WearOnboarding(val wearName: String, val urlToOnboard: String?) : LauncherNavigationEvent
 }
 
@@ -66,7 +68,8 @@ internal class LauncherViewModel @AssistedInject constructor(
         when (initialDeepLink) {
             is LauncherActivity.DeepLink.OpenOnboarding -> navigateToOnboarding(
                 initialDeepLink.urlToOnboard,
-                initialDeepLink.hideExistingServers,
+                hideExistingServers = initialDeepLink.hideExistingServers,
+                skipWelcome = initialDeepLink.skipWelcome,
             )
 
             is LauncherActivity.DeepLink.NavigateTo,
@@ -114,8 +117,18 @@ internal class LauncherViewModel @AssistedInject constructor(
         )
     }
 
-    private suspend fun navigateToOnboarding(urlToOnboard: String? = null, hideExistingServers: Boolean = false) {
-        _navigationEventsFlow.emit(LauncherNavigationEvent.Onboarding(urlToOnboard, hideExistingServers))
+    private suspend fun navigateToOnboarding(
+        urlToOnboard: String? = null,
+        hideExistingServers: Boolean = false,
+        skipWelcome: Boolean = false,
+    ) {
+        _navigationEventsFlow.emit(
+            LauncherNavigationEvent.Onboarding(
+                urlToOnboard,
+                hideExistingServers = hideExistingServers,
+                skipWelcome = skipWelcome,
+            ),
+        )
     }
 
     private suspend fun cleanupServers() {

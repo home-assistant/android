@@ -73,7 +73,11 @@ class LinkActivity : BaseActivity() {
                     LinkDestination.NoDestination -> finish()
                     is LinkDestination.Onboarding -> {
                         if (USE_NEW_LAUNCHER) {
-                            startLauncherOnboarding(destination.serverUrl, hideExistingServers = false)
+                            startLauncherOnboarding(
+                                destination.serverUrl,
+                                hideExistingServers = false,
+                                skipWelcome = false,
+                            )
                         } else {
                             startActivity(LaunchActivity.newInstance(this@LinkActivity, destination.serverUrl))
                         }

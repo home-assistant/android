@@ -79,6 +79,11 @@ class ServerDiscoveryScreenshotTest {
                             URL("http://ohf.org"),
                             HomeAssistantVersion(2042, 1, 42),
                         ),
+                        ServerDiscovered(
+                            "Mr Red",
+                            URL("http://my.homeassistant.very.long.url.for.testing.with.many.sub.domains.org"),
+                            HomeAssistantVersion(2042, 1, 42),
+                        ),
                     ),
                 ),
                 onConnectClick = {},

@@ -119,7 +119,7 @@ class ServerDiscoveryScreenTest {
         TestHelper().apply {
             setContent {
                 ServerDiscoveryScreen(
-                    state,
+                    discoveryState = state,
                     onBackClick = { backClicked = true },
                     onConnectClick = { connectClickedWithUrl = it },
                     onDismissOneServerFound = {
