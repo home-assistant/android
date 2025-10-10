@@ -10,15 +10,13 @@ import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryMode
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
-import io.homeassistant.companion.android.util.delayFirst
+import io.homeassistant.companion.android.util.delayFirstThrottle
 import java.net.URL
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
@@ -33,9 +31,6 @@ val TIMEOUT_NO_SERVER_FOUND = 5.seconds
 
 @VisibleForTesting
 val DELAY_BEFORE_DISPLAY_DISCOVERY = 1.5.seconds
-
-@VisibleForTesting
-val DELAY_AFTER_FIRST_DISCOVERY = 5.seconds
 
 /**
  * Represents the current state of the server discovery process.
@@ -113,14 +108,13 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
     /**
      * A flow that emits the current [DiscoveryState] of the server discovery process.
      *
-     * The discovery process includes the following delays:
-     * - [DELAY_BEFORE_DISPLAY_DISCOVERY]: No discovery events are emitted before this delay.
-     * - [DELAY_AFTER_FIRST_DISCOVERY]: Applied after the first server is discovered ([ServerDiscovered]),
-     * before any subsequent [ServersDiscovered].
+     * The flow starts with a delay of [DELAY_BEFORE_DISPLAY_DISCOVERY]
+     * before emitting any subsequent states. Once servers are discovered, the flow will emit
+     * [ServerDiscovered] for a single server or [ServersDiscovered] for multiple servers.
      *
      * If no server is found after [TIMEOUT_NO_SERVER_FOUND], the state transitions to [NoServerFound].
      */
-    val discoveryFlow = _discoveryFlow.asStateFlow()
+    val discoveryFlow = _discoveryFlow.delayFirstThrottle(DELAY_BEFORE_DISPLAY_DISCOVERY)
 
     init {
         discoverInstances()
@@ -132,7 +126,6 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
         viewModelScope.launch {
             try {
                 searcher.discoveredInstanceFlow()
-                    .delayFirst(DELAY_BEFORE_DISPLAY_DISCOVERY)
                     .filter { instanceFound ->
                         serversToIgnore.none { it.isSameServer(instanceFound.url) }
                     }
@@ -150,9 +143,7 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
         }
     }
 
-    private suspend fun onServerDiscovered(serverDiscovered: ServerDiscovered) {
-        var shouldDelayNext = false
-
+    private fun onServerDiscovered(serverDiscovered: ServerDiscovered) {
         _discoveryFlow.update {
             when (it) {
                 is ServersDiscovered -> {
@@ -172,12 +163,10 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
                 )
 
                 is Started, is NoServerFound -> {
-                    shouldDelayNext = true
                     serverDiscovered
                 }
             }
         }
-        if (shouldDelayNext) delay(DELAY_AFTER_FIRST_DISCOVERY)
     }
 
     private fun watchForNoServerFound() {

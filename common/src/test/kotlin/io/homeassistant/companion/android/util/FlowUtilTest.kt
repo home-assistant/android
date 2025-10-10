@@ -19,16 +19,14 @@ import org.junit.jupiter.api.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class FlowUtilTest {
     @Test
-    fun `Given event sent before delay when consuming then should return all after delay without delay`() = runTest {
+    fun `Given events sent before delay when consuming a flow with delayFirstThrottle then emits only latest after delay`() = runTest {
         flowOf(1, 2, 3)
-            .delayFirst(1.seconds)
+            .delayFirstThrottle(1.seconds)
             .test {
                 expectNoEvents()
                 advanceTimeBy(500.milliseconds)
                 expectNoEvents()
                 advanceTimeBy(500.milliseconds)
-                assertEquals(1, awaitItem())
-                assertEquals(2, awaitItem())
                 assertEquals(3, awaitItem())
                 awaitComplete()
             }
@@ -36,23 +34,27 @@ class FlowUtilTest {
 
     @OptIn(ExperimentalTime::class)
     @Test
-    fun `Given event sent before delay and after delay when consuming then should return at the write time`() = runTest {
+    fun `Given event sent before delay and after delay when consuming a flow with delayFirstThrottle then emits at the right time`() = runTest {
         val channel = Channel<Int>(Channel.UNLIMITED)
         val fakeClock = FakeClock()
 
         channel.consumeAsFlow()
-            .delayFirst(1.seconds, fakeClock).test {
+            .delayFirstThrottle(1.seconds, fakeClock).test {
                 expectNoEvents()
                 channel.trySend(1)
                 expectNoEvents()
+                channel.trySend(2)
+                expectNoEvents()
                 advanceTimeBy(1.seconds)
                 runCurrent()
-                assertEquals(1, expectMostRecentItem())
+                assertEquals(2, awaitItem())
 
                 // We need to modify the clock manually since it is not advancing with advanceTimeBy
                 fakeClock.currentInstant = fakeClock.currentInstant.plus(1.seconds)
-                channel.trySend(2)
-                assertEquals(2, expectMostRecentItem())
+                channel.trySend(3)
+                assertEquals(3, awaitItem())
+                channel.trySend(4)
+                assertEquals(4, awaitItem())
 
                 channel.close()
                 awaitComplete()
@@ -60,13 +62,13 @@ class FlowUtilTest {
     }
 
     @Test
-    fun `Given events before delay when consuming then should not block upstream`() = runTest {
+    fun `Given events before delay when consuming a flow with delayFirstThrottle then does not block upstream`() = runTest {
         val channel = Channel<Int>(Channel.UNLIMITED)
         var currentValueInUpstream: Int? = null
 
         channel.consumeAsFlow()
             .onEach { currentValueInUpstream = it }
-            .delayFirst(1.seconds).test {
+            .delayFirstThrottle(1.seconds).test {
                 expectNoEvents()
                 channel.trySend(1)
                 assertEquals(1, currentValueInUpstream)
@@ -75,7 +77,6 @@ class FlowUtilTest {
                 expectNoEvents()
                 advanceTimeBy(1.seconds)
                 runCurrent()
-                assertEquals(1, expectMostRecentItem())
                 assertEquals(2, awaitItem())
                 channel.close()
                 awaitComplete()
@@ -84,12 +85,12 @@ class FlowUtilTest {
 
     @OptIn(ExperimentalTime::class)
     @Test
-    fun `Given events after delay when consuming then no delay should apply`() = runTest {
+    fun `Given events after delay when consuming a flow with delayFirstThrottle then no delay apply`() = runTest {
         val channel = Channel<Int>(Channel.UNLIMITED)
         val fakeClock = FakeClock()
 
         channel.consumeAsFlow()
-            .delayFirst(90.seconds, fakeClock).test {
+            .delayFirstThrottle(90.seconds, fakeClock).test {
                 expectNoEvents()
                 advanceTimeBy(90.seconds)
                 runCurrent()
@@ -108,9 +109,9 @@ class FlowUtilTest {
     }
 
     @Test
-    fun `Given no event when consuming then should complete`() = runTest {
+    fun `Given no event when consuming a flow with delayFirstThrottle then complete`() = runTest {
         flowOf<Int>()
-            .delayFirst(1.seconds)
+            .delayFirstThrottle(1.seconds)
             .test {
                 awaitComplete()
             }

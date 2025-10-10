@@ -18,10 +18,10 @@ internal fun mockServer(
     cloudUrl: String? = null,
 ): Server {
     return mockk<Server> {
+        every { version } returns haVersion
+        every { friendlyName } returns name
         every { connection } returns mockk<ServerConnectionInfo> {
             every { getUrl(isInternal = false) } returns url?.let { URL(url) }
-            every { version } returns haVersion
-            every { friendlyName } returns name
             every { this@mockk.externalUrl } returns externalUrl
             every { this@mockk.internalUrl } returns internalUrl
             every { this@mockk.cloudUrl } returns cloudUrl

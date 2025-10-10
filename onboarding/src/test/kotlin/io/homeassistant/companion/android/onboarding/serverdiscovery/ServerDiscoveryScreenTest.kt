@@ -1,13 +1,19 @@
 package io.homeassistant.companion.android.onboarding.serverdiscovery
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -104,6 +110,42 @@ class ServerDiscoveryScreenTest {
                 assertServer(server1)
                 assertServer(server2)
             }
+        }
+    }
+
+    @Test
+    fun `Given ServerDiscover state when getting state ServersDiscovered then bottom sheet is still displayed on top of the server list`() {
+        val server1 = ServerDiscovered("Hello", URL("http://192.168.0.1"), haVersion)
+        val server2 = ServerDiscovered("World", URL("http://192.168.0.2"), haVersion)
+
+        composeTestRule.apply {
+            val state = mutableStateOf<DiscoveryState>(server1)
+            setContent {
+                val discoveryState by remember(state) { state }
+                ServerDiscoveryScreen(
+                    discoveryState,
+                    onBackClick = { },
+                    onConnectClick = { },
+                    onDismissOneServerFound = {
+                        // We don't know how to test dismiss of the modal
+                    },
+                    onHelpClick = { },
+                    onManualSetupClick = { },
+                )
+            }
+
+            onNodeWithText(server1.name).assertIsDisplayed()
+            onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).performTouchInput {
+                swipeUp(startY = bottom * 0.9f, endY = centerY, durationMillis = 200)
+            }
+
+            waitForIdle()
+            onNodeWithText(stringResource(R.string.server_discovery_connect)).assertIsDisplayed()
+
+            state.value = ServersDiscovered(listOf(server1, server2))
+
+            onNodeWithText(stringResource(R.string.server_discovery_connect)).assertIsDisplayed()
+            onNodeWithText(server2.name).assertIsDisplayed()
         }
     }
 
