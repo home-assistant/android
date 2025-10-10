@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -102,9 +103,7 @@ private fun LocationForSecureConnectionContent(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = HADimens.SPACE4),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(
-            HADimens.SPACE6,
-        ),
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE6),
     ) {
         val coroutineScope = rememberCoroutineScope()
         var selectedOption by rememberSelectedOption<SelectionKey>()
@@ -155,7 +154,7 @@ private fun LocationForSecureConnectionContent(
                     onAllowInsecureConnection(true)
                 }
             },
-            modifier = Modifier.padding(bottom = HADimens.SPACE6),
+            modifier = Modifier.fillMaxWidth().padding(bottom = HADimens.SPACE6),
         )
     }
 }

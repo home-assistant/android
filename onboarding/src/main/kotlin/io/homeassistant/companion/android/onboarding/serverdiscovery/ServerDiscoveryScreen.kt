@@ -249,7 +249,7 @@ private fun ScreenContent(
         HAPlainButton(
             text = stringResource(commonR.string.manual_setup),
             onClick = onManualSetupClick,
-            modifier = Modifier.padding(bottom = HADimens.SPACE6),
+            modifier = Modifier.fillMaxWidth().padding(bottom = HADimens.SPACE6),
         )
     }
 }

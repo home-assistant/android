@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
@@ -165,14 +166,13 @@ private fun SetHomeNetworkContent(
             )
         }
 
-        Spacer(modifier = Modifier.weight(1f))
         Hint()
         Spacer(modifier = Modifier.weight(1f))
 
         HAAccentButton(
             text = stringResource(R.string.set_home_network_next),
             onClick = onNextClick,
-            modifier = Modifier.padding(bottom = HADimens.SPACE6),
+            modifier = Modifier.fillMaxWidth().padding(bottom = HADimens.SPACE6),
         )
     }
 }

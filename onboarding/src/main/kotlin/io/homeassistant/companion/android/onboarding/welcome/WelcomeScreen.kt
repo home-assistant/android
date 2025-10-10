@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -78,17 +79,26 @@ private fun ColumnScope.WelcomeText() {
 }
 
 @Composable
-private fun ColumnScope.BottomButtons(onConnectClick: () -> Unit, onLearnMoreClick: () -> Unit) {
-    HAAccentButton(
-        text = stringResource(R.string.welcome_connect_to_ha),
-        onClick = onConnectClick,
-    )
+private fun BottomButtons(onConnectClick: () -> Unit, onLearnMoreClick: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
+    ) {
+        HAAccentButton(
+            text = stringResource(R.string.welcome_connect_to_ha),
+            onClick = onConnectClick,
+            modifier = Modifier.fillMaxWidth(),
+        )
 
-    HAPlainButton(
-        text = stringResource(R.string.welcome_learn_more),
-        onClick = onLearnMoreClick,
-        modifier = Modifier.padding(bottom = HADimens.SPACE6),
-    )
+        HAPlainButton(
+            text = stringResource(R.string.welcome_learn_more),
+            onClick = onLearnMoreClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = HADimens.SPACE6),
+        )
+    }
 }
 
 @HAPreviews

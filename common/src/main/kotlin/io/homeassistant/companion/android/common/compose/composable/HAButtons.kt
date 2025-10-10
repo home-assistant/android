@@ -193,9 +193,10 @@ fun HAPlainButton(
             onClick = onClick,
             enabled = enabled,
             colors = colors.buttonColors,
-            modifier = modifier
-                .heightIn(min = size.value)
-                .widthIn(max = MaxButtonWidth),
+            modifier = Modifier
+                .widthIn(max = MaxButtonWidth)
+                .then(modifier)
+                .heightIn(min = size.value),
             contentPadding = PaddingValues.Zero,
             shape = buttonShape,
         ) {
@@ -228,9 +229,10 @@ private fun HABaseButton(
             onClick = onClick,
             enabled = enabled,
             colors = colors.buttonColors,
-            modifier = modifier
-                .heightIn(min = size.value)
-                .widthIn(max = MaxButtonWidth),
+            modifier = Modifier
+                .widthIn(max = MaxButtonWidth)
+                .then(modifier)
+                .heightIn(min = size.value),
             contentPadding = PaddingValues.Zero,
             shape = buttonShape,
         ) {

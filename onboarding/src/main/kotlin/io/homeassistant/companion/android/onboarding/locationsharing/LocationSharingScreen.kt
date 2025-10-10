@@ -3,9 +3,9 @@ package io.homeassistant.companion.android.onboarding.locationsharing
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -109,33 +109,36 @@ private fun LocationSharingContent(
 
 @Composable
 @OptIn(ExperimentalPermissionsApi::class)
-private fun ColumnScope.BottomButtons(
-    onGoToNextScreen: () -> Unit,
-    onLocationSharingResponse: (enabled: Boolean) -> Unit,
-) {
+private fun BottomButtons(onGoToNextScreen: () -> Unit, onLocationSharingResponse: (enabled: Boolean) -> Unit) {
     val permissions = rememberLocationPermission(
         onPermissionResult = {
             // We ignore the result and proceed even if the user rejected the permission
             onGoToNextScreen()
         },
     )
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
+    ) {
+        HAAccentButton(
+            text = stringResource(R.string.location_sharing_share),
+            onClick = {
+                onLocationSharingResponse(true)
+                permissions.launchMultiplePermissionRequest()
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
 
-    HAAccentButton(
-        text = stringResource(R.string.location_sharing_share),
-        onClick = {
-            onLocationSharingResponse(true)
-            permissions.launchMultiplePermissionRequest()
-        },
-    )
-
-    HAPlainButton(
-        text = stringResource(R.string.location_sharing_no_share),
-        onClick = {
-            onLocationSharingResponse(false)
-            onGoToNextScreen()
-        },
-        modifier = Modifier.padding(bottom = HADimens.SPACE6),
-    )
+        HAPlainButton(
+            text = stringResource(R.string.location_sharing_no_share),
+            onClick = {
+                onLocationSharingResponse(false)
+                onGoToNextScreen()
+            },
+            modifier = Modifier.fillMaxWidth().padding(bottom = HADimens.SPACE6),
+        )
+    }
 }
 
 @HAPreviews
