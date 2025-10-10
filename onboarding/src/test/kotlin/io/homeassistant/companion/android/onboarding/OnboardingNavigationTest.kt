@@ -370,10 +370,23 @@ internal class OnboardingNavigationTest {
     }
 
     @Test
+    fun `Given device named and skip welcome with url when pressing next then show LocalFirst then goes back stop the app`() {
+        localFirstTest(true, "http://ha.local")
+    }
+
+    @Test
+    fun `Given device named and skip welcome without url when pressing next then show LocalFirst then goes back stop the app`() {
+        localFirstTest(true, null)
+    }
+
+    @Test
     fun `Given device named when pressing next then show LocalFirst then goes back stop the app`() {
-        val instanceUrl = "http://ha.local"
-        testNavigation {
-            navController.navigateToNameYourDevice(instanceUrl, "code")
+        localFirstTest(false, null)
+    }
+
+    private fun localFirstTest(skipWelcome: Boolean, urlToOnboard: String?) {
+        testNavigation(skipWelcome = skipWelcome, urlToOnboard = urlToOnboard) {
+            navController.navigateToNameYourDevice("http://dummy.local", "code")
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
 
             onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
