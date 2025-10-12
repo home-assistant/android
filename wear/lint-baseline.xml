@@ -63,7 +63,7 @@
         errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/tiles/TileViews.kt"
-            line="92"
+            line="94"
             column="19"/>
     </issue>
 
@@ -109,31 +109,6 @@
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
             line="189"
             column="13"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; `SDK_INT` is always >= 30"
-        errorLine1="        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R"
-        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/sensors/HealthServicesSensorManager.kt"
-            line="158"
-            column="16"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
-        message="This folder configuration (`v26`) is unnecessary; `minSdkVersion` is 26. Merge all the resources in this folder into `mipmap-anydpi`.">
-        <location
-            file="src/debug/res/mipmap-anydpi-v26"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
-        message="This folder configuration (`v26`) is unnecessary; `minSdkVersion` is 26. Merge all the resources in this folder into `mipmap-anydpi`.">
-        <location
-            file="src/main/res/mipmap-anydpi-v26"/>
     </issue>
 
     <issue
@@ -296,7 +271,7 @@
         errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
         errorLine2="^">
         <location
-            file="src/debug/res/mipmap-anydpi-v26/ic_launcher.xml"
+            file="src/debug/res/mipmap-anydpi/ic_launcher.xml"
             line="2"
             column="1"/>
     </issue>
@@ -307,7 +282,7 @@
         errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
         errorLine2="^">
         <location
-            file="src/main/res/mipmap-anydpi-v26/ic_launcher.xml"
+            file="src/main/res/mipmap-anydpi/ic_launcher.xml"
             line="2"
             column="1"/>
     </issue>
@@ -318,7 +293,7 @@
         errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
         errorLine2="^">
         <location
-            file="src/debug/res/mipmap-anydpi-v26/ic_launcher_round.xml"
+            file="src/debug/res/mipmap-anydpi/ic_launcher_round.xml"
             line="2"
             column="1"/>
     </issue>
@@ -329,7 +304,7 @@
         errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
         errorLine2="^">
         <location
-            file="src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml"
+            file="src/main/res/mipmap-anydpi/ic_launcher_round.xml"
             line="2"
             column="1"/>
     </issue>

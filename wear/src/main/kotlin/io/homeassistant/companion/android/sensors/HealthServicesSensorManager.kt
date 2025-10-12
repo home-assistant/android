@@ -154,10 +154,6 @@ class HealthServicesSensorManager : SensorManager {
         return arrayOf(Manifest.permission.ACTIVITY_RECOGNITION)
     }
 
-    override fun hasSensor(context: Context): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
-    }
-
     override suspend fun requestSensorUpdate(context: Context) {
         latestContext = context
         updateHealthServices()
