@@ -18,6 +18,9 @@ import androidx.glance.color.ColorProviders
 import androidx.glance.material.ColorProviders
 import androidx.glance.text.FontWeight
 import androidx.glance.text.TextStyle
+import io.homeassistant.companion.android.common.compose.theme.DarkHAColorScheme
+import io.homeassistant.companion.android.common.compose.theme.LightHAColorScheme
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 
 val colorPrimary = Color(0xFF03A9F4)
 val colorPrimaryDark = Color(0xFF0288D1)
@@ -55,6 +58,8 @@ fun HomeAssistantAppTheme(content: @Composable () -> Unit) {
         // Copied from MdcTheme:
         CompositionLocalProvider(
             LocalContentColor provides MaterialTheme.colors.onBackground,
+            // To be able to use HA composable in old theme
+            LocalHAColorScheme provides if (isSystemInDarkTheme()) DarkHAColorScheme else LightHAColorScheme,
             content = content,
         )
     }

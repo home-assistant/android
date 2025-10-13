@@ -121,4 +121,8 @@ interface PrefsRepository {
 
     /** Clean up any app-level preferences that might reference servers */
     suspend fun removeServer(serverId: Int)
+
+    suspend fun showPrivacyHint(): Boolean
+
+    suspend fun setShowPrivacyHint(showPrivacyHint: Boolean)
 }

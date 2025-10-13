@@ -43,6 +43,7 @@ private const val PREF_LOCATION_HISTORY_DISABLED = "location_history"
 private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displayed"
 private const val PREF_GESTURE_ACTION_PREFIX = "gesture_action"
 private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
+private const val PREF_SHOW_PRIVACY_HINT = "show_privacy_hint"
 
 /**
  * This class ensure that when we use the local storage in [PrefsRepositoryImpl] the migrations has been made
@@ -337,5 +338,13 @@ class PrefsRepositoryImpl @Inject constructor(
             localStorage().remove(CONTROLS_PANEL_SERVER)
             setControlsPanelPath(null)
         }
+    }
+
+    override suspend fun showPrivacyHint(): Boolean {
+        return localStorage().getBooleanOrNull(PREF_SHOW_PRIVACY_HINT) ?: true
+    }
+
+    override suspend fun setShowPrivacyHint(showPrivacyHint: Boolean) {
+        localStorage().putBoolean(PREF_SHOW_PRIVACY_HINT, showPrivacyHint)
     }
 }
