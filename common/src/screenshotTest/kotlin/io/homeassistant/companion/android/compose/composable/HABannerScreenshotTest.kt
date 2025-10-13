@@ -38,7 +38,7 @@ class HABannerScreenshotTest {
     fun `HAHint with content closable`() {
         HAThemeForPreview {
             HAHint(
-                "Simple content, but quite long to see how it behaves on the width. It should be on multiples lines.",
+                "Simple content.",
                 onClose = {},
             )
         }

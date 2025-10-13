@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -134,7 +135,10 @@ private fun LocationForSecureConnectionContent(
             },
             selectedOption = selectedOption,
         )
-        HAHint(text = stringResource(R.string.location_secure_connection_hint))
+        HAHint(
+            text = stringResource(R.string.location_secure_connection_hint),
+            modifier = Modifier.width(MaxContentWidth),
+        )
         Spacer(modifier = Modifier.weight(1f))
         HAAccentButton(
             text = stringResource(R.string.location_secure_connection_next),

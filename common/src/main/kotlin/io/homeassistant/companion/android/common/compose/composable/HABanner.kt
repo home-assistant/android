@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -28,7 +27,6 @@ import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 
 /**
  * Displays a horizontal banner component with rounded corners and neutral background
@@ -42,7 +40,6 @@ import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 fun HABanner(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
     Row(
         modifier = modifier
-            .width(MaxButtonWidth)
             .background(
                 color = LocalHAColorScheme.current.colorFillNeutralNormalResting, // TODO update color
                 shape = RoundedCornerShape(
@@ -72,7 +69,9 @@ fun HAHint(text: String, modifier: Modifier = Modifier, onClose: (() -> Unit)? =
             painter = painterResource(R.drawable.ic_casita),
             colorFilter = ColorFilter.tint(HABrandColors.Blue),
             contentDescription = null,
-            modifier = Modifier.align(Alignment.Top),
+            modifier = Modifier.align(Alignment.Top)
+                // We want to align the close button with casita icon
+                .padding(vertical = HADimens.SPACE2),
         )
         Text(
             text = text,
@@ -99,7 +98,7 @@ fun HAHint(text: String, modifier: Modifier = Modifier, onClose: (() -> Unit)? =
 private fun HAHintPreview() {
     HAThemeForPreview {
         HAHint(
-            "Simple content, but quite long to see how it behaves on the width. It should be on multiples lines.",
+            "Simple content, but not too long",
             onClose = {
             },
         )
