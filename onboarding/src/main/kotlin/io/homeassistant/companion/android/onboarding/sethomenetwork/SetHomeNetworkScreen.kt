@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.onboarding.sethomenetwork
 
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -13,10 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -30,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -39,11 +35,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.composable.HAHint
 import io.homeassistant.companion.android.common.compose.composable.HASwitch
 import io.homeassistant.companion.android.common.compose.composable.HATextField
-import io.homeassistant.companion.android.common.compose.theme.HABrandColors
 import io.homeassistant.companion.android.common.compose.theme.HADimens
-import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
@@ -166,7 +161,7 @@ private fun SetHomeNetworkContent(
             )
         }
 
-        Hint()
+        HAHint(text = stringResource(commonR.string.manage_ssids_warning))
         Spacer(modifier = Modifier.weight(1f))
 
         HAAccentButton(
@@ -246,34 +241,6 @@ private fun SelectableOption(
             checked = checked,
             onCheckedChange = onCheckedChange,
             modifier = Modifier.testTag(testTag),
-        )
-    }
-}
-
-@Composable
-private fun Hint(modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .width(MaxButtonWidth)
-            .background(
-                color = LocalHAColorScheme.current.colorFillNeutralNormalResting, // TODO update color
-                shape = RoundedCornerShape(
-                    HARadius.XL,
-                ),
-            )
-            .padding(HADimens.SPACE4),
-        horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Image(
-            // Use painterResource instead of vector resource for API < 24
-            painter = painterResource(R.drawable.ic_casita),
-            colorFilter = ColorFilter.tint(HABrandColors.Blue),
-            contentDescription = null,
-        )
-        Text(
-            text = stringResource(commonR.string.manage_ssids_warning),
-            style = HATextStyle.Body.copy(textAlign = TextAlign.Start),
         )
     }
 }
