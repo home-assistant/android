@@ -18,7 +18,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
-import io.homeassistant.companion.android.common.data.LocalStorage
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
@@ -31,7 +31,6 @@ import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.sensor.toSensorsWithAttributes
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.SettingsDao
-import io.homeassistant.companion.android.di.qualifiers.NamedSessionStorage
 import io.homeassistant.companion.android.sensors.LastAppSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import javax.inject.Inject
@@ -54,14 +53,12 @@ class SensorDetailViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val sensorDao: SensorDao,
     private val settingsDao: SettingsDao,
-    @NamedSessionStorage private val localStorage: LocalStorage,
+    private val prefsRepository: PrefsRepository,
     application: Application,
 ) : AndroidViewModel(application) {
 
     companion object {
         private const val SENSOR_SETTING_TRANS_KEY_PREFIX = "sensor_setting_"
-
-        private const val PREF_SHOW_PRIVACY_HINT = "show_privacy_hint"
 
         data class PermissionsDialog(val serverId: Int?, val permissions: Array<String>? = null)
         data class LocationPermissionsDialog(
@@ -178,7 +175,7 @@ class SensorDetailViewModel @Inject constructor(
             settingUpdateFrequency = settingsDao.get(0)?.sensorUpdateFrequency ?: SensorUpdateFrequencySetting.NORMAL
         }
         viewModelScope.launch {
-            _showPrivacyHint.update { localStorage.getBooleanOrNull(PREF_SHOW_PRIVACY_HINT) ?: true }
+            _showPrivacyHint.update { prefsRepository.showPrivacyHint() }
         }
     }
 
@@ -300,7 +297,7 @@ class SensorDetailViewModel @Inject constructor(
         _showPrivacyHint.update { false }
         viewModelScope.launch {
             // 0 is used for storing app level settings
-            localStorage.putBoolean(PREF_SHOW_PRIVACY_HINT, false)
+            prefsRepository.setShowPrivacyHint(false)
         }
     }
 
