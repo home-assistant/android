@@ -188,6 +188,9 @@ fun SensorDetailView(
                 }
                 if (showPrivacyHint) {
                     item {
+                        // Display privacy hint for Google Play Store compliance. While required for Health
+                        // sensors, we show this hint for all sensors as the privacy information is universally
+                        // relevant and helps users understand how their sensor data is used.
                         HAHint(
                             modifier = Modifier
                                 .fillMaxWidth()
