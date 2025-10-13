@@ -24,10 +24,22 @@ class HABannerScreenshotTest {
     @PreviewLightDark
     @PreviewTest
     @Composable
-    fun `HAHint with content`() {
+    fun `HAHint with content not closable`() {
         HAThemeForPreview {
             HAHint(
                 "Simple content, but quite long to see how it behaves on the width. It should be on multiples lines.",
+            )
+        }
+    }
+
+    @PreviewLightDark
+    @PreviewTest
+    @Composable
+    fun `HAHint with content closable`() {
+        HAThemeForPreview {
+            HAHint(
+                "Simple content, but quite long to see how it behaves on the width. It should be on multiples lines.",
+                onClose = {},
             )
         }
     }

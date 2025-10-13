@@ -8,18 +8,25 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.theme.HABrandColors
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 
@@ -55,19 +62,46 @@ fun HABanner(modifier: Modifier = Modifier, content: @Composable RowScope.() -> 
  *
  * @param text The hint text to be displayed.
  * @param modifier Optional [androidx.compose.ui.Modifier] to be applied to the banner.
+ * @param onClose Optional if present it adds a close Icon on the right
  */
 @Composable
-fun HAHint(text: String, modifier: Modifier = Modifier) {
+fun HAHint(text: String, modifier: Modifier = Modifier, onClose: (() -> Unit)? = null) {
     HABanner(modifier = modifier) {
         Image(
             // Use painterResource instead of vector resource for API < 24
             painter = painterResource(R.drawable.ic_casita),
             colorFilter = ColorFilter.tint(HABrandColors.Blue),
             contentDescription = null,
+            modifier = Modifier.align(Alignment.Top),
         )
         Text(
             text = text,
             style = HATextStyle.Body.copy(textAlign = TextAlign.Start),
+            modifier = Modifier.weight(1f),
+        )
+        onClose?.let {
+            IconButton(
+                onClick = { onClose() },
+                modifier = Modifier.align(Alignment.Top),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.cancel),
+                    tint = LocalHAColorScheme.current.colorOnNeutralQuiet,
+                )
+            }
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun HAHintPreview() {
+    HAThemeForPreview {
+        HAHint(
+            "Simple content, but quite long to see how it behaves on the width. It should be on multiples lines.",
+            onClose = {
+            },
         )
     }
 }
