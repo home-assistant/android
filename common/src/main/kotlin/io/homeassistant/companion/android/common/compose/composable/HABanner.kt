@@ -41,7 +41,7 @@ fun HABanner(modifier: Modifier = Modifier, content: @Composable RowScope.() -> 
     Row(
         modifier = modifier
             .background(
-                color = LocalHAColorScheme.current.colorFillNeutralNormalResting, // TODO update color
+                color = LocalHAColorScheme.current.colorFillNeutralNormalResting,
                 shape = RoundedCornerShape(
                     HARadius.XL,
                 ),

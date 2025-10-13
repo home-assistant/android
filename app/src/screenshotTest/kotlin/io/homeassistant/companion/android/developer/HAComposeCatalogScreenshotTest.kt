@@ -10,8 +10,8 @@ import io.homeassistant.companion.android.developer.catalog.HAComposeCatalogScre
 class HAComposeCatalogScreenshotTest {
 
     // Use static heightDp to see the whole content of the screen
-    @Preview(name = "Light", heightDp = 2000, widthDp = 1000)
-    @Preview(name = "Dark", uiMode = UI_MODE_NIGHT_YES or UI_MODE_TYPE_NORMAL, heightDp = 2000, widthDp = 1000)
+    @Preview(name = "Light", heightDp = 2000, widthDp = 2000)
+    @Preview(name = "Dark", uiMode = UI_MODE_NIGHT_YES or UI_MODE_TYPE_NORMAL, heightDp = 2000, widthDp = 2000)
     @PreviewTest
     @Composable
     fun `HAComposeCatalog default screen`() {
