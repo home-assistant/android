@@ -65,6 +65,7 @@ class LocationForSecureConnectionScreenTest {
                 nextButton.assertIsEnabled().performClick()
                 assertEquals(false, allowInsecureConnection)
                 assertNull(snackbarMessage)
+                registry.assertLocationPermissionRequested()
             }
         }
     }
@@ -83,6 +84,7 @@ class LocationForSecureConnectionScreenTest {
                 nextButton.assertIsEnabled().performClick()
                 assertEquals(true, allowInsecureConnection)
                 assertNull(snackbarMessage)
+                registry.assertLocationPermissionNotRequested()
             }
         }
     }
@@ -108,14 +110,17 @@ class LocationForSecureConnectionScreenTest {
                 nextButton.assertIsEnabled().performClick()
                 assertEquals(true, allowInsecureConnection)
                 assertNull(snackbarMessage)
+                // background is only requested if foreground is granted
+                registry.assertLocationPermissionRequested(false)
             }
         }
     }
 
-    private class TestHelper {
+    private class TestHelper(locationPermissionGranted: Boolean) {
         var helpClicked = false
         var allowInsecureConnection: Boolean? = null
         var snackbarMessage: String? = null
+        val registry = LocationPermissionActivityResultRegistry(locationPermissionGranted)
     }
 
     @OptIn(ExperimentalPermissionsApi::class)
@@ -123,11 +128,11 @@ class LocationForSecureConnectionScreenTest {
         locationPermissionGranted: Boolean = true,
         block: TestHelper.() -> Unit,
     ) {
-        TestHelper().apply {
+        TestHelper(locationPermissionGranted).apply {
             setContent {
                 CompositionLocalProvider(
                     LocalActivityResultRegistryOwner provides object : ActivityResultRegistryOwner {
-                        override val activityResultRegistry: ActivityResultRegistry = LocationPermissionActivityResultRegistry(locationPermissionGranted)
+                        override val activityResultRegistry: ActivityResultRegistry = registry
                     },
                 ) {
                     LocationForSecureConnectionScreen(
