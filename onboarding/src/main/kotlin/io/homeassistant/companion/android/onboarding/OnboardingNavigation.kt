@@ -120,19 +120,27 @@ internal fun NavGraphBuilder.onboarding(
         commonScreens(navController = navController, onShowSnackbar = onShowSnackbar)
         nameYourDeviceScreen(
             onBackClick = navController::popBackStack,
-            onDeviceNamed = { serverId, hasPlainTextAccess ->
-                // TODO if external URL or cloud URL available go to Location otherwise go to local first
-                navController.navigateToLocalFirst(
-                    serverId = serverId,
-                    hasPlainTextAccess = hasPlainTextAccess,
-                    navOptions {
-                        // We don't want to come back to name your device once the device
-                        // is named since the auth_code has already been used.
-                        popUpTo(startDestination) {
-                            inclusive = true
-                        }
-                    },
-                )
+            onDeviceNamed = { serverId, hasPlainTextAccess, isRemotelyAccessible: Boolean ->
+                val navOptions = navOptions {
+                    // We don't want to come back to name your device once the device
+                    // is named since the auth_code has already been used.
+                    popUpTo(startDestination) {
+                        inclusive = true
+                    }
+                }
+                if (hasPlainTextAccess || !isRemotelyAccessible) {
+                    navController.navigateToLocalFirst(
+                        serverId = serverId,
+                        hasPlainTextAccess = hasPlainTextAccess,
+                        navOptions,
+                    )
+                } else {
+                    navController.navigateToLocationSharing(
+                        serverId = serverId,
+                        hasPlainTextAccess = hasPlainTextAccess,
+                        navOptions,
+                    )
+                }
             },
             onShowSnackbar = onShowSnackbar,
             onHelpClick = {

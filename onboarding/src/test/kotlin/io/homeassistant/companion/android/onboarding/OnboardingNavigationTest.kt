@@ -121,13 +121,14 @@ internal class OnboardingNavigationTest {
         every { isErrorFlow } returns MutableStateFlow(false)
     }
 
+    private val nameYourDeviceNavigationFlow = MutableSharedFlow<NameYourDeviceNavigationEvent>()
+
     @BindValue
     @JvmField
     val nameYourDeviceViewModel: NameYourDeviceViewModel = mockk(relaxed = true) {
-        val nameYourDeviceNavigationFlow = MutableSharedFlow<NameYourDeviceNavigationEvent>()
         every { navigationEventsFlow } returns nameYourDeviceNavigationFlow
         every { onSaveClick() } coAnswers {
-            nameYourDeviceNavigationFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved(42, false))
+            nameYourDeviceNavigationFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved(42, hasPlainTextAccess = false, isRemotelyAccessible = false))
         }
         every { deviceNameFlow } returns MutableStateFlow("Test")
         every { isValidNameFlow } returns MutableStateFlow(true)
@@ -412,6 +413,21 @@ internal class OnboardingNavigationTest {
 
             // In the test scenario since we never opened NameYourDevice the stack still contains Welcome
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given device named with public url when pressing next then show LocationSharing`() {
+        // Override default
+        every { nameYourDeviceViewModel.onSaveClick() } coAnswers {
+            nameYourDeviceNavigationFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved(42, hasPlainTextAccess = false, isRemotelyAccessible = true))
+        }
+        testNavigation {
+            navController.navigateToNameYourDevice("https://www.home-assistant.io", "code")
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
+
+            onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
         }
     }
 
