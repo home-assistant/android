@@ -57,6 +57,7 @@ class LocationSharingScreenTest {
 
                 assertTrue(locationSharingResponse == true)
                 assertTrue(goToNextScreenClicked)
+                registry.assertLocationPermissionRequested()
             }
         }
     }
@@ -72,6 +73,7 @@ class LocationSharingScreenTest {
 
                 assertTrue(locationSharingResponse == false)
                 assertTrue(goToNextScreenClicked)
+                registry.assertLocationPermissionNotRequested()
             }
         }
     }
@@ -87,14 +89,18 @@ class LocationSharingScreenTest {
 
                 assertTrue(locationSharingResponse == true)
                 assertTrue(goToNextScreenClicked)
+                // background is only requested if foreground is granted
+                registry.assertLocationPermissionRequested(false)
             }
         }
     }
 
-    private class TestHelper {
+    private class TestHelper(locationPermissionGranted: Boolean) {
         var helpClicked = false
         var goToNextScreenClicked = false
         var locationSharingResponse: Boolean? = null
+
+        val registry = LocationPermissionActivityResultRegistry(locationPermissionGranted)
     }
 
     @OptIn(ExperimentalPermissionsApi::class)
@@ -102,11 +108,11 @@ class LocationSharingScreenTest {
         locationPermissionGranted: Boolean = true,
         block: TestHelper.() -> Unit,
     ) {
-        TestHelper().apply {
+        TestHelper(locationPermissionGranted).apply {
             setContent {
                 CompositionLocalProvider(
                     LocalActivityResultRegistryOwner provides object : ActivityResultRegistryOwner {
-                        override val activityResultRegistry: ActivityResultRegistry = LocationPermissionActivityResultRegistry(locationPermissionGranted)
+                        override val activityResultRegistry: ActivityResultRegistry = registry
                     },
                 ) {
                     LocationSharingScreen(

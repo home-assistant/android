@@ -11,6 +11,14 @@ import com.google.accompanist.permissions.rememberPermissionState
 private val foregroundLocationPermissions: List<String> = listOf(
     Manifest.permission.ACCESS_FINE_LOCATION,
     Manifest.permission.ACCESS_COARSE_LOCATION,
+    // TODO drop this requirement https://github.com/home-assistant/android/issues/5931
+    if (Build.VERSION.SDK_INT >=
+        Build.VERSION_CODES.S
+    ) {
+        Manifest.permission.BLUETOOTH_CONNECT
+    } else {
+        Manifest.permission.BLUETOOTH
+    },
 )
 val locationPermissions: List<String> = foregroundLocationPermissions.run {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
