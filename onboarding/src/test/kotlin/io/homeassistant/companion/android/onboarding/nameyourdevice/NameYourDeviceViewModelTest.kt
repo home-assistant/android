@@ -183,7 +183,7 @@ class NameYourDeviceViewModelTest {
             assertEquals(testServerId, (event as NameYourDeviceNavigationEvent.DeviceNameSaved).serverId)
             // Based on default url used in this test
             assertTrue(event.hasPlainTextAccess)
-            assertFalse(event.isRemotelyAccessible)
+            assertFalse(event.isPubliclyAccessible)
 
             coVerify {
                 integrationRepository.registerDevice(
@@ -198,7 +198,7 @@ class NameYourDeviceViewModelTest {
     }
 
     @Test
-    fun `Given public secure url when onSaveClick then emits DeviceNameSaved with hasPlainTextAccess to false and isRemotelyAccessible true`() = runTest {
+    fun `Given public secure url when onSaveClick then emits DeviceNameSaved with hasPlainTextAccess to false and isPubliclyAccessible true`() = runTest {
         viewModel = NameYourDeviceViewModel(
             NameYourDeviceRoute("https://www.home-assistant.io", "auth_code"),
             serverManager,
@@ -232,7 +232,7 @@ class NameYourDeviceViewModelTest {
             assertTrue(event is NameYourDeviceNavigationEvent.DeviceNameSaved)
             assertEquals(testServerId, (event as NameYourDeviceNavigationEvent.DeviceNameSaved).serverId)
             assertFalse(event.hasPlainTextAccess)
-            assertTrue(event.isRemotelyAccessible)
+            assertTrue(event.isPubliclyAccessible)
         }
     }
 

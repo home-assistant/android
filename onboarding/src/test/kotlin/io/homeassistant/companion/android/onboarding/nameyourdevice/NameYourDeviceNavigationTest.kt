@@ -51,15 +51,15 @@ class NameYourDeviceNavigationTest {
 
         var serverIdSet: Int? = null
         var hasPlainTextAccessSet: Boolean? = null
-        var isRemotelyAccessibleSet: Boolean? = null
+        var isPubliclyAccessibleSet: Boolean? = null
 
         composeTestRule.setContent {
             HandleNameYourDeviceNavigationEvents(
                 viewModel,
-                onDeviceNamed = { serverId, hasPlainTextAccess, isRemotelyAccessible ->
+                onDeviceNamed = { serverId, hasPlainTextAccess, isPubliclyAccessible ->
                     serverIdSet = serverId
                     hasPlainTextAccessSet = hasPlainTextAccess
-                    isRemotelyAccessibleSet = isRemotelyAccessible
+                    isPubliclyAccessibleSet = isPubliclyAccessible
                 },
                 onShowSnackbar = { message, _ ->
                     true
@@ -68,13 +68,13 @@ class NameYourDeviceNavigationTest {
             )
         }
 
-        val event = NameYourDeviceNavigationEvent.DeviceNameSaved(42, hasPlainTextAccess = true, isRemotelyAccessible = true).apply {
+        val event = NameYourDeviceNavigationEvent.DeviceNameSaved(42, hasPlainTextAccess = true, isPubliclyAccessible = true).apply {
             sharedFlow.emit(this)
         }
 
         assertEquals(event.serverId, serverIdSet)
         assertEquals(event.hasPlainTextAccess, hasPlainTextAccessSet)
-        assertEquals(event.isRemotelyAccessible, isRemotelyAccessibleSet)
+        assertEquals(event.isPubliclyAccessible, isPubliclyAccessibleSet)
     }
 
     @Test

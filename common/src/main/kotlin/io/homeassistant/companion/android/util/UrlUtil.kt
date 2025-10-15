@@ -104,9 +104,9 @@ object UrlUtil {
 }
 
 /**
- * Determines if this URL uses a publicly accessible Fully Qualified Domain Name (FQDN).
+ * Determines if this URL is publicly accessible using Fully Qualified Domain Name (FQDN) or a public IP.
  *
- * A URL is considered to use a public FQDN if:
+ * A URL is considered to be publicly accessible if:
  * 1. Its hostname does NOT end with a known local TLD (`.local`, `.lan`, `.home`, `.internal`,
  *    `.localdomain`), AND
  * 2. When resolved via DNS, ALL of its IP addresses are public (not private RFC 1918 addresses,
@@ -115,14 +115,14 @@ object UrlUtil {
  * This function performs DNS resolution on the IO dispatcher and may block briefly while
  * resolving the hostname.
  *
- * @return `true` if the URL uses a public FQDN, `false` if it uses a local/private FQDN or
+ * @return `true` if the URL is publicly accessible, `false` if it is local/private or
  *         if DNS resolution fails.
  */
-suspend fun URL.usesPublicFqdn(): Boolean {
-    return usesPublicFqdn(host)
+suspend fun URL.isPubliclyAccessible(): Boolean {
+    return isPubliclyAccessible(host)
 }
 
-private suspend fun usesPublicFqdn(fqdn: String): Boolean {
+private suspend fun isPubliclyAccessible(fqdn: String): Boolean {
     // Check TLD
     val localTlds = listOf(".local", ".lan", ".home", ".internal", ".localdomain")
     if (localTlds.any { fqdn.endsWith(it, ignoreCase = true) }) {

@@ -32,28 +32,28 @@ class UrlUtilTest {
             "http://169.254.1.1:8123", // link local IP
         ],
     )
-    fun `Given local URL when checking usesPublicFqdn then returns false`(url: String) = runTest {
+    fun `Given local URL when checking isPubliclyAccessible then returns false`(url: String) = runTest {
         val url = URL(url)
-        assertFalse(url.usesPublicFqdn())
+        assertFalse(url.isPubliclyAccessible())
     }
 
     @Test
-    fun `Given unresolved TLD when checking usesPublicFqdn then returns false`() = runTest {
+    fun `Given unresolved TLD when checking isPubliclyAccessible then returns false`() = runTest {
         val url = URL("http://this-domain-definitely-does-not-exist-12345.com:8123")
-        assertFalse(url.usesPublicFqdn())
+        assertFalse(url.isPubliclyAccessible())
     }
 
     @Test
-    fun `Given URL with public domain resolving to public IP when checking usesPublicFqdn then returns true`() = runTest {
+    fun `Given URL with public domain resolving to public IP when checking isPubliclyAccessible then returns true`() = runTest {
         // Using a well-known public domain that should resolve to public IPs
         val url = URL("https://www.home-assistant.io")
-        assertTrue(url.usesPublicFqdn())
+        assertTrue(url.isPubliclyAccessible())
     }
 
     @Test
-    fun `Given URL with Google DNS when checking usesPublicFqdn then returns true`() = runTest {
+    fun `Given URL with Google DNS when checking isPubliclyAccessible then returns true`() = runTest {
         // Google's public DNS IP
         val url = URL("http://8.8.8.8:80")
-        assertTrue(url.usesPublicFqdn())
+        assertTrue(url.isPubliclyAccessible())
     }
 }

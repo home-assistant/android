@@ -120,7 +120,7 @@ internal fun NavGraphBuilder.onboarding(
         commonScreens(navController = navController, onShowSnackbar = onShowSnackbar)
         nameYourDeviceScreen(
             onBackClick = navController::popBackStack,
-            onDeviceNamed = { serverId, hasPlainTextAccess, isRemotelyAccessible: Boolean ->
+            onDeviceNamed = { serverId, hasPlainTextAccess, isPubliclyAccessible: Boolean ->
                 val navOptions = navOptions {
                     // We don't want to come back to name your device once the device
                     // is named since the auth_code has already been used.
@@ -128,7 +128,7 @@ internal fun NavGraphBuilder.onboarding(
                         inclusive = true
                     }
                 }
-                if (hasPlainTextAccess || !isRemotelyAccessible) {
+                if (hasPlainTextAccess || !isPubliclyAccessible) {
                     navController.navigateToLocalFirst(
                         serverId = serverId,
                         hasPlainTextAccess = hasPlainTextAccess,

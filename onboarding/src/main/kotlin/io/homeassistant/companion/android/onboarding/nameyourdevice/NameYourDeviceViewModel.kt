@@ -19,7 +19,7 @@ import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.NameYourDeviceRoute
-import io.homeassistant.companion.android.util.usesPublicFqdn
+import io.homeassistant.companion.android.util.isPubliclyAccessible
 import java.net.URL
 import javax.inject.Inject
 import javax.net.ssl.SSLException
@@ -41,9 +41,9 @@ internal sealed interface NameYourDeviceNavigationEvent {
      *
      * @param serverId The ID of the server for which the device name was saved.
      * @param hasPlainTextAccess Boolean that defines if the server has a plain text URL.
-     * @param isRemotelyAccessible Boolean that defines if the server is publicly accessible.
+     * @param isPubliclyAccessible Boolean that defines if the server is publicly accessible.
      */
-    data class DeviceNameSaved(val serverId: Int, val hasPlainTextAccess: Boolean, val isRemotelyAccessible: Boolean) :
+    data class DeviceNameSaved(val serverId: Int, val hasPlainTextAccess: Boolean, val isPubliclyAccessible: Boolean) :
         NameYourDeviceNavigationEvent
 
     data class Error(@StringRes val messageRes: Int) : NameYourDeviceNavigationEvent
@@ -100,7 +100,7 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
                     NameYourDeviceNavigationEvent.DeviceNameSaved(
                         serverId,
                         hasPlainTextAccess = url.startsWith("http://"),
-                        isRemotelyAccessible = runCatching { URL(url).usesPublicFqdn() }.getOrDefault(false),
+                        isPubliclyAccessible = runCatching { URL(url).isPubliclyAccessible() }.getOrDefault(false),
                     ),
                 )
             } catch (e: Exception) {

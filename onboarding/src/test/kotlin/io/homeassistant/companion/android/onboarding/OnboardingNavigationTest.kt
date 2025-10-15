@@ -128,7 +128,7 @@ internal class OnboardingNavigationTest {
     val nameYourDeviceViewModel: NameYourDeviceViewModel = mockk(relaxed = true) {
         every { navigationEventsFlow } returns nameYourDeviceNavigationFlow
         every { onSaveClick() } coAnswers {
-            nameYourDeviceNavigationFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved(42, hasPlainTextAccess = false, isRemotelyAccessible = false))
+            nameYourDeviceNavigationFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved(42, hasPlainTextAccess = false, isPubliclyAccessible = false))
         }
         every { deviceNameFlow } returns MutableStateFlow("Test")
         every { isValidNameFlow } returns MutableStateFlow(true)
@@ -420,7 +420,7 @@ internal class OnboardingNavigationTest {
     fun `Given device named with public url when pressing next then show LocationSharing`() {
         // Override default
         every { nameYourDeviceViewModel.onSaveClick() } coAnswers {
-            nameYourDeviceNavigationFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved(42, hasPlainTextAccess = false, isRemotelyAccessible = true))
+            nameYourDeviceNavigationFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved(42, hasPlainTextAccess = false, isPubliclyAccessible = true))
         }
         testNavigation {
             navController.navigateToNameYourDevice("https://www.home-assistant.io", "code")
