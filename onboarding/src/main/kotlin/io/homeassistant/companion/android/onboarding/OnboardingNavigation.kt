@@ -270,7 +270,6 @@ private fun NavGraphBuilder.commonScreens(
                 )
             }
         },
-        onShowSnackbar = onShowSnackbar,
         onBackClick = navController::popBackStack,
         onOpenExternalLink = {
             navController.navigateToUri(it.toString())
