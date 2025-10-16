@@ -112,7 +112,7 @@ internal class WearOnboardingNavigationTest {
         every { urlFlow } returns MutableStateFlow("http://homeassistant.local:8123")
         every { isLoadingFlow } returns MutableStateFlow(false)
         every { navigationEventsFlow } returns connectionNavigationEventFlow
-        every { isErrorFlow } returns MutableStateFlow(false)
+        every { errorFlow } returns MutableStateFlow(null)
     }
 
     private val selectedUri = mockk<Uri>()

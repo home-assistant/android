@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.connection
 
+import android.content.Context
 import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
@@ -35,18 +36,44 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import timber.log.Timber
 
+internal sealed interface ConnectionError {
+    @get:StringRes
+    val title: Int
+
+    @get:StringRes
+    val message: Int
+    val errorDetails: String
+    val rawErrorType: String
+
+    data class AuthenticationError(
+        @StringRes override val message: Int,
+        override val errorDetails: String,
+        override val rawErrorType: String,
+    ) : ConnectionError {
+        override val title: Int = commonR.string.error_connection_failed
+    }
+
+    data class UnreachableError(
+        @StringRes override val message: Int,
+        override val errorDetails: String,
+        override val rawErrorType: String,
+    ) : ConnectionError {
+        override val title: Int = commonR.string.error_connection_failed
+    }
+
+    data class UnknownError(
+        @StringRes override val message: Int,
+        override val errorDetails: String,
+        override val rawErrorType: String,
+    ) : ConnectionError {
+        override val title: Int = commonR.string.error_connection_failed
+    }
+}
+
 /**
  * Represents the navigation events that can occur during the connection process.
  */
 internal sealed interface ConnectionNavigationEvent {
-    /**
-     * Represents an error event during the connection process.
-     *
-     * @property resId The string resource ID for the error message.
-     * @property formatArgs Optional arguments to be used for formatting the error message.
-     */
-    class Error(@StringRes val resId: Int, vararg val formatArgs: Any?) : ConnectionNavigationEvent
-
     /**
      * Emitted when authentication is successful and the code is available
      *
@@ -98,8 +125,8 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     private val _isLoadingFlow = MutableStateFlow(true)
     val isLoadingFlow = _isLoadingFlow.asStateFlow()
 
-    private val _isErrorFlow = MutableStateFlow(false)
-    val isErrorFlow = _isErrorFlow.asStateFlow()
+    private val _errorFlow = MutableStateFlow<ConnectionError?>(null)
+    val errorFlow = _errorFlow.asStateFlow()
 
     val webViewClient: TLSWebViewClient = object : TLSWebViewClient(keyChainRepository) {
         override fun onPageFinished(view: WebView?, url: String?) {
@@ -111,32 +138,56 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
             return request?.url?.let { interceptRedirectIfRequired(it) } ?: false
         }
 
+        private fun errorDetails(context: Context?, code: Int?, description: String?): String {
+            return "Status Code: ${code}\nDescription: ${
+                description?.takeIf {
+                    it.isNotEmpty()
+                } ?: context?.getString(commonR.string.no_description)
+            }"
+        }
+
         @RequiresApi(Build.VERSION_CODES.M)
         override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
             super.onReceivedError(view, request, error)
-            Timber.e("onReceivedError: Status Code: ${error?.errorCode} Description: ${error?.description}")
+            val errorDetails = errorDetails(view?.context, error?.errorCode, error?.description?.toString())
+            Timber.e("onReceivedError: $errorDetails")
+
+            fun authenticationError(message: Int): ConnectionError {
+                return ConnectionError.AuthenticationError(
+                    message = message,
+                    errorDetails = errorDetails,
+                    rawErrorType = WebResourceError::class.toString(),
+                )
+            }
 
             if (request?.url?.toString() == urlFlow.value) {
                 val error = when (error?.errorCode) {
-                    ERROR_FAILED_SSL_HANDSHAKE -> ConnectionNavigationEvent.Error(
+                    ERROR_FAILED_SSL_HANDSHAKE -> authenticationError(
                         commonR.string.webview_error_FAILED_SSL_HANDSHAKE,
                     )
 
-                    ERROR_AUTHENTICATION -> ConnectionNavigationEvent.Error(commonR.string.webview_error_AUTHENTICATION)
-                    ERROR_PROXY_AUTHENTICATION -> ConnectionNavigationEvent.Error(
+                    ERROR_AUTHENTICATION -> authenticationError(
+                        commonR.string.webview_error_AUTHENTICATION,
+                    )
+
+                    ERROR_PROXY_AUTHENTICATION -> authenticationError(
                         commonR.string.webview_error_PROXY_AUTHENTICATION,
                     )
 
-                    ERROR_UNSUPPORTED_AUTH_SCHEME -> ConnectionNavigationEvent.Error(
+                    ERROR_UNSUPPORTED_AUTH_SCHEME -> authenticationError(
                         commonR.string.webview_error_AUTH_SCHEME,
                     )
 
-                    ERROR_HOST_LOOKUP -> ConnectionNavigationEvent.Error(commonR.string.webview_error_HOST_LOOKUP)
-                    else -> ConnectionNavigationEvent.Error(
-                        commonR.string.error_http_generic,
-                        error?.errorCode,
-                        error?.description?.takeIf { it.isNotEmpty() }
-                            ?: view?.context?.getString(commonR.string.no_description),
+                    ERROR_HOST_LOOKUP -> ConnectionError.UnreachableError(
+                        message = commonR.string.webview_error_HOST_LOOKUP,
+                        errorDetails = errorDetails,
+                        rawErrorType = WebResourceError::class.toString(),
+                    )
+
+                    else -> ConnectionError.UnknownError(
+                        message = commonR.string.error_http_generic,
+                        errorDetails = errorDetails,
+                        rawErrorType = WebResourceError::class.toString(),
                     )
                 }
 
@@ -151,24 +202,31 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         ) {
             super.onReceivedHttpError(view, request, errorResponse)
             if (request?.url?.toString() == urlFlow.value) {
-                Timber.e(
-                    "onReceivedHttpError: Status Code: ${errorResponse?.statusCode} Description: ${errorResponse?.reasonPhrase}",
-                )
+                val errorDetails =
+                    errorDetails(view?.context, errorResponse?.statusCode, errorResponse?.reasonPhrase)
+                Timber.e("onReceivedHttpError: $errorDetails")
+
+                fun authenticationError(message: Int): ConnectionError {
+                    return ConnectionError.AuthenticationError(
+                        message = message,
+                        errorDetails = errorDetails,
+                        rawErrorType = WebResourceResponse::class.toString(),
+                    )
+                }
 
                 val error = when {
-                    isTLSClientAuthNeeded && !isCertificateChainValid -> ConnectionNavigationEvent.Error(
+                    isTLSClientAuthNeeded && !isCertificateChainValid -> authenticationError(
                         commonR.string.tls_cert_expired_message,
                     )
 
-                    isTLSClientAuthNeeded && errorResponse?.statusCode == 400 -> ConnectionNavigationEvent.Error(
+                    isTLSClientAuthNeeded && errorResponse?.statusCode == 400 -> authenticationError(
                         commonR.string.tls_cert_not_found_message,
                     )
 
-                    else -> ConnectionNavigationEvent.Error(
-                        commonR.string.error_http_generic,
-                        errorResponse?.statusCode,
-                        errorResponse?.reasonPhrase?.takeIf { it.isNotEmpty() }
-                            ?: view?.context?.getString(commonR.string.no_description),
+                    else -> ConnectionError.UnknownError(
+                        message = commonR.string.error_http_generic,
+                        errorDetails = errorDetails,
+                        rawErrorType = WebResourceResponse::class.toString(),
                     )
                 }
                 onError(error)
@@ -187,7 +245,14 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                 SslError.SSL_UNTRUSTED -> commonR.string.webview_error_SSL_UNTRUSTED
                 else -> commonR.string.error_ssl
             }
-            onError(ConnectionNavigationEvent.Error(messageRes))
+            onError(
+                ConnectionError.AuthenticationError(
+                    message = messageRes,
+                    // SslError overrides the toString method with the error details
+                    error.toString(),
+                    SslError::class.toString(),
+                ),
+            )
         }
     }
 
@@ -216,7 +281,13 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
             _urlFlow.emit(authUrl)
         } catch (e: Exception) {
             Timber.e(e, "Unable to build authentication URL")
-            onError(ConnectionNavigationEvent.Error(R.string.connection_screen_malformed_url))
+            onError(
+                ConnectionError.UnreachableError(
+                    message = R.string.connection_screen_malformed_url,
+                    errorDetails = e.localizedMessage ?: e.message ?: "No description",
+                    rawErrorType = e::class.toString(),
+                ),
+            )
         }
     }
 
@@ -250,10 +321,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         }
     }
 
-    private fun onError(error: ConnectionNavigationEvent.Error) {
-        viewModelScope.launch {
-            _isErrorFlow.emit(true)
-            _navigationEventsFlow.emit(error)
-        }
+    private fun onError(error: ConnectionError) {
+        _errorFlow.update { error }
     }
 }
