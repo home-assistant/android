@@ -5,6 +5,7 @@ GEM
       base64
       nkf
       rexml
+    abbrev (0.1.2)
     addressable (2.8.7)
       public_suffix (>= 2.0.2, < 7.0)
     artifactory (3.0.17)
@@ -221,10 +222,12 @@ GEM
 
 PLATFORMS
   arm64-darwin-22
+  arm64-darwin-25
   x64-mingw-ucrt
   x86_64-linux
 
 DEPENDENCIES
+  abbrev
   fastlane
   fastlane-plugin-amazon_app_submission
 

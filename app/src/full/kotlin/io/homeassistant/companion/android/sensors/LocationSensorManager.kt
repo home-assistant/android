@@ -1340,6 +1340,7 @@ class LocationSensorManager :
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
+                    // TODO drop this requirement https://github.com/home-assistant/android/issues/5931
                     Manifest.permission.BLUETOOTH_CONNECT,
                 )
             }
@@ -1348,6 +1349,7 @@ class LocationSensorManager :
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
+                    // TODO drop this requirement https://github.com/home-assistant/android/issues/5931
                     Manifest.permission.BLUETOOTH,
                 )
             }
@@ -1355,6 +1357,7 @@ class LocationSensorManager :
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
+                    // TODO drop this requirement https://github.com/home-assistant/android/issues/5931
                     Manifest.permission.BLUETOOTH,
                 )
             }

@@ -43,7 +43,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import io.homeassistant.companion.android.common.compose.composable.ButtonSize
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.composable.HABanner
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
+import io.homeassistant.companion.android.common.compose.composable.HAHint
 import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HAProgress
@@ -92,6 +94,7 @@ fun HAComposeCatalogScreen() {
                 textStyles()
                 input()
                 progress()
+                banners()
             }
         }
     }
@@ -327,122 +330,123 @@ private fun LazyListScope.input() {
             var value4 by remember { mutableStateOf("") }
             var value5 by remember { mutableStateOf("error") }
             var value6 by remember { mutableStateOf("super secret") }
-
-            HATextField(
-                value = value1,
-                onValueChange = { value1 = it },
-                trailingIcon = {
-                    if (value1.isNotBlank()) {
-                        IconButton(onClick = { value1 = "" }) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = null,
+            CatalogRow {
+                HATextField(
+                    value = value1,
+                    onValueChange = { value1 = it },
+                    trailingIcon = {
+                        if (value1.isNotBlank()) {
+                            IconButton(onClick = { value1 = "" }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = null,
+                                )
+                            }
+                        }
+                    },
+                )
+                HATextField(
+                    value = value2,
+                    onValueChange = { value2 = it },
+                    placeholder = {
+                        Text(
+                            text = "Placeholder",
+                            style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                        )
+                    },
+                )
+                HATextField(
+                    value = value3,
+                    onValueChange = { value3 = it },
+                    label = {
+                        Text(
+                            text = "Label",
+                            style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                        )
+                    },
+                )
+                HATextField(
+                    value = value4,
+                    onValueChange = { value4 = it },
+                    label = {
+                        Text(
+                            text = "Label",
+                            style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                        )
+                    },
+                    placeholder = {
+                        Text(
+                            text = "Placeholder",
+                            style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                        )
+                    },
+                )
+                HATextField(
+                    value = value5,
+                    onValueChange = { value5 = it },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = null,
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = "Label",
+                            style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                        )
+                    },
+                    placeholder = {
+                        Text(
+                            text = "Placeholder",
+                            style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                        )
+                    },
+                    isError = value5.isNotBlank(),
+                    supportingText = {
+                        if (value5.isNotBlank()) {
+                            Text(
+                                text = "Supporting text",
+                                style = HATextStyle.BodyMedium.copy(color = Color.Unspecified),
                             )
                         }
-                    }
-                },
-            )
-            HATextField(
-                value = value2,
-                onValueChange = { value2 = it },
-                placeholder = {
-                    Text(
-                        text = "Placeholder",
-                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
-                    )
-                },
-            )
-            HATextField(
-                value = value3,
-                onValueChange = { value3 = it },
-                label = {
-                    Text(
-                        text = "Label",
-                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
-                    )
-                },
-            )
-            HATextField(
-                value = value4,
-                onValueChange = { value4 = it },
-                label = {
-                    Text(
-                        text = "Label",
-                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
-                    )
-                },
-                placeholder = {
-                    Text(
-                        text = "Placeholder",
-                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
-                    )
-                },
-            )
-            HATextField(
-                value = value5,
-                onValueChange = { value5 = it },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Info,
-                        contentDescription = null,
-                    )
-                },
-                label = {
-                    Text(
-                        text = "Label",
-                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
-                    )
-                },
-                placeholder = {
-                    Text(
-                        text = "Placeholder",
-                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
-                    )
-                },
-                isError = value5.isNotBlank(),
-                supportingText = {
-                    if (value5.isNotBlank()) {
+                    },
+                )
+                HATextField(
+                    value = BIG_CONTENT,
+                    enabled = false,
+                    onValueChange = { },
+                    label = {
                         Text(
-                            text = "Supporting text",
-                            style = HATextStyle.BodyMedium.copy(color = Color.Unspecified),
+                            text = "Label",
+                            style = HATextStyle.UserInput.copy(color = Color.Unspecified),
                         )
-                    }
-                },
-            )
-            HATextField(
-                value = BIG_CONTENT,
-                enabled = false,
-                onValueChange = { },
-                label = {
-                    Text(
-                        text = "Label",
-                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
-                    )
-                },
-                placeholder = {
-                    Text(
-                        text = "Placeholder",
-                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
-                    )
-                },
-            )
-            HATextField(
-                value = value6,
-                onValueChange = { value6 = it },
-                visualTransformation = PasswordVisualTransformation(),
-                label = {
-                    Text(
-                        text = "Password",
-                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
-                    )
-                },
-                placeholder = {
-                    Text(
-                        text = "Placeholder",
-                        style = HATextStyle.UserInput.copy(color = Color.Unspecified),
-                    )
-                },
-            )
+                    },
+                    placeholder = {
+                        Text(
+                            text = "Placeholder",
+                            style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                        )
+                    },
+                )
+                HATextField(
+                    value = value6,
+                    onValueChange = { value6 = it },
+                    visualTransformation = PasswordVisualTransformation(),
+                    label = {
+                        Text(
+                            text = "Password",
+                            style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                        )
+                    },
+                    placeholder = {
+                        Text(
+                            text = "Placeholder",
+                            style = HATextStyle.UserInput.copy(color = Color.Unspecified),
+                        )
+                    },
+                )
+            }
         }
     }
 }
@@ -507,12 +511,30 @@ private fun LazyListScope.switches() {
     catalogSection(title = "Switches") {
         CatalogRow {
             var isChecked by remember { mutableStateOf(false) }
-            HASwitch(checked = isChecked, onCheckedChange = {
-                isChecked = it
-            })
-            HASwitch(checked = !isChecked, onCheckedChange = {
-                isChecked = !it
-            })
+            HASwitch(
+                checked = isChecked,
+                onCheckedChange = {
+                    isChecked = it
+                },
+            )
+            HASwitch(
+                checked = !isChecked,
+                onCheckedChange = {
+                    isChecked = !it
+                },
+            )
+        }
+    }
+}
+
+private fun LazyListScope.banners() {
+    catalogSection(title = "Banners") {
+        CatalogRow {
+            HAHint("This is a small hint banner")
+            HAHint("This is a hint banner with a close button") {}
+            HABanner {
+                Text("Simple customizable banner", color = Color.Red)
+            }
         }
     }
 }

@@ -1166,6 +1166,7 @@
     <string name="sensor_update_type_info_worker_setting">You can change how often this sensor is updated by using the \'%1$s\' setting.</string>
     <string name="sensor_update_type_info_location">For more information about location updates, please check the documentation.</string>
     <string name="sensor_update_type_info_custom">This sensor updates on a non-standard schedule, please check the documentation.</string>
+    <string name="sensor_privacy">You have full control over your data. When enabled, sensor data is only sent to your own Home\u00A0Assistant server. It will never be shared with the Home\u00A0Assistant project or third parties.</string>
     <string name="missing_camera_permission">\'Camera\' permission required</string>
     <string name="missing_phone_permission">Please grant Phone permission to make a phone call</string>
     <string name="missing_bluetooth_permission">Please grant Nearby devices permission to control Bluetooth</string>

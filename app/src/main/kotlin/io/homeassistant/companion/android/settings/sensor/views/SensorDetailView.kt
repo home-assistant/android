@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
@@ -45,6 +46,7 @@ import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -69,6 +71,7 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HAHint
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.sensor.SensorSetting
@@ -97,6 +100,8 @@ fun SensorDetailView(
     var sensorUpdateTypeInfo by remember { mutableStateOf(false) }
 
     var sensorEnabled by remember { mutableStateOf(false) }
+    val showPrivacyHint by viewModel.showPrivacyHint.collectAsState()
+
     LaunchedEffect(Unit) {
         sensorEnabled = viewModel.sensor?.sensor?.enabled
             ?: (
@@ -180,6 +185,22 @@ fun SensorDetailView(
                         text = stringResource(viewModel.basicSensor.descriptionId),
                         modifier = Modifier.padding(all = 16.dp),
                     )
+                }
+                if (showPrivacyHint) {
+                    item {
+                        // Display privacy hint for Google Play Store compliance. While required for Health
+                        // sensors, we show this hint for all sensors as the privacy information is universally
+                        // relevant and helps users understand how their sensor data is used.
+                        HAHint(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentWidth(Alignment.CenterHorizontally)
+                                .padding(horizontal = 16.dp)
+                                .padding(bottom = 16.dp),
+                            text = stringResource(commonR.string.sensor_privacy),
+                            onClose = viewModel::discardShowPrivacyHint,
+                        )
+                    }
                 }
                 item {
                     TransparentChip(

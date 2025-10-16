@@ -6,6 +6,7 @@ import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -64,6 +65,7 @@ class LocationForSecureConnectionScreenTest {
                 nextButton.assertIsEnabled().performClick()
                 assertEquals(false, allowInsecureConnection)
                 assertNull(snackbarMessage)
+                registry.assertLocationPermissionRequested()
             }
         }
     }
@@ -82,6 +84,7 @@ class LocationForSecureConnectionScreenTest {
                 nextButton.assertIsEnabled().performClick()
                 assertEquals(true, allowInsecureConnection)
                 assertNull(snackbarMessage)
+                registry.assertLocationPermissionNotRequested()
             }
         }
     }
@@ -91,13 +94,12 @@ class LocationForSecureConnectionScreenTest {
         composeTestRule.apply {
             testScreen(false) {
                 val nextButton = onNodeWithText(stringResource(R.string.location_secure_connection_next))
-                    .performScrollTo()
-                    .assertIsDisplayed()
-                    .assertIsNotEnabled()
+                    .assertIsNotDisplayed()
 
                 onNodeWithText(stringResource(R.string.location_secure_connection_most_secure)).performScrollTo().performClick()
 
-                nextButton.assertIsEnabled().performClick()
+                // Should have scroll automatically to the end of the screen
+                nextButton.assertIsDisplayed().assertIsEnabled().performClick()
                 // The callback shouldn't be invoked since the permission is not granted
                 assertEquals(null, allowInsecureConnection)
                 assertEquals(stringResource(R.string.location_secure_connection_discard_permission), snackbarMessage)
@@ -108,14 +110,17 @@ class LocationForSecureConnectionScreenTest {
                 nextButton.assertIsEnabled().performClick()
                 assertEquals(true, allowInsecureConnection)
                 assertNull(snackbarMessage)
+                // background is only requested if foreground is granted
+                registry.assertLocationPermissionRequested(false)
             }
         }
     }
 
-    private class TestHelper {
+    private class TestHelper(locationPermissionGranted: Boolean) {
         var helpClicked = false
         var allowInsecureConnection: Boolean? = null
         var snackbarMessage: String? = null
+        val registry = LocationPermissionActivityResultRegistry(locationPermissionGranted)
     }
 
     @OptIn(ExperimentalPermissionsApi::class)
@@ -123,11 +128,11 @@ class LocationForSecureConnectionScreenTest {
         locationPermissionGranted: Boolean = true,
         block: TestHelper.() -> Unit,
     ) {
-        TestHelper().apply {
+        TestHelper(locationPermissionGranted).apply {
             setContent {
                 CompositionLocalProvider(
                     LocalActivityResultRegistryOwner provides object : ActivityResultRegistryOwner {
-                        override val activityResultRegistry: ActivityResultRegistry = LocationPermissionActivityResultRegistry(locationPermissionGranted)
+                        override val activityResultRegistry: ActivityResultRegistry = registry
                     },
                 ) {
                     LocationForSecureConnectionScreen(
