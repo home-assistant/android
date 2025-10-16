@@ -128,7 +128,7 @@ internal fun NavGraphBuilder.onboarding(
                         inclusive = true
                     }
                 }
-                if (hasPlainTextAccess || !isPubliclyAccessible) {
+                if (!isPubliclyAccessible) {
                     navController.navigateToLocalFirst(
                         serverId = serverId,
                         hasPlainTextAccess = hasPlainTextAccess,
