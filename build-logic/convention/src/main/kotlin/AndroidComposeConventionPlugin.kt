@@ -1,5 +1,6 @@
 
 import com.android.compose.screenshot.gradle.ScreenshotTestOptions
+import com.android.compose.screenshot.tasks.PreviewScreenshotValidationTask
 import io.homeassistant.companion.android.androidConfig
 import io.homeassistant.companion.android.getPluginId
 import org.gradle.api.Plugin
@@ -7,6 +8,7 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.withType
 
 /**
  * A convention plugin that applies common configurations to Android Compose modules.
@@ -30,7 +32,16 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
                 extensions.configure<ScreenshotTestOptions> {
                     imageDifferenceThreshold = 0.00025f // 0.025%
                 }
+            }
 
+            tasks.withType<PreviewScreenshotValidationTask>().configureEach {
+                // Hack until we get the update of the screenshot libray
+                // https://issuetracker.google.com/issues/444048026
+                // 3g is the minimal value for our tests to pass currently
+                maxHeapSize = "3g"
+            }
+
+            androidConfig {
                 dependencies {
                     "implementation"(platform(libs.compose.bom))
                     "implementation"(libs.compose.foundation)
