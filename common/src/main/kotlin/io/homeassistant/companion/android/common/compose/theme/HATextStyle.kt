@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.common.compose.theme
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -73,5 +75,15 @@ object HATextStyle {
             /**
              Color should not be set here since it is controlled by [androidx.compose.material3.ButtonColors.contentColor]
              */
+        )
+
+    val Link
+        @Composable
+        get() = TextLinkStyles(
+            style = SpanStyle(
+                color = LocalHAColorScheme.current.colorTextLink,
+                fontSize = HAFontSize.M,
+                fontWeight = FontWeight.W600,
+            ),
         )
 }
