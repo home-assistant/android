@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.os.Build
 import android.os.SystemClock
-import androidx.annotation.RequiresApi
 import androidx.health.services.client.HealthServices
 import androidx.health.services.client.HealthServicesClient
 import androidx.health.services.client.PassiveListenerCallback
@@ -31,7 +30,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
-@RequiresApi(Build.VERSION_CODES.R)
 class HealthServicesSensorManager : SensorManager {
     companion object {
 
@@ -105,6 +103,8 @@ class HealthServicesSensorManager : SensorManager {
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
+    private val areHealthServicesSensorApisAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/wear-os/sensors#health-services"
     }
@@ -151,7 +151,15 @@ class HealthServicesSensorManager : SensorManager {
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
-        return arrayOf(Manifest.permission.ACTIVITY_RECOGNITION)
+        return if (areHealthServicesSensorApisAvailable) {
+            arrayOf(Manifest.permission.ACTIVITY_RECOGNITION)
+        } else {
+            emptyArray()
+        }
+    }
+
+    override fun hasSensor(context: Context): Boolean {
+        return areHealthServicesSensorApisAvailable
     }
 
     override suspend fun requestSensorUpdate(context: Context) {

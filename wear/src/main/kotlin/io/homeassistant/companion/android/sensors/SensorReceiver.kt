@@ -52,7 +52,7 @@ class SensorReceiver : SensorReceiverBase() {
         get() = MANAGERS
 
     companion object {
-        private val allManager = listOf(
+        val MANAGERS = listOf(
             AndroidOsSensorManager(),
             AppSensorManager(),
             AudioSensorManager(),
@@ -61,6 +61,7 @@ class SensorReceiver : SensorReceiverBase() {
             BluetoothSensorManager(),
             DisplaySensorManager(),
             DNDSensorManager(),
+            HealthServicesSensorManager(),
             HeartRateSensorManager(),
             KeyguardSensorManager(),
             LastRebootSensorManager(),
@@ -82,11 +83,6 @@ class SensorReceiver : SensorReceiverBase() {
             TrafficStatsManager(),
             WetModeSensorManager(),
         )
-        val MANAGERS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            allManager.plus(HealthServicesSensorManager())
-        } else {
-            allManager
-        }
 
         const val ACTION_REQUEST_SENSORS_UPDATE =
             "io.homeassistant.companion.android.background.REQUEST_SENSORS_UPDATE"
