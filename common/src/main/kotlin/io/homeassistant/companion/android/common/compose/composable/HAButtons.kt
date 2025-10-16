@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Text
@@ -21,6 +23,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -188,7 +192,7 @@ fun HAPlainButton(
 ) {
     val colors = LocalHAColorScheme.current.plainButtonColorsFromVariant(variant)
 
-    RippleConfigurationLocalProvider(colors) {
+    RippleConfigurationLocalProvider(colors.rippleColor) {
         TextButton(
             onClick = onClick,
             enabled = enabled,
@@ -211,6 +215,46 @@ fun HAPlainButton(
     }
 }
 
+/**
+ * Displays an icon button, which is a button containing only an icon with no text label.
+ * The button's appearance is determined by the [variant] and the current theme.
+ *
+ * @param icon The [ImageVector] icon to be displayed in the button.
+ * @param onClick The lambda function to be executed when the button is clicked.
+ * @param contentDescription The content description for accessibility purposes.
+ * @param modifier Optional [androidx.compose.ui.Modifier] to be applied to the button.
+ * @param variant The [ButtonVariant] that determines the button's color scheme. Defaults to [ButtonVariant.PRIMARY].
+ * @param enabled Controls the enabled state of the button. When `false`, the button will not be clickable.
+ */
+@Composable
+fun HAIconButton(
+    icon: ImageVector,
+    onClick: () -> Unit,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    variant: ButtonVariant = ButtonVariant.PRIMARY,
+    enabled: Boolean = true,
+) {
+    val colors = LocalHAColorScheme.current.iconButtonColorsFromVariant(variant)
+
+    RippleConfigurationLocalProvider(colors.rippleColor) {
+        IconButton(
+            onClick = onClick,
+            enabled = enabled,
+            // We only support one size for now
+            modifier = modifier.size(48.dp),
+            colors = colors.buttonColors,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                // We only support one size for now
+                modifier = Modifier.size(24.dp),
+            )
+        }
+    }
+}
+
 @Composable
 private fun HABaseButton(
     text: String,
@@ -224,7 +268,7 @@ private fun HABaseButton(
     suffix: @Composable (BoxScope.() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    RippleConfigurationLocalProvider(colors) {
+    RippleConfigurationLocalProvider(colors.rippleColor) {
         Button(
             onClick = onClick,
             enabled = enabled,
@@ -251,10 +295,10 @@ private fun HABaseButton(
  * Provide a custom ripple configuration based on [colors].
  */
 @Composable
-private fun RippleConfigurationLocalProvider(colors: HAButtonColors, content: @Composable () -> Unit) {
+private fun RippleConfigurationLocalProvider(rippleColor: Color, content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalRippleConfiguration provides RippleConfiguration(
-            color = colors.rippleColor,
+            color = rippleColor,
             rippleAlpha = defaultRippleAlpha,
         ),
         content = content,
