@@ -99,7 +99,6 @@ jobs:
             ./automotive/build/outputs/apk/minimal/release/automotive-minimal-release.apk
             ./strings.zip
             ./app/src/main/res/xml/locales_config.xml
-            ./wear/src/main/res/xml/locales_config.xml
 
       - name: Deploy to Firebase
         env:
