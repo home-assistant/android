@@ -22,7 +22,6 @@ import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import javax.inject.Inject
-import retrofit2.HttpException
 import timber.log.Timber
 
 @AndroidEntryPoint

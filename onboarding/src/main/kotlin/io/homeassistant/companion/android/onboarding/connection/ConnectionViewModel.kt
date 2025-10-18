@@ -24,6 +24,7 @@ import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.util.TLSWebViewClient
+import io.homeassistant.companion.android.util.UrlBuilder
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,8 +32,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import timber.log.Timber
 
 /**
@@ -78,6 +77,7 @@ private const val AUTH_CALLBACK = "$AUTH_CALLBACK_SCHEME://$AUTH_CALLBACK_HOST"
 internal class ConnectionViewModel @VisibleForTesting constructor(
     private val rawUrl: String,
     private val keyChainRepository: KeyChainRepository,
+    private val urlBuilder: UrlBuilder,
 ) : ViewModel() {
 
     @Inject
@@ -85,7 +85,12 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         savedStateHandle: SavedStateHandle,
         @NamedKeyChain
         keyChainRepository: KeyChainRepository,
-    ) : this(savedStateHandle.toRoute<ConnectionRoute>().url, keyChainRepository)
+        urlBuilder: UrlBuilder,
+    ) : this(
+        rawUrl = savedStateHandle.toRoute<ConnectionRoute>().url,
+        keyChainRepository = keyChainRepository,
+        urlBuilder = urlBuilder,
+    )
 
     private val rawUri: Uri by lazy { rawUrl.toUri() }
 
@@ -200,18 +205,15 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     private suspend fun buildAuthUrl(base: String) {
         Timber.d("Building auth url based on $base")
         try {
-            val authUrl = with(base.toHttpUrl()) {
-                HttpUrl.Builder()
-                    .scheme(scheme)
-                    .host(host)
-                    .port(port)
-                    .addPathSegments("auth/authorize")
-                    .addEncodedQueryParameter("response_type", "code")
-                    .addEncodedQueryParameter("client_id", AuthenticationService.CLIENT_ID)
-                    .addEncodedQueryParameter("redirect_uri", AUTH_CALLBACK)
-                    .build()
-                    .toString()
-            }
+            val authUrl = urlBuilder.buildUrl(
+                base = base,
+                pathSegments = "auth/authorize",
+                parameters = mapOf(
+                    "response_type" to "code",
+                    "client_id" to AuthenticationService.CLIENT_ID,
+                    "redirect_uri" to AUTH_CALLBACK,
+                ),
+            )
             Timber.d("Auth url is: $authUrl")
             _urlFlow.emit(authUrl)
         } catch (e: Exception) {

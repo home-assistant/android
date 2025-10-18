@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.exception.HttpException
 import io.homeassistant.companion.android.util.RegistriesDataHandler
 import java.time.LocalDateTime
 import java.util.concurrent.Flow
@@ -29,8 +30,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
 import okhttp3.ResponseBody.Companion.toResponseBody
-import retrofit2.HttpException
-import retrofit2.Response
 import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.R)
@@ -309,7 +308,7 @@ class HaControlsProviderService : ControlsProviderService() {
         if (serverManager.integrationRepository(serverId).isHomeAssistantVersionAtLeast(2022, 4, 0)) {
             webSocketScope.launch {
                 var sentInitial = false
-                val error404 = HttpException(Response.error<ResponseBody>(404, byteArrayOf().toResponseBody()))
+                val error404 = HttpException(404, "Not Found")
 
                 serverManager.webSocketRepository(serverId).getCompressedStateAndChanges(entityIds)
                     ?.collect { event ->
@@ -535,7 +534,7 @@ class HaControlsProviderService : ControlsProviderService() {
     private fun getFailedEntity(entityId: String, exception: Exception): Entity {
         return Entity(
             entityId = entityId,
-            state = if (exception is HttpException && exception.code() == 404) "notfound" else "exception",
+            state = if (exception is HttpException && exception.code == 404) "notfound" else "exception",
             attributes = mapOf<String, String>(),
             lastChanged = LocalDateTime.now(),
             lastUpdated = LocalDateTime.now(),
