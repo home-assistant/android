@@ -29,8 +29,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import retrofit2.HttpException
-import retrofit2.Response
+import io.homeassistant.companion.android.common.exception.HttpException
 
 private const val DEFAULT_DEVICE_NAME = "Pixel 42"
 
@@ -346,7 +345,7 @@ class NameYourDeviceViewModelTest {
     fun `Given registerAuthCode throws HttpException 404 when onSaveClick then emits error with error_with_registration message`() = runTest {
         val tempServerId = 0
         coEvery { serverManager.addServer(any()) } returns tempServerId
-        coEvery { authRepository.registerAuthorizationCode(route.authCode) } throws HttpException(Response.error<Any>(404, mockk(relaxed = true)))
+        coEvery { authRepository.registerAuthorizationCode(route.authCode) } throws HttpException(404, "Not Found")
         coEvery { authRepository.revokeSession() } just Runs
         coEvery { serverManager.removeServer(tempServerId) } just Runs
 
