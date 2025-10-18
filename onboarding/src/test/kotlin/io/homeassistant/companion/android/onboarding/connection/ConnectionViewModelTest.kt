@@ -20,6 +20,7 @@ import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.TLSWebViewClient
+import io.homeassistant.companion.android.util.UrlBuilder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -44,6 +45,7 @@ import timber.log.Timber
 class ConnectionViewModelTest {
 
     private val keyChainRepository: KeyChainRepository = mockk()
+    private val urlBuilder: UrlBuilder = UrlBuilder()
 
     @BeforeEach
     fun setup() {
@@ -54,7 +56,7 @@ class ConnectionViewModelTest {
     @ParameterizedTest
     @ValueSource(strings = ["http://homeassistant.local:8123", "https://cloud.ui.nabu.casa"])
     fun `Given a valid http url when buildAuthUrl then urlFlow emits correct auth url and isLoading is false`(baseUrl: String) = runTest {
-        val viewModel = ConnectionViewModel(baseUrl, keyChainRepository)
+        val viewModel = ConnectionViewModel(baseUrl, keyChainRepository, urlBuilder)
 
         turbineScope {
             val urlFlow = viewModel.urlFlow.testIn(backgroundScope)
@@ -84,7 +86,7 @@ class ConnectionViewModelTest {
     @ValueSource(strings = ["http://homeassistant.local:8123", "https://cloud.ui.nabu.casa"])
     fun `Given a valid http url with suffix when buildAuthUrl then urlFlow emits correct auth url with path stripped`(baseUrl: String) = runTest {
         val suffix = "/hello?query=param&isHA=true#segment"
-        val viewModel = ConnectionViewModel("$baseUrl$suffix", keyChainRepository)
+        val viewModel = ConnectionViewModel("$baseUrl$suffix", keyChainRepository, urlBuilder)
 
         turbineScope {
             val urlFlow = viewModel.urlFlow.testIn(backgroundScope)
@@ -101,7 +103,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given a malformed url when buildAuthUrl then navigationEventsFlow emits malformed url error`() = runTest {
         val malformedUrl = "not_a_url"
-        val viewModel = ConnectionViewModel(malformedUrl, keyChainRepository)
+        val viewModel = ConnectionViewModel(malformedUrl, keyChainRepository, urlBuilder)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -127,7 +129,7 @@ class ConnectionViewModelTest {
             every { getQueryParameter("code") } returns authCode
         }
 
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository, urlBuilder)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -161,7 +163,7 @@ class ConnectionViewModelTest {
 
         mockUriParse()
 
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository, urlBuilder)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -189,7 +191,7 @@ class ConnectionViewModelTest {
 
         mockUriParse()
 
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository, urlBuilder)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -213,7 +215,7 @@ class ConnectionViewModelTest {
 
     @Test
     fun `Given SSL errors when onReceivedSslError is invoked then Error event with message`() = runTest {
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository, urlBuilder)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -245,7 +247,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given HTTP errors when onReceivedHttpError is invoked then Error event with message`() = runTest {
         val rawUrl = "http://homeassistant.local:8123"
-        val viewModel = ConnectionViewModel(rawUrl, keyChainRepository)
+        val viewModel = ConnectionViewModel(rawUrl, keyChainRepository, urlBuilder)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -320,7 +322,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given received error when onReceivedError is invoked then Error event with message`() = runTest {
         val rawUrl = "http://homeassistant.local:8123"
-        val viewModel = ConnectionViewModel(rawUrl, keyChainRepository)
+        val viewModel = ConnectionViewModel(rawUrl, keyChainRepository, urlBuilder)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)

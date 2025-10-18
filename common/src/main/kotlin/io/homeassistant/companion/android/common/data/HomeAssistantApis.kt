@@ -75,6 +75,7 @@ class HomeAssistantApis @Inject constructor(
 
     val retrofit: Retrofit = Retrofit
         .Builder()
+        .addCallAdapterFactory(HttpExceptionCallAdapterFactory())
         .addConverterFactory(
             kotlinJsonMapper.asConverterFactory(
                 "application/json; charset=UTF-8".toMediaType(),

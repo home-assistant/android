@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.exception.HttpException
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
@@ -44,7 +45,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
 import timber.log.Timber
 
 private const val EXTRA_SERVER_URL_TO_ONBOARD = "extra_server_url_to_onboard"
@@ -261,7 +261,7 @@ class LaunchActivity :
                 .setTitle(commonR.string.error_connection_failed)
                 .setMessage(
                     when {
-                        e is HttpException && e.code() == 404 -> commonR.string.error_with_registration
+                        e is HttpException && e.code == 404 -> commonR.string.error_with_registration
                         e is SSLHandshakeException -> commonR.string.webview_error_FAILED_SSL_HANDSHAKE
                         e is SSLException -> commonR.string.webview_error_SSL_INVALID
                         else -> commonR.string.webview_error
