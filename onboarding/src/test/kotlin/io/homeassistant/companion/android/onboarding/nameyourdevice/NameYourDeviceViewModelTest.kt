@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.exception.HttpException
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.MessagingToken
@@ -29,7 +30,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import io.homeassistant.companion.android.common.exception.HttpException
 
 private const val DEFAULT_DEVICE_NAME = "Pixel 42"
 
