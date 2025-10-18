@@ -1,22 +1,16 @@
 package io.homeassistant.companion.android.common.data
 
 import io.homeassistant.companion.android.common.exception.HttpException
-import okhttp3.Request
-import okio.Timeout
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
 import retrofit2.Call
 import retrofit2.CallAdapter
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
-import java.lang.reflect.ParameterizedType
-import java.lang.reflect.Type
 
 class HttpExceptionCallAdapterFactory : CallAdapter.Factory() {
-    override fun get(
-        returnType: Type,
-        annotations: Array<out Annotation>,
-        retrofit: Retrofit,
-    ): CallAdapter<*, *>? {
+    override fun get(returnType: Type, annotations: Array<out Annotation>, retrofit: Retrofit): CallAdapter<*, *>? {
         if (getRawType(returnType) != Call::class.java) {
             return null
         }
@@ -26,18 +20,14 @@ class HttpExceptionCallAdapterFactory : CallAdapter.Factory() {
     }
 }
 
-private class HttpExceptionCallAdapter<R>(
-    private val responseType: Type,
-) : CallAdapter<R, Call<R>> {
+private class HttpExceptionCallAdapter<R>(private val responseType: Type) : CallAdapter<R, Call<R>> {
 
     override fun responseType(): Type = responseType
 
     override fun adapt(call: Call<R>): Call<R> = HttpExceptionCall(call)
 }
 
-private class HttpExceptionCall<R>(
-    private val delegate: Call<R>,
-) : Call<R> by delegate {
+private class HttpExceptionCall<R>(private val delegate: Call<R>) : Call<R> by delegate {
 
     override fun enqueue(callback: Callback<R>) {
         delegate.enqueue(object : Callback<R> {
