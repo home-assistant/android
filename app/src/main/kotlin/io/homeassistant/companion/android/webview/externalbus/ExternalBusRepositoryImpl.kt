@@ -1,10 +1,11 @@
 package io.homeassistant.companion.android.webview.externalbus
 
+import io.homeassistant.companion.android.util.getString
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import org.json.JSONObject
+import kotlinx.serialization.json.JsonObject
 import timber.log.Timber
 
 class ExternalBusRepositoryImpl @Inject constructor() : ExternalBusRepository {
@@ -13,20 +14,20 @@ class ExternalBusRepositoryImpl @Inject constructor() : ExternalBusRepository {
         // Don't suspend if the WebView is temporarily unavailable
         extraBufferCapacity = 100,
     )
-    private val receiverFlows = mutableMapOf<List<String>, MutableSharedFlow<JSONObject>>()
+    private val receiverFlows = mutableMapOf<List<String>, MutableSharedFlow<JsonObject>>()
 
     override suspend fun send(message: ExternalBusMessage) {
         externalBusFlow.emit(message)
     }
 
-    override fun receive(types: List<String>): Flow<JSONObject> {
+    override fun receive(types: List<String>): Flow<JsonObject> {
         val flow = receiverFlows[types] ?: MutableSharedFlow()
         receiverFlows[types] = flow
         return flow.asSharedFlow()
     }
 
-    override suspend fun received(message: JSONObject) {
-        if (!message.has("type")) return
+    override suspend fun received(message: JsonObject) {
+        if (!message.containsKey("type")) return
         val type = message.getString("type")
         val receivers = receiverFlows.filter { it.key.contains(type) }
         Timber.d("Sending message of type $type to ${receivers.size} receiver(s)")

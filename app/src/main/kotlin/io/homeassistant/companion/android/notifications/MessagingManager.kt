@@ -100,10 +100,12 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.sink
-import org.json.JSONObject
 import timber.log.Timber
 
 class MessagingManager @Inject constructor(
@@ -288,7 +290,10 @@ class MessagingManager @Inject constructor(
                     jsonData = jsonData + dbData // Add the notificationData, this contains the reply text
                 } ?: return@launch
             } else {
-                val jsonObject = JSONObject(jsonData)
+                val mappedJsonObjects = jsonData.mapValues { (_, value) ->
+                    JsonPrimitive(value)
+                }
+                val jsonObject = JsonObject(mappedJsonObjects)
                 val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
                     serverManager.getServer(webhookId = it)?.id
                 }
@@ -648,7 +653,7 @@ class MessagingManager @Inject constructor(
                     val notificationManager =
                         context.getSystemService<NotificationManager>()
                     if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                        notifyMissingPermission(message.toString(), serverId)
+                        notifyMissingPermission(message, serverId)
                     } else {
                         when (command) {
                             DND_ALARMS_ONLY -> notificationManager?.setInterruptionFilter(
@@ -678,7 +683,7 @@ class MessagingManager @Inject constructor(
                     val notificationManager =
                         context.getSystemService<NotificationManager>()
                     if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                        notifyMissingPermission(message.toString(), serverId)
+                        notifyMissingPermission(message, serverId)
                     } else {
                         processRingerMode(audioManager!!, command)
                     }
@@ -720,7 +725,7 @@ class MessagingManager @Inject constructor(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     val notificationManager = context.getSystemService<NotificationManager>()
                     if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                        notifyMissingPermission(message.toString(), serverId)
+                        notifyMissingPermission(message, serverId)
                     } else {
                         processStreamVolume(
                             audioManager!!,
@@ -747,7 +752,7 @@ class MessagingManager @Inject constructor(
 
                         else -> {
                             Timber.e("Missing Bluetooth permissions, notifying user to grant permissions")
-                            notifyMissingPermission(message.toString(), serverId)
+                            notifyMissingPermission(message, serverId)
                         }
                     }
                 }
@@ -778,7 +783,7 @@ class MessagingManager @Inject constructor(
             COMMAND_ACTIVITY -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(context)) {
-                        notifyMissingPermission(message.toString(), serverId)
+                        notifyMissingPermission(message, serverId)
                     } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) !=
                         PackageManager.PERMISSION_GRANTED &&
                         data["tag"] == Intent.ACTION_CALL
@@ -806,7 +811,7 @@ class MessagingManager @Inject constructor(
             COMMAND_WEBVIEW -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(context)) {
-                        notifyMissingPermission(message.toString(), serverId)
+                        notifyMissingPermission(message, serverId)
                     } else {
                         openWebview(command, data)
                     }
@@ -838,7 +843,7 @@ class MessagingManager @Inject constructor(
                     if (!NotificationManagerCompat.getEnabledListenerPackages(context)
                             .contains(context.packageName)
                     ) {
-                        notifyMissingPermission(message.toString(), serverId)
+                        notifyMissingPermission(message, serverId)
                     } else {
                         processMediaCommand(data)
                     }
@@ -848,7 +853,7 @@ class MessagingManager @Inject constructor(
             COMMAND_LAUNCH_APP -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(context)) {
-                        notifyMissingPermission(message.toString(), serverId)
+                        notifyMissingPermission(message, serverId)
                     } else {
                         launchApp(data)
                     }
@@ -871,7 +876,7 @@ class MessagingManager @Inject constructor(
                             sendNotification(data)
                         }
                     } else {
-                        notifyMissingPermission(message.toString(), serverId)
+                        notifyMissingPermission(message, serverId)
                     }
                 } else if (!processScreenCommands(data)) {
                     sendNotification(data)
@@ -1360,7 +1365,7 @@ class MessagingManager @Inject constructor(
             }.build()
 
             val response = okHttpClient.newCall(request).execute()
-            image = BitmapFactory.decodeStream(response.body?.byteStream())
+            image = BitmapFactory.decodeStream(response.body.byteStream())
             response.close()
         } catch (e: Exception) {
             Timber.e(e, "Couldn't download image for notification")
@@ -1396,7 +1401,7 @@ class MessagingManager @Inject constructor(
                 }.build()
 
                 val response = okHttpClient.newCall(request).execute()
-                val bytes = response.body?.bytes() ?: return@withContext null
+                val bytes = response.body.bytes()
                 file.writeBytes(bytes)
 
                 response.close()

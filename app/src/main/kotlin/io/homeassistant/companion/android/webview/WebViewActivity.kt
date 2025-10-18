@@ -107,7 +107,12 @@ import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.compose.initializePlayer
+import io.homeassistant.companion.android.util.getBoolean
+import io.homeassistant.companion.android.util.getBooleanOrDefault
+import io.homeassistant.companion.android.util.getString
+import io.homeassistant.companion.android.util.getStringOrDefault
 import io.homeassistant.companion.android.util.isStarted
+import io.homeassistant.companion.android.util.toJsonObject
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
@@ -122,8 +127,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.json.JSONObject
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -721,18 +730,18 @@ class WebViewActivity :
 
                     @JavascriptInterface
                     fun getExternalAuth(payload: String) {
-                        JSONObject(payload).let {
+                        payload.toJsonObject()?.let {
                             presenter.onGetExternalAuth(
                                 this@WebViewActivity,
-                                it.getString("callback"),
-                                it.has("force") && it.getBoolean("force"),
+                                it["callback"].toString(),
+                                it.containsKey("force") && it.getBooleanOrDefault("force"),
                             )
                         }
                     }
 
                     @JavascriptInterface
                     fun revokeExternalAuth(callback: String) {
-                        presenter.onRevokeExternalAuth(JSONObject(callback).get("callback") as String)
+                        presenter.onRevokeExternalAuth(callback.toJsonObject().getStringOrDefault("callback"))
                         isRelaunching = true // Prevent auth errors from showing
                     }
 
@@ -740,11 +749,10 @@ class WebViewActivity :
                     fun externalBus(message: String) {
                         Timber.d("External bus $message")
                         webView.post {
-                            val json = JSONObject(message)
-                            when (json.get("type")) {
+                            val json = message.toJsonObject()
+                            when (json?.getString("type")) {
                                 "connection-status" -> {
-                                    isConnected = json.getJSONObject("payload")
-                                        .getString("event") == "connected"
+                                    isConnected = json["payload"]?.jsonPrimitive.contentOrNull == "connected"
                                     if (isConnected) {
                                         alertDialog?.cancel()
                                         presenter.checkSecurityVersion()
@@ -767,7 +775,7 @@ class WebViewActivity :
                                         }
                                     sendExternalBusMessage(
                                         ExternalConfigResponse(
-                                            id = JSONObject(message).get("id"),
+                                            id = message.toJsonObject().getStringOrDefault("id"),
                                             hasNfc = hasNfc,
                                             canCommissionMatter = canCommissionMatter,
                                             canExportThread = canExportThread,
@@ -791,22 +799,29 @@ class WebViewActivity :
                                 }
 
                                 "assist/show" -> {
-                                    val payload = if (json.has("payload")) json.getJSONObject("payload") else null
+                                    val payload = if (json.containsKey(
+                                            "payload",
+                                        )
+                                    ) {
+                                        json.get("payload")?.jsonObject
+                                    } else {
+                                        null
+                                    }
                                     startActivity(
                                         AssistActivity.newInstance(
                                             this@WebViewActivity,
                                             serverId = presenter.getActiveServer(),
-                                            pipelineId = if (payload?.has("pipeline_id") ==
+                                            pipelineId = if (payload?.containsKey("pipeline_id") ==
                                                 true
                                             ) {
                                                 payload.getString("pipeline_id")
                                             } else {
                                                 null
                                             },
-                                            startListening = if (payload?.has("start_listening") ==
+                                            startListening = if (payload?.containsKey("start_listening") ==
                                                 true
                                             ) {
-                                                payload.getBoolean("start_listening")
+                                                payload.getBooleanOrDefault("start_listening")
                                             } else {
                                                 true
                                             },
@@ -1792,7 +1807,7 @@ class WebViewActivity :
                     viewport['content'] = elements.join(',');
                 } else {
                     viewport['content'] = original_elements;
-                }           
+                }
             }
             """,
         ) {}
