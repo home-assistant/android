@@ -97,6 +97,8 @@ jobs:
             ./wear/build/outputs/apk/release/wear-release.apk
             ./automotive/build/outputs/apk/full/release/automotive-full-release.apk
             ./automotive/build/outputs/apk/minimal/release/automotive-minimal-release.apk
+            ./strings.zip
+            ./app/src/main/res/xml/locales_config.xml
 
       - name: Deploy to Firebase
         env:
