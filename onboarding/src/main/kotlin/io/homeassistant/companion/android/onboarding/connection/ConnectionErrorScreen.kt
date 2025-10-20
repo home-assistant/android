@@ -36,7 +36,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HABanner
 import io.homeassistant.companion.android.common.compose.composable.HADetails
@@ -290,7 +289,7 @@ private fun ColumnScope.GetMoreHelp(onOpenExternalLink: (Uri) -> Unit) {
 @Composable
 private fun CloseAction(onClick: () -> Unit) {
     HAAccentButton(
-        stringResource(commonR.string.close),
+        stringResource(R.string.back),
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()

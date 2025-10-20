@@ -44,4 +44,5 @@
     <string name="connection_error_more_details_error">Error</string>
     <string name="connection_error_help">Get more help</string>
     <string name="connection_error_documentation_content_description">Documentation</string>
+    <string name="back">Back</string>
 </resources>

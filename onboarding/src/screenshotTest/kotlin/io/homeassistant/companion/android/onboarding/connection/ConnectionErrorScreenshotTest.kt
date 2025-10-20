@@ -56,7 +56,8 @@ class ConnectionErrorScreenshotTest {
     fun `ConnectionErrorScreen with UnknownError`() {
         HAThemeForPreview {
             ConnectionErrorScreen(
-                url = "http://ha.org",
+                url =
+                "http://super-long-url-to-see-how-it-displays-in-the-screenshot.org/path/1/home-assistant/io?external_auth=1",
                 error = ConnectionError.UnknownError(commonR.string.tls_cert_expired_message, "details", "raw"),
                 onOpenExternalLink = {},
                 onBackClick = {},
