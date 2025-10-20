@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.compose.theme
 
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -202,6 +203,9 @@ object HABrandColors {
 
 @Immutable
 class HAButtonColors(val buttonColors: ButtonColors, val rippleColor: Color)
+
+@Immutable
+class HAIconButtonColors(val buttonColors: IconButtonColors, val rippleColor: Color)
 
 /**
  * Home Assistant Color Scheme. HA* composables use the values from this class to theme the UI.
@@ -558,6 +562,57 @@ class HAColorScheme(
                     colorFillSuccessQuietHover,
                 )
             }
+        }
+    }
+
+    fun iconButtonColorsFromVariant(variant: ButtonVariant): HAIconButtonColors {
+        return when (variant) {
+            ButtonVariant.PRIMARY -> HAIconButtonColors(
+                IconButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = colorOnPrimaryNormal,
+                    disabledContainerColor = Color.Transparent,
+                    disabledContentColor = colorOnDisabledNormal,
+                ),
+                colorFillPrimaryQuietHover,
+            )
+            ButtonVariant.NEUTRAL -> HAIconButtonColors(
+                IconButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = colorOnNeutralQuiet,
+                    disabledContainerColor = Color.Transparent,
+                    disabledContentColor = colorOnDisabledNormal,
+                ),
+                colorFillNeutralQuietHover,
+            )
+            ButtonVariant.DANGER -> HAIconButtonColors(
+                IconButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = colorOnDangerQuiet,
+                    disabledContainerColor = Color.Transparent,
+                    disabledContentColor = colorOnDisabledNormal,
+                ),
+                colorFillDangerNormalHover,
+            )
+            // TODO validate when design is ready (current value are based on other buttons)
+            ButtonVariant.WARNING -> HAIconButtonColors(
+                IconButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = colorOnWarningQuiet,
+                    disabledContainerColor = Color.Transparent,
+                    disabledContentColor = colorOnDisabledNormal,
+                ),
+                colorFillWarningNormalHover,
+            )
+            ButtonVariant.SUCCESS -> HAIconButtonColors(
+                IconButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = colorOnSuccessQuiet,
+                    disabledContainerColor = Color.Transparent,
+                    disabledContentColor = colorOnDisabledNormal,
+                ),
+                colorFillSuccessNormalHover,
+            )
         }
     }
 }

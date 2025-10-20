@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Info
@@ -47,6 +48,7 @@ import io.homeassistant.companion.android.common.compose.composable.HABanner
 import io.homeassistant.companion.android.common.compose.composable.HADetails
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAHint
+import io.homeassistant.companion.android.common.compose.composable.HAIconButton
 import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HAProgress
@@ -184,6 +186,13 @@ private fun LazyListScope.buttonSection(variant: ButtonVariant, enabled: Boolean
                     size = it,
                 )
             }
+            HAIconButton(
+                Icons.Default.Build,
+                onClick = {},
+                contentDescription = null,
+                variant = variant,
+                enabled = enabled,
+            )
         }
     }
 }
