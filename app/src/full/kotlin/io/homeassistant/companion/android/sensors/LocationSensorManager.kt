@@ -930,9 +930,10 @@ class LocationSensorManager :
             val locationZone = zones
                 .filter {
                     val passive = it.attributes["passive"] as? Boolean ?: true
-                    !passive && it.containsWithAccuracy(location)
+                    val radius = it.attributes["radius"] as? Number
+                    return@filter !passive && it.containsWithAccuracy(location) && radius != null
                 }
-                .minByOrNull { (it.attributes["radius"] as? Number ?: 1).toFloat() }
+                .minByOrNull { (it.attributes["radius"] as? Number ?: Int.MAX_VALUE).toFloat() }
 
             val locationName = locationZone?.entityId?.split(".")?.getOrNull(1) ?: ZONE_NAME_NOT_HOME
             updateLocation = UpdateLocation(
