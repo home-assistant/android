@@ -930,8 +930,7 @@ class LocationSensorManager :
             val locationZone = zones
                 .filter {
                     val passive = it.attributes["passive"] as? Boolean ?: true
-                    !(passive) &&
-                        it.containsWithAccuracy(location)
+                    !passive && it.containsWithAccuracy(location)
                 }
                 .minByOrNull { (it.attributes["radius"] as? Number ?: 1).toFloat() }
 
