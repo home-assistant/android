@@ -175,7 +175,7 @@ class NetworkSensorManager : SensorManager {
         }
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return when {
             sensorId == hotspotState.id || sensorId == publicIp.id || sensorId == networkType.id -> {
                 arrayOf()

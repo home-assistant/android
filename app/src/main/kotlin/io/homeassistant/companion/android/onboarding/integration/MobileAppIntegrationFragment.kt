@@ -136,12 +136,12 @@ class MobileAppIntegrationFragment : Fragment() {
     private fun requestPermissions(sensorId: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             requestLocationPermissions.launch(
-                LocationSensorManager().requiredPermissions(sensorId)
+                LocationSensorManager().requiredPermissions(requireContext(), sensorId)
                     .toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                     .toTypedArray(),
             )
         } else {
-            requestLocationPermissions.launch(LocationSensorManager().requiredPermissions(sensorId))
+            requestLocationPermissions.launch(LocationSensorManager().requiredPermissions(requireContext(), sensorId))
         }
     }
 

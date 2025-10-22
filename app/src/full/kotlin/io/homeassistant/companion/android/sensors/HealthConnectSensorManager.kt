@@ -379,7 +379,7 @@ class HealthConnectSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_health_connect
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return FailFast.failOnCatch({ "Unable to get required permissions for $sensorId" }, emptyArray<String>()) {
             val permissions = sensorPermissionMap[sensorId]?.let { recordClass ->
                 val readPermission = HealthPermission.getReadPermission(recordClass)
@@ -983,7 +983,7 @@ class HealthConnectSensorManager : SensorManager {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return false
         return try {
             healthConnectClient.permissionController.getGrantedPermissions().containsAll(
-                requiredPermissions(sensorId).toSet(),
+                requiredPermissions(context, sensorId).toSet(),
             )
         } catch (e: Exception) {
             Timber.e(e, "Unable to check permissions")

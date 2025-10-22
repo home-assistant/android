@@ -40,7 +40,7 @@ class AndroidAutoSensorManager :
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return emptyArray()
     }
 

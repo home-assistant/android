@@ -165,7 +165,7 @@ class BatterySensorManager : SensorManager {
         return intent?.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false) == true
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return emptyArray()
     }
 

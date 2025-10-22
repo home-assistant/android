@@ -75,7 +75,7 @@ class SensorManagerTest {
 private class FakeSensorManager : SensorManager {
     override val name: Int = -1
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         TODO("Not needed")
     }
 
