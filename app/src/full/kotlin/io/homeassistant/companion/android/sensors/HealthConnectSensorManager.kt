@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.aggregate.AggregateMetric
 import androidx.health.connect.client.aggregate.AggregationResult
@@ -383,7 +384,14 @@ class HealthConnectSensorManager : SensorManager {
         return FailFast.failOnCatch({ "Unable to get required permissions for $sensorId" }, emptyArray<String>()) {
             val permissions = sensorPermissionMap[sensorId]?.let { recordClass ->
                 val readPermission = HealthPermission.getReadPermission(recordClass)
-                arrayOf(readPermission, HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND)
+                if (getOrCreateHealthConnectClient(context)?.features
+                        ?.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND)
+                    == HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
+                ) {
+                    arrayOf(readPermission, HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND)
+                } else {
+                    arrayOf(readPermission)
+                }
             }
             FailFast.failWhen(permissions == null) { "Missing sensor mapping for $sensorId" }
             permissions ?: emptyArray()
