@@ -103,7 +103,7 @@ class ConnectionErrorScreenTest {
                 .performScrollTo().assertIsDisplayed().performClick()
             assertEquals("https://discord.com/channels/330944238910963714/1284965926336335993", urlClicked)
 
-            onNodeWithText(stringResource(commonR.string.close)).performScrollTo().assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(R.string.back)).performScrollTo().assertIsDisplayed().performClick()
             assertTrue(onBackClicked)
         }
     }
