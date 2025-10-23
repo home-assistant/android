@@ -2,5 +2,5 @@
 <manifest xmlns:tools="http://schemas.android.com/tools">
     <!--Since AGP 8.12.0 we need this otherwise the unit test task fail.
     This is due to the fact that we configure robolectric.-->
-    <uses-sdk tools:overrideLibrary="androidx.glance.testing, androidx.glance.appwidget.testing, androidx.health.connect.client, androidx.health.connect.testing, com.google.android.gms.threadnetwork, androidx.wear.remote.interactions" />
+    <uses-sdk tools:overrideLibrary="androidx.glance.testing, androidx.glance.appwidget.testing, androidx.health.connect.client, com.google.android.gms.threadnetwork, androidx.wear.remote.interactions" />
 </manifest>

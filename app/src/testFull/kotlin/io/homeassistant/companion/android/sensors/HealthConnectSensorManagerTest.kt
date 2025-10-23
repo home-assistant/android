@@ -4,8 +4,6 @@ import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.permission.HealthPermission
-import androidx.health.connect.client.testing.ExperimentalTestingApi
-import androidx.health.connect.client.testing.FakeHealthConnectClient
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.mockk.every
 import io.mockk.mockk
@@ -16,7 +14,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import timber.log.Timber
 
-@OptIn(ExperimentalTestingApi::class)
 class HealthConnectSensorManagerTest {
 
     private val sensorManager = HealthConnectSensorManager()
@@ -24,7 +21,7 @@ class HealthConnectSensorManagerTest {
     private val context = mockk<Context> {
         every { applicationContext } returns this
     }
-    private val healthConnectClient = FakeHealthConnectClient()
+    private val healthConnectClient = mockk<HealthConnectClient>(relaxed = true)
 
     @BeforeEach
     fun setup() {
