@@ -75,10 +75,10 @@ interface SensorManager {
     /**
      * Get list of Android permissions that are required to use this sensor
      */
-    fun requiredPermissions(sensorId: String): Array<String>
+    fun requiredPermissions(context: Context, sensorId: String): Array<String>
 
     suspend fun checkPermission(context: Context, sensorId: String): Boolean {
-        return requiredPermissions(sensorId).all {
+        return requiredPermissions(context, sensorId).all {
             if (sensorId != "last_used_app") {
                 context.checkPermission(it, myPid(), myUid()) == PackageManager.PERMISSION_GRANTED
             } else {

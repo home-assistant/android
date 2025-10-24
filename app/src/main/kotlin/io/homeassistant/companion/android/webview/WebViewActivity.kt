@@ -1075,7 +1075,7 @@ class WebViewActivity :
         for (manager in SensorReceiver.MANAGERS) {
             for (basicSensor in manager.getAvailableSensors(this)) {
                 if (manager.isEnabled(this, basicSensor)) {
-                    val permissions = manager.requiredPermissions(basicSensor.id)
+                    val permissions = manager.requiredPermissions(this, basicSensor.id)
 
                     val fineLocation = DisabledLocationHandler.containsLocationPermission(permissions, true)
                     val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
@@ -1792,7 +1792,7 @@ class WebViewActivity :
                     viewport['content'] = elements.join(',');
                 } else {
                     viewport['content'] = original_elements;
-                }           
+                }
             }
             """,
         ) {}

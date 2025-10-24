@@ -193,7 +193,7 @@ class SensorDetailViewModel @Inject constructor(
     fun setEnabled(isEnabled: Boolean, serverId: Int?) {
         viewModelScope.launch {
             if (isEnabled) {
-                sensorManager?.requiredPermissions(sensorId)?.let { permissions ->
+                sensorManager?.requiredPermissions(getApplication(), sensorId)?.let { permissions ->
                     val fineLocation = DisabledLocationHandler.containsLocationPermission(permissions, true)
                     val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
 

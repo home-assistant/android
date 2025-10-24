@@ -150,7 +150,7 @@ class HealthServicesSensorManager : SensorManager {
         return supportedSensors
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return if (areHealthServicesSensorApisAvailable) {
             arrayOf(Manifest.permission.ACTIVITY_RECOGNITION)
         } else {
