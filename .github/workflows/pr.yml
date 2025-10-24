@@ -207,7 +207,7 @@ jobs:
           KEYSTORE_PASSWORD: android
         # Disable lint tasks since we have a dedicated job for this in the workflow
         run: |
-          ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease -Pandroid.enableLint=false
+          ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
 
   unit_tests:
     name: "Unit Tests"
