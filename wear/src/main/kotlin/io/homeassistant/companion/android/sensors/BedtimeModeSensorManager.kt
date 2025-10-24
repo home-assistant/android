@@ -30,7 +30,7 @@ class BedtimeModeSensorManager : SensorManager {
         return listOf(bedtimeMode)
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return emptyArray()
     }
 

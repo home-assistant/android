@@ -5,13 +5,14 @@ import android.app.NotificationManager
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.net.wifi.WifiManager
 import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
+import androidx.compose.runtime.Composer
+import androidx.compose.runtime.ExperimentalComposeRuntimeApi
 import androidx.core.content.ContextCompat
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -19,14 +20,17 @@ import coil3.SingletonImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.common.util.HAStrictMode
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
+import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.initCrashSaving
 import io.homeassistant.companion.android.util.threadPolicyIgnoredViolationRules
@@ -38,7 +42,6 @@ import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControl
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
 import io.homeassistant.companion.android.widgets.todo.TodoWidget
 import javax.inject.Inject
-import javax.inject.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -57,7 +60,7 @@ open class HomeAssistantApplication :
     lateinit var prefsRepository: PrefsRepository
 
     @Inject
-    @Named("keyChainRepository")
+    @NamedKeyChain
     lateinit var keyChainRepository: KeyChainRepository
 
     @Inject
@@ -66,6 +69,10 @@ open class HomeAssistantApplication :
     @Inject
     lateinit var languagesManager: LanguagesManager
 
+    @Inject
+    lateinit var nightModeManager: NightModeManager
+
+    @OptIn(ExperimentalComposeRuntimeApi::class)
     override fun onCreate() {
         super.onCreate()
 
@@ -81,6 +88,7 @@ open class HomeAssistantApplication :
 
         // We should initialize the logger as early as possible in the lifecycle of the application
         Timber.plant(Timber.DebugTree())
+        Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK ${Build.VERSION.SDK_INT}")
 
         registerActivityLifecycleCallbacks(LifecycleHandler)
 
@@ -91,7 +99,11 @@ open class HomeAssistantApplication :
             )
             initCrashSaving(applicationContext)
             languagesManager.applyCurrentLang()
+            nightModeManager.applyCurrentNightMode()
         }
+
+        // Enable only for debug flavor to avoid perf regressions in release
+        Composer.setDiagnosticStackTraceEnabled(BuildConfig.DEBUG)
 
         // This will make sure we start/stop when we actually need too.
         ContextCompat.registerReceiver(
@@ -323,7 +335,7 @@ open class HomeAssistantApplication :
             ContextCompat.RECEIVER_EXPORTED,
         )
 
-        if (!this.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+        if (!isAutomotive()) {
             // Update widgets when the screen turns on, updates are skipped if widgets were not added
             val buttonWidget = ButtonWidget()
             val entityWidget = EntityWidget()

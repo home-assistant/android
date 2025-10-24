@@ -4,6 +4,14 @@ root = true
 charset = utf-8
 indent_size = 4
 indent_style = space
+insert_final_newline = true
+end_of_line = lf
+trim_trailing_whitespace = true
+
+[*.{yml,yaml}]
+indent_size = 2
+ij_yaml_spaces_within_braces = false
+ij_yaml_spaces_within_brackets = false
 
 [*.{kt,kts}]
 ktlint_code_style = android_studio

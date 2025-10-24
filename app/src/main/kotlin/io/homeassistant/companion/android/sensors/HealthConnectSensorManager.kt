@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.aggregate.AggregateMetric
 import androidx.health.connect.client.aggregate.AggregationResult
@@ -379,11 +380,18 @@ class HealthConnectSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_health_connect
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return FailFast.failOnCatch({ "Unable to get required permissions for $sensorId" }, emptyArray<String>()) {
             val permissions = sensorPermissionMap[sensorId]?.let { recordClass ->
                 val readPermission = HealthPermission.getReadPermission(recordClass)
-                arrayOf(readPermission, HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND)
+                if (getOrCreateHealthConnectClient(context)?.features
+                        ?.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND)
+                    == HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
+                ) {
+                    arrayOf(readPermission, HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND)
+                } else {
+                    arrayOf(readPermission)
+                }
             }
             FailFast.failWhen(permissions == null) { "Missing sensor mapping for $sensorId" }
             permissions ?: emptyArray()
@@ -983,7 +991,7 @@ class HealthConnectSensorManager : SensorManager {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return false
         return try {
             healthConnectClient.permissionController.getGrantedPermissions().containsAll(
-                requiredPermissions(sensorId).toSet(),
+                requiredPermissions(context, sensorId).toSet(),
             )
         } catch (e: Exception) {
             Timber.e(e, "Unable to check permissions")
@@ -1021,7 +1029,7 @@ class HealthConnectSensorManager : SensorManager {
             metrics = setOf(metric),
             timeRangeFilter = TimeRangeFilter.between(
                 LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
-                LocalDateTime.of(LocalDate.now(), LocalTime.now()),
+                LocalDateTime.of(LocalDate.now(), LocalTime.MAX),
             ),
         )
     }

@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.keychain
 
 import android.content.Context
+import android.os.Build
 import java.security.KeyStore
 import java.security.KeyStore.PrivateKeyEntry
 import java.security.PrivateKey
@@ -60,7 +61,7 @@ class KeyStoreRepositoryImpl @Inject constructor() : KeyChainRepository {
     @Synchronized
     private fun doLoad() {
         if (alias != null && alias?.isNotEmpty() == true) {
-            val aks = KeyStore.getInstance("AndroidKeyStore").apply {
+            val aks = keyStore().apply {
                 load(null)
                 if (!containsAlias(alias)) return
             }
@@ -95,12 +96,18 @@ class KeyStoreRepositoryImpl @Inject constructor() : KeyChainRepository {
     @Synchronized
     private fun doStore(alias: String, key: PrivateKey, chain: Array<X509Certificate>) {
         try {
-            KeyStore.getInstance("AndroidKeyStore").apply {
+            keyStore().apply {
                 load(null)
                 setEntry(alias, PrivateKeyEntry(key, chain), null)
             }
         } catch (e: Exception) {
             Timber.e(e, "Exception storing KeyStore.Entry")
         }
+    }
+
+    private fun keyStore(): KeyStore = if ("robolectric" == Build.FINGERPRINT) {
+        KeyStore.getInstance(KeyStore.getDefaultType())
+    } else {
+        KeyStore.getInstance("AndroidKeyStore")
     }
 }

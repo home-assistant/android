@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.UiModeManager
 import android.content.ComponentName
 import android.content.Context
-import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.media.MediaMetadata
 import android.media.session.MediaSessionManager
@@ -19,6 +18,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -76,7 +76,7 @@ class NotificationSensorManager :
         return "https://companion.home-assistant.io/docs/core/sensors#notification-sensors"
     }
     override fun hasSensor(context: Context): Boolean {
-        return if (!context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+        return if (!context.isAutomotive()) {
             val uiManager = context.getSystemService<UiModeManager>()
             uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
         } else {
@@ -89,7 +89,7 @@ class NotificationSensorManager :
         return listOf(lastNotification, lastRemovedNotification, activeNotificationCount, mediaSession)
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE)
     }
 

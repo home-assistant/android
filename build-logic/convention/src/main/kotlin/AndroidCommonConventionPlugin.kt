@@ -1,13 +1,12 @@
+
 import com.android.build.api.dsl.ApplicationExtension
-import com.android.build.api.dsl.CommonExtension
-import com.android.build.api.dsl.LibraryExtension
+import io.homeassistant.companion.android.androidConfig
 import io.homeassistant.companion.android.getPluginId
 import java.io.File
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.apply
-import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -37,7 +36,7 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
             // More info https://github.com/robolectric/robolectric/issues/10103
             val testResourcesDir = file("build/generated/testResources").apply { mkdirs() }
 
-            fun CommonExtension<*, *, *, *, *, *>.configure() {
+            androidConfig {
                 compileSdk = libs.versions.androidSdk.compile.get().toInt()
 
                 defaultConfig {
@@ -122,15 +121,11 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     "testImplementation"(libs.mockk)
                     "testImplementation"(libs.robolectric)
                     "testImplementation"(libs.turbine)
+                    "testImplementation"(libs.hilt.android.testing)
 
                     "testImplementation"(project(":testing-unit"))
-                }
-            }
 
-            when (extensions.findByName("android")) {
-                is ApplicationExtension -> extensions.configure<ApplicationExtension> {
-                    configure()
-                    dependencies {
+                    if (this@androidConfig is ApplicationExtension) {
                         val noLeakCanary = project.findProperty("noLeakCanary")?.toString()?.ifEmpty { "true" }
                             ?.toBoolean() ?: false
 
@@ -139,8 +134,6 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                         }
                     }
                 }
-
-                is LibraryExtension -> extensions.configure<LibraryExtension> { configure() }
             }
 
             File(testResourcesDir, "robolectric.properties").apply {

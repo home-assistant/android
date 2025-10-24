@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.graphics.drawable.Icon
 import android.os.Build
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.getSystemService
@@ -145,14 +146,14 @@ class ManageTilesViewModel @Inject constructor(
         private set
     var sortedEntities by mutableStateOf<List<Entity>>(emptyList())
         private set
-    var selectedServerId by mutableStateOf(ServerManager.SERVER_ID_ACTIVE)
+    var selectedServerId by mutableIntStateOf(ServerManager.SERVER_ID_ACTIVE)
         private set
     var selectedIconId by mutableStateOf<String?>(null)
         private set
     var selectedEntityId by mutableStateOf("")
     var tileLabel by mutableStateOf("")
     var tileSubtitle by mutableStateOf<String?>(null)
-    var submitButtonLabel by mutableStateOf(commonR.string.tile_save)
+    var submitButtonLabel by mutableIntStateOf(commonR.string.tile_save)
         private set
     var selectedShouldVibrate by mutableStateOf(false)
     var tileAuthRequired by mutableStateOf(false)

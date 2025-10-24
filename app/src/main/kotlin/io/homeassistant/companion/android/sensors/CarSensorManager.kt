@@ -1,9 +1,8 @@
 package io.homeassistant.companion.android.sensors
 
+import android.annotation.SuppressLint
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.car.app.hardware.common.CarValue
 import androidx.car.app.hardware.info.EnergyLevel
 import androidx.car.app.hardware.info.EnergyProfile
@@ -18,6 +17,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +25,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-@RequiresApi(Build.VERSION_CODES.O)
 class CarSensorManager :
     SensorManager,
     DefaultLifecycleObserver {
@@ -219,7 +218,10 @@ class CarSensorManager :
 
     private lateinit var latestContext: Context
 
-    private val isAutomotive get() = latestContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    @SuppressLint("ObsoleteSdkInt") // Needed for app module (minSdk 21) but obsolete for automotive (minSdk 29)
+    private val areCarSensorApisAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+
+    private val isAutomotive get() = latestContext.isAutomotive()
 
     private val carSensorsList get() = allSensorsList.filter {
         (isAutomotive && it.automotiveEnabled) ||
@@ -231,7 +233,7 @@ class CarSensorManager :
 
     private suspend fun allDisabled(): Boolean = sensorsList.none { isEnabled(latestContext, it) }
 
-    private fun connected(): Boolean = HaCarAppService.carInfo != null
+    private fun connected(): Boolean = areCarSensorApisAvailable && HaCarAppService.carInfo != null
 
     private val fuelTypeMap = mapOf(
         EnergyProfile.FUEL_TYPE_BIODIESEL to "Biodiesel",
@@ -271,7 +273,7 @@ class CarSensorManager :
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         this.latestContext = context.applicationContext
 
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        return if (areCarSensorApisAvailable) {
             sensorsList
         } else {
             emptyList()
@@ -282,10 +284,10 @@ class CarSensorManager :
     override fun hasSensor(context: Context): Boolean {
         this.latestContext = context.applicationContext
 
-        return isAutomotive || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && BuildConfig.FLAVOR == "full")
+        return isAutomotive || (areCarSensorApisAvailable && BuildConfig.FLAVOR == "full")
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return carSensorsList.firstOrNull { it.sensor.id == sensorId }?.let {
             if (isAutomotive) {
                 it.automotivePermissions.toTypedArray()
@@ -312,7 +314,7 @@ class CarSensorManager :
             return
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (areCarSensorApisAvailable) {
             if (connected()) {
                 updateCarInfo()
             } else {
@@ -344,6 +346,9 @@ class CarSensorManager :
 
     @androidx.annotation.OptIn(androidx.car.app.annotations.ExperimentalCarApi::class)
     private fun setListener(l: Listener, enable: Boolean) {
+        if (!areCarSensorApisAvailable) {
+            return
+        }
         val car = HaCarAppService.carInfo ?: return
 
         if (enable) {

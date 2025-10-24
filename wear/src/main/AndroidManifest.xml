@@ -63,7 +63,8 @@
             android:name="com.google.android.wearable.standalone"
             android:value="false" />
 
-        <activity android:name=".home.HomeActivity" />
+        <activity android:name=".home.HomeActivity"
+            android:exported="true"/>
         <activity android:name=".splash.SplashActivity"
             android:theme="@style/Theme.HomeAssistant.SplashTheme"
             android:exported="true">

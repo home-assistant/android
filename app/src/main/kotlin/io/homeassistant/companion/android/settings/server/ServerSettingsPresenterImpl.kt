@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.settings.server
 
 import androidx.preference.PreferenceDataStore
+import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -164,10 +164,6 @@ class ServerSettingsPresenterImpl @Inject constructor(
     }
 
     override fun hasWifi(): Boolean = wifiHelper.hasWifi()
-
-    override fun isSsidUsed(): Boolean = runBlocking {
-        serverManager.getServer(serverId)?.connection?.internalSsids?.isNotEmpty() == true
-    }
 
     override fun clearSsids() {
         mainScope.launch {

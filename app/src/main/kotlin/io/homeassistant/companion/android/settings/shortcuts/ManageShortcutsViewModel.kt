@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -85,11 +86,29 @@ class ManageShortcutsViewModel @Inject constructor(
         var delete: MutableState<Boolean>,
     )
 
-    var shortcuts = mutableStateListOf<Shortcut>()
+    var shortcuts = mutableStateListOf<Shortcut>().apply {
+        repeat(6) {
+            add(
+                Shortcut(
+                    id = mutableStateOf(""),
+                    serverId = mutableIntStateOf(0),
+                    selectedIcon = mutableStateOf(null),
+                    label = mutableStateOf(""),
+                    desc = mutableStateOf(""),
+                    path = mutableStateOf(""),
+                    type = mutableStateOf("lovelace"),
+                    delete = mutableStateOf(false),
+                ),
+            )
+        }
+    }
         private set
 
     init {
         viewModelScope.launch {
+            val currentServerId = currentServerId()
+            shortcuts.forEach { it.serverId.value = currentServerId }
+
             serverManager.defaultServers.forEach { server ->
                 launch {
                     entities[server.id] = try {
@@ -101,32 +120,19 @@ class ManageShortcutsViewModel @Inject constructor(
                     }
                 }
             }
-            for (i in 0..5) {
-                shortcuts.add(
-                    Shortcut(
-                        mutableStateOf(""),
-                        mutableStateOf(currentServerId()),
-                        mutableStateOf(null),
-                        mutableStateOf(""),
-                        mutableStateOf(""),
-                        mutableStateOf(""),
-                        mutableStateOf("lovelace"),
-                        mutableStateOf(false),
-                    ),
-                )
+
+            updateDynamicShortcuts()
+            Timber.d("We have ${dynamicShortcuts.size} dynamic shortcuts")
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Timber.d("Can we pin shortcuts: ${ShortcutManagerCompat.isRequestPinShortcutSupported(app)}")
+                Timber.d("We have ${pinnedShortcuts.size} pinned shortcuts")
             }
-        }
-        updateDynamicShortcuts()
-        Timber.d("We have ${dynamicShortcuts.size} dynamic shortcuts")
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Timber.d("Can we pin shortcuts: ${ShortcutManagerCompat.isRequestPinShortcutSupported(app)}")
-            Timber.d("We have ${pinnedShortcuts.size} pinned shortcuts")
-        }
-
-        if (dynamicShortcuts.size > 0) {
-            for (i in 0 until dynamicShortcuts.size) {
-                setDynamicShortcutData(dynamicShortcuts[i].id, i)
+            if (dynamicShortcuts.size > 0) {
+                for (i in 0 until dynamicShortcuts.size) {
+                    setDynamicShortcutData(dynamicShortcuts[i].id, i)
+                }
             }
         }
     }

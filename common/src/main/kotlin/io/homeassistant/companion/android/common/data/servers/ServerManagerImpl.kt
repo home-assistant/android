@@ -6,19 +6,20 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepositoryFactory
+import io.homeassistant.companion.android.common.data.network.NetworkHelper
+import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepositoryFactory
-import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerDao
 import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.di.qualifiers.NamedSessionStorage
 import javax.inject.Inject
-import javax.inject.Named
 import kotlin.math.min
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +39,8 @@ class ServerManagerImpl @Inject constructor(
     private val sensorDao: SensorDao,
     private val settingsDao: SettingsDao,
     private val wifiHelper: WifiHelper,
-    @Named("session") private val localStorage: LocalStorage,
+    private val networkHelper: NetworkHelper,
+    @NamedSessionStorage private val localStorage: LocalStorage,
 ) : ServerManager {
 
     private val ioScope = CoroutineScope(Dispatchers.IO + Job())
@@ -64,7 +66,10 @@ class ServerManagerImpl @Inject constructor(
         // Initial (blocking) load
         runBlocking {
             serverDao.getAll().forEach {
-                mutableServers[it.id] = it.apply { connection.wifiHelper = wifiHelper }
+                mutableServers[it.id] = it.apply {
+                    connection.wifiHelper = wifiHelper
+                    connection.networkHelper = networkHelper
+                }
             }
         }
 
@@ -81,7 +86,10 @@ class ServerManagerImpl @Inject constructor(
                         removeServerFromManager(it.key)
                     }
                 servers.forEach {
-                    mutableServers[it.id] = it.apply { connection.wifiHelper = wifiHelper }
+                    mutableServers[it.id] = it.apply {
+                        connection.wifiHelper = wifiHelper
+                        connection.networkHelper = networkHelper
+                    }
                 }
                 mutableDefaultServersFlow.emit(defaultServers)
             }
@@ -109,15 +117,18 @@ class ServerManagerImpl @Inject constructor(
         return if (server.type == ServerType.DEFAULT) {
             serverDao.add(newServer).toInt()
         } else {
-            mutableServers[newServer.id] = newServer.apply { connection.wifiHelper = wifiHelper }
+            mutableServers[newServer.id] = newServer.apply {
+                connection.wifiHelper = wifiHelper
+                connection.networkHelper = networkHelper
+            }
             newServer.id
         }
     }
 
-    private fun activeServerId(): Int? = runBlocking {
+    private suspend fun activeServerId(): Int? {
         val pref = localStorage.getInt(PREF_ACTIVE_SERVER)
 
-        if (pref != null && mutableServers[pref] != null) {
+        return if (pref != null && mutableServers[pref] != null) {
             pref
         } else {
             mutableServers.keys.maxOfOrNull { it }
@@ -128,13 +139,19 @@ class ServerManagerImpl @Inject constructor(
         val serverId = if (id == SERVER_ID_ACTIVE) activeServerId() else id
         return serverId?.let {
             mutableServers[serverId]
-                ?: serverDao.get(serverId)?.apply { connection.wifiHelper = wifiHelper }
+                ?: serverDao.get(serverId)?.apply {
+                    connection.wifiHelper = wifiHelper
+                    connection.networkHelper = networkHelper
+                }
         }
     }
 
     override suspend fun getServer(webhookId: String): Server? =
         mutableServers.values.firstOrNull { it.connection.webhookId == webhookId }
-            ?: serverDao.get(webhookId)?.apply { connection.wifiHelper = wifiHelper }
+            ?: serverDao.get(webhookId)?.apply {
+                connection.wifiHelper = wifiHelper
+                connection.networkHelper = networkHelper
+            }
 
     override fun activateServer(id: Int) {
         if (id != SERVER_ID_ACTIVE && mutableServers[id] != null && mutableServers[id]?.type == ServerType.DEFAULT) {
@@ -143,7 +160,10 @@ class ServerManagerImpl @Inject constructor(
     }
 
     override fun updateServer(server: Server) {
-        mutableServers[server.id] = server.apply { connection.wifiHelper = wifiHelper }
+        mutableServers[server.id] = server.apply {
+            connection.wifiHelper = wifiHelper
+            connection.networkHelper = networkHelper
+        }
         if (server.type == ServerType.DEFAULT) {
             ioScope.launch { serverDao.update(server) }
         }
@@ -183,30 +203,33 @@ class ServerManagerImpl @Inject constructor(
         mutableServers.remove(id)
     }
 
-    override fun authenticationRepository(serverId: Int): AuthenticationRepository {
+    override suspend fun authenticationRepository(serverId: Int): AuthenticationRepository {
         val id = if (serverId == SERVER_ID_ACTIVE) activeServerId() else serverId
         return authenticationRepos[id] ?: run {
             if (id == null || mutableServers[id] == null) throw IllegalArgumentException("No server for ID")
-            authenticationRepos[id] = authenticationRepositoryFactory.create(id)
-            authenticationRepos[id]!!
+            val repository = authenticationRepositoryFactory.create(id)
+            authenticationRepos[id] = repository
+            checkNotNull(authenticationRepos[id]) { "Should not be null since we've just called create ($repository)" }
         }
     }
 
-    override fun integrationRepository(serverId: Int): IntegrationRepository {
+    override suspend fun integrationRepository(serverId: Int): IntegrationRepository {
         val id = if (serverId == SERVER_ID_ACTIVE) activeServerId() else serverId
         return integrationRepos[id] ?: run {
             if (id == null || mutableServers[id] == null) throw IllegalArgumentException("No server for ID")
-            integrationRepos[id] = integrationRepositoryFactory.create(id)
-            integrationRepos[id]!!
+            val repository = integrationRepositoryFactory.create(id)
+            integrationRepos[id] = repository
+            checkNotNull(integrationRepos[id]) { "Should not be null since we've just called create ($repository)" }
         }
     }
 
-    override fun webSocketRepository(serverId: Int): WebSocketRepository {
+    override suspend fun webSocketRepository(serverId: Int): WebSocketRepository {
         val id = if (serverId == SERVER_ID_ACTIVE) activeServerId() else serverId
         return webSocketRepos[id] ?: run {
             if (id == null || mutableServers[id] == null) throw IllegalArgumentException("No server for ID")
-            webSocketRepos[id] = webSocketRepositoryFactory.create(id)
-            webSocketRepos[id]!!
+            val repository = webSocketRepositoryFactory.create(id)
+            webSocketRepos[id] = repository
+            checkNotNull(webSocketRepos[id]) { "Should not be null since we've just caled create ($repository)" }
         }
     }
 }

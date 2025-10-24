@@ -134,7 +134,7 @@
     <string name="camera_tile_desc">See what\'s on your camera</string>
     <string name="camera_tile_log_in">Log in to add a camera tile</string>
     <string name="camera_tile_no_tiles_yet">There are no camera tiles added yet - add one from the watch face to set it up</string>
-    <string name="camera_tile_no_entity_yet">Edit the tile settings and select a camera to show</string>
+    <string name="camera_tile_no_entity_yet">Open the tile settings to select a camera</string>
     <string name="camera_tile_n">Camera tile #%d</string>
     <string name="camera_tiles">Camera tiles</string>
     <string name="camera_widgets">Picture widgets</string>
@@ -257,6 +257,7 @@
     <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
     <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
     <string name="error_connection_failed_to">Unable to connect to %1$s</string>
+    <string name="error_connection_failed_no_network">Network unavailable, please check your connection</string>
     <string name="error_loading_entities">Error loading entities</string>
     <string name="error_onboarding_connection_failed">Unable to connect to Home Assistant.</string>
     <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error. Please ensure your certificate is valid.</string>
@@ -636,8 +637,8 @@
     <string name="sensor_description_battery_level">The current battery level of the device</string>
     <string name="sensor_description_battery_state">The current charging state of the battery</string>
     <string name="sensor_description_battery_temperature">The current battery temperature</string>
-    <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon with configured interval, used to track presence around house, e.g. together with roomassistant, esp32-mqtt-room or espresence projects.\n\nWarning: this can affect battery life, particularly if the \"Transmitter power\" setting is set to High or \"Advertise Mode\" is set to Low latency.\n\nSettings allow for specifying:\n- \"UUID\" (standard UUID format), \"Major\" and \"Minor\" (should be 0 - 65535), to tailor identifiers and groups. The default Minor value 40004 has the special meaning of forcing the beacon to be recognized by the iBeacon Tracker integration\n- \"Transmitter Power\" and \"Advertise Mode\" to help to preserve battery life (use lowest values if possible)\n - \"Measured Power\" to specify power measured at 1m (initial default -59)\n\nIt is also possible to set beacons to only be transmitted when connected to a Home network, which may be desirable for privacy and battery life.\n\nNote:\nAdditionally a separate setting exists (\"Enable Transmitter\") to stop or start transmitting.</string>
-    <string name="sensor_description_bluetooth_ble_beacon_monitor">Scans for iBeacons and shows the IDs of nearby beacons and their distance in meters. A notification will be shown on the device when scanning is actively running.\n\nWarning: this can affect battery life, especially with a short \"Scan Interval\".\n\nSettings allow for specifying:\n- \"Filter Iterations\" (should be 1 - 100, default: 10), higher values will result in more stable measurements but also less responsiveness.\n- \"Filter RSSI Multiplier\" (should be 1.0 - 2.0, default: 1.05), can be used to achieve more stable measurements when beacons are farther away. This will also affect responsiveness.\n- \"Scan Interval\" (default: 500) milliseconds between scans. Shorter intervals will drain the battery more quickly.\n- \"Scan Period\" (default: 1100) milliseconds to scan for beacons. Most beacons will send a signal every second so this value should be at least 1100ms.\n- \"UUID Filter\" allows to restrict the reported beacons by including (or excluding) those with the selected UUIDs.\n- \"Exclude selected UUIDs\", if false (default) only the beacons with the selected UUIDs are reported. If true all beacons except the selected ones are reported. Not available when \"UUID Filter\" is empty.\n\nNote:\nAdditionally a separate setting exists (\"Enable Beacon Monitor\") to stop or start scanning.</string>
+    <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon with configured interval, used to track presence around house, e.g. together with roomassistant, esp32–mqtt–room or espresence projects.\n\nWarning: this can affect battery life, particularly if the \"Transmitter power\" setting is set to High or \"Advertise Mode\" is set to Low latency.\n\nSettings allow for specifying:\n– \"UUID\" (standard UUID format), \"Major\" and \"Minor\" (should be 0 – 65535), to tailor identifiers and groups. The default Minor value 40004 has the special meaning of forcing the beacon to be recognized by the iBeacon Tracker integration\n- \"Transmitter Power\" and \"Advertise Mode\" to help to preserve battery life (use lowest values if possible)\n - \"Measured Power\" to specify power measured at 1m (initial default -59)\n\nIt is also possible to set beacons to only be transmitted when connected to a Home network, which may be desirable for privacy and battery life.\n\nNote:\nAdditionally a separate setting exists (\"Enable Transmitter\") to stop or start transmitting.</string>
+    <string name="sensor_description_bluetooth_ble_beacon_monitor">Scans for iBeacons and shows the IDs of nearby beacons and their distance in meters. A notification will be shown on the device when scanning is actively running.\n\nWarning: this can affect battery life, especially with a short \"Scan Interval\".\n\nSettings allow for specifying:\n– \"Filter Iterations\" (should be 1 – 100, default: 10), higher values will result in more stable measurements but also less responsiveness.\n– \"Filter RSSI Multiplier\" (should be 1.0 – 2.0, default: 1.05), can be used to achieve more stable measurements when beacons are farther away. This will also affect responsiveness.\n- \"Scan Interval\" (default: 500) milliseconds between scans. Shorter intervals will drain the battery more quickly.\n- \"Scan Period\" (default: 1100) milliseconds to scan for beacons. Most beacons will send a signal every second so this value should be at least 1100ms.\n- \"UUID Filter\" allows to restrict the reported beacons by including (or excluding) those with the selected UUIDs.\n- \"Exclude selected UUIDs\", if false (default) only the beacons with the selected UUIDs are reported. If true all beacons except the selected ones are reported. Not available when \"UUID Filter\" is empty.\n\nNote:\nAdditionally a separate setting exists (\"Enable Beacon Monitor\") to stop or start scanning.</string>
     <string name="sensor_description_bluetooth_connection">Information about currently connected Bluetooth devices</string>
     <string name="sensor_description_bluetooth_state">Whether Bluetooth is enabled on the device</string>
     <string name="sensor_description_car_battery">Remaining car battery percentage</string>
@@ -782,7 +783,7 @@
     <string name="sensor_setting_lastupdate_intent_title" translatable="false">Intent %1$1s</string>
     <string name="sensor_setting_location_send_as_title">Location sent</string>
     <string name="sensor_setting_location_send_as_exact_label">Exact</string>
-    <string name="sensor_setting_location_send_as_zone_only_label">Zone name only</string>
+    <string name="sensor_setting_location_send_as_zone_only_label">Zone only</string>
     <string name="sensor_setting_location_ham_enabled_title">High accuracy mode (May drain battery fast)</string>
     <string name="sensor_setting_location_ham_zone_bt_combined_title">High accuracy mode enabled only when in zone and BT device connected</string>
     <string name="sensor_setting_location_ham_only_bt_dev_title">High accuracy mode only when connected to BT devices</string>
@@ -1084,9 +1085,7 @@
     <string name="widget_todo_refresh">Refresh to-do</string>
     <string name="widget_todo_label">To-do list</string>
     <string name="widget_todo_empty">You have no to-do items!</string>
-    <string name="widget_todo_active">Active</string>
     <string name="widget_todo_show_completed">Show completed items</string>
-    <string name="widget_todo_completed">Completed</string>
     <string name="widget_tap_action_label">Tap action:</string>
     <string name="widget_tap_action_open">Open</string>
     <string name="widget_tap_action_toggle">Toggle</string>
@@ -1103,6 +1102,7 @@
     <string name="widget_text_color_label">Widget text color:</string>
     <string name="widget_text_color_label_icon">Widget text/icon color:</string>
     <string name="widget_text_color_white">White</string>
+    <string name="widget_update_error">Unable to update widget.</string>
     <string name="widgets">Widgets</string>
     <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
     <string name="companion_app">Companion app</string>
@@ -1129,6 +1129,8 @@
     <string name="info">Information</string>
     <string name="show_changelog">Show change log</string>
     <string name="show_changelog_summary">Show the change log dialog from when the app was updated</string>
+    <string name="enable_change_log_popup">Show change log after updating</string>
+    <string name="enable_change_log_popup_summary">Allow the change log dialog to automatically appear when the app is updated</string>
     <string name="tile_icon">Tile icon</string>
     <string name="tile_icon_original">Use entity icon</string>
     <string name="tile_select">Select a tile to edit</string>
@@ -1164,6 +1166,7 @@
     <string name="sensor_update_type_info_worker_setting">You can change how often this sensor is updated by using the \'%1$s\' setting.</string>
     <string name="sensor_update_type_info_location">For more information about location updates, please check the documentation.</string>
     <string name="sensor_update_type_info_custom">This sensor updates on a non-standard schedule, please check the documentation.</string>
+    <string name="sensor_privacy">You have full control over your data. When enabled, sensor data is only sent to your own Home\u00A0Assistant server. It will never be shared with the Home\u00A0Assistant project or third parties.</string>
     <string name="missing_camera_permission">\'Camera\' permission required</string>
     <string name="missing_phone_permission">Please grant Phone permission to make a phone call</string>
     <string name="missing_bluetooth_permission">Please grant Nearby devices permission to control Bluetooth</string>
@@ -1410,7 +1413,7 @@
     <string name="thermostat">Thermostat</string>
     <string name="thermostat_tile_desc">See and change the thermostat temperature.</string>
     <string name="thermostat_tile_no_tiles_yet">There are no thermostat tiles added yet - add one from the watch face to set it up</string>
-    <string name="thermostat_tile_no_entity_yet">Edit the tile settings and select a thermostat to show</string>
+    <string name="thermostat_tile_no_entity_yet">Open the tile settings to select a thermostat</string>
     <string name="thermostat_tile_n">Thermostat tile #%d</string>
     <string name="thermostat_tile_log_in">Log in to add a thermostat tile</string>
     <string name="thermostat_tile">Thermostat tile</string>
@@ -1422,4 +1425,5 @@
     <string name="default_launcher_prompt">Change home app</string>
     <string name="default_launcher_prompt_def">Open settings to choose your default home app. Currently set to %s.</string>
     <string name="unknown_launcher_label">unknown app</string>
+    <string name="open_settings">Open settings</string>
 </resources>

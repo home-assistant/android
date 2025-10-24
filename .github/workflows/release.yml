@@ -8,16 +8,19 @@ on: # yamllint disable-line rule:truthy
 env:
   SUPPLY_UPLOAD_MAX_RETRIES: 5
 
+permissions:
+  contents: read
+
 jobs:
   play_promote_production:
     name: Play Publish Production
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@ab177d40ee5483edb974554986f56b33477e21d0 # v1.265.0
         with:
-          ruby-version: "3.2"
+          ruby-version: "3.4.7"
           bundler-cache: true
 
       - uses: ./.github/actions/inflate-secrets

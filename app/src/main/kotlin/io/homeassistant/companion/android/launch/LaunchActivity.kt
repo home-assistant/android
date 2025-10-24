@@ -2,10 +2,10 @@ package io.homeassistant.companion.android.launch
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
@@ -13,11 +13,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.AppVersion
+import io.homeassistant.companion.android.common.util.MessagingToken
+import io.homeassistant.companion.android.common.util.MessagingTokenProvider
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -26,7 +31,6 @@ import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.onboarding.OnboardApp
-import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.settings.SettingViewModel
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
@@ -67,6 +71,9 @@ class LaunchActivity :
     @Inject
     lateinit var sensorDao: SensorDao
 
+    @Inject
+    lateinit var messagingTokenProvider: MessagingTokenProvider
+
     private val mainScope = CoroutineScope(Dispatchers.Main + Job())
 
     private val settingViewModel: SettingViewModel by viewModels()
@@ -75,6 +82,8 @@ class LaunchActivity :
         OnboardApp(),
         this::onOnboardingComplete,
     )
+
+    private var networkDialog: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,13 +96,15 @@ class LaunchActivity :
                 }
             }
         }
-        presenter.onViewReady(intent.getStringExtra(EXTRA_SERVER_URL_TO_ONBOARD))
+        lifecycleScope.launch {
+            presenter.onViewReady(intent.getStringExtra(EXTRA_SERVER_URL_TO_ONBOARD))
+        }
     }
 
-    override suspend fun displayWebview() {
+    override suspend fun displayWebView() {
         presenter.setSessionExpireMillis(0)
 
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) && BuildConfig.FLAVOR == "full") {
+        if (isAutomotive() && BuildConfig.FLAVOR == "full") {
             val carIntent = Intent(
                 this,
                 Class.forName("androidx.car.app.activity.CarAppActivity"),
@@ -115,7 +126,7 @@ class LaunchActivity :
             }
 
             if (serverParameter != null) {
-                startActivity(WebViewActivity.newInstance(this, intent.data?.path, serverParameter))
+                startActivity(WebViewActivity.newInstance(this, intent.data?.toString(), serverParameter))
             } else { // Show server chooser
                 supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
                     val serverId = if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
@@ -124,7 +135,7 @@ class LaunchActivity :
                         null
                     }
                     supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
-                    startActivity(WebViewActivity.newInstance(this, intent.data?.path, serverId))
+                    startActivity(WebViewActivity.newInstance(this, intent.data?.toString(), serverId))
                     finish()
                     overridePendingTransition(0, 0) // Disable activity start/stop animation
                 }
@@ -132,7 +143,7 @@ class LaunchActivity :
                 return
             }
         } else {
-            startActivity(WebViewActivity.newInstance(this, intent.data?.path))
+            startActivity(WebViewActivity.newInstance(this, intent.data?.toString()))
         }
         finish()
         overridePendingTransition(0, 0) // Disable activity start/stop animation
@@ -142,8 +153,23 @@ class LaunchActivity :
         registerActivityResult.launch(OnboardApp.Input(url = serverUrlToOnboard))
     }
 
+    override fun displayAlertMessageDialog(@StringRes messageResId: Int) {
+        if (networkDialog?.isShowing != true) {
+            AlertDialog.Builder(this)
+                .setTitle(commonR.string.error_connection_failed)
+                .setMessage(messageResId)
+                .setCancelable(false)
+                .show()
+        }
+    }
+
+    override fun dismissDialog() {
+        networkDialog?.dismiss()
+        networkDialog = null
+    }
+
     override fun onDestroy() {
-        presenter.onFinish()
+        dismissDialog()
         super.onDestroy()
     }
 
@@ -151,7 +177,7 @@ class LaunchActivity :
         mainScope.launch {
             if (result != null) {
                 val (url, authCode, deviceName, deviceTrackingEnabled, notificationsEnabled) = result
-                val messagingToken = getMessagingToken()
+                val messagingToken = messagingTokenProvider()
                 if (messagingToken.isBlank() && BuildConfig.FLAVOR == "full") {
                     AlertDialog.Builder(this@LaunchActivity)
                         .setTitle(commonR.string.firebase_error_title)
@@ -189,7 +215,7 @@ class LaunchActivity :
         url: String,
         authCode: String,
         deviceName: String,
-        messagingToken: String,
+        messagingToken: MessagingToken,
         deviceTrackingEnabled: Boolean,
         notificationsEnabled: Boolean,
     ) {
@@ -209,7 +235,7 @@ class LaunchActivity :
             serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
             serverManager.integrationRepository(serverId).registerDevice(
                 DeviceRegistration(
-                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    AppVersion.from(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
                     deviceName,
                     messagingToken,
                 ),
@@ -253,7 +279,7 @@ class LaunchActivity :
             setLocationTracking(serverId, deviceTrackingEnabled)
             setNotifications(serverId, notificationsEnabled)
         }
-        displayWebview()
+        displayWebView()
     }
 
     private suspend fun setLocationTracking(serverId: Int, enabled: Boolean) {

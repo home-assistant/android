@@ -3,12 +3,14 @@ package io.homeassistant.companion.android.settings
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.biometric.BiometricManager
 import androidx.core.content.IntentCompat
 import androidx.fragment.app.commit
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
@@ -28,11 +30,12 @@ import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.parcelize.Parcelize
 import timber.log.Timber
 
 private const val EXTRA_FRAGMENT = "fragment"
-private const val EXTRA_FRAGMENT_ITEM = "fragment_item_id"
 
 @AndroidEntryPoint
 class SettingsActivity : BaseActivity() {
@@ -47,24 +50,22 @@ class SettingsActivity : BaseActivity() {
     private var externalAuthCallback: ((Int) -> Boolean)? = null
 
     companion object {
-        fun newInstance(context: Context, screen: Deeplink? = null, screenItemId: String? = null): Intent {
+        fun newInstance(context: Context, screen: Deeplink? = null): Intent {
             return Intent(context, SettingsActivity::class.java).apply {
                 if (screen != null) {
                     putExtra(EXTRA_FRAGMENT, screen)
-                    if (!screenItemId.isNullOrBlank()) {
-                        putExtra(EXTRA_FRAGMENT_ITEM, screenItemId)
-                    }
                 }
             }
         }
     }
 
-    enum class Deeplink {
-        DEVELOPER,
-        NOTIFICATION_HISTORY,
-        QS_TILE,
-        SENSOR,
-        WEBSOCKET,
+    @Parcelize
+    sealed interface Deeplink : Parcelable {
+        data object Developer : Deeplink
+        data object NotificationHistory : Deeplink
+        data class QSTile(val tileId: String) : Deeplink
+        data class Sensor(val sensorId: String) : Deeplink
+        data object Websocket : Deeplink
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,37 +89,44 @@ class SettingsActivity : BaseActivity() {
         authenticator = Authenticator(this, this, ::settingsActivityAuthenticationResult)
 
         if (savedInstanceState == null) {
-            val settingsNavigation = IntentCompat.getSerializableExtra(intent, EXTRA_FRAGMENT, Deeplink::class.java)
+            val settingsNavigation = IntentCompat.getParcelableExtra(intent, EXTRA_FRAGMENT, Deeplink::class.java)
             supportFragmentManager.commit {
                 replace(
                     R.id.content,
                     when (settingsNavigation) {
-                        Deeplink.WEBSOCKET -> if (serverManager.defaultServers.size == 1) {
+                        Deeplink.Websocket -> if (serverManager.defaultServers.size == 1) {
                             WebsocketSettingFragment::class.java
                         } else {
                             SettingsFragment::class.java
                         }
-                        Deeplink.DEVELOPER -> DeveloperSettingsFragment::class.java
-                        Deeplink.NOTIFICATION_HISTORY -> NotificationHistoryFragment::class.java
-                        Deeplink.SENSOR -> SensorDetailFragment::class.java
-                        Deeplink.QS_TILE -> ManageTilesFragment::class.java
+                        Deeplink.Developer -> DeveloperSettingsFragment::class.java
+                        Deeplink.NotificationHistory -> NotificationHistoryFragment::class.java
+                        is Deeplink.Sensor -> SensorDetailFragment::class.java
+                        is Deeplink.QSTile -> ManageTilesFragment::class.java
                         else -> SettingsFragment::class.java
                     },
-                    if (settingsNavigation == Deeplink.SENSOR) {
-                        val sensorId = intent.getStringExtra(EXTRA_FRAGMENT_ITEM) ?: ""
-                        SensorDetailFragment.newInstance(sensorId).arguments
-                    } else if (settingsNavigation == Deeplink.QS_TILE) {
-                        val tileId = intent.getStringExtra(EXTRA_FRAGMENT_ITEM) ?: ""
-                        Bundle().apply { putString("id", tileId) }
-                    } else if (settingsNavigation == Deeplink.WEBSOCKET) {
-                        val servers = serverManager.defaultServers
-                        if (servers.size == 1) {
-                            Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, servers[0].id) }
-                        } else {
+                    when (settingsNavigation) {
+                        is Deeplink.Sensor -> {
+                            SensorDetailFragment.newInstance(settingsNavigation.sensorId).arguments
+                        }
+
+                        is Deeplink.QSTile -> {
+                            val tileId = settingsNavigation.tileId
+                            Bundle().apply { putString("id", tileId) }
+                        }
+
+                        Deeplink.Websocket -> {
+                            val servers = serverManager.defaultServers
+                            if (servers.size == 1) {
+                                Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, servers[0].id) }
+                            } else {
+                                null
+                            }
+                        }
+
+                        else -> {
                             null
                         }
-                    } else {
-                        null
                     },
                 )
             }
@@ -137,19 +145,23 @@ class SettingsActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
-        blurView.setBlurEnabled(isAppLocked())
+        lifecycleScope.launch {
+            blurView.setBlurEnabled(isAppLocked())
+        }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus && !isFinishing) {
-            if (isAppLocked()) {
-                authenticating = true
-                authenticator.authenticate(getString(commonR.string.biometric_title))
-                blurView.setBlurEnabled(true)
-            } else {
-                setAppActive(true)
-                blurView.setBlurEnabled(false)
+            lifecycleScope.launch {
+                if (isAppLocked()) {
+                    authenticating = true
+                    authenticator.authenticate(getString(commonR.string.biometric_title))
+                    blurView.setBlurEnabled(true)
+                } else {
+                    setAppActive(true)
+                    blurView.setBlurEnabled(false)
+                }
             }
         }
     }
@@ -184,18 +196,18 @@ class SettingsActivity : BaseActivity() {
     /**
      * @return `true` if the app is locked for the active server or the currently visible server
      */
-    private fun isAppLocked(): Boolean {
+    private suspend fun isAppLocked(): Boolean {
         val serverFragment = supportFragmentManager.findFragmentByTag(ServerSettingsFragment.TAG)
         val serverLocked = serverFragment?.let { isAppLocked((it as ServerSettingsFragment).getServerId()) } ?: false
         return serverLocked || isAppLocked(ServerManager.SERVER_ID_ACTIVE)
     }
 
-    fun isAppLocked(serverId: Int?): Boolean = runBlocking {
-        serverManager.getServer(serverId ?: ServerManager.SERVER_ID_ACTIVE)?.let {
+    suspend fun isAppLocked(serverId: Int?): Boolean {
+        return serverManager.getServer(serverId ?: ServerManager.SERVER_ID_ACTIVE)?.let {
             try {
                 serverManager.integrationRepository(it.id).isAppLocked()
             } catch (e: IllegalArgumentException) {
-                Timber.w("Cannot determine app locked state")
+                Timber.w(e, "Cannot determine app locked state")
                 false
             }
         } ?: false
@@ -211,12 +223,13 @@ class SettingsActivity : BaseActivity() {
         setAppActive(ServerManager.SERVER_ID_ACTIVE, active)
     }
 
+    // TODO remove runBlocking https://github.com/home-assistant/android/issues/5688
     fun setAppActive(serverId: Int?, active: Boolean) = runBlocking {
         serverManager.getServer(serverId ?: ServerManager.SERVER_ID_ACTIVE)?.let {
             try {
                 serverManager.integrationRepository(it.id).setAppActive(active)
             } catch (e: IllegalArgumentException) {
-                Timber.w("Cannot set app active $active for server $serverId")
+                Timber.w(e, "Cannot set app active $active for server $serverId")
             }
         }
     }

@@ -1,11 +1,12 @@
 package io.homeassistant.companion.android.common.util
 
 import java.time.LocalDateTime
+import kotlinx.serialization.Serializable
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
-import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.fail
 
 class JsonUtilTest {
     @Test
@@ -88,15 +89,16 @@ class JsonUtilTest {
             "key5" to 1.0,
             "key6" to null,
             "key7" to listOf(1, 2, 3),
-            "key8" to mapOf("subkey1" to "value1", "subkey2" to 1),
+            "key8" to mapOf("subkey1" to "value1", "subkey2" to 1, "subkey3" to DummyValueBoolean(true)),
             "key9" to 1.0f,
             "key10" to arrayOf(4, 5, 6),
+            "key11" to DummyValueObject(DummyObject("hello", 1)),
         )
 
         val json = kotlinJsonMapper.encodeToString(MapAnySerializer, map)
 
         assertEquals(
-            """{"key1":"value1","key2":true,"key3":1,"key4":9223372036854775807,"key5":1.0,"key6":null,"key7":[1,2,3],"key8":{"subkey1":"value1","subkey2":1},"key9":1.0,"key10":[4,5,6]}""".trimIndent(),
+            """{"key1":"value1","key2":true,"key3":1,"key4":9223372036854775807,"key5":1.0,"key6":null,"key7":[1,2,3],"key8":{"subkey1":"value1","subkey2":1,"subkey3":true},"key9":1.0,"key10":[4,5,6],"key11":{"str_value":"hello","int_value":1}}""".trimIndent(),
             json,
         )
     }
@@ -105,8 +107,24 @@ class JsonUtilTest {
     fun `Given a map with an object when serializing then it throws`() {
         val map = mapOf<String, Any?>("key1" to Stub("value"))
 
-        assertThrows<IllegalArgumentException>("Unsupported type: ${Stub::class}") { kotlinJsonMapper.encodeToString(MapAnySerializer, map) }
+        try {
+            kotlinJsonMapper.encodeToString(MapAnySerializer, map)
+            fail { "encodeToString should fail with unsupported type" }
+        } catch (e: IllegalArgumentException) {
+            assertEquals("Unsupported type: ${Stub::class}", e.message)
+        }
     }
 }
+
+@JvmInline
+@Serializable
+private value class DummyValueBoolean(val value: Boolean)
+
+@JvmInline
+@Serializable
+private value class DummyValueObject(val value: DummyObject)
+
+@Serializable
+private class DummyObject(val strValue: String, val intValue: Int)
 
 private class Stub(val value: String)

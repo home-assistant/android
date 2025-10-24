@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.vehicle
 
 import android.content.Intent
-import android.content.pm.PackageManager
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
@@ -15,6 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.launch.LaunchActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -35,9 +35,7 @@ class LoginScreen(context: CarContext, val serverManager: ServerManager) : Scree
                         serverManager.authenticationRepository()
                             .getSessionState() == SessionState.CONNECTED
                 }
-                if (isLoggedIn == true) {
-                    screenManager.pop()
-                }
+                screenManager.pop()
             }
         }
     }
@@ -59,7 +57,7 @@ class LoginScreen(context: CarContext, val serverManager: ServerManager) : Scree
             .build()
     }
 
-    private val isAutomotive get() = carContext.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    private val isAutomotive get() = carContext.isAutomotive()
 
     private fun startNativeActivity() {
         with(carContext) {

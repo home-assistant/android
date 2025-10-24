@@ -54,7 +54,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -1274,7 +1273,7 @@ class LocationSensorManager :
                                     Timber.d(
                                         "Location accurate enough, all done with high accuracy.",
                                     )
-                                    runBlocking {
+                                    ioScope.launch {
                                         locationResult.lastLocation?.let {
                                             getEnabledServers(
                                                 latestContext,
@@ -1296,7 +1295,7 @@ class LocationSensorManager :
                                         "No location was accurate enough, sending our last location anyway",
                                     )
                                     if (locationResult.lastLocation!!.accuracy <= minAccuracy * 2) {
-                                        runBlocking {
+                                        ioScope.launch {
                                             getEnabledServers(
                                                 latestContext,
                                                 singleAccurateLocation,
@@ -1334,13 +1333,14 @@ class LocationSensorManager :
     override val name: Int
         get() = commonR.string.sensor_name_location
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return when {
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
+                    // TODO drop this requirement https://github.com/home-assistant/android/issues/5931
                     Manifest.permission.BLUETOOTH_CONNECT,
                 )
             }
@@ -1349,6 +1349,7 @@ class LocationSensorManager :
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
+                    // TODO drop this requirement https://github.com/home-assistant/android/issues/5931
                     Manifest.permission.BLUETOOTH,
                 )
             }
@@ -1356,6 +1357,7 @@ class LocationSensorManager :
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
+                    // TODO drop this requirement https://github.com/home-assistant/android/issues/5931
                     Manifest.permission.BLUETOOTH,
                 )
             }

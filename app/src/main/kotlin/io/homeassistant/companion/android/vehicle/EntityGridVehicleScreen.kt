@@ -1,19 +1,18 @@
 package io.homeassistant.companion.android.vehicle
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.constraints.ConstraintManager
-import androidx.car.app.model.Action
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.GridItem
 import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.ItemList
 import androidx.car.app.model.Template
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -42,6 +41,7 @@ import io.homeassistant.companion.android.util.vehicle.canNavigate
 import io.homeassistant.companion.android.util.vehicle.getChangeServerGridItem
 import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getDomainsGridItem
+import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 import io.homeassistant.companion.android.util.vehicle.getNavigationGridItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,7 +54,7 @@ class EntityGridVehicleScreen(
     val serverManager: ServerManager,
     val serverId: StateFlow<Int>,
     val prefsRepository: PrefsRepository,
-    val integrationRepository: IntegrationRepository,
+    val integrationRepositoryProvider: suspend () -> IntegrationRepository,
     val title: String,
     private val entityRegistry: List<EntityRegistryResponse>?,
     private val domains: MutableSet<String>,
@@ -102,7 +102,7 @@ class EntityGridVehicleScreen(
                 getNavigationGridItem(
                     carContext,
                     screenManager,
-                    integrationRepository,
+                    integrationRepositoryProvider,
                     allEntities,
                     entityRegistry,
                 ).build(),
@@ -113,7 +113,6 @@ class EntityGridVehicleScreen(
                         carContext,
                         screenManager,
                         serverManager,
-                        integrationRepository,
                         serverId,
                         allEntities,
                         prefsRepository,
@@ -139,8 +138,7 @@ class EntityGridVehicleScreen(
         val entityGrid = getEntityGridItems(entities)
 
         return GridTemplate.Builder().apply {
-            setTitle(title)
-            setHeaderAction(Action.BACK)
+            setHeader(getHeaderBuilder(title).build())
             if (loading) {
                 setLoading(true)
             } else {
@@ -183,7 +181,7 @@ class EntityGridVehicleScreen(
                                         if (lat != null && lon != null) {
                                             val intent = Intent(
                                                 CarContext.ACTION_NAVIGATE,
-                                                Uri.parse("geo:$lat,$lon"),
+                                                "geo:$lat,$lon".toUri(),
                                             )
                                             carContext.startCarApp(intent)
                                         }
@@ -192,7 +190,7 @@ class EntityGridVehicleScreen(
 
                                 in SUPPORTED_DOMAINS -> {
                                     lifecycleScope.launch {
-                                        entity.onPressed(integrationRepository)
+                                        entity.onPressed(integrationRepositoryProvider())
                                     }
                                 }
 

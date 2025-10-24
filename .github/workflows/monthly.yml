@@ -8,14 +8,28 @@ jobs:
   tag:
     name: Tag Monthly Release
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Get Current Time
-        uses: josStorer/get-current-time@v2.1.2
+        uses: josStorer/get-current-time@060cae3fbd32c181c6841788189a601ac8df8389 # v2.1.2
         id: current-time
 
       - name: Bump Calendar Version
-        uses: rickstaa/action-create-tag@v1.7.2
+        uses: rickstaa/action-create-tag@a1c7777fcb2fee4f19b0f283ba888afa11678b72 # v1.7.2
         with:
           tag: ${{ steps.current-time.outputs.year }}.${{ steps.current-time.outputs.month }}.0
+
+      - name: Trigger Prepare Next Release
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'prepareNextRelease.yml',
+              ref: 'main',
+            })

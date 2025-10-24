@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.onboarding.manual
 
 import android.content.Context
-import android.net.Uri
+import androidx.core.net.toUri
 import androidx.wear.phone.interactions.authentication.CodeChallenge
 import androidx.wear.phone.interactions.authentication.CodeVerifier
 import androidx.wear.phone.interactions.authentication.OAuthRequest
@@ -43,7 +43,7 @@ class ManualSetupPresenterImpl @Inject constructor(
             try {
                 request = OAuthRequest.Builder(context)
                     .setAuthProviderUrl(
-                        Uri.parse(UrlUtil.buildAuthenticationUrl(url)),
+                        UrlUtil.buildAuthenticationUrl(url).toUri(),
                     )
                     .setCodeChallenge(CodeChallenge(codeVerifier))
                     .build()

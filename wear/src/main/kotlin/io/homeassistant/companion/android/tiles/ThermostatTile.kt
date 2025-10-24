@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.ThermostatTile
+import io.homeassistant.companion.android.home.HomeActivity
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -89,14 +90,11 @@ class ThermostatTile : TileService() {
             } else {
                 if (tileConfig?.entityId.isNullOrBlank()) {
                     tile.setTileTimeline(
-                        Timeline.fromLayoutElement(
-                            LayoutElementBuilders.Box.Builder()
-                                .addContent(
-                                    LayoutElementBuilders.Text.Builder()
-                                        .setText(getString(commonR.string.thermostat_tile_no_entity_yet))
-                                        .setMaxLines(10)
-                                        .build(),
-                                ).build(),
+                        getNotConfiguredTimeline(
+                            this@ThermostatTile,
+                            requestParams,
+                            commonR.string.thermostat_tile_no_entity_yet,
+                            HomeActivity.Companion.LaunchMode.ThermostatTile,
                         ),
                     ).build()
                 } else {

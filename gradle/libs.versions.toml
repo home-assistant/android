@@ -2,60 +2,63 @@
 # You need to update the lock if you update or add a dependency
 # you can do that with `./gradlew alldependencies --write-locks`
 [versions]
+accompanist = "0.37.3"
 activity-compose = "1.10.1"
 androidBeaconLibrary = "2.21.1"
-androidGradlePlugin = "8.10.1"
+androidGradlePlugin = "8.13.0"
 androidSdk-compile = "36"
 androidSdk-min = "21"
 androidSdk-target = "36"
 androidSdk-automotive-min = "29"
 androidSdk-wear-min = "26"
 androidSdk-wear-target = "34"
-androidTools = "31.10.1"
-androidxTestCore = "1.6.1"
-androidxTestExt = "1.2.1"
-androidxTestRules = "1.6.1"
-androidxTestRunner = "1.6.2"
+androidTools = "31.13.0"
+androidxHiltNavigationCompose = "1.2.0"
+androidxTestCore = "1.7.0"
+androidxTestExt = "1.3.0"
+androidxTestRules = "1.7.0"
+androidxTestRunner = "1.7.0"
 appcompat = "1.7.1"
 biometric = "1.1.0"
 blurView = "version-2.0.6"
 car-versions = "1.7.0"
-changeLog = "3.7.1"
+changeLog = "3.8.1"
 community-material-typeface = "7.0.96.1-kotlin"
-compose-bom = "2025.07.00"
+compose-bom = "2025.10.00"
+composeLintChecks = "1.4.2"
 connectClient = "1.1.0-rc03"
 constraintlayout = "2.2.1"
-coreKtx = "1.16.0"
+coreKtx = "1.17.0"
 core-splashscreen = "1.1.0-rc01"
 core-remoteviews = "1.1.0"
 cronet-embedded = "119.6045.31"
 emojiJava = "5.1.1"
 firebase-bom = "33.16.0"
 firebaseAppdistributionGradle = "5.1.1"
-fragment-ktx = "1.8.8"
+fragment-ktx = "1.8.9"
 glance = "1.1.1"
-googleServices = "4.4.3"
+googleServices = "4.4.4"
 guava = "33.4.6-android"
 healthServicesClient = "1.1.0-alpha05"
-haze = "1.6.9"
-hilt = "2.57"
+haze = "1.6.10"
+hilt = "2.57.2"
 iconics = "5.4.0"
 improv = "0.1.1"
 javaVersion = "11" # https://developer.android.com/studio/write/java11-minimal-support-table
-junit = "5.13.4"
-kotlin = "2.2.0"
+junit = "6.0.0"
+kotlin = "2.2.20"
 kotlinx-coroutines = "1.10.2"
 kotlinx-serialization = "1.9.0"
-ksp = "2.2.0-2.0.2"
-ktlint = "13.0.0"
+ksp = "2.2.20-2.0.4"
+ktlint = "13.1.0"
 leakcanaryAndroid = "2.14"
-lifecycle = "2.9.2"
-material = "1.12.0"
-media = "1.7.0"
-media3 = "1.7.1"
-mockk = "1.14.5"
-navigation-compose = "2.9.2"
-okhttp = "5.1.0"
+lifecycle = "2.9.3"
+material = "1.13.0"
+media = "1.7.1"
+media3 = "1.8.0"
+mockk = "1.14.6"
+navigation-compose = "2.9.5"
+okhttp = "5.2.1"
 paging = "3.3.6"
 coil = "3.3.0"
 play-services-threadnetwork = "16.3.0"
@@ -64,29 +67,28 @@ play-services-location = "21.3.0"
 play-services-wearable = "19.0.0"
 preference-ktx = "1.2.1"
 recyclerview = "1.4.0"
-reorderable = "2.5.1"
+reorderable = "3.0.0"
 retrofit-bom = "3.0.0"
-robolectric = "4.15.1" # Check if robolectric supports a more recent version of the SDK on each update
-robolectric-target-sdk = "35"
+robolectric = "4.16" # Check if robolectric supports a more recent version of the SDK on each update
+robolectric-target-sdk = "36"
 room = "2.7.2"
-runtimeLint = "1.8.3"
-screenshot = "0.0.1-alpha09"
-sentry-android = "8.17.0"
+runtimeLint = "1.9.3"
+screenshot = "0.0.1-alpha11" # On the next update, replace the hack in AndroidComposeConvertionPlugin with the real fix
+sentry-android = "8.23.0"
 timber = "5.0.1"
 tools-desugar-jdk-libs = "2.1.5"
 turbine = "1.2.1"
 watchfaceComplicationsDataSourceKtx = "1.2.1"
 wear = "1.3.0"
-wear-compose-foundation = "1.4.1"
-wear-compose-material = "1.0.0-alpha37"
+wear-compose = "1.5.3"
 wear-protolayout = "1.3.0"
 wear-tiles = "1.5.0"
 wear-tooling = "1.0.0"
 wearPhoneInteractions = "1.1.0"
-wearInput = "1.2.0-alpha04"
+wearInput = "1.2.0-rc01"
 webkit = "1.14.0"
 wear-remote-interactions = "1.1.0"
-workRuntimeKtx = "2.10.2"
+workRuntime = "2.10.3"
 zxing = "4.3.0"
 
 [plugins]
@@ -107,14 +109,18 @@ screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot"
 # Plugins defined by this project in `:build-logic:convention` module.
 homeassistant-android-application = { id = "homeassistant.android.application" }
 homeassistant-android-common = { id = "homeassistant.android.common" }
+homeassistant-android-compose = { id = "homeassistant.android.compose" }
 homeassistant-android-dependencies = { id = "homeassistant.android.dependencies" }
 homeassistant-android-flavor = { id = "homeassistant.android.flavor" }
 
 [libraries]
+accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanist" }
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
 activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity-compose" }
 android-beacon-library = { module = "org.altbeacon:android-beacon-library", version.ref = "androidBeaconLibrary" }
 android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
+androidx-lifecycle-service = { module = "androidx.lifecycle:lifecycle-service", version.ref = "lifecycle" }
+compose-screenshot-gradle-plugin = { group = "com.android.compose.screenshot", name = "screenshot-test-gradle-plugin", version.ref = "screenshot" }
 androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
 androidx-glance-material = { module = "androidx.glance:glance-material", version.ref = "glance" }
 androidx-glance-preview = { module = "androidx.glance:glance-preview", version.ref = "glance" }
@@ -124,6 +130,7 @@ androidx-glance-appwidget-testing = { module = "androidx.glance:glance-appwidget
 androidx-health-connect-client = { module = "androidx.health.connect:connect-client", version.ref = "connectClient" }
 androidx-health-services-client = { module = "androidx.health:health-services-client", version.ref = "healthServicesClient" }
 androidx-media = { module = "androidx.media:media", version.ref = "media" }
+androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "androidxHiltNavigationCompose" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "room" }
@@ -133,7 +140,7 @@ androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-ru
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidx-runtime-lint = { module = "androidx.compose.runtime:runtime-lint", version.ref = "runtimeLint" }
 androidx-watchface-complications-data-source-ktx = { module = "androidx.wear.watchface:watchface-complications-data-source-ktx", version.ref = "watchfaceComplicationsDataSourceKtx" }
-androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntime" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
 androidx-test-ext = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "androidxTestExt" }
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidxTestRules" }
@@ -145,14 +152,16 @@ car-core = { module = "androidx.car.app:app", version.ref = "car-versions" }
 car-automotive = { module = "androidx.car.app:app-automotive", version.ref = "car-versions" }
 car-projected = { module = "androidx.car.app:app-projected", version.ref = "car-versions" }
 changeLog = { module = "com.github.AppDevNext:ChangeLog", version.ref = "changeLog" }
-coil-oktthp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+coil-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 coil-views = { module = "io.coil-kt.coil3:coil", version.ref = "coil" }
 community-material-typeface = { module = "com.mikepenz:community-material-typeface", version.ref = "community-material-typeface" }
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
 compose-animation = { module = "androidx.compose.animation:animation" }
 compose-foundation = { module = "androidx.compose.foundation:foundation" }
+compose-lint-checks = { module = "com.slack.lint.compose:compose-lint-checks", version.ref = "composeLintChecks" }
 compose-material = { module = "androidx.compose.material:material" }
+compose-material3 = { module = "androidx.compose.material3:material3-android" }
 compose-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
 compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 compose-runtime = { module = "androidx.compose.runtime:runtime" }
@@ -174,6 +183,7 @@ haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
+hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "hilt" }
 iconics-compose = { module = "com.mikepenz:iconics-compose", version.ref = "iconics" }
 iconics-core = { module = "com.mikepenz:iconics-core", version.ref = "iconics" }
 improv = { module = "org.openhomefoundation.improv-wifi:sdk-android", version.ref = "improv" }
@@ -197,6 +207,7 @@ lint-api = { group = "com.android.tools.lint", name = "lint-api", version.ref = 
 lint-checks = { group = "com.android.tools.lint", name = "lint-checks", version.ref = "androidTools" }
 lint-tests = { group = "com.android.tools.lint", name = "lint-tests", version.ref = "androidTools" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation-compose" }
+navigation-test = { module = "androidx.navigation:navigation-testing", version.ref = "navigation-compose" }
 okhttp-android = { module = "com.squareup.okhttp3:okhttp-android" }
 okhttp-bom = { module = "com.squareup.okhttp3:okhttp-bom", version.ref = "okhttp" }
 okhttp-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor" }
@@ -220,14 +231,15 @@ retrofit-bom = { module = "com.squareup.retrofit2:retrofit-bom", version.ref = "
 retrofit = { module = "com.squareup.retrofit2:retrofit" }
 retrofit-converter-kotlinx-serialization = { module = "com.squareup.retrofit2:converter-kotlinx-serialization" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "screenshot" }
 sentry-android-core = { module = "io.sentry:sentry-android-core", version.ref = "sentry-android" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 tools-desugar-jdk = { module = "com.android.tools:desugar_jdk_libs", version.ref = "tools-desugar-jdk-libs" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 wear = { module = "androidx.wear:wear", version.ref = "wear" }
-wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wear-compose-foundation" }
-wear-compose-material = { module = "androidx.wear.compose:compose-material3", version.ref = "wear-compose-material" }
-wear-compose-navigation = { module = "androidx.wear.compose:compose-navigation", version.ref = "wear-compose-foundation" }
+wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wear-compose" }
+wear-compose-material = { module = "androidx.wear.compose:compose-material3", version.ref = "wear-compose" }
+wear-compose-navigation = { module = "androidx.wear.compose:compose-navigation", version.ref = "wear-compose" }
 wear-phone-interactions = { module = "androidx.wear:wear-phone-interactions", version.ref = "wearPhoneInteractions" }
 wear-input = { module = "androidx.wear:wear-input", version.ref = "wearInput" }
 wear-protolayout-expression = { module = "androidx.wear.protolayout:protolayout-expression", version.ref = "wear-protolayout" }
@@ -244,7 +256,7 @@ androidx-test =["androidx-test-core", "androidx-test-ext", "androidx-test-rules"
 androidx-compose-ui-test = ["compose-ui-test", "compose-ui-testManifest"]
 androidx-glance = ["androidx-glance-appwidget", "androidx-glance-appwidget-preview", "androidx-glance-material", "androidx-glance-preview"]
 androidx-glance-testing = ["androidx-glance-testing", "androidx-glance-appwidget-testing"]
-coil = ["coil-views", "coil-oktthp", "coil-svg"]
+coil = ["coil-views", "coil-okhttp", "coil-svg"]
 media3 = ["media3-exoplayer", "media3-exoplayer-hls", "media3-ui-compose", "media3-session"]
 paging = ["paging-runtime", "paging-compose"]
 wear-tiles = ["wear-tiles", "wear-protolayout-main", "wear-protolayout-expression", "wear-protolayout-material"]

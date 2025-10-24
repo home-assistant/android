@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.settings.sensor
 
 import android.content.Intent
-import android.net.Uri
+import androidx.core.net.toUri
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -15,7 +15,7 @@ class HealthConnectPermissionActivity : BaseActivity() {
                     intent.hasCategory("android.intent.category.HEALTH_PERMISSIONS")
                 )
         ) {
-            Intent(Intent.ACTION_VIEW, Uri.parse(resources.getString(commonR.string.privacy_url))).also {
+            Intent(Intent.ACTION_VIEW, resources.getString(commonR.string.privacy_url).toUri()).also {
                 startActivity(it)
             }
         }

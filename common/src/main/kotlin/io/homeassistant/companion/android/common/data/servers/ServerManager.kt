@@ -75,17 +75,17 @@ interface ServerManager {
      * @return [AuthenticationRepository] for the server with the provided ID
      * @throws [IllegalArgumentException] if there is no server with the provided ID
      */
-    fun authenticationRepository(serverId: Int = SERVER_ID_ACTIVE): AuthenticationRepository
+    suspend fun authenticationRepository(serverId: Int = SERVER_ID_ACTIVE): AuthenticationRepository
 
     /**
      * @return [IntegrationRepository] for the server with the provided ID
      * @throws [IllegalArgumentException] if there is no server with the provided ID
      */
-    fun integrationRepository(serverId: Int = SERVER_ID_ACTIVE): IntegrationRepository
+    suspend fun integrationRepository(serverId: Int = SERVER_ID_ACTIVE): IntegrationRepository
 
     /**
      * @return [WebSocketRepository] for the server with the provided ID
      * @throws [IllegalArgumentException] if there is no server with the provided ID
      */
-    fun webSocketRepository(serverId: Int = SERVER_ID_ACTIVE): WebSocketRepository
+    suspend fun webSocketRepository(serverId: Int = SERVER_ID_ACTIVE): WebSocketRepository
 }

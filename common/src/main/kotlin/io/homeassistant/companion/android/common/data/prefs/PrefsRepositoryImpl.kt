@@ -5,9 +5,10 @@ import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
+import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
+import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
-import javax.inject.Named
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -18,7 +19,7 @@ const val MIGRATION_PREF = "migration"
 const val MIGRATION_VERSION = 1
 
 private const val PREF_VER = "version"
-private const val PREF_THEME = "theme"
+private const val PREF_NIGHT_MODE_THEME = "theme"
 private const val PREF_LANG = "lang"
 private const val PREF_LOCALES = "locales"
 private const val PREF_SCREEN_ORIENTATION = "screen_orientation"
@@ -41,6 +42,8 @@ private const val PREF_AUTO_FAVORITES = "auto_favorites"
 private const val PREF_LOCATION_HISTORY_DISABLED = "location_history"
 private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displayed"
 private const val PREF_GESTURE_ACTION_PREFIX = "gesture_action"
+private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
+private const val PREF_SHOW_PRIVACY_HINT = "show_privacy_hint"
 
 /**
  * This class ensure that when we use the local storage in [PrefsRepositoryImpl] the migrations has been made
@@ -84,8 +87,8 @@ private class LocalStorageWithMigration(
                     }
 
                     localStorage.putInt(MIGRATION_PREF, MIGRATION_VERSION)
-                    migrationChecked.set(true)
                 }
+                migrationChecked.set(true)
             }
         }
     }
@@ -97,8 +100,8 @@ private class LocalStorageWithMigration(
 }
 
 class PrefsRepositoryImpl @Inject constructor(
-    @Named("themes") localStorage: LocalStorage,
-    @Named("integration") integrationStorage: LocalStorage,
+    @NamedThemesStorage localStorage: LocalStorage,
+    @NamedIntegrationStorage integrationStorage: LocalStorage,
 ) : PrefsRepository {
 
     private val localStorage = LocalStorageWithMigration(localStorage, integrationStorage)
@@ -111,12 +114,12 @@ class PrefsRepositoryImpl @Inject constructor(
         localStorage().putString(PREF_VER, ver)
     }
 
-    override suspend fun getCurrentTheme(): String? {
-        return localStorage().getString(PREF_THEME)
+    override suspend fun getCurrentNightModeTheme(): NightModeTheme? {
+        return NightModeTheme.fromStorageValue(localStorage().getString(PREF_NIGHT_MODE_THEME))
     }
 
-    override suspend fun saveTheme(theme: String) {
-        localStorage().putString(PREF_THEME, theme)
+    override suspend fun saveNightModeTheme(nightModeTheme: NightModeTheme) {
+        localStorage().putString(PREF_NIGHT_MODE_THEME, nightModeTheme.storageValue)
     }
 
     override suspend fun getCurrentLang(): String? {
@@ -316,6 +319,14 @@ class PrefsRepositoryImpl @Inject constructor(
         localStorage().putString("${PREF_GESTURE_ACTION_PREFIX}_${gesture.name}", action.name)
     }
 
+    override suspend fun isChangeLogPopupEnabled(): Boolean {
+        return localStorage().getBooleanOrNull(PREF_CHANGE_LOG_POPUP_ENABLED) ?: true
+    }
+
+    override suspend fun setChangeLogPopupEnabled(enabled: Boolean) {
+        localStorage().putBoolean(PREF_CHANGE_LOG_POPUP_ENABLED, enabled)
+    }
+
     override suspend fun removeServer(serverId: Int) {
         val controlsAuthEntities = getControlsAuthEntities().filter { it.split(".")[0].toIntOrNull() != serverId }
         setControlsAuthEntities(controlsAuthEntities)
@@ -327,5 +338,13 @@ class PrefsRepositoryImpl @Inject constructor(
             localStorage().remove(CONTROLS_PANEL_SERVER)
             setControlsPanelPath(null)
         }
+    }
+
+    override suspend fun showPrivacyHint(): Boolean {
+        return localStorage().getBooleanOrNull(PREF_SHOW_PRIVACY_HINT) ?: true
+    }
+
+    override suspend fun setShowPrivacyHint(showPrivacyHint: Boolean) {
+        localStorage().putBoolean(PREF_SHOW_PRIVACY_HINT, showPrivacyHint)
     }
 }

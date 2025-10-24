@@ -58,7 +58,7 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.wifi.WifiHelper
+import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.util.compose.HaAlertInfo
 import io.homeassistant.companion.android.util.compose.HaAlertWarning
 import io.homeassistant.companion.android.util.plus
@@ -194,6 +194,15 @@ fun SsidView(
             }
         }
 
+        item("vpn") {
+            SsidSubheader(
+                title = stringResource(commonR.string.manage_ssids_vpn),
+                icon = Icons.Default.VpnKey,
+                checked = vpn,
+                onClicked = { onSetVpn(it) },
+            )
+        }
+
         item("ethernet") {
             Column {
                 Spacer(Modifier.height(16.dp))
@@ -204,15 +213,6 @@ fun SsidView(
                     onClicked = { onSetEthernet(it) },
                 )
             }
-        }
-
-        item("vpn") {
-            SsidSubheader(
-                title = stringResource(commonR.string.manage_ssids_vpn),
-                icon = Icons.Default.VpnKey,
-                checked = vpn,
-                onClicked = { onSetVpn(it) },
-            )
         }
 
         if (wifiSsids.isNotEmpty() || ethernet == true || vpn == true) {

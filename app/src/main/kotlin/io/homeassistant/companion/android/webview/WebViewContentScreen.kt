@@ -36,6 +36,7 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
@@ -50,6 +51,7 @@ internal fun WebViewContentScreen(
     playerLeft: Dp,
     currentAppLocked: Boolean,
     customViewFromWebView: View?,
+    nightModeTheme: NightModeTheme? = null,
     statusBarColor: Color? = null,
     backgroundColor: Color? = null,
     onFullscreenClicked: (isFullscreen: Boolean) -> Unit,
@@ -60,7 +62,7 @@ internal fun WebViewContentScreen(
                 .fillMaxSize()
                 .background(colorResource(commonR.color.colorLaunchScreenBackground)),
         ) {
-            SafeHAWebView(webView, currentAppLocked, statusBarColor, backgroundColor)
+            SafeHAWebView(webView, nightModeTheme, currentAppLocked, statusBarColor, backgroundColor)
 
             player?.let { player ->
                 playerSize?.let { playerSize ->
@@ -92,6 +94,7 @@ internal fun WebViewContentScreen(
 @Composable
 private fun SafeHAWebView(
     webView: WebView?,
+    nightModeTheme: NightModeTheme?,
     currentAppLocked: Boolean,
     statusBarColor: Color?,
     backgroundColor: Color?,
@@ -120,6 +123,7 @@ private fun SafeHAWebView(
                     .width(insetsPaddingValues.calculateLeftPadding(LayoutDirection.Ltr)),
             )
             HAWebView(
+                nightModeTheme = nightModeTheme,
                 factory = {
                     webView
                 },

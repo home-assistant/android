@@ -84,7 +84,7 @@ fun ManageControlsView(
     onSetPanelSetting: (String, Int) -> Unit,
     onSetStructureEnabled: (Boolean) -> Unit,
 ) {
-    var selectedServer by remember { mutableIntStateOf(defaultServer) }
+    var selectedServer by remember(defaultServer) { mutableIntStateOf(defaultServer) }
     val initialPanelEnabled by rememberSaveable { mutableStateOf(panelEnabled) }
     var panelServer by remember(panelSetting?.second) { mutableIntStateOf(panelSetting?.second ?: defaultServer) }
     var panelPath by remember(panelSetting?.first) { mutableStateOf(panelSetting?.first ?: "") }

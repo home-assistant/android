@@ -8,10 +8,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.android.tools.screenshot.PreviewTest
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 
 class SettingsRowScreenshotTest {
 
+    @PreviewTest
     @Preview
     @Composable
     fun `SettingsRow with only title and subtitle`() {
@@ -23,6 +25,7 @@ class SettingsRowScreenshotTest {
         )
     }
 
+    @PreviewTest
     @Preview
     @Composable
     fun `SettingsRow with custom icon composable`() {
@@ -40,6 +43,7 @@ class SettingsRowScreenshotTest {
         )
     }
 
+    @PreviewTest
     @Preview
     @Composable
     fun `SettingsRow with MDI icon on`() {
@@ -52,6 +56,7 @@ class SettingsRowScreenshotTest {
         )
     }
 
+    @PreviewTest
     @Preview
     @Composable
     fun `SettingsRow with MDI icon off`() {

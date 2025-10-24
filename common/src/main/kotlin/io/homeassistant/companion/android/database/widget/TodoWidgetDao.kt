@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 @TypeConverters(TodoLastUpdateDataConverter::class)
-interface TodoWidgetDao : WidgetDao {
+interface TodoWidgetDao : WidgetDao<TodoWidgetEntity> {
 
     @Query("SELECT * FROM todo_widget WHERE id = :id")
     suspend fun get(id: Int): TodoWidgetEntity?
@@ -22,7 +22,7 @@ interface TodoWidgetDao : WidgetDao {
     suspend fun getAll(): List<TodoWidgetEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun add(todoWidgetEntity: TodoWidgetEntity)
+    override suspend fun add(entity: TodoWidgetEntity)
 
     @Query("DELETE FROM todo_widget WHERE id = :id")
     override suspend fun delete(id: Int)
@@ -35,4 +35,7 @@ interface TodoWidgetDao : WidgetDao {
 
     @Query("UPDATE todo_widget SET latest_update_data = :lastUpdateData WHERE id = :widgetId")
     suspend fun updateWidgetLastUpdate(widgetId: Int, lastUpdateData: TodoWidgetEntity.LastUpdateData)
+
+    @Query("SELECT COUNT(*) FROM todo_widget")
+    override fun getWidgetCountFlow(): Flow<Int>
 }

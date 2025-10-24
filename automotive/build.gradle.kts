@@ -1,5 +1,3 @@
-import com.google.gms.googleservices.GoogleServicesPlugin.GoogleServicesPluginConfig
-
 plugins {
     alias(libs.plugins.homeassistant.android.application)
     alias(libs.plugins.homeassistant.android.flavor)
@@ -66,8 +64,16 @@ android {
             }
         }
         getByName("debug") {
+            kotlin {
+                srcDirs("../app/src/debug/kotlin")
+            }
             res {
                 srcDirs("../app/src/debug/res")
+            }
+        }
+        getByName("release") {
+            kotlin {
+                srcDirs("../app/src/release/kotlin")
             }
         }
         getByName("androidTest") {
@@ -90,6 +96,6 @@ dependencies {
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.
-configure<GoogleServicesPluginConfig> {
+googleServices {
     disableVersionCheck = true
 }

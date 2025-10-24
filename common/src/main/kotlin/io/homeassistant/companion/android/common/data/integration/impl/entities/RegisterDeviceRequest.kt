@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.integration.impl.entities
 
+import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import kotlin.reflect.jvm.jvmName
 import kotlinx.serialization.KSerializer
@@ -19,7 +20,7 @@ import kotlinx.serialization.json.JsonEncoder
 data class RegisterDeviceRequest(
     var appId: String? = null,
     var appName: String? = null,
-    val appVersion: String? = null,
+    val appVersion: AppVersion? = null,
     val deviceName: String? = null,
     val manufacturer: String? = null,
     val model: String? = null,
@@ -40,7 +41,7 @@ private object RegisterDeviceRequestSerializer : KSerializer<RegisterDeviceReque
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor(RegisterDeviceRequest::class.jvmName) {
         element("app_id", String.serializer().descriptor)
         element("app_name", String.serializer().descriptor)
-        element("app_version", String.serializer().descriptor)
+        element("app_version", AppVersion.serializer().descriptor)
         element("device_name", String.serializer().descriptor)
         element("manufacturer", String.serializer().descriptor)
         element("model", String.serializer().descriptor)
@@ -57,7 +58,7 @@ private object RegisterDeviceRequestSerializer : KSerializer<RegisterDeviceReque
             with(value) {
                 if (appId != null) encodeStringElement(descriptor, 0, appId!!)
                 if (appName != null) encodeStringElement(descriptor, 1, appName!!)
-                if (appVersion != null) encodeStringElement(descriptor, 2, appVersion)
+                if (appVersion != null) encodeSerializableElement(descriptor, 2, AppVersion.serializer(), appVersion)
                 if (deviceName != null) encodeStringElement(descriptor, 3, deviceName)
                 if (manufacturer != null) encodeStringElement(descriptor, 4, manufacturer)
                 if (model != null) encodeStringElement(descriptor, 5, model)
@@ -75,7 +76,7 @@ private object RegisterDeviceRequestSerializer : KSerializer<RegisterDeviceReque
         return jsonDecoder.decodeStructure(descriptor) {
             var appId: String? = null
             var appName: String? = null
-            var appVersion: String? = null
+            var appVersion: AppVersion? = null
             var deviceName: String? = null
             var manufacturer: String? = null
             var model: String? = null
@@ -89,7 +90,7 @@ private object RegisterDeviceRequestSerializer : KSerializer<RegisterDeviceReque
                 when (val index = decodeElementIndex(descriptor)) {
                     0 -> appId = decodeStringElement(descriptor, index)
                     1 -> appName = decodeStringElement(descriptor, index)
-                    2 -> appVersion = decodeStringElement(descriptor, index)
+                    2 -> appVersion = decodeSerializableElement(descriptor, index, AppVersion.serializer())
                     3 -> deviceName = decodeStringElement(descriptor, index)
                     4 -> manufacturer = decodeStringElement(descriptor, index)
                     5 -> model = decodeStringElement(descriptor, index)

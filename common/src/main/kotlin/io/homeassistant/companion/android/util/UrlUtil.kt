@@ -3,8 +3,12 @@ package io.homeassistant.companion.android.util
 import android.net.Uri
 import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
+import java.net.InetAddress
 import java.net.URI
 import java.net.URL
+import java.net.UnknownHostException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -51,9 +55,11 @@ object UrlUtil {
             asURI == null -> {
                 base
             }
+
             isAbsoluteUrl(input) -> {
                 asURI.toURL()
             }
+
             else -> { // Input is relative to base URL
                 val builder = base
                     ?.toHttpUrlOrNull()
@@ -95,4 +101,51 @@ object UrlUtil {
             )
         return matches?.groups?.get(1)?.value
     }
+}
+
+/**
+ * Determines if this URL is publicly accessible using Fully Qualified Domain Name (FQDN) or a public IP.
+ *
+ * A URL is considered to be publicly accessible if:
+ * 1. Its hostname does NOT end with a known local TLD (`.local`, `.lan`, `.home`, `.internal`,
+ *    `.localdomain`), AND
+ * 2. When resolved via DNS, ALL of its IP addresses are public (not private RFC 1918 addresses,
+ *    not loopback, not link-local, and not any-local addresses).
+ *
+ * This function performs DNS resolution on the IO dispatcher and may block briefly while
+ * resolving the hostname.
+ *
+ * @return `true` if the URL is publicly accessible, `false` if it is local/private or
+ *         if DNS resolution fails.
+ */
+suspend fun URL.isPubliclyAccessible(): Boolean {
+    return isPubliclyAccessible(host)
+}
+
+private suspend fun isPubliclyAccessible(fqdn: String): Boolean {
+    // Check TLD
+    val localTlds = listOf(".local", ".lan", ".home", ".internal", ".localdomain")
+    if (localTlds.any { fqdn.endsWith(it, ignoreCase = true) }) {
+        return false
+    }
+
+    // Resolve and check IP
+    return try {
+        val addresses = withContext(Dispatchers.IO) {
+            InetAddress.getAllByName(fqdn)
+        }
+        addresses.none { it.isPrivateOrLocal() }
+    } catch (e: UnknownHostException) {
+        false
+    }
+}
+
+private fun InetAddress.isPrivateOrLocal(): Boolean {
+    return this.isSiteLocalAddress ||
+        // Private IP ranges (RFC 1918)
+        this.isLoopbackAddress ||
+        // 127.0.0.0/8 or ::1
+        this.isLinkLocalAddress ||
+        // 169.254.0.0/16 or fe80::/10
+        this.isAnyLocalAddress // 0.0.0.0 or ::
 }
