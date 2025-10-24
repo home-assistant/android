@@ -15,6 +15,7 @@ val vmPolicyIgnoredViolationRules = listOf(
 val threadPolicyIgnoredViolationRules = listOf(
     IgnoreChangelogDiskRead,
     IgnoreNotificationHistoryFragmentLoadSharedPrefDiskRead,
+    IgnoreComposeTextContextMenuDiskRead,
 )
 
 /**
@@ -85,6 +86,21 @@ private data object IgnoreNotificationHistoryFragmentLoadSharedPrefDiskRead : Ig
         return violation.stackTrace.any {
             it.className == "io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment" &&
                 it.methodName == "onCreatePreferences"
+        }
+    }
+}
+
+/**
+ * Ignore a DiskReadViolation in Jetpack Compose's text selection context menu implementation.
+ * This occurs when using SelectionContainer which enables text selection and shows a context menu.
+ */
+private data object IgnoreComposeTextContextMenuDiskRead : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskReadViolation) return false
+        return violation.stackTrace.any {
+            it.className ==
+                "androidx.compose.foundation.text.contextmenu.internal.AndroidTextContextMenuToolbarProvider"
         }
     }
 }
