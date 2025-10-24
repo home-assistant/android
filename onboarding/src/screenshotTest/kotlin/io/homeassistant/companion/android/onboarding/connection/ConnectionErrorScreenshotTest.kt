@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.onboarding.connection
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.compose.HAPreviews
+import io.homeassistant.companion.android.onboarding.R
 
 class ConnectionErrorScreenshotTest {
 
@@ -17,7 +19,26 @@ class ConnectionErrorScreenshotTest {
                 url = null,
                 error = null,
                 onOpenExternalLink = {},
-                onBackClick = {},
+                onCloseClick = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `ConnectionErrorScreen with error expanded`() {
+        HAThemeForPreview {
+            ConnectionErrorScreen(
+                url = null,
+                error = ConnectionError.AuthenticationError(
+                    commonR.string.tls_cert_expired_message,
+                    stringResource(R.string.connection_error_more_details_description_content, 403, "forbidden"),
+                    "raw",
+                ),
+                onOpenExternalLink = {},
+                onCloseClick = {},
+                errorDetailsExpanded = true,
             )
         }
     }
@@ -31,7 +52,7 @@ class ConnectionErrorScreenshotTest {
                 url = null,
                 error = ConnectionError.AuthenticationError(commonR.string.tls_cert_expired_message, "details", "raw"),
                 onOpenExternalLink = {},
-                onBackClick = {},
+                onCloseClick = {},
             )
         }
     }
@@ -45,7 +66,7 @@ class ConnectionErrorScreenshotTest {
                 url = "http://ha.org",
                 error = ConnectionError.UnreachableError(commonR.string.tls_cert_expired_message, "details", "raw"),
                 onOpenExternalLink = {},
-                onBackClick = {},
+                onCloseClick = {},
             )
         }
     }
@@ -60,7 +81,7 @@ class ConnectionErrorScreenshotTest {
                 "http://super-long-url-to-see-how-it-displays-in-the-screenshot.org/path/1/home-assistant/io?external_auth=1",
                 error = ConnectionError.UnknownError(commonR.string.tls_cert_expired_message, "details", "raw"),
                 onOpenExternalLink = {},
-                onBackClick = {},
+                onCloseClick = {},
             )
         }
     }

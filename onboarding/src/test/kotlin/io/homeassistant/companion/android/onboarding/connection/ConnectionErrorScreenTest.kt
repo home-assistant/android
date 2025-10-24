@@ -50,7 +50,7 @@ class ConnectionErrorScreenTest {
                 ConnectionErrorScreen(
                     error = null,
                     url = null,
-                    onBackClick = {},
+                    onCloseClick = {},
                     onOpenExternalLink = {},
                 )
             }
@@ -62,13 +62,13 @@ class ConnectionErrorScreenTest {
     fun `Given ConnectionErrorScreen when error is not null and url is null then url info is not displayed but the error is`() {
         composeTestRule.apply {
             var urlClicked: String? = null
-            var onBackClicked: Boolean = false
+            var onCloseClicked: Boolean = false
             setContent {
                 ConnectionErrorScreen(
                     error = ConnectionError.UnknownError(commonR.string.tls_cert_expired_message, "details", "errorType"),
                     url = null,
-                    onBackClick = {
-                        onBackClicked = true
+                    onCloseClick = {
+                        onCloseClicked = true
                     },
                     onOpenExternalLink = {
                         urlClicked = it.toString()
@@ -95,16 +95,20 @@ class ConnectionErrorScreenTest {
                 .performScrollTo().assertIsDisplayed().performClick()
             assertEquals("https://companion.home-assistant.io/docs/troubleshooting/faqs/", urlClicked)
 
-            onNodeWithContentDescription("Home Assistant Github")
+            onNodeWithContentDescription(stringResource(R.string.connection_error_forum_content_description))
                 .performScrollTo().assertIsDisplayed().performClick()
-            assertEquals("https://github.com/home-assistant/android/", urlClicked)
+            assertEquals("https://community.home-assistant.io/c/mobile-apps/android-companion/42", urlClicked)
 
-            onNodeWithContentDescription("Home Assistant Discord")
+            onNodeWithContentDescription(stringResource(R.string.connection_error_github_content_description))
+                .performScrollTo().assertIsDisplayed().performClick()
+            assertEquals("https://github.com/home-assistant/android/issues", urlClicked)
+
+            onNodeWithContentDescription(stringResource(R.string.connection_error_discord_content_description))
                 .performScrollTo().assertIsDisplayed().performClick()
             assertEquals("https://discord.com/channels/330944238910963714/1284965926336335993", urlClicked)
 
             onNodeWithText(stringResource(R.string.back)).performScrollTo().assertIsDisplayed().performClick()
-            assertTrue(onBackClicked)
+            assertTrue(onCloseClicked)
         }
     }
 
@@ -116,7 +120,7 @@ class ConnectionErrorScreenTest {
                 ConnectionErrorScreen(
                     error = ConnectionError.AuthenticationError(commonR.string.tls_cert_expired_message, "details", "errorType"),
                     url = url,
-                    onBackClick = {},
+                    onCloseClick = {},
                     onOpenExternalLink = {},
                 )
             }

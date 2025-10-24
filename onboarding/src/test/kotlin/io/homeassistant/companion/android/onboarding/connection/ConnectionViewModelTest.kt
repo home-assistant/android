@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Exten
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.slot
 import java.net.URL
 import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -266,6 +267,7 @@ class ConnectionViewModelTest {
     fun `Given HTTP errors when onReceivedHttpError is invoked then errorFlow emits appropriate error`() = runTest {
         val rawUrl = "http://homeassistant.local:8123"
         val viewModel = ConnectionViewModel(rawUrl, keyChainRepository)
+        val webView = mockWebView()
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -288,14 +290,14 @@ class ConnectionViewModelTest {
             // Expired cert
             webViewClient.isTLSClientAuthNeeded = true
             webViewClient.isCertificateChainValid = false
-            webViewClient.onReceivedHttpError(null, request, null)
-            errorFlow.awaitConnectionError<ConnectionError.AuthenticationError>(commonR.string.tls_cert_expired_message, errorDetails(null, null), WebResourceResponse::class)
+            webViewClient.onReceivedHttpError(webView, request, null)
+            errorFlow.awaitConnectionError<ConnectionError.AuthenticationError>(commonR.string.tls_cert_expired_message, errorDetails(null, "No description"), WebResourceResponse::class)
 
             // Cert not found
             webViewClient.isTLSClientAuthNeeded = true
             webViewClient.isCertificateChainValid = true
             webViewClient.onReceivedHttpError(
-                null,
+                webView,
                 request,
                 mockk<WebResourceResponse> {
                     every { statusCode } returns 400
@@ -308,7 +310,7 @@ class ConnectionViewModelTest {
             webViewClient.isTLSClientAuthNeeded = false
             webViewClient.isCertificateChainValid = false
             webViewClient.onReceivedHttpError(
-                null,
+                webView,
                 request,
                 mockk<WebResourceResponse> {
                     every { statusCode } returns 418
@@ -321,11 +323,7 @@ class ConnectionViewModelTest {
             webViewClient.isTLSClientAuthNeeded = false
             webViewClient.isCertificateChainValid = false
             webViewClient.onReceivedHttpError(
-                mockk<WebView> {
-                    every { context } returns mockk {
-                        every { getString(commonR.string.no_description) } returns "No description"
-                    }
-                },
+                webView,
                 request,
                 mockk<WebResourceResponse> {
                     every { statusCode } returns 418
@@ -341,6 +339,8 @@ class ConnectionViewModelTest {
     fun `Given received error when onReceivedError is invoked then errorFlow emits appropriate error`() = runTest {
         val rawUrl = "http://homeassistant.local:8123"
         val viewModel = ConnectionViewModel(rawUrl, keyChainRepository)
+
+        val webView = mockWebView()
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -360,7 +360,7 @@ class ConnectionViewModelTest {
             suspend fun testAuthError(errorCode: Int, @StringRes messageRes: Int) {
                 val description = "Error description"
                 viewModel.webViewClient.onReceivedError(
-                    null,
+                    webView,
                     request,
                     mockk<WebResourceError> {
                         every { this@mockk.errorCode } returns errorCode
@@ -373,7 +373,7 @@ class ConnectionViewModelTest {
             suspend fun testUnreachableError(errorCode: Int, @StringRes messageRes: Int) {
                 val description = "Error description"
                 viewModel.webViewClient.onReceivedError(
-                    null,
+                    webView,
                     request,
                     mockk<WebResourceError> {
                         every { this@mockk.errorCode } returns errorCode
@@ -391,7 +391,7 @@ class ConnectionViewModelTest {
 
             // Generic error with description
             viewModel.webViewClient.onReceivedError(
-                null,
+                webView,
                 request,
                 mockk<WebResourceError> {
                     every { this@mockk.errorCode } returns -1
@@ -402,11 +402,7 @@ class ConnectionViewModelTest {
 
             // Generic error without description
             viewModel.webViewClient.onReceivedError(
-                mockk<WebView> {
-                    every { context } returns mockk {
-                        every { getString(commonR.string.no_description) } returns "No description"
-                    }
-                },
+                webView,
                 request,
                 mockk<WebResourceError> {
                     every { this@mockk.errorCode } returns -1
@@ -439,6 +435,19 @@ class ConnectionViewModelTest {
             return@answers mockk<Uri> {
                 every { this@mockk.toString() } returns uriString
                 every { host } returns javaURL.host
+            }
+        }
+    }
+
+    private fun mockWebView(): WebView {
+        return mockk<WebView> {
+            every { context } returns mockk {
+                val code = slot<String>()
+                val detail = slot<String>()
+                every { getString(any(), capture(code), capture(detail)) } answers {
+                    errorDetails(code.captured.toIntOrNull(), detail.captured)
+                }
+                every { getString(commonR.string.no_description) } returns "No description"
             }
         }
     }

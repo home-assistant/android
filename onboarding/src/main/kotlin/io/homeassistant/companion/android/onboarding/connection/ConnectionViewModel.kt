@@ -42,7 +42,7 @@ internal sealed interface ConnectionError {
 
     @get:StringRes
     val message: Int
-    val errorDetails: String
+    val errorDetails: String?
     val rawErrorType: String
 
     data class AuthenticationError(
@@ -55,7 +55,7 @@ internal sealed interface ConnectionError {
 
     data class UnreachableError(
         @StringRes override val message: Int,
-        override val errorDetails: String,
+        override val errorDetails: String?,
         override val rawErrorType: String,
     ) : ConnectionError {
         override val title: Int = commonR.string.error_connection_failed
@@ -139,11 +139,13 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         }
 
         private fun errorDetails(context: Context?, code: Int?, description: String?): String {
-            return "Status Code: ${code}\nDescription: ${
+            return context?.getString(
+                R.string.connection_error_more_details_description_content,
+                code.toString(),
                 description?.takeIf {
                     it.isNotEmpty()
-                } ?: context?.getString(commonR.string.no_description)
-            }"
+                } ?: context.getString(commonR.string.no_description),
+            ) ?: ""
         }
 
         @RequiresApi(Build.VERSION_CODES.M)
@@ -284,7 +286,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
             onError(
                 ConnectionError.UnreachableError(
                     message = R.string.connection_screen_malformed_url,
-                    errorDetails = e.localizedMessage ?: e.message ?: "No description",
+                    errorDetails = e.localizedMessage ?: e.message,
                     rawErrorType = e::class.toString(),
                 ),
             )

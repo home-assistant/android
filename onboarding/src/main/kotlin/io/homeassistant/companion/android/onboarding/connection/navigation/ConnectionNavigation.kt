@@ -43,7 +43,7 @@ internal fun NavGraphBuilder.connectionScreen(
 
         ConnectionErrorScreen(
             onOpenExternalLink = onOpenExternalLink,
-            onBackClick = onBackClick,
+            onCloseClick = onBackClick,
             viewModel = viewModel,
         )
     }
