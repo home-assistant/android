@@ -76,7 +76,7 @@ Whenever you add or update dependencies in the project (whether through `gradle/
 ### App Flavors (`:app` and `:automotive` only)
 
 - **`full`** - Includes Google Play Services (location tracking, FCM push notifications, Wear OS communication). Distributed via Play Store.
-- **`minimal`** - FOSS version without Google Play Services (distributed via F-Droid, manual APK downloads, Meta Quest, OEM automotive builds).
+- **`minimal`** - FOSS version without Google Play Services (distributed via F-Droid, manual APK downloads, Meta Quest, OEM automotive builds, Amazon Appstore).
 
 Code should be flavor-agnostic in the `main` source set whenever possible.
 
@@ -110,6 +110,7 @@ Source code is in Kotlin under `src/main/kotlin/io/homeassistant/companion/andro
 - `qs/` - Quick Settings tiles
 - `controls/` - Device controls
 - `launch/` - App launcher logic
+- `vehicle/` - Android Auto and Automotive specific content
 - `widgets/` - All the Android widgets (all new widgets must use Jetpack Glance for declarative UI)
 - `webview/` - Main Activity of the application with the implementation of the external bus to communicate with the Home Assistant Frontend.
 
