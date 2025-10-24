@@ -11,6 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.exception.HttpException
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.database.server.Server
@@ -31,7 +32,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
 import timber.log.Timber
 
 internal sealed interface NameYourDeviceNavigationEvent {
@@ -106,7 +106,7 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
             } catch (e: Exception) {
                 Timber.e(e, "Error while adding server")
                 val messageRes = when {
-                    e is HttpException && e.code() == 404 -> commonR.string.error_with_registration
+                    e is HttpException && e.code == 404 -> commonR.string.error_with_registration
                     e is SSLHandshakeException -> commonR.string.webview_error_FAILED_SSL_HANDSHAKE
                     e is SSLException -> commonR.string.webview_error_SSL_INVALID
                     else -> commonR.string.webview_error

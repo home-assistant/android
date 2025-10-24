@@ -20,9 +20,9 @@ import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.exception.HttpException
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import javax.inject.Inject
-import retrofit2.HttpException
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -50,7 +50,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
                 ?: return getErrorComplication(request, R.string.state_unknown)
         } catch (t: Throwable) {
             Timber.e(t, "Unable to get entity state for $entityId")
-            return if (t is HttpException && t.code() == 404) {
+            return if (t is HttpException && t.code == 404) {
                 getErrorComplication(request, R.string.complication_entity_invalid)
             } else {
                 null
@@ -102,6 +102,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
                     .setMonochromaticImage(monochromaticImage)
                     .build()
             }
+
             ComplicationType.LONG_TEXT -> {
                 LongTextComplicationData.Builder(
                     text = text,
@@ -112,6 +113,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
                     .setMonochromaticImage(monochromaticImage)
                     .build()
             }
+
             else -> null // Already handled at the start of the function
         }
     }
@@ -138,6 +140,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
                     .setMonochromaticImage(monochromaticImage)
                     .build()
             }
+
             ComplicationType.LONG_TEXT -> {
                 LongTextComplicationData.Builder(
                     text = text,
@@ -147,6 +150,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
                     .setMonochromaticImage(monochromaticImage)
                     .build()
             }
+
             else -> {
                 Timber.w("Preview for unsupported complication type $type requested")
                 null
