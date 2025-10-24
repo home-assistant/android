@@ -39,6 +39,10 @@ import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
  * @param keyboardActions when the input service emits an IME action, the corresponding callback
  * is called. Note that this IME action may be different from what you specified in
  * [KeyboardOptions.imeAction]
+ * @param maxLines the maximum height in terms of maximum number of visible lines. If [singleLine]
+ * is set to `true`, this value will be ignored
+ * @param singleLine when `true`, this text field becomes a single horizontally scrolling text field
+ * instead of wrapping onto multiple lines. [maxLines] will be ignored and automatically set to 1
  */
 @Composable
 fun HATextField(
@@ -55,6 +59,7 @@ fun HATextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     maxLines: Int = Int.MAX_VALUE,
+    singleLine: Boolean = maxLines == 1,
     visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     // TODO probably replace the text composable by strings to control the applied style
@@ -67,6 +72,7 @@ fun HATextField(
         leadingIcon = leadingIcon,
         shape = RoundedCornerShape(size = HARadius.M),
         maxLines = maxLines,
+        singleLine = singleLine,
         // The color is controlled from the [colors] attribute
         textStyle = HATextStyle.UserInput.copy(color = Color.Unspecified),
         keyboardOptions = keyboardOptions,
