@@ -47,6 +47,6 @@
     <string name="connection_error_discord_content_description">Home Assistant Discord"</string>
     <string name="connection_error_documentation_content_description">Home Assistant Documentation</string>
     <string name="connection_error_forum_content_description">Home Assistant Forum</string>
-    <string name="connection_error_github_content_description">Home Assistant Github"</string>
+    <string name="connection_error_github_content_description">Home Assistant GitHub"</string>
     <string name="back">Back</string>
 </resources>
