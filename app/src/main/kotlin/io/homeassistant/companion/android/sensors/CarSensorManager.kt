@@ -287,7 +287,7 @@ class CarSensorManager :
         return isAutomotive || (areCarSensorApisAvailable && BuildConfig.FLAVOR == "full")
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return carSensorsList.firstOrNull { it.sensor.id == sensorId }?.let {
             if (isAutomotive) {
                 it.automotivePermissions.toTypedArray()

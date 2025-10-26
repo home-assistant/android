@@ -43,7 +43,7 @@ class LastAppSensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.PACKAGE_USAGE_STATS)
     }
 

@@ -67,7 +67,7 @@ class StorageSensorManager : SensorManager {
         return listOf(storageSensor, externalStorage)
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return emptyArray()
     }
 

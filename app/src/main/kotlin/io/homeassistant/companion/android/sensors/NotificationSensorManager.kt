@@ -89,7 +89,7 @@ class NotificationSensorManager :
         return listOf(lastNotification, lastRemovedNotification, activeNotificationCount, mediaSession)
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE)
     }
 

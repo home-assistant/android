@@ -60,7 +60,7 @@ class DisplaySensorManager : SensorManager {
         return listOf(screenBrightness, screenOffTimeout, screenOrientation, screenRotation)
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return emptyArray()
     }
 
