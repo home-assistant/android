@@ -1339,7 +1339,7 @@ class LocationSensorManager :
     override val name: Int
         get() = commonR.string.sensor_name_location
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return when {
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
                 arrayOf(

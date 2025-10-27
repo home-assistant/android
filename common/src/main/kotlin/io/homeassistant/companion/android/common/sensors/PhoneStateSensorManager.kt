@@ -153,7 +153,7 @@ class PhoneStateSensorManager : SensorManager {
         }
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.READ_PHONE_STATE)
     }
 
