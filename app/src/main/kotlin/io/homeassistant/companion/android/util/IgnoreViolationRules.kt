@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.util
 
 import android.os.Build
 import android.os.strictmode.DiskReadViolation
+import android.os.strictmode.DiskWriteViolation
 import android.os.strictmode.IncorrectContextUseViolation
 import android.os.strictmode.Violation
 import androidx.annotation.RequiresApi
@@ -16,6 +17,9 @@ val threadPolicyIgnoredViolationRules = listOf(
     IgnoreChangelogDiskRead,
     IgnoreNotificationHistoryFragmentLoadSharedPrefDiskRead,
     IgnoreComposeTextContextMenuDiskRead,
+    IgnoreActivityThreadVsyncDiskReadWrite,
+    IgnoreSamsungInputRuneDiskRead,
+    IgnoreSamsungKnoxProKioskDiskRead,
 )
 
 /**
@@ -101,6 +105,55 @@ private data object IgnoreComposeTextContextMenuDiskRead : IgnoreViolationRule {
         return violation.stackTrace.any {
             it.className ==
                 "androidx.compose.foundation.text.contextmenu.internal.AndroidTextContextMenuToolbarProvider"
+        }
+    }
+}
+
+/**
+ * Ignore an [DiskWriteViolation] and [DiskReadViolation] in Android's ActivityThread vsync scheduling.
+ * This occurs in the framework's internal vsync scheduling mechanism and is beyond
+ * application control.
+ */
+private data object IgnoreActivityThreadVsyncDiskReadWrite : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskWriteViolation && violation !is DiskReadViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "android.app.ActivityThread" &&
+                it.methodName == "scheduleVsyncSS"
+        }
+    }
+}
+
+/**
+ * Ignore a [DiskReadViolation] in Samsung's InputRune framework component.
+ * This occurs in Samsung's internal input configuration system and is beyond
+ * application control.
+ */
+private data object IgnoreSamsungInputRuneDiskRead : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskReadViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "com.samsung.android.rune.InputRune"
+        }
+    }
+}
+
+/**
+ * Ignore a [DiskReadViolation] in Samsung Knox's ProKioskManager.
+ * This occurs when Samsung Knox checks the kiosk state and is beyond application control.
+ */
+private data object IgnoreSamsungKnoxProKioskDiskRead : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskReadViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "com.samsung.android.knox.custom.ProKioskManager" &&
+                it.methodName == "getProKioskState"
         }
     }
 }

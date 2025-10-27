@@ -173,7 +173,7 @@ class BluetoothSensorManager : SensorManager {
     }
 
     @SuppressLint("InlinedApi")
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return when {
             (sensorId == bleTransmitter.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
                 arrayOf(
