@@ -41,7 +41,7 @@
     <string name="connection_error_url_info">The app is currently connecting to</string>
     <string name="connection_error_more_details">More details</string>
     <string name="connection_error_more_details_description">Description</string>
-    <string name="connection_error_more_details_description_content">Status Code: %s\nDetail: %s</string>
+    <string name="connection_error_more_details_description_content">Status Code: %1$s\nDetail: %2$s</string>
     <string name="connection_error_more_details_error">Error</string>
     <string name="connection_error_help">Get more help</string>
     <string name="connection_error_discord_content_description">Home Assistant Discord"</string>
