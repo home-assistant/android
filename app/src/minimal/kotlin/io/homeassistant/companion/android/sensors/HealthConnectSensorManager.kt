@@ -16,7 +16,7 @@ class HealthConnectSensorManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_health_connect
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return emptyArray()
     }
 

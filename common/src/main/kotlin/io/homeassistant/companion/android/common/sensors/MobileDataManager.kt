@@ -42,7 +42,7 @@ class MobileDataManager : SensorManager {
         return listOf(mobileDataState, mobileDataRoaming)
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return if (sensorId == mobileDataRoaming.id || Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             arrayOf(Manifest.permission.READ_PHONE_STATE)
         } else {

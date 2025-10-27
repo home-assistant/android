@@ -30,6 +30,8 @@ fun HATheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () 
                 background = LocalHAColorScheme.current.colorSurfaceDefault,
                 // Used by ModalBottomSheetDefaults.containerColor
                 surfaceContainerLow = LocalHAColorScheme.current.colorSurfaceDefault,
+                // Used for text selection
+                primary = LocalHAColorScheme.current.colorOnPrimaryNormal,
             ),
         )
     }

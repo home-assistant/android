@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Info
@@ -44,8 +45,10 @@ import io.homeassistant.companion.android.common.compose.composable.ButtonSize
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HABanner
+import io.homeassistant.companion.android.common.compose.composable.HADetails
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAHint
+import io.homeassistant.companion.android.common.compose.composable.HAIconButton
 import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HAProgress
@@ -95,6 +98,7 @@ fun HAComposeCatalogScreen() {
                 input()
                 progress()
                 banners()
+                details()
             }
         }
     }
@@ -182,6 +186,13 @@ private fun LazyListScope.buttonSection(variant: ButtonVariant, enabled: Boolean
                     size = it,
                 )
             }
+            HAIconButton(
+                Icons.Default.Build,
+                onClick = {},
+                contentDescription = null,
+                variant = variant,
+                enabled = enabled,
+            )
         }
     }
 }
@@ -534,6 +545,19 @@ private fun LazyListScope.banners() {
             HAHint("This is a hint banner with a close button") {}
             HABanner {
                 Text("Simple customizable banner", color = Color.Red)
+            }
+        }
+    }
+}
+
+private fun LazyListScope.details() {
+    catalogSection(title = "Details") {
+        CatalogRow {
+            HADetails("Hello") {
+                Text("Content", style = HATextStyle.Body)
+            }
+            HADetails("Hello", defaultExpanded = true) {
+                Text("Content", style = HATextStyle.Body)
             }
         }
     }

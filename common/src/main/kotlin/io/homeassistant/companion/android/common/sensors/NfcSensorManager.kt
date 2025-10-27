@@ -22,7 +22,7 @@ class NfcSensorManager : SensorManager {
 
     override suspend fun getAvailableSensors(context: Context) = listOf(nfcStateSensor)
 
-    override fun requiredPermissions(sensorId: String) = emptyArray<String>()
+    override fun requiredPermissions(context: Context, sensorId: String) = emptyArray<String>()
 
     override suspend fun requestSensorUpdate(context: Context) = updateNfcState(context)
 
