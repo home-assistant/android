@@ -6,7 +6,6 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.connection.navigation.HandleConnectionNavigationEvents
 import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
@@ -18,7 +17,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -63,11 +61,6 @@ class ConnectionNavigationTest {
                     onAuthenticatedCode = authCode
                     onRequiredMTLS = requiredMTLS
                 },
-                onShowSnackbar = { _, _ ->
-                    true
-                },
-                onBackClick = {
-                },
                 onOpenExternalLink = {},
             )
         }
@@ -98,11 +91,6 @@ class ConnectionNavigationTest {
                 viewModel,
                 onAuthenticated = { _, _, _ ->
                 },
-                onShowSnackbar = { _, _ ->
-                    true
-                },
-                onBackClick = {
-                },
                 onOpenExternalLink = {
                     onOpenExternalLink = it
                 },
@@ -115,43 +103,5 @@ class ConnectionNavigationTest {
             }
 
         assertEquals(event.url, onOpenExternalLink)
-    }
-
-    @Test
-    fun `Given HandleConnectionNavigationEvents when viewModel emits Error then invoke onShowSnackbar and onBackClick`() = runTest {
-        val sharedFlow = MutableSharedFlow<ConnectionNavigationEvent>()
-
-        val viewModel = mockk<ConnectionViewModel> {
-            every { navigationEventsFlow } returns sharedFlow
-        }
-
-        var errorMessage: String? = null
-        var backPressed = false
-
-        composeTestRule.setContent {
-            HandleConnectionNavigationEvents(
-                viewModel,
-                onAuthenticated = { _, _, _ -> },
-                onShowSnackbar = { message, _ ->
-                    errorMessage = message
-                    true
-                },
-                onBackClick = {
-                    backPressed = true
-                },
-                onOpenExternalLink = {},
-            )
-        }
-
-        sharedFlow.emit(ConnectionNavigationEvent.Error(commonR.string.error_http_generic, 404, ""))
-
-        assertEquals(
-            """There was an error loading Home Assistant. Please review the connection settings and try again.
-
-Error Code: 404 
-Description: """,
-            errorMessage,
-        )
-        assertTrue(backPressed)
     }
 }
