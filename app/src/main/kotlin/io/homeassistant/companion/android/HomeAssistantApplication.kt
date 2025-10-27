@@ -11,7 +11,6 @@ import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
-import androidx.compose.runtime.Composer
 import androidx.compose.runtime.ExperimentalComposeRuntimeApi
 import androidx.core.content.ContextCompat
 import coil3.ImageLoader
@@ -103,7 +102,7 @@ open class HomeAssistantApplication :
         }
 
         // Enable only for debug flavor to avoid perf regressions in release
-        Composer.setDiagnosticStackTraceEnabled(BuildConfig.DEBUG)
+        // Composer.setDiagnosticStackTraceEnabled(BuildConfig.DEBUG)
 
         // This will make sure we start/stop when we actually need too.
         ContextCompat.registerReceiver(
