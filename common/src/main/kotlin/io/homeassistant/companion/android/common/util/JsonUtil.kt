@@ -32,15 +32,16 @@ import kotlinx.serialization.json.floatOrNull
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.modules.plus
 import kotlinx.serialization.serializer
 import kotlinx.serialization.serializerOrNull
-import org.json.JSONArray
 
-fun JSONArray.toStringList(): List<String> = List(length()) { i ->
-    getString(i)
+fun JsonArray.toStringList(): List<String> = List(size) { i ->
+    val element = this[i]
+    element.jsonPrimitive.content
 }
 
 /**
@@ -263,5 +264,78 @@ private fun toJsonElement(encoder: JsonEncoder, value: Any?): JsonElement {
                 throw IllegalArgumentException("Unsupported type: ${value::class}")
             }
         }
+    }
+}
+
+/**
+ * Converts a map to a JsonObject
+ */
+@Suppress("UNCHECKED_CAST")
+fun Map<String, Any?>.toJsonObject(): JsonObject {
+    val content = this.mapValues { (_, value) ->
+        when (value) {
+            null -> JsonNull
+            is Number -> JsonPrimitive(value)
+            is String -> JsonPrimitive(value)
+            is Boolean -> JsonPrimitive(value)
+            is Map<*, *> -> (value as Map<String, Any?>).toJsonObject()
+            is List<*> -> JsonArray(
+                value.map {
+                    when (it) {
+                        null -> JsonNull
+                        is Map<*, *> -> (it as Map<String, Any?>).toJsonObject()
+                        is Number -> JsonPrimitive(it)
+                        is String -> JsonPrimitive(it)
+                        is Boolean -> JsonPrimitive(it)
+                        else -> JsonPrimitive(it.toString())
+                    }
+                },
+            )
+            else -> JsonPrimitive(value.toString())
+        }
+    }
+    return JsonObject(content)
+}
+
+/**
+ * Parses a string to a JsonObject
+ */
+fun String.toJsonObject(): JsonObject {
+    return Json.parseToJsonElement(this) as JsonObject
+}
+
+/**
+ * Returns a string value for a key, if the key is missing or null an empty string is returned
+ * @param key a string value to lookup json structure
+ */
+fun JsonObject.getString(key: String): String {
+    return if (this.containsKey(key)) {
+        this[key]?.jsonPrimitive?.content ?: ""
+    } else {
+        ""
+    }
+}
+
+/**
+ * Returns a boolean value for a key, if the key is missing or null false is returned
+ * @param key a string value to lookup json structure
+ */
+fun JsonObject.getBoolean(key: String): Boolean {
+    return if (this.containsKey(key)) {
+        this[key]?.jsonPrimitive?.booleanOrNull ?: false
+    } else {
+        false
+    }
+}
+
+/**
+ * Returns an integer value for a key, if the key is missing or null 0 is returned
+ * @param key a string value to lookup json structure
+ */
+fun JsonObject.getInt(key: String): Int {
+    return if (this.containsKey(key)) {
+        this[key]?.jsonPrimitive?.intOrNull ?: 0
+    } else {
+        0
     }
 }
