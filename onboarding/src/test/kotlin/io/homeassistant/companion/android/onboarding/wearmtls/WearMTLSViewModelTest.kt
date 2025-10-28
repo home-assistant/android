@@ -16,13 +16,9 @@ import io.mockk.verify
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.security.KeyStore
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -43,8 +39,6 @@ class WearMTLSViewModelTest {
 
     private val testFileName = "test_cert.p12"
 
-    private val testDispatcher = StandardTestDispatcher()
-
     @BeforeEach
     fun setUp() {
         mockkStatic(KeyStore::class)
@@ -53,13 +47,11 @@ class WearMTLSViewModelTest {
             every { contentResolver } returns this@WearMTLSViewModelTest.mockContentResolver
         }
         viewModel = WearMTLSViewModel(context)
-        Dispatchers.setMain(testDispatcher)
     }
 
     @AfterEach
     fun tearDown() {
         unmockkStatic(KeyStore::class)
-        Dispatchers.resetMain()
     }
 
     @Test
