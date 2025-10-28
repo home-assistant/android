@@ -23,8 +23,9 @@ import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.launch
+
 @AndroidEntryPoint
-class AssistActivity:BaseActivity() {
+class AssistActivity : BaseActivity() {
 
     private val viewModel: AssistViewModel by viewModels()
 
