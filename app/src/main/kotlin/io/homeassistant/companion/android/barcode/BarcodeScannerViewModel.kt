@@ -10,7 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.common.util.getString
+import io.homeassistant.companion.android.common.util.getStringOrElse
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusRepository
 import javax.inject.Inject
@@ -42,9 +42,9 @@ class BarcodeScannerViewModel @Inject constructor(
             externalBusRepository.receive(
                 listOf(BarcodeActionType.NOTIFY.externalBusType, BarcodeActionType.CLOSE.externalBusType),
             ).collect { message ->
-                when (val type = BarcodeActionType.fromExternalBus(message.getString("type"))) {
+                when (val type = BarcodeActionType.fromExternalBus(message.getStringOrElse("type", ""))) {
                     BarcodeActionType.NOTIFY -> frontendActionsFlow.emit(
-                        BarcodeScannerAction(type, message.get("payload")?.jsonObject?.getString("message")),
+                        BarcodeScannerAction(type, message["payload"]?.jsonObject?.getStringOrElse("message", "")),
                     )
                     BarcodeActionType.CLOSE -> frontendActionsFlow.emit(
                         BarcodeScannerAction(type),

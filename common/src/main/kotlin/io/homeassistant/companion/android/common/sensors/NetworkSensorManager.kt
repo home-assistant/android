@@ -14,8 +14,8 @@ import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
-import io.homeassistant.companion.android.common.util.getString
-import io.homeassistant.companion.android.common.util.toJsonObject
+import io.homeassistant.companion.android.common.util.getStringOrElse
+import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
@@ -556,8 +556,8 @@ class NetworkSensorManager : SensorManager {
                 override fun onResponse(call: Call, response: Response) {
                     if (!response.isSuccessful) throw IOException("Unexpected response code $response")
                     try {
-                        val jsonObject = response.body.string().toJsonObject()
-                        ip = jsonObject.getString("ip")
+                        val jsonObject = response.body.string().toJsonObjectOrNull()
+                        ip = jsonObject?.getStringOrElse("ip", "") ?: ""
                     } catch (e: Exception) {
                         Timber.e(e, "Unable to parse ip address from response")
                     }

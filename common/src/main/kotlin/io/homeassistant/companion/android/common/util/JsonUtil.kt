@@ -38,6 +38,7 @@ import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.modules.plus
 import kotlinx.serialization.serializer
 import kotlinx.serialization.serializerOrNull
+import timber.log.Timber
 
 fun JsonArray.toStringList(): List<String> = List(size) { i ->
     val element = this[i]
@@ -271,19 +272,19 @@ private fun toJsonElement(encoder: JsonEncoder, value: Any?): JsonElement {
  * Converts a map to a JsonObject
  */
 @Suppress("UNCHECKED_CAST")
-fun Map<String, Any?>.toJsonObject(): JsonObject {
+fun Map<String, Any?>.toJsonObjectOrNull(): JsonObject {
     val content = this.mapValues { (_, value) ->
         when (value) {
             null -> JsonNull
             is Number -> JsonPrimitive(value)
             is String -> JsonPrimitive(value)
             is Boolean -> JsonPrimitive(value)
-            is Map<*, *> -> (value as Map<String, Any?>).toJsonObject()
+            is Map<*, *> -> (value as Map<String, Any?>).toJsonObjectOrNull()
             is List<*> -> JsonArray(
                 value.map {
                     when (it) {
                         null -> JsonNull
-                        is Map<*, *> -> (it as Map<String, Any?>).toJsonObject()
+                        is Map<*, *> -> (it as Map<String, Any?>).toJsonObjectOrNull()
                         is Number -> JsonPrimitive(it)
                         is String -> JsonPrimitive(it)
                         is Boolean -> JsonPrimitive(it)
@@ -300,42 +301,80 @@ fun Map<String, Any?>.toJsonObject(): JsonObject {
 /**
  * Parses a string to a JsonObject
  */
-fun String.toJsonObject(): JsonObject {
-    return Json.parseToJsonElement(this) as JsonObject
+fun String.toJsonObjectOrNull(): JsonObject? {
+    if (this.isEmpty()) return null
+    return runCatching {
+        Json.parseToJsonElement(this) as? JsonObject
+    }.onFailure {
+        Timber.w("Failed to convert to a json object $this")
+    }.getOrNull()
 }
 
 /**
- * Returns a string value for a key, if the key is missing or null an empty string is returned
+ * Returns a string value for a key, if the key is missing will return null
  * @param key a string value to lookup json structure
  */
-fun JsonObject.getString(key: String): String {
-    return if (this.containsKey(key)) {
-        this[key]?.jsonPrimitive?.content ?: ""
-    } else {
-        ""
-    }
+fun JsonObject.getStringOrNull(key: String): String? {
+    return runCatching {
+        if (this.containsKey(key)) {
+            this[key]?.jsonPrimitive?.content
+        } else {
+            null
+        }
+    }.onFailure {
+        Timber.w("Failed to get string value for $key in jsonObject $this")
+    }.getOrNull()
 }
 
 /**
- * Returns a boolean value for a key, if the key is missing or null false is returned
+ * Returns a string value for a key, if the key is missing or null will return fabllback value
+ * @param key a string value to lookup json structure
+ * @param fallback a string used as the fallback if the key is missing or value is null
+ */
+fun JsonObject.getStringOrElse(key: String, fallback: String): String = this.getStringOrNull(key) ?: fallback
+
+/**
+ * Returns a boolean value for a key, if the key is missing will return null
  * @param key a string value to lookup json structure
  */
-fun JsonObject.getBoolean(key: String): Boolean {
-    return if (this.containsKey(key)) {
-        this[key]?.jsonPrimitive?.booleanOrNull ?: false
-    } else {
-        false
-    }
+fun JsonObject.getBooleanOrNull(key: String): Boolean? {
+    return runCatching {
+        if (this.containsKey(key)) {
+            this[key]?.jsonPrimitive?.booleanOrNull
+        } else {
+            null
+        }
+    }.onFailure {
+        Timber.w("Failed to get boolean value for $key in jsonObject $this")
+    }.getOrNull()
 }
 
 /**
- * Returns an integer value for a key, if the key is missing or null 0 is returned
+ * Returns a boolean value for a key, if the key is missing or null will return fallback value
+ * @param key a string value to lookup json structure
+ * @param fallback a boolean value used as the fallback if the key is missing or value is null
+ */
+fun JsonObject.getBooleanOrElse(key: String, fallback: Boolean): Boolean = this.getBooleanOrNull(key) ?: fallback
+
+/**
+ * Returns an integer value for a key, if the key is missing will return null
  * @param key a string value to lookup json structure
  */
-fun JsonObject.getInt(key: String): Int {
-    return if (this.containsKey(key)) {
-        this[key]?.jsonPrimitive?.intOrNull ?: 0
-    } else {
-        0
-    }
+fun JsonObject.getIntOrNull(key: String): Int? {
+    return runCatching {
+        if (this.containsKey(key)) {
+            this[key]?.jsonPrimitive?.intOrNull
+        } else {
+            null
+        }
+    }.onFailure {
+        Timber.w("Failed to get integer value for $key in jsonObject $this")
+    }.getOrNull()
 }
+
+/**
+ * Returns an integer value for a key, if the key is missing or null will return fallback value
+ * @param key a string value to lookup json structure
+ * @param fallback an integer used as the fallback if the key is missing or value for key is null
+ */
+fun JsonObject.getIntOrElse(key: String, fallback: Int): Int = this.getIntOrNull(key) ?: fallback

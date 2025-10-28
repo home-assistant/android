@@ -88,11 +88,14 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
-import io.homeassistant.companion.android.common.util.getBoolean
-import io.homeassistant.companion.android.common.util.getInt
-import io.homeassistant.companion.android.common.util.getString
+import io.homeassistant.companion.android.common.util.getBooleanOrElse
+import io.homeassistant.companion.android.common.util.getBooleanOrNull
+import io.homeassistant.companion.android.common.util.getIntOrElse
+import io.homeassistant.companion.android.common.util.getIntOrNull
+import io.homeassistant.companion.android.common.util.getStringOrElse
+import io.homeassistant.companion.android.common.util.getStringOrNull
 import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.common.util.toJsonObject
+import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
@@ -727,18 +730,18 @@ class WebViewActivity :
 
                     @JavascriptInterface
                     fun getExternalAuth(payload: String) {
-                        payload.toJsonObject().let {
+                        payload.toJsonObjectOrNull().let {
                             presenter.onGetExternalAuth(
                                 this@WebViewActivity,
-                                it.getString("callback"),
-                                it.containsKey("force") && it.getBoolean("force"),
+                                it?.getStringOrNull("callback") ?: "",
+                                it?.getBooleanOrNull("force") ?: false,
                             )
                         }
                     }
 
                     @JavascriptInterface
                     fun revokeExternalAuth(callback: String) {
-                        presenter.onRevokeExternalAuth(callback.toJsonObject().getString("callback"))
+                        presenter.onRevokeExternalAuth(callback.toJsonObjectOrNull()?.getStringOrNull("callback") ?: "")
                         isRelaunching = true // Prevent auth errors from showing
                     }
 
@@ -746,11 +749,11 @@ class WebViewActivity :
                     fun externalBus(message: String) {
                         Timber.d("External bus $message")
                         webView.post {
-                            val json = message.toJsonObject()
-                            when (json.getString("type")) {
+                            val json = message.toJsonObjectOrNull() ?: return@post
+                            when (json.getStringOrNull("type")) {
                                 "connection-status" -> {
-                                    isConnected = json.get("payload")?.jsonObject
-                                        ?.getString("event") == "connected"
+                                    isConnected = json["payload"]?.jsonObject
+                                        ?.getStringOrNull("event") == "connected"
                                     if (isConnected) {
                                         alertDialog?.cancel()
                                         presenter.checkSecurityVersion()
@@ -773,7 +776,7 @@ class WebViewActivity :
                                         }
                                     sendExternalBusMessage(
                                         ExternalConfigResponse(
-                                            id = message.toJsonObject().getInt("id"),
+                                            id = message.toJsonObjectOrNull()?.getIntOrNull("id") ?: 0,
                                             hasNfc = hasNfc,
                                             canCommissionMatter = canCommissionMatter,
                                             canExportThread = canExportThread,
@@ -801,7 +804,7 @@ class WebViewActivity :
                                             "payload",
                                         )
                                     ) {
-                                        json.get("payload")?.jsonObject
+                                        json["payload"]?.jsonObject
                                     } else {
                                         null
                                     }
@@ -809,20 +812,8 @@ class WebViewActivity :
                                         AssistActivity.newInstance(
                                             this@WebViewActivity,
                                             serverId = presenter.getActiveServer(),
-                                            pipelineId = if (payload?.containsKey("pipeline_id") ==
-                                                true
-                                            ) {
-                                                payload.getString("pipeline_id")
-                                            } else {
-                                                null
-                                            },
-                                            startListening = if (payload?.containsKey("start_listening") ==
-                                                true
-                                            ) {
-                                                payload.getBoolean("start_listening")
-                                            } else {
-                                                true
-                                            },
+                                            pipelineId = payload?.getStringOrNull("pipeline_id"),
+                                            startListening = payload?.getBooleanOrNull("start_listening") ?: true,
                                         ),
                                     )
                                 }
@@ -835,8 +826,8 @@ class WebViewActivity :
                                 "tag/write" ->
                                     writeNfcTag.launch(
                                         WriteNfcTag.Input(
-                                            tagId = json.get("payload")?.jsonObject?.getString("tag"),
-                                            messageId = message.toJsonObject().getInt("id"),
+                                            tagId = json["payload"]?.jsonObject?.getStringOrNull("tag"),
+                                            messageId = message.toJsonObjectOrNull()?.getIntOrNull("id") ?: -1,
                                         ),
                                     )
 
@@ -855,7 +846,7 @@ class WebViewActivity :
                                             "payload",
                                         )
                                     ) {
-                                        json.get("payload")?.jsonObject
+                                        json["payload"]?.jsonObject
                                     } else {
                                         null
                                     }
@@ -867,17 +858,10 @@ class WebViewActivity :
                                     startActivity(
                                         BarcodeScannerActivity.newInstance(
                                             this@WebViewActivity,
-                                            messageId = json.getInt("id"),
-                                            title = payload.getString("title"),
-                                            subtitle = payload.getString("description"),
-                                            action = if (payload.containsKey(
-                                                    "alternative_option_label",
-                                                )
-                                            ) {
-                                                payload.getString("alternative_option_label").ifBlank {
-                                                    null
-                                                }
-                                            } else {
+                                            messageId = json.getIntOrElse("id", 0),
+                                            title = payload.getStringOrElse("title", ""),
+                                            subtitle = payload.getStringOrElse("description", ""),
+                                            action = payload.getStringOrNull("alternative_option_label")?.ifBlank {
                                                 null
                                             },
                                         ),
@@ -890,19 +874,19 @@ class WebViewActivity :
                                             "payload",
                                         )
                                     ) {
-                                        json.get("payload")?.jsonObject
+                                        json["payload"]?.jsonObject
                                     } else {
                                         null
                                     }
-                                    if (payload?.containsKey("name") != true) return@post
-                                    configureImprovDevice(payload.getString("name"))
+                                    val deviceName = payload?.getStringOrNull("name") ?: return@post
+                                    configureImprovDevice(deviceName)
                                 }
 
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)
                                 "haptic" -> processHaptic(
-                                    json.get("payload")?.jsonObject?.getString("hapticType") ?: "",
+                                    json["payload"]?.jsonObject?.getStringOrNull("hapticType") ?: "",
                                 )
                                 "theme-update" -> getAndSetStatusBarNavigationBarColors()
                                 else -> presenter.onExternalBusMessage(json)
@@ -1133,9 +1117,9 @@ class WebViewActivity :
     }
 
     fun exoPlayHls(json: JsonObject) {
-        val payload = json.get("payload")?.jsonObject
-        val uri = payload?.getString("url")?.toUri() ?: return
-        val isMuted = payload.getBoolean("muted")
+        val payload = json["payload"]?.jsonObject
+        val uri = payload?.getStringOrNull("url")?.toUri() ?: return
+        val isMuted = payload.getBooleanOrElse("muted", false)
         runOnUiThread {
             exoPlayer.value = initializePlayer(this).apply {
                 setMediaItem(MediaItem.fromUri(uri))
@@ -1160,7 +1144,7 @@ class WebViewActivity :
         }
         sendExternalBusMessage(
             ExternalBusMessage(
-                id = json.get("id"),
+                id = json["id"],
                 type = "result",
                 success = true,
                 callback = {
@@ -1186,26 +1170,27 @@ class WebViewActivity :
 
     @OptIn(UnstableApi::class)
     fun exoResizeHls(json: JsonObject) {
-        val payload = json.get("payload")?.jsonObject ?: return
+        val payload = json["payload"]?.jsonObject ?: return
         // Payload is https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect
         // The values are already scaled to the screen.
         // We only need to store the top left corner for the offset and the player size
 
-        val left = payload.getInt("left")
-        val top = payload.getInt("top")
-        val right = payload.getInt("right")
+        val left = payload.getIntOrElse("left", 0)
+        val top = payload.getIntOrElse("top", 0)
+        val right = payload.getIntOrElse("right", 0)
         // if the bottom value is not 0 we should take it it is a constraint from the frontend, otherwise we try to compute the
         // height based on the video's aspect ratio if available.
-        val bottom = payload.getInt("bottom").takeIf { it > 0 } ?: exoPlayer.value?.videoFormat?.let { videoFormat ->
-            if (videoFormat.width > 0) {
-                // Calculate height of the video based on aspect ratio
-                val width = right - left
-                val videoHeight = width * videoFormat.height / videoFormat.width
-                (top + videoHeight)
-            } else {
-                payload.getInt("bottom")
-            }
-        } ?: payload.getInt("bottom")
+        val bottom =
+            payload.getIntOrNull("bottom")?.takeIf { it > 0 } ?: exoPlayer.value?.videoFormat?.let { videoFormat ->
+                if (videoFormat.width > 0) {
+                    // Calculate height of the video based on aspect ratio
+                    val width = right - left
+                    val videoHeight = width * videoFormat.height / videoFormat.width
+                    (top + videoHeight)
+                } else {
+                    payload.getIntOrNull("bottom")
+                }
+            } ?: payload.getIntOrElse("bottom", 0)
 
         playerTop.value = top.dp
         playerLeft.value = left.dp
@@ -1681,7 +1666,7 @@ class WebViewActivity :
         message.result?.let { map["result"] = it }
         message.error?.let { map["error"] = it }
         message.payload?.let { map["payload"] = it }
-        val jsonObject = map.toJsonObject()
+        val jsonObject = map.toJsonObjectOrNull()
         val json = Json.encodeToString(jsonObject)
         val script = "externalBus($json);"
 

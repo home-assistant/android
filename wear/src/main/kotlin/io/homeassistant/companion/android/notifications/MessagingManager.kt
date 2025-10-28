@@ -18,7 +18,7 @@ import io.homeassistant.companion.android.common.notifications.handleSmallIcon
 import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
-import io.homeassistant.companion.android.common.util.toJsonObject
+import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
 import io.homeassistant.companion.android.database.AppDatabase
@@ -46,7 +46,7 @@ class MessagingManager @Inject constructor(
             val now = System.currentTimeMillis()
 
             val jsonData = notificationData as Map<String, String>?
-            val jsonObject = jsonData?.let { it.toJsonObject() }
+            val jsonObject = jsonData?.toJsonObjectOrNull()
             val serverId = jsonData?.get(NotificationData.WEBHOOK_ID)?.let {
                 serverManager.getServer(webhookId = it)?.id
             } ?: ServerManager.SERVER_ID_ACTIVE

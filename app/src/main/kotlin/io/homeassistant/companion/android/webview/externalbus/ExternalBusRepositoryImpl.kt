@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.webview.externalbus
 
-import io.homeassistant.companion.android.common.util.getString
+import io.homeassistant.companion.android.common.util.getStringOrNull
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -27,8 +27,7 @@ class ExternalBusRepositoryImpl @Inject constructor() : ExternalBusRepository {
     }
 
     override suspend fun received(message: JsonObject) {
-        if (!message.containsKey("type")) return
-        val type = message.getString("type")
+        val type = message.getStringOrNull("type") ?: return
         val receivers = receiverFlows.filter { it.key.contains(type) }
         Timber.d("Sending message of type $type to ${receivers.size} receiver(s)")
         receivers.forEach { (_, flow) ->

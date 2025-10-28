@@ -4,7 +4,7 @@ import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
-import io.homeassistant.companion.android.common.util.toJsonObject
+import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.common.util.toStringList
 import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedWearStorage
@@ -78,7 +78,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
                             kotlinJsonMapper.encodeToString(TemplateTileConfig(template, templateRefreshInterval)),
                     )
 
-                    localStorage.putString(PREF_TILE_TEMPLATES, templates.toJsonObject().toString())
+                    localStorage.putString(PREF_TILE_TEMPLATES, templates.toJsonObjectOrNull().toString())
                 }
 
                 localStorage.remove(legacyPrefTileTemplate)
@@ -109,11 +109,11 @@ class WearPrefsRepositoryImpl @Inject constructor(
     override suspend fun getAllTileShortcuts(): Map<Int?, List<String>> {
         return localStorage.getString(PREF_TILE_SHORTCUTS)?.let { jsonStr ->
             runCatching {
-                jsonStr.toJsonObject()
+                jsonStr.toJsonObjectOrNull()
             }.fold(
                 onSuccess = { jsonObject ->
                     buildMap {
-                        jsonObject.keys.forEach { stringKey ->
+                        jsonObject?.keys?.forEach { stringKey ->
                             val intKey = stringKey.takeUnless { it == "null" }?.toInt()
                             val jsonArray = jsonObject.get(stringKey)?.jsonArray
                             val entities = jsonArray?.toStringList() ?: emptyList()
@@ -123,12 +123,14 @@ class WearPrefsRepositoryImpl @Inject constructor(
                 },
                 onFailure = {
                     // backward compatibility with the previous format when there was only one Shortcut Tile:
-                    val jsonArray = jsonStr.toJsonObject().jsonArray
-                    val entities = jsonArray.toStringList()
-                    mapOf(
-                        // the key is null since we don't (yet) have the tileId
-                        null to entities,
-                    )
+                    val jsonArray = jsonStr.toJsonObjectOrNull()?.jsonArray
+                    jsonArray?.let {
+                        val entities = jsonArray.toStringList()
+                        mapOf(
+                            // the key is null since we don't (yet) have the tileId
+                            null to entities,
+                        )
+                    }
                 },
             )
         } ?: emptyMap()
