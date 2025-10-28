@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.commit
+import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
@@ -28,9 +29,11 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.USE_NEW_LAUNCHER
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
 import io.homeassistant.companion.android.settings.url.ExternalUrlFragment
@@ -177,6 +180,20 @@ class ServerSettingsFragment :
             it.isVisible = presenter.hasWifi()
         }
 
+        findPreference<Preference>("connection_security_level")?.let {
+            it.setOnPreferenceClickListener {
+                parentFragmentManager.commit {
+                    replace(
+                        R.id.content_full_screen,
+                        ConnectionSecurityLevelFragment::class.java,
+                        Bundle().apply { putInt(ConnectionSecurityLevelFragment.EXTRA_SEVER_ID_KEY, serverId) },
+                    )
+                    addToBackStack(null)
+                }
+                return@setOnPreferenceClickListener true
+            }
+        }
+
         findPreference<PreferenceCategory>("security_category")?.isVisible = Build.MODEL != "Quest"
 
         findPreference<Preference>("websocket")?.let {
@@ -221,6 +238,11 @@ class ServerSettingsFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         applyBottomSafeDrawingInsets()
+
+        // Listen for result from ConnectionSecurityLevelFragment
+        setFragmentResultListener(ConnectionSecurityLevelFragment.RESULT_KEY) { _, _ ->
+            updateSecurityLevelSummary()
+        }
 
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(
@@ -331,6 +353,9 @@ class ServerSettingsFragment :
                 }
         }
     }
+    override fun updateInternalUrl() {
+        potentiallyShowSecurityLevel()
+    }
 
     private fun setLockAuthenticationResult(result: Int): Boolean {
         val success = result == Authenticator.SUCCESS
@@ -363,6 +388,26 @@ class ServerSettingsFragment :
 
         presenter.updateServerName()
         presenter.updateUrlStatus()
+        updateSecurityLevelSummary()
+        potentiallyShowSecurityLevel()
+    }
+
+    private fun potentiallyShowSecurityLevel() {
+        lifecycleScope.launch {
+            findPreference<Preference>("connection_security_level")?.let {
+                // TODO once we are ready https://github.com/home-assistant/android/issues/5980 we should remove the DEBUG flag
+                it.isVisible = USE_NEW_LAUNCHER && presenter.hasHTTPURL()
+            }
+        }
+    }
+    private fun updateSecurityLevelSummary() {
+        lifecycleScope.launch {
+            findPreference<Preference>("connection_security_level")?.let { preference ->
+                presenter.securityLevelSummary()?.let { summaryId ->
+                    preference.summary = getString(summaryId)
+                }
+            }
+        }
     }
 
     override fun onDestroy() {

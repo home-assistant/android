@@ -23,10 +23,16 @@
             android:layout_height="match_parent" />
     </LinearLayout>
 
+    <!-- Useful for screen that already have a topbar built-in -->
+    <FrameLayout
+        android:id="@+id/content_full_screen"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="true" />
+
     <eightbitlab.com.blurview.BlurView
         android:id="@+id/blurView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-    </eightbitlab.com.blurview.BlurView>
+        android:layout_height="match_parent" />
 
 </RelativeLayout>
