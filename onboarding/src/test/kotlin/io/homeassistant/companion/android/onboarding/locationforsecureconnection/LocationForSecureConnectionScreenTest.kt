@@ -71,6 +71,18 @@ class LocationForSecureConnectionScreenTest {
     }
 
     @Test
+    fun `Given most secure connection already set when displayed and most secure is selected`() {
+        composeTestRule.apply {
+            testScreen(initialAllowInsecureConnection = false) {
+                onNodeWithText(stringResource(R.string.location_secure_connection_next))
+                    .performScrollTo()
+                    .assertIsDisplayed()
+                    .assertIsEnabled()
+            }
+        }
+    }
+
+    @Test
     fun `Given selecting less secure connection when next clicked then go to next screen`() {
         composeTestRule.apply {
             testScreen {
@@ -92,7 +104,7 @@ class LocationForSecureConnectionScreenTest {
     @Test
     fun `Given selecting most secure connection when next clicked and permission not given then stay on screen with snackbar and select less secure`() {
         composeTestRule.apply {
-            testScreen(false) {
+            testScreen(locationPermissionGranted = false) {
                 val nextButton = onNodeWithText(stringResource(R.string.location_secure_connection_next))
                     .assertIsNotDisplayed()
 
@@ -125,6 +137,7 @@ class LocationForSecureConnectionScreenTest {
 
     @OptIn(ExperimentalPermissionsApi::class)
     private fun AndroidComposeTestRule<*, *>.testScreen(
+        initialAllowInsecureConnection: Boolean? = null,
         locationPermissionGranted: Boolean = true,
         block: TestHelper.() -> Unit,
     ) {
@@ -137,6 +150,7 @@ class LocationForSecureConnectionScreenTest {
                 ) {
                     LocationForSecureConnectionScreen(
                         onHelpClick = { helpClicked = true },
+                        initialAllowInsecureConnection = initialAllowInsecureConnection,
                         onAllowInsecureConnection = { allowInsecureConnection = it },
                         onShowSnackbar = { message, _ ->
                             snackbarMessage = message
