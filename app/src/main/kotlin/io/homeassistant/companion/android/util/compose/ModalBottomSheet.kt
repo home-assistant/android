@@ -35,7 +35,7 @@ fun ModalBottomSheet(title: String?, showHandle: Boolean = true, content: @Compo
         shape = RoundedCornerShape(topStart = sheetCornerRadius, topEnd = sheetCornerRadius),
     ) {
         Column(
-            modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets()),
+            modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets(false)),
         ) {
             if (showHandle) {
                 Row(
