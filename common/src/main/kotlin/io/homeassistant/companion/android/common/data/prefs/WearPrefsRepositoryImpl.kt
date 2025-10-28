@@ -140,9 +140,6 @@ class WearPrefsRepositoryImpl @Inject constructor(
     }
 
     private suspend fun setTileShortcuts(map: Map<Int?, List<String>>) {
-//        val jsonArrayMap = map.map { (tileId, entities) ->
-//            tileId.toString() to entities.toJsonArray()
-//        }.toMap()
         val jsonStr = Json.encodeToString(map)
         localStorage.putString(PREF_TILE_SHORTCUTS, jsonStr)
     }
