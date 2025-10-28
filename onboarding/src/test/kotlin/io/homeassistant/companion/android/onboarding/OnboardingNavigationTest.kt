@@ -501,7 +501,7 @@ internal class OnboardingNavigationTest {
             navController.navigateToLocationForSecureConnection(42)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
 
-            onNodeWithText(stringResource(R.string.location_secure_connection_most_secure)).performScrollTo().performClick()
+            onNodeWithText(stringResource(commonR.string.connection_security_most_secure)).performScrollTo().performClick()
             onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)

@@ -60,7 +60,7 @@ class LocationForSecureConnectionScreenTest {
                     .assertIsDisplayed()
                     .assertIsNotEnabled()
 
-                onNodeWithText(stringResource(R.string.location_secure_connection_most_secure)).performScrollTo().performClick()
+                onNodeWithText(stringResource(commonR.string.connection_security_most_secure)).performScrollTo().performClick()
 
                 nextButton.assertIsEnabled().performClick()
                 assertEquals(false, allowInsecureConnection)
@@ -79,7 +79,7 @@ class LocationForSecureConnectionScreenTest {
                     .assertIsDisplayed()
                     .assertIsNotEnabled()
 
-                onNodeWithText(stringResource(R.string.location_secure_connection_less_secure)).performScrollTo().performClick()
+                onNodeWithText(stringResource(commonR.string.connection_security_less_secure)).performScrollTo().performClick()
 
                 nextButton.assertIsEnabled().performClick()
                 assertEquals(true, allowInsecureConnection)
@@ -96,7 +96,7 @@ class LocationForSecureConnectionScreenTest {
                 val nextButton = onNodeWithText(stringResource(R.string.location_secure_connection_next))
                     .assertIsNotDisplayed()
 
-                onNodeWithText(stringResource(R.string.location_secure_connection_most_secure)).performScrollTo().performClick()
+                onNodeWithText(stringResource(commonR.string.connection_security_most_secure)).performScrollTo().performClick()
 
                 // Should have scroll automatically to the end of the screen
                 nextButton.assertIsDisplayed().assertIsEnabled().performClick()
@@ -151,8 +151,8 @@ class LocationForSecureConnectionScreenTest {
 
             onNodeWithText(stringResource(R.string.location_secure_connection_title)).assertIsDisplayed()
             onNodeWithText(stringResource(R.string.location_secure_connection_content)).assertIsDisplayed()
-            onNodeWithText(stringResource(R.string.location_secure_connection_most_secure)).performScrollTo().assertIsDisplayed()
-            onNodeWithText(stringResource(R.string.location_secure_connection_less_secure)).performScrollTo().assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.connection_security_most_secure)).performScrollTo().assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.connection_security_less_secure)).performScrollTo().assertIsDisplayed()
             onNodeWithText(stringResource(R.string.location_secure_connection_hint)).performScrollTo().assertIsDisplayed()
 
             block()

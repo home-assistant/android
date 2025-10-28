@@ -1426,4 +1426,8 @@
     <string name="default_launcher_prompt_def">Open settings to choose your default home app. Currently set to %s.</string>
     <string name="unknown_launcher_label">unknown app</string>
     <string name="open_settings">Open settings</string>
+    <string name="connection_security_level_title">Remote connection security level</string>
+    <string name="connection_security_level_default_summary">Only connect to the server when we are sure that connection is encrypted or you are at home</string>
+    <string name="connection_security_most_secure">Most secure: Allow this app to know when you\'re home</string>
+    <string name="connection_security_less_secure">Less secure: Do not allow this app to know when you\'re home</string>
 </resources>
