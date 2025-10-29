@@ -122,6 +122,15 @@ suspend fun URL.isPubliclyAccessible(): Boolean {
     return isPubliclyAccessible(host)
 }
 
+/**
+ * Checks if this URL uses plain text (unencrypted) HTTP protocol.
+ *
+ * @return `true` if the URL uses HTTP protocol, `false` if it uses any other protocol
+ */
+fun URL.isHttp(): Boolean {
+    return protocol.equals("http", ignoreCase = true)
+}
+
 private suspend fun isPubliclyAccessible(fqdn: String): Boolean {
     // Check TLD
     val localTlds = listOf(".local", ".lan", ".home", ".internal", ".localdomain")

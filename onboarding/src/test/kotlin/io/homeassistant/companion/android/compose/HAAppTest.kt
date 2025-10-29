@@ -171,7 +171,7 @@ class HAAppTest {
         testApp(OnboardingRoute()) {
             navController.navigateToLocationForSecureConnection(42)
 
-            onNodeWithText(stringResource(R.string.location_secure_connection_less_secure)).performScrollTo().performClick()
+            onNodeWithText(stringResource(R.string.connection_security_less_secure)).performScrollTo().performClick()
             onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().assertIsEnabled().assertIsDisplayed().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
@@ -183,7 +183,7 @@ class HAAppTest {
         testApp(OnboardingRoute(), isAutomotive = true) {
             navController.navigateToLocationForSecureConnection(42)
 
-            onNodeWithText(stringResource(R.string.location_secure_connection_less_secure)).performScrollTo().performClick()
+            onNodeWithText(stringResource(R.string.connection_security_less_secure)).performScrollTo().performClick()
             onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().assertIsEnabled().assertIsDisplayed().performClick()
 
             verify(exactly = 1) {

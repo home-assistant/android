@@ -61,7 +61,7 @@ data class RadioOption<T>(
  */
 @Composable
 fun <T> rememberSelectedOption(option: RadioOption<T>? = null): MutableState<RadioOption<T>?> =
-    remember { mutableStateOf<RadioOption<T>?>(option) }
+    remember(option) { mutableStateOf<RadioOption<T>?>(option) }
 
 /**
  * A composable function that displays a group of radio buttons.

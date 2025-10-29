@@ -17,4 +17,8 @@ interface ServerSettingsPresenter {
     fun setAppActive(active: Boolean)
 
     suspend fun serverURL(): String?
+
+    suspend fun securityLevelSummary(): Int?
+
+    suspend fun hasHTTPURL(): Boolean
 }

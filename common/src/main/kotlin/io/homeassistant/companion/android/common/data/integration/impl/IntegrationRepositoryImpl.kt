@@ -703,8 +703,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun getAllowInsecureConnection(): Boolean {
-        return localStorage.getBoolean("${serverId}_$PREF_ALLOW_INSECURE_CONNECTION")
+    override suspend fun getAllowInsecureConnection(): Boolean? {
+        return localStorage.getBooleanOrNull("${serverId}_$PREF_ALLOW_INSECURE_CONNECTION")
     }
 
     override suspend fun setAllowInsecureConnection(allowInsecureConnection: Boolean) {
