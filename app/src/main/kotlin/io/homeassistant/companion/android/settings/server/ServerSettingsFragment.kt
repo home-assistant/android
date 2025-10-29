@@ -239,7 +239,6 @@ class ServerSettingsFragment :
         super.onViewCreated(view, savedInstanceState)
         applyBottomSafeDrawingInsets()
 
-        // Listen for result from ConnectionSecurityLevelFragment
         setFragmentResultListener(ConnectionSecurityLevelFragment.RESULT_KEY) { _, _ ->
             updateSecurityLevelSummary()
         }
@@ -395,7 +394,6 @@ class ServerSettingsFragment :
     private fun potentiallyShowSecurityLevel() {
         lifecycleScope.launch {
             findPreference<Preference>("connection_security_level")?.let {
-                // TODO once we are ready https://github.com/home-assistant/android/issues/5980 we should remove the DEBUG flag
                 it.isVisible = USE_NEW_LAUNCHER && presenter.hasHTTPURL()
             }
         }
