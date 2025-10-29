@@ -14,6 +14,8 @@ import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.getStringOrElse
+import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
@@ -26,8 +28,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okio.IOException
-import org.json.JSONException
-import org.json.JSONObject
 import timber.log.Timber
 
 class NetworkSensorManager : SensorManager {
@@ -556,9 +556,9 @@ class NetworkSensorManager : SensorManager {
                 override fun onResponse(call: Call, response: Response) {
                     if (!response.isSuccessful) throw IOException("Unexpected response code $response")
                     try {
-                        val jsonObject = JSONObject(response.body.string())
-                        ip = jsonObject.getString("ip")
-                    } catch (e: JSONException) {
+                        val jsonObject = response.body.string().toJsonObjectOrNull()
+                        ip = jsonObject?.getStringOrElse("ip", "") ?: ""
+                    } catch (e: Exception) {
                         Timber.e(e, "Unable to parse ip address from response")
                     }
 

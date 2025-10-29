@@ -6,7 +6,7 @@ import androidx.activity.result.ActivityResult
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
 import kotlinx.coroutines.flow.Flow
-import org.json.JSONObject
+import kotlinx.serialization.json.JsonObject
 
 interface WebViewPresenter {
 
@@ -42,7 +42,7 @@ interface WebViewPresenter {
     suspend fun isAutoPlayVideoEnabled(): Boolean
     suspend fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean
 
-    fun onExternalBusMessage(message: JSONObject)
+    fun onExternalBusMessage(message: JsonObject)
 
     suspend fun getGestureAction(direction: GestureDirection, pointerCount: Int): GestureAction
 
