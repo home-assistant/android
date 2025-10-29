@@ -168,7 +168,6 @@ internal class WearOnboardingNavigationTest {
                 ) {
                     wearOnboarding(
                         navController,
-                        onShowSnackbar = { message, action -> true },
                         onOnboardingDone = { deviceName, serverUrl, authCode, certUri, certPassword ->
                             onboardingDone = true
                             this@WearOnboardingNavigationTest.deviceName = deviceName
