@@ -13,6 +13,9 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.material.color.DynamicColors
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
@@ -24,7 +27,6 @@ import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
-import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
@@ -41,10 +43,11 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
-@HiltViewModel
-class TodoWidgetConfigureViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = TodoWidgetConfigureViewModel.Factory::class)
+class TodoWidgetConfigureViewModel @AssistedInject constructor(
     private val todoWidgetDao: TodoWidgetDao,
     private val serverManager: ServerManager,
+    @Assisted preSelectedEntityId: String?,
 ) : ViewModel() {
     private var supportedTextColors: List<String> = emptyList()
     private var widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID
@@ -69,7 +72,7 @@ class TodoWidgetConfigureViewModel @Inject constructor(
 
     // We need a mutex since the update of the entities might happen concurrently with onSetup and the viewModel creation
     private val selectedEntityMutex = Mutex()
-    var selectedEntityId by mutableStateOf<String?>(null)
+    var selectedEntityId by mutableStateOf<String?>(preSelectedEntityId)
     var selectedBackgroundType by mutableStateOf(
         if (DynamicColors.isDynamicColorAvailable()) {
             WidgetBackgroundType.DYNAMICCOLOR
@@ -216,5 +219,10 @@ class TodoWidgetConfigureViewModel @Inject constructor(
             val glanceId = GlanceAppWidgetManager(appContext).getGlanceIdBy(widgetId)
             TodoGlanceAppWidget().update(appContext, glanceId)
         }
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(preSelectedEntityId: String?): TodoWidgetConfigureViewModel
     }
 }

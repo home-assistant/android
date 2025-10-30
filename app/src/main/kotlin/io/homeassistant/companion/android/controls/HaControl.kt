@@ -14,6 +14,8 @@ import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyState
@@ -69,7 +71,7 @@ interface HaControl {
             if (iconDrawable.icon != null) {
                 val colorTint = when {
                     entity.domain == "light" && entity.state == "on" -> R.color.colorDeviceControlsLightOn
-                    entity.domain == "camera" -> R.color.colorDeviceControlsCamera
+                    entity.domain == CAMERA_DOMAIN -> R.color.colorDeviceControlsCamera
                     entity.domain == "climate" && entity.state == "heat" -> R.color.colorDeviceControlsThermostatHeat
                     entity.state in listOf(
                         "off",
@@ -84,7 +86,7 @@ interface HaControl {
             }
         } else {
             // Specific override for some domain icons to match HA frontend rather than provided device type
-            val iconOverride = listOf("media_player", "number")
+            val iconOverride = listOf(MEDIA_PLAYER_DOMAIN, "number")
             if (entity.domain in iconOverride) {
                 val icon = IconicsDrawable(context, entity.getIcon(context)).apply { sizeDp = 48 }
                 val tint = if (entity.isActive()) {

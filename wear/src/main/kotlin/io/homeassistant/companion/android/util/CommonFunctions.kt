@@ -7,6 +7,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import com.mikepenz.iconics.typeface.IIcon
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import java.time.LocalDateTime
@@ -17,7 +18,7 @@ fun stringForDomain(domain: String, context: Context): String? = (
         "binary_sensor" to commonR.string.binary_sensor,
         "device_tracker" to commonR.string.device_tracker,
         "input_number" to commonR.string.domain_input_number,
-        "media_player" to commonR.string.media_player,
+        MEDIA_PLAYER_DOMAIN to commonR.string.media_player,
         "persistent_notification" to commonR.string.persistent_notification,
         "person" to commonR.string.person,
         "select" to commonR.string.select,
