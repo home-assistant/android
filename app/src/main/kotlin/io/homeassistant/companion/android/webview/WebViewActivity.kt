@@ -45,6 +45,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.runtime.LaunchedEffect
@@ -87,6 +88,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.common.util.isAutomotive
@@ -111,9 +113,11 @@ import io.homeassistant.companion.android.util.compose.initializePlayer
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
-import io.homeassistant.companion.android.webview.addto.AddToDialog
+import io.homeassistant.companion.android.webview.addto.EntityAddToViewModel
+import io.homeassistant.companion.android.webview.externalbus.EntityAddToActionsResponse
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import io.homeassistant.companion.android.webview.externalbus.ExternalConfigResponse
+import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import io.homeassistant.companion.android.webview.externalbus.NavigateTo
 import io.homeassistant.companion.android.webview.externalbus.ShowSidebar
 import javax.inject.Inject
@@ -151,6 +155,8 @@ class WebViewActivity :
 
         private const val CONNECTION_DELAY = 10000L
     }
+
+    private val addToViewModel: EntityAddToViewModel by viewModels()
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     private val requestPermissions =
@@ -772,7 +778,7 @@ class WebViewActivity :
                                         }
                                     sendExternalBusMessage(
                                         ExternalConfigResponse(
-                                            id = JSONObject(message).get("id"),
+                                            id = json.get("id"),
                                             hasNfc = hasNfc,
                                             canCommissionMatter = canCommissionMatter,
                                             canExportThread = canExportThread,
@@ -877,6 +883,7 @@ class WebViewActivity :
                                 "exoplayer/resize" -> exoResizeHls(json)
                                 "haptic" -> processHaptic(json.getJSONObject("payload").getString("hapticType"))
                                 "theme-update" -> getAndSetStatusBarNavigationBarColors()
+                                "entity/add_to/get_actions" -> getActions(json)
                                 "entity/add_to" -> addEntityTo(json)
                                 else -> presenter.onExternalBusMessage(json)
                             }
@@ -903,9 +910,36 @@ class WebViewActivity :
     }
 
     private fun addEntityTo(json: JSONObject) {
-        val entityId = json.getJSONObject("payload").getString("entity_id")
-        val addToDialog = AddToDialog(entityId, serverManager, prefsRepository)
-        addToDialog.show(supportFragmentManager, AddToDialog.TAG)
+        val payload = if (json.has("payload")) json.getJSONObject("payload") else null
+        val entityId = if (payload?.has("entity_id") == true) payload.getString("entity_id") else null
+        val appPayload = if (payload?.has("app_payload") == true) payload.getString("app_payload") else null
+        if (entityId != null && appPayload != null) {
+            val action = ExternalEntityAddToAction.appPayloadToAction(appPayload)
+            action.action(this, addToViewModel, entityId)
+        } else {
+            FailFast.fail { "Missing entity_id or app_payload to addEntityTo" }
+        }
+    }
+
+    private fun getActions(json: JSONObject) {
+        val payload = if (json.has("payload")) json.getJSONObject("payload") else null
+        val entityId =
+            if (payload?.has("entity_id") == true) payload.getString("entity_id") else null
+        entityId?.let {
+            lifecycleScope.launch {
+                val actions = addToViewModel.actionsForEntity(entityId)
+                sendExternalBusMessage(
+                    EntityAddToActionsResponse(
+                        id = json.get("id"),
+                        actions = actions.map { action ->
+                            ExternalEntityAddToAction.fromAction(this@WebViewActivity, action)
+                        },
+                    ),
+                )
+            }
+        } ?: FailFast.fail {
+            "entity_id not present in response from External bus for `entity/add_to/get_actions`"
+        }
     }
 
     private fun handleWebViewGesture(direction: GestureDirection, pointerCount: Int) {
@@ -1664,7 +1698,7 @@ class WebViewActivity :
         val json = JSONObject(map.toMap())
         val script = "externalBus($json);"
 
-        Timber.d(script)
+        Timber.d("Sending: $script")
 
         webView.evaluateJavascript(script, message.callback)
     }

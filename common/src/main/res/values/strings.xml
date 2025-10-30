@@ -20,9 +20,11 @@
     <string name="add_to_entity_widget">Add entity state to home screen</string>
     <string name="add_to_media_player_widget">Add media player to home screen</string>
     <string name="add_to_shortcut">Add shortcut</string>
+    <string name="add_to_shortcut_limit">Already 5 shortcuts set</string>
     <string name="add_to_tile">Add tile</string>
     <string name="add_to_todo_widget">Add list to home screen</string>
     <string name="add_to_watch_favorite">Add to %s favorite</string>
+    <string name="add_to_watch_favorite_disconnected">Watch disconnected</string>
     <string name="disable_all_sensors">Disable all %1$d sensors</string>
     <string name="add_ssid">Add</string>
     <string name="add_ssid_name_suggestion">Add %1$s</string>

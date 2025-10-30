@@ -1,7 +1,13 @@
 package io.homeassistant.companion.android.webview.externalbus
 
+import android.content.Context
 import android.webkit.ValueCallback
 import io.homeassistant.companion.android.common.util.AppVersion
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.webview.addto.EntityAddToAction
+import kotlin.io.encoding.Base64
+import kotlinx.serialization.Serializable
+import org.json.JSONArray
 import org.json.JSONObject
 import timber.log.Timber
 
@@ -63,9 +69,60 @@ class ExternalConfigResponse(
             "canSetupImprov" to true,
             "downloadFileSupported" to true,
             "appVersion" to appVersion.value,
+            "hasAddTo" to true,
         ),
     ),
     callback = {
         Timber.d("Callback from external config (id=$id): $it")
     },
 )
+
+@Serializable
+data class ExternalEntityAddToAction(
+    val appPayload: String,
+    val enabled: Boolean,
+    val name: String,
+    val details: String?,
+    val mdiIcon: String,
+) {
+    companion object {
+        /**
+         * We encode the app payload into Base64 so that we are sure that the data remains the same while going
+         * to the frontend and coming back.
+         */
+        fun fromAction(context: Context, action: EntityAddToAction): ExternalEntityAddToAction {
+            return ExternalEntityAddToAction(
+                appPayload = Base64.UrlSafe.encode(
+                    kotlinJsonMapper.encodeToString(action)
+                        .encodeToByteArray(),
+                ),
+                action.enabled,
+                action.text(context),
+                action.details(context),
+                action.mdiIcon,
+            )
+        }
+
+        fun appPayloadToAction(appPayload: String): EntityAddToAction {
+            val actionJSON = Base64.UrlSafe.decode(appPayload).decodeToString()
+            return kotlinJsonMapper.decodeFromString<EntityAddToAction>(
+                actionJSON,
+            )
+        }
+    }
+}
+
+class EntityAddToActionsResponse(id: Any, actions: List<ExternalEntityAddToAction>) :
+    ExternalBusMessage(
+        id = id,
+        type = "result",
+        success = true,
+        result = JSONObject(
+            mapOf(
+                "actions" to JSONArray(kotlinJsonMapper.encodeToString(actions)),
+            ),
+        ),
+        callback = {
+            Timber.d("Callback from AddToActions")
+        },
+    )

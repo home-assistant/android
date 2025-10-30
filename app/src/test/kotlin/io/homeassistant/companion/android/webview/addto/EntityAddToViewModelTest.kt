@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.webview.addto
 
-import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.IMAGE_DOMAIN
@@ -20,20 +19,20 @@ import io.mockk.mockk
 import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import timber.log.Timber
 
 @ExperimentalCoroutinesApi
-class AddToViewModelTest {
+class EntityAddToViewModelTest {
 
     private lateinit var serverManager: ServerManager
     private lateinit var prefsRepository: PrefsRepository
     private lateinit var integrationRepository: IntegrationRepository
+
+    private lateinit var viewModel: EntityAddToViewModel
 
     private val serverId = 42
 
@@ -49,6 +48,7 @@ class AddToViewModelTest {
         every { server.id } returns serverId
         coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
         coEvery { serverManager.getServer() } returns server
+        viewModel = EntityAddToViewModel(serverManager, prefsRepository)
     }
 
     @Test
@@ -57,9 +57,7 @@ class AddToViewModelTest {
         coEvery { integrationRepository.getEntity(entityId) } returns createEntity(entityId)
         coJustRun { prefsRepository.addAutoFavorite(any()) }
 
-        val viewModel = AddToViewModel(entityId, serverManager, prefsRepository)
-
-        viewModel.addToAndroidAutoFavorite()
+        viewModel.addToAndroidAutoFavorite(entityId)
 
         coVerify {
             prefsRepository.addAutoFavorite(AutoFavorite(serverId, entityId))
@@ -72,15 +70,9 @@ class AddToViewModelTest {
 
         mockGetEntity(entityId)
 
-        val viewModel = AddToViewModel(entityId, serverManager, prefsRepository)
-
-        viewModel.potentialActions.test {
-            assertTrue(awaitItem().isEmpty())
-            advanceUntilIdle()
-            val actions = awaitItem()
-            assertEquals(1, actions.size)
-            assertEquals(AddToAction.EntityWidget, actions.first())
-        }
+        val actions = viewModel.actionsForEntity(entityId)
+        assertEquals(1, actions.size)
+        assertEquals(EntityAddToAction.EntityWidget, actions.first())
     }
 
     @Test
@@ -89,14 +81,9 @@ class AddToViewModelTest {
 
         mockGetEntity(entityId)
 
-        val viewModel = AddToViewModel(entityId, serverManager, prefsRepository)
+        val actions = viewModel.actionsForEntity(entityId)
 
-        viewModel.potentialActions.test {
-            assertTrue(awaitItem().isEmpty())
-            advanceUntilIdle()
-            val actions = awaitItem()
-            assertEquals(listOf(AddToAction.EntityWidget, AddToAction.AndroidAutoFavorite), actions)
-        }
+        assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.AndroidAutoFavorite), actions)
     }
 
     @Test
@@ -105,14 +92,9 @@ class AddToViewModelTest {
 
         mockGetEntity(entityId)
 
-        val viewModel = AddToViewModel(entityId, serverManager, prefsRepository)
+        val actions = viewModel.actionsForEntity(entityId)
 
-        viewModel.potentialActions.test {
-            assertTrue(awaitItem().isEmpty())
-            advanceUntilIdle()
-            val actions = awaitItem()
-            assertEquals(listOf(AddToAction.EntityWidget, AddToAction.MediaPlayerWidget), actions)
-        }
+        assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.MediaPlayerWidget), actions)
     }
 
     @Test
@@ -121,14 +103,9 @@ class AddToViewModelTest {
 
         mockGetEntity(entityId)
 
-        val viewModel = AddToViewModel(entityId, serverManager, prefsRepository)
+        val actions = viewModel.actionsForEntity(entityId)
 
-        viewModel.potentialActions.test {
-            assertTrue(awaitItem().isEmpty())
-            advanceUntilIdle()
-            val actions = awaitItem()
-            assertEquals(listOf(AddToAction.EntityWidget, AddToAction.TodoWidget), actions)
-        }
+        assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.TodoWidget), actions)
     }
 
     @Test
@@ -137,14 +114,9 @@ class AddToViewModelTest {
 
         mockGetEntity(entityId)
 
-        val viewModel = AddToViewModel(entityId, serverManager, prefsRepository)
+        val actions = viewModel.actionsForEntity(entityId)
 
-        viewModel.potentialActions.test {
-            assertTrue(awaitItem().isEmpty())
-            advanceUntilIdle()
-            val actions = awaitItem()
-            assertEquals(listOf(AddToAction.EntityWidget, AddToAction.CameraWidget), actions)
-        }
+        assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.CameraWidget), actions)
     }
 
     @Test
@@ -153,14 +125,8 @@ class AddToViewModelTest {
 
         mockGetEntity(entityId)
 
-        val viewModel = AddToViewModel(entityId, serverManager, prefsRepository)
-
-        viewModel.potentialActions.test {
-            assertTrue(awaitItem().isEmpty())
-            advanceUntilIdle()
-            val actions = awaitItem()
-            assertEquals(listOf(AddToAction.EntityWidget, AddToAction.CameraWidget), actions)
-        }
+        val actions = viewModel.actionsForEntity(entityId)
+        assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.CameraWidget), actions)
     }
 
     private fun mockGetEntity(entityId: String) {

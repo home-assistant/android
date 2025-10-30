@@ -2,9 +2,6 @@ package io.homeassistant.companion.android.webview.addto
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.IMAGE_DOMAIN
@@ -16,45 +13,40 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-// For some unknown reason hilt is not able to inject anything without @Assisted in the context
-// of this viewModel.
-@HiltViewModel(assistedFactory = AddToViewModel.Factory::class)
-class AddToViewModel @AssistedInject constructor(
-    @Assisted val entityId: String,
-    @Assisted val serverManager: ServerManager,
-    @Assisted val prefsRepository: PrefsRepository,
+@HiltViewModel
+class EntityAddToViewModel @Inject constructor(
+    private val serverManager: ServerManager,
+    private val prefsRepository: PrefsRepository,
 ) : ViewModel() {
-    private val _potentialActions = MutableStateFlow<List<AddToAction>>(emptyList())
-    val potentialActions = _potentialActions.asStateFlow()
 
-    init {
-        viewModelScope.launch {
+    suspend fun actionsForEntity(entityId: String): List<EntityAddToAction> {
+        return withContext(Dispatchers.Default) {
+            val actions = mutableListOf<EntityAddToAction>()
             serverManager.getServer()?.let { server ->
                 serverManager.integrationRepository(server.id).getEntity(entityId)
                     ?.let { entity ->
-                        val actions = mutableListOf<AddToAction>()
-
-                        actions.add(AddToAction.EntityWidget)
+                        actions.add(EntityAddToAction.EntityWidget)
 
                         if (isVehicleDomain(entity)) {
                             // We could check if it already exist but the action won't do anything so we can keep it
-                            actions.add(AddToAction.AndroidAutoFavorite)
+                            actions.add(EntityAddToAction.AndroidAutoFavorite)
                         }
 
                         if (entity.domain == MEDIA_PLAYER_DOMAIN) {
-                            actions.add(AddToAction.MediaPlayerWidget)
+                            actions.add(EntityAddToAction.MediaPlayerWidget)
                         }
 
                         if (entity.domain == TODO_DOMAIN) {
-                            actions.add(AddToAction.TodoWidget)
+                            actions.add(EntityAddToAction.TodoWidget)
                         }
 
                         if (entity.domain == CAMERA_DOMAIN || entity.domain == IMAGE_DOMAIN) {
-                            actions.add(AddToAction.CameraWidget)
+                            actions.add(EntityAddToAction.CameraWidget)
                         }
 
                         // TODO support tile https://github.com/home-assistant/android/issues/5623
@@ -63,25 +55,21 @@ class AddToViewModel @AssistedInject constructor(
                         // }
 
                         // TODO support watch favorite https://github.com/home-assistant/android/issues/5624
+                        // when it has a watch always send it and set the flag to false when not connected + details that it is disconnected
 
                         // TODO support shortcut https://github.com/home-assistant/android/issues/5625
-
-                        _potentialActions.emit(actions)
-                    } ?: FailFast.fail { "Entity is null" }
+                        // Always show but send false and details about why it is not enabled
+                    }
             }
+            actions
         }
     }
 
-    fun addToAndroidAutoFavorite() {
+    fun addToAndroidAutoFavorite(entityId: String) {
         viewModelScope.launch {
             serverManager.getServer()?.id?.let { serverId ->
                 prefsRepository.addAutoFavorite(AutoFavorite(serverId, entityId))
             } ?: FailFast.fail { "Server is null" }
         }
-    }
-
-    @AssistedFactory
-    interface Factory {
-        fun create(entityId: String, serverManager: ServerManager, prefsRepository: PrefsRepository): AddToViewModel
     }
 }
