@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.widgets.camera
 
 import android.R.layout
 import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Build

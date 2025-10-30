@@ -27,7 +27,6 @@ import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
-import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
