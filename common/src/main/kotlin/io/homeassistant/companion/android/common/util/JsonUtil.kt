@@ -271,29 +271,10 @@ private fun toJsonElement(encoder: JsonEncoder, value: Any?): JsonElement {
 /**
  * Converts a map to a JsonObject
  */
-@Suppress("UNCHECKED_CAST")
+
 fun Map<String, Any?>.toJsonObjectOrNull(): JsonObject {
     val content = this.mapValues { (_, value) ->
-        when (value) {
-            null -> JsonNull
-            is Number -> JsonPrimitive(value)
-            is String -> JsonPrimitive(value)
-            is Boolean -> JsonPrimitive(value)
-            is Map<*, *> -> (value as Map<String, Any?>).toJsonObjectOrNull()
-            is List<*> -> JsonArray(
-                value.map {
-                    when (it) {
-                        null -> JsonNull
-                        is Map<*, *> -> (it as Map<String, Any?>).toJsonObjectOrNull()
-                        is Number -> JsonPrimitive(it)
-                        is String -> JsonPrimitive(it)
-                        is Boolean -> JsonPrimitive(it)
-                        else -> JsonPrimitive(it.toString())
-                    }
-                },
-            )
-            else -> JsonPrimitive(value.toString())
-        }
+        value.toJsonElementOrNull()
     }
     return JsonObject(content)
 }
@@ -317,7 +298,8 @@ fun String.toJsonObjectOrNull(): JsonObject? {
 fun JsonObject.getStringOrNull(key: String): String? {
     return runCatching {
         if (this.containsKey(key)) {
-            this[key]?.jsonPrimitive?.content
+            val value = this[key]
+            if (value is JsonNull) null else value?.jsonPrimitive?.content
         } else {
             null
         }
@@ -378,3 +360,32 @@ fun JsonObject.getIntOrNull(key: String): Int? {
  * @param fallback an integer used as the fallback if the key is missing or value for key is null
  */
 fun JsonObject.getIntOrElse(key: String, fallback: Int): Int = this.getIntOrNull(key) ?: fallback
+
+@Suppress("UNCHECKED_CAST")
+private fun Any?.toJsonElementOrNull(): JsonElement = when (this) {
+    null -> JsonNull
+    is Number -> JsonPrimitive(this)
+    is String -> JsonPrimitive(this)
+    is Boolean -> JsonPrimitive(this)
+    is List<*> -> JsonArray(
+        this.map {
+            it.toJsonElementOrNull()
+        },
+    )
+    is Map<*, *> -> this.mapKeys { (key, _) ->
+        val mappedKey = key.toString()
+        mappedKey
+    }.toJsonObjectOrNull()
+    else -> {
+        val serializer = runCatching {
+            Json.serializersModule.serializer(this::class.java)
+        }.getOrNull()
+        // try to use a known serializer
+        if (serializer != null) {
+            Json.encodeToJsonElement(serializer, this)
+        } else {
+            // fallback
+            JsonPrimitive(this.toString())
+        }
+    }
+}

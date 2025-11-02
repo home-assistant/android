@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.lang.reflect.Method
 import java.net.Inet6Address
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.serialization.SerializationException
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -558,7 +559,7 @@ class NetworkSensorManager : SensorManager {
                     try {
                         val jsonObject = response.body.string().toJsonObjectOrNull()
                         ip = jsonObject?.getStringOrElse("ip", "") ?: ""
-                    } catch (e: Exception) {
+                    } catch (e: SerializationException) {
                         Timber.e(e, "Unable to parse ip address from response")
                     }
 
