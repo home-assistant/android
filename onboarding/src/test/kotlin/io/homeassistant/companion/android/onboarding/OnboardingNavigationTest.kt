@@ -155,7 +155,7 @@ internal class OnboardingNavigationTest {
         urlToOnboard: String? = null,
         hideExistingServers: Boolean = false,
         skipWelcome: Boolean = false,
-        hasLocationSensors: Boolean = true,
+        hasLocationTracking: Boolean = true,
     ) {
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
@@ -179,7 +179,7 @@ internal class OnboardingNavigationTest {
                         urlToOnboard = urlToOnboard,
                         hideExistingServers = hideExistingServers,
                         skipWelcome = skipWelcome,
-                        hasLocationSensors = hasLocationSensors,
+                        hasLocationTracking = hasLocationTracking,
                     )
                 }
             }
@@ -190,14 +190,14 @@ internal class OnboardingNavigationTest {
         urlToOnboard: String? = null,
         hideExistingServers: Boolean = false,
         skipWelcome: Boolean = false,
-        hasLocationSensors: Boolean = true,
+        hasLocationTracking: Boolean = true,
         testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit,
     ) {
         setContent(
             urlToOnboard = urlToOnboard,
             hideExistingServers = hideExistingServers,
             skipWelcome = skipWelcome,
-            hasLocationSensors = hasLocationSensors,
+            hasLocationTracking = hasLocationTracking,
         )
         runTest {
             composeTestRule.testContent()
@@ -557,7 +557,7 @@ internal class OnboardingNavigationTest {
     }
 
     @Test
-    fun `Given no location sensors with HTTPS public server when device named then onboarding completes`() {
+    fun `Given no location tracking with HTTPS public server when device named then onboarding completes`() {
         every { nameYourDeviceViewModel.onSaveClick() } coAnswers {
             nameYourDeviceNavigationFlow.emit(
                 NameYourDeviceNavigationEvent.DeviceNameSaved(
@@ -567,7 +567,7 @@ internal class OnboardingNavigationTest {
                 ),
             )
         }
-        testNavigation(hasLocationSensors = false) {
+        testNavigation(hasLocationTracking = false) {
             navController.navigateToNameYourDevice("https://www.home-assistant.io", "code")
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
 
@@ -578,7 +578,7 @@ internal class OnboardingNavigationTest {
     }
 
     @Test
-    fun `Given no location sensors with HTTP public server and no location permission when device named then show LocationForSecureConnection`() {
+    fun `Given no location tracking with HTTP public server and no location permission when device named then show LocationForSecureConnection`() {
         every { nameYourDeviceViewModel.onSaveClick() } coAnswers {
             nameYourDeviceNavigationFlow.emit(
                 NameYourDeviceNavigationEvent.DeviceNameSaved(
@@ -588,7 +588,7 @@ internal class OnboardingNavigationTest {
                 ),
             )
         }
-        testNavigation(hasLocationSensors = false) {
+        testNavigation(hasLocationTracking = false) {
             mockCheckPermission(false)
             navController.navigateToNameYourDevice("http://homeassistant.local", "code")
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
@@ -600,7 +600,7 @@ internal class OnboardingNavigationTest {
     }
 
     @Test
-    fun `Given no location sensors with HTTP public server and has location permission when device named then show SetHomeNetwork`() {
+    fun `Given no location tracking with HTTP public server and has location permission when device named then show SetHomeNetwork`() {
         every { nameYourDeviceViewModel.onSaveClick() } coAnswers {
             nameYourDeviceNavigationFlow.emit(
                 NameYourDeviceNavigationEvent.DeviceNameSaved(
@@ -610,7 +610,7 @@ internal class OnboardingNavigationTest {
                 ),
             )
         }
-        testNavigation(hasLocationSensors = false) {
+        testNavigation(hasLocationTracking = false) {
             mockCheckPermission(true)
             navController.navigateToNameYourDevice("http://homeassistant.local", "code")
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
@@ -622,8 +622,8 @@ internal class OnboardingNavigationTest {
     }
 
     @Test
-    fun `Given no location sensors from LocalFirst with HTTP and no permission when next clicked then show LocationForSecureConnection`() {
-        testNavigation(hasLocationSensors = false) {
+    fun `Given no location tracking from LocalFirst with HTTP and no permission when next clicked then show LocationForSecureConnection`() {
+        testNavigation(hasLocationTracking = false) {
             mockCheckPermission(false)
             navController.navigateToLocalFirst(serverId = 42, hasPlainTextAccess = true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
@@ -635,8 +635,8 @@ internal class OnboardingNavigationTest {
     }
 
     @Test
-    fun `Given no location sensors from LocalFirst with HTTP and has permission when next clicked then show SetHomeNetwork`() {
-        testNavigation(hasLocationSensors = false) {
+    fun `Given no location tracking from LocalFirst with HTTP and has permission when next clicked then show SetHomeNetwork`() {
+        testNavigation(hasLocationTracking = false) {
             mockCheckPermission(true)
             navController.navigateToLocalFirst(serverId = 42, hasPlainTextAccess = true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
@@ -648,8 +648,8 @@ internal class OnboardingNavigationTest {
     }
 
     @Test
-    fun `Given no location sensors from LocalFirst with HTTPS when next clicked then onboarding completes`() {
-        testNavigation(hasLocationSensors = false) {
+    fun `Given no location tracking from LocalFirst with HTTPS when next clicked then onboarding completes`() {
+        testNavigation(hasLocationTracking = false) {
             navController.navigateToLocalFirst(serverId = 42, hasPlainTextAccess = false)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
 

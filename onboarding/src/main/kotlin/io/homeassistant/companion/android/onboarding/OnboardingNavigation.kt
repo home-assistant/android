@@ -105,7 +105,7 @@ internal fun NavController.navigateToOnboarding(
  * @param urlToOnboard Optional server URL to onboard directly, bypassing server discovery
  * @param hideExistingServers When true, hides already registered servers from discovery
  * @param skipWelcome When true, skips the welcome screen and goes directly to server discovery or connection
- * @param hasLocationSensors Whether location sensors are available (default to full flavor = true, minimal = false)
+ * @param hasLocationTracking Whether location tracking is available (default to full flavor = true, minimal = false)
  */
 internal fun NavGraphBuilder.onboarding(
     navController: NavController,
@@ -114,7 +114,7 @@ internal fun NavGraphBuilder.onboarding(
     urlToOnboard: String?,
     hideExistingServers: Boolean,
     skipWelcome: Boolean,
-    hasLocationSensors: Boolean = navController.context.packageName?.contains(".minimal")?.not() == true,
+    hasLocationTracking: Boolean = navController.context.packageName?.contains(".minimal")?.not() == true,
 ) {
     val serverDiscoveryMode = if (hideExistingServers) {
         ServerDiscoveryMode.HIDE_EXISTING
@@ -150,7 +150,7 @@ internal fun NavGraphBuilder.onboarding(
                     serverId = serverId,
                     hasPlainTextAccess = hasPlainTextAccess,
                     isPubliclyAccessible = isPubliclyAccessible,
-                    hasLocationSensors = hasLocationSensors,
+                    hasLocationTracking = hasLocationTracking,
                     navOptions = navOptions {
                         // We don't want to come back to name your device once the device
                         // is named since the auth_code has already been used.
@@ -172,7 +172,7 @@ internal fun NavGraphBuilder.onboarding(
                 val navOptions = navOptions {
                     popUpTo<LocalFirstRoute> { inclusive = true }
                 }
-                if (hasLocationSensors) {
+                if (hasLocationTracking) {
                     navController.navigateToLocationSharing(
                         serverId = serverId,
                         hasPlainTextAccess = hasPlainTextAccess,
@@ -326,14 +326,14 @@ private fun NavController.shouldRequestLocationPermissions(): Boolean {
  * This function encapsulates the complex decision tree for post-registration navigation,
  * considering:
  * - Whether the server is publicly accessible
- * - Whether location sensors are available (full vs minimal flavor)
+ * - Whether location tracking is available (full vs minimal flavor)
  * - Whether the connection uses plain text HTTP
  * - Whether location permissions are already granted
  *
  * @param serverId The ID of the registered server
  * @param hasPlainTextAccess Whether the server connection uses HTTP (insecure)
  * @param isPubliclyAccessible Whether the server is accessible from the public internet
- * @param hasLocationSensors Whether this app flavor includes location sensors (full flavor)
+ * @param hasLocationTracking Whether this app flavor includes location tracking (full flavor)
  * @param navOptions Navigation options to apply when navigating
  * @param onOnboardingDone Callback to invoke when onboarding is complete
  */
@@ -341,7 +341,7 @@ private fun NavController.navigateAfterDeviceRegistration(
     serverId: Int,
     hasPlainTextAccess: Boolean,
     isPubliclyAccessible: Boolean,
-    hasLocationSensors: Boolean,
+    hasLocationTracking: Boolean,
     navOptions: NavOptions,
     onOnboardingDone: () -> Unit,
 ) {
@@ -352,8 +352,8 @@ private fun NavController.navigateAfterDeviceRegistration(
             hasPlainTextAccess = hasPlainTextAccess,
             navOptions = navOptions,
         )
-        // Full flavor with location sensors: always show location sharing screen
-        hasLocationSensors -> navigateToLocationSharing(
+        // Full flavor with location tracking: always show location sharing screen
+        hasLocationTracking -> navigateToLocationSharing(
             serverId = serverId,
             hasPlainTextAccess = hasPlainTextAccess,
             navOptions = navOptions,
@@ -371,7 +371,7 @@ private fun NavController.navigateAfterDeviceRegistration(
 /**
  * Navigates to the appropriate screen for minimal flavor after location-related setup.
  *
- * For minimal flavor (without location sensors), the flow is:
+ * For minimal flavor (without location tracking), the flow is:
  * - If HTTPS: onboarding is complete
  * - If HTTP and no location permission: ask for location to enable secure connection detection
  * - If HTTP and has location permission: configure home network
