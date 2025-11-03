@@ -4,6 +4,7 @@ import java.time.LocalDateTime
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.boolean
@@ -181,20 +182,20 @@ class JsonUtilTest {
     }
 
     @Test
-    fun `Given an empty map when toJsonObjectOrNull is called then returns a JsonObject`() {
+    fun `Given an empty map when toJsonObject is called then returns a JsonObject`() {
         val input = mapOf<String, String>()
-        val jsonObject = input.toJsonObjectOrNull()
+        val jsonObject = input.toJsonObject()
         assertNotNull(jsonObject)
         assertTrue(jsonObject.isEmpty())
     }
 
     @Test
-    fun `Given a map of strings when toJsonObjectOrNull is called then returns a JsonObject`() {
+    fun `Given a map of strings when toJsonObject is called then returns a JsonObject`() {
         val input = mapOf(
             "key1" to "value1",
             "key2" to "value2",
         )
-        val jsonObject = input.toJsonObjectOrNull()
+        val jsonObject = input.toJsonObject()
         assertNotNull(jsonObject)
         assertTrue(jsonObject.isNotEmpty())
         assertTrue(jsonObject.containsKey("key1"))
@@ -204,12 +205,12 @@ class JsonUtilTest {
     }
 
     @Test
-    fun `Given a map of numbers(int) when toJsonObjectOrNull is called then returns a JsonObject`() {
+    fun `Given a map of numbers(int) when toJsonObject is called then returns a JsonObject`() {
         val input = mapOf(
             "key1" to 1,
             "key2" to 2,
         )
-        val jsonObject = input.toJsonObjectOrNull()
+        val jsonObject = input.toJsonObject()
         assertNotNull(jsonObject)
         assertTrue(jsonObject.isNotEmpty())
         assertTrue(jsonObject.containsKey("key1"))
@@ -219,12 +220,12 @@ class JsonUtilTest {
     }
 
     @Test
-    fun `Given a map of numbers(float) when toJsonObjectOrNull is called then returns a JsonObject`() {
+    fun `Given a map of numbers(float) when toJsonObject is called then returns a JsonObject`() {
         val input = mapOf(
             "key1" to 1.1f,
             "key2" to 2.1f,
         )
-        val jsonObject = input.toJsonObjectOrNull()
+        val jsonObject = input.toJsonObject()
         assertNotNull(jsonObject)
         assertTrue(jsonObject.isNotEmpty())
         assertTrue(jsonObject.containsKey("key1"))
@@ -234,12 +235,12 @@ class JsonUtilTest {
     }
 
     @Test
-    fun `Given a map of booleans when toJsonObjectOrNull is called then returns a JsonObject`() {
+    fun `Given a map of booleans when toJsonObject is called then returns a JsonObject`() {
         val input = mapOf(
             "key1" to true,
             "key2" to false,
         )
-        val jsonObject = input.toJsonObjectOrNull()
+        val jsonObject = input.toJsonObject()
         assertNotNull(jsonObject)
         assertTrue(jsonObject.isNotEmpty())
         assertTrue(jsonObject.containsKey("key1"))
@@ -249,14 +250,14 @@ class JsonUtilTest {
     }
 
     @Test
-    fun `Given a map of objects when toJsonObjectOrNull is called then returns a JsonObject`() {
+    fun `Given a map of objects when toJsonObject is called then returns a JsonObject`() {
         val value1 = Stub("value1")
         val value2 = Stub("value2")
         val input = mapOf(
             "key1" to value1,
             "key2" to value2,
         )
-        val jsonObject = input.toJsonObjectOrNull()
+        val jsonObject = input.toJsonObject()
         assertNotNull(jsonObject)
         assertTrue(jsonObject.isNotEmpty())
         assertTrue(jsonObject.containsKey("key1"))
@@ -266,14 +267,14 @@ class JsonUtilTest {
     }
 
     @Test
-    fun `Given a map of list of strings when toJsonObjectOrNull is called then returns a JsonObject`() {
+    fun `Given a map of list of strings when toJsonObject is called then returns a JsonObject`() {
         val value1 = listOf("key1->item1", "key1->item2")
         val value2 = listOf("key2->item1", "key2->item2", "key2->item3")
         val input = mapOf(
             "key1" to value1,
             "key2" to value2,
         )
-        val jsonObject = input.toJsonObjectOrNull()
+        val jsonObject = input.toJsonObject()
         assertNotNull(jsonObject)
         assertTrue(jsonObject.isNotEmpty())
         assertTrue(jsonObject.containsKey("key1"))
@@ -287,13 +288,13 @@ class JsonUtilTest {
     }
 
     @Test
-    fun `Given a map of list of serializable objects when toJsonObjectOrNull is called then returns a JsonObject`() {
+    fun `Given a map of list of serializable objects when toJsonObject is called then returns a JsonObject`() {
         val value1 = DummyObject("string value 1", 100)
         val value2 = DummyObject("string value 2", 200)
         val input = mapOf(
             "key1" to listOf(value1, value2),
         )
-        val jsonObject = input.toJsonObjectOrNull()
+        val jsonObject = input.toJsonObject()
         assertNotNull(jsonObject)
         assertTrue(jsonObject.isNotEmpty())
         assertTrue(jsonObject.containsKey("key1"))
@@ -301,38 +302,38 @@ class JsonUtilTest {
         assertNotNull(jsonArray)
         val valueJsonObject1 = jsonArray[0] as? JsonObject
         assertNotNull(valueJsonObject1)
-        assertEquals("string value 1", valueJsonObject1["strValue"]?.jsonPrimitive?.content)
-        assertEquals(100, valueJsonObject1["intValue"]?.jsonPrimitive?.int)
+        assertEquals("string value 1", valueJsonObject1["str_value"]?.jsonPrimitive?.content)
+        assertEquals(100, valueJsonObject1["int_value"]?.jsonPrimitive?.int)
         val valueJsonObject2 = jsonArray[1] as? JsonObject
         assertNotNull(valueJsonObject2)
-        assertEquals("string value 2", valueJsonObject2["strValue"]?.jsonPrimitive?.content)
-        assertEquals(200, valueJsonObject2["intValue"]?.jsonPrimitive?.int)
+        assertEquals("string value 2", valueJsonObject2["str_value"]?.jsonPrimitive?.content)
+        assertEquals(200, valueJsonObject2["int_value"]?.jsonPrimitive?.int)
     }
 
     @Test
-    fun `Given a map of serializable objects when toJsonObjectOrNull is called then returns a JsonObject`() {
+    fun `Given a map of serializable objects when toJsonObject is called then returns a JsonObject`() {
         val value1 = DummyObject("string value 1", 100)
         val value2 = DummyObject("string value 2", 200)
         val input = mapOf(
             "key1" to value1,
             "key2" to value2,
         )
-        val jsonObject = input.toJsonObjectOrNull()
+        val jsonObject = input.toJsonObject()
         assertNotNull(jsonObject)
         assertTrue(jsonObject.isNotEmpty())
         assertTrue(jsonObject.containsKey("key1"))
         val valueJsonObject1 = jsonObject["key1"] as? JsonObject
         assertNotNull(valueJsonObject1)
-        assertEquals("string value 1", valueJsonObject1["strValue"]?.jsonPrimitive?.content)
-        assertEquals(100, valueJsonObject1["intValue"]?.jsonPrimitive?.int)
+        assertEquals("string value 1", valueJsonObject1["str_value"]?.jsonPrimitive?.content)
+        assertEquals(100, valueJsonObject1["int_value"]?.jsonPrimitive?.int)
         val valueJsonObject2 = jsonObject["key2"] as? JsonObject
         assertNotNull(valueJsonObject2)
-        assertEquals("string value 2", valueJsonObject2["strValue"]?.jsonPrimitive?.content)
-        assertEquals(200, valueJsonObject2["intValue"]?.jsonPrimitive?.int)
+        assertEquals("string value 2", valueJsonObject2["str_value"]?.jsonPrimitive?.content)
+        assertEquals(200, valueJsonObject2["int_value"]?.jsonPrimitive?.int)
     }
 
     @Test
-    fun `Given a map of map of strings when toJsonObjectOrNull is called then returns a JsonObject`() {
+    fun `Given a map of map of strings when toJsonObject is called then returns a JsonObject`() {
         val value1 = mapOf(
             "string value 1" to 100,
             "string value 2" to 200,
@@ -345,7 +346,7 @@ class JsonUtilTest {
             "key1" to value1,
             "key2" to value2,
         )
-        val jsonObject = input.toJsonObjectOrNull()
+        val jsonObject = input.toJsonObject()
         assertNotNull(jsonObject)
         assertTrue(jsonObject.isNotEmpty())
         assertTrue(jsonObject.containsKey("key1"))
@@ -358,7 +359,7 @@ class JsonUtilTest {
     }
 
     @Test
-    fun `Given a map of map with an int key when toJsonObjectOrNull is called then returns a JsonObject`() {
+    fun `Given a map of map with an int key when toJsonObject is called then returns a JsonObject`() {
         val value1 = mapOf(
             1 to 100,
             2 to 200,
@@ -366,7 +367,7 @@ class JsonUtilTest {
         val input = mapOf(
             "key1" to value1,
         )
-        val jsonObject = input.toJsonObjectOrNull()
+        val jsonObject = input.toJsonObject()
         assertNotNull(jsonObject)
         assertTrue(jsonObject.isNotEmpty())
         assertTrue(jsonObject.containsKey("key1"))
@@ -379,7 +380,7 @@ class JsonUtilTest {
     }
 
     @Test
-    fun `Given a map with mixed value types when toJsonObjectOrNull is called then returns a JsonObject`() {
+    fun `Given a map with mixed value types when toJsonObject is called then returns a JsonObject`() {
         val input = mapOf(
             "key1" to mapOf(
                 "1" to 100,
@@ -391,7 +392,7 @@ class JsonUtilTest {
             "key5" to "value4",
             "key6" to arrayOf(1, 2, 3, 4),
         )
-        val jsonObject = input.toJsonObjectOrNull()
+        val jsonObject = input.toJsonObject()
         assertNotNull(jsonObject)
         assertTrue(jsonObject.isNotEmpty())
         assertTrue(jsonObject.containsKey("key1"))
@@ -406,11 +407,11 @@ class JsonUtilTest {
         val value2 = jsonObject["key2"]
         assertEquals(false, value2?.jsonPrimitive?.boolean)
         val value3 = jsonObject["key3"] as JsonObject
-        assertEquals("string1", value3["strValue"]?.jsonPrimitive?.content)
-        assertEquals(20, value3["intValue"]?.jsonPrimitive?.int)
+        assertEquals("string1", value3["str_value"]?.jsonPrimitive?.content)
+        assertEquals(20, value3["int_value"]?.jsonPrimitive?.int)
         val value4 = jsonObject["key4"] as JsonObject
-        assertEquals("string2", value4["strValue"]?.jsonPrimitive?.content)
-        assertEquals(30, value4["intValue"]?.jsonPrimitive?.int)
+        assertEquals("string2", value4["str_value"]?.jsonPrimitive?.content)
+        assertEquals(30, value4["int_value"]?.jsonPrimitive?.int)
         val value5 = jsonObject["key5"]
         assertEquals("value4", value5?.jsonPrimitive?.content)
         val value6 = jsonObject["key6"]
@@ -420,7 +421,7 @@ class JsonUtilTest {
     }
 
     @Test
-    fun `Given a non exist key when getStringOrNull on JsonObject then returns null`() {
+    fun `Given a non existing key when getStringOrNull on JsonObject then returns null`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -432,7 +433,7 @@ class JsonUtilTest {
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
-    fun `Given an exist key with value null when getStringOrNull on JsonObject then returns null`() {
+    fun `Given an existing key with value null when getStringOrNull on JsonObject then returns null`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -445,7 +446,7 @@ class JsonUtilTest {
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
-    fun `Given an exist key with value empty string when getStringOrNull on JsonObject then returns empty string`() {
+    fun `Given an existing key with value empty string when getStringOrNull on JsonObject then returns empty string`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -459,7 +460,7 @@ class JsonUtilTest {
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
-    fun `Given an exist key with value empty string when getStringOrNull on JsonObject then returns value`() {
+    fun `Given an existing key with value empty string when getStringOrNull on JsonObject then returns value`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -472,7 +473,7 @@ class JsonUtilTest {
     }
 
     @Test
-    fun `Given a non exist key when getStringOrElse on JsonObject then returns fallback`() {
+    fun `Given a non existing key when getStringOrElse on JsonObject then returns fallback`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -485,7 +486,7 @@ class JsonUtilTest {
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
-    fun `Given an exist key with value empty string when getStringOrElse on JsonObject then returns value`() {
+    fun `Given an existing key with value empty string when getStringOrElse on JsonObject then returns value`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -499,7 +500,7 @@ class JsonUtilTest {
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
-    fun `Given an exist key with value empty string when getStringOrElse on JsonObject then returns empty string`() {
+    fun `Given an existing key with value empty string when getStringOrElse on JsonObject then returns empty string`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -512,7 +513,7 @@ class JsonUtilTest {
     }
 
     @Test
-    fun `Given a non exist key when getBooleanOrNull on JsonObject then returns null`() {
+    fun `Given a non existing key when getBooleanOrNull on JsonObject then returns null`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -524,7 +525,7 @@ class JsonUtilTest {
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
-    fun `Given an exist key with value null when getBooleanOrNull on JsonObject then returns null`() {
+    fun `Given an existing key with value null when getBooleanOrNull on JsonObject then returns null`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -537,7 +538,7 @@ class JsonUtilTest {
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
-    fun `Given an exist key with value false when getBooleanOrNull on JsonObject then returns false`() {
+    fun `Given an existing key with value false when getBooleanOrNull on JsonObject then returns false`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -551,7 +552,7 @@ class JsonUtilTest {
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
-    fun `Given an exist key with value true when getBooleanOrNull on JsonObject then returns true`() {
+    fun `Given an existing key with value true when getBooleanOrNull on JsonObject then returns true`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -564,7 +565,7 @@ class JsonUtilTest {
     }
 
     @Test
-    fun `Given a non exist key when getBooleanOrElse on JsonObject then returns fallback`() {
+    fun `Given a non existing key when getBooleanOrElse on JsonObject then returns fallback`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -577,7 +578,7 @@ class JsonUtilTest {
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
-    fun `Given an exist key with value empty string when getBooleanOrElse on JsonObject then returns value`() {
+    fun `Given an existing key with value empty string when getBooleanOrElse on JsonObject then returns value`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -590,7 +591,7 @@ class JsonUtilTest {
     }
 
     @Test
-    fun `Given a non exist key when getIntOrNull on JsonObject then returns null`() {
+    fun `Given a non existing key when getIntOrNull on JsonObject then returns null`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -602,7 +603,7 @@ class JsonUtilTest {
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
-    fun `Given an exist key with value null when getIntOrNull on JsonObject then returns null`() {
+    fun `Given an existing key with value null when getIntOrNull on JsonObject then returns null`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -615,7 +616,7 @@ class JsonUtilTest {
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
-    fun `Given an exist key with value 1 when getIntOrNull on JsonObject then returns 1`() {
+    fun `Given an existing key with value 1 when getIntOrNull on JsonObject then returns 1`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -628,7 +629,7 @@ class JsonUtilTest {
     }
 
     @Test
-    fun `Given a non exist key when getIntOrElse on JsonObject then returns fallback`() {
+    fun `Given a non existing key when getIntOrElse on JsonObject then returns fallback`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -641,7 +642,7 @@ class JsonUtilTest {
 
     @OptIn(ExperimentalSerializationApi::class)
     @Test
-    fun `Given an exist key with value empty string when getIntOrElse on JsonObject then returns value`() {
+    fun `Given an existing key with value empty string when getIntOrElse on JsonObject then returns value`() {
         val jsonObject = buildJsonObject {
             put("key1", JsonPrimitive("value1"))
             put("key2", JsonPrimitive("value2"))
@@ -651,6 +652,47 @@ class JsonUtilTest {
         val value4 = jsonObject.getIntOrElse("key4", -1)
         assertNotNull(value4)
         assertEquals(1, value4)
+    }
+
+    @Test
+    fun `Given a JsonObject when jsonObjectOrNull is called then returns current element as JsonObject`() {
+        val jsonObject = buildJsonObject {
+            put(
+                "key1",
+                buildJsonObject {
+                    put("innerKey1", JsonPrimitive("value1"))
+                },
+            )
+        }
+
+        val value = jsonObject.jsonObjectOrNull()
+        assertNotNull(value)
+    }
+
+    @Test
+    fun `Given a JsonObject when jsonObjectOrNull is called when current element is not a JsonObject then returns null`() {
+        val jsonObject = buildJsonObject {
+            put(
+                "key1",
+                JsonPrimitive("value1"),
+            )
+        }
+
+        val value = jsonObject["key1"]?.jsonObjectOrNull()
+        assertNull(value)
+    }
+
+    @Test
+    fun `Given a JsonObject when jsonObjectOrNull is called when current element is a JsonNull then returns null`() {
+        val jsonObject = buildJsonObject {
+            put(
+                "key1",
+                JsonNull,
+            )
+        }
+
+        val value = jsonObject["key1"]?.jsonObjectOrNull()
+        assertNull(value)
     }
 }
 

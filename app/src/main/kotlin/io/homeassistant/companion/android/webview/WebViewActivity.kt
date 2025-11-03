@@ -95,6 +95,8 @@ import io.homeassistant.companion.android.common.util.getIntOrNull
 import io.homeassistant.companion.android.common.util.getStringOrElse
 import io.homeassistant.companion.android.common.util.getStringOrNull
 import io.homeassistant.companion.android.common.util.isAutomotive
+import io.homeassistant.companion.android.common.util.jsonObjectOrNull
+import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
@@ -131,7 +133,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import timber.log.Timber
 
@@ -752,7 +753,7 @@ class WebViewActivity :
                             val json = message.toJsonObjectOrNull() ?: return@post
                             when (json.getStringOrNull("type")) {
                                 "connection-status" -> {
-                                    isConnected = json["payload"]?.jsonObject
+                                    isConnected = json["payload"]?.jsonObjectOrNull()
                                         ?.getStringOrNull("event") == "connected"
                                     if (isConnected) {
                                         alertDialog?.cancel()
@@ -804,7 +805,7 @@ class WebViewActivity :
                                             "payload",
                                         )
                                     ) {
-                                        json["payload"]?.jsonObject
+                                        json["payload"]?.jsonObjectOrNull()
                                     } else {
                                         null
                                     }
@@ -826,7 +827,7 @@ class WebViewActivity :
                                 "tag/write" ->
                                     writeNfcTag.launch(
                                         WriteNfcTag.Input(
-                                            tagId = json["payload"]?.jsonObject?.getStringOrNull("tag"),
+                                            tagId = json["payload"]?.jsonObjectOrNull()?.getStringOrNull("tag"),
                                             messageId = message.toJsonObjectOrNull()?.getIntOrNull("id") ?: -1,
                                         ),
                                     )
@@ -846,7 +847,7 @@ class WebViewActivity :
                                             "payload",
                                         )
                                     ) {
-                                        json["payload"]?.jsonObject
+                                        json["payload"]?.jsonObjectOrNull()
                                     } else {
                                         null
                                     }
@@ -874,7 +875,7 @@ class WebViewActivity :
                                             "payload",
                                         )
                                     ) {
-                                        json["payload"]?.jsonObject
+                                        json["payload"]?.jsonObjectOrNull()
                                     } else {
                                         null
                                     }
@@ -886,7 +887,7 @@ class WebViewActivity :
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)
                                 "haptic" -> processHaptic(
-                                    json["payload"]?.jsonObject?.getStringOrNull("hapticType") ?: "",
+                                    json["payload"]?.jsonObjectOrNull()?.getStringOrNull("hapticType") ?: "",
                                 )
                                 "theme-update" -> getAndSetStatusBarNavigationBarColors()
                                 else -> presenter.onExternalBusMessage(json)
@@ -1117,7 +1118,7 @@ class WebViewActivity :
     }
 
     fun exoPlayHls(json: JsonObject) {
-        val payload = json["payload"]?.jsonObject
+        val payload = json["payload"]?.jsonObjectOrNull()
         val uri = payload?.getStringOrNull("url")?.toUri() ?: return
         val isMuted = payload.getBooleanOrElse("muted", false)
         runOnUiThread {
@@ -1139,7 +1140,7 @@ class WebViewActivity :
                     },
                 )
                 prepare()
-                volume = if (isMuted == true) 0f else 1f
+                volume = if (isMuted) 0f else 1f
             }
         }
         sendExternalBusMessage(
@@ -1170,7 +1171,7 @@ class WebViewActivity :
 
     @OptIn(UnstableApi::class)
     fun exoResizeHls(json: JsonObject) {
-        val payload = json["payload"]?.jsonObject ?: return
+        val payload = json["payload"]?.jsonObjectOrNull() ?: return
         // Payload is https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect
         // The values are already scaled to the screen.
         // We only need to store the top left corner for the offset and the player size
@@ -1666,7 +1667,7 @@ class WebViewActivity :
         message.result?.let { map["result"] = it }
         message.error?.let { map["error"] = it }
         message.payload?.let { map["payload"] = it }
-        val jsonObject = map.toJsonObjectOrNull()
+        val jsonObject = map.toJsonObject()
         val json = Json.encodeToString(jsonObject)
         val script = "externalBus($json);"
 

@@ -67,7 +67,7 @@ import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
-import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
+import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
 import io.homeassistant.companion.android.database.notification.NotificationDao
@@ -288,7 +288,7 @@ class MessagingManager @Inject constructor(
                     jsonData = jsonData + dbData // Add the notificationData, this contains the reply text
                 } ?: return@launch
             } else {
-                val jsonObject = jsonData.toJsonObjectOrNull()
+                val jsonObject = jsonData.toJsonObject()
                 val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
                     serverManager.getServer(webhookId = it)?.id
                 }

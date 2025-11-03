@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.webview.externalbus
 
 import android.webkit.ValueCallback
 import io.homeassistant.companion.android.common.util.AppVersion
-import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
+import io.homeassistant.companion.android.common.util.toJsonObject
 import timber.log.Timber
 
 /**
@@ -62,7 +62,7 @@ class ExternalConfigResponse(
         "canSetupImprov" to true,
         "downloadFileSupported" to true,
         "appVersion" to appVersion.value,
-    ).toJsonObjectOrNull(),
+    ).toJsonObject(),
     callback = {
         Timber.d("Callback from external config (id=$id): $it")
     },

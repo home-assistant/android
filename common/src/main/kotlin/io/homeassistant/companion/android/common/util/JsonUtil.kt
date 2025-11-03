@@ -269,10 +269,19 @@ private fun toJsonElement(encoder: JsonEncoder, value: Any?): JsonElement {
 }
 
 /**
+ * Returns current element as JsonObject. If current element is not a JsonObject (ex/ JsonPrimitive) will swallow the exception and return null
+ */
+fun JsonElement.jsonObjectOrNull(): JsonObject? = runCatching {
+    this.jsonObject
+}.onFailure { ex ->
+    Timber.w("Failed to get current element as JsonObject $this, exception: $ex")
+}.getOrNull()
+
+/**
  * Converts a map to a JsonObject
  */
 
-fun Map<String, Any?>.toJsonObjectOrNull(): JsonObject {
+fun Map<String, Any?>.toJsonObject(): JsonObject {
     val content = this.mapValues { (_, value) ->
         value.toJsonElementOrNull()
     }
@@ -280,7 +289,7 @@ fun Map<String, Any?>.toJsonObjectOrNull(): JsonObject {
 }
 
 /**
- * Parses a string to a JsonObject
+ * Parses a string to a JsonObject. If the string is empty this method will return null
  */
 fun String.toJsonObjectOrNull(): JsonObject? {
     if (this.isEmpty()) return null
@@ -292,7 +301,11 @@ fun String.toJsonObjectOrNull(): JsonObject? {
 }
 
 /**
- * Returns a string value for a key, if the key is missing will return null
+ * Returns the value to which the specified key is mapped, or null if;\
+ * this JsonObject contains no mapping for the key or\
+ * this mapping for the key is JsonNull or\
+ * this mapping for the key is not a JsonPrimitive or\
+ * this mapping for the key is not a string
  * @param key a string value to lookup json structure
  */
 fun JsonObject.getStringOrNull(key: String): String? {
@@ -309,20 +322,29 @@ fun JsonObject.getStringOrNull(key: String): String? {
 }
 
 /**
- * Returns a string value for a key, if the key is missing or null will return fabllback value
+ * Returns the value to which the specified key is mapped, or fallback if;\
+ * this JsonObject contains no mapping for the key or\
+ * this mapping for the key is JsonNull or\
+ * this mapping for the key is not a JsonPrimitive or\
+ * this mapping for the key is not a string
  * @param key a string value to lookup json structure
  * @param fallback a string used as the fallback if the key is missing or value is null
  */
 fun JsonObject.getStringOrElse(key: String, fallback: String): String = this.getStringOrNull(key) ?: fallback
 
 /**
- * Returns a boolean value for a key, if the key is missing will return null
+ * Returns the value to which the specified key is mapped, or null if;\
+ * this JsonObject contains no mapping for the key or\
+ * this mapping for the key is JsonNull or\
+ * this mapping for the key is not a JsonPrimitive or\
+ * this mapping for the key is not a boolean
  * @param key a string value to lookup json structure
  */
 fun JsonObject.getBooleanOrNull(key: String): Boolean? {
     return runCatching {
         if (this.containsKey(key)) {
-            this[key]?.jsonPrimitive?.booleanOrNull
+            val value = this[key]
+            if (value is JsonNull) null else value?.jsonPrimitive?.booleanOrNull
         } else {
             null
         }
@@ -332,20 +354,29 @@ fun JsonObject.getBooleanOrNull(key: String): Boolean? {
 }
 
 /**
- * Returns a boolean value for a key, if the key is missing or null will return fallback value
+ * Returns the value to which the specified key is mapped, or fallback if;\
+ * this JsonObject contains no mapping for the key or\
+ * this mapping for the key is JsonNull or\
+ * this mapping for the key is not a JsonPrimitive or\
+ * this mapping for the key is not a boolean
  * @param key a string value to lookup json structure
  * @param fallback a boolean value used as the fallback if the key is missing or value is null
  */
 fun JsonObject.getBooleanOrElse(key: String, fallback: Boolean): Boolean = this.getBooleanOrNull(key) ?: fallback
 
 /**
- * Returns an integer value for a key, if the key is missing will return null
+ * Returns the value to which the specified key is mapped, or null if;\
+ * this JsonObject contains no mapping for the key or\
+ * this mapping for the key is JsonNull or\
+ * this mapping for the key is not a JsonPrimitive or\
+ * this mapping for the key is not an integer
  * @param key a string value to lookup json structure
  */
 fun JsonObject.getIntOrNull(key: String): Int? {
     return runCatching {
         if (this.containsKey(key)) {
-            this[key]?.jsonPrimitive?.intOrNull
+            val value = this[key]
+            if (value is JsonNull) null else value?.jsonPrimitive?.intOrNull
         } else {
             null
         }
@@ -355,7 +386,11 @@ fun JsonObject.getIntOrNull(key: String): Int? {
 }
 
 /**
- * Returns an integer value for a key, if the key is missing or null will return fallback value
+ * Returns the value to which the specified key is mapped, or fallback if;\
+ * this JsonObject contains no mapping for the key or\
+ * this mapping for the key is JsonNull or\
+ * this mapping for the key is not a JsonPrimitive or\
+ * this mapping for the key is not an integer
  * @param key a string value to lookup json structure
  * @param fallback an integer used as the fallback if the key is missing or value for key is null
  */
@@ -375,14 +410,14 @@ private fun Any?.toJsonElementOrNull(): JsonElement = when (this) {
     is Map<*, *> -> this.mapKeys { (key, _) ->
         val mappedKey = key.toString()
         mappedKey
-    }.toJsonObjectOrNull()
+    }.toJsonObject()
     else -> {
         val serializer = runCatching {
-            Json.serializersModule.serializer(this::class.java)
+            kotlinJsonMapper.serializersModule.serializer(this::class.java)
         }.getOrNull()
         // try to use a known serializer
         if (serializer != null) {
-            Json.encodeToJsonElement(serializer, this)
+            kotlinJsonMapper.encodeToJsonElement(serializer, this)
         } else {
             // fallback
             JsonPrimitive(this.toString())
