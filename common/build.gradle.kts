@@ -41,6 +41,7 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     api(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.concurrent.ktx)
 
     // TODO should not expose retrofit outside of common https://github.com/home-assistant/android/issues/5421
     api(platform(libs.retrofit.bom))
