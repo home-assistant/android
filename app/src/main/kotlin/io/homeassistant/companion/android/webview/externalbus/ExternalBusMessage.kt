@@ -69,7 +69,7 @@ class ExternalConfigResponse(
             "canSetupImprov" to true,
             "downloadFileSupported" to true,
             "appVersion" to appVersion.value,
-            "hasAddTo" to true,
+            "hasEntityAddTo" to true,
         ),
     ),
     callback = {
