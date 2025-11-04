@@ -113,7 +113,7 @@ import io.homeassistant.companion.android.util.compose.initializePlayer
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
-import io.homeassistant.companion.android.webview.addto.EntityAddToViewModel
+import io.homeassistant.companion.android.webview.addto.EntityAddToHandler
 import io.homeassistant.companion.android.webview.externalbus.EntityAddToActionsResponse
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import io.homeassistant.companion.android.webview.externalbus.ExternalConfigResponse
@@ -156,7 +156,7 @@ class WebViewActivity :
         private const val CONNECTION_DELAY = 10000L
     }
 
-    private val addToViewModel: EntityAddToViewModel by viewModels()
+    private val entityAddToHandler: EntityAddToHandler by viewModels()
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     private val requestPermissions =
@@ -915,7 +915,9 @@ class WebViewActivity :
         val appPayload = if (payload?.has("app_payload") == true) payload.getString("app_payload") else null
         if (entityId != null && appPayload != null) {
             val action = ExternalEntityAddToAction.appPayloadToAction(appPayload)
-            action.action(this, addToViewModel, entityId)
+            lifecycleScope.launch {
+                entityAddToHandler.execute(this@WebViewActivity, action, entityId)
+            }
         } else {
             FailFast.fail { "Missing entity_id or app_payload to addEntityTo" }
         }
@@ -927,7 +929,7 @@ class WebViewActivity :
             if (payload?.has("entity_id") == true) payload.getString("entity_id") else null
         entityId?.let {
             lifecycleScope.launch {
-                val actions = addToViewModel.actionsForEntity(entityId)
+                val actions = entityAddToHandler.actionsForEntity(entityId)
                 sendExternalBusMessage(
                     EntityAddToActionsResponse(
                         id = json.get("id"),

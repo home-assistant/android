@@ -16,6 +16,7 @@
     <string name="add_action_data_field">Add field</string>
     <string name="add_shortcut">Add shortcut</string>
     <string name="add_to_android_auto_favorite">Add to Android Auto favorite</string>
+    <string name="add_to_android_auto_driving_favorite">Add to Driving favorites</string>
     <string name="add_to_camera_widget">Add camera/picture to home screen</string>
     <string name="add_to_entity_widget">Add entity state to home screen</string>
     <string name="add_to_media_player_widget">Add media player to home screen</string>

@@ -620,6 +620,10 @@ fun Entity.getIcon(context: Context): IIcon {
     }
 }
 
+fun Entity.isUsableInTile(): Boolean {
+    return domain in EntityExt.APP_PRESS_ACTION_DOMAINS
+}
+
 private fun binarySensorIcon(state: String?, entity: Entity): IIcon {
     val isOff = state == "off"
 

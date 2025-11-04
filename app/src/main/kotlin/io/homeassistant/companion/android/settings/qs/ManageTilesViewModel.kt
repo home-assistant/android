@@ -21,6 +21,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.integration.isUsableInTile
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
@@ -69,7 +70,6 @@ import io.homeassistant.companion.android.qs.Tile8Service
 import io.homeassistant.companion.android.qs.Tile9Service
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.icondialog.mdiName
-import io.homeassistant.companion.android.util.vehicle.isValidTileDomain
 import java.util.concurrent.Executors
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -184,7 +184,7 @@ class ManageTilesViewModel @Inject constructor(
                 async {
                     entities[it.id] = try {
                         serverManager.integrationRepository(it.id).getEntities().orEmpty()
-                            .filter { entity -> isValidTileDomain(entity) }
+                            .filter(Entity::isUsableInTile)
                     } catch (e: Exception) {
                         Timber.e(e, "Couldn't load entities for server")
                         emptyList()
