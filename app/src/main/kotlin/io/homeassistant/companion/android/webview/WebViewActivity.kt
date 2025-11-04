@@ -777,7 +777,7 @@ class WebViewActivity :
                                         }
                                     sendExternalBusMessage(
                                         ExternalConfigResponse(
-                                            id = message.toJsonObjectOrNull()?.getIntOrNull("id") ?: 0,
+                                            id = json.getIntOrElse("id", 0),
                                             hasNfc = hasNfc,
                                             canCommissionMatter = canCommissionMatter,
                                             canExportThread = canExportThread,
@@ -801,14 +801,7 @@ class WebViewActivity :
                                 }
 
                                 "assist/show" -> {
-                                    val payload = if (json.containsKey(
-                                            "payload",
-                                        )
-                                    ) {
-                                        json["payload"]?.jsonObjectOrNull()
-                                    } else {
-                                        null
-                                    }
+                                    val payload = json["payload"]?.jsonObjectOrNull()
                                     startActivity(
                                         AssistActivity.newInstance(
                                             this@WebViewActivity,
@@ -828,7 +821,7 @@ class WebViewActivity :
                                     writeNfcTag.launch(
                                         WriteNfcTag.Input(
                                             tagId = json["payload"]?.jsonObjectOrNull()?.getStringOrNull("tag"),
-                                            messageId = message.toJsonObjectOrNull()?.getIntOrNull("id") ?: -1,
+                                            messageId = json.getIntOrElse("id", -1),
                                         ),
                                     )
 
@@ -843,14 +836,7 @@ class WebViewActivity :
                                 }
 
                                 "bar_code/scan" -> {
-                                    val payload = if (json.containsKey(
-                                            "payload",
-                                        )
-                                    ) {
-                                        json["payload"]?.jsonObjectOrNull()
-                                    } else {
-                                        null
-                                    }
+                                    val payload = json["payload"]?.jsonObjectOrNull()
                                     if (payload?.containsKey("title") != true ||
                                         !payload.containsKey("description")
                                     ) {
@@ -871,14 +857,7 @@ class WebViewActivity :
 
                                 "improv/scan" -> scanForImprov()
                                 "improv/configure_device" -> {
-                                    val payload = if (json.containsKey(
-                                            "payload",
-                                        )
-                                    ) {
-                                        json["payload"]?.jsonObjectOrNull()
-                                    } else {
-                                        null
-                                    }
+                                    val payload = json["payload"]?.jsonObjectOrNull()
                                     val deviceName = payload?.getStringOrNull("name") ?: return@post
                                     configureImprovDevice(deviceName)
                                 }

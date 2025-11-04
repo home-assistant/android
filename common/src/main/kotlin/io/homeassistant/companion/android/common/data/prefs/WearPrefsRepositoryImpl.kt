@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.prefs
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
+import io.homeassistant.companion.android.common.util.jsonArrayOrNull
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
@@ -12,8 +13,6 @@ import io.homeassistant.companion.android.di.qualifiers.NamedWearStorage
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonArray
-import timber.log.Timber
 
 class WearPrefsRepositoryImpl @Inject constructor(
     @NamedWearStorage private val localStorage: LocalStorage,
@@ -117,13 +116,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
                     buildMap {
                         jsonObject?.keys?.forEach { stringKey ->
                             val intKey = stringKey.takeUnless { it == "null" }?.toInt()
-                            val jsonArray = runCatching {
-                                jsonObject[stringKey]?.jsonArray
-                            }.onFailure { ex ->
-                                Timber.w(
-                                    "Failed to get current element as JsonArray ${jsonStr.toJsonObjectOrNull()}, exception: $ex",
-                                )
-                            }.getOrNull()
+                            val jsonArray = jsonObject[stringKey]?.jsonArrayOrNull()
                             val entities = jsonArray?.toStringList() ?: emptyList()
                             put(intKey, entities)
                         }
@@ -131,13 +124,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
                 },
                 onFailure = {
                     // backward compatibility with the previous format when there was only one Shortcut Tile:
-                    val jsonArray = runCatching {
-                        jsonStr.toJsonObjectOrNull()?.jsonArray
-                    }.onFailure { ex ->
-                        Timber.w(
-                            "Failed to get current element as JsonArray ${jsonStr.toJsonObjectOrNull()}, exception: $ex",
-                        )
-                    }.getOrNull()
+                    val jsonArray = jsonStr.toJsonObjectOrNull()?.jsonArrayOrNull()
                     jsonArray?.let {
                         val entities = jsonArray.toStringList()
                         mapOf(

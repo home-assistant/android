@@ -16,6 +16,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
@@ -182,6 +183,13 @@ class JsonUtilTest {
     }
 
     @Test
+    fun `Given a valid json string that cannot be mapped to a JsonObject when toJsonObjectOrNull is called then returns a null`() {
+        val input = "\"abcdefg\""
+        val jsonObject = input.toJsonObjectOrNull()
+        assertNull(jsonObject)
+    }
+
+    @Test
     fun `Given an empty map when toJsonObject is called then returns a JsonObject`() {
         val input = mapOf<String, String>()
         val jsonObject = input.toJsonObject()
@@ -251,8 +259,8 @@ class JsonUtilTest {
 
     @Test
     fun `Given a map of objects when toJsonObject is called then returns a JsonObject`() {
-        val value1 = Stub("value1")
-        val value2 = Stub("value2")
+        val value1 = DummyValueString("value1")
+        val value2 = DummyValueString("value2")
         val input = mapOf(
             "key1" to value1,
             "key2" to value2,
@@ -261,9 +269,9 @@ class JsonUtilTest {
         assertNotNull(jsonObject)
         assertTrue(jsonObject.isNotEmpty())
         assertTrue(jsonObject.containsKey("key1"))
-        assertEquals(value1.toString(), jsonObject["key1"]?.jsonPrimitive?.content)
+        assertEquals("value1", jsonObject["key1"]?.jsonPrimitive?.content)
         assertTrue(jsonObject.containsKey("key2"))
-        assertEquals(value2.toString(), jsonObject["key2"]?.jsonPrimitive?.content)
+        assertEquals("value2", jsonObject["key2"]?.jsonPrimitive?.content)
     }
 
     @Test
@@ -359,7 +367,7 @@ class JsonUtilTest {
     }
 
     @Test
-    fun `Given a map of map with an int key when toJsonObject is called then returns a JsonObject`() {
+    fun `Given a map of map with an int key when toJsonObject is called then throws exception`() {
         val value1 = mapOf(
             1 to 100,
             2 to 200,
@@ -367,16 +375,12 @@ class JsonUtilTest {
         val input = mapOf(
             "key1" to value1,
         )
-        val jsonObject = input.toJsonObject()
-        assertNotNull(jsonObject)
-        assertTrue(jsonObject.isNotEmpty())
-        assertTrue(jsonObject.containsKey("key1"))
-        val valueJsonObject = jsonObject["key1"] as? JsonObject
-        assertNotNull(valueJsonObject)
-        assertTrue(valueJsonObject.containsKey("1"))
-        assertEquals(100, valueJsonObject["1"]?.jsonPrimitive?.int)
-        assertTrue(valueJsonObject.containsKey("2"))
-        assertEquals(200, valueJsonObject["2"]?.jsonPrimitive?.int)
+        val exception = assertThrows(Exception::class.java) {
+            input.toJsonObject()
+        }
+        assertNotNull(exception)
+        assertTrue(exception is IllegalArgumentException)
+        assertTrue(exception.message?.contains("Unsupported type: ") ?: false)
     }
 
     @Test
@@ -694,11 +698,54 @@ class JsonUtilTest {
         val value = jsonObject["key1"]?.jsonObjectOrNull()
         assertNull(value)
     }
+
+    @Test
+    fun `Given a JsonObject when jsonArrayOrNull is called then returns current element as JsonArray`() {
+        val jsonObject = buildJsonArray {
+            add(JsonPrimitive("item1"))
+            add(JsonPrimitive("item2"))
+            add(JsonPrimitive("item3"))
+        }
+
+        val value = jsonObject.jsonArrayOrNull()
+        assertNotNull(value)
+        assertEquals(3, value.count())
+    }
+
+    @Test
+    fun `Given a JsonObject when jsonArrayOrNull is called when current element is not a JsonArray then returns null`() {
+        val jsonObject = buildJsonObject {
+            put(
+                "key1",
+                JsonPrimitive("value1"),
+            )
+        }
+
+        val value = jsonObject["key1"]?.jsonArrayOrNull()
+        assertNull(value)
+    }
+
+    @Test
+    fun `Given a JsonObject when jsonArrayOrNull is called when current element is a JsonNull then returns null`() {
+        val jsonObject = buildJsonObject {
+            put(
+                "key1",
+                JsonNull,
+            )
+        }
+
+        val value = jsonObject["key1"]?.jsonArrayOrNull()
+        assertNull(value)
+    }
 }
 
 @JvmInline
 @Serializable
 private value class DummyValueBoolean(val value: Boolean)
+
+@JvmInline
+@Serializable
+private value class DummyValueString(val value: String)
 
 @JvmInline
 @Serializable
