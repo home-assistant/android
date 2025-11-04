@@ -37,6 +37,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "implementation"(libs.kotlin.reflect)
                     "implementation"(libs.kotlinx.coroutines.core)
                     "implementation"(libs.kotlinx.coroutines.android)
+                    "implementation"(libs.androidx.concurrent.ktx)
                     "fullImplementation"(libs.kotlinx.coroutines.play.services)
 
                     "implementation"(libs.appcompat)
