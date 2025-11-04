@@ -45,7 +45,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.runtime.LaunchedEffect
@@ -84,7 +83,6 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
-import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
@@ -156,8 +154,6 @@ class WebViewActivity :
         private const val CONNECTION_DELAY = 10000L
     }
 
-    private val entityAddToHandler: EntityAddToHandler by viewModels()
-
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     private val requestPermissions =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -222,7 +218,7 @@ class WebViewActivity :
     lateinit var appVersionProvider: AppVersionProvider
 
     @Inject
-    lateinit var prefsRepository: PrefsRepository
+    lateinit var entityAddToHandler: EntityAddToHandler
 
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
