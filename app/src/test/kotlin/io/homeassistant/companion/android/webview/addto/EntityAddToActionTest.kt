@@ -43,97 +43,97 @@ class EntityAddToActionTest {
     @Test
     fun `Given non-automotive context when testing AndroidAutoFavorite then return correct attributes`() {
         every { context.isAutomotive() } returns false
-        every { context.getString(commonR.string.add_to_android_auto_favorite) } returns "Add to Android Auto favorites"
+        every { context.getString(commonR.string.add_to_android_auto_favorite) } returns "hello"
 
         val action = EntityAddToAction.AndroidAutoFavorite
 
         assertEquals("mdi:car", action.mdiIcon)
-        assertEquals("Add to Android Auto favorites", action.text(context))
+        assertEquals("hello", action.text(context))
         assertEquals(true, action.enabled)
         assertEquals(null, action.details(context))
     }
 
     @Test
     fun `Given enabled Shortcut when testing attributes then return correct values`() {
-        every { context.getString(commonR.string.add_to_shortcut) } returns "Add to home screen"
+        every { context.getString(commonR.string.add_to_shortcut) } returns "world"
 
         val action = EntityAddToAction.Shortcut(enabled = true)
 
         assertEquals("mdi:open-in-new", action.mdiIcon)
-        assertEquals("Add to home screen", action.text(context))
+        assertEquals("world", action.text(context))
         assertEquals(true, action.enabled)
         assertEquals(null, action.details(context))
     }
 
     @Test
     fun `Given disabled Shortcut when testing attributes then return correct values`() {
-        every { context.getString(commonR.string.add_to_shortcut) } returns "Add to home screen"
-        every { context.getString(commonR.string.add_to_shortcut_limit) } returns "Maximum shortcuts reached"
+        every { context.getString(commonR.string.add_to_shortcut) } returns "HA"
+        every { context.getString(commonR.string.add_to_shortcut_limit) } returns "OHF"
 
         val action = EntityAddToAction.Shortcut(enabled = false)
 
         assertEquals("mdi:open-in-new", action.mdiIcon)
-        assertEquals("Add to home screen", action.text(context))
+        assertEquals("HA", action.text(context))
         assertEquals(false, action.enabled)
-        assertEquals("Maximum shortcuts reached", action.details(context))
+        assertEquals("OHF", action.details(context))
     }
 
     @Test
     fun `Given Tile when testing attributes then return correct values`() {
-        every { context.getString(commonR.string.add_to_tile) } returns "Add to Quick Settings"
+        every { context.getString(commonR.string.add_to_tile) } returns "dumb"
 
         val action = EntityAddToAction.Tile
 
         assertEquals("mdi:tune", action.mdiIcon)
-        assertEquals("Add to Quick Settings", action.text(context))
+        assertEquals("dumb", action.text(context))
         assertEquals(true, action.enabled)
         assertEquals(null, action.details(context))
     }
 
     @Test
     fun `Given EntityWidget when testing attributes then return correct values`() {
-        every { context.getString(commonR.string.add_to_entity_widget) } returns "Add entity widget"
+        every { context.getString(commonR.string.add_to_entity_widget) } returns "Peter"
 
         val action = EntityAddToAction.EntityWidget
 
         assertEquals("mdi:shape", action.mdiIcon)
-        assertEquals("Add entity widget", action.text(context))
+        assertEquals("Peter", action.text(context))
         assertEquals(true, action.enabled)
         assertEquals(null, action.details(context))
     }
 
     @Test
     fun `Given MediaPlayerWidget when testing attributes then return correct values`() {
-        every { context.getString(commonR.string.add_to_media_player_widget) } returns "Add media player widget"
+        every { context.getString(commonR.string.add_to_media_player_widget) } returns "MP"
 
         val action = EntityAddToAction.MediaPlayerWidget
 
         assertEquals("mdi:play-box-multiple", action.mdiIcon)
-        assertEquals("Add media player widget", action.text(context))
+        assertEquals("MP", action.text(context))
         assertEquals(true, action.enabled)
         assertEquals(null, action.details(context))
     }
 
     @Test
     fun `Given CameraWidget when testing attributes then return correct values`() {
-        every { context.getString(commonR.string.add_to_camera_widget) } returns "Add camera widget"
+        every { context.getString(commonR.string.add_to_camera_widget) } returns "Camera"
 
         val action = EntityAddToAction.CameraWidget
 
         assertEquals("mdi:camera-image", action.mdiIcon)
-        assertEquals("Add camera widget", action.text(context))
+        assertEquals("Camera", action.text(context))
         assertEquals(true, action.enabled)
         assertEquals(null, action.details(context))
     }
 
     @Test
     fun `Given TodoWidget when testing attributes then return correct values`() {
-        every { context.getString(commonR.string.add_to_todo_widget) } returns "Add to-do widget"
+        every { context.getString(commonR.string.add_to_todo_widget) } returns "to-do"
 
         val action = EntityAddToAction.TodoWidget
 
         assertEquals("mdi:clipboard-list", action.mdiIcon)
-        assertEquals("Add to-do widget", action.text(context))
+        assertEquals("to-do", action.text(context))
         assertEquals(true, action.enabled)
         assertEquals(null, action.details(context))
     }
@@ -141,12 +141,12 @@ class EntityAddToActionTest {
     @Test
     fun `Given enabled Watch when testing attributes then return correct values`() {
         val watchName = "Pixel Watch"
-        every { context.getString(commonR.string.add_to_watch_favorite, watchName) } returns "Add to $watchName favorites"
+        every { context.getString(commonR.string.add_to_watch_favorite, watchName) } returns "$watchName favorites"
 
         val action = EntityAddToAction.Watch(name = watchName, enabled = true)
 
         assertEquals("mdi:watch-import", action.mdiIcon)
-        assertEquals("Add to $watchName favorites", action.text(context))
+        assertEquals("$watchName favorites", action.text(context))
         assertEquals(true, action.enabled)
         assertEquals(null, action.details(context))
     }
@@ -154,13 +154,13 @@ class EntityAddToActionTest {
     @Test
     fun `Given disabled Watch when testing attributes then return correct values`() {
         val watchName = "Pixel Watch"
-        every { context.getString(commonR.string.add_to_watch_favorite, watchName) } returns "Add to $watchName favorites"
+        every { context.getString(commonR.string.add_to_watch_favorite, watchName) } returns "Add to $watchName"
         every { context.getString(commonR.string.add_to_watch_favorite_disconnected) } returns "Watch disconnected"
 
         val action = EntityAddToAction.Watch(name = watchName, enabled = false)
 
         assertEquals("mdi:watch-import", action.mdiIcon)
-        assertEquals("Add to $watchName favorites", action.text(context))
+        assertEquals("Add to $watchName", action.text(context))
         assertEquals(false, action.enabled)
         assertEquals("Watch disconnected", action.details(context))
     }

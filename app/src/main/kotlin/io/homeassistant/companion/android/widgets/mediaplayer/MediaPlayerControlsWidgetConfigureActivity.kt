@@ -36,8 +36,6 @@ class MediaPlayerControlsWidgetConfigureActivity :
     BaseWidgetConfigureActivity<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
 
     companion object {
-        private const val FOR_ENTITY = "for_entity"
-
         fun newInstance(context: Context, entityId: String): Intent {
             return Intent(context, MediaPlayerControlsWidgetConfigureActivity::class.java).apply {
                 putExtra(FOR_ENTITY, entityId)

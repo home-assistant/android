@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.webview.addto
 
 import android.content.Context
-import android.content.Intent
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.IMAGE_DOMAIN
@@ -24,7 +23,6 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
-import io.mockk.slot
 import io.mockk.verify
 import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -121,7 +119,7 @@ class EntityAddToHandlerTest {
     }
 
     @Test
-    fun `Given standard entityId when getting potentialActions then it emits first empty then EntityWidget`() = runTest {
+    fun `Given standard entityId when getting actionsForEntity then returns EntityWidget`() = runTest {
         val entityId = "standard.test"
 
         mockGetEntity(entityId)
@@ -132,7 +130,7 @@ class EntityAddToHandlerTest {
     }
 
     @Test
-    fun `Given entityId with vehicle domain when getting potentialActions then it emits first empty then EntityWidget and AndroidAutoFavorite`() = runTest {
+    fun `Given alarm_control_panel entityId when getting actionsForEntity then returns EntityWidget and AndroidAutoFavorite`() = runTest {
         val entityId = "alarm_control_panel.test"
 
         mockGetEntity(entityId)
@@ -143,7 +141,7 @@ class EntityAddToHandlerTest {
     }
 
     @Test
-    fun `Given media player entityId when getting potentialActions then it emits first empty then EntityWidget and MediaPlayerWidget`() = runTest {
+    fun `Given media player entityId when getting actionsForEntity then returns EntityWidget and MediaPlayerWidget`() = runTest {
         val entityId = "$MEDIA_PLAYER_DOMAIN.test"
 
         mockGetEntity(entityId)
@@ -154,7 +152,7 @@ class EntityAddToHandlerTest {
     }
 
     @Test
-    fun `Given list entityId when getting potentialActions then it emits first empty then EntityWidget and TodoWidget`() = runTest {
+    fun `Given todo entityId when getting actionsForEntity then returns EntityWidget and TodoWidget`() = runTest {
         val entityId = "$TODO_DOMAIN.test"
 
         mockGetEntity(entityId)
@@ -165,7 +163,7 @@ class EntityAddToHandlerTest {
     }
 
     @Test
-    fun `Given camera entityId when getting potentialActions then it emits first empty then EntityWidget and CameraWidget`() = runTest {
+    fun `Given camera entityId when getting actionsForEntity then returns EntityWidget and CameraWidget`() = runTest {
         val entityId = "$CAMERA_DOMAIN.test"
 
         mockGetEntity(entityId)
@@ -176,7 +174,7 @@ class EntityAddToHandlerTest {
     }
 
     @Test
-    fun `Given image entityId when getting potentialActions then it emits first empty then EntityWidget and CameraWidget`() = runTest {
+    fun `Given image entityId when getting actionsForEntity then returns EntityWidget and CameraWidget`() = runTest {
         val entityId = "$IMAGE_DOMAIN.test"
 
         mockGetEntity(entityId)
@@ -203,13 +201,12 @@ class EntityAddToHandlerTest {
     fun `Given MediaPlayerWidget action when executing then it starts MediaPlayerControlsWidgetConfigureActivity`() = runTest {
         val entityId = "$MEDIA_PLAYER_DOMAIN.test"
         val action = EntityAddToAction.MediaPlayerWidget
-        val intentSlot = slot<Intent>()
 
         mockkObject(MediaPlayerControlsWidgetConfigureActivity.Companion)
         every { MediaPlayerControlsWidgetConfigureActivity.newInstance(context, entityId) } returns mockk()
 
         handler.execute(context, action, entityId)
-        verify { context.startActivity(capture(intentSlot)) }
+        verify { context.startActivity(any()) }
         verify { MediaPlayerControlsWidgetConfigureActivity.newInstance(context, entityId) }
     }
 

@@ -32,9 +32,8 @@ import timber.log.Timber
 
 @AndroidEntryPoint
 class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetEntity, CameraWidgetDao>() {
-    companion object {
-        private const val FOR_ENTITY = "for_entity"
 
+    companion object {
         fun newInstance(context: Context, entityId: String): Intent {
             return Intent(context, CameraWidgetConfigureActivity::class.java).apply {
                 putExtra(FOR_ENTITY, entityId)

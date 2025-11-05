@@ -43,8 +43,6 @@ import timber.log.Timber
 class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity<StaticWidgetEntity, StaticWidgetDao>() {
 
     companion object {
-        private const val FOR_ENTITY = "for_entity"
-
         fun newInstance(context: Context, entityId: String): Intent {
             return Intent(context, EntityWidgetConfigureActivity::class.java).apply {
                 putExtra(FOR_ENTITY, entityId)
