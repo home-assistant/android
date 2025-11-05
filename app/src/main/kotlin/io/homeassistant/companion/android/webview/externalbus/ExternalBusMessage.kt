@@ -84,11 +84,9 @@ data class ExternalEntityAddToAction(
     val mdiIcon: String,
 ) {
     companion object {
-        /**
-         * We encode the app payload into Base64 so that we are sure that the data remains the same while going
-         * to the frontend and coming back.
-         */
         fun fromAction(context: Context, action: EntityAddToAction): ExternalEntityAddToAction {
+            // Encode the app payload into Base64 to ensure that the data remains the same while going
+            // to the frontend and coming back.
             return ExternalEntityAddToAction(
                 appPayload = Base64.UrlSafe.encode(
                     kotlinJsonMapper.encodeToString(action)

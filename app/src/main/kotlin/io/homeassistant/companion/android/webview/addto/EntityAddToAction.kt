@@ -13,10 +13,6 @@ import kotlinx.serialization.Transient
  * This sealed interface is used for bidirectional communication between the Android app and the
  * Home Assistant frontend. The frontend can query available actions, and the user can select
  * which action to perform for a specific entity.
- *
- * Each implementation represents a different platform integration point where entities can be
- * added, such as Android Auto favorites, home screen shortcuts, Quick Settings tiles, or various
- * widget types.
  */
 @Serializable
 sealed interface EntityAddToAction {
@@ -86,7 +82,7 @@ sealed interface EntityAddToAction {
     }
 
     /**
-     * Action to add an entity shortcut to the device home screen.
+     * Action to add a pinned shortcut to the entity to the device home screen.
      *
      * Android devices have a system-imposed limit on the number of pinned shortcuts that can be created,
      * so this action may be disabled if that limit has been reached.
@@ -120,7 +116,7 @@ sealed interface EntityAddToAction {
     }
 
     /**
-     * Action to add a general entity widget to the home screen.
+     * Action to add an entity state widget to the home screen.
      */
     @Serializable
     data object EntityWidget : EntityAddToAction {
