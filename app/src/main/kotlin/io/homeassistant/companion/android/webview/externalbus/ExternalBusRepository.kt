@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.webview.externalbus
 
 import kotlinx.coroutines.flow.Flow
-import org.json.JSONObject
+import kotlinx.serialization.json.JsonObject
 
 /**
  * A repository to communicate with the external bus which is provided by the frontend,
@@ -21,10 +21,10 @@ interface ExternalBusRepository {
      * @param types List of which message `type`s should be received
      * @return Flow with received messages for the specified types
      */
-    fun receive(types: List<String>): Flow<JSONObject>
+    fun receive(types: List<String>): Flow<JsonObject>
 
     /** Send a message from the external bus to registered receivers (for webview) */
-    suspend fun received(message: JSONObject)
+    suspend fun received(message: JsonObject)
 
     /**
      * @return Flow with [ExternalBusMessage]s that should be sent on the external

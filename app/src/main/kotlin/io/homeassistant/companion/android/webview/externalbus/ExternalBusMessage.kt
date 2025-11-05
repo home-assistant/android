@@ -4,11 +4,10 @@ import android.content.Context
 import android.webkit.ValueCallback
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.webview.addto.EntityAddToAction
 import kotlin.io.encoding.Base64
 import kotlinx.serialization.Serializable
-import org.json.JSONArray
-import org.json.JSONObject
 import timber.log.Timber
 
 /**
@@ -57,21 +56,20 @@ class ExternalConfigResponse(
     id = id,
     type = "result",
     success = true,
-    result = JSONObject(
-        mapOf(
-            "hasSettingsScreen" to true,
-            "canWriteTag" to hasNfc,
-            "hasExoPlayer" to true,
-            "canCommissionMatter" to canCommissionMatter,
-            "canImportThreadCredentials" to canExportThread,
-            "hasAssist" to true,
-            "hasBarCodeScanner" to hasBarCodeScanner,
-            "canSetupImprov" to true,
-            "downloadFileSupported" to true,
-            "appVersion" to appVersion.value,
-            "hasEntityAddTo" to true,
-        ),
-    ),
+    result =
+    mapOf(
+        "hasSettingsScreen" to true,
+        "canWriteTag" to hasNfc,
+        "hasExoPlayer" to true,
+        "canCommissionMatter" to canCommissionMatter,
+        "canImportThreadCredentials" to canExportThread,
+        "hasAssist" to true,
+        "hasBarCodeScanner" to hasBarCodeScanner,
+        "canSetupImprov" to true,
+        "downloadFileSupported" to true,
+        "appVersion" to appVersion.value,
+        "hasEntityAddTo" to true,
+    ).toJsonObject(),
     callback = {
         Timber.d("Callback from external config (id=$id): $it")
     },
@@ -112,16 +110,12 @@ data class ExternalEntityAddToAction(
     }
 }
 
-class EntityAddToActionsResponse(id: Any, actions: List<ExternalEntityAddToAction>) :
+class EntityAddToActionsResponse(id: Any?, actions: List<ExternalEntityAddToAction>) :
     ExternalBusMessage(
         id = id,
         type = "result",
         success = true,
-        result = JSONObject(
-            mapOf(
-                "actions" to JSONArray(kotlinJsonMapper.encodeToString(actions)),
-            ),
-        ),
+        result = mapOf("actions" to actions).toJsonObject(),
         callback = {
             Timber.d("Callback from AddToActions")
         },

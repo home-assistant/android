@@ -67,6 +67,7 @@ import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
 import io.homeassistant.companion.android.database.notification.NotificationDao
@@ -103,7 +104,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.sink
-import org.json.JSONObject
 import timber.log.Timber
 
 class MessagingManager @Inject constructor(
@@ -288,7 +288,7 @@ class MessagingManager @Inject constructor(
                     jsonData = jsonData + dbData // Add the notificationData, this contains the reply text
                 } ?: return@launch
             } else {
-                val jsonObject = JSONObject(jsonData)
+                val jsonObject = jsonData.toJsonObject()
                 val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
                     serverManager.getServer(webhookId = it)?.id
                 }
