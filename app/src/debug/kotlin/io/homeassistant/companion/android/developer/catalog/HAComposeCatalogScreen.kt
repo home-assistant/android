@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.TouchApp
@@ -38,10 +38,12 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 
-private sealed class CatalogScreen(val route: String, val title: String, val icon: ImageVector) {
-    object ButtonsAndIndicators : CatalogScreen("buttons", "Buttons & Indicators", Icons.Default.TouchApp)
-    object UserInput : CatalogScreen("input", "User Input", Icons.Default.Edit)
-    object TextAndBanners : CatalogScreen("text", "Text & Banners", Icons.Default.Article)
+private sealed class CatalogScreen(val title: String, val icon: ImageVector) {
+    object ButtonsAndIndicators : CatalogScreen( "Buttons & Indicators", Icons.Default.TouchApp)
+    object UserInput : CatalogScreen( "User Input", Icons.Default.Edit)
+    object TextAndBanners : CatalogScreen( "Text & Banners",
+        Icons.AutoMirrored.Filled.Article
+    )
 }
 
 @Composable
