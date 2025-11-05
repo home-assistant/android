@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.webview.externalbus
 
 import android.webkit.ValueCallback
 import io.homeassistant.companion.android.common.util.AppVersion
-import org.json.JSONObject
+import io.homeassistant.companion.android.common.util.toJsonObject
 import timber.log.Timber
 
 /**
@@ -50,20 +50,19 @@ class ExternalConfigResponse(
     id = id,
     type = "result",
     success = true,
-    result = JSONObject(
-        mapOf(
-            "hasSettingsScreen" to true,
-            "canWriteTag" to hasNfc,
-            "hasExoPlayer" to true,
-            "canCommissionMatter" to canCommissionMatter,
-            "canImportThreadCredentials" to canExportThread,
-            "hasAssist" to true,
-            "hasBarCodeScanner" to hasBarCodeScanner,
-            "canSetupImprov" to true,
-            "downloadFileSupported" to true,
-            "appVersion" to appVersion.value,
-        ),
-    ),
+    result =
+    mapOf(
+        "hasSettingsScreen" to true,
+        "canWriteTag" to hasNfc,
+        "hasExoPlayer" to true,
+        "canCommissionMatter" to canCommissionMatter,
+        "canImportThreadCredentials" to canExportThread,
+        "hasAssist" to true,
+        "hasBarCodeScanner" to hasBarCodeScanner,
+        "canSetupImprov" to true,
+        "downloadFileSupported" to true,
+        "appVersion" to appVersion.value,
+    ).toJsonObject(),
     callback = {
         Timber.d("Callback from external config (id=$id): $it")
     },
