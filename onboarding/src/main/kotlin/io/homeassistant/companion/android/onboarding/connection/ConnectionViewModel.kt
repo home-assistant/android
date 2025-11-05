@@ -187,7 +187,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                     )
 
                     else -> ConnectionError.UnknownError(
-                        message = commonR.string.error_http_generic,
+                        message = R.string.connection_error_unknown_error,
                         errorDetails = errorDetails,
                         rawErrorType = WebResourceError::class.toString(),
                     )
@@ -226,7 +226,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                     )
 
                     else -> ConnectionError.UnknownError(
-                        message = commonR.string.error_http_generic,
+                        message = R.string.connection_error_unknown_error,
                         errorDetails = errorDetails,
                         rawErrorType = WebResourceResponse::class.toString(),
                     )
