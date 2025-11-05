@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.util
 
+import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -40,6 +41,15 @@ import kotlinx.serialization.serializer
 import kotlinx.serialization.serializerOrNull
 import timber.log.Timber
 
+/**
+ * Converts a JsonArray to a list of strings by extracting the primitive content from each element.
+ *
+ * This assumes all elements in the array are JsonPrimitive values. If any element is not a
+ * JsonPrimitive (for example, a JsonObject or JsonArray), this will throw an exception.
+ *
+ * @return A list containing the string content of each array element
+ * @throws IllegalArgumentException if any element is not a JsonPrimitive
+ */
 fun JsonArray.toStringList(): List<String> = List(size) { i ->
     val element = this[i]
     element.jsonPrimitive.content
@@ -269,130 +279,237 @@ private fun toJsonElement(encoder: JsonEncoder, value: Any?): JsonElement {
 }
 
 /**
- * Returns current element as JsonObject. If current element is not a JsonObject (ex/ JsonPrimitive) this will return null
+ * Safely casts this JsonElement to a JsonObject.
+ *
+ * @return The element as a JsonObject if it is one, null otherwise (for example, if it's a
+ *         JsonPrimitive, JsonArray, or JsonNull)
  */
 fun JsonElement.jsonObjectOrNull(): JsonObject? = this as? JsonObject
 
 /**
- * Returns current element as JsonArray. If current element is not a JsonArray (ex/ JsonPrimitive) this will return null
+ * Safely casts this JsonElement to a JsonArray.
+ *
+ * @return The element as a JsonArray if it is one, null otherwise (for example, if it's a
+ *         JsonPrimitive, JsonObject, or JsonNull)
  */
 fun JsonElement.jsonArrayOrNull(): JsonArray? = this as? JsonArray
 
 /**
- * Converts a map to a JsonObject
+ * Converts a map with string keys and arbitrary values to a JsonObject.
+ *
+ * This uses [MapAnySerializer] to handle the conversion, which supports primitive types,
+ * collections, nested maps, and serializable objects. See [MapAnySerializer] documentation
+ * for details on supported types and limitations.
+ *
+ * Example:
+ * ```kotlin
+ * val data = mapOf(
+ *     "name" to "Alice",
+ *     "age" to 30,
+ *     "active" to true
+ * )
+ * val json = data.toJsonObject()
+ * ```
+ *
+ * @return A JsonObject representation of this map
+ * @throws IllegalArgumentException if the map contains unsupported value types or non-string keys in nested maps
  */
-
 fun Map<String, Any?>.toJsonObject(): JsonObject {
     return kotlinJsonMapper.encodeToJsonElement(MapAnySerializer, this) as JsonObject
 }
 
 /**
- * Parses a string to a JsonObject. This will return null if;\
- * the string is empty or\
- * if the given string is not a valid json or\
- * if the given string cannot be mapped to a json object
+ * Parses a JSON string to a JsonObject, returning null if parsing fails.
+ *
+ * This function safely handles various failure scenarios including empty strings, malformed JSON,
+ * and JSON that represents non-object types (for example, arrays or primitives).
+ *
+ * Example:
+ * ```kotlin
+ * val json = """{"name": "Alice", "age": 30}""".toJsonObjectOrNull()
+ * // json is a JsonObject with properties "name" and "age"
+ *
+ * val invalid = "not valid json".toJsonObjectOrNull()
+ * // invalid is null
+ *
+ * val array = """["item1", "item2"]""".toJsonObjectOrNull()
+ * // array is null (because it's a JSON array, not an object)
+ * ```
+ *
+ * @return A JsonObject if the string is valid JSON representing an object, null otherwise
  */
 fun String.toJsonObjectOrNull(): JsonObject? {
     if (this.isEmpty()) return null
     return runCatching {
         Json.parseToJsonElement(this) as? JsonObject
     }.onFailure {
-        Timber.w("Failed to convert to a json object $this")
+        Timber.w("Failed to convert to a json object: ${if (BuildConfig.DEBUG) this else "HIDDEN"}")
     }.getOrNull()
 }
 
 /**
- * Returns the value to which the specified key is mapped, or null if;\
- * this JsonObject contains no mapping for the key or\
- * this mapping for the key is JsonNull or\
- * this mapping for the key is not a JsonPrimitive or\
- * this mapping for the key is not a string
- * @param key a string value to lookup json structure
+ * Retrieves a string value from this JsonObject, returning null if the value cannot be accessed.
+ *
+ * This function safely handles various scenarios including missing keys, null values, and
+ * type mismatches. It will return null if:
+ * - The key does not exist in the JsonObject
+ * - The value for the key is JsonNull
+ * - The value is not a JsonPrimitive (for example, it's a JsonObject or JsonArray)
+ * - The primitive value is not a string (for example, it's a number or boolean)
+ *
+ * Example:
+ * ```kotlin
+ * val json = buildJsonObject {
+ *     put("name", JsonPrimitive("Alice"))
+ *     put("age", JsonPrimitive(30))
+ * }
+ * json.getStringOrNull("name")  // Returns "Alice"
+ * json.getStringOrNull("age")   // Returns null (it's a number, not a string)
+ * json.getStringOrNull("email") // Returns null (key doesn't exist)
+ * ```
+ *
+ * @param key The key to look up in the JsonObject
+ * @return The string value if present and valid, null otherwise
  */
 fun JsonObject.getStringOrNull(key: String): String? {
     return runCatching {
-        if (this.containsKey(key)) {
-            val value = this[key]
-            if (value is JsonNull) null else value?.jsonPrimitive?.content
-        } else {
-            null
-        }
+        val value = this[key]
+        if (value is JsonNull) null else value?.jsonPrimitive?.content
     }.onFailure {
-        Timber.w("Failed to get string value for $key in jsonObject $this")
+        Timber.w("Failed to get string value for $key in jsonObject: ${if (BuildConfig.DEBUG) this else "HIDDEN"}")
     }.getOrNull()
 }
 
 /**
- * Returns the value to which the specified key is mapped, or fallback if;\
- * this JsonObject contains no mapping for the key or\
- * this mapping for the key is JsonNull or\
- * this mapping for the key is not a JsonPrimitive or\
- * this mapping for the key is not a string
- * @param key a string value to lookup json structure
- * @param fallback a string used as the fallback if the key is missing or value is null
+ * Retrieves a string value from this JsonObject, returning a fallback value if the value cannot be accessed.
+ *
+ * This is a convenience function that combines [getStringOrNull] with a default value. It will
+ * return the fallback if the key doesn't exist, the value is null, or the value cannot be
+ * converted to a string.
+ *
+ * Example:
+ * ```kotlin
+ * val json = buildJsonObject {
+ *     put("name", JsonPrimitive("Alice"))
+ * }
+ * json.getStringOrElse("name", "Unknown")    // Returns "Alice"
+ * json.getStringOrElse("email", "No Email")  // Returns "No Email"
+ * ```
+ *
+ * @param key The key to look up in the JsonObject
+ * @param fallback The default value to return if the key is missing or invalid
+ * @return The string value if present and valid, the fallback value otherwise
  */
 fun JsonObject.getStringOrElse(key: String, fallback: String): String = this.getStringOrNull(key) ?: fallback
 
 /**
- * Returns the value to which the specified key is mapped, or null if;\
- * this JsonObject contains no mapping for the key or\
- * this mapping for the key is JsonNull or\
- * this mapping for the key is not a JsonPrimitive or\
- * this mapping for the key is not a boolean
- * @param key a string value to lookup json structure
+ * Retrieves a boolean value from this JsonObject, returning null if the value cannot be accessed.
+ *
+ * This function safely handles various scenarios including missing keys, null values, and
+ * type mismatches. It will return null if:
+ * - The key does not exist in the JsonObject
+ * - The value for the key is JsonNull
+ * - The value is not a JsonPrimitive (for example, it's a JsonObject or JsonArray)
+ * - The primitive value is not a boolean (for example, it's a string or number)
+ *
+ * Example:
+ * ```kotlin
+ * val json = buildJsonObject {
+ *     put("active", JsonPrimitive(true))
+ *     put("name", JsonPrimitive("Alice"))
+ * }
+ * json.getBooleanOrNull("active")  // Returns true
+ * json.getBooleanOrNull("name")    // Returns null (it's a string, not a boolean)
+ * json.getBooleanOrNull("deleted") // Returns null (key doesn't exist)
+ * ```
+ *
+ * @param key The key to look up in the JsonObject
+ * @return The boolean value if present and valid, null otherwise
  */
 fun JsonObject.getBooleanOrNull(key: String): Boolean? {
     return runCatching {
-        if (this.containsKey(key)) {
-            val value = this[key]
-            if (value is JsonNull) null else value?.jsonPrimitive?.booleanOrNull
-        } else {
-            null
-        }
+        val value = this[key]
+        if (value is JsonNull) null else value?.jsonPrimitive?.booleanOrNull
     }.onFailure {
-        Timber.w("Failed to get boolean value for $key in jsonObject $this")
+        Timber.w("Failed to get boolean value for $key in jsonObject: ${if (BuildConfig.DEBUG) this else "HIDDEN"}")
     }.getOrNull()
 }
 
 /**
- * Returns the value to which the specified key is mapped, or fallback if;\
- * this JsonObject contains no mapping for the key or\
- * this mapping for the key is JsonNull or\
- * this mapping for the key is not a JsonPrimitive or\
- * this mapping for the key is not a boolean
- * @param key a string value to lookup json structure
- * @param fallback a boolean value used as the fallback if the key is missing or value is null
+ * Retrieves a boolean value from this JsonObject, returning a fallback value if the value cannot be accessed.
+ *
+ * This is a convenience function that combines [getBooleanOrNull] with a default value. It will
+ * return the fallback if the key doesn't exist, the value is null, or the value cannot be
+ * converted to a boolean.
+ *
+ * Example:
+ * ```kotlin
+ * val json = buildJsonObject {
+ *     put("active", JsonPrimitive(true))
+ * }
+ * json.getBooleanOrElse("active", false)  // Returns true
+ * json.getBooleanOrElse("deleted", false) // Returns false
+ * ```
+ *
+ * @param key The key to look up in the JsonObject
+ * @param fallback The default value to return if the key is missing or invalid
+ * @return The boolean value if present and valid, the fallback value otherwise
  */
 fun JsonObject.getBooleanOrElse(key: String, fallback: Boolean): Boolean = this.getBooleanOrNull(key) ?: fallback
 
 /**
- * Returns the value to which the specified key is mapped, or null if;\
- * this JsonObject contains no mapping for the key or\
- * this mapping for the key is JsonNull or\
- * this mapping for the key is not a JsonPrimitive or\
- * this mapping for the key is not an integer
- * @param key a string value to lookup json structure
+ * Retrieves an integer value from this JsonObject, returning null if the value cannot be accessed.
+ *
+ * This function safely handles various scenarios including missing keys, null values, and
+ * type mismatches. It will return null if:
+ * - The key does not exist in the JsonObject
+ * - The value for the key is JsonNull
+ * - The value is not a JsonPrimitive (for example, it's a JsonObject or JsonArray)
+ * - The primitive value is not an integer (for example, it's a string or boolean, or a number too large for Int)
+ *
+ * Note: This will return null for floating-point numbers. Use JsonPrimitive.int only for integer values.
+ *
+ * Example:
+ * ```kotlin
+ * val json = buildJsonObject {
+ *     put("age", JsonPrimitive(30))
+ *     put("name", JsonPrimitive("Alice"))
+ * }
+ * json.getIntOrNull("age")   // Returns 30
+ * json.getIntOrNull("name")  // Returns null (it's a string, not an int)
+ * json.getIntOrNull("score") // Returns null (key doesn't exist)
+ * ```
+ *
+ * @param key The key to look up in the JsonObject
+ * @return The integer value if present and valid, null otherwise
  */
 fun JsonObject.getIntOrNull(key: String): Int? {
     return runCatching {
-        if (this.containsKey(key)) {
-            val value = this[key]
-            if (value is JsonNull) null else value?.jsonPrimitive?.intOrNull
-        } else {
-            null
-        }
+        val value = this[key]
+        if (value is JsonNull) null else value?.jsonPrimitive?.intOrNull
     }.onFailure {
-        Timber.w("Failed to get integer value for $key in jsonObject $this")
+        Timber.w("Failed to get integer value for $key in jsonObject: ${if (BuildConfig.DEBUG) this else "HIDDEN"}")
     }.getOrNull()
 }
 
 /**
- * Returns the value to which the specified key is mapped, or fallback if;\
- * this JsonObject contains no mapping for the key or\
- * this mapping for the key is JsonNull or\
- * this mapping for the key is not a JsonPrimitive or\
- * this mapping for the key is not an integer
- * @param key a string value to lookup json structure
- * @param fallback an integer used as the fallback if the key is missing or value for key is null
+ * Retrieves an integer value from this JsonObject, returning a fallback value if the value cannot be accessed.
+ *
+ * This is a convenience function that combines [getIntOrNull] with a default value. It will
+ * return the fallback if the key doesn't exist, the value is null, or the value cannot be
+ * converted to an integer.
+ *
+ * Example:
+ * ```kotlin
+ * val json = buildJsonObject {
+ *     put("age", JsonPrimitive(30))
+ * }
+ * json.getIntOrElse("age", 0)   // Returns 30
+ * json.getIntOrElse("score", 0) // Returns 0
+ * ```
+ *
+ * @param key The key to look up in the JsonObject
+ * @param fallback The default value to return if the key is missing or invalid
+ * @return The integer value if present and valid, the fallback value otherwise
  */
 fun JsonObject.getIntOrElse(key: String, fallback: Int): Int = this.getIntOrNull(key) ?: fallback
