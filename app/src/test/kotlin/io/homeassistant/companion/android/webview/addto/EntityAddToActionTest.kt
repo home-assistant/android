@@ -84,7 +84,7 @@ class EntityAddToActionTest {
 
         val action = EntityAddToAction.Tile
 
-        assertEquals("mdi:cog", action.mdiIcon)
+        assertEquals("mdi:tune", action.mdiIcon)
         assertEquals("Add to Quick Settings", action.text(context))
         assertEquals(true, action.enabled)
         assertEquals(null, action.details(context))
@@ -96,7 +96,7 @@ class EntityAddToActionTest {
 
         val action = EntityAddToAction.EntityWidget
 
-        assertEquals("mdi:widgets", action.mdiIcon)
+        assertEquals("mdi:shape", action.mdiIcon)
         assertEquals("Add entity widget", action.text(context))
         assertEquals(true, action.enabled)
         assertEquals(null, action.details(context))
@@ -120,7 +120,7 @@ class EntityAddToActionTest {
 
         val action = EntityAddToAction.CameraWidget
 
-        assertEquals("mdi:camera", action.mdiIcon)
+        assertEquals("mdi:camera-image", action.mdiIcon)
         assertEquals("Add camera widget", action.text(context))
         assertEquals(true, action.enabled)
         assertEquals(null, action.details(context))
@@ -132,7 +132,7 @@ class EntityAddToActionTest {
 
         val action = EntityAddToAction.TodoWidget
 
-        assertEquals("mdi:checkbox-marked-circle-plus-outline", action.mdiIcon)
+        assertEquals("mdi:clipboard-list", action.mdiIcon)
         assertEquals("Add to-do widget", action.text(context))
         assertEquals(true, action.enabled)
         assertEquals(null, action.details(context))

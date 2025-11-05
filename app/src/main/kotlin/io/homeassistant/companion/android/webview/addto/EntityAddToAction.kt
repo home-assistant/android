@@ -108,7 +108,7 @@ sealed interface EntityAddToAction {
      */
     @Serializable
     data object Tile : EntityAddToAction {
-        override val mdiIcon: String = "mdi:cog"
+        override val mdiIcon: String = "mdi:tune"
 
         override fun text(context: Context): String {
             return context.getString(commonR.string.add_to_tile)
@@ -120,7 +120,7 @@ sealed interface EntityAddToAction {
      */
     @Serializable
     data object EntityWidget : EntityAddToAction {
-        override val mdiIcon: String = "mdi:widgets"
+        override val mdiIcon: String = "mdi:shape"
 
         override fun text(context: Context): String {
             return context.getString(commonR.string.add_to_entity_widget)
@@ -144,7 +144,7 @@ sealed interface EntityAddToAction {
      */
     @Serializable
     data object CameraWidget : EntityAddToAction {
-        override val mdiIcon: String = "mdi:camera"
+        override val mdiIcon: String = "mdi:camera-image"
 
         override fun text(context: Context): String {
             return context.getString(commonR.string.add_to_camera_widget)
@@ -156,7 +156,7 @@ sealed interface EntityAddToAction {
      */
     @Serializable
     data object TodoWidget : EntityAddToAction {
-        override val mdiIcon: String = "mdi:checkbox-marked-circle-plus-outline"
+        override val mdiIcon: String = "mdi:clipboard-list"
 
         override fun text(context: Context): String {
             return context.getString(commonR.string.add_to_todo_widget)

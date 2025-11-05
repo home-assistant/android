@@ -71,17 +71,6 @@ class EntityAddToHandler @Inject constructor(
                         if (entity.domain == CAMERA_DOMAIN || entity.domain == IMAGE_DOMAIN) {
                             actions.add(EntityAddToAction.CameraWidget)
                         }
-
-                        // TODO support tile https://github.com/home-assistant/android/issues/5623
-                        // if (entity.isUsableInTile()) {
-                        //   actions.add(EntityAddToAction.Tile)
-                        // }
-
-                        // TODO support watch favorite https://github.com/home-assistant/android/issues/5624
-                        // when it has a watch always send it and set the flag to false when not connected + details that it is disconnected
-
-                        // TODO support shortcut https://github.com/home-assistant/android/issues/5625
-                        // Always show but send false and details about why it is not enabled
                     }
             }
             actions
@@ -102,7 +91,6 @@ class EntityAddToHandler @Inject constructor(
             is EntityAddToAction.AndroidAutoFavorite -> addToAndroidAutoFavorite(entityId)
             is EntityAddToAction.Tile -> {
                 // TODO go to a new tile https://github.com/home-assistant/android/issues/5623
-                // startActivity(SettingsActivity.newInstance(context, SettingsActivity.Deeplink.QSTile()))
             }
             is EntityAddToAction.EntityWidget -> {
                 context.startActivity(
