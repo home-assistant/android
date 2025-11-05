@@ -271,6 +271,11 @@ private fun toJsonElement(encoder: JsonEncoder, value: Any?): JsonElement {
 
             is List<*> -> JsonArray(value.map { toJsonElement(encoder, it) })
             is Array<*> -> JsonArray(value.map { toJsonElement(encoder, it) })
+            // Handles internal JsonElement types from kotlinx.serialization, such as JsonLiteral
+            // (returned when accessing elements from parsed JSON using [] operator). JsonLiteral is an internal
+            // implementation detail that extends JsonPrimitive but doesn't have a public serializer.
+            // This case allows passing through any JsonElement directly without re-encoding.
+            is JsonElement -> value
             else -> {
                 throw IllegalArgumentException("Unsupported type: ${value::class}")
             }
