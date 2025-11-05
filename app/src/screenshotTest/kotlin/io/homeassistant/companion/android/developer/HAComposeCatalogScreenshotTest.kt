@@ -4,6 +4,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.developer.catalog.catalogButtonsAndIndicatorsSection
 import io.homeassistant.companion.android.developer.catalog.catalogTextAndBannersSection
 import io.homeassistant.companion.android.developer.catalog.catalogUserInputSection
@@ -14,8 +15,10 @@ class HAComposeCatalogScreenshotTest {
     @PreviewTest
     @Composable
     fun HAButtonsAndIndicatorsScreen() {
-        LazyColumn {
-            catalogButtonsAndIndicatorsSection(ButtonVariant.PRIMARY)
+        HAThemeForPreview {
+            LazyColumn {
+                catalogButtonsAndIndicatorsSection(ButtonVariant.PRIMARY)
+            }
         }
     }
 
@@ -23,8 +26,10 @@ class HAComposeCatalogScreenshotTest {
     @PreviewTest
     @Composable
     fun HAUserInputScreen() {
-        LazyColumn {
-            catalogUserInputSection()
+        HAThemeForPreview {
+            LazyColumn {
+                catalogUserInputSection()
+            }
         }
     }
 
@@ -32,8 +37,10 @@ class HAComposeCatalogScreenshotTest {
     @PreviewTest
     @Composable
     fun HATextAndBannersScreen() {
-        LazyColumn {
-            catalogTextAndBannersSection()
+        HAThemeForPreview {
+            LazyColumn {
+                catalogTextAndBannersSection()
+            }
         }
     }
 }

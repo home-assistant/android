@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HAProgress
 import io.homeassistant.companion.android.common.compose.theme.HASize
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 
 internal const val BIG_CONTENT =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
@@ -203,10 +204,12 @@ private fun LazyListScope.progress() {
     }
 }
 
-@Preview
+@Preview(showBackground = true, heightDp = 2000, widthDp = 1000)
 @Composable
-fun PreviewHAButtonsAndIndicatorsScreen() {
-    LazyColumn {
-        catalogButtonsAndIndicatorsSection(ButtonVariant.PRIMARY)
+private fun PreviewHAButtonsAndIndicatorsScreen() {
+    HAThemeForPreview {
+        LazyColumn {
+            catalogButtonsAndIndicatorsSection(ButtonVariant.PRIMARY)
+        }
     }
 }

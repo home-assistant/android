@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.composable.RadioOption
 import io.homeassistant.companion.android.common.compose.composable.rememberSelectedOption
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 
 fun LazyListScope.catalogUserInputSection() {
     input()
@@ -218,10 +219,12 @@ private fun LazyListScope.switches() {
     }
 }
 
-@Preview
+@Preview(showBackground = true, heightDp = 2000, widthDp = 1000)
 @Composable
-fun PreviewHAUserInputScreen() {
-    LazyColumn {
-        catalogUserInputSection()
+private fun PreviewHAUserInputScreen() {
+    HAThemeForPreview {
+        LazyColumn {
+            catalogUserInputSection()
+        }
     }
 }

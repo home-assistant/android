@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.common.compose.composable.HABanner
 import io.homeassistant.companion.android.common.compose.composable.HADetails
 import io.homeassistant.companion.android.common.compose.composable.HAHint
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 
 fun LazyListScope.catalogTextAndBannersSection() {
     textStyles()
@@ -79,10 +80,12 @@ private fun LazyListScope.details() {
     }
 }
 
-@Preview
+@Preview(showBackground = true, heightDp = 2000, widthDp = 1000)
 @Composable
-fun PreviewHATextAndBannersScreen() {
-    LazyColumn {
-        catalogTextAndBannersSection()
+private fun PreviewHATextAndBannersScreen() {
+    HAThemeForPreview {
+        LazyColumn {
+            catalogTextAndBannersSection()
+        }
     }
 }
