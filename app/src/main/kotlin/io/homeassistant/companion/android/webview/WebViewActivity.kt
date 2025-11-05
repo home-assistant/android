@@ -777,7 +777,7 @@ class WebViewActivity :
                                         }
                                     sendExternalBusMessage(
                                         ExternalConfigResponse(
-                                            id = json.getIntOrElse("id", 0),
+                                            id = json["id"],
                                             hasNfc = hasNfc,
                                             canCommissionMatter = canCommissionMatter,
                                             canExportThread = canExportThread,

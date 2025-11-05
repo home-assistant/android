@@ -40,7 +40,7 @@ object ShowSidebar : ExternalBusMessage(
 )
 
 class ExternalConfigResponse(
-    id: Any,
+    id: Any?,
     hasNfc: Boolean,
     canCommissionMatter: Boolean,
     canExportThread: Boolean,

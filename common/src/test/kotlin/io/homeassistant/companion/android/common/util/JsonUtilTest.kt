@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.util
 import java.time.LocalDateTime
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -108,12 +109,14 @@ class JsonUtilTest {
             "key9" to 1.0f,
             "key10" to arrayOf(4, 5, 6),
             "key11" to DummyValueObject(DummyObject("hello", 1)),
+            // Tests JsonLiteral handling (internal JsonElement type returned by [] operator)
+            "key12" to (Json.parseToJsonElement("""{"value": 1,"test": "hello"}""") as JsonObject)["value"],
         )
 
         val json = kotlinJsonMapper.encodeToString(MapAnySerializer, map)
 
         assertEquals(
-            """{"key1":"value1","key2":true,"key3":1,"key4":9223372036854775807,"key5":1.0,"key6":null,"key7":[1,2,3],"key8":{"subkey1":"value1","subkey2":1,"subkey3":true},"key9":1.0,"key10":[4,5,6],"key11":{"str_value":"hello","int_value":1}}""".trimIndent(),
+            """{"key1":"value1","key2":true,"key3":1,"key4":9223372036854775807,"key5":1.0,"key6":null,"key7":[1,2,3],"key8":{"subkey1":"value1","subkey2":1,"subkey3":true},"key9":1.0,"key10":[4,5,6],"key11":{"str_value":"hello","int_value":1},"key12":1}""".trimIndent(),
             json,
         )
     }
