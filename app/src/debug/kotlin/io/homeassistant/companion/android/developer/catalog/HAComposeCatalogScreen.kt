@@ -39,10 +39,11 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 
 private sealed class CatalogScreen(val title: String, val icon: ImageVector) {
-    object ButtonsAndIndicators : CatalogScreen( "Buttons & Indicators", Icons.Default.TouchApp)
-    object UserInput : CatalogScreen( "User Input", Icons.Default.Edit)
-    object TextAndBanners : CatalogScreen( "Text & Banners",
-        Icons.AutoMirrored.Filled.Article
+    object ButtonsAndIndicators : CatalogScreen("Buttons & Indicators", Icons.Default.TouchApp)
+    object UserInput : CatalogScreen("User Input", Icons.Default.Edit)
+    object TextAndBanners : CatalogScreen(
+        "Text & Banners",
+        Icons.AutoMirrored.Filled.Article,
     )
 }
 
