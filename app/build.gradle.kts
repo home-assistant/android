@@ -1,5 +1,3 @@
-import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
-
 plugins {
     alias(libs.plugins.homeassistant.android.application)
     alias(libs.plugins.homeassistant.android.flavor)
@@ -30,7 +28,7 @@ android {
     }
 }
 
-firebaseAppDistribution {
+firebaseAppDistributionDefault {
     serviceCredentialsFile = "firebaseAppDistributionServiceCredentialsFile.json"
     releaseNotesFile = "./app/build/outputs/changelogBeta"
     groups = "continuous-deployment"

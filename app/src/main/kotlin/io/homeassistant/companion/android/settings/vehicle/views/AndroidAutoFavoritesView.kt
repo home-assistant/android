@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
+import io.homeassistant.companion.android.common.data.prefs.AutoFavorite
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoViewModel
 import io.homeassistant.companion.android.util.compose.FavoriteEntityRow
@@ -56,7 +57,7 @@ fun AndroidAutoFavoritesSettings(
         validEntities = withContext(Dispatchers.IO) {
             androidAutoViewModel.sortedEntities
                 .filter {
-                    !favoriteEntities.contains("$selectedServer-${it.entityId}") &&
+                    !favoriteEntities.contains(AutoFavorite(selectedServer, it.entityId)) &&
                         isVehicleDomain(it)
                 }
                 .toList()
@@ -103,11 +104,10 @@ fun AndroidAutoFavoritesSettings(
         }
         if (favoriteEntities.isNotEmpty() && androidAutoViewModel.sortedEntities.isNotEmpty()) {
             items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
-                val favoriteEntity =
-                    favoriteEntities[index].split("-")
+                val favoriteEntity = favoriteEntities[index]
                 androidAutoViewModel.sortedEntities.firstOrNull {
-                    it.entityId == favoriteEntity[1] &&
-                        favoriteEntity[0].toInt() == selectedServer
+                    it.entityId == favoriteEntity.entityId &&
+                        favoriteEntity.serverId == selectedServer
                 }?.let {
                     ReorderableItem(
                         state = reorderState,

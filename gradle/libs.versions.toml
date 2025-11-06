@@ -13,6 +13,7 @@ androidSdk-automotive-min = "29"
 androidSdk-wear-min = "26"
 androidSdk-wear-target = "34"
 androidTools = "31.13.0"
+androidxConcurrent = "1.3.0"
 androidxHiltNavigationCompose = "1.2.0"
 androidxTestCore = "1.7.0"
 androidxTestExt = "1.3.0"
@@ -45,7 +46,7 @@ hilt = "2.57.2"
 iconics = "5.4.0"
 improv = "0.1.1"
 javaVersion = "11" # https://developer.android.com/studio/write/java11-minimal-support-table
-junit = "6.0.0"
+junit = "6.0.1"
 kotlin = "2.2.21"
 kotlinx-coroutines = "1.10.2"
 kotlinx-serialization = "1.9.0"
@@ -121,6 +122,7 @@ android-beacon-library = { module = "org.altbeacon:android-beacon-library", vers
 android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
 androidx-lifecycle-service = { module = "androidx.lifecycle:lifecycle-service", version.ref = "lifecycle" }
 compose-screenshot-gradle-plugin = { group = "com.android.compose.screenshot", name = "screenshot-test-gradle-plugin", version.ref = "screenshot" }
+androidx-concurrent-ktx = { group = "androidx.concurrent", name = "concurrent-futures-ktx", version.ref = "androidxConcurrent" }
 androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
 androidx-glance-material = { module = "androidx.glance:glance-material", version.ref = "glance" }
 androidx-glance-preview = { module = "androidx.glance:glance-preview", version.ref = "glance" }
