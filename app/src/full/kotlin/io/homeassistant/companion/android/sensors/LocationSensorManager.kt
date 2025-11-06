@@ -931,7 +931,7 @@ class LocationSensorManager :
                 .filter {
                     val passive = it.attributes["passive"] as? Boolean
                     val radius = it.attributes["radius"] as? Number
-                    return@filter passive == false && it.containsWithAccuracy(location) && radius != null
+                    return@filter passive == false && radius != null && it.containsWithAccuracy(location)
                 }
                 .minByOrNull { (it.attributes["radius"] as? Number ?: Int.MAX_VALUE).toFloat() }
 
