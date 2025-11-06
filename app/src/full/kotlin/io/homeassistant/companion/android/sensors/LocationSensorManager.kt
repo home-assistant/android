@@ -929,7 +929,7 @@ class LocationSensorManager :
             val zones = getZones(serverId)
             val locationZone = zones
                 .filter {
-                    val passive = it.attributes["passive"] as? Boolean ?: true
+                    val passive = it.attributes["passive"] as? Boolean
                     val radius = it.attributes["radius"] as? Number
                     return@filter !passive && it.containsWithAccuracy(location) && radius != null
                 }
