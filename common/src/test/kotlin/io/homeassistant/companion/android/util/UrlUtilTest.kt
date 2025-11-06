@@ -56,36 +56,4 @@ class UrlUtilTest {
         val url = URL("http://8.8.8.8:80")
         assertTrue(url.isPubliclyAccessible())
     }
-
-    @ParameterizedTest
-    @ValueSource(
-        strings = [
-            "http://example.com",
-            "http://homeassistant.local:8123",
-            "http://192.168.1.10:8123",
-            "http://localhost:8123/lovelace",
-            "HTTP://EXAMPLE.COM",
-            "HtTp://mixed.case.url:8080",
-        ],
-    )
-    fun `Given HTTP URL when checking isHttp then returns true`(urlString: String) {
-        val url = URL(urlString)
-        assertTrue(url.isHttp())
-    }
-
-    @ParameterizedTest
-    @ValueSource(
-        strings = [
-            "https://example.com",
-            "https://homeassistant.local:8123",
-            "https://192.168.1.10:8123",
-            "https://localhost:8123/lovelace",
-            "HTTPS://EXAMPLE.COM",
-            "HtTpS://mixed.case.url:8080",
-        ],
-    )
-    fun `Given HTTPS URL when checking isHttp then returns false`(urlString: String) {
-        val url = URL(urlString)
-        assertFalse(url.isHttp())
-    }
 }

@@ -48,7 +48,7 @@ class ConnectionSecurityLevelFragment : Fragment() {
 
     companion object {
         const val RESULT_KEY = "connection_security_level_result"
-        const val EXTRA_SEVER_ID_KEY = "server_id"
+        const val EXTRA_SERVER = "server_id"
     }
 
     private val viewModel: LocationForSecureConnectionViewModel by createViewModelLazy(
@@ -57,7 +57,7 @@ class ConnectionSecurityLevelFragment : Fragment() {
         extrasProducer = {
             // Extract serverId from Fragment arguments and inject into SavedStateHandle
             // to satisfy LocationForSecureConnectionRoute requirements
-            val serverId = arguments?.getInt(EXTRA_SEVER_ID_KEY, -1) ?: -1
+            val serverId = arguments?.getInt(EXTRA_SERVER, -1) ?: -1
             MutableCreationExtras(defaultViewModelCreationExtras).apply {
                 // Key need to match the name of the attribute in the route
                 set(DEFAULT_ARGS_KEY, bundleOf("serverId" to serverId))
@@ -87,9 +87,13 @@ class ConnectionSecurityLevelFragment : Fragment() {
                                 setFragmentResult(RESULT_KEY, Bundle())
                                 parentFragmentManager.popBackStack()
                             },
+                            onBackClick = {
+                                parentFragmentManager.popBackStack()
+                            },
                             onHelpClick = {
-                                // TODO validate the URL to use
-                                uriHandler.openUri("https://www.home-assistant.io/installation/")
+                                uriHandler.openUri(
+                                    "https://companion.home-assistant.io/docs/getting_started/connection-security-level",
+                                )
                             },
                             onShowSnackbar = { message, action ->
                                 snackbarHostState.showSnackbar(

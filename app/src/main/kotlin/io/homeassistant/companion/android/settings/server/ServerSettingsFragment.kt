@@ -186,7 +186,7 @@ class ServerSettingsFragment :
                     replace(
                         R.id.content_full_screen,
                         ConnectionSecurityLevelFragment::class.java,
-                        Bundle().apply { putInt(ConnectionSecurityLevelFragment.EXTRA_SEVER_ID_KEY, serverId) },
+                        Bundle().apply { putInt(ConnectionSecurityLevelFragment.EXTRA_SERVER, serverId) },
                     )
                     addToBackStack(null)
                 }
@@ -352,9 +352,6 @@ class ServerSettingsFragment :
                 }
         }
     }
-    override fun updateInternalUrl() {
-        potentiallyShowSecurityLevel()
-    }
 
     private fun setLockAuthenticationResult(result: Int): Boolean {
         val success = result == Authenticator.SUCCESS
@@ -394,7 +391,7 @@ class ServerSettingsFragment :
     private fun potentiallyShowSecurityLevel() {
         lifecycleScope.launch {
             findPreference<Preference>("connection_security_level")?.let {
-                it.isVisible = USE_NEW_LAUNCHER && presenter.hasHTTPURL()
+                it.isVisible = USE_NEW_LAUNCHER
             }
         }
     }

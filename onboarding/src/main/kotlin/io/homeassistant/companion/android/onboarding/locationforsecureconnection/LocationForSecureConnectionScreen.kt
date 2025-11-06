@@ -61,11 +61,13 @@ fun LocationForSecureConnectionScreen(
     onHelpClick: () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
+    onBackClick: (() -> Unit)? = null,
 ) {
     val initialAllowInsecureConnection by viewModel.allowInsecureConnection.collectAsState(null)
 
     LocationForSecureConnectionScreen(
         initialAllowInsecureConnection = initialAllowInsecureConnection,
+        onBackClick = onBackClick,
         onAllowInsecureConnection = { allowInsecureConnection ->
             viewModel.allowInsecureConnection(allowInsecureConnection)
             onGoToNextScreen(allowInsecureConnection)
@@ -83,10 +85,11 @@ internal fun LocationForSecureConnectionScreen(
     onHelpClick: () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
+    onBackClick: (() -> Unit)? = null,
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { HATopBar(onHelpClick = onHelpClick) },
+        topBar = { HATopBar(onBackClick = onBackClick, onHelpClick = onHelpClick) },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { contentPadding ->
         LocationForSecureConnectionContent(
@@ -169,7 +172,7 @@ private fun LocationForSecureConnectionContent(
         )
         Spacer(modifier = Modifier.weight(1f))
         HAAccentButton(
-            text = stringResource(R.string.location_secure_connection_next),
+            text = stringResource(R.string.location_secure_connection_save),
             enabled = selectedOption != null,
             onClick = {
                 if (selectedOption?.selectionKey == SelectionKey.MOST_SECURE) {

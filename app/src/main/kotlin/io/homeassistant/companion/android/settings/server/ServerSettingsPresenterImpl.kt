@@ -4,7 +4,6 @@ import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.util.isHttp
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -97,7 +96,6 @@ class ServerSettingsPresenterImpl @Inject constructor(
                                 ),
                             ),
                         )
-                        view.updateInternalUrl()
                     }
                 }
                 "session_timeout" -> {
@@ -203,9 +201,5 @@ class ServerSettingsPresenterImpl @Inject constructor(
             false -> commonR.string.connection_security_most_secure
             null -> commonR.string.connection_security_level_default_summary
         }
-    }
-
-    override suspend fun hasHTTPURL(): Boolean {
-        return serverManager.getServer(serverId)?.connection?.getApiUrls()?.any { it.isHttp() } == true
     }
 }

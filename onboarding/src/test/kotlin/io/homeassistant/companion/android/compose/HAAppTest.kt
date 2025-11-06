@@ -172,7 +172,7 @@ class HAAppTest {
             navController.navigateToLocationForSecureConnection(42)
 
             onNodeWithText(stringResource(R.string.connection_security_less_secure)).performScrollTo().performClick()
-            onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().assertIsEnabled().assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(R.string.location_secure_connection_save)).performScrollTo().assertIsEnabled().assertIsDisplayed().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
         }
@@ -184,7 +184,7 @@ class HAAppTest {
             navController.navigateToLocationForSecureConnection(42)
 
             onNodeWithText(stringResource(R.string.connection_security_less_secure)).performScrollTo().performClick()
-            onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().assertIsEnabled().assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(R.string.location_secure_connection_save)).performScrollTo().assertIsEnabled().assertIsDisplayed().performClick()
 
             verify(exactly = 1) {
                 activityNavigator.navigate(

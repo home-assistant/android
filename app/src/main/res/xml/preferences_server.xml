@@ -40,8 +40,7 @@
             app:isPreferenceVisible="false"
             android:key="connection_security_level"
             android:icon="@drawable/ic_lock"
-            android:title="@string/connection_security_level_title"
-            android:summary="@string/connection_security_level_default_summary"/>
+            android:title="@string/connection_security_level_title"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:key="security_category"
