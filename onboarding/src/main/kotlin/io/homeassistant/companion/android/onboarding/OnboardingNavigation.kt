@@ -92,11 +92,7 @@ internal fun NavController.navigateToOnboarding(
  * 2. Server discovery (only shown if [urlToOnboard] is empty)
  * 3. Connection
  * 3. Device naming and registration
- * 4. Location/security configuration (conditional):
- *    - Public servers + full flavor: Location sharing
- *    - Local servers: Local-first explanation then location sharing (full) or security config (minimal)
- *    - Minimal flavor + HTTP: Location for secure connection detection
- *    - Minimal flavor + HTTPS: Complete
+ * 4. Location/security configuration (conditional)
  * 5. Home network configuration (if applicable)
  *
  * @param navController Navigation controller for managing navigation actions
