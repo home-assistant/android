@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.widgets.entity
 
 import android.appwidget.AppWidgetManager
+import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.text.Editable
@@ -39,6 +41,16 @@ import timber.log.Timber
 
 @AndroidEntryPoint
 class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity<StaticWidgetEntity, StaticWidgetDao>() {
+
+    companion object {
+        fun newInstance(context: Context, entityId: String): Intent {
+            return Intent(context, EntityWidgetConfigureActivity::class.java).apply {
+                putExtra(FOR_ENTITY, entityId)
+                putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+        }
+    }
 
     private var entities = mutableMapOf<Int, List<Entity>>()
 
@@ -93,6 +105,10 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity<StaticWidgetEn
         val intent = intent
         val extras = intent.extras
         if (extras != null) {
+            if (extras.containsKey(FOR_ENTITY)) {
+                binding.widgetTextConfigEntityId.setText(extras.getString(FOR_ENTITY))
+            }
+
             appWidgetId = extras.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
                 AppWidgetManager.INVALID_APPWIDGET_ID,

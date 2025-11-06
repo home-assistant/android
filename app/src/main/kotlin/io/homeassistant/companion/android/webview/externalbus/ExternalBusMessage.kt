@@ -1,8 +1,13 @@
 package io.homeassistant.companion.android.webview.externalbus
 
+import android.content.Context
 import android.webkit.ValueCallback
 import io.homeassistant.companion.android.common.util.AppVersion
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.toJsonObject
+import io.homeassistant.companion.android.webview.addto.EntityAddToAction
+import kotlin.io.encoding.Base64
+import kotlinx.serialization.Serializable
 import timber.log.Timber
 
 /**
@@ -33,6 +38,7 @@ class NavigateTo(path: String, replace: Boolean = false) :
             ),
         ),
     )
+
 object ShowSidebar : ExternalBusMessage(
     id = -1,
     type = "command",
@@ -62,8 +68,53 @@ class ExternalConfigResponse(
         "canSetupImprov" to true,
         "downloadFileSupported" to true,
         "appVersion" to appVersion.value,
+        "hasEntityAddTo" to true,
     ).toJsonObject(),
     callback = {
         Timber.d("Callback from external config (id=$id): $it")
     },
 )
+
+@Serializable
+data class ExternalEntityAddToAction(
+    val appPayload: String,
+    val enabled: Boolean,
+    val name: String,
+    val details: String?,
+    val mdiIcon: String,
+) {
+    companion object {
+        fun fromAction(context: Context, action: EntityAddToAction): ExternalEntityAddToAction {
+            // Encode the app payload into Base64 to ensure that the data remains the same while going
+            // to the frontend and coming back.
+            return ExternalEntityAddToAction(
+                appPayload = Base64.UrlSafe.encode(
+                    kotlinJsonMapper.encodeToString(action)
+                        .encodeToByteArray(),
+                ),
+                action.enabled,
+                action.text(context),
+                action.details(context),
+                action.mdiIcon,
+            )
+        }
+
+        fun appPayloadToAction(appPayload: String): EntityAddToAction {
+            val actionJSON = Base64.UrlSafe.decode(appPayload).decodeToString()
+            return kotlinJsonMapper.decodeFromString<EntityAddToAction>(
+                actionJSON,
+            )
+        }
+    }
+}
+
+class EntityAddToActionsResponse(id: Any?, actions: List<ExternalEntityAddToAction>) :
+    ExternalBusMessage(
+        id = id,
+        type = "result",
+        success = true,
+        result = mapOf("actions" to actions).toJsonObject(),
+        callback = {
+            Timber.d("Callback from AddToActions")
+        },
+    )

@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.common.data.prefs
 
+import android.os.Parcelable
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
+import kotlinx.parcelize.Parcelize
 
 enum class NightModeTheme(val storageValue: String) {
     LIGHT("light"),
@@ -17,6 +19,9 @@ enum class NightModeTheme(val storageValue: String) {
         fun fromStorageValue(value: String?): NightModeTheme? = entries.firstOrNull { it.storageValue == value }
     }
 }
+
+@Parcelize
+data class AutoFavorite(val serverId: Int, val entityId: String) : Parcelable
 
 interface PrefsRepository {
     suspend fun getAppVersion(): String?
@@ -99,9 +104,11 @@ interface PrefsRepository {
 
     suspend fun setIgnoredSuggestions(ignored: List<String>)
 
-    suspend fun getAutoFavorites(): List<String>
+    suspend fun getAutoFavorites(): List<AutoFavorite>
 
-    suspend fun setAutoFavorites(favorites: List<String>)
+    suspend fun setAutoFavorites(favorites: List<AutoFavorite>)
+
+    suspend fun addAutoFavorite(favorite: AutoFavorite)
 
     suspend fun isLocationHistoryEnabled(): Boolean
 

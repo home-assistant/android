@@ -8,6 +8,8 @@ import androidx.annotation.RequiresApi
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.applyCompressedStateDiff
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -41,7 +43,7 @@ class HaControlsProviderService : ControlsProviderService() {
         private val domainToHaControl = mapOf(
             "automation" to DefaultSwitchControl,
             "button" to DefaultButtonControl,
-            "camera" to CameraControl,
+            CAMERA_DOMAIN to CameraControl,
             "climate" to ClimateControl,
             "cover" to CoverControl,
             "fan" to FanControl,
@@ -52,7 +54,7 @@ class HaControlsProviderService : ControlsProviderService() {
             "input_number" to DefaultSliderControl,
             "light" to LightControl,
             "lock" to LockControl,
-            "media_player" to MediaPlayerControl,
+            MEDIA_PLAYER_DOMAIN to MediaPlayerControl,
             "number" to DefaultSliderControl,
             "remote" to DefaultSwitchControl,
             "scene" to DefaultButtonControl,
@@ -62,11 +64,10 @@ class HaControlsProviderService : ControlsProviderService() {
             "vacuum" to VacuumControl,
         )
         private val domainToMinimumApi = mapOf(
-            "camera" to Build.VERSION_CODES.S,
+            CAMERA_DOMAIN to Build.VERSION_CODES.S,
         )
 
         fun getSupportedDomains(): List<String> = domainToHaControl
-            .filter { it.value != null }
             .map { it.key }
             .filter {
                 domainToMinimumApi[it] == null ||

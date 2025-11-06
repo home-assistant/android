@@ -86,6 +86,7 @@ import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.common.util.getBooleanOrElse
@@ -119,8 +120,11 @@ import io.homeassistant.companion.android.util.compose.initializePlayer
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
+import io.homeassistant.companion.android.webview.addto.EntityAddToHandler
+import io.homeassistant.companion.android.webview.externalbus.EntityAddToActionsResponse
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import io.homeassistant.companion.android.webview.externalbus.ExternalConfigResponse
+import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import io.homeassistant.companion.android.webview.externalbus.NavigateTo
 import io.homeassistant.companion.android.webview.externalbus.ShowSidebar
 import javax.inject.Inject
@@ -222,6 +226,9 @@ class WebViewActivity :
 
     @Inject
     lateinit var appVersionProvider: AppVersionProvider
+
+    @Inject
+    lateinit var entityAddToHandler: EntityAddToHandler
 
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
@@ -869,6 +876,8 @@ class WebViewActivity :
                                     json["payload"]?.jsonObjectOrNull()?.getStringOrNull("hapticType") ?: "",
                                 )
                                 "theme-update" -> getAndSetStatusBarNavigationBarColors()
+                                "entity/add_to/get_actions" -> getActions(json)
+                                "entity/add_to" -> addEntityTo(json)
                                 else -> presenter.onExternalBusMessage(json)
                             }
                         }
@@ -890,6 +899,40 @@ class WebViewActivity :
                 },
                 javascriptInterface,
             )
+        }
+    }
+
+    private fun addEntityTo(json: JsonObject) {
+        val payload = json["payload"]?.jsonObjectOrNull()
+        val entityId = payload?.getStringOrNull("entity_id")
+        val appPayload = payload?.getStringOrNull("app_payload")
+        if (entityId != null && appPayload != null) {
+            val action = ExternalEntityAddToAction.appPayloadToAction(appPayload)
+            lifecycleScope.launch {
+                entityAddToHandler.execute(this@WebViewActivity, action, entityId)
+            }
+        } else {
+            FailFast.fail { "Missing entity_id or app_payload to addEntityTo" }
+        }
+    }
+
+    private fun getActions(json: JsonObject) {
+        val payload = json["payload"]?.jsonObjectOrNull()
+        val entityId = payload?.getStringOrNull("entity_id")
+        entityId?.let {
+            lifecycleScope.launch {
+                val actions = entityAddToHandler.actionsForEntity(entityId)
+                sendExternalBusMessage(
+                    EntityAddToActionsResponse(
+                        id = json["id"],
+                        actions = actions.map { action ->
+                            ExternalEntityAddToAction.fromAction(this@WebViewActivity, action)
+                        },
+                    ),
+                )
+            }
+        } ?: FailFast.fail {
+            "entity_id not present in response from External bus for `entity/add_to/get_actions`"
         }
     }
 
@@ -1650,7 +1693,7 @@ class WebViewActivity :
         val json = Json.encodeToString(jsonObject)
         val script = "externalBus($json);"
 
-        Timber.d(script)
+        Timber.d("Sending: $script")
 
         webView.evaluateJavascript(script, message.callback)
     }

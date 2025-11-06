@@ -14,7 +14,6 @@ import androidx.fragment.app.viewModels
 import com.mikepenz.iconics.typeface.IIcon
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.qs.views.ManageTilesView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
@@ -23,11 +22,6 @@ import timber.log.Timber
 
 @AndroidEntryPoint
 class ManageTilesFragment : Fragment() {
-
-    companion object {
-        val validDomains = EntityExt.APP_PRESS_ACTION_DOMAINS
-    }
-
     val viewModel: ManageTilesViewModel by viewModels()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
