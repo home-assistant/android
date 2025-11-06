@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.PowerManager
+import androidx.concurrent.futures.await
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import androidx.work.CoroutineWorker
@@ -47,7 +48,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     CoroutineWorker(appContext, workerParams) {
 
     companion object {
-        private const val TAG = "WebSockManager"
+        private const val TAG = "WebSocketManager"
         private const val SOURCE = "Websocket"
         private const val NOTIFICATION_ID = 65423
         private const val NOTIFICATION_RESTRICTED_ID = 65424
@@ -59,13 +60,13 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
             WebsocketSetting.ALWAYS
         }
 
-        fun start(context: Context) {
+        suspend fun start(context: Context) {
             val websocketNotifications =
                 PeriodicWorkRequestBuilder<WebsocketManager>(15, TimeUnit.MINUTES)
                     .build()
 
             val workManager = WorkManager.getInstance(context)
-            val workInfo = workManager.getWorkInfosForUniqueWork(TAG).get().firstOrNull()
+            val workInfo = workManager.getWorkInfosForUniqueWork(TAG).await().firstOrNull()
 
             if (workInfo == null || workInfo.state.isFinished || workInfo.state == WorkInfo.State.ENQUEUED) {
                 workManager.enqueueUniquePeriodicWork(
