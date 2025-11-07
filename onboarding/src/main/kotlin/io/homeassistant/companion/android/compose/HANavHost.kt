@@ -68,7 +68,6 @@ internal fun HANavHost(
             if (startDestination is WearOnboardingRoute) {
                 wearOnboarding(
                     navController,
-                    onShowSnackbar,
                     onOnboardingDone = {
                             deviceName: String,
                             serverUrl: String,
