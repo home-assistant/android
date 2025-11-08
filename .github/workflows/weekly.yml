@@ -2,8 +2,8 @@ name: Tag Weekly Release
 
 on: # yamllint disable-line rule:truthy
   workflow_dispatch:
-  schedule:
-    - cron: "0 4 * * 0"
+  # schedule:
+  #   - cron: "0 4 * * 0"
 jobs:
   tag:
     name: Tag Weekly Release
