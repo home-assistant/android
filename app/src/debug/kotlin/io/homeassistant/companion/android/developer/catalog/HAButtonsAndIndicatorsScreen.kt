@@ -1,21 +1,13 @@
 package io.homeassistant.companion.android.developer.catalog
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,10 +16,7 @@ import io.homeassistant.companion.android.common.compose.composable.ButtonVarian
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAIconButton
-import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
-import io.homeassistant.companion.android.common.compose.composable.HAProgress
-import io.homeassistant.companion.android.common.compose.theme.HASize
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 
 internal const val BIG_CONTENT =
@@ -38,7 +27,6 @@ fun LazyListScope.catalogButtonsAndIndicatorsSection(variant: ButtonVariant) {
     buttonSection(variant = variant, enabled = false)
     buttonsWithIcon(variant = variant)
     buttonsWithBigContent(variant = variant)
-    progress()
 }
 
 private fun LazyListScope.buttonSection(variant: ButtonVariant, enabled: Boolean) {
@@ -176,29 +164,6 @@ private fun LazyListScope.buttonsWithBigContent(variant: ButtonVariant) {
                 suffix = { AddIcon() },
                 maxLines = 1,
                 textOverflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
-private fun LazyListScope.progress() {
-    catalogSection(title = "Progress") {
-        CatalogRow {
-            HALoading(modifier = Modifier.size(HASize.X5L))
-            var progress by remember { mutableFloatStateOf(0.1f) }
-            val animatedProgress by
-                animateFloatAsState(
-                    targetValue = progress,
-                    animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
-                    label = "Progress",
-                )
-            HAProgress(
-                { animatedProgress },
-                modifier = Modifier.clickable(
-                    onClick = {
-                        progress = 1f
-                    },
-                ),
             )
         }
     }

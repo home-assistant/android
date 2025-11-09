@@ -1,9 +1,8 @@
-@file:JvmName("HAComposeCatalogScreenKt")
-
 package io.homeassistant.companion.android.developer.catalog
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -82,11 +82,16 @@ fun HAComposeCatalogScreen() {
                     }
                 }
             },
-        ) { paddingValues ->
+        ) { scaffoldPadding ->
+            val layoutDirection = LocalLayoutDirection.current
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = scaffoldPadding.calculateLeftPadding(LocalLayoutDirection.current),
+                    top = scaffoldPadding.calculateTopPadding(),
+                    end = scaffoldPadding.calculateRightPadding(layoutDirection),
+                    bottom = scaffoldPadding.calculateBottomPadding() + HADimens.SPACE4,
+                ),
                 verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
             ) {
                 when (currentScreen) {
