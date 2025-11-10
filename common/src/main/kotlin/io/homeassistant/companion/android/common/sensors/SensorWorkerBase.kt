@@ -91,11 +91,12 @@ abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerPar
 
     private suspend fun determineForegroundServiceType(): Int {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            if (isWebSocketManagerRunning()) {
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
-            } else {
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-            }
+//            if (isWebSocketManagerRunning()) {
+//                ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
+//            } else {
+//                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+//            }
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
         } else {
