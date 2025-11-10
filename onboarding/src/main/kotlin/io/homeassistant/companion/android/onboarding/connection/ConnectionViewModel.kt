@@ -294,9 +294,11 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     }
 
     private fun interceptRedirectIfRequired(url: Uri): Boolean {
+        Timber.e("Hello, intercept $url")
         val code = url.getQueryParameter("code")
 
         return if (url.scheme == AUTH_CALLBACK_SCHEME && url.host == AUTH_CALLBACK_HOST) {
+            Timber.e("Hello, valid scheme and host")
             if (!code.isNullOrBlank()) {
                 viewModelScope.launch {
                     _navigationEventsFlow.emit(
@@ -319,6 +321,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
             }
             true // Intercepted: External link
         } else {
+            Timber.e("Hello, no intercept")
             false // Default: Not intercepted
         }
     }
