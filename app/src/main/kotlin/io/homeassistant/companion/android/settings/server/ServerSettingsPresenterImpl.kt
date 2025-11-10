@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.server
 
 import androidx.preference.PreferenceDataStore
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
@@ -194,12 +193,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
         return serverManager.getServer(serverId)?.connection?.getUrl()?.toString()
     }
 
-    override suspend fun securityLevelSummary(): Int? {
-        val allowInsecureConnection = serverManager.integrationRepository(serverId).getAllowInsecureConnection()
-        return when (allowInsecureConnection) {
-            true -> commonR.string.connection_security_less_secure
-            false -> commonR.string.connection_security_most_secure
-            null -> commonR.string.connection_security_level_default_summary
-        }
+    override suspend fun getAllowInsecureConnection(): Boolean? {
+        return serverManager.integrationRepository(serverId).getAllowInsecureConnection()
     }
 }

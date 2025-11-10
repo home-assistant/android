@@ -62,12 +62,14 @@ fun LocationForSecureConnectionScreen(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
     onBackClick: (() -> Unit)? = null,
+    isStandaloneScreen: Boolean = false,
 ) {
     val initialAllowInsecureConnection by viewModel.allowInsecureConnection.collectAsState(null)
 
     LocationForSecureConnectionScreen(
         initialAllowInsecureConnection = initialAllowInsecureConnection,
         onBackClick = onBackClick,
+        isStandaloneScreen = isStandaloneScreen,
         onAllowInsecureConnection = { allowInsecureConnection ->
             viewModel.allowInsecureConnection(allowInsecureConnection)
             onGoToNextScreen(allowInsecureConnection)
@@ -86,6 +88,7 @@ internal fun LocationForSecureConnectionScreen(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
     onBackClick: (() -> Unit)? = null,
+    isStandaloneScreen: Boolean = false,
 ) {
     Scaffold(
         modifier = modifier,
@@ -93,6 +96,7 @@ internal fun LocationForSecureConnectionScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { contentPadding ->
         LocationForSecureConnectionContent(
+            isStandaloneScreen = isStandaloneScreen,
             initialAllowInsecureConnection = initialAllowInsecureConnection,
             onAllowInsecureConnection = onAllowInsecureConnection,
             onShowSnackbar = onShowSnackbar,
@@ -104,6 +108,7 @@ internal fun LocationForSecureConnectionScreen(
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 private fun LocationForSecureConnectionContent(
+    isStandaloneScreen: Boolean,
     initialAllowInsecureConnection: Boolean?,
     onAllowInsecureConnection: (allowInsecureConnection: Boolean) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
@@ -172,7 +177,13 @@ private fun LocationForSecureConnectionContent(
         )
         Spacer(modifier = Modifier.weight(1f))
         HAAccentButton(
-            text = stringResource(R.string.location_secure_connection_save),
+            text = if (isStandaloneScreen) {
+                stringResource(
+                    R.string.location_secure_connection_save,
+                )
+            } else {
+                stringResource(R.string.location_secure_connection_next)
+            },
             enabled = selectedOption != null,
             onClick = {
                 if (selectedOption?.selectionKey == SelectionKey.MOST_SECURE) {

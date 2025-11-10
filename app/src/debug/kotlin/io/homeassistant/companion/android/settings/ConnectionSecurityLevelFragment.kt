@@ -82,6 +82,7 @@ class ConnectionSecurityLevelFragment : Fragment() {
                         },
                     ) {
                         LocationForSecureConnectionScreen(
+                            isStandaloneScreen = true,
                             viewModel = viewModel,
                             onGoToNextScreen = {
                                 setFragmentResult(RESULT_KEY, Bundle())

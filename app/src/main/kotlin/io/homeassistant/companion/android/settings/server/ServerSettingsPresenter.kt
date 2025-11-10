@@ -18,5 +18,5 @@ interface ServerSettingsPresenter {
 
     suspend fun serverURL(): String?
 
-    suspend fun securityLevelSummary(): Int?
+    suspend fun getAllowInsecureConnection(): Boolean?
 }

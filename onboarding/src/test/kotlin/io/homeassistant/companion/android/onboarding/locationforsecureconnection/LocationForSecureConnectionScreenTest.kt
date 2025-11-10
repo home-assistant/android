@@ -55,7 +55,7 @@ class LocationForSecureConnectionScreenTest {
     fun `Given selecting most secure connection when next clicked and permission given then go to next screen`() {
         composeTestRule.apply {
             testScreen {
-                val nextButton = onNodeWithText(stringResource(R.string.location_secure_connection_save))
+                val nextButton = onNodeWithText(stringResource(R.string.location_secure_connection_next))
                     .performScrollTo()
                     .assertIsDisplayed()
                     .assertIsNotEnabled()
@@ -74,7 +74,7 @@ class LocationForSecureConnectionScreenTest {
     fun `Given most secure connection already set when displayed and most secure is selected`() {
         composeTestRule.apply {
             testScreen(initialAllowInsecureConnection = false) {
-                onNodeWithText(stringResource(R.string.location_secure_connection_save))
+                onNodeWithText(stringResource(R.string.location_secure_connection_next))
                     .performScrollTo()
                     .assertIsDisplayed()
                     .assertIsEnabled()
@@ -86,7 +86,7 @@ class LocationForSecureConnectionScreenTest {
     fun `Given selecting less secure connection when next clicked then go to next screen`() {
         composeTestRule.apply {
             testScreen {
-                val nextButton = onNodeWithText(stringResource(R.string.location_secure_connection_save))
+                val nextButton = onNodeWithText(stringResource(R.string.location_secure_connection_next))
                     .performScrollTo()
                     .assertIsDisplayed()
                     .assertIsNotEnabled()
@@ -105,7 +105,7 @@ class LocationForSecureConnectionScreenTest {
     fun `Given selecting most secure connection when next clicked and permission not given then stay on screen with snackbar and select less secure`() {
         composeTestRule.apply {
             testScreen(locationPermissionGranted = false) {
-                val nextButton = onNodeWithText(stringResource(R.string.location_secure_connection_save))
+                val nextButton = onNodeWithText(stringResource(R.string.location_secure_connection_next))
                     .assertIsNotDisplayed()
 
                 onNodeWithText(stringResource(commonR.string.connection_security_most_secure)).performScrollTo().performClick()

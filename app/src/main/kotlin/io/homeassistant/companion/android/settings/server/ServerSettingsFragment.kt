@@ -398,9 +398,12 @@ class ServerSettingsFragment :
     private fun updateSecurityLevelSummary() {
         lifecycleScope.launch {
             findPreference<Preference>("connection_security_level")?.let { preference ->
-                presenter.securityLevelSummary()?.let { summaryId ->
-                    preference.summary = getString(summaryId)
+                val summaryId = when (presenter.getAllowInsecureConnection()) {
+                    true -> commonR.string.connection_security_less_secure
+                    false -> commonR.string.connection_security_most_secure
+                    null -> commonR.string.connection_security_level_default_summary
                 }
+                preference.summary = getString(summaryId)
             }
         }
     }
