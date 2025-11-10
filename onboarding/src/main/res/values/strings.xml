@@ -49,5 +49,6 @@
     <string name="connection_error_documentation_content_description">Home Assistant Documentation</string>
     <string name="connection_error_forum_content_description">Home Assistant Forum</string>
     <string name="connection_error_github_content_description">Home Assistant GitHub"</string>
+    <string name="connection_error_unknown_error">There was an error loading Home Assistant. Please review the connection settings and try again.</string>
     <string name="back">Back</string>
 </resources>

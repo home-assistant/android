@@ -16,6 +16,7 @@ import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tiles.TileService
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.sensors.id
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -231,7 +232,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
                 SetCameraTileView(
                     tile = mainViewModel.cameraTiles.value.firstOrNull { it.id == tileId },
-                    entities = mainViewModel.cameraEntitiesMap["camera"],
+                    entities = mainViewModel.cameraEntitiesMap[CAMERA_DOMAIN],
                     onSelectEntity = {
                         swipeDismissableNavController.navigate(
                             "$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_ENTITY",
@@ -253,7 +254,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 ),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
-                val cameraDomains = remember { mutableStateListOf("camera") }
+                val cameraDomains = remember { mutableStateListOf(CAMERA_DOMAIN) }
                 val cameraFavorites = remember { mutableStateOf(emptyList<String>()) } // There are no camera favorites
                 ChooseEntityView(
                     entitiesByDomainOrder = cameraDomains,
