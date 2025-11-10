@@ -928,18 +928,24 @@ class LocationSensorManager :
         if (updateLocationAs == SEND_LOCATION_AS_ZONE_ONLY) {
             val zones = getZones(serverId)
             val locationZone = zones
-                .filter { !(it.attributes["passive"] as Boolean) && it.containsWithAccuracy(location) }
-                .minByOrNull { (it.attributes["radius"] as Number).toFloat() }
+                .filter {
+                    val passive = it.attributes["passive"] as? Boolean
+                    val radius = it.attributes["radius"] as? Number
+                    return@filter passive == false && radius != null && it.containsWithAccuracy(location)
+                }
+                .minByOrNull { (it.attributes["radius"] as? Number ?: Int.MAX_VALUE).toFloat() }
+
+            val locationName = locationZone?.entityId?.split(".")?.getOrNull(1) ?: ZONE_NAME_NOT_HOME
             updateLocation = UpdateLocation(
                 gps = null,
                 gpsAccuracy = null,
-                locationName = locationZone?.entityId?.split(".")?.get(1) ?: ZONE_NAME_NOT_HOME,
+                locationName = locationName,
                 speed = null,
                 altitude = null,
                 course = null,
                 verticalAccuracy = null,
             )
-            updateLocationString = updateLocation.locationName!!
+            updateLocationString = locationName
         } else {
             updateLocation = UpdateLocation(
                 gps = listOf(location.latitude, location.longitude),

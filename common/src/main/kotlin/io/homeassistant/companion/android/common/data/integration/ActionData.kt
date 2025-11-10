@@ -6,7 +6,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ActionData(
     val name: String? = null,
-    val description: String,
     @Serializable(with = AnySerializer::class)
     val target: Any? = false,
     val fields: Map<String, ActionFields>,
