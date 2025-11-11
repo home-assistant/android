@@ -27,7 +27,6 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
-import io.homeassistant.companion.android.common.util.HAStrictMode
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.configureComposeDiagnosticStackTrace
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
@@ -41,8 +40,6 @@ import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.QuestUtil
 import io.homeassistant.companion.android.util.initCrashSaving
-import io.homeassistant.companion.android.util.threadPolicyIgnoredViolationRules
-import io.homeassistant.companion.android.util.vmPolicyIgnoredViolationRules
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
@@ -99,10 +96,10 @@ open class HomeAssistantApplication : Application() {
             BuildConfig.DEBUG &&
             !BuildConfig.NO_STRICT_MODE
         ) {
-            HAStrictMode.enable(
-                vmPolicyIgnoredViolationRules = vmPolicyIgnoredViolationRules,
-                threadPolicyIgnoredViolationRules = threadPolicyIgnoredViolationRules,
-            )
+//            HAStrictMode.enable(
+//                vmPolicyIgnoredViolationRules = vmPolicyIgnoredViolationRules,
+//                threadPolicyIgnoredViolationRules = threadPolicyIgnoredViolationRules,
+//            )
         }
 
         Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK $SdkVersion")
