@@ -5,16 +5,18 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.ServiceInfo
 import android.os.Build
+import androidx.concurrent.futures.await
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_WORKER
 import io.homeassistant.companion.android.database.AppDatabase
-import java.lang.IllegalStateException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -28,6 +30,9 @@ abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerPar
     companion object {
         const val TAG = "SensorWorker"
         const val NOTIFICATION_ID = 42
+
+        // WARNING: Use the tag from WebsocketManager in :app
+        private const val WEBSOCKET_MANAGER_TAG = "WebSocketManager"
     }
 
     private val notificationManager = appContext.getSystemService<NotificationManager>()!!
@@ -51,11 +56,7 @@ abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerPar
             val foregroundInfo = ForegroundInfo(
                 NOTIFICATION_ID,
                 notification,
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-                } else {
-                    0
-                },
+                determineForegroundServiceType(),
             )
             try {
                 setForeground(foregroundInfo)
@@ -86,6 +87,28 @@ abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerPar
         }
 
         Result.success()
+    }
+
+    private suspend fun determineForegroundServiceType(): Int {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+//            if (isWebSocketManagerRunning()) {
+//                ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
+//            } else {
+//                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+//            }
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+        } else {
+            0
+        }.apply { Timber.d("Using Foreground type: $this for updating sensor") }
+    }
+
+    private suspend fun isWebSocketManagerRunning(): Boolean {
+        return WorkManager.getInstance(applicationContext)
+            .getWorkInfosByTag(WEBSOCKET_MANAGER_TAG)
+            .await()
+            .any { it.state == WorkInfo.State.RUNNING }
     }
 
     protected fun createNotificationChannel() {
