@@ -15,6 +15,21 @@ class LocationForSecureConnectionScreenshotTest {
                 onAllowInsecureConnection = { _ -> },
                 onHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
+                initialAllowInsecureConnection = null,
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `LocationForSecureConnection most secure selected`() {
+        HAThemeForPreview {
+            LocationForSecureConnectionScreen(
+                onAllowInsecureConnection = { _ -> },
+                onHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                initialAllowInsecureConnection = false,
             )
         }
     }

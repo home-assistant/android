@@ -96,10 +96,14 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
                 _isSavingFlow.emit(true)
                 val serverId = addServer()
                 val url = route.url
+                val hasPlainTextAccess = url.startsWith("http://")
+
+                enforceSecureConnectionIfNeeded(serverId = serverId, hasPlainTextAccess = hasPlainTextAccess)
+
                 _navigationEventsFlow.emit(
                     NameYourDeviceNavigationEvent.DeviceNameSaved(
                         serverId,
-                        hasPlainTextAccess = url.startsWith("http://"),
+                        hasPlainTextAccess = hasPlainTextAccess,
                         isPubliclyAccessible = runCatching { URL(url).isPubliclyAccessible() }.getOrDefault(false),
                     ),
                 )
@@ -124,6 +128,27 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
 
     private fun isValidName(name: String): Boolean {
         return name.isNotEmpty()
+    }
+
+    /**
+     * Enforces secure connections for servers that were onboarded using HTTPS.
+     *
+     * If the server was accessed via HTTPS during onboarding, this function ensures that future
+     * connections will only be allowed over secure channels to prevent future usage of HTTP.
+     *
+     * @param serverId The ID of the server to configure
+     * @param hasPlainTextAccess Whether the server was accessed via HTTP during onboarding
+     */
+    private suspend fun enforceSecureConnectionIfNeeded(serverId: Int, hasPlainTextAccess: Boolean) {
+        if (!hasPlainTextAccess) {
+            // Until https://github.com/home-assistant/android/issues/6005 is not addressed this is going to fail.
+            // It means that the flag allow insecure won't be set for HTTPS
+            runCatching {
+                serverManager.integrationRepository(serverId).setAllowInsecureConnection(false)
+            }.onFailure { exception ->
+                Timber.e(exception, "Failed to enforce secure connection for server $serverId")
+            }
+        }
     }
 
     private suspend fun addServer(): Int {

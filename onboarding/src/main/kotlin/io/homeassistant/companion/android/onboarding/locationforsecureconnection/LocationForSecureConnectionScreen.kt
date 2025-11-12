@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -25,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAHint
 import io.homeassistant.companion.android.common.compose.composable.HARadioGroup
@@ -47,15 +50,26 @@ private enum class SelectionKey {
     LESS_SECURE,
 }
 
+/**
+ * Public screen so it can be used in other places than the onboarding,
+ * to update the choice of the user.
+ */
 @Composable
-internal fun LocationForSecureConnectionScreen(
+fun LocationForSecureConnectionScreen(
     viewModel: LocationForSecureConnectionViewModel,
     onGoToNextScreen: (allowInsecureConnection: Boolean) -> Unit,
     onHelpClick: () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
+    onBackClick: (() -> Unit)? = null,
+    isStandaloneScreen: Boolean = false,
 ) {
+    val initialAllowInsecureConnection by viewModel.allowInsecureConnection.collectAsState(null)
+
     LocationForSecureConnectionScreen(
+        initialAllowInsecureConnection = initialAllowInsecureConnection,
+        onBackClick = onBackClick,
+        isStandaloneScreen = isStandaloneScreen,
         onAllowInsecureConnection = { allowInsecureConnection ->
             viewModel.allowInsecureConnection(allowInsecureConnection)
             onGoToNextScreen(allowInsecureConnection)
@@ -68,16 +82,22 @@ internal fun LocationForSecureConnectionScreen(
 
 @Composable
 internal fun LocationForSecureConnectionScreen(
+    initialAllowInsecureConnection: Boolean?,
     onAllowInsecureConnection: (allowInsecureConnection: Boolean) -> Unit,
     onHelpClick: () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
+    onBackClick: (() -> Unit)? = null,
+    isStandaloneScreen: Boolean = false,
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { HATopBar(onHelpClick = onHelpClick) },
+        topBar = { HATopBar(onBackClick = onBackClick, onHelpClick = onHelpClick) },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { contentPadding ->
         LocationForSecureConnectionContent(
+            isStandaloneScreen = isStandaloneScreen,
+            initialAllowInsecureConnection = initialAllowInsecureConnection,
             onAllowInsecureConnection = onAllowInsecureConnection,
             onShowSnackbar = onShowSnackbar,
             modifier = Modifier.padding(contentPadding),
@@ -88,6 +108,8 @@ internal fun LocationForSecureConnectionScreen(
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 private fun LocationForSecureConnectionContent(
+    isStandaloneScreen: Boolean,
+    initialAllowInsecureConnection: Boolean?,
     onAllowInsecureConnection: (allowInsecureConnection: Boolean) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
@@ -102,11 +124,22 @@ private fun LocationForSecureConnectionContent(
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE6),
     ) {
         val coroutineScope = rememberCoroutineScope()
-        var selectedOption by rememberSelectedOption<SelectionKey>()
 
+        val mostSecureOption = RadioOption(
+            selectionKey = SelectionKey.MOST_SECURE,
+            headline = stringResource(commonR.string.connection_security_most_secure),
+        )
         val lessSecureOption = RadioOption(
             selectionKey = SelectionKey.LESS_SECURE,
-            headline = stringResource(R.string.location_secure_connection_less_secure),
+            headline = stringResource(commonR.string.connection_security_less_secure),
+        )
+
+        var selectedOption by rememberSelectedOption(
+            when (initialAllowInsecureConnection) {
+                true -> lessSecureOption
+                false -> mostSecureOption
+                null -> null
+            },
         )
         val errorText = stringResource(R.string.location_secure_connection_discard_permission)
 
@@ -127,10 +160,7 @@ private fun LocationForSecureConnectionContent(
         Spacer(modifier = Modifier.weight(1f))
         HARadioGroup(
             options = listOf(
-                RadioOption(
-                    selectionKey = SelectionKey.MOST_SECURE,
-                    headline = stringResource(R.string.location_secure_connection_most_secure),
-                ),
+                mostSecureOption,
                 lessSecureOption,
             ),
             onSelect = {
@@ -147,7 +177,13 @@ private fun LocationForSecureConnectionContent(
         )
         Spacer(modifier = Modifier.weight(1f))
         HAAccentButton(
-            text = stringResource(R.string.location_secure_connection_next),
+            text = if (isStandaloneScreen) {
+                stringResource(
+                    R.string.location_secure_connection_save,
+                )
+            } else {
+                stringResource(R.string.location_secure_connection_next)
+            },
             enabled = selectedOption != null,
             onClick = {
                 if (selectedOption?.selectionKey == SelectionKey.MOST_SECURE) {
@@ -188,6 +224,7 @@ private fun ColumnScope.Header() {
 private fun LocationForSecureConnectionScreenPreview() {
     HAThemeForPreview {
         LocationForSecureConnectionScreen(
+            initialAllowInsecureConnection = null,
             onAllowInsecureConnection = {},
             onHelpClick = {},
             onShowSnackbar = { _, _ -> true },

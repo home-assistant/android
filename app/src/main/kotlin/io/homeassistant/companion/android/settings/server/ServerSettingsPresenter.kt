@@ -17,4 +17,6 @@ interface ServerSettingsPresenter {
     fun setAppActive(active: Boolean)
 
     suspend fun serverURL(): String?
+
+    suspend fun getAllowInsecureConnection(): Boolean?
 }
