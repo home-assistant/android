@@ -160,7 +160,7 @@ jobs:
 
       - name: Build Debug APK
         run: |
-          ./gradlew :common:assemble :app:assembleDebug :wear:assembleDebug :automotive:assembleDebug
+          ./gradlew :common:assemble :app:assembleDebug :wear:assembleDebug :automotive:assembleDebug -PnoStrictMode
 
       - name: Check for missing/modified DB schemas after build
         run: |
@@ -175,6 +175,7 @@ jobs:
       - name: Archive Debug Build
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
+          name: APKs
           path: ./**/*.apk
 
   pr_build_release:
