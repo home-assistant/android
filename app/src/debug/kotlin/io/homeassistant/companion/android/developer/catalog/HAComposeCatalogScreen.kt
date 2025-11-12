@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.tooling.preview.Devices.TABLET
 import androidx.compose.ui.tooling.preview.Preview
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -138,7 +139,7 @@ private fun TopBar(onVariantClick: (ButtonVariant) -> Unit) {
 }
 
 @Composable
-@Preview(showBackground = true, heightDp = 2000, widthDp = 1000)
+@Preview(showBackground = true, device = TABLET)
 private fun HAComposeCatalogScreenPreview() {
     HAComposeCatalogScreen()
 }

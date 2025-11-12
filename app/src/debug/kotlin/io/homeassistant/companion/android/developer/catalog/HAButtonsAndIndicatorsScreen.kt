@@ -10,6 +10,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Devices.TABLET
 import androidx.compose.ui.tooling.preview.Preview
 import io.homeassistant.companion.android.common.compose.composable.ButtonSize
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
@@ -169,7 +170,7 @@ private fun LazyListScope.buttonsWithBigContent(variant: ButtonVariant) {
     }
 }
 
-@Preview(showBackground = true, heightDp = 2000, widthDp = 1000)
+@Preview(showBackground = true, device = TABLET)
 @Composable
 private fun PreviewHAButtonsAndIndicatorsScreen() {
     HAThemeForPreview {

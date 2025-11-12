@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Devices.TABLET
 import androidx.compose.ui.tooling.preview.Preview
 import io.homeassistant.companion.android.common.compose.composable.HABanner
 import io.homeassistant.companion.android.common.compose.composable.HADetails
@@ -115,7 +116,7 @@ private fun LazyListScope.progress() {
     }
 }
 
-@Preview(showBackground = true, heightDp = 2000, widthDp = 1000)
+@Preview(showBackground = true, device = TABLET)
 @Composable
 private fun PreviewHATextAndBannersScreen() {
     HAThemeForPreview {

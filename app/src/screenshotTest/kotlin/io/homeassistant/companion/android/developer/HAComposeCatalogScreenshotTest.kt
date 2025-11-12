@@ -11,7 +11,7 @@ import io.homeassistant.companion.android.developer.catalog.catalogUserInputSect
 
 class HAComposeCatalogScreenshotTest {
 
-    @ScreenPreview
+    @CatalogScreenPreview
     @PreviewTest
     @Composable
     fun HAButtonsAndIndicatorsScreen() {
@@ -22,7 +22,7 @@ class HAComposeCatalogScreenshotTest {
         }
     }
 
-    @ScreenPreview
+    @CatalogScreenPreview
     @PreviewTest
     @Composable
     fun HAUserInputScreen() {
@@ -33,7 +33,7 @@ class HAComposeCatalogScreenshotTest {
         }
     }
 
-    @ScreenPreview
+    @CatalogScreenPreview
     @PreviewTest
     @Composable
     fun HATextAndBannersScreen() {
