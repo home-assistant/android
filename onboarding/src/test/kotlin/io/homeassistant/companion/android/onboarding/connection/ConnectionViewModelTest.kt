@@ -18,7 +18,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.every
 import io.mockk.mockk
@@ -32,26 +32,18 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import timber.log.Timber
 
-@ExtendWith(MainDispatcherJUnit5Extension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConnectionViewModelTest {
 
     private val keyChainRepository: KeyChainRepository = mockk()
-
-    @BeforeEach
-    fun setup() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
-    }
 
     @ParameterizedTest
     @ValueSource(strings = ["http://homeassistant.local:8123", "https://cloud.ui.nabu.casa"])

@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.NameYourDeviceRoute
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -34,7 +35,7 @@ import retrofit2.Response
 
 private const val DEFAULT_DEVICE_NAME = "Pixel 42"
 
-@ExtendWith(MainDispatcherJUnit5Extension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class NameYourDeviceViewModelTest {
 
@@ -53,11 +54,6 @@ class NameYourDeviceViewModelTest {
 
     @BeforeEach
     fun setup() {
-        // Disable logging on CI since it generates too much logs and crash the action that loads the result
-        // https://github.com/home-assistant/android/issues/5846
-        // Timber.plant(ConsoleLogTree)
-        // ConsoleLogTree.verbose = true
-
         coEvery { serverManager.authenticationRepository(any()) } returns authRepository
         coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
         coEvery { integrationRepository.setAllowInsecureConnection(any()) } just Runs

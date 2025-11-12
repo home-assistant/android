@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.onboarding.locationforsecureconnectio
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -18,10 +18,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(MainDispatcherJUnit5Extension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
 class LocationForSecureConnectionViewModelTest {
 
     private val serverId = 42
@@ -33,9 +32,6 @@ class LocationForSecureConnectionViewModelTest {
 
     @BeforeEach
     fun setup() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
-
         viewModel = LocationForSecureConnectionViewModel(
             serverId = serverId,
             serverManager = serverManager,

@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.onboarding.serverdiscovery
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryMode
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.utils.mockServer
 import io.homeassistant.companion.android.utils.testHAVersion
@@ -21,10 +21,11 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
-import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@ExtendWith(ConsoleLogExtension::class)
 private class ServerDiscoveryViewModelTest {
 
     @RegisterExtension
@@ -38,9 +39,6 @@ private class ServerDiscoveryViewModelTest {
 
     @BeforeEach
     fun setUp() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
-
         every { searcher.discoveredInstanceFlow() } returns discoveredInstanceFlow
     }
 

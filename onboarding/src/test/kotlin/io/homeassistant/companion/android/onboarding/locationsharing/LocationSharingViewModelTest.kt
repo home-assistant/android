@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.onboarding.locationsharing
 
 import io.homeassistant.companion.android.database.sensor.SensorDao
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -14,10 +14,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(MainDispatcherJUnit5Extension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
 class LocationSharingViewModelTest {
     private val serverId = 42
     private val sensorDao: SensorDao = mockk(relaxUnitFun = true)
@@ -32,9 +31,6 @@ class LocationSharingViewModelTest {
 
     @BeforeEach
     fun setup() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true // As per reference
-
         viewModel = LocationSharingViewModel(
             serverId = serverId,
             sensorDao = sensorDao,
