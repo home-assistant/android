@@ -9,6 +9,6 @@ class ConnectionSecurityLevelFragment : Fragment() {
 
     companion object {
         const val RESULT_KEY = "connection_security_level_result"
-        const val EXTRA_SEVER_ID_KEY = "server_id"
+        const val EXTRA_SERVER = "server_id"
     }
 }
