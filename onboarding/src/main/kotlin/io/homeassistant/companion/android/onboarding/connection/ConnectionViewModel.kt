@@ -134,8 +134,12 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
             _isLoadingFlow.update { false }
         }
 
-        override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-            return request?.url?.let { interceptRedirectIfRequired(it) } ?: false
+        // Override deprecated method for backward compatibility with API 23 and below.
+        // The non-deprecated shouldOverrideUrlLoading(WebView, WebResourceRequest) is not invoked
+        // on these older Android versions, so this method remains necessary.
+        @Suppress("DEPRECATION")
+        override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+            return url?.toUri()?.let { interceptRedirectIfRequired(it) } ?: false
         }
 
         private fun errorDetails(context: Context?, code: Int?, description: String?): String {
