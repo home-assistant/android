@@ -1,5 +1,10 @@
 package io.homeassistant.companion.android.testing.unit
 
+import org.junit.jupiter.api.extension.AfterAllCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
 import timber.log.Timber
 
 /**
@@ -14,16 +19,8 @@ import timber.log.Timber
  * ### Features:
  * - Logs messages and exceptions to `stderr`.
  * - Supports a `verbose` mode to control whether logs without exception are printed.
- *
- * ### Example:
- * ```kotlin
- * Timber.plant(ConsoleLogTree)
- * ConsoleLogTree.verbose = true
- * Timber.d("Debug message")
- * Timber.e(Exception("Test exception"), "Error message")
- * ```
  */
-object ConsoleLogTree : Timber.DebugTree() {
+private object ConsoleLogTree : Timber.DebugTree() {
     /**
      * Controls whether logs without exception are printed to the console.
      * When `true`, all logs are printed. When `false`, only logs with exceptions are printed.
@@ -40,5 +37,74 @@ object ConsoleLogTree : Timber.DebugTree() {
                 // no-op
             }
         }
+    }
+}
+
+/**
+ * A JUnit 4 test rule that automatically sets up and tears down [ConsoleLogTree] for each test.
+ *
+ * This rule plants [ConsoleLogTree] with verbose mode enabled before each test starts
+ * and removes it after the test finishes. This ensures that Timber logs are visible
+ * in the console during test execution without requiring manual setup in each test.
+ *
+ * ### Usage:
+ * ```kotlin
+ * class MyTest {
+ *     @get:Rule
+ *     val consoleLogRule = ConsoleLogRule()
+ *
+ *     @Test
+ *     fun myTest() {
+ *         Timber.d("This will be visible in the console")
+ *     }
+ * }
+ * ```
+ *
+ * @see ConsoleLogExtension for JUnit Jupiter tests
+ */
+class ConsoleLogRule : TestWatcher() {
+    override fun starting(description: Description?) {
+        super.starting(description)
+        Timber.plant(ConsoleLogTree)
+        ConsoleLogTree.verbose = true
+    }
+
+    override fun finished(description: Description?) {
+        super.finished(description)
+        Timber.uproot(ConsoleLogTree)
+    }
+}
+
+/**
+ * A JUnit Jupiter extension that automatically sets up and tears down [ConsoleLogTree]
+ * for all tests in a test class.
+ *
+ * This extension plants [ConsoleLogTree] with verbose mode enabled before all tests in the class
+ * start and removes it after all tests finish. This ensures that Timber logs are visible in the
+ * console during test execution without requiring manual setup in each test.
+ *
+ * ### Usage:
+ * ```kotlin
+ * @ExtendWith(ConsoleLogExtension::class)
+ * class MyTest {
+ *     @Test
+ *     fun myTest() {
+ *         Timber.d("This will be visible in the console")
+ *     }
+ * }
+ * ```
+ *
+ * @see ConsoleLogRule for JUnit 4 tests
+ */
+class ConsoleLogExtension :
+    BeforeAllCallback,
+    AfterAllCallback {
+    override fun beforeAll(context: ExtensionContext) {
+        Timber.plant(ConsoleLogTree)
+        ConsoleLogTree.verbose = true
+    }
+
+    override fun afterAll(context: ExtensionContext) {
+        Timber.uproot(ConsoleLogTree)
     }
 }
