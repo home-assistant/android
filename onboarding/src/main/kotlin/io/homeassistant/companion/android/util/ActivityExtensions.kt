@@ -4,14 +4,6 @@ import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewGroupCompat
-import androidx.lifecycle.Lifecycle
-
-/**
- * Check if the state of the activity is at least started,
- * meaning onStart has been called but the state has not reached onSavedInstanceState (yet).
- */
-val ComponentActivity.isStarted: Boolean
-    get() = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
 
 /**
  * Enables edge-to-edge display with enhanced WindowInsets compatibility.
