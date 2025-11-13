@@ -7,7 +7,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.fakes.FakeCapabilityClient
 import io.homeassistant.companion.android.fakes.FakeNodeClient
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -17,11 +17,12 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import timber.log.Timber
+import org.junit.jupiter.api.extension.ExtendWith
 
 private const val CAPABILITY_WEAR_APP = "verify_wear_app"
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@ExtendWith(ConsoleLogExtension::class)
 class SettingsWearViewModelTest {
 
     private val serverManager: ServerManager = mockk()
@@ -32,8 +33,6 @@ class SettingsWearViewModelTest {
 
     @BeforeEach
     fun setup() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
         val application = mockk<Application> {
             every { applicationContext } returns this
             every { packageManager } returns mockk()

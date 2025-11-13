@@ -64,7 +64,7 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.SetHomeNetworkRoute
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.navigateToSetHomeNetworkRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.mockk.Runs
 import io.mockk.every
@@ -88,18 +88,19 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import timber.log.Timber
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 @UninstallModules(ServerDiscoveryModule::class)
 @HiltAndroidTest
 internal class OnboardingNavigationTest {
-
     @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
+    var consoleLog = ConsoleLogRule()
 
     @get:Rule(order = 1)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 2)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @BindValue
@@ -144,9 +145,6 @@ internal class OnboardingNavigationTest {
 
     @Before
     fun setup() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
-
         mockkStatic(NavController::navigateToUri)
         every { any<NavController>().navigateToUri(any()) } just Runs
     }

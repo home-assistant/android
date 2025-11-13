@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -24,6 +23,7 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.developer.catalog.HAComposeCatalogActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 
 /**
  * This activity is meant to host a playground for development purposes.
@@ -37,7 +37,7 @@ class DevPlaygroundActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdgeCompat()
 
         setContent {
             HomeAssistantAppTheme {

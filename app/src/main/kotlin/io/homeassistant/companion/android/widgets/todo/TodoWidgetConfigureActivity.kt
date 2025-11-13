@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
@@ -49,6 +48,7 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
 import io.homeassistant.companion.android.util.compose.WidgetBackgroundTypeExposedDropdownMenu
+import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewEntity2
@@ -87,7 +87,7 @@ class TodoWidgetConfigureActivity : BaseActivity() {
         )
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
+        enableEdgeToEdgeCompat()
         super.onCreate(savedInstanceState)
 
         // Set the result to CANCELED.  This will cause the widget host to cancel

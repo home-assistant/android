@@ -12,7 +12,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidgetConfigureActivity
@@ -32,10 +32,11 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.fail
-import timber.log.Timber
 
 @ExperimentalCoroutinesApi
+@ExtendWith(ConsoleLogExtension::class)
 class EntityAddToHandlerTest {
 
     private lateinit var serverManager: ServerManager
@@ -48,8 +49,6 @@ class EntityAddToHandlerTest {
 
     @BeforeEach
     fun setUp() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
         serverManager = mockk()
         prefsRepository = mockk()
         integrationRepository = mockk()

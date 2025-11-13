@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -13,6 +12,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
+import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -45,7 +45,7 @@ class SettingsWearMainView : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        enableEdgeToEdge()
+        enableEdgeToEdgeCompat()
 
         setContent {
             LoadSettingsHomeView(
