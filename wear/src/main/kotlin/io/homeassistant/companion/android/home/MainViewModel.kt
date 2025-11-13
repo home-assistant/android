@@ -66,6 +66,17 @@ class MainViewModel @Inject constructor(
         ERROR,
     }
 
+    /**
+     * Holds entity classification information for filtering entities in the UI.
+     */
+    data class EntityClassification(
+        val entitiesWithoutArea: Set<String> = emptySet(),
+        val entitiesWithCategory: Set<String> = emptySet(),
+        val entitiesHidden: Set<String> = emptySet(),
+        val hasAreasToShow: Boolean = false,
+        val hasMoreEntitiesToShow: Boolean = false,
+    )
+
     private val app = application
 
     private lateinit var homePresenter: HomePresenter
@@ -86,6 +97,9 @@ class MainViewModel @Inject constructor(
 
     private val _supportedEntities = MutableStateFlow(emptyList<String>())
     val supportedEntities = _supportedEntities.asStateFlow()
+
+    private val _entityClassification = MutableStateFlow(EntityClassification())
+    val entityClassification = _entityClassification.asStateFlow()
 
     /**
      * IDs of favorites in the Favorites database.
@@ -114,6 +128,15 @@ class MainViewModel @Inject constructor(
     var entitiesByAreaOrder = mutableStateListOf<String>()
         private set
     var entitiesByDomainOrder = mutableStateListOf<String>()
+        private set
+
+    /**
+     * Filtered entities by domain - only entities without area, category, or hidden status.
+     * Used for the "More Entities" section in the UI.
+     */
+    var entitiesByDomainFiltered = mutableStateMapOf<String, SnapshotStateList<Entity>>()
+        private set
+    var entitiesByDomainFilteredOrder = mutableStateListOf<String>()
         private set
 
     // Content of EntityListView
@@ -317,48 +340,151 @@ class MainViewModel @Inject constructor(
         .map { it.entityId }
         .filter { it.split(".")[0] in supportedDomains() }
 
-    private fun updateEntityDomains() {
+    /**
+     * This function does a lot of manipulation and could take some time so we need
+     * to make sure it doesn't happen in the Main thread.
+     */
+    private suspend fun updateEntityDomains() = withContext(Dispatchers.Default) {
         val entitiesList = entities.values.toList().sortedBy { it.entityId }
         val areasList = areaRegistry.orEmpty().sortedBy { it.name }
         val domainsList = entitiesList.map { it.domain }.distinct()
+        val validAreaIds = areasList.map { it.areaId }.toSet()
 
-        // Create a list with all areas + their entities
+        // Single pass: compute entity metadata and cache area lookups to avoid redundant calls
+        val entityAreaMap = mutableMapOf<String, AreaRegistryResponse?>()
+        val withoutArea = mutableSetOf<String>()
+        val withCategory = mutableSetOf<String>()
+        val hidden = mutableSetOf<String>()
+
+        entities.keys.forEach { entityId ->
+            val area = getAreaForEntity(entityId)
+            entityAreaMap[entityId] = area
+
+            if (area == null) {
+                withoutArea.add(entityId)
+            }
+            if (getCategoryForEntity(entityId) != null) {
+                withCategory.add(entityId)
+            }
+            if (getHiddenByForEntity(entityId) != null) {
+                hidden.add(entityId)
+            }
+        }
+
+        // Determine if entity should be shown in filtered views
+        val shouldShowEntity: (String) -> Boolean = { entityId ->
+            entityId !in withCategory && entityId !in hidden
+        }
+
+        // Group entities by area using cached area lookups
+        updateEntitiesByArea(areasList, entitiesList, entityAreaMap)
+
+        // Remove areas that no longer exist
+        entitiesByArea.keys.toList().forEach { areaId ->
+            if (areaId !in validAreaIds) {
+                entitiesByArea.remove(areaId)
+            }
+        }
+
+        // Group entities by domain (both full and filtered) in a single pass
+        updateEntitiesByDomain(domainsList, entitiesList, withoutArea, withCategory, hidden)
+
+        // Compute UI visibility flags
+        val hasAreasToShow = entitiesByArea.values.any { areaEntities ->
+            areaEntities.any { entity -> shouldShowEntity(entity.entityId) }
+        }
+
+        val hasMoreEntitiesToShow = withoutArea.any(shouldShowEntity)
+
+        // Update entity classification with all computed values
+        _entityClassification.value = EntityClassification(
+            entitiesWithoutArea = withoutArea,
+            entitiesWithCategory = withCategory,
+            entitiesHidden = hidden,
+            hasAreasToShow = hasAreasToShow,
+            hasMoreEntitiesToShow = hasMoreEntitiesToShow,
+        )
+    }
+
+    /**
+     * Updates the entities grouped by area.
+     */
+    private fun updateEntitiesByArea(
+        areasList: List<AreaRegistryResponse>,
+        entitiesList: List<Entity>,
+        entityAreaMap: Map<String, AreaRegistryResponse?>,
+    ) {
         areasList.forEach { area ->
-            val entitiesInArea = mutableStateListOf<Entity>()
-            entitiesInArea.addAll(
-                entitiesList
-                    .filter { getAreaForEntity(it.entityId)?.areaId == area.areaId }
-                    .sortedBy { (it.attributes["friendly_name"] ?: it.entityId) as String },
-            )
+            val entitiesInArea = entitiesList
+                .filter { entityAreaMap[it.entityId]?.areaId == area.areaId }
+                .sortedBy { (it.attributes["friendly_name"] ?: it.entityId) as String }
+
             entitiesByArea[area.areaId]?.let {
                 it.clear()
                 it.addAll(entitiesInArea)
             } ?: run {
-                entitiesByArea[area.areaId] = entitiesInArea
-            }
-        }
-        entitiesByAreaOrder.clear()
-        entitiesByAreaOrder.addAll(areasList.map { it.areaId })
-        // Quick check: are there any areas in the list that no longer exist?
-        entitiesByArea.forEach {
-            if (!areasList.any { item -> item.areaId == it.key }) {
-                entitiesByArea.remove(it.key)
+                entitiesByArea[area.areaId] = mutableStateListOf<Entity>().apply { addAll(entitiesInArea) }
             }
         }
 
-        // Create a list with all discovered domains + their entities
+        entitiesByAreaOrder.clear()
+        entitiesByAreaOrder.addAll(areasList.map { it.areaId })
+    }
+
+    /**
+     * Updates entities grouped by domain (both full and filtered).
+     */
+    private fun updateEntitiesByDomain(
+        domainsList: List<String>,
+        entitiesList: List<Entity>,
+        withoutArea: Set<String>,
+        withCategory: Set<String>,
+        hidden: Set<String>,
+    ) {
+        val filteredDomainsList = mutableListOf<String>()
+
         domainsList.forEach { domain ->
-            val entitiesInDomain = mutableStateListOf<Entity>()
-            entitiesInDomain.addAll(entitiesList.filter { it.domain == domain })
+            // All entities in domain
+            val entitiesInDomain = entitiesList.filter { it.domain == domain }
+
             entitiesByDomain[domain]?.let {
                 it.clear()
                 it.addAll(entitiesInDomain)
             } ?: run {
-                entitiesByDomain[domain] = entitiesInDomain
+                entitiesByDomain[domain] = mutableStateListOf<Entity>().apply { addAll(entitiesInDomain) }
+            }
+
+            // Filtered entities (without area, category, or hidden status)
+            val entitiesInDomainFiltered = entitiesInDomain.filter { entity ->
+                entity.entityId in withoutArea &&
+                    entity.entityId !in withCategory &&
+                    entity.entityId !in hidden
+            }
+
+            if (entitiesInDomainFiltered.isNotEmpty()) {
+                filteredDomainsList.add(domain)
+                entitiesByDomainFiltered[domain]?.let {
+                    it.clear()
+                    it.addAll(entitiesInDomainFiltered)
+                } ?: run {
+                    entitiesByDomainFiltered[domain] =
+                        mutableStateListOf<Entity>().apply { addAll(entitiesInDomainFiltered) }
+                }
             }
         }
+
         entitiesByDomainOrder.clear()
         entitiesByDomainOrder.addAll(domainsList)
+
+        // Remove domains that no longer have filtered entities
+        entitiesByDomainFiltered.keys.toList().forEach { domain ->
+            if (domain !in filteredDomainsList) {
+                entitiesByDomainFiltered.remove(domain)
+            }
+        }
+
+        entitiesByDomainFilteredOrder.clear()
+        entitiesByDomainFilteredOrder.addAll(filteredDomainsList)
     }
 
     fun toggleEntity(entityId: String, state: String) {
