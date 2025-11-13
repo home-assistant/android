@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
@@ -65,6 +66,13 @@ fun MainView(
 
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
+
+    // Collect entity classification from ViewModel
+    val entityClassification by mainViewModel.entityClassification.collectAsStateWithLifecycle()
+    val entitiesWithCategory = entityClassification.entitiesWithCategory
+    val entitiesHidden = entityClassification.entitiesHidden
+    val hasAreasToShow = entityClassification.hasAreasToShow
+    val hasMoreEntitiesToShow = entityClassification.hasMoreEntitiesToShow
 
     WearAppTheme {
         ThemeLazyColumn {
@@ -204,23 +212,15 @@ fun MainView(
                             }
                         }
 
-                        if (
-                            mainViewModel.entitiesByArea.values.any {
-                                it.isNotEmpty() &&
-                                    it.any { entity ->
-                                        mainViewModel.getCategoryForEntity(entity.entityId) == null &&
-                                            mainViewModel.getHiddenByForEntity(entity.entityId) == null
-                                    }
-                            }
-                        ) {
+                        if (hasAreasToShow) {
                             item {
                                 ListHeader(id = commonR.string.areas)
                             }
                             for (id in mainViewModel.entitiesByAreaOrder) {
                                 val entities = mainViewModel.entitiesByArea[id]
                                 val entitiesToShow = entities?.filter {
-                                    mainViewModel.getCategoryForEntity(it.entityId) == null &&
-                                        mainViewModel.getHiddenByForEntity(it.entityId) == null
+                                    it.entityId !in entitiesWithCategory &&
+                                        it.entityId !in entitiesHidden
                                 }
                                 if (!entitiesToShow.isNullOrEmpty()) {
                                     val area = mainViewModel.areas.first { it.areaId == id }
@@ -233,10 +233,8 @@ fun MainView(
                                                     mapOf(area.name to entities),
                                                     listOf(area.name),
                                                 ) {
-                                                    mainViewModel.getCategoryForEntity(it.entityId) == null &&
-                                                        mainViewModel.getHiddenByForEntity(
-                                                            it.entityId,
-                                                        ) == null
+                                                    it.entityId !in entitiesWithCategory &&
+                                                        it.entityId !in entitiesHidden
                                                 }
                                             },
                                             colors = getPrimaryButtonColors(),
@@ -246,46 +244,36 @@ fun MainView(
                             }
                         }
 
-                        val domainEntitiesFilter: (entity: Entity) -> Boolean =
-                            {
-                                mainViewModel.getAreaForEntity(it.entityId) == null &&
-                                    mainViewModel.getCategoryForEntity(it.entityId) == null &&
-                                    mainViewModel.getHiddenByForEntity(it.entityId) == null
-                            }
-                        if (mainViewModel.entities.values.any(domainEntitiesFilter)) {
+                        if (hasMoreEntitiesToShow) {
                             item {
                                 ListHeader(id = commonR.string.more_entities)
                             }
                         }
-                        // Buttons for each existing category
-                        for (domain in mainViewModel.entitiesByDomainOrder) {
-                            val domainEntities = mainViewModel.entitiesByDomain[domain]!!
-                            val domainEntitiesToShow =
-                                domainEntities.filter(domainEntitiesFilter)
-                            if (domainEntitiesToShow.isNotEmpty()) {
-                                item {
-                                    Button(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        icon = {
-                                            getIcon(
-                                                "",
-                                                domain,
-                                                context,
-                                            ).let { Image(asset = it) }
-                                        },
-                                        label = { Text(mainViewModel.stringForDomain(domain)!!) },
-                                        onClick = {
-                                            onNavigationClicked(
-                                                mapOf(
-                                                    mainViewModel.stringForDomain(domain)!! to domainEntities,
-                                                ),
-                                                listOf(mainViewModel.stringForDomain(domain)!!),
-                                                domainEntitiesFilter,
-                                            )
-                                        },
-                                        colors = getPrimaryButtonColors(),
-                                    )
-                                }
+
+                        // Buttons for each domain with filtered entities
+                        for (domain in mainViewModel.entitiesByDomainFilteredOrder) {
+                            val domainEntitiesFiltered = mainViewModel.entitiesByDomainFiltered[domain]!!
+                            item {
+                                Button(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    icon = {
+                                        getIcon(
+                                            "",
+                                            domain,
+                                            context,
+                                        ).let { Image(asset = it) }
+                                    },
+                                    label = { Text(mainViewModel.stringForDomain(domain)!!) },
+                                    onClick = {
+                                        onNavigationClicked(
+                                            mapOf(
+                                                mainViewModel.stringForDomain(domain)!! to domainEntitiesFiltered,
+                                            ),
+                                            listOf(mainViewModel.stringForDomain(domain)!!),
+                                        ) { true }
+                                    },
+                                    colors = getPrimaryButtonColors(),
+                                )
                             }
                         }
 
