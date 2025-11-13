@@ -20,7 +20,9 @@ import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 class NotificationSensorManager :
@@ -149,28 +151,29 @@ class NotificationSensorManager :
                 return@launch
             }
 
-            val attr = mappedBundle(sbn.notification.extras).orEmpty()
-                .plus("package" to sbn.packageName)
-                .plus("post_time" to sbn.postTime)
-                .plus("is_clearable" to sbn.isClearable)
-                .plus("is_ongoing" to sbn.isOngoing)
-                .plus("group_id" to sbn.notification.group)
-                .plus("category" to sbn.notification.category)
-                .toMutableMap()
+            val attrs = buildMap {
+                putAll(mappedBundle(sbn.notification.extras).orEmpty())
+                put("package", sbn.packageName)
+                put("post_time", sbn.postTime)
+                put("is_clearable", sbn.isClearable)
+                put("is_ongoing", sbn.isOngoing)
+                put("group_id", sbn.notification.group)
+                put("category", sbn.notification.category)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                attr["channel_id"] = sbn.notification.channelId
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    put("channel_id", sbn.notification.channelId)
+                }
             }
 
             // Attempt to use the text of the notification but fallback to package name if all else fails.
-            val state = attr["android.text"] ?: attr["android.title"] ?: sbn.packageName
+            val state = attrs["android.text"] ?: attrs["android.title"] ?: sbn.packageName
 
             onSensorUpdated(
                 applicationContext,
                 lastNotification,
                 state.toString().take(255),
                 lastNotification.statelessIcon,
-                attr,
+                attrs,
                 forceUpdate = true,
             )
 
@@ -211,28 +214,29 @@ class NotificationSensorManager :
                 return@launch
             }
 
-            val attr = mappedBundle(sbn.notification.extras).orEmpty()
-                .plus("package" to sbn.packageName)
-                .plus("post_time" to sbn.postTime)
-                .plus("is_clearable" to sbn.isClearable)
-                .plus("is_ongoing" to sbn.isOngoing)
-                .plus("group_id" to sbn.notification.group)
-                .plus("category" to sbn.notification.category)
-                .toMutableMap()
+            val attrs = buildMap {
+                putAll(mappedBundle(sbn.notification.extras).orEmpty())
+                put("package", sbn.packageName)
+                put("post_time", sbn.postTime)
+                put("is_clearable", sbn.isClearable)
+                put("is_ongoing", sbn.isOngoing)
+                put("group_id", sbn.notification.group)
+                put("category", sbn.notification.category)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                attr["channel_id"] = sbn.notification.channelId
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    put("channel_id", sbn.notification.channelId)
+                }
             }
 
             // Attempt to use the text of the notification but fallback to package name if all else fails.
-            val state = attr["android.text"] ?: attr["android.title"] ?: sbn.packageName
+            val state = attrs["android.text"] ?: attrs["android.title"] ?: sbn.packageName
 
             onSensorUpdated(
                 applicationContext,
                 lastRemovedNotification,
                 state.toString().take(255),
                 lastRemovedNotification.statelessIcon,
-                attr,
+                attrs,
                 forceUpdate = true,
             )
 
@@ -248,7 +252,6 @@ class NotificationSensorManager :
             }
 
             try {
-                val attr: MutableMap<String, Any?> = mutableMapOf()
                 val includeContentsAsAttrsSetting =
                     getToggleSetting(
                         applicationContext,
@@ -256,26 +259,30 @@ class NotificationSensorManager :
                         SETTING_INCLUDE_CONTENTS_AS_ATTRS,
                         default = true,
                     )
-                if (includeContentsAsAttrsSetting) {
-                    for (item in activeNotifications) {
-                        attr += mappedBundle(item.notification.extras, "_${item.packageName}_${item.id}").orEmpty()
-                            .plus("${item.packageName}_${item.id}_post_time" to item.postTime)
-                            .plus("${item.packageName}_${item.id}_is_ongoing" to item.isOngoing)
-                            .plus("${item.packageName}_${item.id}_is_clearable" to item.isClearable)
-                            .plus("${item.packageName}_${item.id}_group_id" to item.notification.group)
-                            .plus("${item.packageName}_${item.id}_category" to item.notification.category)
+                val attrs = if (includeContentsAsAttrsSetting) {
+                    buildMap {
+                        activeNotifications.forEach { item ->
+                            putAll(mappedBundle(item.notification.extras, "_${item.packageName}_${item.id}").orEmpty())
+                            put("${item.packageName}_${item.id}_post_time", item.postTime)
+                            put("${item.packageName}_${item.id}_is_ongoing", item.isOngoing)
+                            put("${item.packageName}_${item.id}_is_clearable", item.isClearable)
+                            put("${item.packageName}_${item.id}_group_id", item.notification.group)
+                            put("${item.packageName}_${item.id}_category", item.notification.category)
 
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            attr["${item.packageName}_${item.id}_channel_id"] = item.notification.channelId
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                put("${item.packageName}_${item.id}_channel_id", item.notification.channelId)
+                            }
                         }
                     }
+                } else {
+                    emptyMap()
                 }
                 onSensorUpdated(
                     applicationContext,
                     activeNotificationCount,
                     activeNotifications.size,
                     activeNotificationCount.statelessIcon,
-                    attr,
+                    attrs,
                 )
             } catch (e: Exception) {
                 Timber.e(e, "Unable to update active notifications")
@@ -352,8 +359,10 @@ class NotificationSensorManager :
      * Arrays are converted to lists to make them human readable.
      * Bundles inside the given bundle will also be mapped as a key/value map.
      */
-    private fun mappedBundle(bundle: Bundle, keySuffix: String = ""): Map<String, Any?>? {
-        return try {
+    private suspend fun mappedBundle(bundle: Bundle, keySuffix: String = ""): Map<String, Any?>? = withContext(
+        Dispatchers.Default,
+    ) {
+        try {
             bundle.keySet().associate { key ->
                 @Suppress("DEPRECATION")
                 val keyValue = when (val value = bundle.get(key)) {
