@@ -1,8 +1,9 @@
 package io.homeassistant.companion.android.onboarding.locationforsecureconnection
 
+import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -10,15 +11,16 @@ import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(MainDispatcherJUnit5Extension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
 class LocationForSecureConnectionViewModelTest {
 
     private val serverId = 42
@@ -30,9 +32,6 @@ class LocationForSecureConnectionViewModelTest {
 
     @BeforeEach
     fun setup() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
-
         viewModel = LocationForSecureConnectionViewModel(
             serverId = serverId,
             serverManager = serverManager,
@@ -65,6 +64,40 @@ class LocationForSecureConnectionViewModelTest {
 
         coVerify {
             serverManager.integrationRepository(serverId).setAllowInsecureConnection(allow)
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `Given integration repository returns value When allowInsecureConnection is collected Then emits the value`(
+        allowInsecure: Boolean,
+    ) = runTest {
+        coEvery { integrationRepository.getAllowInsecureConnection() } returns allowInsecure
+
+        viewModel.allowInsecureConnection.test {
+            assertEquals(allowInsecure, awaitItem())
+            awaitComplete()
+        }
+
+        coVerify {
+            serverManager.integrationRepository(serverId)
+            integrationRepository.getAllowInsecureConnection()
+        }
+    }
+
+    @Test
+    fun `Given integration  repository throws exception When allowInsecureConnection is collected Then emits null`() = runTest {
+        val exception = RuntimeException("Failed to get allow insecure connection")
+        coEvery { integrationRepository.getAllowInsecureConnection() } throws exception
+
+        viewModel.allowInsecureConnection.test {
+            assertNull(awaitItem())
+            awaitComplete()
+        }
+
+        coVerify {
+            serverManager.integrationRepository(serverId)
+            integrationRepository.getAllowInsecureConnection()
         }
     }
 }

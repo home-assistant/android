@@ -112,6 +112,8 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     "ksp"(libs.hilt.android.compiler)
                     "implementation"(libs.hilt.android)
 
+                    "implementation"(libs.core.ktx)
+
                     "testRuntimeOnly"(libs.junit.platform.launcher)
 
                     "testImplementation"(platform(libs.junit.bom))

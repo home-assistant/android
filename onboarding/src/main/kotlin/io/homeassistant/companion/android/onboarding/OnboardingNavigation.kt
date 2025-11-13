@@ -198,8 +198,9 @@ internal fun NavGraphBuilder.onboarding(
         )
         locationForSecureConnectionScreen(
             onHelpClick = {
-                // TODO validate the URL to use
-                navController.navigateToUri("https://www.home-assistant.io/installation/")
+                navController.navigateToUri(
+                    "https://companion.home-assistant.io/docs/getting_started/connection-security-level",
+                )
             },
             onGotoNextScreen = { allowInsecureConnection, serverId ->
                 if (allowInsecureConnection) {

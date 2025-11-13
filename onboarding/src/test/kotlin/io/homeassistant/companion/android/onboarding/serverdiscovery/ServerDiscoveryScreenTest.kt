@@ -22,10 +22,9 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.compose.assertAlpha
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import java.net.URL
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -33,7 +32,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import timber.log.Timber
 
 private val haVersion = HomeAssistantVersion(2025, 1, 1)
 
@@ -41,18 +39,14 @@ private val haVersion = HomeAssistantVersion(2025, 1, 1)
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
 class ServerDiscoveryScreenTest {
-
     @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
+    var consoleLog = ConsoleLogRule()
 
     @get:Rule(order = 1)
-    val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
+    val hiltRule = HiltAndroidRule(this)
 
-    @Before
-    fun setup() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
-    }
+    @get:Rule(order = 2)
+    val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Test
     fun `Given Started state when server discovery is displayed then show loading and handle clicks`() {

@@ -192,4 +192,8 @@ class ServerSettingsPresenterImpl @Inject constructor(
     override suspend fun serverURL(): String? {
         return serverManager.getServer(serverId)?.connection?.getUrl()?.toString()
     }
+
+    override suspend fun getAllowInsecureConnection(): Boolean? {
+        return serverManager.integrationRepository(serverId).getAllowInsecureConnection()
+    }
 }
