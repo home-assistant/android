@@ -24,6 +24,7 @@ import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
 
 interface SensorManager {
 
@@ -248,10 +249,10 @@ interface SensorManager {
         mdiIcon: String,
         attributes: Map<String, Any?>,
         forceUpdate: Boolean = false,
-    ) {
+    ) = withContext(Dispatchers.Default) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensors = sensorDao.get(basicSensor.id)
-        if (sensors.isEmpty()) return
+        if (sensors.isEmpty()) return@withContext
 
         sensors.forEach {
             val sensor = it.copy(
