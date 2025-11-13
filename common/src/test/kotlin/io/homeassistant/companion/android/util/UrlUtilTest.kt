@@ -58,18 +58,13 @@ class UrlUtilTest {
     }
 
     @Test
-    fun `Given input with homeassistant navigate prefix and absolute URL when calling handle then treats as relative path`() {
-        // Note: This is a bug in the current implementation - isAbsoluteUrl checks the original input
-        // instead of the normalized input, so "homeassistant://navigate/https://..." is treated as relative
-        val input = "homeassistant://navigate/https://example.com/path"
+    fun `Given input with homeassistant navigate prefix and absolute URL when calling handle then treats as relative path without taking care of second host and protocol`() {
+        val input = "homeassistant://navigate/https://example2.com/path/subpath"
 
         val result = UrlUtil.handle(baseUrl, input)
 
-        // Current buggy behavior: addPathSegments treats "https://example.com/path" as path segments
-        // splitting on "/" and adding each segment, resulting in a malformed URL
         assertNotNull(result)
-        // assertEquals("https://example.com:8123/https:/example.com/path", result.toString())
-        assertEquals("https://example.com:8123/path", result.toString())
+        assertEquals("https://example.com:8123/path/subpath", result.toString())
     }
 
     @Test
