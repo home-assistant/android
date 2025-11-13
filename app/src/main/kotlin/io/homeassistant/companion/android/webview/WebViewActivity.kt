@@ -925,7 +925,7 @@ class WebViewActivity :
         val entityId = payload?.getStringOrNull("entity_id")
         entityId?.let {
             lifecycleScope.launch {
-                val actions = entityAddToHandler.actionsForEntity(entityId)
+                val actions = entityAddToHandler.actionsForEntity(this@WebViewActivity, entityId)
                 sendExternalBusMessage(
                     EntityAddToActionsResponse(
                         id = json["id"],
