@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.webview.addto
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.IMAGE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
@@ -10,6 +11,7 @@ import io.homeassistant.companion.android.common.data.prefs.AutoFavorite
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
 import io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
@@ -43,33 +45,41 @@ class EntityAddToHandler @Inject constructor(
      * Vehicle-related entities will include Android Auto favorites. Camera and image entities
      * will include camera widget options.
      *
+     * @param context An android context
      * @param entityId The entity ID to get available actions for (for example, "light.living_room")
      * @return List of actions that can be performed for this entity. Returns an empty list if the
      *         entity is not found or if the server is unavailable.
      */
-    suspend fun actionsForEntity(entityId: String): List<EntityAddToAction> {
+    suspend fun actionsForEntity(context: Context, entityId: String): List<EntityAddToAction> {
+        return actionsForEntity(context.isAutomotive(), entityId)
+    }
+
+    @VisibleForTesting
+    suspend fun actionsForEntity(isAutomotive: Boolean, entityId: String): List<EntityAddToAction> {
         return withContext(Dispatchers.Default) {
             val actions = mutableListOf<EntityAddToAction>()
             serverManager.getServer()?.let { server ->
                 serverManager.integrationRepository(server.id).getEntity(entityId)
                     ?.let { entity ->
-                        actions.add(EntityAddToAction.EntityWidget)
+                        if (!isAutomotive) {
+                            actions.add(EntityAddToAction.EntityWidget)
+
+                            if (entity.domain == MEDIA_PLAYER_DOMAIN) {
+                                actions.add(EntityAddToAction.MediaPlayerWidget)
+                            }
+
+                            if (entity.domain == TODO_DOMAIN) {
+                                actions.add(EntityAddToAction.TodoWidget)
+                            }
+
+                            if (entity.domain == CAMERA_DOMAIN || entity.domain == IMAGE_DOMAIN) {
+                                actions.add(EntityAddToAction.CameraWidget)
+                            }
+                        }
 
                         if (isVehicleDomain(entity)) {
                             // We could check if it already exist but the action won't do anything so we can keep it
                             actions.add(EntityAddToAction.AndroidAutoFavorite)
-                        }
-
-                        if (entity.domain == MEDIA_PLAYER_DOMAIN) {
-                            actions.add(EntityAddToAction.MediaPlayerWidget)
-                        }
-
-                        if (entity.domain == TODO_DOMAIN) {
-                            actions.add(EntityAddToAction.TodoWidget)
-                        }
-
-                        if (entity.domain == CAMERA_DOMAIN || entity.domain == IMAGE_DOMAIN) {
-                            actions.add(EntityAddToAction.CameraWidget)
                         }
                     }
             }
