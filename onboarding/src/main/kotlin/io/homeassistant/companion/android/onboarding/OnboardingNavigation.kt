@@ -47,6 +47,7 @@ import kotlinx.serialization.Serializable
 /**
  * Navigation route for the main onboarding flow.
  *
+ * @property hasLocationTracking Whether location tracking is available (default to full flavor = true, minimal = false)
  * @property urlToOnboard Optional server URL to onboard directly. If null, shows server discovery.
  * @property hideExistingServers When true, hides already registered servers from discovery results.
  * @property skipWelcome When true, skips the welcome screen and navigates directly to server discovery,
@@ -54,6 +55,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 internal data class OnboardingRoute(
+    val hasLocationTracking: Boolean,
     val urlToOnboard: String? = null,
     val hideExistingServers: Boolean = false,
     val skipWelcome: Boolean = false,
@@ -68,14 +70,6 @@ internal data class OnboardingRoute(
 @Serializable
 internal data class WearOnboardingRoute(val wearName: String, val urlToOnboard: String? = null) :
     HAStartDestinationRoute
-
-internal fun NavController.navigateToOnboarding(
-    urlToOnboard: String? = null,
-    hideExistingServers: Boolean = false,
-    navOptions: NavOptions? = null,
-) {
-    navigate(OnboardingRoute(urlToOnboard, hideExistingServers), navOptions)
-}
 
 /**
  * Defines the complete onboarding navigation graph.
@@ -110,7 +104,7 @@ internal fun NavGraphBuilder.onboarding(
     urlToOnboard: String?,
     hideExistingServers: Boolean,
     skipWelcome: Boolean,
-    hasLocationTracking: Boolean = navController.context.packageName?.contains(".minimal")?.not() == true,
+    hasLocationTracking: Boolean,
 ) {
     val serverDiscoveryMode = if (hideExistingServers) {
         ServerDiscoveryMode.HIDE_EXISTING
