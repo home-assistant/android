@@ -545,7 +545,11 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
 
     private fun onServerLockResult(result: Int): Boolean {
         if (result == Authenticator.SUCCESS && serverAuth != null) {
-            (activity as? SettingsActivity)?.setAppActive(serverAuth, true)
+            (activity as? SettingsActivity)?.let { settingsActivity ->
+                lifecycleScope.launch {
+                    settingsActivity.setAppActive(serverAuth, true)
+                }
+            }
             parentFragmentManager.commit {
                 replace(
                     R.id.content,
