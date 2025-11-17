@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.isAutomotive
+import io.homeassistant.companion.android.util.QuestUtil
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
 import io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
@@ -51,17 +52,17 @@ class EntityAddToHandler @Inject constructor(
      *         entity is not found or if the server is unavailable.
      */
     suspend fun actionsForEntity(context: Context, entityId: String): List<EntityAddToAction> {
-        return actionsForEntity(context.isAutomotive(), entityId)
+        return actionsForEntity(isAutomotive = context.isAutomotive(), isQuest = QuestUtil.isQuest, entityId)
     }
 
     @VisibleForTesting
-    suspend fun actionsForEntity(isAutomotive: Boolean, entityId: String): List<EntityAddToAction> {
+    suspend fun actionsForEntity(isAutomotive: Boolean, isQuest: Boolean, entityId: String): List<EntityAddToAction> {
         return withContext(Dispatchers.Default) {
             val actions = mutableListOf<EntityAddToAction>()
             serverManager.getServer()?.let { server ->
                 serverManager.integrationRepository(server.id).getEntity(entityId)
                     ?.let { entity ->
-                        if (!isAutomotive) {
+                        if (!isAutomotive && !isQuest) {
                             actions.add(EntityAddToAction.EntityWidget)
 
                             if (entity.domain == MEDIA_PLAYER_DOMAIN) {

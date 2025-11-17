@@ -32,6 +32,7 @@ import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.LifecycleHandler
+import io.homeassistant.companion.android.util.QuestUtil
 import io.homeassistant.companion.android.util.initCrashSaving
 import io.homeassistant.companion.android.util.threadPolicyIgnoredViolationRules
 import io.homeassistant.companion.android.util.vmPolicyIgnoredViolationRules
@@ -152,7 +153,7 @@ open class HomeAssistantApplication :
         )
 
         // Update Quest only sensors when the device is a Quest
-        if (Build.MODEL == "Quest") {
+        if (QuestUtil.isQuest) {
             ContextCompat.registerReceiver(
                 this,
                 sensorReceiver,

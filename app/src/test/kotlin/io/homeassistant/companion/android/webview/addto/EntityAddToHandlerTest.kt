@@ -104,7 +104,7 @@ class EntityAddToHandlerTest {
         val entityId = "light.test"
         coEvery { serverManager.getServer() } returns null
 
-        val actions = handler.actionsForEntity(false, entityId)
+        val actions = handler.actionsForEntity(isAutomotive = false, isQuest = false, entityId = entityId)
 
         assertEquals(emptyList<EntityAddToAction>(), actions)
     }
@@ -114,7 +114,7 @@ class EntityAddToHandlerTest {
         val entityId = "light.nonexistent"
         coEvery { integrationRepository.getEntity(entityId) } returns null
 
-        val actions = handler.actionsForEntity(false, entityId)
+        val actions = handler.actionsForEntity(isAutomotive = false, isQuest = false, entityId)
 
         assertEquals(emptyList<EntityAddToAction>(), actions)
     }
@@ -125,7 +125,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(false, entityId)
+        val actions = handler.actionsForEntity(isAutomotive = false, isQuest = false, entityId)
         assertEquals(1, actions.size)
         assertEquals(EntityAddToAction.EntityWidget, actions.first())
     }
@@ -136,7 +136,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(false, entityId)
+        val actions = handler.actionsForEntity(isAutomotive = false, isQuest = false, entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.AndroidAutoFavorite), actions)
     }
@@ -147,7 +147,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(false, entityId)
+        val actions = handler.actionsForEntity(isAutomotive = false, isQuest = false, entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.MediaPlayerWidget), actions)
     }
@@ -158,7 +158,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(false, entityId)
+        val actions = handler.actionsForEntity(isAutomotive = false, isQuest = false, entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.TodoWidget), actions)
     }
@@ -169,7 +169,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(false, entityId)
+        val actions = handler.actionsForEntity(isAutomotive = false, isQuest = false, entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.CameraWidget), actions)
     }
@@ -180,7 +180,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(false, entityId)
+        val actions = handler.actionsForEntity(isAutomotive = false, isQuest = false, entityId)
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.CameraWidget), actions)
     }
 
@@ -249,7 +249,7 @@ class EntityAddToHandlerTest {
     fun `Given standard entity on automotive when getting actionsForEntity then returns auto favorite`(entityId: String) = runTest {
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(true, entityId)
+        val actions = handler.actionsForEntity(isAutomotive = true, isQuest = false, entityId)
 
         assertEquals(listOf(EntityAddToAction.AndroidAutoFavorite), actions)
     }
@@ -266,7 +266,39 @@ class EntityAddToHandlerTest {
     fun `Given entity on automotive not vehicle domain with when getting actionsForEntity then returns empty list`(entityId: String) = runTest {
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(true, entityId)
+        val actions = handler.actionsForEntity(isAutomotive = true, isQuest = false, entityId)
+
+        assertEquals(emptyList<EntityAddToAction>(), actions)
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "light.test",
+            "alarm_control_panel.test",
+        ],
+    )
+    fun `Given standard entity on Quest when getting actionsForEntity then returns auto favorite`(entityId: String) = runTest {
+        mockGetEntity(entityId)
+
+        val actions = handler.actionsForEntity(isAutomotive = false, isQuest = true, entityId)
+
+        assertEquals(listOf(EntityAddToAction.AndroidAutoFavorite), actions)
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "$MEDIA_PLAYER_DOMAIN.test",
+            "$TODO_DOMAIN.test",
+            "$CAMERA_DOMAIN.test",
+            "$IMAGE_DOMAIN.test",
+        ],
+    )
+    fun `Given entity on Quest not vehicle domain with when getting actionsForEntity then returns empty list`(entityId: String) = runTest {
+        mockGetEntity(entityId)
+
+        val actions = handler.actionsForEntity(isAutomotive = false, isQuest = true, entityId)
 
         assertEquals(emptyList<EntityAddToAction>(), actions)
     }
