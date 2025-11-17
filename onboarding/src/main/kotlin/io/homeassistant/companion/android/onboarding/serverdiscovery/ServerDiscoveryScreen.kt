@@ -128,6 +128,7 @@ internal fun ServerDiscoveryScreen(
         topBar = {
             HATopBar(onBackClick = onBackClick, onHelpClick = onHelpClick)
         },
+        contentWindowInsets = WindowInsets.safeDrawing,
     ) { contentPadding ->
         ScreenContent(
             contentPadding = contentPadding,
