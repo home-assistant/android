@@ -136,12 +136,12 @@
     <issue
         id="NewApi"
         message="Field requires API level 31 (current min is 30): `CameraControl`"
-        errorLine1="            &quot;camera&quot; to CameraControl,"
-        errorLine2="                        ~~~~~~~~~~~~~">
+        errorLine1="            CAMERA_DOMAIN to CameraControl,"
+        errorLine2="                             ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/controls/HaControlsProviderService.kt"
-            line="44"
-            column="25"/>
+            line="46"
+            column="30"/>
     </issue>
 
     <issue
@@ -459,7 +459,7 @@
         errorLine2="                 ~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/websocket/WebsocketBroadcastReceiver.kt"
-            line="8"
+            line="14"
             column="18"/>
     </issue>
 
@@ -868,7 +868,7 @@
         errorLine2="                                                          ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
-            line="415"
+            line="416"
             column="59"/>
     </issue>
 
@@ -912,7 +912,7 @@
         errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/entity/EntityWidgetConfigureActivity.kt"
-            line="118"
+            line="134"
             column="42"/>
     </issue>
 

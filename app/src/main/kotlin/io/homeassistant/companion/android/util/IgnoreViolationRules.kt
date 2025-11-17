@@ -20,6 +20,8 @@ val threadPolicyIgnoredViolationRules = listOf(
     IgnoreActivityThreadVsyncDiskReadWrite,
     IgnoreSamsungInputRuneDiskRead,
     IgnoreSamsungKnoxProKioskDiskRead,
+    IgnoreAndroidAutoServiceConnectionDiskRead,
+    IgnoreAndroidAutoRendererServiceDiskRead,
 )
 
 /**
@@ -154,6 +156,40 @@ private data object IgnoreSamsungKnoxProKioskDiskRead : IgnoreViolationRule {
         return violation.stackTrace.any {
             it.className == "com.samsung.android.knox.custom.ProKioskManager" &&
                 it.methodName == "getProKioskState"
+        }
+    }
+}
+
+/**
+ * Ignore a [DiskReadViolation] in Android Auto/Automotive's ServiceConnectionManager.
+ * This occurs when the Android Auto library initializes its service connection and is
+ * beyond application control.
+ */
+private data object IgnoreAndroidAutoServiceConnectionDiskRead : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskReadViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "androidx.car.app.activity.ServiceConnectionManager" &&
+                it.methodName == "initializeService"
+        }
+    }
+}
+
+/**
+ * Ignore a [DiskReadViolation] in Android Auto/Automotive's IRendererService.
+ * This occurs when the Android Auto renderer service handles binder transactions and is
+ * beyond application control.
+ */
+private data object IgnoreAndroidAutoRendererServiceDiskRead : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskReadViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "androidx.car.app.activity.renderer.IRendererService\$Stub" &&
+                it.methodName == "onTransact"
         }
     }
 }
