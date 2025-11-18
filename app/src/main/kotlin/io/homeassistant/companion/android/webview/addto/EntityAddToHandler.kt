@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.webview.addto
 import android.content.Context
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.IMAGE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
@@ -107,10 +108,21 @@ class EntityAddToHandler @Inject constructor(
      * @param context Android context used for starting activities and accessing system services
      * @param action The action to execute (determines what platform feature to add the entity to)
      * @param entityId The entity ID to add (for example, "light.living_room")
+     * @param onShowSnackbar A lambda to show a snackbar that takes a message and an action as parameters
+     *  and returns true when the action is performed
      */
-    suspend fun execute(context: Context, action: EntityAddToAction, entityId: String) {
+    suspend fun execute(
+        context: Context,
+        action: EntityAddToAction,
+        entityId: String,
+        onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+    ) {
         when (action) {
-            is EntityAddToAction.AndroidAutoFavorite -> addToAndroidAutoFavorite(entityId)
+            is EntityAddToAction.AndroidAutoFavorite -> {
+                addToAndroidAutoFavorite(entityId)
+                onShowSnackbar(context.getString(commonR.string.add_to_android_auto_success), null)
+            }
+
             is EntityAddToAction.Tile -> {
                 // TODO go to a new tile https://github.com/home-assistant/android/issues/5623
             }

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.webview
 
+import android.annotation.SuppressLint
 import android.view.View
 import android.webkit.WebView
 import androidx.compose.foundation.background
@@ -20,6 +21,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,11 +46,13 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 internal fun WebViewContentScreen(
     webView: WebView?,
     player: Player?,
+    snackbarHostState: SnackbarHostState,
     playerSize: DpSize?,
     playerTop: Dp,
     playerLeft: Dp,
@@ -57,35 +64,47 @@ internal fun WebViewContentScreen(
     onFullscreenClicked: (isFullscreen: Boolean) -> Unit,
 ) {
     HomeAssistantAppTheme {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colorResource(commonR.color.colorLaunchScreenBackground)),
+        Scaffold(
+            snackbarHost = {
+                SnackbarHost(
+                    snackbarHostState,
+                    modifier =
+                    Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
+                )
+            },
+            // Delegate the insets handling to the webview
+            contentWindowInsets = WindowInsets(),
         ) {
-            SafeHAWebView(webView, nightModeTheme, currentAppLocked, statusBarColor, backgroundColor)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(colorResource(commonR.color.colorLaunchScreenBackground)),
+            ) {
+                SafeHAWebView(webView, nightModeTheme, currentAppLocked, statusBarColor, backgroundColor)
 
-            player?.let { player ->
-                playerSize?.let { playerSize ->
-                    HAMediaPlayer(
-                        player = player,
-                        contentScale = ContentScale.Inside,
-                        modifier = Modifier
-                            .offset(playerLeft, playerTop)
-                            .size(playerSize),
-                        fullscreenModifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black),
-                        onFullscreenClicked = onFullscreenClicked,
+                player?.let { player ->
+                    playerSize?.let { playerSize ->
+                        HAMediaPlayer(
+                            player = player,
+                            contentScale = ContentScale.Inside,
+                            modifier = Modifier
+                                .offset(playerLeft, playerTop)
+                                .size(playerSize),
+                            fullscreenModifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black),
+                            onFullscreenClicked = onFullscreenClicked,
+                        )
+                    }
+                }
+                customViewFromWebView?.let { customViewFromWebView ->
+                    AndroidView(
+                        factory = {
+                            customViewFromWebView
+                        },
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
-            }
-            customViewFromWebView?.let { customViewFromWebView ->
-                AndroidView(
-                    factory = {
-                        customViewFromWebView
-                    },
-                    modifier = Modifier.fillMaxSize(),
-                )
             }
         }
     }
@@ -160,6 +179,7 @@ private fun WebViewContentScreenPreview() {
     WebViewContentScreen(
         webView = null,
         player = null,
+        snackbarHostState = SnackbarHostState(),
         playerSize = null,
         playerTop = 0.dp,
         playerLeft = 0.dp,
