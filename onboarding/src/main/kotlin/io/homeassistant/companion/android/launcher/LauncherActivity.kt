@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Parcelable
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.produceState
@@ -22,6 +21,7 @@ import io.homeassistant.companion.android.compose.HAApp
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
+import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 import kotlinx.coroutines.flow.first
 import kotlinx.parcelize.Parcelize
 
@@ -92,7 +92,7 @@ class LauncherActivity : AppCompatActivity() {
             viewModel.shouldShowSplashScreen()
         }
 
-        enableEdgeToEdge()
+        enableEdgeToEdgeCompat()
 
         setContent {
             HATheme {
@@ -110,7 +110,8 @@ class LauncherActivity : AppCompatActivity() {
                             }
 
                             is LauncherNavigationEvent.Onboarding -> OnboardingRoute(
-                                event.urlToOnboard,
+                                hasLocationTracking = event.hasLocationTrackingSupport,
+                                urlToOnboard = event.urlToOnboard,
                                 hideExistingServers = event.hideExistingServers,
                                 skipWelcome = event.skipWelcome,
                             )

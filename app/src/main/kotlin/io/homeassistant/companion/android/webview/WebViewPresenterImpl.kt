@@ -43,7 +43,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
+import kotlinx.serialization.json.JsonObject
 import timber.log.Timber
 
 class WebViewPresenterImpl @Inject constructor(
@@ -333,7 +333,7 @@ class WebViewPresenterImpl @Inject constructor(
         return prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()
     }
 
-    override fun onExternalBusMessage(message: JSONObject) {
+    override fun onExternalBusMessage(message: JsonObject) {
         mainScope.launch {
             externalBusRepository.received(message)
         }

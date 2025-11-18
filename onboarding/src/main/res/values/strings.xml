@@ -25,10 +25,11 @@
     <string name="location_sharing_no_share">Do not share my location</string>
     <string name="location_secure_connection_title">Let us help secure your remote connection</string>
     <string name="location_secure_connection_content">It appears that your connection is not encrypted (using HTTP). If the app knows when you\'re away from home, it can choose a more secure way to connect to your Home Assistant system if available. This requires location services to be enabled.</string>
-    <string name="location_secure_connection_most_secure">Most secure: Allow this app to know when you\'re home</string>
-    <string name="location_secure_connection_less_secure">Less secure: Do not allow this app to know when you\'re home</string>
+    <string name="connection_security_most_secure">Most secure: Allow this app to know when you\'re home</string>
+    <string name="connection_security_less_secure">Less secure: Do not allow this app to know when you\'re home</string>
     <string name="location_secure_connection_hint">This data will never be shared with the Home Assistant project or third parties.</string>
     <string name="location_secure_connection_next">Next</string>
+    <string name="location_secure_connection_save">Save</string>
     <string name="location_secure_connection_discard_permission">Location permission denied. Allow access or choose the \'Less secure\' option.</string>
     <string name="wear_mtls_no_filename">No file name</string>
     <string name="wear_mtls_content">Your Home Assistant server requires TLS client certificate authentication. Select a TLS client certificate file to install it on your Wear OS device.</string>
@@ -38,4 +39,16 @@
     <string name="set_home_network_title">Define your home network.</string>
     <string name="set_home_network_content">Indicate when you\'re connected to your home network. This can be used to, for example, use the internal connection URL or disable the app lock when at home.</string>
     <string name="set_home_network_next">Next</string>
+    <string name="connection_error_url_info">The app is currently connecting to</string>
+    <string name="connection_error_more_details">More details</string>
+    <string name="connection_error_more_details_description">Description</string>
+    <string name="connection_error_more_details_description_content">Status Code: %1$s\nDetail: %2$s</string>
+    <string name="connection_error_more_details_error">Error</string>
+    <string name="connection_error_help">Get more help</string>
+    <string name="connection_error_discord_content_description">Home Assistant Discord"</string>
+    <string name="connection_error_documentation_content_description">Home Assistant Documentation</string>
+    <string name="connection_error_forum_content_description">Home Assistant Forum</string>
+    <string name="connection_error_github_content_description">Home Assistant GitHub"</string>
+    <string name="connection_error_unknown_error">There was an error loading Home Assistant. Please review the connection settings and try again.</string>
+    <string name="back">Back</string>
 </resources>

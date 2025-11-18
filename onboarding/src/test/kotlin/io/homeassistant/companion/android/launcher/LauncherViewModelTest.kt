@@ -10,7 +10,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -23,16 +23,14 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.EnumSource
-import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(MainDispatcherJUnit5Extension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
 class LauncherViewModelTest {
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val networkStatusMonitor: NetworkStatusMonitor = mockk(relaxed = true)
@@ -41,14 +39,11 @@ class LauncherViewModelTest {
 
     private lateinit var viewModel: LauncherViewModel
 
-    private fun createViewModel(initialDeepLink: LauncherActivity.DeepLink? = null) {
-        viewModel = LauncherViewModel(initialDeepLink, workManager, serverManager, networkStatusMonitor)
-    }
-
-    @BeforeEach
-    fun setUp() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
+    private fun createViewModel(
+        initialDeepLink: LauncherActivity.DeepLink? = null,
+        hasLocationTrackingSupport: Boolean = false,
+    ) {
+        viewModel = LauncherViewModel(initialDeepLink, workManager, serverManager, networkStatusMonitor, hasLocationTrackingSupport)
     }
 
     @ParameterizedTest
@@ -151,7 +146,7 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false, hasLocationTrackingSupport = false), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test
@@ -164,7 +159,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false, hasLocationTrackingSupport = false), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test
@@ -178,7 +173,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false, hasLocationTrackingSupport = false), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test
@@ -191,7 +186,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false, hasLocationTrackingSupport = false), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test
@@ -249,22 +244,28 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false, hasLocationTrackingSupport = false), viewModel.navigationEventsFlow.replayCache.first())
         assertTrue(!viewModel.shouldShowSplashScreen())
     }
 
     @ParameterizedTest
     @CsvSource(
-        "false, true",
-        "true, false",
+        "false, true, false",
+        "true, false, false",
+        "false, false, true",
+        "true, true, true",
     )
     fun `Given initial deep link is OpenOnboarding when creating viewModel, then navigate to onboarding with the server url`(
         hideExistingServers: Boolean,
         skipWelcome: Boolean,
+        hasLocationTrackingSupport: Boolean,
     ) = runTest {
-        createViewModel(LauncherActivity.DeepLink.OpenOnboarding("http://homeassistant.io", hideExistingServers = hideExistingServers, skipWelcome = skipWelcome))
+        createViewModel(
+            initialDeepLink = LauncherActivity.DeepLink.OpenOnboarding("http://homeassistant.io", hideExistingServers = hideExistingServers, skipWelcome = skipWelcome),
+            hasLocationTrackingSupport = hasLocationTrackingSupport,
+        )
         advanceUntilIdle()
-        assertEquals(LauncherNavigationEvent.Onboarding("http://homeassistant.io", hideExistingServers = hideExistingServers, skipWelcome = skipWelcome), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(LauncherNavigationEvent.Onboarding("http://homeassistant.io", hideExistingServers = hideExistingServers, skipWelcome = skipWelcome, hasLocationTrackingSupport = hasLocationTrackingSupport), viewModel.navigationEventsFlow.replayCache.first())
     }
 
     @Test

@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.util
 
 import android.os.Build
 import android.os.strictmode.DiskReadViolation
+import android.os.strictmode.DiskWriteViolation
 import android.os.strictmode.IncorrectContextUseViolation
 import android.os.strictmode.Violation
 import androidx.annotation.RequiresApi
@@ -15,6 +16,12 @@ val vmPolicyIgnoredViolationRules = listOf(
 val threadPolicyIgnoredViolationRules = listOf(
     IgnoreChangelogDiskRead,
     IgnoreNotificationHistoryFragmentLoadSharedPrefDiskRead,
+    IgnoreComposeTextContextMenuDiskRead,
+    IgnoreActivityThreadVsyncDiskReadWrite,
+    IgnoreSamsungInputRuneDiskRead,
+    IgnoreSamsungKnoxProKioskDiskRead,
+    IgnoreAndroidAutoServiceConnectionDiskRead,
+    IgnoreAndroidAutoRendererServiceDiskRead,
 )
 
 /**
@@ -85,6 +92,104 @@ private data object IgnoreNotificationHistoryFragmentLoadSharedPrefDiskRead : Ig
         return violation.stackTrace.any {
             it.className == "io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment" &&
                 it.methodName == "onCreatePreferences"
+        }
+    }
+}
+
+/**
+ * Ignore a DiskReadViolation in Jetpack Compose's text selection context menu implementation.
+ * This occurs when using SelectionContainer which enables text selection and shows a context menu.
+ */
+private data object IgnoreComposeTextContextMenuDiskRead : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskReadViolation) return false
+        return violation.stackTrace.any {
+            it.className ==
+                "androidx.compose.foundation.text.contextmenu.internal.AndroidTextContextMenuToolbarProvider"
+        }
+    }
+}
+
+/**
+ * Ignore an [DiskWriteViolation] and [DiskReadViolation] in Android's ActivityThread vsync scheduling.
+ * This occurs in the framework's internal vsync scheduling mechanism and is beyond
+ * application control.
+ */
+private data object IgnoreActivityThreadVsyncDiskReadWrite : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskWriteViolation && violation !is DiskReadViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "android.app.ActivityThread" &&
+                it.methodName == "scheduleVsyncSS"
+        }
+    }
+}
+
+/**
+ * Ignore a [DiskReadViolation] in Samsung's InputRune framework component.
+ * This occurs in Samsung's internal input configuration system and is beyond
+ * application control.
+ */
+private data object IgnoreSamsungInputRuneDiskRead : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskReadViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "com.samsung.android.rune.InputRune"
+        }
+    }
+}
+
+/**
+ * Ignore a [DiskReadViolation] in Samsung Knox's ProKioskManager.
+ * This occurs when Samsung Knox checks the kiosk state and is beyond application control.
+ */
+private data object IgnoreSamsungKnoxProKioskDiskRead : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskReadViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "com.samsung.android.knox.custom.ProKioskManager" &&
+                it.methodName == "getProKioskState"
+        }
+    }
+}
+
+/**
+ * Ignore a [DiskReadViolation] in Android Auto/Automotive's ServiceConnectionManager.
+ * This occurs when the Android Auto library initializes its service connection and is
+ * beyond application control.
+ */
+private data object IgnoreAndroidAutoServiceConnectionDiskRead : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskReadViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "androidx.car.app.activity.ServiceConnectionManager" &&
+                it.methodName == "initializeService"
+        }
+    }
+}
+
+/**
+ * Ignore a [DiskReadViolation] in Android Auto/Automotive's IRendererService.
+ * This occurs when the Android Auto renderer service handles binder transactions and is
+ * beyond application control.
+ */
+private data object IgnoreAndroidAutoRendererServiceDiskRead : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskReadViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "androidx.car.app.activity.renderer.IRendererService\$Stub" &&
+                it.methodName == "onTransact"
         }
     }
 }

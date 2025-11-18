@@ -67,6 +67,7 @@ import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
 import io.homeassistant.companion.android.database.notification.NotificationDao
@@ -103,7 +104,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.sink
-import org.json.JSONObject
 import timber.log.Timber
 
 class MessagingManager @Inject constructor(
@@ -288,7 +288,7 @@ class MessagingManager @Inject constructor(
                     jsonData = jsonData + dbData // Add the notificationData, this contains the reply text
                 } ?: return@launch
             } else {
-                val jsonObject = JSONObject(jsonData)
+                val jsonObject = jsonData.toJsonObject()
                 val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
                     serverManager.getServer(webhookId = it)?.id
                 }
@@ -353,14 +353,7 @@ class MessagingManager @Inject constructor(
                     when (jsonData[NotificationData.MESSAGE]) {
                         COMMAND_DND -> {
                             if (jsonData[NotificationData.COMMAND] in DND_COMMANDS) {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                    handleDeviceCommands(jsonData)
-                                } else {
-                                    Timber.d(
-                                        "Posting notification to device as it does not support DND commands",
-                                    )
-                                    sendNotification(jsonData)
-                                }
+                                handleDeviceCommands(jsonData)
                             } else {
                                 Timber.d(
                                     "Invalid DND command received, posting notification to device",
@@ -522,15 +515,7 @@ class MessagingManager @Inject constructor(
                                 jsonData[MEDIA_COMMAND] in MEDIA_COMMANDS &&
                                 !jsonData[MEDIA_PACKAGE_NAME].isNullOrEmpty()
                             ) {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                                    handleDeviceCommands(jsonData)
-                                } else {
-                                    Timber.d(
-
-                                        "Posting notification to device as it does not support media commands",
-                                    )
-                                    sendNotification(jsonData)
-                                }
+                                handleDeviceCommands(jsonData)
                             } else {
                                 Timber.d(
 
@@ -599,9 +584,7 @@ class MessagingManager @Inject constructor(
 
                         COMMAND_FLASHLIGHT -> {
                             val command = jsonData[NotificationData.COMMAND]
-                            if (command in DeviceCommandData.ENABLE_COMMANDS &&
-                                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                            ) {
+                            if (command in DeviceCommandData.ENABLE_COMMANDS) {
                                 handleDeviceCommands(jsonData)
                             } else {
                                 Timber.d("Invalid flashlight command received, posting notification to device")
@@ -644,44 +627,39 @@ class MessagingManager @Inject constructor(
         val serverId = data[THIS_SERVER_ID]!!
         when (message) {
             COMMAND_DND -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    val notificationManager =
-                        context.getSystemService<NotificationManager>()
-                    if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                        notifyMissingPermission(message.toString(), serverId)
-                    } else {
-                        when (command) {
-                            DND_ALARMS_ONLY -> notificationManager?.setInterruptionFilter(
-                                NotificationManager.INTERRUPTION_FILTER_ALARMS,
-                            )
+                val notificationManager =
+                    context.getSystemService<NotificationManager>()
+                if (notificationManager?.isNotificationPolicyAccessGranted == false) {
+                    notifyMissingPermission(message.toString(), serverId)
+                } else {
+                    when (command) {
+                        DND_ALARMS_ONLY -> notificationManager?.setInterruptionFilter(
+                            NotificationManager.INTERRUPTION_FILTER_ALARMS,
+                        )
 
-                            DND_ALL -> notificationManager?.setInterruptionFilter(
-                                NotificationManager.INTERRUPTION_FILTER_ALL,
-                            )
-                            DND_NONE -> notificationManager?.setInterruptionFilter(
-                                NotificationManager.INTERRUPTION_FILTER_NONE,
-                            )
+                        DND_ALL -> notificationManager?.setInterruptionFilter(
+                            NotificationManager.INTERRUPTION_FILTER_ALL,
+                        )
 
-                            DND_PRIORITY_ONLY -> notificationManager?.setInterruptionFilter(
-                                NotificationManager.INTERRUPTION_FILTER_PRIORITY,
-                            )
+                        DND_NONE -> notificationManager?.setInterruptionFilter(
+                            NotificationManager.INTERRUPTION_FILTER_NONE,
+                        )
 
-                            else -> Timber.d("Skipping invalid command")
-                        }
+                        DND_PRIORITY_ONLY -> notificationManager?.setInterruptionFilter(
+                            NotificationManager.INTERRUPTION_FILTER_PRIORITY,
+                        )
+
+                        else -> Timber.d("Skipping invalid command")
                     }
                 }
             }
 
             COMMAND_RINGER_MODE -> {
                 val audioManager = context.getSystemService<AudioManager>()
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    val notificationManager =
-                        context.getSystemService<NotificationManager>()
-                    if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                        notifyMissingPermission(message.toString(), serverId)
-                    } else {
-                        processRingerMode(audioManager!!, command)
-                    }
+                val notificationManager =
+                    context.getSystemService<NotificationManager>()
+                if (notificationManager?.isNotificationPolicyAccessGranted == false) {
+                    notifyMissingPermission(message.toString(), serverId)
                 } else {
                     processRingerMode(audioManager!!, command)
                 }
@@ -717,17 +695,9 @@ class MessagingManager @Inject constructor(
             COMMAND_VOLUME_LEVEL -> {
                 val audioManager =
                     context.getSystemService<AudioManager>()
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    val notificationManager = context.getSystemService<NotificationManager>()
-                    if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                        notifyMissingPermission(message.toString(), serverId)
-                    } else {
-                        processStreamVolume(
-                            audioManager!!,
-                            data[NotificationData.MEDIA_STREAM].toString(),
-                            command!!.toInt(),
-                        )
-                    }
+                val notificationManager = context.getSystemService<NotificationManager>()
+                if (notificationManager?.isNotificationPolicyAccessGranted == false) {
+                    notifyMissingPermission(message.toString(), serverId)
                 } else {
                     processStreamVolume(
                         audioManager!!,
@@ -776,24 +746,20 @@ class MessagingManager @Inject constructor(
             }
 
             COMMAND_ACTIVITY -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (!Settings.canDrawOverlays(context)) {
-                        notifyMissingPermission(message.toString(), serverId)
-                    } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) !=
-                        PackageManager.PERMISSION_GRANTED &&
-                        data["tag"] == Intent.ACTION_CALL
-                    ) {
-                        Handler(Looper.getMainLooper()).post {
-                            Toast.makeText(
-                                context,
-                                context.getString(commonR.string.missing_phone_permission),
-                                Toast.LENGTH_LONG,
-                            ).show()
-                        }
-                        navigateAppDetails()
-                    } else {
-                        processActivityCommand(data)
+                if (!Settings.canDrawOverlays(context)) {
+                    notifyMissingPermission(message.toString(), serverId)
+                } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) !=
+                    PackageManager.PERMISSION_GRANTED &&
+                    data["tag"] == Intent.ACTION_CALL
+                ) {
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(
+                            context,
+                            context.getString(commonR.string.missing_phone_permission),
+                            Toast.LENGTH_LONG,
+                        ).show()
                     }
+                    navigateAppDetails()
                 } else {
                     processActivityCommand(data)
                 }
@@ -804,12 +770,8 @@ class MessagingManager @Inject constructor(
             }
 
             COMMAND_WEBVIEW -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (!Settings.canDrawOverlays(context)) {
-                        notifyMissingPermission(message.toString(), serverId)
-                    } else {
-                        openWebview(command, data)
-                    }
+                if (!Settings.canDrawOverlays(context)) {
+                    notifyMissingPermission(message.toString(), serverId)
                 } else {
                     openWebview(command, data)
                 }
@@ -834,24 +796,18 @@ class MessagingManager @Inject constructor(
             }
 
             COMMAND_MEDIA -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                    if (!NotificationManagerCompat.getEnabledListenerPackages(context)
-                            .contains(context.packageName)
-                    ) {
-                        notifyMissingPermission(message.toString(), serverId)
-                    } else {
-                        processMediaCommand(data)
-                    }
+                if (!NotificationManagerCompat.getEnabledListenerPackages(context)
+                        .contains(context.packageName)
+                ) {
+                    notifyMissingPermission(message.toString(), serverId)
+                } else {
+                    processMediaCommand(data)
                 }
             }
 
             COMMAND_LAUNCH_APP -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (!Settings.canDrawOverlays(context)) {
-                        notifyMissingPermission(message.toString(), serverId)
-                    } else {
-                        launchApp(data)
-                    }
+                if (!Settings.canDrawOverlays(context)) {
+                    notifyMissingPermission(message.toString(), serverId)
                 } else {
                     launchApp(data)
                 }
@@ -865,16 +821,12 @@ class MessagingManager @Inject constructor(
             }
 
             COMMAND_AUTO_SCREEN_BRIGHTNESS, COMMAND_SCREEN_BRIGHTNESS_LEVEL, COMMAND_SCREEN_OFF_TIMEOUT -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (Settings.System.canWrite(context)) {
-                        if (!processScreenCommands(data)) {
-                            sendNotification(data)
-                        }
-                    } else {
-                        notifyMissingPermission(message.toString(), serverId)
+                if (Settings.System.canWrite(context)) {
+                    if (!processScreenCommands(data)) {
+                        sendNotification(data)
                     }
-                } else if (!processScreenCommands(data)) {
-                    sendNotification(data)
+                } else {
+                    notifyMissingPermission(message.toString(), serverId)
                 }
             }
 
@@ -886,7 +838,7 @@ class MessagingManager @Inject constructor(
                         DeviceCommandData.TURN_OFF -> flashlightHelper.turnOffFlashlight()
                         DeviceCommandData.TURN_ON -> flashlightHelper.turnOnFlashlight()
                     }
-                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                } else {
                     Handler(Looper.getMainLooper()).post {
                         Toast.makeText(context, commonR.string.missing_camera_permission, Toast.LENGTH_LONG).show()
                     }
@@ -1724,7 +1676,6 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     private fun requestDNDPermission() {
         val intent =
             Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
@@ -1732,7 +1683,6 @@ class MessagingManager @Inject constructor(
         context.startActivity(intent)
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     private fun requestSystemAlertPermission() {
         val intent = Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -1742,7 +1692,6 @@ class MessagingManager @Inject constructor(
         context.startActivity(intent)
     }
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     private fun requestNotificationPermission() {
         val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -1758,7 +1707,6 @@ class MessagingManager @Inject constructor(
         context.startActivity(intent)
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     private fun requestWriteSystemPermission() {
         val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
         intent.data = ("package:" + context.packageName).toUri()
@@ -1766,12 +1714,10 @@ class MessagingManager @Inject constructor(
         context.startActivity(intent)
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     private fun requestRuntimePermission(permission: String) {
         permissionRequestMediator.emitPermissionRequestEvent(permission)
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     private fun requestCameraPermission() = requestRuntimePermission(Manifest.permission.CAMERA)
 
     private fun getKeyEvent(key: String): Int {
@@ -2060,21 +2006,11 @@ class MessagingManager @Inject constructor(
                         }
                     } else {
                         when (type) {
-                            COMMAND_WEBVIEW, COMMAND_ACTIVITY, COMMAND_LAUNCH_APP -> if (Build.VERSION.SDK_INT >=
-                                Build.VERSION_CODES.M
-                            ) {
-                                requestSystemAlertPermission()
-                            }
+                            COMMAND_WEBVIEW, COMMAND_ACTIVITY, COMMAND_LAUNCH_APP -> requestSystemAlertPermission()
 
-                            COMMAND_RINGER_MODE, COMMAND_DND, COMMAND_VOLUME_LEVEL -> if (Build.VERSION.SDK_INT >=
-                                Build.VERSION_CODES.M
-                            ) {
-                                requestDNDPermission()
-                            }
+                            COMMAND_RINGER_MODE, COMMAND_DND, COMMAND_VOLUME_LEVEL -> requestDNDPermission()
 
-                            COMMAND_MEDIA -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                                requestNotificationPermission()
-                            }
+                            COMMAND_MEDIA -> requestNotificationPermission()
 
                             COMMAND_BLUETOOTH -> {
                                 Handler(Looper.getMainLooper()).post {
@@ -2090,11 +2026,7 @@ class MessagingManager @Inject constructor(
                             COMMAND_SCREEN_BRIGHTNESS_LEVEL,
                             COMMAND_AUTO_SCREEN_BRIGHTNESS,
                             COMMAND_SCREEN_OFF_TIMEOUT,
-                            -> {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                    requestWriteSystemPermission()
-                                }
-                            }
+                            -> requestWriteSystemPermission()
                         }
                     }
                 }

@@ -86,9 +86,19 @@ import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.common.util.getBooleanOrElse
+import io.homeassistant.companion.android.common.util.getBooleanOrNull
+import io.homeassistant.companion.android.common.util.getIntOrElse
+import io.homeassistant.companion.android.common.util.getIntOrNull
+import io.homeassistant.companion.android.common.util.getStringOrElse
+import io.homeassistant.companion.android.common.util.getStringOrNull
 import io.homeassistant.companion.android.common.util.isAutomotive
+import io.homeassistant.companion.android.common.util.jsonObjectOrNull
+import io.homeassistant.companion.android.common.util.toJsonObject
+import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
@@ -110,8 +120,11 @@ import io.homeassistant.companion.android.util.compose.initializePlayer
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
+import io.homeassistant.companion.android.webview.addto.EntityAddToHandler
+import io.homeassistant.companion.android.webview.externalbus.EntityAddToActionsResponse
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import io.homeassistant.companion.android.webview.externalbus.ExternalConfigResponse
+import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import io.homeassistant.companion.android.webview.externalbus.NavigateTo
 import io.homeassistant.companion.android.webview.externalbus.ShowSidebar
 import javax.inject.Inject
@@ -122,8 +135,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.json.JSONObject
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -212,6 +226,9 @@ class WebViewActivity :
 
     @Inject
     lateinit var appVersionProvider: AppVersionProvider
+
+    @Inject
+    lateinit var entityAddToHandler: EntityAddToHandler
 
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
@@ -448,13 +465,17 @@ class WebViewActivity :
                     resourceURL = url!!
                 }
 
-                override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                    request?.url?.let {
+                // Override deprecated method for backward compatibility with API 23 and below.
+                // The non-deprecated shouldOverrideUrlLoading(WebView, WebResourceRequest) is not invoked
+                // on these older Android versions, so this method remains necessary.
+                @Suppress("DEPRECATION")
+                override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                    url?.let {
                         try {
-                            if (it.toString().startsWith(APP_PREFIX)) {
+                            if (it.startsWith(APP_PREFIX)) {
                                 Timber.d("Launching the app")
                                 val intent = packageManager.getLaunchIntentForPackage(
-                                    it.toString().substringAfter(APP_PREFIX),
+                                    it.substringAfter(APP_PREFIX),
                                 )
                                 if (intent != null) {
                                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -463,14 +484,14 @@ class WebViewActivity :
                                     Timber.w("No intent to launch app found, opening app store")
                                     val marketIntent = Intent(Intent.ACTION_VIEW)
                                     marketIntent.data =
-                                        (MARKET_PREFIX + it.toString().substringAfter(APP_PREFIX)).toUri()
+                                        (MARKET_PREFIX + it.substringAfter(APP_PREFIX)).toUri()
                                     startActivity(marketIntent)
                                 }
                                 return true
-                            } else if (it.toString().startsWith(INTENT_PREFIX)) {
+                            } else if (it.startsWith(INTENT_PREFIX)) {
                                 Timber.d("Launching the intent")
                                 val intent =
-                                    Intent.parseUri(it.toString(), Intent.URI_INTENT_SCHEME)
+                                    Intent.parseUri(it, Intent.URI_INTENT_SCHEME)
                                 val intentPackage = intent.`package`?.let { it1 ->
                                     packageManager.getLaunchIntentForPackage(
                                         it1,
@@ -486,9 +507,9 @@ class WebViewActivity :
                                     startActivity(intent)
                                 }
                                 return true
-                            } else if (!webView.url.toString().contains(it.toString())) {
+                            } else if (!webView.url.toString().contains(it)) {
                                 Timber.d("Launching browser")
-                                val browserIntent = Intent(Intent.ACTION_VIEW, it)
+                                val browserIntent = Intent(Intent.ACTION_VIEW, it.toUri())
                                 startActivity(browserIntent)
                                 return true
                             } else {
@@ -509,8 +530,7 @@ class WebViewActivity :
             }
 
             setDownloadListener { url, _, contentDisposition, mimetype, _ ->
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
                     ActivityCompat.checkSelfPermission(
                         context,
                         android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -540,43 +560,38 @@ class WebViewActivity :
                 }
 
                 override fun onPermissionRequest(request: PermissionRequest?) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        val alreadyGranted = ArrayList<String>()
-                        val toBeGranted = ArrayList<String>()
-                        request?.resources?.forEach {
-                            if (it == PermissionRequest.RESOURCE_VIDEO_CAPTURE) {
-                                if (ActivityCompat.checkSelfPermission(
-                                        context,
-                                        android.Manifest.permission.CAMERA,
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    alreadyGranted.add(it)
-                                } else {
-                                    toBeGranted.add(android.Manifest.permission.CAMERA)
-                                }
-                            } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
-                                if (ActivityCompat.checkSelfPermission(
-                                        context,
-                                        android.Manifest.permission.RECORD_AUDIO,
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    alreadyGranted.add(it)
-                                } else {
-                                    toBeGranted.add(android.Manifest.permission.RECORD_AUDIO)
-                                }
+                    val alreadyGranted = ArrayList<String>()
+                    val toBeGranted = ArrayList<String>()
+                    request?.resources?.forEach {
+                        if (it == PermissionRequest.RESOURCE_VIDEO_CAPTURE) {
+                            if (ActivityCompat.checkSelfPermission(
+                                    context,
+                                    android.Manifest.permission.CAMERA,
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                alreadyGranted.add(it)
+                            } else {
+                                toBeGranted.add(android.Manifest.permission.CAMERA)
+                            }
+                        } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
+                            if (ActivityCompat.checkSelfPermission(
+                                    context,
+                                    android.Manifest.permission.RECORD_AUDIO,
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                alreadyGranted.add(it)
+                            } else {
+                                toBeGranted.add(android.Manifest.permission.RECORD_AUDIO)
                             }
                         }
-                        if (alreadyGranted.size > 0) {
-                            request?.grant(alreadyGranted.toTypedArray())
-                        }
-                        if (toBeGranted.size > 0) {
-                            requestPermissions.launch(
-                                toBeGranted.toTypedArray(),
-                            )
-                        }
-                    } else {
-                        // If we are before M we already have permission, just grant it.
-                        request?.grant(request.resources)
+                    }
+                    if (alreadyGranted.isNotEmpty()) {
+                        request?.grant(alreadyGranted.toTypedArray())
+                    }
+                    if (toBeGranted.isNotEmpty()) {
+                        requestPermissions.launch(
+                            toBeGranted.toTypedArray(),
+                        )
                     }
                 }
 
@@ -721,18 +736,18 @@ class WebViewActivity :
 
                     @JavascriptInterface
                     fun getExternalAuth(payload: String) {
-                        JSONObject(payload).let {
+                        payload.toJsonObjectOrNull().let {
                             presenter.onGetExternalAuth(
                                 this@WebViewActivity,
-                                it.getString("callback"),
-                                it.has("force") && it.getBoolean("force"),
+                                it?.getStringOrNull("callback") ?: "",
+                                it?.getBooleanOrNull("force") ?: false,
                             )
                         }
                     }
 
                     @JavascriptInterface
                     fun revokeExternalAuth(callback: String) {
-                        presenter.onRevokeExternalAuth(JSONObject(callback).get("callback") as String)
+                        presenter.onRevokeExternalAuth(callback.toJsonObjectOrNull()?.getStringOrNull("callback") ?: "")
                         isRelaunching = true // Prevent auth errors from showing
                     }
 
@@ -740,11 +755,11 @@ class WebViewActivity :
                     fun externalBus(message: String) {
                         Timber.d("External bus $message")
                         webView.post {
-                            val json = JSONObject(message)
-                            when (json.get("type")) {
+                            val json = message.toJsonObjectOrNull() ?: return@post
+                            when (json.getStringOrNull("type")) {
                                 "connection-status" -> {
-                                    isConnected = json.getJSONObject("payload")
-                                        .getString("event") == "connected"
+                                    isConnected = json["payload"]?.jsonObjectOrNull()
+                                        ?.getStringOrNull("event") == "connected"
                                     if (isConnected) {
                                         alertDialog?.cancel()
                                         presenter.checkSecurityVersion()
@@ -767,7 +782,7 @@ class WebViewActivity :
                                         }
                                     sendExternalBusMessage(
                                         ExternalConfigResponse(
-                                            id = JSONObject(message).get("id"),
+                                            id = json["id"],
                                             hasNfc = hasNfc,
                                             canCommissionMatter = canCommissionMatter,
                                             canExportThread = canExportThread,
@@ -791,25 +806,13 @@ class WebViewActivity :
                                 }
 
                                 "assist/show" -> {
-                                    val payload = if (json.has("payload")) json.getJSONObject("payload") else null
+                                    val payload = json["payload"]?.jsonObjectOrNull()
                                     startActivity(
                                         AssistActivity.newInstance(
                                             this@WebViewActivity,
                                             serverId = presenter.getActiveServer(),
-                                            pipelineId = if (payload?.has("pipeline_id") ==
-                                                true
-                                            ) {
-                                                payload.getString("pipeline_id")
-                                            } else {
-                                                null
-                                            },
-                                            startListening = if (payload?.has("start_listening") ==
-                                                true
-                                            ) {
-                                                payload.getBoolean("start_listening")
-                                            } else {
-                                                true
-                                            },
+                                            pipelineId = payload?.getStringOrNull("pipeline_id"),
+                                            startListening = payload?.getBooleanOrNull("start_listening") ?: true,
                                         ),
                                     )
                                 }
@@ -822,8 +825,8 @@ class WebViewActivity :
                                 "tag/write" ->
                                     writeNfcTag.launch(
                                         WriteNfcTag.Input(
-                                            tagId = json.getJSONObject("payload").getString("tag"),
-                                            messageId = JSONObject(message).getInt("id"),
+                                            tagId = json["payload"]?.jsonObjectOrNull()?.getStringOrNull("tag"),
+                                            messageId = json.getIntOrElse("id", -1),
                                         ),
                                     )
 
@@ -838,22 +841,19 @@ class WebViewActivity :
                                 }
 
                                 "bar_code/scan" -> {
-                                    val payload = if (json.has("payload")) json.getJSONObject("payload") else null
-                                    if (payload?.has("title") != true || !payload.has("description")) return@post
+                                    val payload = json["payload"]?.jsonObjectOrNull()
+                                    if (payload?.containsKey("title") != true ||
+                                        !payload.containsKey("description")
+                                    ) {
+                                        return@post
+                                    }
                                     startActivity(
                                         BarcodeScannerActivity.newInstance(
                                             this@WebViewActivity,
-                                            messageId = json.getInt("id"),
-                                            title = payload.getString("title"),
-                                            subtitle = payload.getString("description"),
-                                            action = if (payload.has(
-                                                    "alternative_option_label",
-                                                )
-                                            ) {
-                                                payload.getString("alternative_option_label").ifBlank {
-                                                    null
-                                                }
-                                            } else {
+                                            messageId = json.getIntOrElse("id", 0),
+                                            title = payload.getStringOrElse("title", ""),
+                                            subtitle = payload.getStringOrElse("description", ""),
+                                            action = payload.getStringOrNull("alternative_option_label")?.ifBlank {
                                                 null
                                             },
                                         ),
@@ -862,16 +862,20 @@ class WebViewActivity :
 
                                 "improv/scan" -> scanForImprov()
                                 "improv/configure_device" -> {
-                                    val payload = if (json.has("payload")) json.getJSONObject("payload") else null
-                                    if (payload?.has("name") != true) return@post
-                                    configureImprovDevice(payload.getString("name"))
+                                    val payload = json["payload"]?.jsonObjectOrNull()
+                                    val deviceName = payload?.getStringOrNull("name") ?: return@post
+                                    configureImprovDevice(deviceName)
                                 }
 
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)
-                                "haptic" -> processHaptic(json.getJSONObject("payload").getString("hapticType"))
+                                "haptic" -> processHaptic(
+                                    json["payload"]?.jsonObjectOrNull()?.getStringOrNull("hapticType") ?: "",
+                                )
                                 "theme-update" -> getAndSetStatusBarNavigationBarColors()
+                                "entity/add_to/get_actions" -> getActions(json)
+                                "entity/add_to" -> addEntityTo(json)
                                 else -> presenter.onExternalBusMessage(json)
                             }
                         }
@@ -893,6 +897,40 @@ class WebViewActivity :
                 },
                 javascriptInterface,
             )
+        }
+    }
+
+    private fun addEntityTo(json: JsonObject) {
+        val payload = json["payload"]?.jsonObjectOrNull()
+        val entityId = payload?.getStringOrNull("entity_id")
+        val appPayload = payload?.getStringOrNull("app_payload")
+        if (entityId != null && appPayload != null) {
+            val action = ExternalEntityAddToAction.appPayloadToAction(appPayload)
+            lifecycleScope.launch {
+                entityAddToHandler.execute(this@WebViewActivity, action, entityId)
+            }
+        } else {
+            FailFast.fail { "Missing entity_id or app_payload to addEntityTo" }
+        }
+    }
+
+    private fun getActions(json: JsonObject) {
+        val payload = json["payload"]?.jsonObjectOrNull()
+        val entityId = payload?.getStringOrNull("entity_id")
+        entityId?.let {
+            lifecycleScope.launch {
+                val actions = entityAddToHandler.actionsForEntity(this@WebViewActivity, entityId)
+                sendExternalBusMessage(
+                    EntityAddToActionsResponse(
+                        id = json["id"],
+                        actions = actions.map { action ->
+                            ExternalEntityAddToAction.fromAction(this@WebViewActivity, action)
+                        },
+                    ),
+                )
+            }
+        } ?: FailFast.fail {
+            "entity_id not present in response from External bus for `entity/add_to/get_actions`"
         }
     }
 
@@ -1099,10 +1137,10 @@ class WebViewActivity :
         }
     }
 
-    fun exoPlayHls(json: JSONObject) {
-        val payload = json.getJSONObject("payload")
-        val uri = payload.getString("url").toUri()
-        val isMuted = payload.optBoolean("muted")
+    fun exoPlayHls(json: JsonObject) {
+        val payload = json["payload"]?.jsonObjectOrNull()
+        val uri = payload?.getStringOrNull("url")?.toUri() ?: return
+        val isMuted = payload.getBooleanOrElse("muted", false)
         runOnUiThread {
             exoPlayer.value = initializePlayer(this).apply {
                 setMediaItem(MediaItem.fromUri(uri))
@@ -1127,7 +1165,7 @@ class WebViewActivity :
         }
         sendExternalBusMessage(
             ExternalBusMessage(
-                id = json.get("id"),
+                id = json["id"],
                 type = "result",
                 success = true,
                 callback = {
@@ -1152,27 +1190,28 @@ class WebViewActivity :
     }
 
     @OptIn(UnstableApi::class)
-    fun exoResizeHls(json: JSONObject) {
-        val payload = json.getJSONObject("payload")
+    fun exoResizeHls(json: JsonObject) {
+        val payload = json["payload"]?.jsonObjectOrNull() ?: return
         // Payload is https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect
         // The values are already scaled to the screen.
         // We only need to store the top left corner for the offset and the player size
 
-        val left = payload.getInt("left")
-        val top = payload.getInt("top")
-        val right = payload.getInt("right")
+        val left = payload.getIntOrElse("left", 0)
+        val top = payload.getIntOrElse("top", 0)
+        val right = payload.getIntOrElse("right", 0)
         // if the bottom value is not 0 we should take it it is a constraint from the frontend, otherwise we try to compute the
         // height based on the video's aspect ratio if available.
-        val bottom = payload.getInt("bottom").takeIf { it > 0 } ?: exoPlayer.value?.videoFormat?.let { videoFormat ->
-            if (videoFormat.width > 0) {
-                // Calculate height of the video based on aspect ratio
-                val width = right - left
-                val videoHeight = width * videoFormat.height / videoFormat.width
-                (top + videoHeight)
-            } else {
-                payload.getInt("bottom")
-            }
-        } ?: payload.getInt("bottom")
+        val bottom =
+            payload.getIntOrNull("bottom")?.takeIf { it > 0 } ?: exoPlayer.value?.videoFormat?.let { videoFormat ->
+                if (videoFormat.width > 0) {
+                    // Calculate height of the video based on aspect ratio
+                    val width = right - left
+                    val videoHeight = width * videoFormat.height / videoFormat.width
+                    (top + videoHeight)
+                } else {
+                    payload.getIntOrNull("bottom")
+                }
+            } ?: payload.getIntOrElse("bottom", 0)
 
         playerTop.value = top.dp
         playerLeft.value = left.dp
@@ -1648,11 +1687,11 @@ class WebViewActivity :
         message.result?.let { map["result"] = it }
         message.error?.let { map["error"] = it }
         message.payload?.let { map["payload"] = it }
-
-        val json = JSONObject(map.toMap())
+        val jsonObject = map.toJsonObject()
+        val json = Json.encodeToString(jsonObject)
         val script = "externalBus($json);"
 
-        Timber.d(script)
+        Timber.d("Sending: $script")
 
         webView.evaluateJavascript(script, message.callback)
     }

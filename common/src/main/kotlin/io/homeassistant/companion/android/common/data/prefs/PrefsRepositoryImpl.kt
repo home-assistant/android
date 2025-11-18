@@ -273,14 +273,30 @@ class PrefsRepositoryImpl @Inject constructor(
         localStorage().putStringSet(PREF_IGNORED_SUGGESTIONS, ignored.toSet())
     }
 
-    override suspend fun getAutoFavorites(): List<String> {
+    override suspend fun getAutoFavorites(): List<AutoFavorite> {
         return localStorage().getString(PREF_AUTO_FAVORITES)?.removeSurrounding("[", "]")?.split(", ")?.filter {
             it.isNotBlank()
+        }?.mapNotNull {
+            it.split("-").run {
+                if (size != 2) {
+                    null
+                } else {
+                    AutoFavorite(this[0].toInt(), this[1])
+                }
+            }
         } ?: emptyList()
     }
 
-    override suspend fun setAutoFavorites(favorites: List<String>) {
-        localStorage().putString(PREF_AUTO_FAVORITES, favorites.toString())
+    override suspend fun setAutoFavorites(favorites: List<AutoFavorite>) {
+        localStorage().putString(PREF_AUTO_FAVORITES, favorites.map { "${it.serverId}-${it.entityId}" }.toString())
+    }
+
+    override suspend fun addAutoFavorite(favorite: AutoFavorite) {
+        val favorites = getAutoFavorites().toMutableList()
+        if (!favorites.contains(favorite)) {
+            favorites.add(favorite)
+            setAutoFavorites(favorites)
+        }
     }
 
     override suspend fun isLocationHistoryEnabled(): Boolean {
@@ -331,7 +347,7 @@ class PrefsRepositoryImpl @Inject constructor(
         val controlsAuthEntities = getControlsAuthEntities().filter { it.split(".")[0].toIntOrNull() != serverId }
         setControlsAuthEntities(controlsAuthEntities)
 
-        val autoFavorites = getAutoFavorites().filter { it.split("-")[0].toIntOrNull() != serverId }
+        val autoFavorites = getAutoFavorites().filter { it.serverId != serverId }
         setAutoFavorites(autoFavorites)
 
         if (getControlsPanelServer() == serverId) {

@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
+import io.homeassistant.companion.android.di.qualifiers.LocationTrackingSupport
 import javax.inject.Singleton
 
 @Module
@@ -45,5 +46,12 @@ object TestApplicationModule {
                 "",
             )
         }
+    }
+
+    @Provides
+    @Singleton
+    @LocationTrackingSupport
+    fun providesLocationTrackingSupport(): Boolean {
+        return true
     }
 }

@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.NameYourDeviceRoute
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -34,7 +35,7 @@ import retrofit2.Response
 
 private const val DEFAULT_DEVICE_NAME = "Pixel 42"
 
-@ExtendWith(MainDispatcherJUnit5Extension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class NameYourDeviceViewModelTest {
 
@@ -53,13 +54,9 @@ class NameYourDeviceViewModelTest {
 
     @BeforeEach
     fun setup() {
-        // Disable logging on CI since it generates too much logs and crash the action that loads the result
-        // https://github.com/home-assistant/android/issues/5846
-        // Timber.plant(ConsoleLogTree)
-        // ConsoleLogTree.verbose = true
-
         coEvery { serverManager.authenticationRepository(any()) } returns authRepository
         coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
+        coEvery { integrationRepository.setAllowInsecureConnection(any()) } just Runs
 
         viewModel = NameYourDeviceViewModel(
             route,
@@ -148,6 +145,9 @@ class NameYourDeviceViewModelTest {
                 integrationRepository.registerDevice(any())
                 serverManager.convertTemporaryServer(tempServerId)
             }
+            coVerify(exactly = 0) {
+                integrationRepository.setAllowInsecureConnection(any())
+            }
         }
     }
 
@@ -198,7 +198,7 @@ class NameYourDeviceViewModelTest {
     }
 
     @Test
-    fun `Given public secure url when onSaveClick then emits DeviceNameSaved with hasPlainTextAccess to false and isPubliclyAccessible true`() = runTest {
+    fun `Given public secure url when onSaveClick then emits DeviceNameSaved with hasPlainTextAccess to false and isPubliclyAccessible true and enforces secure connection`() = runTest {
         viewModel = NameYourDeviceViewModel(
             NameYourDeviceRoute("https://www.home-assistant.io", "auth_code"),
             serverManager,
@@ -233,6 +233,54 @@ class NameYourDeviceViewModelTest {
             assertEquals(testServerId, (event as NameYourDeviceNavigationEvent.DeviceNameSaved).serverId)
             assertFalse(event.hasPlainTextAccess)
             assertTrue(event.isPubliclyAccessible)
+
+            coVerify(exactly = 1) {
+                integrationRepository.setAllowInsecureConnection(false)
+            }
+        }
+    }
+
+    @Test
+    fun `Given setAllowInsecureConnection throws when onSaveClick with HTTPS then logs error but continues successfully`() = runTest {
+        viewModel = NameYourDeviceViewModel(
+            NameYourDeviceRoute("https://ha.local", "auth_code"),
+            serverManager,
+            appVersionProvider,
+            messagingTokenProvider,
+            defaultName = DEFAULT_DEVICE_NAME,
+        )
+
+        val testServerId = 1
+        val tempServerId = 0
+        coEvery { serverManager.addServer(any()) } returns tempServerId
+        coEvery { authRepository.registerAuthorizationCode("auth_code") } just Runs
+        coEvery {
+            integrationRepository.registerDevice(
+                DeviceRegistration(
+                    appVersionProvider(),
+                    DEFAULT_DEVICE_NAME,
+                    messagingTokenProvider(),
+                ),
+            )
+        } just Runs
+        coEvery { serverManager.convertTemporaryServer(tempServerId) } returns testServerId
+        coEvery { integrationRepository.setAllowInsecureConnection(false) } throws RuntimeException("Failed to set connection security")
+
+        turbineScope {
+            val navEvents = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            viewModel.onSaveClick()
+            advanceUntilIdle()
+
+            val event = navEvents.awaitItem()
+            assertTrue(event is NameYourDeviceNavigationEvent.DeviceNameSaved)
+            assertEquals(testServerId, (event as NameYourDeviceNavigationEvent.DeviceNameSaved).serverId)
+            assertFalse(event.hasPlainTextAccess)
+
+            coVerify(exactly = 1) {
+                integrationRepository.setAllowInsecureConnection(false)
+                serverManager.convertTemporaryServer(tempServerId)
+            }
         }
     }
 

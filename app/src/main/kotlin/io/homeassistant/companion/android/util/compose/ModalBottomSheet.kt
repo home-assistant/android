@@ -9,13 +9,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.style.TextAlign
@@ -33,9 +37,12 @@ fun ModalBottomSheet(title: String?, showHandle: Boolean = true, content: @Compo
     val sheetCornerRadius = dimensionResource(R.dimen.bottom_sheet_corner_radius)
     Surface(
         shape = RoundedCornerShape(topStart = sheetCornerRadius, topEnd = sheetCornerRadius),
+        modifier = Modifier.nestedScroll(rememberNestedScrollInteropConnection()),
     ) {
         Column(
-            modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets()),
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .windowInsetsPadding(safeBottomWindowInsets(false)),
         ) {
             if (showHandle) {
                 Row(

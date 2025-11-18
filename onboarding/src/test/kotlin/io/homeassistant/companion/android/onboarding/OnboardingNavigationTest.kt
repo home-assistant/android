@@ -64,7 +64,7 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.SetHomeNetworkRoute
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.navigateToSetHomeNetworkRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.mockk.Runs
 import io.mockk.every
@@ -88,18 +88,19 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import timber.log.Timber
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 @UninstallModules(ServerDiscoveryModule::class)
 @HiltAndroidTest
 internal class OnboardingNavigationTest {
-
     @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
+    var consoleLog = ConsoleLogRule()
 
     @get:Rule(order = 1)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 2)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @BindValue
@@ -118,7 +119,7 @@ internal class OnboardingNavigationTest {
         every { urlFlow } returns MutableStateFlow("http://homeassistant.local:8123")
         every { isLoadingFlow } returns MutableStateFlow(false)
         every { navigationEventsFlow } returns connectionNavigationEventFlow
-        every { isErrorFlow } returns MutableStateFlow(false)
+        every { errorFlow } returns MutableStateFlow(null)
     }
 
     private val nameYourDeviceNavigationFlow = MutableSharedFlow<NameYourDeviceNavigationEvent>()
@@ -144,14 +145,16 @@ internal class OnboardingNavigationTest {
 
     @Before
     fun setup() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
-
         mockkStatic(NavController::navigateToUri)
         every { any<NavController>().navigateToUri(any()) } just Runs
     }
 
-    private fun setContent(urlToOnboard: String? = null, hideExistingServers: Boolean = false, skipWelcome: Boolean = false) {
+    private fun setContent(
+        urlToOnboard: String? = null,
+        hideExistingServers: Boolean = false,
+        skipWelcome: Boolean = false,
+        hasLocationTracking: Boolean = true,
+    ) {
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
             navController.navigatorProvider.addNavigator(ComposeNavigator())
@@ -163,7 +166,7 @@ internal class OnboardingNavigationTest {
             ) {
                 NavHost(
                     navController = navController,
-                    startDestination = OnboardingRoute(),
+                    startDestination = OnboardingRoute(hasLocationTracking = true),
                 ) {
                     onboarding(
                         navController,
@@ -174,14 +177,26 @@ internal class OnboardingNavigationTest {
                         urlToOnboard = urlToOnboard,
                         hideExistingServers = hideExistingServers,
                         skipWelcome = skipWelcome,
+                        hasLocationTracking = hasLocationTracking,
                     )
                 }
             }
         }
     }
 
-    private fun testNavigation(urlToOnboard: String? = null, hideExistingServers: Boolean = false, skipWelcome: Boolean = false, testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit) {
-        setContent(urlToOnboard, hideExistingServers = hideExistingServers, skipWelcome = skipWelcome)
+    private fun testNavigation(
+        urlToOnboard: String? = null,
+        hideExistingServers: Boolean = false,
+        skipWelcome: Boolean = false,
+        hasLocationTracking: Boolean = true,
+        testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit,
+    ) {
+        setContent(
+            urlToOnboard = urlToOnboard,
+            hideExistingServers = hideExistingServers,
+            skipWelcome = skipWelcome,
+            hasLocationTracking = hasLocationTracking,
+        )
         runTest {
             composeTestRule.testContent()
         }
@@ -417,13 +432,27 @@ internal class OnboardingNavigationTest {
     }
 
     @Test
-    fun `Given device named with public url when pressing next then show LocationSharing`() {
-        // Override default
+    fun `Given device named with public HTTPS url when pressing next then show LocationSharing`() {
+        testDeviceNamedWithPublicUrl(hasPlainTextAccess = true)
+    }
+
+    @Test
+    fun `Given device named with public HTTP url when pressing next then show LocationSharing`() {
+        testDeviceNamedWithPublicUrl(hasPlainTextAccess = false)
+    }
+
+    private fun testDeviceNamedWithPublicUrl(hasPlainTextAccess: Boolean) {
         every { nameYourDeviceViewModel.onSaveClick() } coAnswers {
-            nameYourDeviceNavigationFlow.emit(NameYourDeviceNavigationEvent.DeviceNameSaved(42, hasPlainTextAccess = false, isPubliclyAccessible = true))
+            nameYourDeviceNavigationFlow.emit(
+                NameYourDeviceNavigationEvent.DeviceNameSaved(
+                    serverId = 42,
+                    hasPlainTextAccess = hasPlainTextAccess,
+                    isPubliclyAccessible = true,
+                ),
+            )
         }
         testNavigation {
-            navController.navigateToNameYourDevice("https://www.home-assistant.io", "code")
+            navController.navigateToNameYourDevice("http://homeassistant.local", "code")
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
 
             onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
@@ -436,9 +465,7 @@ internal class OnboardingNavigationTest {
         testNavigation {
             navController.navigateToLocationSharing(42, true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
-
-            mockkStatic(ContextCompat::class)
-            every { ContextCompat.checkSelfPermission(any(), any()) } returns PackageManager.PERMISSION_GRANTED
+            mockCheckPermission(true)
 
             onNodeWithText(stringResource(R.string.location_sharing_share)).performScrollTo().performClick()
 
@@ -452,9 +479,7 @@ internal class OnboardingNavigationTest {
             navController.navigateToLocationSharing(42, false)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
 
-            mockkStatic(ContextCompat::class)
-            every { ContextCompat.checkSelfPermission(any(), any()) } returns PackageManager.PERMISSION_GRANTED
-
+            mockCheckPermission(true)
             onNodeWithText(stringResource(R.string.location_sharing_share)).performScrollTo().performClick()
 
             assertTrue(onboardingDone)
@@ -467,8 +492,7 @@ internal class OnboardingNavigationTest {
             navController.navigateToLocationSharing(42, true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
 
-            mockkStatic(ContextCompat::class)
-            every { ContextCompat.checkSelfPermission(any(), any()) } returns PackageManager.PERMISSION_DENIED
+            mockCheckPermission(false)
 
             onNodeWithText(stringResource(R.string.location_sharing_no_share)).performScrollTo().performClick()
             assertFalse(onboardingDone)
@@ -487,9 +511,7 @@ internal class OnboardingNavigationTest {
             navController.navigateToLocationSharing(42, false)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
 
-            mockkStatic(ContextCompat::class)
-            every { ContextCompat.checkSelfPermission(any(), any()) } returns PackageManager.PERMISSION_DENIED
-
+            mockCheckPermission(false)
             onNodeWithText(stringResource(R.string.location_sharing_no_share)).performScrollTo().performClick()
             assertTrue(onboardingDone)
         }
@@ -501,7 +523,7 @@ internal class OnboardingNavigationTest {
             navController.navigateToLocationForSecureConnection(42)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
 
-            onNodeWithText(stringResource(R.string.location_secure_connection_most_secure)).performScrollTo().performClick()
+            onNodeWithText(stringResource(commonR.string.connection_security_most_secure)).performScrollTo().performClick()
             onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
@@ -518,5 +540,126 @@ internal class OnboardingNavigationTest {
             assertTrue(onboardingDone)
         }
     }
+
+    @Test
+    fun `Given LocationForSecureConnection when choosing less secure option then onboarding completes`() {
+        testNavigation {
+            navController.navigateToLocationForSecureConnection(42)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
+
+            onNodeWithText(stringResource(commonR.string.connection_security_less_secure)).performScrollTo().performClick()
+            onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().performClick()
+
+            assertTrue(onboardingDone)
+        }
+    }
+
+    @Test
+    fun `Given no location tracking with HTTPS public server when device named then onboarding completes`() {
+        every { nameYourDeviceViewModel.onSaveClick() } coAnswers {
+            nameYourDeviceNavigationFlow.emit(
+                NameYourDeviceNavigationEvent.DeviceNameSaved(
+                    serverId = 42,
+                    hasPlainTextAccess = false,
+                    isPubliclyAccessible = true,
+                ),
+            )
+        }
+        testNavigation(hasLocationTracking = false) {
+            navController.navigateToNameYourDevice("https://www.home-assistant.io", "code")
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
+
+            onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
+
+            assertTrue(onboardingDone)
+        }
+    }
+
+    @Test
+    fun `Given no location tracking with HTTP public server and no location permission when device named then show LocationForSecureConnection`() {
+        every { nameYourDeviceViewModel.onSaveClick() } coAnswers {
+            nameYourDeviceNavigationFlow.emit(
+                NameYourDeviceNavigationEvent.DeviceNameSaved(
+                    serverId = 42,
+                    hasPlainTextAccess = true,
+                    isPubliclyAccessible = true,
+                ),
+            )
+        }
+        testNavigation(hasLocationTracking = false) {
+            mockCheckPermission(false)
+            navController.navigateToNameYourDevice("http://homeassistant.local", "code")
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
+
+            onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given no location tracking with HTTP public server and has location permission when device named then show SetHomeNetwork`() {
+        every { nameYourDeviceViewModel.onSaveClick() } coAnswers {
+            nameYourDeviceNavigationFlow.emit(
+                NameYourDeviceNavigationEvent.DeviceNameSaved(
+                    serverId = 42,
+                    hasPlainTextAccess = true,
+                    isPubliclyAccessible = true,
+                ),
+            )
+        }
+        testNavigation(hasLocationTracking = false) {
+            mockCheckPermission(true)
+            navController.navigateToNameYourDevice("http://homeassistant.local", "code")
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
+
+            onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given no location tracking from LocalFirst with HTTP and no permission when next clicked then show LocationForSecureConnection`() {
+        testNavigation(hasLocationTracking = false) {
+            mockCheckPermission(false)
+            navController.navigateToLocalFirst(serverId = 42, hasPlainTextAccess = true)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
+
+            onNodeWithText(stringResource(R.string.local_first_next)).performScrollTo().performClick()
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given no location tracking from LocalFirst with HTTP and has permission when next clicked then show SetHomeNetwork`() {
+        testNavigation(hasLocationTracking = false) {
+            mockCheckPermission(true)
+            navController.navigateToLocalFirst(serverId = 42, hasPlainTextAccess = true)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
+
+            onNodeWithText(stringResource(R.string.local_first_next)).performScrollTo().performClick()
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given no location tracking from LocalFirst with HTTPS when next clicked then onboarding completes`() {
+        testNavigation(hasLocationTracking = false) {
+            navController.navigateToLocalFirst(serverId = 42, hasPlainTextAccess = false)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
+
+            onNodeWithText(stringResource(R.string.local_first_next)).performScrollTo().performClick()
+
+            assertTrue(onboardingDone)
+        }
+    }
     // TODO maybe split this file into multiples one dedicated to each screen
+}
+
+private fun mockCheckPermission(grant: Boolean) {
+    mockkStatic(ContextCompat::class)
+    every { ContextCompat.checkSelfPermission(any(), any()) } returns if (grant) PackageManager.PERMISSION_GRANTED else PackageManager.PERMISSION_DENIED
 }

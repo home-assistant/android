@@ -10,6 +10,8 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon2
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon3
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
 import io.homeassistant.companion.android.common.util.LocalDateTimeSerializer
@@ -53,7 +55,7 @@ object EntityExt {
     val DOMAINS_PRESS = listOf("button", "input_button")
     val DOMAINS_TOGGLE = listOf(
         "automation", "cover", "fan", "humidifier", "input_boolean", "light", "lock",
-        "media_player", "remote", "siren", "switch",
+        MEDIA_PLAYER_DOMAIN, "remote", "siren", "switch",
     )
 
     val APP_PRESS_ACTION_DOMAINS = DOMAINS_PRESS + DOMAINS_TOGGLE + listOf(
@@ -67,7 +69,7 @@ object EntityExt {
         "automation",
         "binary_sensor",
         "calendar",
-        "camera",
+        CAMERA_DOMAIN,
         "climate",
         "cover",
         "device_tracker",
@@ -78,7 +80,7 @@ object EntityExt {
         "lawn_mower",
         "light",
         "lock",
-        "media_player",
+        MEDIA_PLAYER_DOMAIN,
         "person",
         "plant",
         "remote",
@@ -310,7 +312,7 @@ fun Entity.getLightColor(): Int? {
 
 fun Entity.supportsVolumeSet(): Boolean {
     return try {
-        if (domain != "media_player") return false
+        if (domain != MEDIA_PLAYER_DOMAIN) return false
         (attributes["supported_features"] as Number).toInt() and
             EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET == EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET
     } catch (e: Exception) {
@@ -396,7 +398,7 @@ fun Entity.getIcon(context: Context): IIcon {
             }
 
             "calendar" -> Icon.cmd_calendar
-            "camera" -> if (compareState == "off") {
+            CAMERA_DOMAIN -> if (compareState == "off") {
                 Icon3.cmd_video_off
             } else {
                 Icon3.cmd_video
@@ -456,7 +458,7 @@ fun Entity.getIcon(context: Context): IIcon {
             }
 
             "mailbox" -> Icon3.cmd_mailbox
-            "media_player" -> when (attributes["device_class"]) {
+            MEDIA_PLAYER_DOMAIN -> when (attributes["device_class"]) {
                 "speaker" -> when (compareState) {
                     "playing" -> Icon3.cmd_speaker_play
                     "paused" -> Icon3.cmd_speaker_pause
@@ -616,6 +618,10 @@ fun Entity.getIcon(context: Context): IIcon {
             else -> Icon.cmd_bookmark
         }
     }
+}
+
+fun Entity.isUsableInTile(): Boolean {
+    return domain in EntityExt.APP_PRESS_ACTION_DOMAINS
 }
 
 private fun binarySensorIcon(state: String?, entity: Entity): IIcon {
@@ -1146,11 +1152,11 @@ fun Entity.isActive() = when {
     (domain == "lawn_mower") -> state in listOf("mowing", "error")
     // on Android, contrary to HA Frontend, a lock is considered active when locked
     (domain == "lock") -> state == "locked"
-    (domain == "media_player") -> state != "standby"
+    (domain == MEDIA_PLAYER_DOMAIN) -> state != "standby"
     (domain == "vacuum") -> state !in listOf("idle", "docked", "paused")
     (domain == "plant") -> state == "problem"
     (domain == "group") -> state in listOf("on", "home", "open", "locked", "problem")
     (domain == "timer") -> state == "active"
-    (domain == "camera") -> state == "streaming"
+    (domain == CAMERA_DOMAIN) -> state == "streaming"
     else -> true
 }

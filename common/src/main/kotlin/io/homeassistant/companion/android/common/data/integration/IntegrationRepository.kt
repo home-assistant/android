@@ -81,7 +81,7 @@ interface IntegrationRepository {
     /** Clear the list of orphaned border agent IDs, to use after removing them from storage */
     suspend fun clearOrphanedThreadBorderAgentIds()
 
-    suspend fun getAllowInsecureConnection(): Boolean
+    suspend fun getAllowInsecureConnection(): Boolean?
 
     suspend fun setAllowInsecureConnection(allowInsecureConnection: Boolean)
 }

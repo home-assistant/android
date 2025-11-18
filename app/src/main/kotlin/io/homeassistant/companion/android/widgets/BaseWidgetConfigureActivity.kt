@@ -28,6 +28,10 @@ import timber.log.Timber
 
 abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<T>> : BaseActivity() {
 
+    protected companion object {
+        const val FOR_ENTITY = "for_entity"
+    }
+
     @Inject
     lateinit var serverManager: ServerManager
 

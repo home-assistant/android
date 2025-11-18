@@ -54,7 +54,7 @@ import io.homeassistant.companion.android.onboarding.wearmtls.WearMTLSUiState
 import io.homeassistant.companion.android.onboarding.wearmtls.WearMTLSViewModel
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.WearMTLSRoute
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.navigateToWearMTLS
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.mockk.Runs
 import io.mockk.every
@@ -79,7 +79,6 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import timber.log.Timber
 
 private const val WEAR_NAME = "super_ha_wear"
 private const val VALID_PASSWORD = "1234"
@@ -89,11 +88,13 @@ private const val VALID_PASSWORD = "1234"
 @UninstallModules(ServerDiscoveryModule::class)
 @HiltAndroidTest
 internal class WearOnboardingNavigationTest {
-
     @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
+    var consoleLog = ConsoleLogRule()
 
     @get:Rule(order = 1)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 2)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @BindValue
@@ -112,7 +113,7 @@ internal class WearOnboardingNavigationTest {
         every { urlFlow } returns MutableStateFlow("http://homeassistant.local:8123")
         every { isLoadingFlow } returns MutableStateFlow(false)
         every { navigationEventsFlow } returns connectionNavigationEventFlow
-        every { isErrorFlow } returns MutableStateFlow(false)
+        every { errorFlow } returns MutableStateFlow(null)
     }
 
     private val selectedUri = mockk<Uri>()
@@ -145,9 +146,6 @@ internal class WearOnboardingNavigationTest {
 
     @Before
     fun setup() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
-
         mockkStatic(NavController::navigateToUri)
         every { any<NavController>().navigateToUri(any()) } just Runs
     }
@@ -168,7 +166,6 @@ internal class WearOnboardingNavigationTest {
                 ) {
                     wearOnboarding(
                         navController,
-                        onShowSnackbar = { message, action -> true },
                         onOnboardingDone = { deviceName, serverUrl, authCode, certUri, certPassword ->
                             onboardingDone = true
                             this@WearOnboardingNavigationTest.deviceName = deviceName

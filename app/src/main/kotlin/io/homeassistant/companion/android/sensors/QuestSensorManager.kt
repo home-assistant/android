@@ -3,10 +3,10 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Build
 import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.util.QuestUtil
 
 class QuestSensorManager : SensorManager {
     companion object {
@@ -39,7 +39,7 @@ class QuestSensorManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        return Build.MODEL == "Quest"
+        return QuestUtil.isQuest
     }
 
     override suspend fun requestSensorUpdate(context: Context) {
