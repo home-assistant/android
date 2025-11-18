@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.13.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.0)" variant="all" version="8.13.0">
+<issues format="6" by="lint 8.13.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.1)" variant="all" version="8.13.1">
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="                notify(NOTIFICATION_ID, notification)"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/database/AppDatabase.kt"
+            line="1034"
+            column="17"/>
+    </issue>
 
     <issue
         id="MissingPermission"
@@ -14,6 +25,17 @@
 
     <issue
         id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="                NotificationManagerCompat.from("
+        errorLine2="                ^">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/util/DisabledLocationHandler.kt"
+            line="139"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
         message="Missing permissions required by NotificationManagerCompat.notify: android.permission.POST_NOTIFICATIONS"
         errorLine1="                NotificationManagerCompat.from("
         errorLine2="                ^">
@@ -21,6 +43,61 @@
             file="src/main/kotlin/io/homeassistant/companion/android/common/util/DisabledLocationHandler.kt"
             line="139"
             column="17"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="                telephonyManager.isDataRoamingEnabled"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
+            line="76"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="                telephonyManager.isDataEnabled"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
+            line="78"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="        val subscription = context.applicationContext.getSystemService&lt;SubscriptionManager>()"
+        errorLine2="                           ^">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
+            line="273"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="        val subscription = context.applicationContext.getSystemService&lt;SubscriptionManager>()"
+        errorLine2="                           ^">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
+            line="318"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="            state = dataTypeMap.getOrDefault(telephonyManager.dataNetworkType, STATE_UNKNOWN)"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
+            line="326"
+            column="46"/>
     </issue>
 
     <issue
@@ -46,13 +123,24 @@
     </issue>
 
     <issue
+        id="BatteryLife"
+        message="Use of `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` violates the Play Store Content Policy regarding acceptable use cases, as described in https://developer.android.com/training/monitoring-device-state/doze-standby.html"
+        errorLine1="                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,"
+        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/util/ContextExt.kt"
+            line="53"
+            column="26"/>
+    </issue>
+
+    <issue
         id="PrivateResource"
         message="Overriding `@string/state_off` which is marked as private in androidx.compose.ui:ui-android:1.9.4. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
         errorLine1="    &lt;string name=&quot;state_off&quot;>Off&lt;/string>"
         errorLine2="                  ~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="896"
+            line="907"
             column="19"/>
     </issue>
 
@@ -63,7 +151,7 @@
         errorLine2="                  ~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="897"
+            line="908"
             column="19"/>
     </issue>
 
@@ -74,7 +162,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="18"
+            line="29"
             column="5"/>
     </issue>
 
@@ -85,7 +173,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="235"
+            line="246"
             column="5"/>
     </issue>
 
@@ -96,7 +184,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="401"
+            line="412"
             column="5"/>
     </issue>
 
@@ -107,7 +195,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="462"
+            line="473"
             column="5"/>
     </issue>
 
@@ -124,7 +212,7 @@
 
     <issue
         id="ObsoleteSdkInt"
-        message="Unnecessary; `Build.VERSION.SDK_INT &lt; Build.VERSION_CODES.Q` is always true here (`SDK_INT` ≥ 21 and &lt; 29)"
+        message="Unnecessary; `Build.VERSION.SDK_INT &lt; Build.VERSION_CODES.Q` is always true here (`SDK_INT` ≥ 23 and &lt; 29)"
         errorLine1="            (sensorId == beaconMonitor.id &amp;&amp; Build.VERSION.SDK_INT &lt; Build.VERSION_CODES.Q) -> {"
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -135,7 +223,7 @@
 
     <issue
         id="ObsoleteSdkInt"
-        message="Unnecessary; `Build.VERSION.SDK_INT &lt;= Build.VERSION_CODES.R` is always true here (`SDK_INT` ≥ 21 and &lt; 31)"
+        message="Unnecessary; `Build.VERSION.SDK_INT &lt;= Build.VERSION_CODES.R` is always true here (`SDK_INT` ≥ 23 and &lt; 31)"
         errorLine1="            (sensorId == beaconMonitor.id &amp;&amp; Build.VERSION.SDK_INT &lt;= Build.VERSION_CODES.R) -> {"
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -157,28 +245,6 @@
 
     <issue
         id="ObsoleteSdkInt"
-        message="Unnecessary; `SDK_INT` is always >= 23"
-        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/DNDSensorManager.kt"
-            line="43"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; `SDK_INT` is always >= 23"
-        errorLine1="            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/DNDSensorManager.kt"
-            line="53"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 29"
         errorLine1="                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &amp;&amp;"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
@@ -195,7 +261,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="143"
+            line="144"
             column="17"/>
     </issue>
 
@@ -217,7 +283,7 @@
         errorLine2="                                                            ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorManager.kt"
-            line="302"
+            line="303"
             column="61"/>
     </issue>
 

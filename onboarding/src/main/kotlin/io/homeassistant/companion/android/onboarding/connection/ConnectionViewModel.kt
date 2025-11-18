@@ -3,13 +3,11 @@ package io.homeassistant.companion.android.onboarding.connection
 import android.content.Context
 import android.net.Uri
 import android.net.http.SslError
-import android.os.Build
 import android.webkit.SslErrorHandler
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
-import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.annotation.VisibleForTesting
 import androidx.core.net.toUri
@@ -152,7 +150,6 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
             ) ?: ""
         }
 
-        @RequiresApi(Build.VERSION_CODES.M)
         override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
             super.onReceivedError(view, request, error)
             val errorDetails = errorDetails(view?.context, error?.errorCode, error?.description?.toString())

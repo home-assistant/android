@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.onboarding.authentication
 
 import android.annotation.SuppressLint
 import android.net.http.SslError
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -14,7 +13,6 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Spacer
@@ -101,7 +99,6 @@ class AuthenticationFragment : Fragment() {
                                     return onRedirect(url)
                                 }
 
-                                @RequiresApi(Build.VERSION_CODES.M)
                                 override fun onReceivedError(
                                     view: WebView?,
                                     request: WebResourceRequest?,
@@ -248,26 +245,22 @@ class AuthenticationFragment : Fragment() {
                     SslError.SSL_NOTYETVALID -> requireContext().getString(commonR.string.webview_error_SSL_NOTYETVALID)
                     SslError.SSL_UNTRUSTED -> requireContext().getString(commonR.string.webview_error_SSL_UNTRUSTED)
                     else -> {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            when (error?.errorCode) {
-                                WebViewClient.ERROR_FAILED_SSL_HANDSHAKE ->
-                                    requireContext().getString(commonR.string.webview_error_FAILED_SSL_HANDSHAKE)
-                                WebViewClient.ERROR_AUTHENTICATION -> requireContext().getString(
-                                    commonR.string.webview_error_AUTHENTICATION,
-                                )
-                                WebViewClient.ERROR_PROXY_AUTHENTICATION -> requireContext().getString(
-                                    commonR.string.webview_error_PROXY_AUTHENTICATION,
-                                )
-                                WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME -> requireContext().getString(
-                                    commonR.string.webview_error_AUTH_SCHEME,
-                                )
-                                WebViewClient.ERROR_HOST_LOOKUP -> requireContext().getString(
-                                    commonR.string.webview_error_HOST_LOOKUP,
-                                )
-                                else -> message
-                            }
-                        } else {
-                            message
+                        when (error?.errorCode) {
+                            WebViewClient.ERROR_FAILED_SSL_HANDSHAKE ->
+                                requireContext().getString(commonR.string.webview_error_FAILED_SSL_HANDSHAKE)
+                            WebViewClient.ERROR_AUTHENTICATION -> requireContext().getString(
+                                commonR.string.webview_error_AUTHENTICATION,
+                            )
+                            WebViewClient.ERROR_PROXY_AUTHENTICATION -> requireContext().getString(
+                                commonR.string.webview_error_PROXY_AUTHENTICATION,
+                            )
+                            WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME -> requireContext().getString(
+                                commonR.string.webview_error_AUTH_SCHEME,
+                            )
+                            WebViewClient.ERROR_HOST_LOOKUP -> requireContext().getString(
+                                commonR.string.webview_error_HOST_LOOKUP,
+                            )
+                            else -> message
                         }
                     }
                 },

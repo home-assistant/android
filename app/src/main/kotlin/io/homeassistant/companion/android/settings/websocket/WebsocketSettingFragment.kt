@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.websocket
 
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
@@ -68,14 +67,12 @@ class WebsocketSettingFragment : Fragment() {
                         hasWifi = wifiHelper.hasWifi(),
                         onSettingChanged = { viewModel.updateWebsocketSetting(serverId, it) },
                         onBackgroundAccessTapped = {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                requestBackgroundAccessResult.launch(
-                                    Intent(
-                                        Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                                        "package:${activity?.packageName}".toUri(),
-                                    ),
-                                )
-                            }
+                            requestBackgroundAccessResult.launch(
+                                Intent(
+                                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                                    "package:${activity?.packageName}".toUri(),
+                                ),
+                            )
                         },
                     )
                 }
