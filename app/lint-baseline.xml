@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.13.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.0)" variant="all" version="8.13.0">
+<issues format="6" by="lint 8.13.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.1)" variant="all" version="8.13.1">
 
     <issue
         id="MissingPermission"
@@ -8,7 +8,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="236"
+            line="232"
             column="13"/>
     </issue>
 
@@ -19,7 +19,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="241"
+            line="237"
             column="17"/>
     </issue>
 
@@ -30,7 +30,7 @@
         errorLine2="                        ^">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="261"
+            line="257"
             column="25"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="                        ^">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="269"
+            line="265"
             column="25"/>
     </issue>
 
@@ -52,7 +52,7 @@
         errorLine2="                        ^">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="277"
+            line="273"
             column="25"/>
     </issue>
 
@@ -85,7 +85,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1101"
+            line="1053"
             column="17"/>
     </issue>
 
@@ -145,19 +145,8 @@
     </issue>
 
     <issue
-        id="NewApi"
-        message="Call requires API level 23 (current min is 21): `DNDSensorManager`"
-        errorLine1="            DNDSensorManager(),"
-        errorLine2="            ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/sensors/SensorReceiver.kt"
-            line="61"
-            column="13"/>
-    </issue>
-
-    <issue
         id="UnusedAttribute"
-        message="Attribute `intentMatchingFlags` is only used in API level 36 and higher (current min is 21)"
+        message="Attribute `intentMatchingFlags` is only used in API level 36 and higher (current min is 23)"
         errorLine1="            android:intentMatchingFlags=&quot;allowNullAction&quot;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -168,7 +157,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `targetCellWidth` is only used in API level 31 and higher (current min is 21)"
+        message="Attribute `targetCellWidth` is only used in API level 31 and higher (current min is 23)"
         errorLine1="    android:targetCellWidth=&quot;2&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -179,7 +168,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `targetCellHeight` is only used in API level 31 and higher (current min is 21)"
+        message="Attribute `targetCellHeight` is only used in API level 31 and higher (current min is 23)"
         errorLine1="    android:targetCellHeight=&quot;1&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -190,7 +179,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `widgetFeatures` is only used in API level 28 and higher (current min is 21)"
+        message="Attribute `widgetFeatures` is only used in API level 28 and higher (current min is 23)"
         errorLine1="    android:widgetFeatures=&quot;reconfigurable&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -201,7 +190,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `previewLayout` is only used in API level 31 and higher (current min is 21)"
+        message="Attribute `previewLayout` is only used in API level 31 and higher (current min is 23)"
         errorLine1="    android:previewLayout=&quot;@layout/widget_button_wrapper_dynamiccolor&quot; />"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -212,7 +201,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `targetCellHeight` is only used in API level 31 and higher (current min is 21)"
+        message="Attribute `targetCellHeight` is only used in API level 31 and higher (current min is 23)"
         errorLine1="    android:targetCellHeight=&quot;2&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -223,7 +212,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `targetCellWidth` is only used in API level 31 and higher (current min is 21)"
+        message="Attribute `targetCellWidth` is only used in API level 31 and higher (current min is 23)"
         errorLine1="    android:targetCellWidth=&quot;2&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -234,7 +223,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `widgetFeatures` is only used in API level 28 and higher (current min is 21)"
+        message="Attribute `widgetFeatures` is only used in API level 28 and higher (current min is 23)"
         errorLine1="    android:widgetFeatures=&quot;reconfigurable&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -245,7 +234,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `targetCellWidth` is only used in API level 31 and higher (current min is 21)"
+        message="Attribute `targetCellWidth` is only used in API level 31 and higher (current min is 23)"
         errorLine1="    android:targetCellWidth=&quot;2&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -256,7 +245,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `targetCellHeight` is only used in API level 31 and higher (current min is 21)"
+        message="Attribute `targetCellHeight` is only used in API level 31 and higher (current min is 23)"
         errorLine1="    android:targetCellHeight=&quot;1&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -267,7 +256,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `widgetFeatures` is only used in API level 28 and higher (current min is 21)"
+        message="Attribute `widgetFeatures` is only used in API level 28 and higher (current min is 23)"
         errorLine1="    android:widgetFeatures=&quot;reconfigurable&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -278,7 +267,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `previewLayout` is only used in API level 31 and higher (current min is 21)"
+        message="Attribute `previewLayout` is only used in API level 31 and higher (current min is 23)"
         errorLine1="    android:previewLayout=&quot;@layout/widget_static_wrapper_dynamiccolor&quot; />"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -289,7 +278,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `targetCellWidth` is only used in API level 31 and higher (current min is 21)"
+        message="Attribute `targetCellWidth` is only used in API level 31 and higher (current min is 23)"
         errorLine1="    android:targetCellWidth=&quot;4&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -300,7 +289,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `targetCellHeight` is only used in API level 31 and higher (current min is 21)"
+        message="Attribute `targetCellHeight` is only used in API level 31 and higher (current min is 23)"
         errorLine1="    android:targetCellHeight=&quot;1&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -311,7 +300,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `widgetFeatures` is only used in API level 28 and higher (current min is 21)"
+        message="Attribute `widgetFeatures` is only used in API level 28 and higher (current min is 23)"
         errorLine1="    android:widgetFeatures=&quot;reconfigurable&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -322,7 +311,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `previewLayout` is only used in API level 31 and higher (current min is 21)"
+        message="Attribute `previewLayout` is only used in API level 31 and higher (current min is 23)"
         errorLine1="    android:previewLayout=&quot;@layout/widget_media_controls_wrapper_dynamiccolor&quot; />"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -333,7 +322,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `targetCellWidth` is only used in API level 31 and higher (current min is 21)"
+        message="Attribute `targetCellWidth` is only used in API level 31 and higher (current min is 23)"
         errorLine1="    android:targetCellWidth=&quot;2&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -344,7 +333,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `targetCellHeight` is only used in API level 31 and higher (current min is 21)"
+        message="Attribute `targetCellHeight` is only used in API level 31 and higher (current min is 23)"
         errorLine1="    android:targetCellHeight=&quot;1&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -355,7 +344,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `widgetFeatures` is only used in API level 28 and higher (current min is 21)"
+        message="Attribute `widgetFeatures` is only used in API level 28 and higher (current min is 23)"
         errorLine1="    android:widgetFeatures=&quot;reconfigurable&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -366,7 +355,7 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `previewLayout` is only used in API level 31 and higher (current min is 21)"
+        message="Attribute `previewLayout` is only used in API level 31 and higher (current min is 23)"
         errorLine1="    android:previewLayout=&quot;@layout/widget_template_wrapper_dynamiccolor&quot; />"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -377,13 +366,24 @@
 
     <issue
         id="UnusedAttribute"
-        message="Attribute `clipToOutline` is only used in API level 31 and higher (current min is 21)"
+        message="Attribute `clipToOutline` is only used in API level 31 and higher (current min is 23)"
         errorLine1="    android:clipToOutline=&quot;true&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/widget_media_controls.xml"
             line="10"
             column="5"/>
+    </issue>
+
+    <issue
+        id="BatteryLife"
+        message="Use of `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` violates the Play Store Content Policy regarding acceptable use cases, as described in https://developer.android.com/training/monitoring-device-state/doze-standby.html"
+        errorLine1="                                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/settings/websocket/WebsocketSettingFragment.kt"
+            line="72"
+            column="46"/>
     </issue>
 
     <issue
@@ -492,7 +492,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="541"
+            line="542"
             column="17"/>
     </issue>
 
@@ -503,7 +503,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="541"
+            line="542"
             column="17"/>
     </issue>
 
@@ -653,7 +653,7 @@
     <issue
         id="UnusedResources"
         message="The resource `R.style.Theme_LaunchScreen_Base` appears to be unused"
-        errorLine1="    &lt;style name=&quot;Theme.LaunchScreen.Base&quot; parent=&quot;Theme.MaterialComponents.DayNight.NoActionBar&quot;/>"
+        errorLine1="    &lt;style name=&quot;Theme.LaunchScreen.Base&quot; parent=&quot;Theme.MaterialComponents.DayNight.NoActionBar&quot;>"
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/styles.xml"
@@ -668,7 +668,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/styles.xml"
-            line="5"
+            line="8"
             column="12"/>
     </issue>
 
@@ -679,7 +679,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/styles.xml"
-            line="40"
+            line="46"
             column="12"/>
     </issue>
 
@@ -690,7 +690,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/styles.xml"
-            line="45"
+            line="51"
             column="12"/>
     </issue>
 
@@ -701,7 +701,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/styles.xml"
-            line="49"
+            line="55"
             column="12"/>
     </issue>
 
@@ -712,7 +712,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/styles.xml"
-            line="53"
+            line="59"
             column="12"/>
     </issue>
 
@@ -723,7 +723,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/styles.xml"
-            line="61"
+            line="67"
             column="12"/>
     </issue>
 
@@ -734,7 +734,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/styles.xml"
-            line="81"
+            line="87"
             column="12"/>
     </issue>
 
@@ -868,7 +868,7 @@
         errorLine2="                                                          ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
-            line="416"
+            line="415"
             column="59"/>
     </issue>
 
