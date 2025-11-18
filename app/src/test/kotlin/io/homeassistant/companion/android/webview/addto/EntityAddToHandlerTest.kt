@@ -105,7 +105,7 @@ class EntityAddToHandlerTest {
         val entityId = "light.test"
         coEvery { serverManager.getServer() } returns null
 
-        val actions = handler.actionsForEntity(isFullVariant = true, isAutomotive = false, isQuest = false, entityId = entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = false, isQuest = false, entityId = entityId)
 
         assertEquals(emptyList<EntityAddToAction>(), actions)
     }
@@ -115,7 +115,7 @@ class EntityAddToHandlerTest {
         val entityId = "light.nonexistent"
         coEvery { integrationRepository.getEntity(entityId) } returns null
 
-        val actions = handler.actionsForEntity(isFullVariant = true, isAutomotive = false, isQuest = false, entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = false, isQuest = false, entityId)
 
         assertEquals(emptyList<EntityAddToAction>(), actions)
     }
@@ -126,7 +126,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(isFullVariant = true, isAutomotive = false, isQuest = false, entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = false, isQuest = false, entityId)
         assertEquals(1, actions.size)
         assertEquals(EntityAddToAction.EntityWidget, actions.first())
     }
@@ -137,7 +137,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(isFullVariant = true, isAutomotive = false, isQuest = false, entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = false, isQuest = false, entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.AndroidAutoFavorite), actions)
     }
@@ -148,7 +148,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(isFullVariant = false, isAutomotive = false, isQuest = false, entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = false, isAutomotive = false, isQuest = false, entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget), actions)
     }
@@ -159,7 +159,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(isFullVariant = true, isAutomotive = false, isQuest = false, entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = false, isQuest = false, entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.MediaPlayerWidget), actions)
     }
@@ -170,7 +170,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(isFullVariant = true, isAutomotive = false, isQuest = false, entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = false, isQuest = false, entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.TodoWidget), actions)
     }
@@ -181,7 +181,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(isFullVariant = true, isAutomotive = false, isQuest = false, entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = false, isQuest = false, entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.CameraWidget), actions)
     }
@@ -192,7 +192,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(isFullVariant = true, isAutomotive = false, isQuest = false, entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = false, isQuest = false, entityId)
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.CameraWidget), actions)
     }
 
@@ -260,10 +260,10 @@ class EntityAddToHandlerTest {
             "false,alarm_control_panel.test",
         ],
     )
-    fun `Given standard entity on automotive when getting actionsForEntity then returns auto favorite`(isFullVariant: Boolean, entityId: String) = runTest {
+    fun `Given standard entity on automotive when getting actionsForEntity then returns auto favorite`(isFullFlavor: Boolean, entityId: String) = runTest {
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(isFullVariant = isFullVariant, isAutomotive = true, isQuest = false, entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = isFullFlavor, isAutomotive = true, isQuest = false, entityId)
 
         assertEquals(listOf(EntityAddToAction.AndroidAutoFavorite), actions)
     }
@@ -280,7 +280,7 @@ class EntityAddToHandlerTest {
     fun `Given entity on automotive not vehicle domain with when getting actionsForEntity then returns empty list`(entityId: String) = runTest {
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(isFullVariant = true, isAutomotive = true, isQuest = false, entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = true, isQuest = false, entityId)
 
         assertEquals(emptyList<EntityAddToAction>(), actions)
     }
@@ -299,7 +299,7 @@ class EntityAddToHandlerTest {
     fun `Given entity on Quest with when getting actionsForEntity then returns empty list`(entityId: String) = runTest {
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(isFullVariant = false, isAutomotive = false, isQuest = true, entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = false, isAutomotive = false, isQuest = true, entityId)
 
         assertEquals(emptyList<EntityAddToAction>(), actions)
     }

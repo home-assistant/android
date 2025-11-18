@@ -54,7 +54,7 @@ class EntityAddToHandler @Inject constructor(
      */
     suspend fun actionsForEntity(context: Context, entityId: String): List<EntityAddToAction> {
         return actionsForEntity(
-            isFullVariant = BuildConfig.FLAVOR == "full",
+            isFullFlavor = BuildConfig.FLAVOR == "full",
             isAutomotive = context.isAutomotive(),
             isQuest = QuestUtil.isQuest,
             entityId,
@@ -63,7 +63,7 @@ class EntityAddToHandler @Inject constructor(
 
     @VisibleForTesting
     suspend fun actionsForEntity(
-        isFullVariant: Boolean,
+        isFullFlavor: Boolean,
         isAutomotive: Boolean,
         isQuest: Boolean,
         entityId: String,
@@ -89,7 +89,7 @@ class EntityAddToHandler @Inject constructor(
                             }
                         }
 
-                        if (isVehicleDomain(entity) && (isFullVariant || isAutomotive)) {
+                        if (isVehicleDomain(entity) && (isFullFlavor || isAutomotive)) {
                             // We could check if it already exist but the action won't do anything so we can keep it
                             actions.add(EntityAddToAction.AndroidAutoFavorite)
                         }
