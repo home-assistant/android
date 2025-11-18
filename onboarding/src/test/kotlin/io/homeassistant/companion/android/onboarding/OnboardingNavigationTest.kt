@@ -166,7 +166,7 @@ internal class OnboardingNavigationTest {
             ) {
                 NavHost(
                     navController = navController,
-                    startDestination = OnboardingRoute(),
+                    startDestination = OnboardingRoute(hasLocationTracking = true),
                 ) {
                     onboarding(
                         navController,

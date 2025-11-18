@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.common.data.network.NetworkStatusMonit
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.ResyncRegistrationWorker.Companion.enqueueResyncRegistration
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.di.qualifiers.LocationTrackingSupport
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collect
@@ -27,8 +28,12 @@ import timber.log.Timber
  */
 internal sealed interface LauncherNavigationEvent {
     data class Frontend(val path: String?, val serverId: Int) : LauncherNavigationEvent
-    data class Onboarding(val urlToOnboard: String?, val hideExistingServers: Boolean, val skipWelcome: Boolean) :
-        LauncherNavigationEvent
+    data class Onboarding(
+        val urlToOnboard: String?,
+        val hideExistingServers: Boolean,
+        val skipWelcome: Boolean,
+        val hasLocationTrackingSupport: Boolean,
+    ) : LauncherNavigationEvent
 
     data class WearOnboarding(val wearName: String, val urlToOnboard: String?) : LauncherNavigationEvent
 }
@@ -47,6 +52,7 @@ internal class LauncherViewModel @AssistedInject constructor(
     private val workManager: WorkManager,
     private val serverManager: ServerManager,
     private val networkStatusMonitor: NetworkStatusMonitor,
+    @param:LocationTrackingSupport private val hasLocationTrackingSupport: Boolean,
 ) : ViewModel() {
 
     private val _navigationEventsFlow = MutableSharedFlow<LauncherNavigationEvent>(replay = 1)
@@ -67,6 +73,7 @@ internal class LauncherViewModel @AssistedInject constructor(
     private suspend fun handleInitialState(initialDeepLink: LauncherActivity.DeepLink?) {
         when (initialDeepLink) {
             is LauncherActivity.DeepLink.OpenOnboarding -> navigateToOnboarding(
+
                 initialDeepLink.urlToOnboard,
                 hideExistingServers = initialDeepLink.hideExistingServers,
                 skipWelcome = initialDeepLink.skipWelcome,
@@ -127,6 +134,7 @@ internal class LauncherViewModel @AssistedInject constructor(
                 urlToOnboard,
                 hideExistingServers = hideExistingServers,
                 skipWelcome = skipWelcome,
+                hasLocationTrackingSupport = hasLocationTrackingSupport,
             ),
         )
     }

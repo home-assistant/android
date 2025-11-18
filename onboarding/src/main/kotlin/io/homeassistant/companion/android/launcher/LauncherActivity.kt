@@ -110,7 +110,8 @@ class LauncherActivity : AppCompatActivity() {
                             }
 
                             is LauncherNavigationEvent.Onboarding -> OnboardingRoute(
-                                event.urlToOnboard,
+                                hasLocationTracking = event.hasLocationTrackingSupport,
+                                urlToOnboard = event.urlToOnboard,
                                 hideExistingServers = event.hideExistingServers,
                                 skipWelcome = event.skipWelcome,
                             )

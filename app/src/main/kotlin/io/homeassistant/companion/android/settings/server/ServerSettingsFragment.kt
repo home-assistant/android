@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.settings.server
 
 import android.content.Intent
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -38,6 +37,7 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
 import io.homeassistant.companion.android.settings.url.ExternalUrlFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
+import io.homeassistant.companion.android.util.QuestUtil
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.net.URLEncoder
@@ -194,7 +194,7 @@ class ServerSettingsFragment :
             }
         }
 
-        findPreference<PreferenceCategory>("security_category")?.isVisible = Build.MODEL != "Quest"
+        findPreference<PreferenceCategory>("security_category")?.isVisible = !QuestUtil.isQuest
 
         findPreference<Preference>("websocket")?.let {
             it.setOnPreferenceClickListener {

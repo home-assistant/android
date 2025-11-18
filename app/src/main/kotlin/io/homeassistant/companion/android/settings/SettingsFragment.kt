@@ -51,6 +51,7 @@ import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoSett
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
+import io.homeassistant.companion.android.util.QuestUtil
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.time.Instant
@@ -189,7 +190,7 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
 
         findPreference<PreferenceCategory>("assist")?.isVisible = !isAutomotive
 
-        findPreference<PreferenceCategory>("widgets")?.isVisible = Build.MODEL != "Quest" && !isAutomotive
+        findPreference<PreferenceCategory>("widgets")?.isVisible = !QuestUtil.isQuest && !isAutomotive
         findPreference<Preference>("manage_widgets")?.setOnPreferenceClickListener {
             parentFragmentManager.commit {
                 replace(R.id.content, ManageWidgetsSettingsFragment::class.java, null)
@@ -198,7 +199,7 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
             return@setOnPreferenceClickListener true
         }
 
-        if (Build.MODEL != "Quest") {
+        if (!QuestUtil.isQuest) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
                 findPreference<PreferenceCategory>("shortcuts")?.let {
                     it.isVisible = true

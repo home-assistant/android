@@ -100,7 +100,7 @@ class HAAppTest {
 
     @Test
     fun `Given default OnboardingRoute as start when starts then show Welcome`() {
-        testApp(OnboardingRoute()) {
+        testApp(OnboardingRoute(hasLocationTracking = true)) {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
             onNodeWithText(stringResource(R.string.welcome_home_assistant_title)).assertIsDisplayed()
             onNodeWithText(stringResource(R.string.welcome_details)).assertIsDisplayed()
@@ -112,7 +112,7 @@ class HAAppTest {
 
     @Test
     fun `Given OnboardingRoute with skipWelcome without urlToOnboard as start when starts then show ServerDiscovery`() {
-        testApp(OnboardingRoute(skipWelcome = true)) {
+        testApp(OnboardingRoute(hasLocationTracking = true, skipWelcome = true)) {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
         }
     }
@@ -120,7 +120,7 @@ class HAAppTest {
     @Test
     fun `Given OnboardingRoute with skipWelcome with urlToOnboard as start when starts then show ServerDiscovery`() {
         val url = "http://ha.org"
-        testApp(OnboardingRoute(skipWelcome = true, urlToOnboard = url)) {
+        testApp(OnboardingRoute(hasLocationTracking = true, skipWelcome = true, urlToOnboard = url)) {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
             assertEquals(url, navController.currentBackStackEntry?.toRoute<ConnectionRoute>()?.url)
         }
@@ -163,7 +163,7 @@ class HAAppTest {
 
     @Test
     fun `Given onboarding done then navigate to FrontEnd`() {
-        testApp(OnboardingRoute()) {
+        testApp(OnboardingRoute(hasLocationTracking = true)) {
             navController.navigateToLocationForSecureConnection(42)
 
             onNodeWithText(stringResource(R.string.connection_security_less_secure)).performScrollTo().performClick()
@@ -175,7 +175,7 @@ class HAAppTest {
 
     @Test
     fun `Given onboarding done on automotive then navigate to Automotive screen`() {
-        testApp(OnboardingRoute(), isAutomotive = true) {
+        testApp(OnboardingRoute(hasLocationTracking = true), isAutomotive = true) {
             navController.navigateToLocationForSecureConnection(42)
 
             onNodeWithText(stringResource(R.string.connection_security_less_secure)).performScrollTo().performClick()
