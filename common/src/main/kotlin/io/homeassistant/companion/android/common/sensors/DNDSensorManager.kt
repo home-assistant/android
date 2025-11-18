@@ -2,15 +2,11 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.app.NotificationManager
 import android.content.Context
-import android.os.Build
-import androidx.annotation.ChecksSdkIntAtLeast
-import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.isAutomotive
 
-@RequiresApi(Build.VERSION_CODES.M)
 class DNDSensorManager : SensorManager {
     companion object {
         val dndSensor = SensorManager.BasicSensor(
@@ -28,6 +24,7 @@ class DNDSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#do-not-disturb-sensor"
     }
+
     override val name: Int
         get() = commonR.string.sensor_name_dnd
 
@@ -40,18 +37,11 @@ class DNDSensorManager : SensorManager {
     }
 
     override suspend fun requestSensorUpdate(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            updateDNDState(context)
-        }
+        updateDNDState(context)
     }
 
-    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.M)
     override fun hasSensor(context: Context): Boolean {
-        return if (context.isAutomotive()) {
-            false
-        } else {
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-        }
+        return !context.isAutomotive()
     }
 
     private suspend fun updateDNDState(context: Context) {
