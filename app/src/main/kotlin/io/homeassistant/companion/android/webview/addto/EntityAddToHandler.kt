@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.webview.addto
 
 import android.content.Context
 import androidx.annotation.VisibleForTesting
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.IMAGE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
@@ -52,11 +53,21 @@ class EntityAddToHandler @Inject constructor(
      *         entity is not found or if the server is unavailable.
      */
     suspend fun actionsForEntity(context: Context, entityId: String): List<EntityAddToAction> {
-        return actionsForEntity(isAutomotive = context.isAutomotive(), isQuest = QuestUtil.isQuest, entityId)
+        return actionsForEntity(
+            isFullFlavor = BuildConfig.FLAVOR == "full",
+            isAutomotive = context.isAutomotive(),
+            isQuest = QuestUtil.isQuest,
+            entityId,
+        )
     }
 
     @VisibleForTesting
-    suspend fun actionsForEntity(isAutomotive: Boolean, isQuest: Boolean, entityId: String): List<EntityAddToAction> {
+    suspend fun actionsForEntity(
+        isFullFlavor: Boolean,
+        isAutomotive: Boolean,
+        isQuest: Boolean,
+        entityId: String,
+    ): List<EntityAddToAction> {
         return withContext(Dispatchers.Default) {
             val actions = mutableListOf<EntityAddToAction>()
             serverManager.getServer()?.let { server ->
@@ -78,7 +89,7 @@ class EntityAddToHandler @Inject constructor(
                             }
                         }
 
-                        if (isVehicleDomain(entity)) {
+                        if (isVehicleDomain(entity) && (isFullFlavor || isAutomotive)) {
                             // We could check if it already exist but the action won't do anything so we can keep it
                             actions.add(EntityAddToAction.AndroidAutoFavorite)
                         }
