@@ -138,7 +138,7 @@ internal class WebSocketCoreImpl(
     ),
     // We need a dedicated scope in test to control job that are in background
     private val backgroundScope: CoroutineScope = wsScope,
-    private val socketHandler : WebSocketEventHandler = WebSocketEventHandler()
+    private val socketHandler: WebSocketEventHandler = WebSocketEventHandler()
 ) : WebSocketListener(),
     WebSocketCore {
 
