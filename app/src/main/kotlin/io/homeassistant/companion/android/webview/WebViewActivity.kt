@@ -530,8 +530,7 @@ class WebViewActivity :
             }
 
             setDownloadListener { url, _, contentDisposition, mimetype, _ ->
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
                     ActivityCompat.checkSelfPermission(
                         context,
                         android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -561,43 +560,38 @@ class WebViewActivity :
                 }
 
                 override fun onPermissionRequest(request: PermissionRequest?) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        val alreadyGranted = ArrayList<String>()
-                        val toBeGranted = ArrayList<String>()
-                        request?.resources?.forEach {
-                            if (it == PermissionRequest.RESOURCE_VIDEO_CAPTURE) {
-                                if (ActivityCompat.checkSelfPermission(
-                                        context,
-                                        android.Manifest.permission.CAMERA,
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    alreadyGranted.add(it)
-                                } else {
-                                    toBeGranted.add(android.Manifest.permission.CAMERA)
-                                }
-                            } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
-                                if (ActivityCompat.checkSelfPermission(
-                                        context,
-                                        android.Manifest.permission.RECORD_AUDIO,
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    alreadyGranted.add(it)
-                                } else {
-                                    toBeGranted.add(android.Manifest.permission.RECORD_AUDIO)
-                                }
+                    val alreadyGranted = ArrayList<String>()
+                    val toBeGranted = ArrayList<String>()
+                    request?.resources?.forEach {
+                        if (it == PermissionRequest.RESOURCE_VIDEO_CAPTURE) {
+                            if (ActivityCompat.checkSelfPermission(
+                                    context,
+                                    android.Manifest.permission.CAMERA,
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                alreadyGranted.add(it)
+                            } else {
+                                toBeGranted.add(android.Manifest.permission.CAMERA)
+                            }
+                        } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
+                            if (ActivityCompat.checkSelfPermission(
+                                    context,
+                                    android.Manifest.permission.RECORD_AUDIO,
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                alreadyGranted.add(it)
+                            } else {
+                                toBeGranted.add(android.Manifest.permission.RECORD_AUDIO)
                             }
                         }
-                        if (alreadyGranted.size > 0) {
-                            request?.grant(alreadyGranted.toTypedArray())
-                        }
-                        if (toBeGranted.size > 0) {
-                            requestPermissions.launch(
-                                toBeGranted.toTypedArray(),
-                            )
-                        }
-                    } else {
-                        // If we are before M we already have permission, just grant it.
-                        request?.grant(request.resources)
+                    }
+                    if (alreadyGranted.isNotEmpty()) {
+                        request?.grant(alreadyGranted.toTypedArray())
+                    }
+                    if (toBeGranted.isNotEmpty()) {
+                        requestPermissions.launch(
+                            toBeGranted.toTypedArray(),
+                        )
                     }
                 }
 
