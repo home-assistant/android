@@ -479,7 +479,7 @@
     <string name="manage_ssids_input">New Wi-Fi SSID</string>
     <string name="manage_ssids_introduction">Indicate when you\'re connected to your home network, based on Wi-Fi, ethernet or VPN. This can be used to, for example, use the internal connection URL or disable the app lock when at home.</string>
     <string name="manage_ssids_permission">Home Assistant needs additional access to read Wi-Fi information.</string>
-    <string name="manage_ssids_wifi">Wi-Fi network connected</string>
+    <string name="manage_ssids_wifi">Name of the Wi-Fi network at home</string>
     <string name="manage_ssids_vpn">VPN connected</string>
     <string name="manage_ssids_warning">Make sure to set up your home network correctly. Adding public Wi-Fi networks or using multiple ethernet/VPN connections may unintentionally expose information about or access to your app or server.</string>
     <string name="manage_this_notification">Manage this notification</string>
