@@ -33,14 +33,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".settings.sensor.HealthConnectPermissionActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
-            </intent-filter>
-        </activity>
-
         <activity-alias
             android:name="ViewHealthConnectPermissionUsageActivity"
             android:exported="true"
