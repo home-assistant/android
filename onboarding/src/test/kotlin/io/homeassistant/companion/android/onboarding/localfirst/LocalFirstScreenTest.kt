@@ -9,7 +9,7 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
-import io.homeassistant.companion.android.onboarding.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import org.junit.Rule
@@ -42,9 +42,9 @@ class LocalFirstScreenTest {
                 )
             }
 
-            onNodeWithText(stringResource(R.string.local_first_title)).assertIsDisplayed()
-            onNodeWithText(stringResource(R.string.local_first_content)).assertIsDisplayed()
-            onNodeWithText(stringResource(R.string.local_first_next)).performScrollTo().assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.local_first_title)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.local_first_content)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.local_first_next)).performScrollTo().assertIsDisplayed().performClick()
             assertTrue(nextClicked)
         }
     }

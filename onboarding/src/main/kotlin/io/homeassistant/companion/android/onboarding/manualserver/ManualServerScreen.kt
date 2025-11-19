@@ -31,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -120,7 +121,7 @@ private fun ManualServerContent(
             contentDescription = null,
         )
         Text(
-            text = stringResource(R.string.manual_server_title),
+            text = stringResource(commonR.string.manual_server_title),
             style = HATextStyle.Headline,
         )
 
@@ -134,7 +135,7 @@ private fun ManualServerContent(
         Spacer(modifier = Modifier.weight(1f))
 
         HAAccentButton(
-            text = stringResource(R.string.manual_server_connect),
+            text = stringResource(commonR.string.manual_server_connect),
             onClick = onConnectClick,
             enabled = isServerUrlValid,
             modifier = Modifier
@@ -163,7 +164,7 @@ private fun ServerUrlTextField(
                 IconButton(onClick = { onServerUrlChange("") }) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.clear_text),
+                        contentDescription = stringResource(commonR.string.clear_text),
                     )
                 }
             }
@@ -189,7 +190,7 @@ private fun ServerUrlTextField(
         supportingText = {
             if (isError) {
                 Text(
-                    text = stringResource(R.string.manual_server_wrong_url),
+                    text = stringResource(commonR.string.manual_server_wrong_url),
                     // TODO probably wrong style and color/token
                     style = HATextStyle.BodyMedium.copy(color = LocalHAColorScheme.current.colorBorderDangerNormal),
                 )

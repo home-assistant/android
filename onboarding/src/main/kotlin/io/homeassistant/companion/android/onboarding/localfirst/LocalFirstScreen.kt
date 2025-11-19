@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
@@ -60,13 +61,13 @@ private fun LocalFirstContent(onNextClick: () -> Unit, modifier: Modifier = Modi
         )
 
         Text(
-            text = stringResource(R.string.local_first_title),
+            text = stringResource(commonR.string.local_first_title),
             style = HATextStyle.Headline,
             modifier = Modifier.widthIn(max = MaxContentWidth),
         )
 
         Text(
-            text = stringResource(R.string.local_first_content),
+            text = stringResource(commonR.string.local_first_content),
             style = HATextStyle.Body,
             modifier = Modifier.widthIn(max = MaxContentWidth),
         )
@@ -74,7 +75,7 @@ private fun LocalFirstContent(onNextClick: () -> Unit, modifier: Modifier = Modi
         Spacer(modifier = Modifier.weight(1f))
 
         HAAccentButton(
-            text = stringResource(R.string.local_first_next),
+            text = stringResource(commonR.string.local_first_next),
             onClick = onNextClick,
             modifier = Modifier.fillMaxWidth().padding(bottom = HADimens.SPACE6),
         )

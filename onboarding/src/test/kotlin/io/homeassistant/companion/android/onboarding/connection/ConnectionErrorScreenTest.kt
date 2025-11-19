@@ -14,7 +14,6 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import junit.framework.TestCase.assertEquals
@@ -75,34 +74,34 @@ class ConnectionErrorScreenTest {
             onNodeWithText(stringResource(commonR.string.tls_cert_expired_message)).assertIsDisplayed()
             onNodeWithTag(URL_INFO_TAG).assertIsNotDisplayed()
 
-            val description = onNodeWithText(stringResource(R.string.connection_error_more_details_description))
-            val errorDetail = onNodeWithText(stringResource(R.string.connection_error_more_details_error))
+            val description = onNodeWithText(stringResource(commonR.string.connection_error_more_details_description))
+            val errorDetail = onNodeWithText(stringResource(commonR.string.connection_error_more_details_error))
             description.assertIsNotDisplayed()
             errorDetail.assertIsNotDisplayed()
 
-            onNodeWithText(stringResource(R.string.connection_error_more_details)).assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.connection_error_more_details)).assertIsDisplayed().performClick()
             description.assertIsDisplayed()
             errorDetail.assertIsDisplayed()
 
-            onNodeWithText(stringResource(R.string.connection_error_help)).performScrollTo().assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.connection_error_help)).performScrollTo().assertIsDisplayed()
 
-            onNodeWithContentDescription(stringResource(R.string.connection_error_documentation_content_description))
+            onNodeWithContentDescription(stringResource(commonR.string.connection_error_documentation_content_description))
                 .performScrollTo().assertIsDisplayed().performClick()
             assertEquals("https://companion.home-assistant.io/docs/troubleshooting/faqs/", urlClicked)
 
-            onNodeWithContentDescription(stringResource(R.string.connection_error_forum_content_description))
+            onNodeWithContentDescription(stringResource(commonR.string.connection_error_forum_content_description))
                 .performScrollTo().assertIsDisplayed().performClick()
             assertEquals("https://community.home-assistant.io/c/mobile-apps/android-companion/42", urlClicked)
 
-            onNodeWithContentDescription(stringResource(R.string.connection_error_github_content_description))
+            onNodeWithContentDescription(stringResource(commonR.string.connection_error_github_content_description))
                 .performScrollTo().assertIsDisplayed().performClick()
             assertEquals("https://github.com/home-assistant/android/issues", urlClicked)
 
-            onNodeWithContentDescription(stringResource(R.string.connection_error_discord_content_description))
+            onNodeWithContentDescription(stringResource(commonR.string.connection_error_discord_content_description))
                 .performScrollTo().assertIsDisplayed().performClick()
             assertEquals("https://discord.com/channels/330944238910963714/1284965926336335993", urlClicked)
 
-            onNodeWithText(stringResource(R.string.back)).performScrollTo().assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.back)).performScrollTo().assertIsDisplayed().performClick()
             assertTrue(onCloseClicked)
         }
     }
@@ -123,7 +122,7 @@ class ConnectionErrorScreenTest {
             onNodeWithText(stringResource(commonR.string.error_connection_failed)).assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.tls_cert_expired_message)).assertIsDisplayed()
             onNodeWithTag(URL_INFO_TAG).assertIsDisplayed()
-            onNodeWithText("${stringResource(R.string.connection_error_url_info)}\n$url").assertIsDisplayed()
+            onNodeWithText("${stringResource(commonR.string.connection_error_url_info)}\n$url").assertIsDisplayed()
         }
     }
 }

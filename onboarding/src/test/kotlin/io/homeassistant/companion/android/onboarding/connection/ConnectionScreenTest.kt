@@ -10,8 +10,8 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.compose.composable.HA_WEBVIEW_TAG
-import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import org.junit.Rule
@@ -63,7 +63,7 @@ class ConnectionScreenTest {
                 )
             }
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
-            onNodeWithContentDescription(stringResource(R.string.loading_content_description)).assertIsDisplayed()
+            onNodeWithContentDescription(stringResource(commonR.string.loading_content_description)).assertIsDisplayed()
         }
     }
 
@@ -80,7 +80,7 @@ class ConnectionScreenTest {
                 )
             }
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
-            onNodeWithContentDescription(stringResource(R.string.loading_content_description)).assertIsNotDisplayed()
+            onNodeWithContentDescription(stringResource(commonR.string.loading_content_description)).assertIsNotDisplayed()
         }
     }
 
@@ -98,7 +98,7 @@ class ConnectionScreenTest {
             }
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsNotDisplayed()
             onNodeWithTag(CONNECTION_SCREEN_ERROR_PLACEHOLDER_TAG).assertIsDisplayed()
-            onNodeWithContentDescription(stringResource(R.string.loading_content_description)).assertIsNotDisplayed()
+            onNodeWithContentDescription(stringResource(commonR.string.loading_content_description)).assertIsNotDisplayed()
         }
     }
 

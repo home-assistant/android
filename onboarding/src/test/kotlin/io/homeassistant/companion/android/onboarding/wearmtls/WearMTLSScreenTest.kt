@@ -23,7 +23,6 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.mockk.mockk
@@ -53,8 +52,8 @@ class WearMTLSScreenTest {
         composeTestRule.apply {
             testScreen {
                 onNodeWithText(stringResource(commonR.string.select_file)).performScrollTo().assertIsDisplayed()
-                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsNotDisplayed()
-                onNodeWithText(stringResource(R.string.wear_mtls_next)).performScrollTo().assertIsDisplayed().assertIsNotEnabled()
+                onNodeWithContentDescription(stringResource(commonR.string.clear_text)).assertIsNotDisplayed()
+                onNodeWithText(stringResource(commonR.string.wear_mtls_next)).performScrollTo().assertIsDisplayed().assertIsNotEnabled()
             }
         }
     }
@@ -77,9 +76,9 @@ class WearMTLSScreenTest {
                 onNodeWithText("super_file").performScrollTo().assertIsDisplayed()
                 onNodeWithText("password").performScrollTo().assertIsDisplayed().performTextInput("1234")
                 assertEquals("1234password", passwordSet)
-                onNodeWithText(stringResource(R.string.wear_mtls_open_error)).assertIsDisplayed()
-                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsDisplayed()
-                onNodeWithText(stringResource(R.string.wear_mtls_next)).performScrollTo().assertIsDisplayed().assertIsNotEnabled()
+                onNodeWithText(stringResource(commonR.string.wear_mtls_open_error)).assertIsDisplayed()
+                onNodeWithContentDescription(stringResource(commonR.string.clear_text)).assertIsDisplayed()
+                onNodeWithText(stringResource(commonR.string.wear_mtls_next)).performScrollTo().assertIsDisplayed().assertIsNotEnabled()
             }
         }
     }
@@ -91,9 +90,9 @@ class WearMTLSScreenTest {
                 onNodeWithText("super_file").performScrollTo().assertIsDisplayed()
                 onNodeWithText("password").performScrollTo().assertIsDisplayed().performTextInput("1234")
                 assertEquals("1234password", passwordSet)
-                onNodeWithText(stringResource(R.string.wear_mtls_open_error)).assertIsNotDisplayed()
-                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsDisplayed()
-                onNodeWithText(stringResource(R.string.wear_mtls_next)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
+                onNodeWithText(stringResource(commonR.string.wear_mtls_open_error)).assertIsNotDisplayed()
+                onNodeWithContentDescription(stringResource(commonR.string.clear_text)).assertIsDisplayed()
+                onNodeWithText(stringResource(commonR.string.wear_mtls_next)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
                 assertTrue(nextClicked)
             }
         }
@@ -165,7 +164,7 @@ class WearMTLSScreenTest {
                 }
             }
 
-            onNodeWithText(stringResource(R.string.wear_mtls_content)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.wear_mtls_content)).assertIsDisplayed()
 
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).assertIsDisplayed().performClick()
             assertTrue(backClicked)

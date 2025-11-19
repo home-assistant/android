@@ -20,7 +20,6 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
-import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import javax.inject.Inject
@@ -142,7 +141,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
 
         private fun errorDetails(context: Context?, code: Int?, description: String?): String {
             return context?.getString(
-                R.string.connection_error_more_details_description_content,
+                commonR.string.connection_error_more_details_description_content,
                 code.toString(),
                 description?.takeIf {
                     it.isNotEmpty()
@@ -188,7 +187,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                     )
 
                     else -> ConnectionError.UnknownError(
-                        message = R.string.connection_error_unknown_error,
+                        message = commonR.string.connection_error_unknown_error,
                         errorDetails = errorDetails,
                         rawErrorType = WebResourceError::class.toString(),
                     )
@@ -227,7 +226,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                     )
 
                     else -> ConnectionError.UnknownError(
-                        message = R.string.connection_error_unknown_error,
+                        message = commonR.string.connection_error_unknown_error,
                         errorDetails = errorDetails,
                         rawErrorType = WebResourceResponse::class.toString(),
                     )
@@ -286,7 +285,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
             Timber.e(e, "Unable to build authentication URL")
             onError(
                 ConnectionError.UnreachableError(
-                    message = R.string.connection_screen_malformed_url,
+                    message = commonR.string.connection_screen_malformed_url,
                     errorDetails = e.localizedMessage ?: e.message,
                     rawErrorType = e::class.toString(),
                 ),

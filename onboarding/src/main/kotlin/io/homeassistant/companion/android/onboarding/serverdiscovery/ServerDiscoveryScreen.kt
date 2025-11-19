@@ -202,7 +202,7 @@ private fun OneServerFound(
                     modifier = Modifier.padding(vertical = HADimens.SPACE3),
                 )
                 HAAccentButton(
-                    text = stringResource(R.string.server_discovery_connect),
+                    text = stringResource(commonR.string.server_discovery_connect),
                     onClick = {
                         coroutineScope.launch {
                             bottomSheetState.hide()
@@ -232,7 +232,7 @@ private fun ScreenContent(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = stringResource(R.string.searching_home_network),
+            text = stringResource(commonR.string.searching_home_network),
             style = HATextStyle.Headline,
             modifier = Modifier.padding(top = HADimens.SPACE6),
         )
@@ -334,7 +334,7 @@ private fun ColumnScope.ScanningForServer(discoveryState: DiscoveryState) {
     )
 
     Text(
-        text = stringResource(R.string.server_discovery_no_server_info),
+        text = stringResource(commonR.string.server_discovery_no_server_info),
         style = HATextStyle.Body,
         modifier = Modifier
             .padding(
