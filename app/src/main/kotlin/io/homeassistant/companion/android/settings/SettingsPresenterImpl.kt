@@ -292,7 +292,7 @@ class SettingsPresenterImpl @Inject constructor(
             val roleManager = context.getSystemService<RoleManager>()
             roleManager?.isRoleAvailable(RoleManager.ROLE_ASSISTANT) == true &&
                 !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)
-        } else if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        } else if (assistantSuggestion) {
             val defaultApp: String? = Settings.Secure.getString(context.contentResolver, "assistant")
             defaultApp?.contains(BuildConfig.APPLICATION_ID) == false
         } else {

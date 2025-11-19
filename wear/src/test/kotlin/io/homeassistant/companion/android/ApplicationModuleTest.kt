@@ -5,7 +5,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.integration.PushWebsocketSupport
 import io.homeassistant.companion.android.common.util.AppVersionProvider
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
@@ -16,14 +16,15 @@ import org.junit.jupiter.api.assertNotNull
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import timber.log.Timber
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
 class ApplicationModuleTest {
+    @get:Rule(order = 0)
+    var consoleLog = ConsoleLogRule()
 
-    @get:Rule
+    @get:Rule(order = 1)
     var hiltRule = HiltAndroidRule(this)
 
     @Inject
@@ -36,8 +37,6 @@ class ApplicationModuleTest {
 
     @Before
     fun setUp() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
         hiltRule.inject()
     }
 

@@ -12,7 +12,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidgetConfigureActivity
@@ -32,10 +32,14 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.fail
-import timber.log.Timber
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.ValueSource
 
 @ExperimentalCoroutinesApi
+@ExtendWith(ConsoleLogExtension::class)
 class EntityAddToHandlerTest {
 
     private lateinit var serverManager: ServerManager
@@ -48,8 +52,6 @@ class EntityAddToHandlerTest {
 
     @BeforeEach
     fun setUp() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
         serverManager = mockk()
         prefsRepository = mockk()
         integrationRepository = mockk()
@@ -103,7 +105,7 @@ class EntityAddToHandlerTest {
         val entityId = "light.test"
         coEvery { serverManager.getServer() } returns null
 
-        val actions = handler.actionsForEntity(entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = false, isQuest = false, entityId = entityId)
 
         assertEquals(emptyList<EntityAddToAction>(), actions)
     }
@@ -113,7 +115,7 @@ class EntityAddToHandlerTest {
         val entityId = "light.nonexistent"
         coEvery { integrationRepository.getEntity(entityId) } returns null
 
-        val actions = handler.actionsForEntity(entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = false, isQuest = false, entityId)
 
         assertEquals(emptyList<EntityAddToAction>(), actions)
     }
@@ -124,20 +126,31 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = false, isQuest = false, entityId)
         assertEquals(1, actions.size)
         assertEquals(EntityAddToAction.EntityWidget, actions.first())
     }
 
     @Test
-    fun `Given alarm_control_panel entityId when getting actionsForEntity then returns EntityWidget and AndroidAutoFavorite`() = runTest {
+    fun `Given alarm_control_panel entityId on full flavor when getting actionsForEntity then returns EntityWidget and AndroidAutoFavorite`() = runTest {
         val entityId = "alarm_control_panel.test"
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = false, isQuest = false, entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.AndroidAutoFavorite), actions)
+    }
+
+    @Test
+    fun `Given alarm_control_panel entityId on minimal flavor when getting actionsForEntity then returns EntityWidget`() = runTest {
+        val entityId = "alarm_control_panel.test"
+
+        mockGetEntity(entityId)
+
+        val actions = handler.actionsForEntity(isFullFlavor = false, isAutomotive = false, isQuest = false, entityId)
+
+        assertEquals(listOf(EntityAddToAction.EntityWidget), actions)
     }
 
     @Test
@@ -146,7 +159,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = false, isQuest = false, entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.MediaPlayerWidget), actions)
     }
@@ -157,7 +170,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = false, isQuest = false, entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.TodoWidget), actions)
     }
@@ -168,7 +181,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = false, isQuest = false, entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.CameraWidget), actions)
     }
@@ -179,7 +192,7 @@ class EntityAddToHandlerTest {
 
         mockGetEntity(entityId)
 
-        val actions = handler.actionsForEntity(entityId)
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = false, isQuest = false, entityId)
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.CameraWidget), actions)
     }
 
@@ -236,6 +249,59 @@ class EntityAddToHandlerTest {
 
         verify { context.startActivity(any()) }
         verify { TodoWidgetConfigureActivity.newInstance(context, entityId) }
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        value = [
+            "true,light.test",
+            "false,light.test",
+            "true,alarm_control_panel.test",
+            "false,alarm_control_panel.test",
+        ],
+    )
+    fun `Given standard entity on automotive when getting actionsForEntity then returns auto favorite`(isFullFlavor: Boolean, entityId: String) = runTest {
+        mockGetEntity(entityId)
+
+        val actions = handler.actionsForEntity(isFullFlavor = isFullFlavor, isAutomotive = true, isQuest = false, entityId)
+
+        assertEquals(listOf(EntityAddToAction.AndroidAutoFavorite), actions)
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "$MEDIA_PLAYER_DOMAIN.test",
+            "$TODO_DOMAIN.test",
+            "$CAMERA_DOMAIN.test",
+            "$IMAGE_DOMAIN.test",
+        ],
+    )
+    fun `Given entity on automotive not vehicle domain with when getting actionsForEntity then returns empty list`(entityId: String) = runTest {
+        mockGetEntity(entityId)
+
+        val actions = handler.actionsForEntity(isFullFlavor = true, isAutomotive = true, isQuest = false, entityId)
+
+        assertEquals(emptyList<EntityAddToAction>(), actions)
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "light.test",
+            "alarm_control_panel.test",
+            "$MEDIA_PLAYER_DOMAIN.test",
+            "$TODO_DOMAIN.test",
+            "$CAMERA_DOMAIN.test",
+            "$IMAGE_DOMAIN.test",
+        ],
+    )
+    fun `Given entity on Quest with when getting actionsForEntity then returns empty list`(entityId: String) = runTest {
+        mockGetEntity(entityId)
+
+        val actions = handler.actionsForEntity(isFullFlavor = false, isAutomotive = false, isQuest = true, entityId)
+
+        assertEquals(emptyList<EntityAddToAction>(), actions)
     }
 
     private fun mockGetEntity(entityId: String) {

@@ -18,7 +18,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.every
 import io.mockk.mockk
@@ -39,9 +39,8 @@ import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import timber.log.Timber
 
-@ExtendWith(MainDispatcherJUnit5Extension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConnectionViewModelTest {
 
@@ -49,8 +48,7 @@ class ConnectionViewModelTest {
 
     @BeforeEach
     fun setup() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
+        mockkStatic(Uri::class)
     }
 
     @ParameterizedTest
@@ -127,11 +125,7 @@ class ConnectionViewModelTest {
     @ValueSource(booleans = [true, false])
     fun `Given auth callback uri with code when shouldRedirect then emits Authenticated event with mTLS status and returns true`(requireMTLS: Boolean) = runTest {
         val authCode = "test_auth_code"
-        val callbackUri = mockk<Uri> {
-            every { scheme } returns "homeassistant"
-            every { host } returns "auth-callback"
-            every { getQueryParameter("code") } returns authCode
-        }
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
         val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository)
 
@@ -145,9 +139,7 @@ class ConnectionViewModelTest {
 
             val result = viewModel.webViewClient.shouldOverrideUrlLoading(
                 null,
-                mockk<WebResourceRequest> {
-                    every { url } returns callbackUri
-                },
+                stringUri,
             )
 
             assertTrue(result)
@@ -162,13 +154,7 @@ class ConnectionViewModelTest {
 
     @Test
     fun `Given auth callback uri without code when shouldRedirect then no event and returns false`() = runTest {
-        val callbackUri = mockk<Uri> {
-            every { scheme } returns "homeassistant"
-            every { host } returns "auth-callback"
-            every { getQueryParameter("code") } returns null
-        }
-
-        mockUriParse()
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = null)
 
         val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository)
 
@@ -180,9 +166,7 @@ class ConnectionViewModelTest {
 
             val result = viewModel.webViewClient.shouldOverrideUrlLoading(
                 null,
-                mockk<WebResourceRequest> {
-                    every { url } returns callbackUri
-                },
+                stringUri,
             )
 
             assertFalse(result)
@@ -193,15 +177,12 @@ class ConnectionViewModelTest {
 
     @Test
     fun `Given unmatching uri and webview not null when shouldRedirect is invoked then open in external browser and return true`() = runTest {
-        val callbackUri = mockk<Uri> {
-            every { scheme } returns "http"
-            every { host } returns "google"
-            every { getQueryParameter("code") } returns "not_related_code"
-        }
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository)
 
+        // Used to parse the rawUrl given in the constructor of ConnectionViewModel
         mockUriParse()
 
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository)
+        val stringUri = mockAuthCodeUri(scheme = "http", host = "google", authCode = "not_related_code")
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -211,15 +192,13 @@ class ConnectionViewModelTest {
 
             val result = viewModel.webViewClient.shouldOverrideUrlLoading(
                 null,
-                mockk<WebResourceRequest> {
-                    every { url } returns callbackUri
-                },
+                stringUri,
             )
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
             assertTrue(event is ConnectionNavigationEvent.OpenExternalLink)
-            assertEquals(callbackUri, (event as ConnectionNavigationEvent.OpenExternalLink).url)
+            assertEquals(stringUri, (event as ConnectionNavigationEvent.OpenExternalLink).url.toString())
 
             navigationEventsFlow.expectNoEvents()
             errorFlow.expectNoEvents()
@@ -427,8 +406,21 @@ class ConnectionViewModelTest {
         assertEquals(errorClass.toString(), error.rawErrorType)
     }
 
+    private fun mockAuthCodeUri(scheme: String, host: String, authCode: String?): String {
+        val stringUri = "$scheme://$host${authCode?.let { "?code=$authCode" } ?: ""}"
+        every { Uri.parse(stringUri) } answers {
+            val uriString = firstArg<String>()
+            return@answers mockk<Uri> {
+                every { this@mockk.toString() } returns uriString
+                every { this@mockk.scheme } returns scheme
+                every { this@mockk.host } returns host
+                every { getQueryParameter("code") } returns authCode
+            }
+        }
+        return stringUri
+    }
+
     private fun mockUriParse() {
-        mockkStatic(Uri::class)
         every { Uri.parse(any()) } answers {
             val uriString = firstArg<String>()
             val javaURL = URL(uriString)

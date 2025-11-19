@@ -64,3 +64,10 @@ annotation class NamedDeviceId
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class NamedInstallId
+
+/**
+ * Qualifier for dependencies related to location tracking support functionality.
+ */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class LocationTrackingSupport

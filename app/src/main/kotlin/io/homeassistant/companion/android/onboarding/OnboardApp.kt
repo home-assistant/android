@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContract
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.USE_NEW_LAUNCHER
 import io.homeassistant.companion.android.launch.intentLauncherOnboarding
 import io.homeassistant.companion.android.launch.intentLauncherWearOnboarding
 
@@ -85,7 +86,7 @@ class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>(
     }
 
     override fun createIntent(context: Context, input: Input): Intent {
-        return if (BuildConfig.DEBUG) {
+        return if (USE_NEW_LAUNCHER) {
             if (input.isWatch) {
                 context.intentLauncherWearOnboarding(input.defaultDeviceName, input.url)
             } else {

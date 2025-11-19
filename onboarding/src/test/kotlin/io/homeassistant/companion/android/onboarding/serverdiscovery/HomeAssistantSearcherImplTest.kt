@@ -8,7 +8,7 @@ import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.CapturingSlot
 import io.mockk.Ordering
 import io.mockk.Runs
@@ -24,10 +24,12 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import timber.log.Timber
 
+@ExtendWith(ConsoleLogExtension::class)
 class HomeAssistantSearcherImplTest {
 
     private lateinit var nsdManager: NsdManager
@@ -36,8 +38,6 @@ class HomeAssistantSearcherImplTest {
 
     @BeforeEach
     fun setup() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
         nsdManager = mockk(relaxed = true)
         wifiManager = mockk(relaxed = true)
         searcher = HomeAssistantSearcherImpl(nsdManager, wifiManager)

@@ -465,13 +465,17 @@ class WebViewActivity :
                     resourceURL = url!!
                 }
 
-                override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                    request?.url?.let {
+                // Override deprecated method for backward compatibility with API 23 and below.
+                // The non-deprecated shouldOverrideUrlLoading(WebView, WebResourceRequest) is not invoked
+                // on these older Android versions, so this method remains necessary.
+                @Suppress("DEPRECATION")
+                override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                    url?.let {
                         try {
-                            if (it.toString().startsWith(APP_PREFIX)) {
+                            if (it.startsWith(APP_PREFIX)) {
                                 Timber.d("Launching the app")
                                 val intent = packageManager.getLaunchIntentForPackage(
-                                    it.toString().substringAfter(APP_PREFIX),
+                                    it.substringAfter(APP_PREFIX),
                                 )
                                 if (intent != null) {
                                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -480,14 +484,14 @@ class WebViewActivity :
                                     Timber.w("No intent to launch app found, opening app store")
                                     val marketIntent = Intent(Intent.ACTION_VIEW)
                                     marketIntent.data =
-                                        (MARKET_PREFIX + it.toString().substringAfter(APP_PREFIX)).toUri()
+                                        (MARKET_PREFIX + it.substringAfter(APP_PREFIX)).toUri()
                                     startActivity(marketIntent)
                                 }
                                 return true
-                            } else if (it.toString().startsWith(INTENT_PREFIX)) {
+                            } else if (it.startsWith(INTENT_PREFIX)) {
                                 Timber.d("Launching the intent")
                                 val intent =
-                                    Intent.parseUri(it.toString(), Intent.URI_INTENT_SCHEME)
+                                    Intent.parseUri(it, Intent.URI_INTENT_SCHEME)
                                 val intentPackage = intent.`package`?.let { it1 ->
                                     packageManager.getLaunchIntentForPackage(
                                         it1,
@@ -503,9 +507,9 @@ class WebViewActivity :
                                     startActivity(intent)
                                 }
                                 return true
-                            } else if (!webView.url.toString().contains(it.toString())) {
+                            } else if (!webView.url.toString().contains(it)) {
                                 Timber.d("Launching browser")
-                                val browserIntent = Intent(Intent.ACTION_VIEW, it)
+                                val browserIntent = Intent(Intent.ACTION_VIEW, it.toUri())
                                 startActivity(browserIntent)
                                 return true
                             } else {
@@ -526,8 +530,7 @@ class WebViewActivity :
             }
 
             setDownloadListener { url, _, contentDisposition, mimetype, _ ->
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
                     ActivityCompat.checkSelfPermission(
                         context,
                         android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -557,43 +560,38 @@ class WebViewActivity :
                 }
 
                 override fun onPermissionRequest(request: PermissionRequest?) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        val alreadyGranted = ArrayList<String>()
-                        val toBeGranted = ArrayList<String>()
-                        request?.resources?.forEach {
-                            if (it == PermissionRequest.RESOURCE_VIDEO_CAPTURE) {
-                                if (ActivityCompat.checkSelfPermission(
-                                        context,
-                                        android.Manifest.permission.CAMERA,
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    alreadyGranted.add(it)
-                                } else {
-                                    toBeGranted.add(android.Manifest.permission.CAMERA)
-                                }
-                            } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
-                                if (ActivityCompat.checkSelfPermission(
-                                        context,
-                                        android.Manifest.permission.RECORD_AUDIO,
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    alreadyGranted.add(it)
-                                } else {
-                                    toBeGranted.add(android.Manifest.permission.RECORD_AUDIO)
-                                }
+                    val alreadyGranted = ArrayList<String>()
+                    val toBeGranted = ArrayList<String>()
+                    request?.resources?.forEach {
+                        if (it == PermissionRequest.RESOURCE_VIDEO_CAPTURE) {
+                            if (ActivityCompat.checkSelfPermission(
+                                    context,
+                                    android.Manifest.permission.CAMERA,
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                alreadyGranted.add(it)
+                            } else {
+                                toBeGranted.add(android.Manifest.permission.CAMERA)
+                            }
+                        } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
+                            if (ActivityCompat.checkSelfPermission(
+                                    context,
+                                    android.Manifest.permission.RECORD_AUDIO,
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                alreadyGranted.add(it)
+                            } else {
+                                toBeGranted.add(android.Manifest.permission.RECORD_AUDIO)
                             }
                         }
-                        if (alreadyGranted.size > 0) {
-                            request?.grant(alreadyGranted.toTypedArray())
-                        }
-                        if (toBeGranted.size > 0) {
-                            requestPermissions.launch(
-                                toBeGranted.toTypedArray(),
-                            )
-                        }
-                    } else {
-                        // If we are before M we already have permission, just grant it.
-                        request?.grant(request.resources)
+                    }
+                    if (alreadyGranted.isNotEmpty()) {
+                        request?.grant(alreadyGranted.toTypedArray())
+                    }
+                    if (toBeGranted.isNotEmpty()) {
+                        requestPermissions.launch(
+                            toBeGranted.toTypedArray(),
+                        )
                     }
                 }
 
@@ -921,7 +919,7 @@ class WebViewActivity :
         val entityId = payload?.getStringOrNull("entity_id")
         entityId?.let {
             lifecycleScope.launch {
-                val actions = entityAddToHandler.actionsForEntity(entityId)
+                val actions = entityAddToHandler.actionsForEntity(this@WebViewActivity, entityId)
                 sendExternalBusMessage(
                     EntityAddToActionsResponse(
                         id = json["id"],

@@ -3,19 +3,13 @@ package io.homeassistant.companion.android.common.data.integration.impl.entities
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import timber.log.Timber
+import org.junit.jupiter.api.extension.ExtendWith
 
+@ExtendWith(ConsoleLogExtension::class)
 class RegisterDeviceRequestTest {
-
-    @BeforeEach
-    fun setup() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
-    }
 
     @Test
     fun `Given a valid RegisterDeviceRequest when serializing it then it creates a valid JSON`() {

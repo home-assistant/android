@@ -22,9 +22,8 @@ import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.compose.LocationPermissionActivityResultRegistry
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -33,23 +32,19 @@ import org.junit.jupiter.api.assertNull
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import timber.log.Timber
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
 class LocationForSecureConnectionScreenTest {
     @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
+    var consoleLog = ConsoleLogRule()
 
     @get:Rule(order = 1)
-    val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
+    val hiltRule = HiltAndroidRule(this)
 
-    @Before
-    fun setup() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
-    }
+    @get:Rule(order = 2)
+    val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Test
     fun `Given selecting most secure connection when next clicked and permission given then go to next screen`() {
@@ -60,12 +55,24 @@ class LocationForSecureConnectionScreenTest {
                     .assertIsDisplayed()
                     .assertIsNotEnabled()
 
-                onNodeWithText(stringResource(R.string.location_secure_connection_most_secure)).performScrollTo().performClick()
+                onNodeWithText(stringResource(commonR.string.connection_security_most_secure)).performScrollTo().performClick()
 
                 nextButton.assertIsEnabled().performClick()
                 assertEquals(false, allowInsecureConnection)
                 assertNull(snackbarMessage)
                 registry.assertLocationPermissionRequested()
+            }
+        }
+    }
+
+    @Test
+    fun `Given most secure connection already set when displayed and most secure is selected`() {
+        composeTestRule.apply {
+            testScreen(initialAllowInsecureConnection = false) {
+                onNodeWithText(stringResource(R.string.location_secure_connection_next))
+                    .performScrollTo()
+                    .assertIsDisplayed()
+                    .assertIsEnabled()
             }
         }
     }
@@ -79,7 +86,7 @@ class LocationForSecureConnectionScreenTest {
                     .assertIsDisplayed()
                     .assertIsNotEnabled()
 
-                onNodeWithText(stringResource(R.string.location_secure_connection_less_secure)).performScrollTo().performClick()
+                onNodeWithText(stringResource(commonR.string.connection_security_less_secure)).performScrollTo().performClick()
 
                 nextButton.assertIsEnabled().performClick()
                 assertEquals(true, allowInsecureConnection)
@@ -92,11 +99,11 @@ class LocationForSecureConnectionScreenTest {
     @Test
     fun `Given selecting most secure connection when next clicked and permission not given then stay on screen with snackbar and select less secure`() {
         composeTestRule.apply {
-            testScreen(false) {
+            testScreen(locationPermissionGranted = false) {
                 val nextButton = onNodeWithText(stringResource(R.string.location_secure_connection_next))
                     .assertIsNotDisplayed()
 
-                onNodeWithText(stringResource(R.string.location_secure_connection_most_secure)).performScrollTo().performClick()
+                onNodeWithText(stringResource(commonR.string.connection_security_most_secure)).performScrollTo().performClick()
 
                 // Should have scroll automatically to the end of the screen
                 nextButton.assertIsDisplayed().assertIsEnabled().performClick()
@@ -125,6 +132,7 @@ class LocationForSecureConnectionScreenTest {
 
     @OptIn(ExperimentalPermissionsApi::class)
     private fun AndroidComposeTestRule<*, *>.testScreen(
+        initialAllowInsecureConnection: Boolean? = null,
         locationPermissionGranted: Boolean = true,
         block: TestHelper.() -> Unit,
     ) {
@@ -137,6 +145,7 @@ class LocationForSecureConnectionScreenTest {
                 ) {
                     LocationForSecureConnectionScreen(
                         onHelpClick = { helpClicked = true },
+                        initialAllowInsecureConnection = initialAllowInsecureConnection,
                         onAllowInsecureConnection = { allowInsecureConnection = it },
                         onShowSnackbar = { message, _ ->
                             snackbarMessage = message
@@ -151,8 +160,8 @@ class LocationForSecureConnectionScreenTest {
 
             onNodeWithText(stringResource(R.string.location_secure_connection_title)).assertIsDisplayed()
             onNodeWithText(stringResource(R.string.location_secure_connection_content)).assertIsDisplayed()
-            onNodeWithText(stringResource(R.string.location_secure_connection_most_secure)).performScrollTo().assertIsDisplayed()
-            onNodeWithText(stringResource(R.string.location_secure_connection_less_secure)).performScrollTo().assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.connection_security_most_secure)).performScrollTo().assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.connection_security_less_secure)).performScrollTo().assertIsDisplayed()
             onNodeWithText(stringResource(R.string.location_secure_connection_hint)).performScrollTo().assertIsDisplayed()
 
             block()

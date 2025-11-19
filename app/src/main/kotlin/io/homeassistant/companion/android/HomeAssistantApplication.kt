@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.LifecycleHandler
+import io.homeassistant.companion.android.util.QuestUtil
 import io.homeassistant.companion.android.util.initCrashSaving
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
@@ -149,7 +150,7 @@ open class HomeAssistantApplication :
         )
 
         // Update Quest only sensors when the device is a Quest
-        if (Build.MODEL == "Quest") {
+        if (QuestUtil.isQuest) {
             ContextCompat.registerReceiver(
                 this,
                 sensorReceiver,
@@ -161,16 +162,14 @@ open class HomeAssistantApplication :
         }
 
         // Update doze mode immediately on supported devices
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            ContextCompat.registerReceiver(
-                this,
-                sensorReceiver,
-                IntentFilter().apply {
-                    addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
-                },
-                ContextCompat.RECEIVER_EXPORTED,
-            )
-        }
+        ContextCompat.registerReceiver(
+            this,
+            sensorReceiver,
+            IntentFilter().apply {
+                addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
+            },
+            ContextCompat.RECEIVER_EXPORTED,
+        )
 
         // This will trigger an update any time the wifi state has changed
         ContextCompat.registerReceiver(
@@ -244,14 +243,12 @@ open class HomeAssistantApplication :
         }
 
         // Add receiver for DND changes on devices that support it
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            ContextCompat.registerReceiver(
-                this,
-                sensorReceiver,
-                IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED),
-                ContextCompat.RECEIVER_EXPORTED,
-            )
-        }
+        ContextCompat.registerReceiver(
+            this,
+            sensorReceiver,
+            IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED),
+            ContextCompat.RECEIVER_EXPORTED,
+        )
 
         ContextCompat.registerReceiver(
             this,

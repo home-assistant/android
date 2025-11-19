@@ -3,13 +3,11 @@ package io.homeassistant.companion.android.onboarding.connection
 import android.content.Context
 import android.net.Uri
 import android.net.http.SslError
-import android.os.Build
 import android.webkit.SslErrorHandler
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
-import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.annotation.VisibleForTesting
 import androidx.core.net.toUri
@@ -134,8 +132,12 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
             _isLoadingFlow.update { false }
         }
 
-        override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-            return request?.url?.let { interceptRedirectIfRequired(it) } ?: false
+        // Override deprecated method for backward compatibility with API 23 and below.
+        // The non-deprecated shouldOverrideUrlLoading(WebView, WebResourceRequest) is not invoked
+        // on these older Android versions, so this method remains necessary.
+        @Suppress("DEPRECATION")
+        override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+            return url?.toUri()?.let { interceptRedirectIfRequired(it) } ?: false
         }
 
         private fun errorDetails(context: Context?, code: Int?, description: String?): String {
@@ -148,7 +150,6 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
             ) ?: ""
         }
 
-        @RequiresApi(Build.VERSION_CODES.M)
         override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
             super.onReceivedError(view, request, error)
             val errorDetails = errorDetails(view?.context, error?.errorCode, error?.description?.toString())

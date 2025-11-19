@@ -1,18 +1,12 @@
 package io.homeassistant.companion.android.common.util
 
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import timber.log.Timber
+import org.junit.jupiter.api.extension.ExtendWith
 
+@ExtendWith(ConsoleLogExtension::class)
 class MessagingTokenTest {
-
-    @BeforeEach
-    fun setup() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
-    }
 
     @Test
     fun `Given JSON when deserialize to MessagingToken then it works`() {

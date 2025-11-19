@@ -13,16 +13,11 @@ class WifiHelperImpl @Inject constructor(
 ) : WifiHelper {
     override fun hasWifi(): Boolean = wifiManager != null
 
-    override fun isUsingWifi(): Boolean = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        connectivityManager.activeNetwork?.let {
-            connectivityManager
-                .getNetworkCapabilities(it)
-                ?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
-        } ?: false
-    } else {
-        connectivityManager.activeNetworkInfo?.isConnected == true &&
-            connectivityManager.activeNetworkInfo?.type == ConnectivityManager.TYPE_WIFI
-    }
+    override fun isUsingWifi(): Boolean = connectivityManager.activeNetwork?.let {
+        connectivityManager
+            .getNetworkCapabilities(it)
+            ?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+    } ?: false
 
     override fun isUsingSpecificWifi(networks: List<String>): Boolean {
         if (networks.isEmpty()) return false

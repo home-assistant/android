@@ -15,33 +15,28 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.R
-import io.homeassistant.companion.android.testing.unit.ConsoleLogTree
+import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import timber.log.Timber
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
 class ConnectionErrorScreenTest {
     @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
+    var consoleLog = ConsoleLogRule()
 
     @get:Rule(order = 1)
-    val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
+    val hiltRule = HiltAndroidRule(this)
 
-    @Before
-    fun setup() {
-        Timber.plant(ConsoleLogTree)
-        ConsoleLogTree.verbose = true
-    }
+    @get:Rule(order = 2)
+    val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Test
     fun `Given ConnectionErrorScreen when error is null then nothing is displayed`() {
