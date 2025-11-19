@@ -8,9 +8,9 @@ import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
+import io.homeassistant.companion.android.common.data.websocket.WebSocketEventHandler
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
-import io.homeassistant.companion.android.common.data.websocket.WebSocketEventHandler
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_AREA_REGISTRY_UPDATED
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_DEVICE_REGISTRY_UPDATED
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_ENTITY_REGISTRY_UPDATED
@@ -138,7 +138,7 @@ internal class WebSocketCoreImpl(
     ),
     // We need a dedicated scope in test to control job that are in background
     private val backgroundScope: CoroutineScope = wsScope,
-    private val socketHandler: WebSocketEventHandler = WebSocketEventHandler()
+    private val socketHandler: WebSocketEventHandler = WebSocketEventHandler(),
 ) : WebSocketListener(),
     WebSocketCore {
 
@@ -356,13 +356,16 @@ internal class WebSocketCoreImpl(
                 wsScope.launch(start = CoroutineStart.LAZY) {
                     when (message) {
                         is AuthRequiredSocketResponse -> Timber.d("Auth Requested")
+
                         is AuthOkSocketResponse, is AuthInvalidSocketResponse -> handleAuthComplete(
                             message is AuthOkSocketResponse,
                             message.haVersion,
                         )
 
                         is EventSocketResponse -> socketHandler.handleEvent(message)
+
                         is MessageSocketResponse, is PongSocketResponse -> handleMessage(message)
+
                         is UnknownTypeSocketResponse -> Timber.w("Unknown message received: $message")
                     }
                 },
