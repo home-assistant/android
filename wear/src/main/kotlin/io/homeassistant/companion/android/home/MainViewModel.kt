@@ -4,11 +4,9 @@ import android.app.Application
 import android.content.ComponentName
 import android.content.pm.PackageManager
 import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.core.app.NotificationManagerCompat
@@ -77,6 +75,22 @@ class MainViewModel @Inject constructor(
         val hasMoreEntitiesToShow: Boolean = false,
     )
 
+    /**
+     * Immutable UI state for MainView that contains thread-safe snapshots of all data.
+     */
+    data class MainViewUiState(
+        val entities: Map<String, Entity> = emptyMap(),
+        val favoriteCaches: List<FavoriteCaches> = emptyList(),
+        val isFavoritesOnly: Boolean = false,
+        val loadingState: LoadingState = LoadingState.LOADING,
+        val entitiesByAreaOrder: List<String> = emptyList(),
+        val entitiesByArea: Map<String, List<Entity>> = emptyMap(),
+        val areas: List<AreaRegistryResponse> = emptyList(),
+        val entitiesByDomainFilteredOrder: List<String> = emptyList(),
+        val entitiesByDomainFiltered: Map<String, List<Entity>> = emptyMap(),
+        val entitiesByDomain: Map<String, List<Entity>> = emptyMap(),
+    )
+
     private val app = application
 
     private lateinit var homePresenter: HomePresenter
@@ -100,6 +114,9 @@ class MainViewModel @Inject constructor(
 
     private val _entityClassification = MutableStateFlow(EntityClassification())
     val entityClassification = _entityClassification.asStateFlow()
+
+    private val _mainViewUiState = MutableStateFlow(MainViewUiState())
+    val mainViewUiState = _mainViewUiState.asStateFlow()
 
     /**
      * IDs of favorites in the Favorites database.
@@ -155,11 +172,11 @@ class MainViewModel @Inject constructor(
         private set
     var templateTiles = mutableStateMapOf<Int, TemplateTileConfig>()
         private set
-    var isFavoritesOnly by mutableStateOf(false)
+    var isFavoritesOnly = mutableStateOf(false)
         private set
-    var isAssistantAppAllowed by mutableStateOf(true)
+    var isAssistantAppAllowed = mutableStateOf(true)
         private set
-    var areNotificationsAllowed by mutableStateOf(false)
+    var areNotificationsAllowed = mutableStateOf(false)
         private set
 
     init {
@@ -188,13 +205,13 @@ class MainViewModel @Inject constructor(
             isShowShortcutTextEnabled.value = homePresenter.getShowShortcutText()
             templateTiles.clear()
             templateTiles.putAll(homePresenter.getAllTemplateTiles())
-            isFavoritesOnly = homePresenter.getWearFavoritesOnly()
+            isFavoritesOnly.value = homePresenter.getWearFavoritesOnly()
 
             val assistantAppComponent = ComponentName(
                 BuildConfig.APPLICATION_ID,
                 "io.homeassistant.companion.android.conversation.AssistantActivity",
             )
-            isAssistantAppAllowed =
+            isAssistantAppAllowed.value =
                 app.packageManager.getComponentEnabledSetting(assistantAppComponent) !=
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED
 
@@ -238,9 +255,11 @@ class MainViewModel @Inject constructor(
                 } else {
                     LoadingState.ERROR
                 }
+                updateMainViewUiState()
             } catch (e: Exception) {
                 Timber.e(e, "Exception while loading entities")
                 loadingState.value = LoadingState.ERROR
+                updateMainViewUiState()
             }
         }
     }
@@ -262,7 +281,7 @@ class MainViewModel @Inject constructor(
         val getEntityRegistry = async { homePresenter.getEntityRegistry() }
         val getEntities = async { homePresenter.getEntities() }
 
-        if (!isFavoritesOnly) {
+        if (!isFavoritesOnly.value) {
             areaRegistry = getAreaRegistry.await()?.also {
                 areas.clear()
                 areas.addAll(it)
@@ -283,8 +302,10 @@ class MainViewModel @Inject constructor(
             val climateEntities = it.filter { entity -> entity.domain == "climate" }
             climateEntitiesMap["climate"] = mutableStateListOf<Entity>().apply { addAll(climateEntities) }
         }
-        if (!isFavoritesOnly) {
+        if (!isFavoritesOnly.value) {
             updateEntityDomains()
+        } else {
+            updateMainViewUiState()
         }
     }
 
@@ -294,14 +315,14 @@ class MainViewModel @Inject constructor(
         }
         homePresenter.getEntityUpdates(supportedEntities.value)?.collect {
             updateEntityStates(it)
-            if (!isFavoritesOnly) {
+            if (!isFavoritesOnly.value) {
                 updateEntityDomains()
             }
         }
     }
 
     suspend fun areaUpdates() {
-        if (!homePresenter.isConnected() || isFavoritesOnly) {
+        if (!homePresenter.isConnected() || isFavoritesOnly.value) {
             return
         }
         homePresenter.getAreaRegistryUpdates()?.throttleLatest(1000)?.collect {
@@ -315,7 +336,7 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun deviceUpdates() {
-        if (!homePresenter.isConnected() || isFavoritesOnly) {
+        if (!homePresenter.isConnected() || isFavoritesOnly.value) {
             return
         }
         homePresenter.getDeviceRegistryUpdates()?.throttleLatest(1000)?.collect {
@@ -339,6 +360,26 @@ class MainViewModel @Inject constructor(
         .orEmpty()
         .map { it.entityId }
         .filter { it.split(".")[0] in supportedDomains() }
+
+    /**
+     * Updates the main view UI state with thread-safe snapshots of all data.
+     * This should be called on a background thread whenever state changes.
+     */
+    private fun updateMainViewUiState() {
+        Timber.e("Hello doing an update? ")
+        _mainViewUiState.value = MainViewUiState(
+            entities = entities.toMap(),
+            favoriteCaches = favoriteCaches.toList(),
+            isFavoritesOnly = isFavoritesOnly.value,
+            loadingState = loadingState.value,
+            entitiesByAreaOrder = entitiesByAreaOrder.toList(),
+            entitiesByArea = entitiesByArea.mapValues { it.value.toList() },
+            areas = areas.toList(),
+            entitiesByDomainFilteredOrder = entitiesByDomainFilteredOrder.toList(),
+            entitiesByDomainFiltered = entitiesByDomainFiltered.mapValues { it.value.toList() },
+            entitiesByDomain = entitiesByDomain.mapValues { it.value.toList() },
+        )
+    }
 
     /**
      * This function does a lot of manipulation and could take some time so we need
@@ -404,6 +445,9 @@ class MainViewModel @Inject constructor(
             hasAreasToShow = hasAreasToShow,
             hasMoreEntitiesToShow = hasMoreEntitiesToShow,
         )
+
+        // Update the main view UI state with snapshots
+        updateMainViewUiState()
     }
 
     /**
@@ -654,7 +698,7 @@ class MainViewModel @Inject constructor(
     fun setWearFavoritesOnly(enabled: Boolean) {
         viewModelScope.launch {
             homePresenter.setWearFavoritesOnly(enabled)
-            isFavoritesOnly = enabled
+            isFavoritesOnly.value = enabled
         }
     }
 
@@ -679,7 +723,7 @@ class MainViewModel @Inject constructor(
             favoritesDao.delete(entityId)
             favoriteCachesDao.delete(entityId)
 
-            if (favoritesDao.getAll().isEmpty() && isFavoritesOnly) {
+            if (favoritesDao.getAll().isEmpty() && isFavoritesOnly.value) {
                 setWearFavoritesOnly(false)
             }
         }
@@ -709,11 +753,11 @@ class MainViewModel @Inject constructor(
             },
             PackageManager.DONT_KILL_APP,
         )
-        isAssistantAppAllowed = allowed
+        isAssistantAppAllowed.value = allowed
     }
 
     fun refreshNotificationPermission() {
-        areNotificationsAllowed = NotificationManagerCompat.from(app).areNotificationsEnabled()
+        areNotificationsAllowed.value = NotificationManagerCompat.from(app).areNotificationsEnabled()
     }
 
     fun logout() {

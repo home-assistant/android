@@ -67,7 +67,8 @@ fun MainView(
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
 
-    // Collect entity classification from ViewModel
+    // Collect UI state from ViewModel - single source of truth with thread-safe snapshots
+    val uiState by mainViewModel.mainViewUiState.collectAsStateWithLifecycle()
     val entityClassification by mainViewModel.entityClassification.collectAsStateWithLifecycle()
     val entitiesWithCategory = entityClassification.entitiesWithCategory
     val entitiesHidden = entityClassification.entitiesHidden
@@ -87,9 +88,9 @@ fun MainView(
                 if (expandedFavorites) {
                     items(favoriteEntityIds.size) { index ->
                         val favoriteEntityID = favoriteEntityIds[index].split(",")[0]
-                        if (mainViewModel.entities.isEmpty()) {
+                        if (uiState.entities.isEmpty()) {
                             // when we don't have the state of the entity, create a Chip from cache as we don't have the state yet
-                            val cached = mainViewModel.favoriteCaches.find { it.id == favoriteEntityID }
+                            val cached = uiState.favoriteCaches.find { it.id == favoriteEntityID }
                             Button(
                                 modifier = Modifier
                                     .fillMaxWidth(),
@@ -119,23 +120,21 @@ fun MainView(
                                 colors = getFilledTonalButtonColors(),
                             )
                         } else {
-                            mainViewModel.entities.values.toList()
-                                .firstOrNull { it.entityId == favoriteEntityID }
-                                ?.let {
-                                    EntityUi(
-                                        mainViewModel.entities[favoriteEntityID]!!,
-                                        onEntityClicked,
-                                        isHapticEnabled,
-                                        isToastEnabled,
-                                    ) { entityId -> onEntityLongClicked(entityId) }
-                                }
+                            uiState.entities[favoriteEntityID]?.let {
+                                EntityUi(
+                                    it,
+                                    onEntityClicked,
+                                    isHapticEnabled,
+                                    isToastEnabled,
+                                ) { entityId -> onEntityLongClicked(entityId) }
+                            }
                         }
                     }
                 }
             }
 
-            if (!mainViewModel.isFavoritesOnly) {
-                when (mainViewModel.loadingState.value) {
+            if (!uiState.isFavoritesOnly) {
+                when (uiState.loadingState) {
                     MainViewModel.LoadingState.LOADING -> {
                         if (favoriteEntityIds.isEmpty()) {
                             // Add a Spacer to prevent settings being pushed to the screen center
@@ -185,7 +184,7 @@ fun MainView(
                         }
                     }
                     MainViewModel.LoadingState.READY -> {
-                        if (mainViewModel.entities.isEmpty()) {
+                        if (uiState.entities.isEmpty()) {
                             item {
                                 Column(
                                     modifier = Modifier.fillMaxSize(),
@@ -216,29 +215,31 @@ fun MainView(
                             item {
                                 ListHeader(id = commonR.string.areas)
                             }
-                            for (id in mainViewModel.entitiesByAreaOrder) {
-                                val entities = mainViewModel.entitiesByArea[id]
-                                val entitiesToShow = entities?.filter {
+                            for (id in uiState.entitiesByAreaOrder) {
+                                val areaEntities = uiState.entitiesByArea[id]
+                                val entitiesToShow = areaEntities?.filter {
                                     it.entityId !in entitiesWithCategory &&
                                         it.entityId !in entitiesHidden
                                 }
                                 if (!entitiesToShow.isNullOrEmpty()) {
-                                    val area = mainViewModel.areas.first { it.areaId == id }
-                                    item {
-                                        Button(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            label = { Text(area.name) },
-                                            onClick = {
-                                                onNavigationClicked(
-                                                    mapOf(area.name to entities),
-                                                    listOf(area.name),
-                                                ) {
-                                                    it.entityId !in entitiesWithCategory &&
-                                                        it.entityId !in entitiesHidden
-                                                }
-                                            },
-                                            colors = getPrimaryButtonColors(),
-                                        )
+                                    val area = uiState.areas.firstOrNull { it.areaId == id }
+                                    if (area != null) {
+                                        item {
+                                            Button(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                label = { Text(area.name) },
+                                                onClick = {
+                                                    onNavigationClicked(
+                                                        mapOf(area.name to areaEntities),
+                                                        listOf(area.name),
+                                                    ) {
+                                                        it.entityId !in entitiesWithCategory &&
+                                                            it.entityId !in entitiesHidden
+                                                    }
+                                                },
+                                                colors = getPrimaryButtonColors(),
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -251,29 +252,30 @@ fun MainView(
                         }
 
                         // Buttons for each domain with filtered entities
-                        for (domain in mainViewModel.entitiesByDomainFilteredOrder) {
-                            val domainEntitiesFiltered = mainViewModel.entitiesByDomainFiltered[domain]!!
-                            item {
-                                Button(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    icon = {
-                                        getIcon(
-                                            "",
-                                            domain,
-                                            context,
-                                        ).let { Image(asset = it) }
-                                    },
-                                    label = { Text(mainViewModel.stringForDomain(domain)!!) },
-                                    onClick = {
-                                        onNavigationClicked(
-                                            mapOf(
-                                                mainViewModel.stringForDomain(domain)!! to domainEntitiesFiltered,
-                                            ),
-                                            listOf(mainViewModel.stringForDomain(domain)!!),
-                                        ) { true }
-                                    },
-                                    colors = getPrimaryButtonColors(),
-                                )
+                        for (domain in uiState.entitiesByDomainFilteredOrder) {
+                            val domainEntitiesFiltered = uiState.entitiesByDomainFiltered[domain]
+                            val domainName = mainViewModel.stringForDomain(domain)
+                            if (domainEntitiesFiltered != null && domainName != null) {
+                                item {
+                                    Button(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        icon = {
+                                            getIcon(
+                                                "",
+                                                domain,
+                                                context,
+                                            ).let { Image(asset = it) }
+                                        },
+                                        label = { Text(domainName) },
+                                        onClick = {
+                                            onNavigationClicked(
+                                                mapOf(domainName to domainEntitiesFiltered),
+                                                listOf(domainName),
+                                            ) { true }
+                                        },
+                                        colors = getPrimaryButtonColors(),
+                                    )
+                                }
                             }
                         }
 
@@ -281,7 +283,7 @@ fun MainView(
                             Spacer(modifier = Modifier.height(32.dp))
                         }
                         // All entities regardless of area
-                        if (mainViewModel.entities.isNotEmpty()) {
+                        if (uiState.entities.isNotEmpty()) {
                             item {
                                 Button(
                                     modifier = Modifier
@@ -297,12 +299,12 @@ fun MainView(
                                     },
                                     onClick = {
                                         onNavigationClicked(
-                                            mainViewModel.entitiesByDomain.mapKeys {
+                                            uiState.entitiesByDomain.mapKeys {
                                                 mainViewModel.stringForDomain(
                                                     it.key,
                                                 )!!
                                             },
-                                            mainViewModel.entitiesByDomain.keys.map {
+                                            uiState.entitiesByDomain.keys.map {
                                                 mainViewModel.stringForDomain(
                                                     it,
                                                 )!!
@@ -317,7 +319,7 @@ fun MainView(
                 }
             }
 
-            if (mainViewModel.isFavoritesOnly) {
+            if (uiState.isFavoritesOnly) {
                 item {
                     Spacer(Modifier.padding(32.dp))
                 }
