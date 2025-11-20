@@ -16,7 +16,6 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import org.junit.Rule
@@ -44,14 +43,14 @@ class ManualServerScreenTest {
     fun `Given empty screen when interacting with the view then handle interactions`() {
         composeTestRule.apply {
             testScreen(serverUrl = "", isServerUrlValid = false) {
-                onNodeWithText(stringResource(R.string.manual_server_connect))
+                onNodeWithText(stringResource(commonR.string.manual_server_connect))
                     .assertIsDisplayed()
                     .assertIsNotEnabled()
 
-                onNodeWithText(stringResource(R.string.manual_server_wrong_url)).assertIsNotDisplayed()
+                onNodeWithText(stringResource(commonR.string.manual_server_wrong_url)).assertIsNotDisplayed()
 
                 onNodeWithText("http://homeassistant.local:8123").assertIsDisplayed()
-                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsNotDisplayed()
+                onNodeWithContentDescription(stringResource(commonR.string.clear_text)).assertIsNotDisplayed()
             }
         }
     }
@@ -61,14 +60,14 @@ class ManualServerScreenTest {
         val invalidUrl = "invalid"
         composeTestRule.apply {
             testScreen(serverUrl = invalidUrl, isServerUrlValid = false) {
-                onNodeWithText(stringResource(R.string.manual_server_connect))
+                onNodeWithText(stringResource(commonR.string.manual_server_connect))
                     .assertIsDisplayed()
                     .assertIsNotEnabled()
 
-                onNodeWithText(stringResource(R.string.manual_server_wrong_url)).assertIsDisplayed()
+                onNodeWithText(stringResource(commonR.string.manual_server_wrong_url)).assertIsDisplayed()
 
                 onNodeWithText(invalidUrl).assertIsDisplayed()
-                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsDisplayed().performClick()
+                onNodeWithContentDescription(stringResource(commonR.string.clear_text)).assertIsDisplayed().performClick()
                 assertEquals("", changedUrl)
             }
         }
@@ -79,14 +78,14 @@ class ManualServerScreenTest {
         val validUrl = "http://openhomefoundation.org"
         composeTestRule.apply {
             testScreen(serverUrl = validUrl, isServerUrlValid = true) {
-                onNodeWithText(stringResource(R.string.manual_server_connect))
+                onNodeWithText(stringResource(commonR.string.manual_server_connect))
                     .assertIsDisplayed()
                     .assertIsEnabled()
                     .performClick()
 
                 assertTrue(onConnectClicked)
 
-                onNodeWithText(stringResource(R.string.manual_server_wrong_url)).assertIsNotDisplayed()
+                onNodeWithText(stringResource(commonR.string.manual_server_wrong_url)).assertIsNotDisplayed()
 
                 onNodeWithText(validUrl).assertIsDisplayed()
             }
@@ -98,19 +97,19 @@ class ManualServerScreenTest {
         val validUrl = "http://openhomefoundation.org"
         composeTestRule.apply {
             testScreen(serverUrl = validUrl, isServerUrlValid = true) {
-                onNodeWithText(stringResource(R.string.manual_server_connect))
+                onNodeWithText(stringResource(commonR.string.manual_server_connect))
                     .assertIsDisplayed()
                     .assertIsEnabled()
                     .performClick()
 
                 assertTrue(onConnectClicked)
 
-                onNodeWithText(stringResource(R.string.manual_server_wrong_url)).assertIsNotDisplayed()
+                onNodeWithText(stringResource(commonR.string.manual_server_wrong_url)).assertIsNotDisplayed()
 
                 onNodeWithText(validUrl).assertIsDisplayed().performTextInput("hello")
                 assertEquals("hellohttp://openhomefoundation.org", changedUrl)
 
-                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsDisplayed().performClick()
+                onNodeWithContentDescription(stringResource(commonR.string.clear_text)).assertIsDisplayed().performClick()
                 assertEquals("", changedUrl)
             }
         }
@@ -135,7 +134,7 @@ class ManualServerScreenTest {
                     serverUrl = serverUrl,
                 )
             }
-            onNodeWithText(stringResource(R.string.manual_server_title)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.manual_server_title)).assertIsDisplayed()
 
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).assertIsDisplayed().performClick()
             assertTrue(backClicked)
@@ -143,7 +142,7 @@ class ManualServerScreenTest {
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).assertIsDisplayed().performClick()
             assertTrue(helpClicked)
 
-            onNodeWithText(stringResource(R.string.manual_server_connect)).performScrollTo().assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.manual_server_connect)).performScrollTo().assertIsDisplayed()
 
             dsl()
         }

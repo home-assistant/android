@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 
@@ -38,7 +38,7 @@ internal fun HATopBar(
                 IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = stringResource(R.string.navigate_up),
+                        contentDescription = stringResource(commonR.string.navigate_up),
                     )
                 }
             }
@@ -48,7 +48,7 @@ internal fun HATopBar(
                 IconButton(onClick = onHelpClick) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-                        contentDescription = stringResource(R.string.get_help),
+                        contentDescription = stringResource(commonR.string.get_help),
                     )
                 }
             }

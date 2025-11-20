@@ -194,7 +194,7 @@ internal class WearOnboardingNavigationTest {
         testNavigation {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
             assertTrue(navController.currentBackStackEntry?.toRoute<ServerDiscoveryRoute>()?.discoveryMode == ServerDiscoveryMode.ADD_EXISTING)
-            onNodeWithText(stringResource(R.string.searching_home_network)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.searching_home_network)).assertIsDisplayed()
         }
     }
 
@@ -214,7 +214,7 @@ internal class WearOnboardingNavigationTest {
         val instanceUrl = "http://ha.local"
         testNavigation {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
-            onNodeWithText(stringResource(R.string.searching_home_network)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.searching_home_network)).assertIsDisplayed()
 
             instanceChannel.trySend(HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)))
             waitUntilAtLeastOneExists(hasText(instanceUrl), timeoutMillis = DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds)
@@ -227,7 +227,7 @@ internal class WearOnboardingNavigationTest {
 
             onNodeWithText(instanceUrl).assertIsDisplayed()
 
-            onNodeWithText(stringResource(R.string.server_discovery_connect)).assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.server_discovery_connect)).assertIsDisplayed().performClick()
 
             waitForIdle()
 
@@ -252,7 +252,7 @@ internal class WearOnboardingNavigationTest {
             assertTrue(connectionNavigationEventFlow.subscriptionCount.value == 1)
 
             connectionNavigationEventFlow.emit(ConnectionNavigationEvent.Authenticated(instanceUrl, authCode, false))
-            waitUntilAtLeastOneExists(hasText(stringResource(R.string.name_your_device_title)))
+            waitUntilAtLeastOneExists(hasText(stringResource(commonR.string.name_your_device_title)))
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourWearDeviceRoute>() == true)
             val route = navController.currentBackStackEntry?.toRoute<NameYourWearDeviceRoute>()
@@ -267,7 +267,7 @@ internal class WearOnboardingNavigationTest {
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
             verify { any<NavController>().navigateToUri("https://www.home-assistant.io/installation/") }
 
-            onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.name_your_device_save)).performScrollTo().assertIsDisplayed().performClick()
 
             assertTrue(onboardingDone)
             assertEquals(WEAR_NAME, deviceName)
@@ -290,12 +290,12 @@ internal class WearOnboardingNavigationTest {
             val newDeviceName = "new wear"
             onNodeWithText(defaultDeviceName).performScrollTo().assertIsDisplayed().performTextReplacement(newDeviceName)
 
-            onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.name_your_device_save)).performScrollTo().assertIsDisplayed().performClick()
 
             assertFalse(onboardingDone)
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WearMTLSRoute>() == true)
-            onNodeWithText(stringResource(R.string.wear_mtls_content)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.wear_mtls_content)).assertIsDisplayed()
 
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performClick()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourWearDeviceRoute>() == true)
@@ -311,12 +311,12 @@ internal class WearOnboardingNavigationTest {
         val authCode = "super_code"
         testNavigation("http://ha") {
             navController.navigateToWearMTLS(WEAR_NAME, instanceUrl, authCode)
-            onNodeWithText(stringResource(R.string.wear_mtls_content)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.wear_mtls_content)).assertIsDisplayed()
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
             verify { any<NavController>().navigateToUri("https://companion.home-assistant.io/docs/getting_started/#tls-client-authentication") }
 
-            onNodeWithText(stringResource(R.string.wear_mtls_next)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
+            onNodeWithText(stringResource(commonR.string.wear_mtls_next)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
 
             assertTrue(onboardingDone)
             assertEquals(WEAR_NAME, deviceName)

@@ -215,7 +215,7 @@ private fun UrlInfo(url: String?, onOpenExternalLink: (Uri) -> Unit) {
                 .testTag(URL_INFO_TAG),
         ) {
             val annotatedString = buildAnnotatedString {
-                append(stringResource(R.string.connection_error_url_info))
+                append(stringResource(commonR.string.connection_error_url_info))
                 appendLine()
                 withLink(
                     LinkAnnotation.Url(
@@ -244,14 +244,14 @@ private fun UrlInfo(url: String?, onOpenExternalLink: (Uri) -> Unit) {
 @Composable
 private fun ErrorDetails(errorDescription: String, errorType: String, expanded: Boolean) {
     HADetails(
-        stringResource(R.string.connection_error_more_details),
+        stringResource(commonR.string.connection_error_more_details),
         defaultExpanded = expanded,
         modifier = Modifier.width(MaxContentWidth),
     ) {
         SelectionContainer {
             Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3)) {
                 Text(
-                    text = stringResource(R.string.connection_error_more_details_description),
+                    text = stringResource(commonR.string.connection_error_more_details_description),
                     style = HATextStyle.Body,
                 )
                 Text(
@@ -261,7 +261,7 @@ private fun ErrorDetails(errorDescription: String, errorType: String, expanded: 
                     ),
                 )
                 Text(
-                    text = stringResource(R.string.connection_error_more_details_error),
+                    text = stringResource(commonR.string.connection_error_more_details_error),
                     style = HATextStyle.Body,
                 )
                 Text(
@@ -277,33 +277,33 @@ private fun ErrorDetails(errorDescription: String, errorType: String, expanded: 
 
 @Composable
 private fun ColumnScope.GetMoreHelp(onOpenExternalLink: (Uri) -> Unit) {
-    Text(stringResource(R.string.connection_error_help), style = HATextStyle.Body)
+    Text(stringResource(commonR.string.connection_error_help), style = HATextStyle.Body)
 
     Row {
         HAIconButton(
             icon = Icons.Outlined.Newspaper,
-            contentDescription = stringResource(R.string.connection_error_documentation_content_description),
+            contentDescription = stringResource(commonR.string.connection_error_documentation_content_description),
             onClick = {
                 onOpenExternalLink(URL_DOCUMENTATION.toUri())
             },
         )
         HAIconButton(
             icon = Icons.Outlined.Forum,
-            contentDescription = stringResource(R.string.connection_error_forum_content_description),
+            contentDescription = stringResource(commonR.string.connection_error_forum_content_description),
             onClick = {
                 onOpenExternalLink(URL_COMMUNITY_FORUM.toUri())
             },
         )
         HAIconButton(
             icon = ImageVector.vectorResource(R.drawable.github),
-            contentDescription = stringResource(R.string.connection_error_github_content_description),
+            contentDescription = stringResource(commonR.string.connection_error_github_content_description),
             onClick = {
                 onOpenExternalLink(URL_GITHUB_ISSUES.toUri())
             },
         )
         HAIconButton(
             icon = ImageVector.vectorResource(R.drawable.discord),
-            contentDescription = stringResource(R.string.connection_error_discord_content_description),
+            contentDescription = stringResource(commonR.string.connection_error_discord_content_description),
             onClick = {
                 onOpenExternalLink(URL_DISCORD.toUri())
             },
@@ -314,7 +314,7 @@ private fun ColumnScope.GetMoreHelp(onOpenExternalLink: (Uri) -> Unit) {
 @Composable
 private fun CloseAction(onClick: () -> Unit) {
     HAAccentButton(
-        stringResource(R.string.back),
+        stringResource(commonR.string.back),
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()

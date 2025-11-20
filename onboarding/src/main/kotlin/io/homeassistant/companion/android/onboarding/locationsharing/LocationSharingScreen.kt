@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -87,13 +88,13 @@ private fun LocationSharingContent(
         )
 
         Text(
-            text = stringResource(R.string.location_sharing_title),
+            text = stringResource(commonR.string.location_sharing_title),
             style = HATextStyle.Headline,
             modifier = Modifier.widthIn(max = MaxContentWidth),
         )
 
         Text(
-            text = stringResource(R.string.location_sharing_content),
+            text = stringResource(commonR.string.location_sharing_content),
             style = HATextStyle.Body,
             modifier = Modifier.widthIn(max = MaxContentWidth),
         )
@@ -122,7 +123,7 @@ private fun BottomButtons(onGoToNextScreen: () -> Unit, onLocationSharingRespons
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
     ) {
         HAAccentButton(
-            text = stringResource(R.string.location_sharing_share),
+            text = stringResource(commonR.string.location_sharing_share),
             onClick = {
                 onLocationSharingResponse(true)
                 permissions.launchMultiplePermissionRequest()
@@ -131,7 +132,7 @@ private fun BottomButtons(onGoToNextScreen: () -> Unit, onLocationSharingRespons
         )
 
         HAPlainButton(
-            text = stringResource(R.string.location_sharing_no_share),
+            text = stringResource(commonR.string.location_sharing_no_share),
             onClick = {
                 onLocationSharingResponse(false)
                 onGoToNextScreen()

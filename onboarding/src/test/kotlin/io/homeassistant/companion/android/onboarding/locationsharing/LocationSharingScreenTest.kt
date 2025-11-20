@@ -18,7 +18,6 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.compose.LocationPermissionActivityResultRegistry
-import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import org.junit.Rule
@@ -46,9 +45,9 @@ class LocationSharingScreenTest {
         composeTestRule.apply {
             testScreen {
                 // Check all elements are displayed
-                onNodeWithText(stringResource(R.string.location_sharing_title)).assertIsDisplayed()
-                onNodeWithText(stringResource(R.string.location_sharing_content)).assertIsDisplayed()
-                onNodeWithText(stringResource(R.string.location_sharing_share)).performScrollTo().assertIsDisplayed().performClick()
+                onNodeWithText(stringResource(commonR.string.location_sharing_title)).assertIsDisplayed()
+                onNodeWithText(stringResource(commonR.string.location_sharing_content)).assertIsDisplayed()
+                onNodeWithText(stringResource(commonR.string.location_sharing_share)).performScrollTo().assertIsDisplayed().performClick()
 
                 assertTrue(locationSharingResponse == true)
                 assertTrue(goToNextScreenClicked)
@@ -62,9 +61,9 @@ class LocationSharingScreenTest {
         composeTestRule.apply {
             testScreen(false) {
                 // Check all elements are displayed
-                onNodeWithText(stringResource(R.string.location_sharing_title)).assertIsDisplayed()
-                onNodeWithText(stringResource(R.string.location_sharing_content)).assertIsDisplayed()
-                onNodeWithText(stringResource(R.string.location_sharing_no_share)).performScrollTo().assertIsDisplayed().performClick()
+                onNodeWithText(stringResource(commonR.string.location_sharing_title)).assertIsDisplayed()
+                onNodeWithText(stringResource(commonR.string.location_sharing_content)).assertIsDisplayed()
+                onNodeWithText(stringResource(commonR.string.location_sharing_no_share)).performScrollTo().assertIsDisplayed().performClick()
 
                 assertTrue(locationSharingResponse == false)
                 assertTrue(goToNextScreenClicked)
@@ -78,9 +77,9 @@ class LocationSharingScreenTest {
         composeTestRule.apply {
             testScreen(false) {
                 // Check all elements are displayed
-                onNodeWithText(stringResource(R.string.location_sharing_title)).assertIsDisplayed()
-                onNodeWithText(stringResource(R.string.location_sharing_content)).assertIsDisplayed()
-                onNodeWithText(stringResource(R.string.location_sharing_share)).performScrollTo().assertIsDisplayed().performClick()
+                onNodeWithText(stringResource(commonR.string.location_sharing_title)).assertIsDisplayed()
+                onNodeWithText(stringResource(commonR.string.location_sharing_content)).assertIsDisplayed()
+                onNodeWithText(stringResource(commonR.string.location_sharing_share)).performScrollTo().assertIsDisplayed().performClick()
 
                 assertTrue(locationSharingResponse == true)
                 assertTrue(goToNextScreenClicked)

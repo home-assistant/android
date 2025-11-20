@@ -21,7 +21,6 @@ import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.compose.assertAlpha
-import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import java.net.URL
@@ -52,7 +51,7 @@ class ServerDiscoveryScreenTest {
     fun `Given Started state when server discovery is displayed then show loading and handle clicks`() {
         composeTestRule.apply {
             testScreen(Started) {
-                onNodeWithText(stringResource(R.string.server_discovery_no_server_info))
+                onNodeWithText(stringResource(commonR.string.server_discovery_no_server_info))
                     .assertIsDisplayed().assertAlpha(0f)
             }
         }
@@ -62,7 +61,7 @@ class ServerDiscoveryScreenTest {
     fun `Given NoServerFound state when server discovery is displayed then show loading and handle clicks`() {
         composeTestRule.apply {
             testScreen(NoServerFound) {
-                onNodeWithText(stringResource(R.string.server_discovery_no_server_info))
+                onNodeWithText(stringResource(commonR.string.server_discovery_no_server_info))
                     .assertIsDisplayed().assertAlpha(1f)
             }
         }
@@ -74,11 +73,11 @@ class ServerDiscoveryScreenTest {
         val url = URL("http://192.168.0.1")
         composeTestRule.apply {
             testScreen(ServerDiscovered(serverName, url, haVersion)) {
-                onNodeWithText(stringResource(R.string.server_discovery_no_server_info))
+                onNodeWithText(stringResource(commonR.string.server_discovery_no_server_info))
                     .assertIsDisplayed().assertAlpha(0f)
                 onNodeWithText(url.toString()).assertIsDisplayed()
                 onNodeWithText(serverName).assertIsDisplayed()
-                onNodeWithText(stringResource(R.string.server_discovery_connect)).performClick()
+                onNodeWithText(stringResource(commonR.string.server_discovery_connect)).performClick()
 
                 composeTestRule.mainClock.advanceTimeUntil { connectClickedWithUrl != null }
                 assertEquals(url, connectClickedWithUrl)
@@ -93,7 +92,7 @@ class ServerDiscoveryScreenTest {
 
         composeTestRule.apply {
             testScreen(ServersDiscovered(listOf(server1, server2))) {
-                onNodeWithText(stringResource(R.string.server_discovery_no_server_info)).assertIsNotDisplayed()
+                onNodeWithText(stringResource(commonR.string.server_discovery_no_server_info)).assertIsNotDisplayed()
 
                 fun assertServer(server: ServerDiscovered) {
                     onNodeWithText(server.name).assertIsDisplayed()
@@ -134,11 +133,11 @@ class ServerDiscoveryScreenTest {
             }
 
             waitForIdle()
-            onNodeWithText(stringResource(R.string.server_discovery_connect)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.server_discovery_connect)).assertIsDisplayed()
 
             state.value = ServersDiscovered(listOf(server1, server2))
 
-            onNodeWithText(stringResource(R.string.server_discovery_connect)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.server_discovery_connect)).assertIsDisplayed()
             onNodeWithText(server2.name).assertIsDisplayed()
         }
     }
@@ -166,7 +165,7 @@ class ServerDiscoveryScreenTest {
                 )
             }
 
-            onNodeWithText(stringResource(R.string.searching_home_network)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.searching_home_network)).assertIsDisplayed()
 
             onNodeWithText(stringResource(commonR.string.manual_setup)).performScrollTo().assertIsDisplayed().performClick()
             assertTrue(manualSetupClicked)

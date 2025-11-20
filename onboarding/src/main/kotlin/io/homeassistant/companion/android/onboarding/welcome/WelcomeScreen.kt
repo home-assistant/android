@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -52,7 +53,7 @@ internal fun WelcomeScreen(onConnectClick: () -> Unit, onLearnMoreClick: () -> U
 
         Image(
             imageVector = ImageVector.vectorResource(R.drawable.ic_home_assistant_branding),
-            contentDescription = stringResource(R.string.home_assistant_branding_icon_content_description),
+            contentDescription = stringResource(commonR.string.home_assistant_branding_icon_content_description),
             modifier = Modifier.size(ICON_SIZE),
         )
         WelcomeText()
@@ -66,13 +67,13 @@ internal fun WelcomeScreen(onConnectClick: () -> Unit, onLearnMoreClick: () -> U
 @Composable
 private fun ColumnScope.WelcomeText() {
     Text(
-        text = stringResource(R.string.welcome_home_assistant_title),
+        text = stringResource(commonR.string.welcome_home_assistant_title),
         style = HATextStyle.Headline,
         modifier = Modifier.widthIn(max = MaxTextWidth),
     )
 
     Text(
-        text = stringResource(R.string.welcome_details),
+        text = stringResource(commonR.string.welcome_details),
         style = HATextStyle.Body,
         modifier = Modifier.widthIn(max = MaxTextWidth),
     )
@@ -86,13 +87,13 @@ private fun BottomButtons(onConnectClick: () -> Unit, onLearnMoreClick: () -> Un
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
     ) {
         HAAccentButton(
-            text = stringResource(R.string.welcome_connect_to_ha),
+            text = stringResource(commonR.string.welcome_connect_to_ha),
             onClick = onConnectClick,
             modifier = Modifier.fillMaxWidth(),
         )
 
         HAPlainButton(
-            text = stringResource(R.string.welcome_learn_more),
+            text = stringResource(commonR.string.welcome_learn_more),
             onClick = onLearnMoreClick,
             modifier = Modifier
                 .fillMaxWidth()

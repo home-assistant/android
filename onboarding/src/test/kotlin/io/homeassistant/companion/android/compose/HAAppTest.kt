@@ -25,11 +25,11 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HAStartDestinationRoute
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.compose.composable.HA_WEBVIEW_TAG
 import io.homeassistant.companion.android.frontend.navigation.FrontendActivityRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
-import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.navigateToLocationForSecureConnection
@@ -94,7 +94,7 @@ class HAAppTest {
     fun `Given no start start destination when starts then show loading`() {
         testApp(null) {
             assertNull(navController.currentBackStackEntry)
-            onNodeWithContentDescription(stringResource(R.string.loading_content_description)).assertIsDisplayed()
+            onNodeWithContentDescription(stringResource(commonR.string.loading_content_description)).assertIsDisplayed()
         }
     }
 
@@ -102,11 +102,11 @@ class HAAppTest {
     fun `Given default OnboardingRoute as start when starts then show Welcome`() {
         testApp(OnboardingRoute(hasLocationTracking = true)) {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
-            onNodeWithText(stringResource(R.string.welcome_home_assistant_title)).assertIsDisplayed()
-            onNodeWithText(stringResource(R.string.welcome_details)).assertIsDisplayed()
-            onNodeWithContentDescription(stringResource(R.string.home_assistant_branding_icon_content_description)).assertIsDisplayed()
-            onNodeWithText(stringResource(R.string.welcome_connect_to_ha)).performScrollTo().assertIsDisplayed()
-            onNodeWithText(stringResource(R.string.welcome_learn_more)).performScrollTo().assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.welcome_home_assistant_title)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.welcome_details)).assertIsDisplayed()
+            onNodeWithContentDescription(stringResource(commonR.string.home_assistant_branding_icon_content_description)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.welcome_connect_to_ha)).performScrollTo().assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.welcome_learn_more)).performScrollTo().assertIsDisplayed()
         }
     }
 
@@ -157,7 +157,7 @@ class HAAppTest {
     fun `Given WearOnboardingRoute without as start when starts then navigate to ServerDiscoveryScreen`() {
         testApp(WearOnboardingRoute("wear", null)) {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
-            onNodeWithText(stringResource(R.string.searching_home_network)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.searching_home_network)).assertIsDisplayed()
         }
     }
 
@@ -166,8 +166,8 @@ class HAAppTest {
         testApp(OnboardingRoute(hasLocationTracking = true)) {
             navController.navigateToLocationForSecureConnection(42)
 
-            onNodeWithText(stringResource(R.string.connection_security_less_secure)).performScrollTo().performClick()
-            onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().assertIsEnabled().assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.connection_security_less_secure)).performScrollTo().performClick()
+            onNodeWithText(stringResource(commonR.string.location_secure_connection_next)).performScrollTo().assertIsEnabled().assertIsDisplayed().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
         }
@@ -178,8 +178,8 @@ class HAAppTest {
         testApp(OnboardingRoute(hasLocationTracking = true), isAutomotive = true) {
             navController.navigateToLocationForSecureConnection(42)
 
-            onNodeWithText(stringResource(R.string.connection_security_less_secure)).performScrollTo().performClick()
-            onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().assertIsEnabled().assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.connection_security_less_secure)).performScrollTo().performClick()
+            onNodeWithText(stringResource(commonR.string.location_secure_connection_next)).performScrollTo().assertIsEnabled().assertIsDisplayed().performClick()
 
             verify(exactly = 1) {
                 activityNavigator.navigate(

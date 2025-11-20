@@ -17,7 +17,6 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import org.junit.Rule
@@ -45,9 +44,9 @@ class NameYourDeviceScreenTest {
     fun `Given empty screen when interacting with the view then handle interactions`() {
         composeTestRule.apply {
             testScreen("", saveClickable = false, deviceNameEditable = true) {
-                onNodeWithText(stringResource(R.string.name_your_device_save)).assertIsNotEnabled()
+                onNodeWithText(stringResource(commonR.string.name_your_device_save)).assertIsNotEnabled()
 
-                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsNotDisplayed()
+                onNodeWithContentDescription(stringResource(commonR.string.clear_text)).assertIsNotDisplayed()
             }
         }
     }
@@ -56,7 +55,7 @@ class NameYourDeviceScreenTest {
     fun `Given screen with device name when interacting with the view then handle interactions`() {
         composeTestRule.apply {
             testScreen("Pixel 42", saveClickable = true, deviceNameEditable = true) {
-                onNodeWithText(stringResource(R.string.name_your_device_save))
+                onNodeWithText(stringResource(commonR.string.name_your_device_save))
                     .performScrollTo() // We need to scroll to the button since it is not visible because of the spacer on tests
                     .assertIsDisplayed().assertIsEnabled().performClick()
                 assertTrue(saveClicked)
@@ -66,7 +65,7 @@ class NameYourDeviceScreenTest {
                 onNodeWithTag(DEVICE_NAME_TEXT_FIELD_TAG).assertIsDisplayed().assertIsEnabled().performTextInput("Hello ")
                 assertEquals("Hello Pixel 42", changedName)
 
-                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsDisplayed().performClick()
+                onNodeWithContentDescription(stringResource(commonR.string.clear_text)).assertIsDisplayed().performClick()
                 assertTrue(changedName?.isEmpty() == true)
             }
         }
@@ -76,7 +75,7 @@ class NameYourDeviceScreenTest {
     fun `Given screen with device name and saving when deviceNameEditable is false then handle interactions`() {
         composeTestRule.apply {
             testScreen("Pixel 42", saveClickable = false, deviceNameEditable = false) {
-                onNodeWithText(stringResource(R.string.name_your_device_save))
+                onNodeWithText(stringResource(commonR.string.name_your_device_save))
                     .performScrollTo() // We need to scroll to the button since it is not visible because of the spacer on tests
                     .assertIsDisplayed().assertIsNotEnabled()
 
@@ -86,7 +85,7 @@ class NameYourDeviceScreenTest {
                 // Set fake data to see if click actually does something. In this test it shouldn't do anything since it is disabled
                 changedName = "dummy data"
 
-                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsDisplayed().performClick()
+                onNodeWithContentDescription(stringResource(commonR.string.clear_text)).assertIsDisplayed().performClick()
                 assertEquals("dummy data", changedName)
             }
         }
@@ -116,8 +115,8 @@ class NameYourDeviceScreenTest {
                 )
             }
 
-            onNodeWithText(stringResource(R.string.name_your_device_title)).assertIsDisplayed()
-            onNodeWithText(stringResource(R.string.name_your_device_content)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.name_your_device_title)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.name_your_device_content)).assertIsDisplayed()
 
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).assertIsDisplayed().performClick()
             assertTrue(backClicked)

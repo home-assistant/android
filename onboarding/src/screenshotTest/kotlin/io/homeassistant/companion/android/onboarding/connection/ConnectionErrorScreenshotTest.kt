@@ -6,7 +6,6 @@ import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.compose.HAPreviews
-import io.homeassistant.companion.android.onboarding.R
 
 class ConnectionErrorScreenshotTest {
 
@@ -33,7 +32,7 @@ class ConnectionErrorScreenshotTest {
                 url = null,
                 error = ConnectionError.AuthenticationError(
                     commonR.string.tls_cert_expired_message,
-                    stringResource(R.string.connection_error_more_details_description_content, 403, "forbidden"),
+                    stringResource(commonR.string.connection_error_more_details_description_content, 403, "forbidden"),
                     "raw",
                 ),
                 onOpenExternalLink = {},

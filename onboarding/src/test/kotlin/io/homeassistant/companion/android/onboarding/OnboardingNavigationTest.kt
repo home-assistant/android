@@ -206,7 +206,7 @@ internal class OnboardingNavigationTest {
     fun `Given no action when starting the app then show Welcome`() {
         testNavigation {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
-            onNodeWithText(stringResource(R.string.welcome_learn_more)).performScrollTo().assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.welcome_learn_more)).performScrollTo().assertIsDisplayed().performClick()
             verify { any<NavController>().navigateToUri("https://www.home-assistant.io") }
         }
     }
@@ -232,7 +232,7 @@ internal class OnboardingNavigationTest {
     @Test
     fun `Given clicking on connect button when starting the onboarding then show ServerDiscovery then back goes to Welcome`() {
         testNavigation {
-            onNodeWithText(stringResource(R.string.welcome_connect_to_ha)).assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.welcome_connect_to_ha)).assertIsDisplayed().performClick()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
@@ -246,7 +246,7 @@ internal class OnboardingNavigationTest {
     @Test
     fun `Given clicking on connect button with server to onboard when starting the onboarding then show Connection screen then back goes to Welcome`() {
         testNavigation("http://homeassistant.local") {
-            onNodeWithText(stringResource(R.string.welcome_connect_to_ha)).assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.welcome_connect_to_ha)).assertIsDisplayed().performClick()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
 
             onNodeWithTag(CONNECTION_SCREEN_TAG).assertIsDisplayed()
@@ -260,7 +260,7 @@ internal class OnboardingNavigationTest {
     @Test
     fun `Given clicking on connect button with hide existing server and no server to onboard when starting the onboarding then show Discovery screen with existing server hidden then back goes to Welcome`() {
         testNavigation(hideExistingServers = true) {
-            onNodeWithText(stringResource(R.string.welcome_connect_to_ha)).assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.welcome_connect_to_ha)).assertIsDisplayed().performClick()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
             assertTrue(navController.currentBackStackEntry?.toRoute<ServerDiscoveryRoute>()?.discoveryMode == ServerDiscoveryMode.HIDE_EXISTING)
 
@@ -336,7 +336,7 @@ internal class OnboardingNavigationTest {
 
             onNodeWithText(instanceUrl).assertIsDisplayed()
 
-            onNodeWithText(stringResource(R.string.server_discovery_connect)).assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(commonR.string.server_discovery_connect)).assertIsDisplayed().performClick()
 
             waitForIdle()
 
@@ -366,14 +366,14 @@ internal class OnboardingNavigationTest {
 
             onNodeWithText(instanceUrl).assertIsDisplayed()
 
-            onNodeWithText(stringResource(R.string.server_discovery_connect)).performClick()
+            onNodeWithText(stringResource(commonR.string.server_discovery_connect)).performClick()
 
             onNodeWithTag(CONNECTION_SCREEN_TAG).assertIsDisplayed()
 
             assertTrue(connectionNavigationEventFlow.subscriptionCount.value == 1)
             connectionNavigationEventFlow.emit(ConnectionNavigationEvent.Authenticated(instanceUrl, "super_code", false))
 
-            waitUntilAtLeastOneExists(hasText(stringResource(R.string.name_your_device_title)))
+            waitUntilAtLeastOneExists(hasText(stringResource(commonR.string.name_your_device_title)))
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
             val route = navController.currentBackStackEntry?.toRoute<NameYourDeviceRoute>()
             assertEquals(instanceUrl, route?.url)
@@ -405,7 +405,7 @@ internal class OnboardingNavigationTest {
             navController.navigateToNameYourDevice("http://dummy.local", "code")
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
 
-            onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
+            onNodeWithText(stringResource(commonR.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
 
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
@@ -420,7 +420,7 @@ internal class OnboardingNavigationTest {
         testNavigation {
             navController.navigateToLocalFirst(42, true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
-            onNodeWithText(stringResource(R.string.local_first_next)).performScrollTo().performClick()
+            onNodeWithText(stringResource(commonR.string.local_first_next)).performScrollTo().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
 
@@ -455,7 +455,7 @@ internal class OnboardingNavigationTest {
             navController.navigateToNameYourDevice("http://homeassistant.local", "code")
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
 
-            onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
+            onNodeWithText(stringResource(commonR.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
         }
     }
@@ -467,7 +467,7 @@ internal class OnboardingNavigationTest {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
             mockCheckPermission(true)
 
-            onNodeWithText(stringResource(R.string.location_sharing_share)).performScrollTo().performClick()
+            onNodeWithText(stringResource(commonR.string.location_sharing_share)).performScrollTo().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
         }
@@ -480,7 +480,7 @@ internal class OnboardingNavigationTest {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
 
             mockCheckPermission(true)
-            onNodeWithText(stringResource(R.string.location_sharing_share)).performScrollTo().performClick()
+            onNodeWithText(stringResource(commonR.string.location_sharing_share)).performScrollTo().performClick()
 
             assertTrue(onboardingDone)
         }
@@ -494,7 +494,7 @@ internal class OnboardingNavigationTest {
 
             mockCheckPermission(false)
 
-            onNodeWithText(stringResource(R.string.location_sharing_no_share)).performScrollTo().performClick()
+            onNodeWithText(stringResource(commonR.string.location_sharing_no_share)).performScrollTo().performClick()
             assertFalse(onboardingDone)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
 
@@ -512,7 +512,7 @@ internal class OnboardingNavigationTest {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
 
             mockCheckPermission(false)
-            onNodeWithText(stringResource(R.string.location_sharing_no_share)).performScrollTo().performClick()
+            onNodeWithText(stringResource(commonR.string.location_sharing_no_share)).performScrollTo().performClick()
             assertTrue(onboardingDone)
         }
     }
@@ -524,7 +524,7 @@ internal class OnboardingNavigationTest {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
 
             onNodeWithText(stringResource(commonR.string.connection_security_most_secure)).performScrollTo().performClick()
-            onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().performClick()
+            onNodeWithText(stringResource(commonR.string.location_secure_connection_next)).performScrollTo().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
         }
@@ -536,7 +536,7 @@ internal class OnboardingNavigationTest {
             navController.navigateToSetHomeNetworkRoute(42)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
 
-            onNodeWithText(stringResource(R.string.set_home_network_next)).performScrollTo().performClick()
+            onNodeWithText(stringResource(commonR.string.set_home_network_next)).performScrollTo().performClick()
             assertTrue(onboardingDone)
         }
     }
@@ -548,7 +548,7 @@ internal class OnboardingNavigationTest {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
 
             onNodeWithText(stringResource(commonR.string.connection_security_less_secure)).performScrollTo().performClick()
-            onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().performClick()
+            onNodeWithText(stringResource(commonR.string.location_secure_connection_next)).performScrollTo().performClick()
 
             assertTrue(onboardingDone)
         }
@@ -569,7 +569,7 @@ internal class OnboardingNavigationTest {
             navController.navigateToNameYourDevice("https://www.home-assistant.io", "code")
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
 
-            onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
+            onNodeWithText(stringResource(commonR.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
 
             assertTrue(onboardingDone)
         }
@@ -591,7 +591,7 @@ internal class OnboardingNavigationTest {
             navController.navigateToNameYourDevice("http://homeassistant.local", "code")
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
 
-            onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
+            onNodeWithText(stringResource(commonR.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
         }
@@ -613,7 +613,7 @@ internal class OnboardingNavigationTest {
             navController.navigateToNameYourDevice("http://homeassistant.local", "code")
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
 
-            onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
+            onNodeWithText(stringResource(commonR.string.name_your_device_save)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
         }
@@ -626,7 +626,7 @@ internal class OnboardingNavigationTest {
             navController.navigateToLocalFirst(serverId = 42, hasPlainTextAccess = true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
 
-            onNodeWithText(stringResource(R.string.local_first_next)).performScrollTo().performClick()
+            onNodeWithText(stringResource(commonR.string.local_first_next)).performScrollTo().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
         }
@@ -639,7 +639,7 @@ internal class OnboardingNavigationTest {
             navController.navigateToLocalFirst(serverId = 42, hasPlainTextAccess = true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
 
-            onNodeWithText(stringResource(R.string.local_first_next)).performScrollTo().performClick()
+            onNodeWithText(stringResource(commonR.string.local_first_next)).performScrollTo().performClick()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
         }
@@ -651,7 +651,7 @@ internal class OnboardingNavigationTest {
             navController.navigateToLocalFirst(serverId = 42, hasPlainTextAccess = false)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
 
-            onNodeWithText(stringResource(R.string.local_first_next)).performScrollTo().performClick()
+            onNodeWithText(stringResource(commonR.string.local_first_next)).performScrollTo().performClick()
 
             assertTrue(onboardingDone)
         }
