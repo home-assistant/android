@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.webview.addto
 
 import android.content.Context
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.IMAGE_DOMAIN
@@ -64,7 +65,7 @@ class EntityAddToHandlerTest {
         handler = EntityAddToHandler(serverManager, prefsRepository)
 
         // Always override the handler so individual test can decide to override it or not without impacting the other tests
-        FailFast.setHandler { exception, additionalMessage ->
+        FailFast.setHandler { exception, _ ->
             fail("Unhandled exception caught", exception)
         }
     }
@@ -73,31 +74,39 @@ class EntityAddToHandlerTest {
     fun `Given AndroidAutoFavorite action when executing then it adds to favorite`() = runTest {
         val entityId = "vehicle.test"
         val action = EntityAddToAction.AndroidAutoFavorite
+        val onShowSnackbar: suspend (String, String?) -> Boolean = mockk(relaxed = true)
         coJustRun { prefsRepository.addAutoFavorite(any()) }
+        every { context.getString(commonR.string.add_to_android_auto_success) } returns "hello"
 
-        handler.execute(context, action, entityId)
+        handler.execute(context, action, entityId, onShowSnackbar)
 
         coVerify {
             prefsRepository.addAutoFavorite(AutoFavorite(serverId, entityId))
         }
+        coVerify { onShowSnackbar("hello", null) }
     }
 
     @Test
-    fun `Given null server when adding AndroidAutoFavorite then call FailFast`() = runTest {
+    fun `Given null server when adding AndroidAutoFavorite then call FailFast and show snackbar in release`() = runTest {
         val entityId = "vehicle.test"
         val action = EntityAddToAction.AndroidAutoFavorite
+        val onShowSnackbar: suspend (String, String?) -> Boolean = mockk(relaxed = true)
         var throwableCaptured: Throwable? = null
 
-        FailFast.setHandler { throwable, additionalMessage ->
+        every { context.getString(commonR.string.add_to_android_auto_success) } returns "hello"
+
+        FailFast.setHandler { throwable, _ ->
             throwableCaptured = throwable
         }
 
         coEvery { serverManager.getServer() } returns null
 
-        handler.execute(context, action, entityId)
+        handler.execute(context, action, entityId, onShowSnackbar)
 
         assertNotNull(throwableCaptured)
         coVerify(exactly = 0) { prefsRepository.addAutoFavorite(any()) }
+        // In debug this won't be display since FailFast would throw
+        coVerify { onShowSnackbar("hello", null) }
     }
 
     @Test
@@ -200,55 +209,63 @@ class EntityAddToHandlerTest {
     fun `Given EntityWidget action when executing then it starts EntityWidgetConfigureActivity`() = runTest {
         val entityId = "light.test"
         val action = EntityAddToAction.EntityWidget
+        val onShowSnackbar: suspend (String, String?) -> Boolean = mockk(relaxed = true)
 
         mockkObject(EntityWidgetConfigureActivity.Companion)
         every { EntityWidgetConfigureActivity.newInstance(context, entityId) } returns mockk()
 
-        handler.execute(context, action, entityId)
+        handler.execute(context, action, entityId, onShowSnackbar)
 
         verify { context.startActivity(any()) }
         verify { EntityWidgetConfigureActivity.newInstance(context, entityId) }
+        coVerify(exactly = 0) { onShowSnackbar(any(), any()) }
     }
 
     @Test
     fun `Given MediaPlayerWidget action when executing then it starts MediaPlayerControlsWidgetConfigureActivity`() = runTest {
         val entityId = "$MEDIA_PLAYER_DOMAIN.test"
         val action = EntityAddToAction.MediaPlayerWidget
+        val onShowSnackbar: suspend (String, String?) -> Boolean = mockk(relaxed = true)
 
         mockkObject(MediaPlayerControlsWidgetConfigureActivity.Companion)
         every { MediaPlayerControlsWidgetConfigureActivity.newInstance(context, entityId) } returns mockk()
 
-        handler.execute(context, action, entityId)
+        handler.execute(context, action, entityId, onShowSnackbar)
         verify { context.startActivity(any()) }
         verify { MediaPlayerControlsWidgetConfigureActivity.newInstance(context, entityId) }
+        coVerify(exactly = 0) { onShowSnackbar(any(), any()) }
     }
 
     @Test
     fun `Given CameraWidget action when executing then it starts CameraWidgetConfigureActivity`() = runTest {
         val entityId = "$CAMERA_DOMAIN.test"
         val action = EntityAddToAction.CameraWidget
+        val onShowSnackbar: suspend (String, String?) -> Boolean = mockk(relaxed = true)
 
         mockkObject(CameraWidgetConfigureActivity.Companion)
         every { CameraWidgetConfigureActivity.newInstance(context, entityId) } returns mockk()
 
-        handler.execute(context, action, entityId)
+        handler.execute(context, action, entityId, onShowSnackbar)
 
         verify { context.startActivity(any()) }
         verify { CameraWidgetConfigureActivity.newInstance(context, entityId) }
+        coVerify(exactly = 0) { onShowSnackbar(any(), any()) }
     }
 
     @Test
     fun `Given TodoWidget action when executing then it starts TodoWidgetConfigureActivity`() = runTest {
         val entityId = "$TODO_DOMAIN.test"
         val action = EntityAddToAction.TodoWidget
+        val onShowSnackbar: suspend (String, String?) -> Boolean = mockk(relaxed = true)
 
         mockkObject(TodoWidgetConfigureActivity.Companion)
         every { TodoWidgetConfigureActivity.newInstance(context, entityId) } returns mockk()
 
-        handler.execute(context, action, entityId)
+        handler.execute(context, action, entityId, onShowSnackbar)
 
         verify { context.startActivity(any()) }
         verify { TodoWidgetConfigureActivity.newInstance(context, entityId) }
+        coVerify(exactly = 0) { onShowSnackbar(any(), any()) }
     }
 
     @ParameterizedTest

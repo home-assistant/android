@@ -47,6 +47,9 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -266,6 +269,8 @@ class WebViewActivity :
     private var downloadFileMimetype = ""
     private val javascriptInterface = "externalApp"
 
+    private val snackbarHostState = SnackbarHostState()
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         if (
@@ -313,6 +318,7 @@ class WebViewActivity :
             val statusBarColor by remember { statusBarColor }
             val backgroundColor by remember { backgroundColor }
             var nightModeTheme by remember { mutableStateOf<NightModeTheme?>(null) }
+            val snackbarHostState = remember { snackbarHostState }
 
             LaunchedEffect(Unit) {
                 nightModeTheme = nightModeManager.getCurrentNightMode()
@@ -321,6 +327,7 @@ class WebViewActivity :
             WebViewContentScreen(
                 webView,
                 player,
+                snackbarHostState = snackbarHostState,
                 playerSize = playerSize,
                 playerTop = playerTop,
                 playerLeft = playerLeft,
@@ -907,7 +914,13 @@ class WebViewActivity :
         if (entityId != null && appPayload != null) {
             val action = ExternalEntityAddToAction.appPayloadToAction(appPayload)
             lifecycleScope.launch {
-                entityAddToHandler.execute(this@WebViewActivity, action, entityId)
+                entityAddToHandler.execute(this@WebViewActivity, action, entityId) { message, action ->
+                    snackbarHostState.showSnackbar(
+                        message,
+                        action,
+                        duration = SnackbarDuration.Short,
+                    ) == SnackbarResult.ActionPerformed
+                }
             }
         } else {
             FailFast.fail { "Missing entity_id or app_payload to addEntityTo" }
