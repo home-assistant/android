@@ -55,8 +55,8 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                             menu.removeItem(R.id.action_delete)
                         } else {
                             val searchViewItem = menu.findItem(R.id.search_notifications)
-                            val searchView: SearchView = searchViewItem.actionView as SearchView
-                            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                            val searchView = searchViewItem?.actionView as? SearchView
+                            searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                                 override fun onQueryTextSubmit(query: String?): Boolean {
                                     searchView.clearFocus()
 
