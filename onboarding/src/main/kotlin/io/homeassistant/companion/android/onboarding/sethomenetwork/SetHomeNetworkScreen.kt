@@ -196,7 +196,7 @@ private fun WifiNetworkSSIDTextField(currentWifiNetwork: String, onCurrentWifiNe
         value = currentWifiNetwork,
         onValueChange = onCurrentWifiNetworkChange,
         label = {
-            Text(text = stringResource(commonR.string.manage_ssids_wifi))
+            Text(text = stringResource(R.string.set_home_network_wifi_name))
         },
         trailingIcon = {
             if (currentWifiNetwork.isNotEmpty()) {
