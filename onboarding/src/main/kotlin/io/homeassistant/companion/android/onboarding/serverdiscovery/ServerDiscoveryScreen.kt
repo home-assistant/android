@@ -125,9 +125,8 @@ internal fun ServerDiscoveryScreen(
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = {
-            HATopBar(onBackClick = onBackClick, onHelpClick = onHelpClick)
-        },
+        topBar = { HATopBar(onBackClick = onBackClick, onHelpClick = onHelpClick) },
+        contentWindowInsets = WindowInsets.safeDrawing,
     ) { contentPadding ->
         ScreenContent(
             contentPadding = contentPadding,
