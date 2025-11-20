@@ -6,9 +6,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -72,14 +74,18 @@ class ConnectionSecurityLevelFragment : Fragment() {
                 val snackbarHostState = remember { SnackbarHostState() }
                 val uriHandler = LocalUriHandler.current
 
+                // Remaining insets to apply in settings activity
+                val insets = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)
+
                 HATheme {
                     Scaffold(
                         snackbarHost = {
                             SnackbarHost(
                                 hostState = snackbarHostState,
-                                modifier = Modifier.Companion.windowInsetsPadding(WindowInsets.Companion.safeDrawing),
+                                modifier = Modifier.windowInsetsPadding(insets),
                             )
                         },
+                        contentWindowInsets = insets,
                     ) {
                         LocationForSecureConnectionScreen(
                             isStandaloneScreen = true,
@@ -103,9 +109,10 @@ class ConnectionSecurityLevelFragment : Fragment() {
                                     duration = SnackbarDuration.Short,
                                 ) == SnackbarResult.ActionPerformed
                             },
-                            modifier = Modifier.Companion
+                            modifier = Modifier
                                 // Consume status insets since the settings activity is already applying it
-                                .consumeWindowInsets(WindowInsets.Companion.statusBars),
+                                .consumeWindowInsets(WindowInsets.safeDrawing)
+                                .padding(it),
                         )
                     }
                 }

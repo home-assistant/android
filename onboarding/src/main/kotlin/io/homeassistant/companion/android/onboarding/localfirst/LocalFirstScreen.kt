@@ -30,10 +30,7 @@ private val MaxContentWidth = MaxButtonWidth
 
 @Composable
 internal fun LocalFirstScreen(onNextClick: () -> Unit, modifier: Modifier = Modifier) {
-    Scaffold(
-        modifier = modifier,
-
-    ) { contentPadding ->
+    Scaffold(modifier = modifier) { contentPadding ->
         LocalFirstContent(
             onNextClick = onNextClick,
             modifier = Modifier.padding(contentPadding),
