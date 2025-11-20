@@ -37,6 +37,7 @@
     <string name="wear_mtls_open_error">This password does not open this file.</string>
     <string name="wear_mtls_deselect_file">Deselect file</string>
     <string name="set_home_network_title">What is your home network?</string>
+    <string name="set_home_network_wifi_name">Name of the Wi-Fi network at home</string>
     <string name="set_home_network_content">For the best experience, Home Assistant needs to know when you’re connected to your home network.</string>
     <string name="set_home_network_next">Next</string>
     <string name="connection_error_url_info">The app is currently connecting to</string>
