@@ -146,7 +146,7 @@ class SetHomeNetworkScreenTest {
 
             onNodeWithText(stringResource(R.string.set_home_network_title)).performScrollTo().assertIsDisplayed()
             onNodeWithText(stringResource(R.string.set_home_network_content)).assertIsDisplayed()
-            onNodeWithText(stringResource(commonR.string.manage_ssids_wifi)).assertIsDisplayed()
+            onNodeWithText(stringResource(R.string.set_home_network_wifi_name)).assertIsDisplayed()
 
             dsl()
         }
