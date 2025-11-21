@@ -5,7 +5,7 @@ import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.compose.HAPreviews
+import io.homeassistant.companion.android.util.compose.HAPreviews
 
 class ConnectionErrorScreenshotTest {
 
