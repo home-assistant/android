@@ -3,7 +3,7 @@
 
     <application tools:ignore="MissingApplicationIcon">
 
-        <activity android:name=".launch.LaunchActivity">
+        <activity android:name=".launcher.LauncherActivity">
             <meta-data android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
         </activity>

@@ -26,7 +26,6 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
             extensions.getByType<ApplicationExtension>().apply {
                 dependencies {
                     "implementation"(project(":common"))
-                    "implementation"(project(":onboarding"))
 
                     "implementation"(libs.blurView)
                     "implementation"(libs.haze)
@@ -81,6 +80,10 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "implementation"(libs.activity.compose)
                     "implementation"(libs.navigation.compose)
                     "implementation"(libs.core.remoteviews)
+                    "implementation"(libs.core.splashscreen)
+                    "implementation"(libs.core.ktx)
+                    "implementation"(libs.accompanist.permissions)
+                    "implementation"(libs.androidx.hilt.navigation.compose)
 
                     "implementation"(libs.bundles.androidx.glance)
 
@@ -100,8 +103,13 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "androidTestImplementation"(libs.bundles.androidx.test)
                     "androidTestImplementation"(libs.leakcanary.android.instrumentation)
+                    "androidTestImplementation"(libs.hilt.android.testing)
 
                     "testImplementation"(libs.bundles.androidx.glance.testing)
+                    "testImplementation"(libs.navigation.test)
+                    "testImplementation"(libs.hilt.android.testing)
+
+                    "lintChecks"(libs.compose.lint.checks)
                 }
             }
         }
