@@ -107,7 +107,7 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
-import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.launcher.LauncherActivity
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
@@ -1381,7 +1381,7 @@ class WebViewActivity :
 
     override fun relaunchApp() {
         isRelaunching = true
-        startActivity(Intent(this, LaunchActivity::class.java))
+        startActivity(Intent(this, LauncherActivity::class.java))
         finish()
     }
 
