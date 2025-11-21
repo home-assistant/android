@@ -26,7 +26,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
             extensions.getByType<ApplicationExtension>().apply {
                 dependencies {
                     "implementation"(project(":common"))
-                    "debugImplementation"(project(":onboarding"))
+                    "implementation"(project(":onboarding"))
 
                     "implementation"(libs.blurView)
                     "implementation"(libs.haze)
