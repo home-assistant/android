@@ -265,7 +265,7 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name=".launch.LaunchActivity"
+        <activity android:name=".launcher.LauncherActivity"
             android:exported="true"
             android:theme="@style/Theme.LaunchScreen">
             <intent-filter>
@@ -279,7 +279,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".launch.link.LinkActivity"
+        <activity android:name=".launcher.link.LinkActivity"
             android:exported="true"
             android:launchMode="singleTask">
             <intent-filter android:autoVerify="true">
@@ -352,7 +352,7 @@
                     android:path="/request_home_assistant_instance" />
             </intent-filter>
         </service>
-        
+
         <activity
             android:name=".webview.WebViewActivity"
             android:supportsPictureInPicture="true"

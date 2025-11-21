@@ -5,8 +5,8 @@ import android.content.Intent
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContract
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.launch.intentLauncherOnboarding
-import io.homeassistant.companion.android.launch.intentLauncherWearOnboarding
+import io.homeassistant.companion.android.launcher.intentLauncherOnboarding
+import io.homeassistant.companion.android.launcher.intentLauncherWearOnboarding
 
 class OnboardApp : ActivityResultContract<OnboardApp.Input, OnboardApp.Output?>() {
 

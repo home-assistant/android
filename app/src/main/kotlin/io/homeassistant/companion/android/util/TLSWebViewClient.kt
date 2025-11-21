@@ -8,6 +8,7 @@ import android.security.KeyChainAliasCallback
 import android.webkit.ClientCertRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import java.lang.ref.WeakReference
 import java.security.PrivateKey
@@ -19,15 +20,21 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+/*
+ * [TLSWebViewClient] is on the onboarding module for convenience, since we don't have yet
+ * a place to share components between app modules. Common is shared with wear and
+ * we don't want the webview code in the wear app.
+ */
+
 open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) : WebViewClient() {
     var isTLSClientAuthNeeded = false
-        private set
+        @VisibleForTesting set
 
     var hasUserDeniedAccess = false
         private set
 
     var isCertificateChainValid = false
-        private set
+        @VisibleForTesting set
 
     private var key: PrivateKey? = null
     private var chain: Array<X509Certificate>? = null
