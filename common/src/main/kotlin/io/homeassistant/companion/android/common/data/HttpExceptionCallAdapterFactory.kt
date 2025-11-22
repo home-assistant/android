@@ -13,7 +13,7 @@ import retrofit2.Retrofit
  * A factory converting Retrofit-specific HttpException into domain-defined [HttpException].
  * Prevents leaking Retrofit types into the domain layer.
  */
-class HttpExceptionCallAdapterFactory : CallAdapter.Factory() {
+internal class HttpExceptionCallAdapterFactory : CallAdapter.Factory() {
     override fun get(returnType: Type, annotations: Array<out Annotation>, retrofit: Retrofit): CallAdapter<*, *>? {
         if (getRawType(returnType) != Call::class.java) {
             return null
