@@ -30,23 +30,27 @@ private class HttpExceptionCallAdapter<R>(private val responseType: Type) : Call
 private class HttpExceptionCall<R>(private val delegate: Call<R>) : Call<R> by delegate {
 
     override fun enqueue(callback: Callback<R>) {
-        delegate.enqueue(object : Callback<R> {
-            override fun onResponse(call: Call<R>, response: Response<R>) {
-                callback.onResponse(call, response)
-            }
-
-            override fun onFailure(call: Call<R>, t: Throwable) {
-                val convertedException = if (t is retrofit2.HttpException) {
-                    HttpException(
-                        code = t.code(),
-                        message = t.response()?.errorBody()?.string() ?: t.message(),
-                    )
-                } else {
-                    t
+        delegate.enqueue(
+            object : Callback<R> {
+                override fun onResponse(call: Call<R>, response: Response<R>) {
+                    if (response.isSuccessful) {
+                        callback.onResponse(call, response)
+                    } else {
+                        callback.onFailure(
+                            call,
+                            HttpException(
+                                code = response.code(),
+                                message = response.errorBody()?.string() ?: response.message(),
+                            ),
+                        )
+                    }
                 }
-                callback.onFailure(call, convertedException)
-            }
-        })
+
+                override fun onFailure(call: Call<R>, t: Throwable) {
+                    callback.onFailure(call, t)
+                }
+            },
+        )
     }
 
     override fun clone(): Call<R> = HttpExceptionCall(delegate.clone())

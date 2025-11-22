@@ -64,8 +64,19 @@ class HttpExceptionCallAdapterTest {
         assertEquals(Int::class.java, adapter!!.responseType())
     }
 
-    @Test
-    fun `Given a retrofit HttpException when call fails then it converts to custom HttpException with correct code and message`() {
+    @ParameterizedTest
+    @CsvSource(
+        "400, Bad Request",
+        "401, Unauthorized",
+        "403, Forbidden",
+        "404, Not Found",
+        "500, Internal Server Error",
+        "503, Service Unavailable",
+    )
+    fun `Given an unsuccessful response when call is made then it converts to HttpException`(
+        statusCode: Int,
+        errorMessage: String,
+    ) {
         val delegateCall = mockk<Call<String>>(relaxed = true)
         val returnType = mockk<ParameterizedType> {
             every { rawType } returns Call::class.java
@@ -78,13 +89,11 @@ class HttpExceptionCallAdapterTest {
 
         val callbackSlot = slot<Callback<String>>()
         every { delegateCall.enqueue(capture(callbackSlot)) } answers {
-            callbackSlot.captured.onFailure(
+            callbackSlot.captured.onResponse(
                 delegateCall,
-                retrofit2.HttpException(
-                    Response.error<String>(
-                        404,
-                        "Not Found".toResponseBody(),
-                    ),
+                Response.error<String>(
+                    statusCode,
+                    errorMessage.toResponseBody(),
                 ),
             )
         }
@@ -97,8 +106,8 @@ class HttpExceptionCallAdapterTest {
 
         assertInstanceOf(HttpException::class.java, exceptionSlot.captured)
         val httpException = exceptionSlot.captured as HttpException
-        assertEquals(404, httpException.code)
-        assertEquals("Not Found", httpException.message)
+        assertEquals(statusCode, httpException.code)
+        assertEquals(errorMessage, httpException.message)
     }
 
     @Test
@@ -198,7 +207,7 @@ class HttpExceptionCallAdapterTest {
     }
 
     @Test
-    fun `Given retrofit HttpException with empty error body when call fails then it falls back to default message`() {
+    fun `Given an unsuccessful response with empty error body when call is made then it uses empty string for message`() {
         val delegateCall = mockk<Call<String>>(relaxed = true)
         val returnType = mockk<ParameterizedType> {
             every { rawType } returns Call::class.java
@@ -211,13 +220,11 @@ class HttpExceptionCallAdapterTest {
 
         val callbackSlot = slot<Callback<String>>()
         every { delegateCall.enqueue(capture(callbackSlot)) } answers {
-            callbackSlot.captured.onFailure(
+            callbackSlot.captured.onResponse(
                 delegateCall,
-                retrofit2.HttpException(
-                    Response.error<String>(
-                        500,
-                        "".toResponseBody(),
-                    ),
+                Response.error<String>(
+                    500,
+                    "".toResponseBody(),
                 ),
             )
         }
@@ -234,50 +241,5 @@ class HttpExceptionCallAdapterTest {
         assertEquals("", httpException.message)
     }
 
-    @ParameterizedTest
-    @CsvSource(
-        "400, Bad Request",
-        "401, Unauthorized",
-        "403, Forbidden",
-        "500, Internal Server Error",
-        "503, Service Unavailable",
-    )
-    fun `Given retrofit HttpException with status code when call fails then it converts to custom HttpException with correct code and message`(
-        statusCode: Int,
-        errorMessage: String,
-    ) {
-        val delegateCall = mockk<Call<String>>(relaxed = true)
-        val returnType = mockk<ParameterizedType> {
-            every { rawType } returns Call::class.java
-            every { actualTypeArguments } returns arrayOf(String::class.java)
-        }
 
-        @Suppress("UNCHECKED_CAST")
-        val adapter = factory.get(returnType, emptyArray(), retrofit) as retrofit2.CallAdapter<String, Call<String>>
-        val httpExceptionCall = adapter.adapt(delegateCall)
-
-        val callbackSlot = slot<Callback<String>>()
-        every { delegateCall.enqueue(capture(callbackSlot)) } answers {
-            callbackSlot.captured.onFailure(
-                delegateCall,
-                retrofit2.HttpException(
-                    Response.error<String>(
-                        statusCode,
-                        errorMessage.toResponseBody(),
-                    ),
-                ),
-            )
-        }
-
-        val resultCallback = mockk<Callback<String>>(relaxed = true)
-        httpExceptionCall.enqueue(resultCallback)
-
-        val exceptionSlot = slot<Throwable>()
-        verify { resultCallback.onFailure(any<Call<String>>(), capture(exceptionSlot)) }
-
-        assertInstanceOf(HttpException::class.java, exceptionSlot.captured)
-        val httpException = exceptionSlot.captured as HttpException
-        assertEquals(statusCode, httpException.code)
-        assertEquals(errorMessage, httpException.message)
-    }
 }
