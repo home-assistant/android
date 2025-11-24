@@ -230,7 +230,6 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  abbrev
   fastlane
   fastlane-plugin-amazon_app_submission
 
