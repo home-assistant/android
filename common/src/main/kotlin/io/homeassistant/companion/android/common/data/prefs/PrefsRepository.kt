@@ -132,4 +132,8 @@ interface PrefsRepository {
     suspend fun showPrivacyHint(): Boolean
 
     suspend fun setShowPrivacyHint(showPrivacyHint: Boolean)
+
+    suspend fun setAskNotificationPermission(shouldAsk: Boolean)
+
+    suspend fun shouldAskNotificationPermission(): Boolean
 }

@@ -581,4 +581,12 @@ class WebViewPresenterImpl @Inject constructor(
             improvJob?.cancel()
         }
     }
+
+    override suspend fun discardNotificationPermission() {
+        prefsRepository.setAskNotificationPermission(false)
+    }
+
+    override suspend fun shouldAskForNotificationPermissionIfNeeded(): Boolean {
+        return prefsRepository.shouldAskNotificationPermission()
+    }
 }
