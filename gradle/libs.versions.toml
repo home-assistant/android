@@ -3,7 +3,7 @@
 # you can do that with `./gradlew alldependencies --write-locks`
 [versions]
 accompanist = "0.37.3"
-activity-compose = "1.11.0"
+activity-compose = "1.12.0"
 androidBeaconLibrary = "2.21.1"
 androidGradlePlugin = "8.13.1"
 androidSdk-compile = "36"
@@ -53,7 +53,7 @@ kotlinx-serialization = "1.9.0"
 ksp = "2.3.3"
 ktlint = "14.0.1"
 leakcanaryAndroid = "2.14"
-lifecycle = "2.9.4"
+lifecycle = "2.10.0"
 material = "1.13.0"
 media = "1.7.1"
 media3 = "1.8.0"
@@ -72,7 +72,7 @@ reorderable = "3.0.0"
 retrofit-bom = "3.0.0"
 robolectric = "4.16" # Check if robolectric supports a more recent version of the SDK on each update
 robolectric-target-sdk = "36"
-room = "2.8.3"
+room = "2.8.4"
 runtimeLint = "1.9.4"
 screenshot = "0.0.1-alpha11" # On the next update, replace the hack in AndroidComposeConvertionPlugin with the real fix
 sentry-android = "8.26.0"
