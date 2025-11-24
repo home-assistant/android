@@ -247,23 +247,23 @@ jobs:
             arch: x86_64
             profile: "Nexus 5"
             target: "google_apis"
-            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :onboarding:connectedDebugAndroidTest"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           - api-level: 36
             arch: x86_64
             profile: "pixel_7"
             target: "google_apis"
-            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :onboarding:connectedDebugAndroidTest"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           - api-level: 33
             arch: x86_64
             profile: "automotive_1024p_landscape"
             target: "android-automotive"
-            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :onboarding:connectedDebugAndroidTest"
+            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           - api-level: "34"
             system-image-api-level: "34-ext9"
             arch: x86_64
             profile: "automotive_1024p_landscape"
             target: "android-automotive"
-            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :onboarding:connectedDebugAndroidTest"
+            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           - api-level: 26
             arch: x86
             profile: "wearos_square"

@@ -68,7 +68,6 @@ Whenever you add or update dependencies in the project (whether through `gradle/
 - **`:automotive`** - Android Automotive version (min SDK is defined in `gradle/libs.versions.toml` under the name `androidSdk-automotive-min`, reuses `:app` sources)
 - **`:wear`** - Wear OS application (min SDK is defined in `gradle/libs.versions.toml` under the name `androidSdk-wear-min`, dedicated app requiring full mobile app for onboarding)
 - **`:common`** - Shared code across all apps (data layer, sensors, utilities, WebSocket, REST API)
-- **`:onboarding`** - Onboarding flow shared across apps
 - **`:testing-unit`** - Shared test utilities (must remain independent from `:common`)
 - **`:lint`** - Custom lint rules
 - **`build-logic`** - Gradle convention plugins via `includeBuild`

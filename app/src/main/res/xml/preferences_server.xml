@@ -37,7 +37,6 @@
             android:title="@string/pref_connection_internal"
             app:useSimpleSummaryProvider="true"/>
         <Preference
-            app:isPreferenceVisible="false"
             android:key="connection_security_level"
             android:icon="@drawable/ic_lock"
             android:title="@string/connection_security_level_title"/>

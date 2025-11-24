@@ -1,3 +1,5 @@
+@file:Suppress("ktlint-disable no-empty-file")
+
 package io.homeassistant.companion.android
 
 /**
@@ -11,11 +13,3 @@ package io.homeassistant.companion.android
  *
  * Feature flags should be removed from this file once the feature is fully released and stable.
  */
-
-/**
- * Enables the new onboarding from the `:onboarding` module.
- * Currently only enabled in debug builds to allow testing before production release.
- *
- * Features tracked in https://github.com/home-assistant/android/issues/5980
- */
-val USE_NEW_LAUNCHER by lazy { BuildConfig.DEBUG }
