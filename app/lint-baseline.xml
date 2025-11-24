@@ -96,7 +96,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/AndroidManifest.xml"
-            line="138"
+            line="93"
             column="27"/>
     </issue>
 
@@ -151,7 +151,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/AndroidManifest.xml"
-            line="126"
+            line="81"
             column="13"/>
     </issue>
 
@@ -404,7 +404,7 @@
         errorLine2="     ~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="60"
+            line="87"
             column="6"/>
     </issue>
 
