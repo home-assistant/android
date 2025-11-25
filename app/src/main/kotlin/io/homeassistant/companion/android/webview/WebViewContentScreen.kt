@@ -81,19 +81,18 @@ internal fun WebViewContentScreen(
     customViewFromWebView: View?,
     shouldAskForNotificationPermissionIfNeeded: Boolean,
     webViewInitialized: Boolean,
+    onFullscreenClicked: (isFullscreen: Boolean) -> Unit,
+    onDiscardNotificationPermission: () -> Unit,
     nightModeTheme: NightModeTheme? = null,
     statusBarColor: Color? = null,
     backgroundColor: Color? = null,
-    onFullscreenClicked: (isFullscreen: Boolean) -> Unit,
-    onDiscardNotificationPermission: () -> Unit,
 ) {
     HATheme {
         Scaffold(
             snackbarHost = {
                 SnackbarHost(
                     snackbarHostState,
-                    modifier =
-                    Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
+                    modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
                 )
             },
             // Delegate the insets handling to the webview
@@ -212,6 +211,8 @@ private fun NotificationPermission(onDiscardNotificationPermission: () -> Unit) 
         }
     }
 
+    // By default on lower API the bottom sheet won't be displayed
+    @SuppressLint("InlinedApi")
     val notificationPermission = rememberPermissionState(
         permission = Manifest.permission.POST_NOTIFICATIONS,
         previewPermissionStatus = PermissionStatus.Denied(true),
