@@ -72,6 +72,9 @@ class WebViewPresenterImpl @Inject constructor(
 
     private var matterThreadIntentSender: IntentSender? = null
 
+    /** Tracks which servers have had their security level verified during this session */
+    private val securityLevelVerifiedServers = mutableSetOf<Int>()
+
     init {
         mainScope.launch {
             updateActiveServer()
@@ -354,6 +357,10 @@ class WebViewPresenterImpl @Inject constructor(
 
     override suspend fun isSsidUsed(): Boolean =
         serverManager.getServer(serverId)?.connection?.internalSsids?.isNotEmpty() == true
+
+    override suspend fun isSecurityLevelSet(): Boolean {
+        return serverManager.integrationRepository(serverId).getAllowInsecureConnection() != null
+    }
 
     override suspend fun getAuthorizationHeader(): String {
         return serverManager.getServer(serverId)?.let {

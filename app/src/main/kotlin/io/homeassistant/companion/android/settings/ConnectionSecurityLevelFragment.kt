@@ -31,6 +31,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
+import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.URL_SECURITY_LEVEL_DOCUMENTATION
 
 /**
  * Fragment wrapper for [io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen] to enable usage in Fragment-based navigation.
@@ -51,6 +52,7 @@ class ConnectionSecurityLevelFragment : Fragment() {
     companion object {
         const val RESULT_KEY = "connection_security_level_result"
         const val EXTRA_SERVER = "server_id"
+        const val EXTRA_HANDLE_ALL_INSETS = "handle_all_insets"
     }
 
     private val viewModel: LocationForSecureConnectionViewModel by createViewModelLazy(
@@ -75,7 +77,16 @@ class ConnectionSecurityLevelFragment : Fragment() {
                 val uriHandler = LocalUriHandler.current
 
                 // Remaining insets to apply in settings activity
-                val insets = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)
+                val insets =
+                    if (arguments?.getBoolean(EXTRA_HANDLE_ALL_INSETS) ==
+                        true
+                    ) {
+                        WindowInsets.safeDrawing
+                    } else {
+                        WindowInsets.safeDrawing.only(
+                            WindowInsetsSides.Bottom,
+                        )
+                    }
 
                 HATheme {
                     Scaffold(
@@ -95,12 +106,11 @@ class ConnectionSecurityLevelFragment : Fragment() {
                                 parentFragmentManager.popBackStack()
                             },
                             onBackClick = {
+                                setFragmentResult(RESULT_KEY, Bundle())
                                 parentFragmentManager.popBackStack()
                             },
                             onHelpClick = {
-                                uriHandler.openUri(
-                                    "https://companion.home-assistant.io/docs/getting_started/connection-security-level",
-                                )
+                                uriHandler.openUri(URL_SECURITY_LEVEL_DOCUMENTATION)
                             },
                             onShowSnackbar = { message, action ->
                                 snackbarHostState.showSnackbar(

@@ -111,6 +111,7 @@ import io.homeassistant.companion.android.launcher.LauncherActivity
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.themes.NightModeManager
@@ -1389,8 +1390,16 @@ class WebViewActivity :
         if (openInApp) {
             loadedUrl = url
             clearHistory = !keepHistory
-            webView.loadUrl(url)
-            waitForConnection()
+            lifecycleScope.launch {
+                if (presenter.isSecurityLevelSet()) {
+                    webView.loadUrl(url)
+                    waitForConnection()
+                } else {
+                    val serverId = presenter.getActiveServer()
+                    Timber.d("Security level not set for server $serverId, showing ConnectionSecurityLevelFragment")
+                    showConnectionSecurityLevelFragment(serverId)
+                }
+            }
         } else {
             try {
                 val browserIntent = Intent(Intent.ACTION_VIEW, url.toUri())
@@ -1399,6 +1408,32 @@ class WebViewActivity :
                 Timber.e(e, "Unable to view url")
             }
         }
+    }
+
+    private fun showConnectionSecurityLevelFragment(serverId: Int) {
+        supportFragmentManager.setFragmentResultListener(
+            ConnectionSecurityLevelFragment.RESULT_KEY,
+            this,
+        ) { _, _ ->
+            Timber.d("Security level screen exited by user, proceeding with URL loading")
+            supportFragmentManager.clearFragmentResultListener(ConnectionSecurityLevelFragment.RESULT_KEY)
+
+            if (::loadedUrl.isInitialized) {
+                webView.loadUrl(loadedUrl)
+                waitForConnection()
+            }
+        }
+
+        val fragment = ConnectionSecurityLevelFragment().apply {
+            arguments = Bundle().apply {
+                putInt(ConnectionSecurityLevelFragment.EXTRA_SERVER, serverId)
+                putBoolean(ConnectionSecurityLevelFragment.EXTRA_HANDLE_ALL_INSETS, true)
+            }
+        }
+        supportFragmentManager.beginTransaction()
+            .replace(android.R.id.content, fragment)
+            .addToBackStack(null)
+            .commit()
     }
 
     override fun setStatusBarAndBackgroundColor(statusBarColor: Int, backgroundColor: Int) {

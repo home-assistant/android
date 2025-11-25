@@ -52,6 +52,8 @@ interface WebViewPresenter {
 
     suspend fun isSsidUsed(): Boolean
 
+    suspend fun isSecurityLevelSet(): Boolean
+
     suspend fun getAuthorizationHeader(): String
 
     suspend fun parseWebViewColor(webViewColor: String): Int
