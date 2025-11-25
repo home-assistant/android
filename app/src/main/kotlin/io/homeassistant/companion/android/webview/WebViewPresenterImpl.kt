@@ -359,6 +359,9 @@ class WebViewPresenterImpl @Inject constructor(
         serverManager.getServer(serverId)?.connection?.internalSsids?.isNotEmpty() == true
 
     override suspend fun isSecurityLevelSet(): Boolean {
+        if (serverManager.getServer(serverId)?.connection?.hasPlainTextUrl() == false) {
+            return true
+        }
         return serverManager.integrationRepository(serverId).getAllowInsecureConnection() != null
     }
 

@@ -52,6 +52,13 @@ interface WebViewPresenter {
 
     suspend fun isSsidUsed(): Boolean
 
+    /**
+     * Checks if the security level has been configured for the current server.
+     *
+     * @return `true` if the server has no plain text URLs, or if the allowInsecureConnection
+     *         flag has been explicitly set (to either true or false). Returns `false` if
+     *         the server has plain text URLs and the user hasn't yet chosen a security level.
+     */
     suspend fun isSecurityLevelSet(): Boolean
 
     suspend fun getAuthorizationHeader(): String
