@@ -72,9 +72,6 @@ class WebViewPresenterImpl @Inject constructor(
 
     private var matterThreadIntentSender: IntentSender? = null
 
-    /** Tracks which servers have had their security level verified during this session */
-    private val securityLevelVerifiedServers = mutableSetOf<Int>()
-
     init {
         mainScope.launch {
             updateActiveServer()
