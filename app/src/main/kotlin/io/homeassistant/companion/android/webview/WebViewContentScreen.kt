@@ -29,7 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -99,9 +99,6 @@ internal fun WebViewContentScreen(
             // Delegate the insets handling to the webview
             contentWindowInsets = WindowInsets(),
         ) {
-            if (webViewInitialized && shouldAskForNotificationPermissionIfNeeded) {
-                NotificationPermission(onDiscardNotificationPermission)
-            }
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -133,6 +130,9 @@ internal fun WebViewContentScreen(
                     )
                 }
             }
+        }
+        if (webViewInitialized && shouldAskForNotificationPermissionIfNeeded) {
+            NotificationPermission(onDiscardNotificationPermission)
         }
     }
 }
@@ -195,7 +195,7 @@ private fun SafeHAWebView(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 private fun NotificationPermission(onDiscardNotificationPermission: () -> Unit) {
-    val bottomSheetState = rememberModalBottomSheetState()
+    val bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = false)
     val coroutineScope = rememberCoroutineScope()
 
     // Track whether the bottom sheet has been dismissed to completely remove it from composition.
