@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Te
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -35,7 +36,8 @@ import kotlinx.serialization.json.jsonPrimitive
 import timber.log.Timber
 
 class WebSocketEventHandler {
-    suspend fun handleEvent(response: EventSocketResponse) {
+
+    internal suspend fun handleEvent(response: EventSocketResponse, activeMessages: ConcurrentHashMap<Long, WebSocketRequest>) {
         // TODO https://github.com/home-assistant/android/issues/5271
         val subscriptionId = response.id
 
@@ -46,7 +48,7 @@ class WebSocketEventHandler {
             val message: Any =
                 if ((response.event as? JsonObject)?.contains("hass_confirm_id") == true) {
                     kotlinJsonMapper.decodeFromJsonElement<Map<String, Any?>>(MapAnySerializer, response.event)
-                } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES) {
+                } else if (subscriptionType!! == SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES) {
                     if (response.event != null) {
                         kotlinJsonMapper.decodeFromJsonElement<CompressedStateChangedEvent>(response.event)
                     } else {

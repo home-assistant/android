@@ -334,7 +334,7 @@ internal class WebSocketCoreImpl(
                             message.haVersion,
                         )
 
-                        is EventSocketResponse -> socketHandler.handleEvent(message)
+                        is EventSocketResponse -> socketHandler.handleEvent(message, activeMessages)
 
                         is MessageSocketResponse, is PongSocketResponse -> handleMessage(message)
 
