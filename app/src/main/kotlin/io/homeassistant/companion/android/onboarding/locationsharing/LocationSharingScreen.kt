@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -29,6 +30,7 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
+import io.homeassistant.companion.android.common.util.maybeAskForIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.rememberLocationPermission
 
@@ -114,9 +116,11 @@ private fun LocationSharingContent(
 @Composable
 @OptIn(ExperimentalPermissionsApi::class)
 private fun BottomButtons(onGoToNextScreen: () -> Unit, onLocationSharingResponse: (enabled: Boolean) -> Unit) {
+    val context = LocalContext.current
     val permissions = rememberLocationPermission(
         onPermissionResult = {
             // We ignore the result and proceed even if the user rejected the permission
+            context.maybeAskForIgnoringBatteryOptimizations()
             onGoToNextScreen()
         },
     )

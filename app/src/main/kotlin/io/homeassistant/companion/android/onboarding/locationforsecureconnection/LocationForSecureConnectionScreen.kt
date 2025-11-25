@@ -25,6 +25,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -40,6 +41,7 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
+import io.homeassistant.companion.android.common.util.maybeAskForIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.rememberLocationPermission
 import kotlinx.coroutines.launch
@@ -125,6 +127,7 @@ private fun LocationForSecureConnectionContent(
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE6),
     ) {
         val coroutineScope = rememberCoroutineScope()
+        val context = LocalContext.current
 
         val mostSecureOption = RadioOption(
             selectionKey = SelectionKey.MOST_SECURE,
@@ -147,6 +150,7 @@ private fun LocationForSecureConnectionContent(
         val permissions = rememberLocationPermission(
             onPermissionResult = { permissionGranted ->
                 if (permissionGranted) {
+                    context.maybeAskForIgnoringBatteryOptimizations()
                     onAllowInsecureConnection(false)
                 } else {
                     coroutineScope.launch {

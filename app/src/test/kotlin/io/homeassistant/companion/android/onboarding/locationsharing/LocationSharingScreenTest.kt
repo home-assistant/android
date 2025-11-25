@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.locationsharing
 
+import android.content.Context
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.ActivityResultRegistryOwner
@@ -17,9 +18,14 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.maybeAskForIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.LocationPermissionActivityResultRegistry
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.verify
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -40,8 +46,14 @@ class LocationSharingScreenTest {
     @get:Rule(order = 2)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
+    @Before
+    fun setUp() {
+        mockkStatic(Context::maybeAskForIgnoringBatteryOptimizations)
+        every { any<Context>().maybeAskForIgnoringBatteryOptimizations() } returns Unit
+    }
+
     @Test
-    fun `Given screen displayed when clicking on share and granting permission then go to next screen and location response set to true`() {
+    fun `Given screen displayed when clicking on share and granting permission then go to next screen and location response set to true and ask for battery optimization`() {
         composeTestRule.apply {
             testScreen {
                 // Check all elements are displayed
@@ -52,12 +64,13 @@ class LocationSharingScreenTest {
                 assertTrue(locationSharingResponse == true)
                 assertTrue(goToNextScreenClicked)
                 registry.assertLocationPermissionRequested()
+                verify(exactly = 1) { any<Context>().maybeAskForIgnoringBatteryOptimizations() }
             }
         }
     }
 
     @Test
-    fun `Given screen displayed when clicking do not share then go to next screen and location response set to false`() {
+    fun `Given screen displayed when clicking do not share then go to next screen and location response set to false without battery optimization`() {
         composeTestRule.apply {
             testScreen(false) {
                 // Check all elements are displayed
@@ -68,12 +81,13 @@ class LocationSharingScreenTest {
                 assertTrue(locationSharingResponse == false)
                 assertTrue(goToNextScreenClicked)
                 registry.assertLocationPermissionNotRequested()
+                verify(exactly = 0) { any<Context>().maybeAskForIgnoringBatteryOptimizations() }
             }
         }
     }
 
     @Test
-    fun `Given screen displayed when clicking on share and not granting permission then go to next screen and location response set to true`() {
+    fun `Given screen displayed when clicking on share and not granting permission then go to next screen and location response set to true and still ask for battery optimization`() {
         composeTestRule.apply {
             testScreen(false) {
                 // Check all elements are displayed
@@ -85,6 +99,8 @@ class LocationSharingScreenTest {
                 assertTrue(goToNextScreenClicked)
                 // background is only requested if foreground is granted
                 registry.assertLocationPermissionRequested(false)
+                // Battery optimization is still requested even when permission is denied
+                verify(exactly = 1) { any<Context>().maybeAskForIgnoringBatteryOptimizations() }
             }
         }
     }
