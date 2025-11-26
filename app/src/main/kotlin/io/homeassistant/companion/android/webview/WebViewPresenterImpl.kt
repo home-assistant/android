@@ -355,11 +355,11 @@ class WebViewPresenterImpl @Inject constructor(
     override suspend fun isSsidUsed(): Boolean =
         serverManager.getServer(serverId)?.connection?.internalSsids?.isNotEmpty() == true
 
-    override suspend fun isSecurityLevelSet(): Boolean {
+    override suspend fun shouldSetSecurityLevel(): Boolean {
         if (serverManager.getServer(serverId)?.connection?.hasPlainTextUrl() == false) {
-            return true
+            return false
         }
-        return serverManager.integrationRepository(serverId).getAllowInsecureConnection() != null
+        return serverManager.integrationRepository(serverId).getAllowInsecureConnection() == null
     }
 
     override suspend fun getAuthorizationHeader(): String {

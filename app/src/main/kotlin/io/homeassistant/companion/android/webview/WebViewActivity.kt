@@ -1391,7 +1391,7 @@ class WebViewActivity :
             loadedUrl = url
             clearHistory = !keepHistory
             lifecycleScope.launch {
-                if (presenter.isSecurityLevelSet()) {
+                if (!presenter.shouldSetSecurityLevel()) {
                     webView.loadUrl(url)
                     waitForConnection()
                 } else {
