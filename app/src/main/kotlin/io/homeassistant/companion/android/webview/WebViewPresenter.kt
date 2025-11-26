@@ -82,5 +82,5 @@ interface WebViewPresenter {
     fun stopScanningForImprov(force: Boolean)
 
     suspend fun discardNotificationPermission()
-    suspend fun shouldAskForNotificationPermissionIfNeeded(): Boolean
+    suspend fun shouldAskNotificationPermission(): Boolean
 }

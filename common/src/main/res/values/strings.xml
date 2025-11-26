@@ -1496,5 +1496,5 @@
     <string name="notification_permission_dialog_title">Allow notifications?</string>
     <string name="notification_permission_dialog_content">Enable notifications and get what\'s happening in your home, from detecting leaks to doors left open, you have full control over what it tells you.</string>
     <string name="notification_permission_dialog_allow">Allow notifications</string>
-    <string name="notification_permission_dialog_denied">Do not allow</string>
+    <string name="notification_permission_dialog_deny">Do not allow</string>
 </resources>

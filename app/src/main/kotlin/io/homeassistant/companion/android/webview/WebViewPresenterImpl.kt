@@ -586,7 +586,7 @@ class WebViewPresenterImpl @Inject constructor(
         prefsRepository.setAskNotificationPermission(false)
     }
 
-    override suspend fun shouldAskForNotificationPermissionIfNeeded(): Boolean {
+    override suspend fun shouldAskNotificationPermission(): Boolean {
         return prefsRepository.shouldAskNotificationPermission()
     }
 }

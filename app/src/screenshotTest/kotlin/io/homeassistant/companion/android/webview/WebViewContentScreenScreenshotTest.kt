@@ -22,7 +22,7 @@ class WebViewContentScreenScreenshotTest {
             playerTop = 0.dp,
             playerLeft = 0.dp,
             currentAppLocked = false,
-            shouldAskForNotificationPermissionIfNeeded = false,
+            shouldAskNotificationPermission = false,
             webViewInitialized = true,
             customViewFromWebView = null,
             onFullscreenClicked = {},
@@ -42,7 +42,7 @@ class WebViewContentScreenScreenshotTest {
             playerTop = 0.dp,
             playerLeft = 0.dp,
             currentAppLocked = true,
-            shouldAskForNotificationPermissionIfNeeded = false,
+            shouldAskNotificationPermission = false,
             webViewInitialized = true,
             customViewFromWebView = null,
             onFullscreenClicked = {},
@@ -62,7 +62,7 @@ class WebViewContentScreenScreenshotTest {
             playerTop = 50.dp,
             playerLeft = 10.dp,
             currentAppLocked = false,
-            shouldAskForNotificationPermissionIfNeeded = false,
+            shouldAskNotificationPermission = false,
             webViewInitialized = true,
             customViewFromWebView = null,
             onFullscreenClicked = {},
@@ -74,7 +74,6 @@ class WebViewContentScreenScreenshotTest {
     @Preview
     @Composable
     fun `WebView request notification permission`() {
-        // TODO fix it
         WebViewContentScreen(
             webView = null,
             player = null,
@@ -83,11 +82,12 @@ class WebViewContentScreenScreenshotTest {
             playerTop = 0.dp,
             playerLeft = 0.dp,
             currentAppLocked = false,
-            shouldAskForNotificationPermissionIfNeeded = true,
+            shouldAskNotificationPermission = true,
             webViewInitialized = true,
             customViewFromWebView = null,
             onFullscreenClicked = {},
             onDiscardNotificationPermission = {},
+            hasNotificationPermission = true,
         )
     }
 }

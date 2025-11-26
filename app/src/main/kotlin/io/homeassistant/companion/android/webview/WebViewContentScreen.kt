@@ -2,8 +2,10 @@ package io.homeassistant.companion.android.webview
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.os.Build
 import android.view.View
 import android.webkit.WebView
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -79,13 +81,14 @@ internal fun WebViewContentScreen(
     playerLeft: Dp,
     currentAppLocked: Boolean,
     customViewFromWebView: View?,
-    shouldAskForNotificationPermissionIfNeeded: Boolean,
+    shouldAskNotificationPermission: Boolean,
     webViewInitialized: Boolean,
     onFullscreenClicked: (isFullscreen: Boolean) -> Unit,
     onDiscardNotificationPermission: () -> Unit,
     nightModeTheme: NightModeTheme? = null,
     statusBarColor: Color? = null,
     backgroundColor: Color? = null,
+    hasNotificationPermission: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
 ) {
     HATheme {
         Scaffold(
@@ -130,7 +133,7 @@ internal fun WebViewContentScreen(
                 }
             }
         }
-        if (webViewInitialized && shouldAskForNotificationPermissionIfNeeded) {
+        if (webViewInitialized && shouldAskNotificationPermission && hasNotificationPermission) {
             NotificationPermission(onDiscardNotificationPermission)
         }
     }
@@ -193,6 +196,7 @@ private fun SafeHAWebView(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 private fun NotificationPermission(onDiscardNotificationPermission: () -> Unit) {
     val bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = false)
     val coroutineScope = rememberCoroutineScope()
@@ -212,7 +216,6 @@ private fun NotificationPermission(onDiscardNotificationPermission: () -> Unit) 
     }
 
     // By default on lower API the bottom sheet won't be displayed
-    @SuppressLint("InlinedApi")
     val notificationPermission = rememberPermissionState(
         permission = Manifest.permission.POST_NOTIFICATIONS,
         previewPermissionStatus = PermissionStatus.Denied(true),
@@ -244,31 +247,37 @@ private fun NotificationPermission(onDiscardNotificationPermission: () -> Unit) 
                     text = stringResource(commonR.string.notification_permission_dialog_content),
                     style = HATextStyle.Body,
                 )
-                HAAccentButton(
-                    text = stringResource(commonR.string.notification_permission_dialog_allow),
-                    onClick = {
-                        notificationPermission.launchPermissionRequest()
-                    },
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                )
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
+                ) {
+                    HAAccentButton(
+                        text = stringResource(commonR.string.notification_permission_dialog_allow),
+                        onClick = {
+                            notificationPermission.launchPermissionRequest()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
 
-                HAPlainButton(
-                    text = stringResource(commonR.string.notification_permission_dialog_denied),
-                    onClick = {
-                        onDiscardNotificationPermission()
-                        closeSheet()
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = HADimens.SPACE6),
-                )
+                    HAPlainButton(
+                        text = stringResource(commonR.string.notification_permission_dialog_deny),
+                        onClick = {
+                            onDiscardNotificationPermission()
+                            closeSheet()
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = HADimens.SPACE6),
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun Color.Overlay(modifier: Modifier) {
+private fun Color.Overlay(modifier: Modifier = Modifier) {
     Spacer(
         modifier = modifier
             .background(this),
@@ -286,7 +295,7 @@ private fun WebViewContentScreenPreview() {
         playerTop = 0.dp,
         playerLeft = 0.dp,
         currentAppLocked = false,
-        shouldAskForNotificationPermissionIfNeeded = false,
+        shouldAskNotificationPermission = false,
         webViewInitialized = true,
         customViewFromWebView = null,
         onFullscreenClicked = {},

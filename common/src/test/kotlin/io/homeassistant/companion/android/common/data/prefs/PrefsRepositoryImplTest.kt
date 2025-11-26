@@ -118,4 +118,37 @@ class PrefsRepositoryImplTest {
         // Verify no integration storage was accessed since no migration was needed
         coVerify(exactly = 0) { integrationStorage.getString(any()) }
     }
+
+    @Test
+    fun `Given no preference set when checking should ask notification permission then default is true`() = runTest {
+        coEvery { localStorage.getBooleanOrNull("ask_notification_permission") } returns null
+
+        val result = repository.shouldAskNotificationPermission()
+
+        assertEquals(true, result)
+    }
+
+    @Test
+    fun `Given user sets ask notification permission to true when retrieving then value is true`() = runTest {
+        coEvery { localStorage.putBoolean("ask_notification_permission", true) } returns Unit
+        coEvery { localStorage.getBooleanOrNull("ask_notification_permission") } returns true
+        repository.setAskNotificationPermission(shouldAsk = true)
+
+        val result = repository.shouldAskNotificationPermission()
+
+        assertEquals(true, result)
+        coVerify { localStorage.putBoolean("ask_notification_permission", true) }
+    }
+
+    @Test
+    fun `Given user sets ask notification permission to false when retrieving then value is false`() = runTest {
+        coEvery { localStorage.putBoolean("ask_notification_permission", false) } returns Unit
+        coEvery { localStorage.getBooleanOrNull("ask_notification_permission") } returns false
+        repository.setAskNotificationPermission(shouldAsk = false)
+
+        val result = repository.shouldAskNotificationPermission()
+
+        assertEquals(false, result)
+        coVerify { localStorage.putBoolean("ask_notification_permission", false) }
+    }
 }

@@ -262,7 +262,7 @@ class WebViewActivity :
     private var backgroundColor = mutableStateOf<Color?>(null)
 
     /**
-     * Flag to know when the webview as been fully initialized (loadUrl called).
+     * Flag to know when the webview has been fully initialized (loadUrl called).
      * It is important to know to avoid opening a full screen dialog that
      * could prevent the loading of the webview.
      */
@@ -329,11 +329,11 @@ class WebViewActivity :
             var nightModeTheme by remember { mutableStateOf<NightModeTheme?>(null) }
             val snackbarHostState = remember { snackbarHostState }
             var webViewInitialized by remember { webViewInitialized }
-            var shouldAskForNotificationPermissionIfNeeded by remember { mutableStateOf(false) }
+            var shouldAskNotificationPermission by remember { mutableStateOf(false) }
 
             LaunchedEffect(Unit) {
                 nightModeTheme = nightModeManager.getCurrentNightMode()
-                shouldAskForNotificationPermissionIfNeeded = presenter.shouldAskForNotificationPermissionIfNeeded()
+                shouldAskNotificationPermission = presenter.shouldAskNotificationPermission()
             }
 
             WebViewContentScreen(
@@ -345,7 +345,7 @@ class WebViewActivity :
                 playerLeft = playerLeft,
                 currentAppLocked,
                 customViewFromWebView,
-                shouldAskForNotificationPermissionIfNeeded = shouldAskForNotificationPermissionIfNeeded,
+                shouldAskNotificationPermission = shouldAskNotificationPermission,
                 webViewInitialized = webViewInitialized,
                 nightModeTheme = nightModeTheme,
                 statusBarColor = statusBarColor,
@@ -357,6 +357,7 @@ class WebViewActivity :
                 onDiscardNotificationPermission = {
                     coroutineScope.launch {
                         presenter.discardNotificationPermission()
+                        shouldAskNotificationPermission = false
                     }
                 },
             )
