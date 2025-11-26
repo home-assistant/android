@@ -134,6 +134,7 @@ internal fun WebViewContentScreen(
             }
         }
         if (webViewInitialized && shouldAskNotificationPermission && hasNotificationPermission) {
+            @SuppressLint("InlinedApi")
             NotificationPermission(onDiscardNotificationPermission)
         }
     }
