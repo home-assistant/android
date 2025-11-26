@@ -96,7 +96,7 @@ class LocationForSecureConnectionScreenTest {
     }
 
     @Test
-    fun `Given selecting most secure connection when next clicked and permission not given then stay on screen with snackbar`() {
+    fun `Given selecting most secure connection when next clicked and permission not given then stay on screen with snackbar and select less secure`() {
         composeTestRule.apply {
             testScreen(locationPermissionGranted = false) {
                 val nextButton = onNodeWithText(stringResource(commonR.string.location_secure_connection_next))

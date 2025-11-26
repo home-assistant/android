@@ -25,7 +25,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -126,7 +125,6 @@ private fun LocationForSecureConnectionContent(
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE6),
     ) {
         val coroutineScope = rememberCoroutineScope()
-        val context = LocalContext.current
 
         val mostSecureOption = RadioOption(
             selectionKey = SelectionKey.MOST_SECURE,
