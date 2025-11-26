@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.onboarding.locationforsecureconnection
 
-import android.content.Context
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.ActivityResultRegistryOwner
@@ -21,14 +20,9 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.util.maybeAskForIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.LocationPermissionActivityResultRegistry
-import io.mockk.every
-import io.mockk.mockkStatic
-import io.mockk.verify
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -51,14 +45,8 @@ class LocationForSecureConnectionScreenTest {
     @get:Rule(order = 2)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
-    @Before
-    fun setUp() {
-        mockkStatic(Context::maybeAskForIgnoringBatteryOptimizations)
-        every { any<Context>().maybeAskForIgnoringBatteryOptimizations() } returns Unit
-    }
-
     @Test
-    fun `Given selecting most secure connection when next clicked and permission given then go to next screen and ask for battery optimization`() {
+    fun `Given selecting most secure connection when next clicked and permission given then go to next screen`() {
         composeTestRule.apply {
             testScreen {
                 val nextButton = onNodeWithText(stringResource(commonR.string.location_secure_connection_next))
@@ -72,7 +60,6 @@ class LocationForSecureConnectionScreenTest {
                 assertEquals(false, allowInsecureConnection)
                 assertNull(snackbarMessage)
                 registry.assertLocationPermissionRequested()
-                verify(exactly = 1) { any<Context>().maybeAskForIgnoringBatteryOptimizations() }
             }
         }
     }
@@ -90,7 +77,7 @@ class LocationForSecureConnectionScreenTest {
     }
 
     @Test
-    fun `Given selecting less secure connection when next clicked then go to next screen without asking for battery optimization`() {
+    fun `Given selecting less secure connection when next clicked then go to next screen`() {
         composeTestRule.apply {
             testScreen {
                 val nextButton = onNodeWithText(stringResource(commonR.string.location_secure_connection_next))
@@ -104,13 +91,12 @@ class LocationForSecureConnectionScreenTest {
                 assertEquals(true, allowInsecureConnection)
                 assertNull(snackbarMessage)
                 registry.assertLocationPermissionNotRequested()
-                verify(exactly = 0) { any<Context>().maybeAskForIgnoringBatteryOptimizations() }
             }
         }
     }
 
     @Test
-    fun `Given selecting most secure connection when next clicked and permission not given then stay on screen with snackbar and select less secure without battery optimization`() {
+    fun `Given selecting most secure connection when next clicked and permission not given then stay on screen with snackbar`() {
         composeTestRule.apply {
             testScreen(locationPermissionGranted = false) {
                 val nextButton = onNodeWithText(stringResource(commonR.string.location_secure_connection_next))
@@ -132,8 +118,6 @@ class LocationForSecureConnectionScreenTest {
                 assertNull(snackbarMessage)
                 // background is only requested if foreground is granted
                 registry.assertLocationPermissionRequested(false)
-                // Battery optimization should not be requested since permission was denied
-                verify(exactly = 0) { any<Context>().maybeAskForIgnoringBatteryOptimizations() }
             }
         }
     }

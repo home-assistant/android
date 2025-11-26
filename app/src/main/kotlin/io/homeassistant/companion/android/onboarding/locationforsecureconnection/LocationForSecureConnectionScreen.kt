@@ -41,7 +41,6 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
-import io.homeassistant.companion.android.common.util.maybeAskForIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.rememberLocationPermission
 import kotlinx.coroutines.launch
@@ -150,7 +149,6 @@ private fun LocationForSecureConnectionContent(
         val permissions = rememberLocationPermission(
             onPermissionResult = { permissionGranted ->
                 if (permissionGranted) {
-                    context.maybeAskForIgnoringBatteryOptimizations()
                     onAllowInsecureConnection(false)
                 } else {
                     coroutineScope.launch {
