@@ -268,6 +268,13 @@ open class HomeAssistantApplication :
             ContextCompat.RECEIVER_EXPORTED,
         )
 
+        ContextCompat.registerReceiver(
+            this,
+            sensorReceiver,
+            IntentFilter("com.home-assistant.companion.assist.STATE_UPDATE"),
+            ContextCompat.RECEIVER_EXPORTED,
+        )
+
         // Register for all saved user intents
         val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
         ioScope.launch {

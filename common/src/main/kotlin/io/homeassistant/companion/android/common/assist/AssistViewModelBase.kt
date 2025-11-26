@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.assist
 
 import android.app.Application
+import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -193,7 +194,14 @@ abstract class AssistViewModelBase(
 
     private suspend fun playAudio(path: String): Boolean {
         return UrlUtil.handle(serverManager.getServer(selectedServerId)?.connection?.getUrl(), path)?.let {
-            audioUrlPlayer.playAudio(it.toString())
+            val intent = Intent("com.home-assistant.companion.assist.STATE_UPDATE")
+            intent.putExtra("STATE", "SPEAKING")
+            app.sendBroadcast(intent)
+            val result = audioUrlPlayer.playAudio(it.toString())
+            val idleIntent = Intent("com.home-assistant.companion.assist.STATE_UPDATE")
+            intent.putExtra("STATE", "IDLE")
+            app.sendBroadcast(intent)
+            result
         } ?: false
     }
 

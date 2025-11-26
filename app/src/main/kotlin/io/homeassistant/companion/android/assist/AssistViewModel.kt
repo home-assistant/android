@@ -150,6 +150,16 @@ class AssistViewModel @Inject constructor(
 
     override fun setInput(inputMode: AssistInputMode) {
         this.inputMode = inputMode
+
+        val intent = Intent("com.home-assistant.companion.assist.STATE_UPDATE")
+        val state = when (inputMode) {
+            AssistInputMode.VOICE_ACTIVE -> "LISTENING"
+            AssistInputMode.VOICE_INACTIVE, AssistInputMode.TEXT -> "IDLE"
+            AssistInputMode.BLOCKED -> "CLOSED"
+            else -> "IDLE"
+        }
+        intent.putExtra("STATE", state)
+        app.sendBroadcast(intent)
     }
 
     private suspend fun checkSupport(): Boolean? {
