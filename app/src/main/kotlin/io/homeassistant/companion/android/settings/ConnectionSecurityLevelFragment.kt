@@ -47,12 +47,21 @@ import io.homeassistant.companion.android.onboarding.locationforsecureconnection
  * This fragment is temporary and should be removed once the app fully migrates to Compose Navigation.
  */
 @AndroidEntryPoint
-class ConnectionSecurityLevelFragment : Fragment() {
+class ConnectionSecurityLevelFragment private constructor() : Fragment() {
 
     companion object {
         const val RESULT_KEY = "connection_security_level_result"
-        const val EXTRA_SERVER = "server_id"
-        const val EXTRA_HANDLE_ALL_INSETS = "handle_all_insets"
+        private const val EXTRA_SERVER = "server_id"
+        private const val EXTRA_HANDLE_ALL_INSETS = "handle_all_insets"
+
+        fun newInstance(serverId: Int, handleAllInsets: Boolean = false): ConnectionSecurityLevelFragment {
+            return ConnectionSecurityLevelFragment().apply {
+                arguments = bundleOf(
+                    EXTRA_SERVER to serverId,
+                    EXTRA_HANDLE_ALL_INSETS to handleAllInsets,
+                )
+            }
+        }
     }
 
     private val viewModel: LocationForSecureConnectionViewModel by createViewModelLazy(

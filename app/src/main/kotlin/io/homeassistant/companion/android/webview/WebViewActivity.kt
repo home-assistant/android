@@ -1424,14 +1424,8 @@ class WebViewActivity :
             }
         }
 
-        val fragment = ConnectionSecurityLevelFragment().apply {
-            arguments = Bundle().apply {
-                putInt(ConnectionSecurityLevelFragment.EXTRA_SERVER, serverId)
-                putBoolean(ConnectionSecurityLevelFragment.EXTRA_HANDLE_ALL_INSETS, true)
-            }
-        }
         supportFragmentManager.beginTransaction()
-            .replace(android.R.id.content, fragment)
+            .replace(android.R.id.content, ConnectionSecurityLevelFragment.newInstance(serverId, true))
             .addToBackStack(null)
             .commit()
     }
