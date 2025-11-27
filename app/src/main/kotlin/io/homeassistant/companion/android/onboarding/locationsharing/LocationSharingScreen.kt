@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.onboarding.locationsharing
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,7 +32,7 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
-import io.homeassistant.companion.android.common.util.maybeAskForIgnoringBatteryOptimizations
+import io.homeassistant.companion.android.common.util.createBatteryOptimizationIntent
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.rememberLocationPermission
 
@@ -117,11 +119,19 @@ private fun LocationSharingContent(
 @OptIn(ExperimentalPermissionsApi::class)
 private fun BottomButtons(onGoToNextScreen: () -> Unit, onLocationSharingResponse: (enabled: Boolean) -> Unit) {
     val context = LocalContext.current
+    val batteryOptimizationLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult(),
+        onResult = { onGoToNextScreen() },
+    )
     val permissions = rememberLocationPermission(
         onPermissionResult = {
             // We ignore the result and proceed even if the user rejected the permission
-            context.maybeAskForIgnoringBatteryOptimizations()
-            onGoToNextScreen()
+            val intent = context.createBatteryOptimizationIntent()
+            if (intent != null) {
+                batteryOptimizationLauncher.launch(intent)
+            } else {
+                onGoToNextScreen()
+            }
         },
     )
     Column(
