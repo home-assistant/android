@@ -124,7 +124,7 @@ class BlockInsecureScreenTest {
     @Test
     fun `Given screen displayed with no missing then both banners are hidden`() {
         composeTestRule.apply {
-            testScreen(missingLocation = true, missingHomeSetup = true) {
+            testScreen(missingLocation = false, missingHomeSetup = false) {
                 onNodeWithText(stringResource(commonR.string.block_insecure_missing_location))
                     .assertIsNotDisplayed()
                 onNodeWithText(stringResource(commonR.string.block_insecure_missing_home_setup))

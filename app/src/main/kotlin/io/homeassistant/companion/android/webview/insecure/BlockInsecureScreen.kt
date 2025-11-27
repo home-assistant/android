@@ -31,7 +31,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HABanner
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
@@ -169,7 +168,6 @@ private fun FixBanner(text: String, actionText: String, onFixClick: () -> Unit) 
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                 HAAccentButton(
                     text = actionText,
-                    variant = ButtonVariant.WARNING,
                     onClick = {
                         onFixClick()
                     },
