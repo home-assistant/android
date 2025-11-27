@@ -87,7 +87,7 @@ class WebViewContentScreenScreenshotTest {
             customViewFromWebView = null,
             onFullscreenClicked = {},
             onDiscardNotificationPermission = {},
-            hasNotificationPermission = true,
+            supportsNotificationPermission = true,
         )
     }
 }

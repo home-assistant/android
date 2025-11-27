@@ -88,7 +88,7 @@ internal fun WebViewContentScreen(
     nightModeTheme: NightModeTheme? = null,
     statusBarColor: Color? = null,
     backgroundColor: Color? = null,
-    hasNotificationPermission: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
+    supportsNotificationPermission: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
 ) {
     HATheme {
         Scaffold(
@@ -133,7 +133,7 @@ internal fun WebViewContentScreen(
                 }
             }
         }
-        if (webViewInitialized && shouldAskNotificationPermission && hasNotificationPermission) {
+        if (webViewInitialized && shouldAskNotificationPermission && supportsNotificationPermission) {
             @SuppressLint("InlinedApi")
             NotificationPermission(onDiscardNotificationPermission)
         }
@@ -242,7 +242,7 @@ private fun NotificationPermission(onDiscardNotificationPermission: () -> Unit) 
             ) {
                 Text(
                     text = stringResource(commonR.string.notification_permission_dialog_title),
-                    style = HATextStyle.Headline,
+                    style = HATextStyle.HeadlineMedium,
                 )
                 Text(
                     text = stringResource(commonR.string.notification_permission_dialog_content),
