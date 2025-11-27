@@ -22,6 +22,7 @@ import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.sensors.AssistSensorManager
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.common.util.HAStrictMode
@@ -271,7 +272,7 @@ open class HomeAssistantApplication :
         ContextCompat.registerReceiver(
             this,
             sensorReceiver,
-            IntentFilter("com.home-assistant.companion.assist.STATE_UPDATE"),
+            IntentFilter(AssistSensorManager.ASSIST_STATE_CHANGED),
             ContextCompat.RECEIVER_EXPORTED,
         )
 

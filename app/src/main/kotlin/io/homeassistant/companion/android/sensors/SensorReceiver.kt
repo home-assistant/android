@@ -105,7 +105,7 @@ class SensorReceiver : SensorReceiverBase() {
         "android.bluetooth.device.action.ACL_DISCONNECTED" to listOf(BluetoothSensorManager.bluetoothConnection.id),
         "com.oculus.intent.action.MOUNT_STATE_CHANGED" to listOf(QuestSensorManager.headsetMounted.id),
         "android.net.wifi.WIFI_AP_STATE_CHANGED" to listOf(NetworkSensorManager.hotspotState.id),
-        "com.home-assistant.companion.assist.STATE_UPDATE" to listOf(AssistSensorManager.assistSensor.id),
+        AssistSensorManager.ASSIST_STATE_CHANGED to listOf(AssistSensorManager.assistSensor.id),
         BluetoothAdapter.ACTION_STATE_CHANGED to listOf(BluetoothSensorManager.bluetoothState.id),
         Intent.ACTION_SCREEN_OFF to listOf(PowerSensorManager.interactiveDevice.id),
         Intent.ACTION_SCREEN_ON to listOf(PowerSensorManager.interactiveDevice.id),
