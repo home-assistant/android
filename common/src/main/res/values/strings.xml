@@ -1472,6 +1472,15 @@
     <string name="location_secure_connection_next">Next</string>
     <string name="location_secure_connection_save">Save</string>
     <string name="location_secure_connection_discard_permission">Location permission denied. Allow access or choose the \'Less secure\' option.</string>
+    <string name="block_insecure_title">Insecure connection blocked</string>
+    <string name="block_insecure_content">This connection is not secure because it uses HTTP. You have chosen to block insecure connections when not at home.</string>
+    <string name="block_insecure_missing_home_setup">The app cannot determine if you are at home because no home network has been configured.</string>
+    <string name="block_insecure_missing_location">Location is required to detect your home network. Android requires this because network information can be used to infer your location.</string>
+    <string name="block_insecure_action_enable_location">Enable location</string>
+    <string name="block_insecure_action_configure_home">Configure home network</string>
+    <string name="block_insecure_retry">Retry</string>
+    <string name="block_insecure_open_settings">Open settings</string>
+    <string name="block_insecure_change_security_level">Change security level</string>
     <string name="wear_mtls_no_filename">No file name</string>
     <string name="wear_mtls_content">Your Home Assistant server requires TLS client certificate authentication. Select a TLS client certificate file to install it on your Wear OS device.</string>
     <string name="wear_mtls_next">Next</string>
