@@ -41,7 +41,7 @@ class LocationSharingScreenTest {
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Test
-    fun `Given screen displayed when clicking on share and granting permission then go to next screen and location response set to true`() {
+    fun `Given screen displayed when clicking on share and granting permission then go to next screen and location response set to true and ask for battery optimization`() {
         composeTestRule.apply {
             testScreen {
                 // Check all elements are displayed
@@ -52,12 +52,13 @@ class LocationSharingScreenTest {
                 assertTrue(locationSharingResponse == true)
                 assertTrue(goToNextScreenClicked)
                 registry.assertLocationPermissionRequested()
+                registry.assertBatteryOptimizationRequested()
             }
         }
     }
 
     @Test
-    fun `Given screen displayed when clicking do not share then go to next screen and location response set to false`() {
+    fun `Given screen displayed when clicking do not share then go to next screen and location response set to false without battery optimization`() {
         composeTestRule.apply {
             testScreen(false) {
                 // Check all elements are displayed
@@ -68,12 +69,13 @@ class LocationSharingScreenTest {
                 assertTrue(locationSharingResponse == false)
                 assertTrue(goToNextScreenClicked)
                 registry.assertLocationPermissionNotRequested()
+                registry.assertBatteryOptimizationNotRequested()
             }
         }
     }
 
     @Test
-    fun `Given screen displayed when clicking on share and not granting permission then go to next screen and location response set to true`() {
+    fun `Given screen displayed when clicking on share and not granting permission then go to next screen and location response set to true and still ask for battery optimization`() {
         composeTestRule.apply {
             testScreen(false) {
                 // Check all elements are displayed
@@ -85,6 +87,8 @@ class LocationSharingScreenTest {
                 assertTrue(goToNextScreenClicked)
                 // background is only requested if foreground is granted
                 registry.assertLocationPermissionRequested(false)
+                // Battery optimization is still requested even when permission is denied
+                registry.assertBatteryOptimizationRequested()
             }
         }
     }
