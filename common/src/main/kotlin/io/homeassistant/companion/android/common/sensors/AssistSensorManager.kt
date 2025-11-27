@@ -6,11 +6,11 @@ import io.homeassistant.companion.android.common.R
 
 class AssistSensorManager : SensorManager {
 
-    enum class AssistState(val value: String){
+    enum class AssistState(val value: String) {
         SPEAKING("speaking"),
         LISTENING("listening"),
         IDLE("idle"),
-        CLOSED("closed")
+        CLOSED("closed"),
     }
 
     companion object {
@@ -25,7 +25,7 @@ class AssistSensorManager : SensorManager {
             statelessIcon = "mdi:robot",
         )
 
-        fun updateState(context:Context,state: String){
+        fun updateState(context: Context, state: String) {
             val intent = Intent(ASSIST_STATE_CHANGED)
             intent.putExtra(STATE, state)
             context.sendBroadcast(intent)
@@ -38,7 +38,7 @@ class AssistSensorManager : SensorManager {
         return listOf(assistSensor)
     }
 
-    override fun requiredPermissions(context: Context,sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return emptyArray()
     }
 
@@ -52,10 +52,12 @@ class AssistSensorManager : SensorManager {
             basicSensor = assistSensor,
             state = state,
             attributes = mapOf(
-                "options" to listOf(AssistState.SPEAKING.value,
+                "options" to listOf(
+                    AssistState.SPEAKING.value,
                     AssistState.LISTENING.value,
                     AssistState.IDLE.value,
-                    AssistState.CLOSED.value),
+                    AssistState.CLOSED.value,
+                ),
             ),
             mdiIcon = "mdi:robot",
         )
