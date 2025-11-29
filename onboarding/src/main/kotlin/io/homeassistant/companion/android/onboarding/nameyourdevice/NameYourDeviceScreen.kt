@@ -31,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -116,11 +117,11 @@ private fun NameYourDeviceContent(
             contentDescription = null,
         )
         Text(
-            text = stringResource(R.string.name_your_device_title),
+            text = stringResource(commonR.string.name_your_device_title),
             style = HATextStyle.Headline,
         )
         Text(
-            text = stringResource(R.string.name_your_device_content),
+            text = stringResource(commonR.string.name_your_device_content),
             style = HATextStyle.Body,
         )
 
@@ -135,7 +136,7 @@ private fun NameYourDeviceContent(
         Spacer(modifier = Modifier.weight(1f))
 
         HAAccentButton(
-            text = stringResource(R.string.name_your_device_save),
+            text = stringResource(commonR.string.name_your_device_save),
             onClick = onSaveClick,
             enabled = saveClickable,
             modifier = Modifier
@@ -164,7 +165,7 @@ private fun DeviceNameTextField(
                 IconButton(onClick = { onDeviceNameChange("") }, enabled = deviceNameEditable) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.clear_text),
+                        contentDescription = stringResource(commonR.string.clear_text),
                     )
                 }
             }

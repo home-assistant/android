@@ -164,7 +164,7 @@ private fun WearMTLSContent(
         Spacer(modifier = Modifier.weight(1f))
 
         HAAccentButton(
-            text = stringResource(R.string.wear_mtls_next),
+            text = stringResource(commonR.string.wear_mtls_next),
             onClick = {
                 onNext(checkNotNull(selectedUri) { "No file selected" }, currentPassword)
             },
@@ -189,7 +189,7 @@ private fun ColumnScope.Header() {
         style = HATextStyle.Headline,
     )
     Text(
-        text = stringResource(R.string.wear_mtls_content),
+        text = stringResource(commonR.string.wear_mtls_content),
         style = HATextStyle.Body,
         modifier = Modifier.widthIn(max = MaxTextWidth),
     )
@@ -222,7 +222,7 @@ private fun CertPicker(selectedFileName: String?, onSelectFileClicked: () -> Uni
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.wear_mtls_deselect_file),
+                        contentDescription = stringResource(commonR.string.wear_mtls_deselect_file),
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -259,7 +259,7 @@ private fun PasswordTextField(currentPassword: String, onPasswordChange: (String
                 IconButton(onClick = { onPasswordChange("") }) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.clear_text),
+                        contentDescription = stringResource(commonR.string.clear_text),
                     )
                 }
             }
@@ -268,7 +268,7 @@ private fun PasswordTextField(currentPassword: String, onPasswordChange: (String
         supportingText = {
             if (isError) {
                 Text(
-                    stringResource(R.string.wear_mtls_open_error),
+                    stringResource(commonR.string.wear_mtls_open_error),
                     // TODO probably wrong style and color/token
                     style = HATextStyle.BodyMedium.copy(color = LocalHAColorScheme.current.colorBorderDangerNormal),
                 )

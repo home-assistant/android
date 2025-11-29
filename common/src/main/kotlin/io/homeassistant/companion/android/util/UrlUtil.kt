@@ -44,32 +44,51 @@ object UrlUtil {
             .toString()
     }
 
+    /**
+     * Resolves a URL input string against a base URL.
+     *
+     * @param base The base URL to resolve relative URLs against. Can be null if input is absolute.
+     * @param input The URL string to resolve. Supported formats:
+     *   - Absolute URL (http://... or https://...)
+     *   - Relative path to be resolved against base
+     *   - Deep link URL with homeassistant://navigate/ prefix
+     * @return The resolved URL, the base URL if input is invalid, or null if resolution fails
+     */
     fun handle(base: URL?, input: String): URL? {
-        val asURI = try {
-            URI(input.removePrefix("homeassistant://navigate/"))
+        val normalizedInput = input.removePrefix("homeassistant://navigate/")
+
+        val uri = try {
+            URI(normalizedInput)
         } catch (e: Exception) {
-            Timber.w("Invalid input, returning base only")
-            null
+            Timber.w(e, "Invalid URI input: $normalizedInput")
+            return base
         }
+
         return when {
-            asURI == null -> {
-                base
-            }
-
             isAbsoluteUrl(input) -> {
-                asURI.toURL()
+                uri.runCatching { toURL() }
+                    .onFailure { Timber.w(it, "Failed to convert URI to URL: $normalizedInput") }
+                    .getOrNull()
             }
 
-            else -> { // Input is relative to base URL
-                val builder = base
-                    ?.toHttpUrlOrNull()
-                    ?.newBuilder()
-                if (!asURI.path.isNullOrBlank()) builder?.addPathSegments(asURI.path.trim().removePrefix("/"))
-                if (!asURI.query.isNullOrBlank()) builder?.query(asURI.query.trim())
-                if (!asURI.fragment.isNullOrBlank()) builder?.fragment(asURI.fragment.trim())
-                builder?.build()?.toUrl()
-            }
+            else -> buildRelativeUrl(base, uri)
         }
+    }
+
+    private fun buildRelativeUrl(base: URL?, uri: URI): URL? {
+        val builder = base?.toHttpUrlOrNull()?.newBuilder() ?: return null
+
+        return builder.apply {
+            uri.path?.takeIf { it.isNotBlank() }?.let {
+                addPathSegments(it.trim().removePrefix("/"))
+            }
+            uri.query?.takeIf { it.isNotBlank() }?.let {
+                query(it.trim())
+            }
+            uri.fragment?.takeIf { it.isNotBlank() }?.let {
+                fragment(it.trim())
+            }
+        }.build().toUrl()
     }
 
     fun isAbsoluteUrl(it: String?): Boolean {

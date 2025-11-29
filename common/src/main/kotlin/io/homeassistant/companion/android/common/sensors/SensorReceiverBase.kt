@@ -14,8 +14,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_SYNC
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -60,6 +62,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         )
                     return batteryStatusIntent?.let { BatterySensorManager.getIsCharging(it) } ?: false
                 }
+
                 else -> false
             }
         }
@@ -201,22 +204,25 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         server: Server,
         sensorDao: SensorDao,
     ): Boolean {
-        val currentHAversion = serverManager.integrationRepository(server.id).getHomeAssistantVersion()
-        val supportsDisabledSensors = serverManager.integrationRepository(
-            server.id,
-        ).isHomeAssistantVersionAtLeast(2022, 6, 0)
-        val serverIsTrusted = serverManager.integrationRepository(server.id).isTrusted()
+        val config: GetConfigResponse
+        val integrationRepository: IntegrationRepository
+
+        try {
+            integrationRepository = serverManager.integrationRepository(server.id)
+            config = integrationRepository.getConfig()
+        } catch (e: Exception) {
+            Timber.e(e, "Error while getting core config to sync sensor status aborting")
+            return false
+        }
+
+        val currentHAversion = integrationRepository.getHomeAssistantVersion()
+        val supportsDisabledSensors = integrationRepository.isHomeAssistantVersionAtLeast(2022, 6, 0)
+        val serverIsTrusted = integrationRepository.isTrusted()
         val coreSensorStatus: Map<String, Boolean>? =
             if (supportsDisabledSensors && (serverIsTrusted || (sensorDao.getEnabledCount() ?: 0) > 0)) {
-                try {
-                    val config = serverManager.integrationRepository(server.id).getConfig().entities
-                    config
-                        ?.filter { it.value["disabled"] != null }
-                        ?.mapValues { !(it.value["disabled"] as Boolean) } // Map to sensor id -> enabled
-                } catch (e: Exception) {
-                    Timber.e(e, "Error while getting core config to sync sensor status")
-                    null
-                }
+                config.entities
+                    ?.filter { it.value["disabled"] != null }
+                    ?.mapValues { !(it.value["disabled"] as Boolean) } // Map to sensor id -> enabled
             } else {
                 // Cannot sync disabled, or all sensors disabled and server changes aren't trusted
                 null
@@ -350,7 +356,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         var success = true
         if (enabledRegistrations.isNotEmpty()) {
             success = try {
-                val serverSuccess = serverManager.integrationRepository(server.id).updateSensors(enabledRegistrations)
+                val serverSuccess = integrationRepository.updateSensors(enabledRegistrations)
                 enabledRegistrations.forEach {
                     sensorDao.updateLastSentStateAndIcon(it.uniqueId, it.serverId, it.state.toString(), it.icon)
                 }

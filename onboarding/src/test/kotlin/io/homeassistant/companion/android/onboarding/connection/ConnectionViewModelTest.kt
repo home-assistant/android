@@ -17,7 +17,6 @@ import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.every
@@ -114,7 +113,7 @@ class ConnectionViewModelTest {
             advanceUntilIdle()
             assertNull(urlFlow.awaitItem())
 
-            errorFlow.awaitConnectionError<ConnectionError.UnreachableError>(R.string.connection_screen_malformed_url, "Expected URL scheme 'http' or 'https' but no scheme was found for not_a_...", IllegalArgumentException::class)
+            errorFlow.awaitConnectionError<ConnectionError.UnreachableError>(commonR.string.connection_screen_malformed_url, "Expected URL scheme 'http' or 'https' but no scheme was found for not_a_...", IllegalArgumentException::class)
 
             urlFlow.expectNoEvents()
             navigationEventsFlow.expectNoEvents()
@@ -296,7 +295,7 @@ class ConnectionViewModelTest {
                     every { reasonPhrase } returns "I'm a teapot"
                 },
             )
-            errorFlow.awaitConnectionError<ConnectionError.UnknownError>(R.string.connection_error_unknown_error, errorDetails(418, "I'm a teapot"), WebResourceResponse::class)
+            errorFlow.awaitConnectionError<ConnectionError.UnknownError>(commonR.string.connection_error_unknown_error, errorDetails(418, "I'm a teapot"), WebResourceResponse::class)
 
             // Generic error without reason
             webViewClient.isTLSClientAuthNeeded = false
@@ -309,7 +308,7 @@ class ConnectionViewModelTest {
                     every { reasonPhrase } returns ""
                 },
             )
-            errorFlow.awaitConnectionError<ConnectionError.UnknownError>(R.string.connection_error_unknown_error, errorDetails(418, "No description"), WebResourceResponse::class)
+            errorFlow.awaitConnectionError<ConnectionError.UnknownError>(commonR.string.connection_error_unknown_error, errorDetails(418, "No description"), WebResourceResponse::class)
             navigationEventsFlow.expectNoEvents()
         }
     }
@@ -377,7 +376,7 @@ class ConnectionViewModelTest {
                     every { this@mockk.description } returns "description"
                 },
             )
-            errorFlow.awaitConnectionError<ConnectionError.UnknownError>(R.string.connection_error_unknown_error, errorDetails(-1, "description"), WebResourceError::class)
+            errorFlow.awaitConnectionError<ConnectionError.UnknownError>(commonR.string.connection_error_unknown_error, errorDetails(-1, "description"), WebResourceError::class)
 
             // Generic error without description
             viewModel.webViewClient.onReceivedError(
@@ -388,7 +387,7 @@ class ConnectionViewModelTest {
                     every { this@mockk.description } returns ""
                 },
             )
-            errorFlow.awaitConnectionError<ConnectionError.UnknownError>(R.string.connection_error_unknown_error, errorDetails(-1, "No description"), WebResourceError::class)
+            errorFlow.awaitConnectionError<ConnectionError.UnknownError>(commonR.string.connection_error_unknown_error, errorDetails(-1, "No description"), WebResourceError::class)
             navigationEventsFlow.expectNoEvents()
         }
     }

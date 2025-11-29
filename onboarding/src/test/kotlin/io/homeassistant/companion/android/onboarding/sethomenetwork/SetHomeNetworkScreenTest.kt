@@ -15,7 +15,6 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.onboarding.R
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import junit.framework.TestCase.assertEquals
@@ -47,9 +46,9 @@ class SetHomeNetworkScreenTest {
                 onNodeWithTag(VPN_TAG).assertIsNotDisplayed()
                 onNodeWithText(stringResource(commonR.string.manage_ssids_ethernet)).assertIsNotDisplayed()
                 onNodeWithTag(ETHERNET_TAG).assertIsNotDisplayed()
-                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsNotDisplayed()
+                onNodeWithContentDescription(stringResource(commonR.string.clear_text)).assertIsNotDisplayed()
 
-                onNodeWithText(stringResource(R.string.set_home_network_next)).performScrollTo().assertIsDisplayed().performClick()
+                onNodeWithText(stringResource(commonR.string.set_home_network_next)).performScrollTo().assertIsDisplayed().performClick()
                 assertTrue(nextClicked)
             }
         }
@@ -64,9 +63,9 @@ class SetHomeNetworkScreenTest {
                 assertEquals(false, usingVpnSet)
                 onNodeWithText(stringResource(commonR.string.manage_ssids_ethernet)).assertIsNotDisplayed()
                 onNodeWithTag(ETHERNET_TAG).assertIsNotDisplayed()
-                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsNotDisplayed()
+                onNodeWithContentDescription(stringResource(commonR.string.clear_text)).assertIsNotDisplayed()
 
-                onNodeWithText(stringResource(R.string.set_home_network_next)).performScrollTo().assertIsDisplayed().performClick()
+                onNodeWithText(stringResource(commonR.string.set_home_network_next)).performScrollTo().assertIsDisplayed().performClick()
                 assertTrue(nextClicked)
             }
         }
@@ -81,9 +80,9 @@ class SetHomeNetworkScreenTest {
                 onNodeWithText(stringResource(commonR.string.manage_ssids_ethernet)).performScrollTo().assertIsDisplayed()
                 onNodeWithTag(ETHERNET_TAG).assertIsDisplayed().performClick()
                 assertEquals(false, usingEthernetSet)
-                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsNotDisplayed()
+                onNodeWithContentDescription(stringResource(commonR.string.clear_text)).assertIsNotDisplayed()
 
-                onNodeWithText(stringResource(R.string.set_home_network_next)).performScrollTo().assertIsDisplayed().performClick()
+                onNodeWithText(stringResource(commonR.string.set_home_network_next)).performScrollTo().assertIsDisplayed().performClick()
                 assertTrue(nextClicked)
             }
         }
@@ -98,11 +97,11 @@ class SetHomeNetworkScreenTest {
                 onNodeWithTag(VPN_TAG).assertIsDisplayed()
                 onNodeWithText(stringResource(commonR.string.manage_ssids_ethernet)).performScrollTo().assertIsDisplayed()
                 onNodeWithTag(ETHERNET_TAG).assertIsDisplayed()
-                onNodeWithContentDescription(stringResource(R.string.clear_text)).assertIsDisplayed()
+                onNodeWithContentDescription(stringResource(commonR.string.clear_text)).assertIsDisplayed()
                 onNodeWithText(currentWifiNetwork).performScrollTo().assertIsDisplayed().performTextInput("123")
                 assertEquals("123$currentWifiNetwork", currentWifiNetworkSet)
 
-                onNodeWithText(stringResource(R.string.set_home_network_next)).performScrollTo().assertIsDisplayed().performClick()
+                onNodeWithText(stringResource(commonR.string.set_home_network_next)).performScrollTo().assertIsDisplayed().performClick()
                 assertTrue(nextClicked)
             }
         }
@@ -144,9 +143,9 @@ class SetHomeNetworkScreenTest {
 
             onNodeWithText(stringResource(commonR.string.manage_ssids_warning)).performScrollTo().assertIsDisplayed()
 
-            onNodeWithText(stringResource(R.string.set_home_network_title)).performScrollTo().assertIsDisplayed()
-            onNodeWithText(stringResource(R.string.set_home_network_content)).assertIsDisplayed()
-            onNodeWithText(stringResource(commonR.string.manage_ssids_wifi)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.set_home_network_title)).performScrollTo().assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.set_home_network_content)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.set_home_network_wifi_name)).assertIsDisplayed()
 
             dsl()
         }

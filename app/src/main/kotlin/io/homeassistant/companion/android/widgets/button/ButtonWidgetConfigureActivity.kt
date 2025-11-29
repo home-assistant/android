@@ -389,8 +389,9 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
         val serverId = checkNotNull(selectedServerId) { "Selected server ID is null" }
         val actionText = binding.widgetTextConfigService.text.toString()
         val actions = actions[serverId].orEmpty()
-        val domain = actions[actionText]?.domain ?: actionText.split(".", limit = 2)[0]
-        val action = actions[actionText]?.action ?: actionText.split(".", limit = 2)[1]
+        val actionTextParts = actionText.split(".", limit = 2)
+        val domain = actions[actionText]?.domain ?: actionTextParts.getOrElse(0) { "" }
+        val action = actions[actionText]?.action ?: actionTextParts.getOrElse(1) { "" }
         val actionDataMap = HashMap<String, Any>()
 
         dynamicFields.forEach {

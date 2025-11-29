@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.common.data.network
 
 import android.net.NetworkCapabilities
-import android.os.Build
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,11 +22,8 @@ interface NetworkHelper {
 internal class NetworkHelperImpl @Inject constructor(private val capabilitiesChecker: NetworkCapabilitiesChecker) :
     NetworkHelper {
 
-    override fun isNetworkValidated(): Boolean = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+    override fun isNetworkValidated(): Boolean =
         capabilitiesChecker.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-    } else {
-        capabilitiesChecker.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-    }
 
     override fun hasActiveNetwork(): Boolean = listOf(
         NetworkCapabilities.TRANSPORT_WIFI,

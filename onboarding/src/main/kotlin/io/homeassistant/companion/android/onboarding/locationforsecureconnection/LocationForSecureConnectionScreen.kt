@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -93,7 +94,7 @@ internal fun LocationForSecureConnectionScreen(
     Scaffold(
         modifier = modifier,
         topBar = { HATopBar(onBackClick = onBackClick, onHelpClick = onHelpClick) },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        contentWindowInsets = WindowInsets.safeDrawing,
     ) { contentPadding ->
         LocationForSecureConnectionContent(
             isStandaloneScreen = isStandaloneScreen,
@@ -141,7 +142,7 @@ private fun LocationForSecureConnectionContent(
                 null -> null
             },
         )
-        val errorText = stringResource(R.string.location_secure_connection_discard_permission)
+        val errorText = stringResource(commonR.string.location_secure_connection_discard_permission)
 
         val permissions = rememberLocationPermission(
             onPermissionResult = { permissionGranted ->
@@ -172,17 +173,17 @@ private fun LocationForSecureConnectionContent(
             selectedOption = selectedOption,
         )
         HAHint(
-            text = stringResource(R.string.location_secure_connection_hint),
+            text = stringResource(commonR.string.location_secure_connection_hint),
             modifier = Modifier.width(MaxContentWidth),
         )
         Spacer(modifier = Modifier.weight(1f))
         HAAccentButton(
             text = if (isStandaloneScreen) {
                 stringResource(
-                    R.string.location_secure_connection_save,
+                    commonR.string.location_secure_connection_save,
                 )
             } else {
-                stringResource(R.string.location_secure_connection_next)
+                stringResource(commonR.string.location_secure_connection_next)
             },
             enabled = selectedOption != null,
             onClick = {
@@ -207,13 +208,13 @@ private fun ColumnScope.Header() {
     )
 
     Text(
-        text = stringResource(R.string.location_secure_connection_title),
+        text = stringResource(commonR.string.location_secure_connection_title),
         style = HATextStyle.Headline,
         modifier = Modifier.widthIn(max = MaxContentWidth),
     )
 
     Text(
-        text = stringResource(R.string.location_secure_connection_content),
+        text = stringResource(commonR.string.location_secure_connection_content),
         style = HATextStyle.Body,
         modifier = Modifier.widthIn(max = MaxContentWidth),
     )

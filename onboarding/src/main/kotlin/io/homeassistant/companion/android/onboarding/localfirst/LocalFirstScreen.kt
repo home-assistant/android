@@ -4,9 +4,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -17,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
@@ -30,10 +33,7 @@ private val MaxContentWidth = MaxButtonWidth
 
 @Composable
 internal fun LocalFirstScreen(onNextClick: () -> Unit, modifier: Modifier = Modifier) {
-    Scaffold(
-        modifier = modifier,
-
-    ) { contentPadding ->
+    Scaffold(modifier = modifier, contentWindowInsets = WindowInsets.safeDrawing) { contentPadding ->
         LocalFirstContent(
             onNextClick = onNextClick,
             modifier = Modifier.padding(contentPadding),
@@ -63,13 +63,13 @@ private fun LocalFirstContent(onNextClick: () -> Unit, modifier: Modifier = Modi
         )
 
         Text(
-            text = stringResource(R.string.local_first_title),
+            text = stringResource(commonR.string.local_first_title),
             style = HATextStyle.Headline,
             modifier = Modifier.widthIn(max = MaxContentWidth),
         )
 
         Text(
-            text = stringResource(R.string.local_first_content),
+            text = stringResource(commonR.string.local_first_content),
             style = HATextStyle.Body,
             modifier = Modifier.widthIn(max = MaxContentWidth),
         )
@@ -77,7 +77,7 @@ private fun LocalFirstContent(onNextClick: () -> Unit, modifier: Modifier = Modi
         Spacer(modifier = Modifier.weight(1f))
 
         HAAccentButton(
-            text = stringResource(R.string.local_first_next),
+            text = stringResource(commonR.string.local_first_next),
             onClick = onNextClick,
             modifier = Modifier.fillMaxWidth().padding(bottom = HADimens.SPACE6),
         )

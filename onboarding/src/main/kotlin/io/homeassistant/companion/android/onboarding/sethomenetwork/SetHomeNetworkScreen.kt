@@ -166,7 +166,7 @@ private fun SetHomeNetworkContent(
         Spacer(modifier = Modifier.weight(1f))
 
         HAAccentButton(
-            text = stringResource(R.string.set_home_network_next),
+            text = stringResource(commonR.string.set_home_network_next),
             onClick = onNextClick,
             modifier = Modifier.fillMaxWidth().padding(bottom = HADimens.SPACE6),
         )
@@ -183,11 +183,11 @@ private fun ColumnScope.Header() {
         contentDescription = null,
     )
     Text(
-        text = stringResource(R.string.set_home_network_title),
+        text = stringResource(commonR.string.set_home_network_title),
         style = HATextStyle.Headline,
     )
     Text(
-        text = stringResource(R.string.set_home_network_content),
+        text = stringResource(commonR.string.set_home_network_content),
         style = HATextStyle.Body,
         modifier = Modifier.widthIn(max = MaxContentWidth),
     )
@@ -199,14 +199,14 @@ private fun WifiNetworkSSIDTextField(currentWifiNetwork: String, onCurrentWifiNe
         value = currentWifiNetwork,
         onValueChange = onCurrentWifiNetworkChange,
         label = {
-            Text(text = stringResource(commonR.string.manage_ssids_wifi))
+            Text(text = stringResource(commonR.string.set_home_network_wifi_name))
         },
         trailingIcon = {
             if (currentWifiNetwork.isNotEmpty()) {
                 IconButton(onClick = { onCurrentWifiNetworkChange("") }) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.clear_text),
+                        contentDescription = stringResource(commonR.string.clear_text),
                     )
                 }
             }
