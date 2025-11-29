@@ -4,6 +4,7 @@ import android.os.Build
 import android.os.strictmode.DiskReadViolation
 import android.os.strictmode.DiskWriteViolation
 import android.os.strictmode.IncorrectContextUseViolation
+import android.os.strictmode.UnsafeIntentLaunchViolation
 import android.os.strictmode.Violation
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.util.IgnoreViolationRule
@@ -11,6 +12,7 @@ import io.homeassistant.companion.android.common.util.IgnoreViolationRule
 val vmPolicyIgnoredViolationRules = listOf(
     IgnoreChromiumTrichomeWrongContextUsage,
     IgnoreBarcodeScannerRotationListenerWrongContextUsage,
+    IgnoreAutofillUnsafeIntentLaunch,
 )
 
 val threadPolicyIgnoredViolationRules = listOf(
@@ -23,6 +25,21 @@ val threadPolicyIgnoredViolationRules = listOf(
     IgnoreAndroidAutoServiceConnectionDiskRead,
     IgnoreAndroidAutoRendererServiceDiskRead,
 )
+
+/**
+ * Ignore an [UnsafeIntentLaunchViolation] that can occur
+ * when selecting an autofill option on the login screen.
+ */
+private data object IgnoreAutofillUnsafeIntentLaunch : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.S)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is UnsafeIntentLaunchViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "android.view.autofill.AutofillManager"
+        }
+    }
+}
 
 /**
  * Ignore an [IncorrectContextUseViolation] that can occur
