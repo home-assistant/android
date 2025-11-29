@@ -37,7 +37,10 @@ import timber.log.Timber
 
 class WebSocketEventHandler {
 
-    internal suspend fun handleEvent(response: EventSocketResponse, activeMessages: ConcurrentHashMap<Long, WebSocketRequest>) {
+    internal suspend fun handleEvent(
+        response: EventSocketResponse,
+        activeMessages: ConcurrentHashMap<Long, WebSocketRequest>,
+    ) {
         // TODO https://github.com/home-assistant/android/issues/5271
         val subscriptionId = response.id
 
