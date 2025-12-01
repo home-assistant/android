@@ -191,8 +191,7 @@ private fun OneServerFound(
                     imageVector = Icons.Default.Storage,
                     contentDescription = null,
                     modifier = Modifier
-                        .size(ICON_SIZE), // TODO double check the size of the icon within the modal
-                    // TODO change the color with proper token
+                        .size(ICON_SIZE),
                     tint = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
                 )
                 Text(
@@ -384,7 +383,7 @@ private fun AnimatedIcon() {
                 .size(80.dp)
                 .scale(pulse)
                 .align(Alignment.Center)
-                .background(HABrandColors.Blue, CircleShape), // TODO we might want to use a semantic token?
+                .background(HABrandColors.Blue, CircleShape),
         ) {
             Icon(
                 imageVector = ImageVector.vectorResource(commonR.drawable.ic_stat_ic_notification_blue),
