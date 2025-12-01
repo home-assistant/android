@@ -38,7 +38,7 @@ class LocationForSecureConnectionViewModel @VisibleForTesting constructor(
     fun allowInsecureConnection(allowInsecureConnection: Boolean) {
         viewModelScope.launch {
             try {
-                serverManager.integrationRepository(serverId).setAllowInsecureConnection(allowInsecureConnection)
+                // serverManager.integrationRepository(serverId).setAllowInsecureConnection(allowInsecureConnection)
             } catch (e: Exception) {
                 Timber.e(
                     e,

@@ -93,7 +93,7 @@ internal fun LocationForSecureConnectionScreen(
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { HATopBar(onBackClick = onBackClick, onHelpClick = onHelpClick) },
+        topBar = { HATopBar(onHelpClick = onHelpClick, onCloseClick = onBackClick) },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { contentPadding ->
         LocationForSecureConnectionContent(

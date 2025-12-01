@@ -23,6 +23,21 @@ class LocationForSecureConnectionScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
+    fun `LocationForSecureConnection with back navigation`() {
+        HAThemeForPreview {
+            LocationForSecureConnectionScreen(
+                onAllowInsecureConnection = { _ -> },
+                onHelpClick = {},
+                onBackClick = {},
+                onShowSnackbar = { _, _ -> true },
+                initialAllowInsecureConnection = null,
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
     fun `LocationForSecureConnection most secure selected`() {
         HAThemeForPreview {
             LocationForSecureConnectionScreen(
