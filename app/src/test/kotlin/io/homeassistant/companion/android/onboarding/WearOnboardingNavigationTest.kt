@@ -73,7 +73,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.runner.RunWith
@@ -201,7 +200,7 @@ internal class WearOnboardingNavigationTest {
     @Test
     fun `Given server onboard when starting the navigation then opens ConnectionScreen`() {
         testNavigation("http://ha") {
-            Assertions.assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
         }
     }
