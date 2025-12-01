@@ -43,7 +43,8 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertNull
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -100,7 +101,7 @@ class HAAppTest {
     @Test
     fun `Given default OnboardingRoute as start when starts then show Welcome`() {
         testApp(OnboardingRoute(hasLocationTracking = true)) {
-            Assertions.assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
             onNodeWithText(stringResource(R.string.welcome_home_assistant_title)).assertIsDisplayed()
             onNodeWithText(stringResource(R.string.welcome_details)).assertIsDisplayed()
             onNodeWithContentDescription(stringResource(R.string.home_assistant_branding_icon_content_description)).assertIsDisplayed()
@@ -112,7 +113,7 @@ class HAAppTest {
     @Test
     fun `Given OnboardingRoute with skipWelcome without urlToOnboard as start when starts then show ServerDiscovery`() {
         testApp(OnboardingRoute(hasLocationTracking = true, skipWelcome = true)) {
-            Assertions.assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
         }
     }
 
@@ -120,8 +121,8 @@ class HAAppTest {
     fun `Given OnboardingRoute with skipWelcome with urlToOnboard as start when starts then show ServerDiscovery`() {
         val url = "http://ha.org"
         testApp(OnboardingRoute(hasLocationTracking = true, skipWelcome = true, urlToOnboard = url)) {
-            Assertions.assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
-            Assertions.assertEquals(
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
+            assertEquals(
                 url,
                 navController.currentBackStackEntry?.toRoute<ConnectionRoute>()?.url,
             )
@@ -131,7 +132,7 @@ class HAAppTest {
     @Test
     fun `Given FrontendRoute as start when starts then navigate to Frontend and finish current activity`() {
         testApp(FrontendRoute()) {
-            Assertions.assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
             verify(exactly = 1) {
                 activityNavigator.navigate(
                     match {
@@ -143,14 +144,14 @@ class HAAppTest {
                 )
             }
             // TODO remove this once we are using WebViewActivity anymore
-            Assertions.assertTrue(activity.isFinishing)
+            assertTrue(activity.isFinishing)
         }
     }
 
     @Test
     fun `Given WearOnboardingRoute with url to onboard as start when starts then navigate to ConnectionScreen`() {
         testApp(WearOnboardingRoute("wear", "http://ha")) {
-            Assertions.assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
         }
     }
@@ -158,7 +159,7 @@ class HAAppTest {
     @Test
     fun `Given WearOnboardingRoute without as start when starts then navigate to ServerDiscoveryScreen`() {
         testApp(WearOnboardingRoute("wear", null)) {
-            Assertions.assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
             onNodeWithText(stringResource(R.string.searching_home_network)).assertIsDisplayed()
         }
     }
@@ -171,7 +172,7 @@ class HAAppTest {
             onNodeWithText(stringResource(R.string.connection_security_less_secure)).performScrollTo().performClick()
             onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().assertIsEnabled().assertIsDisplayed().performClick()
 
-            Assertions.assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
         }
     }
 
