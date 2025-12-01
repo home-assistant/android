@@ -422,7 +422,6 @@ internal fun NavGraphBuilder.wearOnboarding(
     }
 
     navigation<WearOnboardingRoute>(startDestination = startRoute) {
-        // TODO discovery should be able to add existing system
         commonScreens(navController = navController, wearNameToOnboard = wearNameToOnboard)
         nameYourWearDeviceScreen(
             onBackClick = navController::popBackStack,
@@ -451,6 +450,5 @@ internal fun NavGraphBuilder.wearOnboarding(
             },
             onNext = onOnboardingDone,
         )
-        // TODO: Consider making auth_code a value class to prevent string parameter mismatches
     }
 }

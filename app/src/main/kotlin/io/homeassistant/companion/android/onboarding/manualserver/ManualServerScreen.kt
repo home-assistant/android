@@ -194,7 +194,6 @@ private fun ServerUrlTextField(
             if (isError) {
                 Text(
                     text = stringResource(commonR.string.manual_server_wrong_url),
-                    // TODO probably wrong style and color/token
                     style = HATextStyle.BodyMedium.copy(color = LocalHAColorScheme.current.colorBorderDangerNormal),
                 )
             }

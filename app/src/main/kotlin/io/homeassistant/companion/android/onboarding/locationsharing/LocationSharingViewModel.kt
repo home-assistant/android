@@ -8,6 +8,7 @@ import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.LocationSharingRoute
+import io.homeassistant.companion.android.sensors.LocationSensorManager
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -29,10 +30,9 @@ internal class LocationSharingViewModel @VisibleForTesting constructor(
             try {
                 sensorDao.setSensorsEnabled(
                     sensorIds = listOf(
-                        // TODO add sensor ID from `LocationSensorManager` instead of string
-                        "location_background",
-                        "zone_background",
-                        "accurate_location",
+                        LocationSensorManager.backgroundLocation.id,
+                        LocationSensorManager.zoneLocation.id,
+                        LocationSensorManager.singleAccurateLocation.id,
                     ),
                     serverId = serverId,
                     enabled = enabled,

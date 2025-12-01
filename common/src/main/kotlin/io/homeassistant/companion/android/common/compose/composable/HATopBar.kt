@@ -56,7 +56,6 @@ fun HATopBar(
         },
         colors = TopAppBarColors(
             containerColor = LocalHAColorScheme.current.colorSurfaceDefault,
-            // TODO validate that we use colorOnNeutralQuiet
             navigationIconContentColor = LocalHAColorScheme.current.colorOnNeutralQuiet,
             actionIconContentColor = LocalHAColorScheme.current.colorOnNeutralQuiet,
             // For now this color are not used we would need to decide with Design team which token to use here
