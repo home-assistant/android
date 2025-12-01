@@ -172,8 +172,13 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
                     messagingTokenProvider(),
                 ),
             )
-            return serverManager.convertTemporaryServer(tempServerId)
+            val serverId = serverManager.convertTemporaryServer(tempServerId)
                 ?: throw IllegalStateException("Server still temporary")
+
+            // Active the newly added server
+            serverManager.activateServer(serverId)
+
+            return serverId
         } catch (e: Exception) {
             // Fatal errors: if one of these calls fail, the app cannot proceed.
             // Show an error, clean up the session and require new registration.

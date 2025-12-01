@@ -34,8 +34,8 @@ import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.isIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.common.util.maybeAskForIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.launcher.intentLauncherOnboarding
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
-import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
 import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
 import io.homeassistant.companion.android.settings.gestures.GesturesFragment
@@ -77,9 +77,6 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             updateNotificationChannelPrefs()
         }
-
-    private val requestOnboardingResult = registerForActivityResult(OnboardApp(), this::onOnboardingComplete)
-
     private var serverAuth: Int? = null
     private val serverMutex = Mutex()
 
@@ -140,13 +137,15 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
 
         findPreference<Preference>("server_add")?.let {
             it.setOnPreferenceClickListener {
-                requestOnboardingResult.launch(
-                    OnboardApp.Input(
-                        // Empty url skips the 'Welcome' screen
-                        url = "",
-                        discoveryOptions = OnboardApp.DiscoveryOptions.HIDE_EXISTING,
-                    ),
-                )
+                requireContext().apply {
+                    startActivity(
+                        intentLauncherOnboarding(
+                            urlToOnboard = null,
+                            hideExistingServers = true,
+                            skipWelcome = true,
+                        ),
+                    )
+                }
                 return@setOnPreferenceClickListener true
             }
         }
@@ -558,12 +557,6 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
             }
         }
         return true
-    }
-
-    private fun onOnboardingComplete(result: OnboardApp.Output?) {
-        lifecycleScope.launch {
-            presenter.addServer(result)
-        }
     }
 
     private fun openNotificationSettings() {
