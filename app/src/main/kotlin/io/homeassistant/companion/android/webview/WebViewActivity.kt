@@ -1705,18 +1705,22 @@ class WebViewActivity :
     }
 
     private fun waitForConnection() {
-        Handler(Looper.getMainLooper()).postDelayed(
-            {
-                if (
-                    !isConnected &&
-                    !loadedUrl.toHttpUrl().pathSegments.first().contains("api") &&
-                    !loadedUrl.toHttpUrl().pathSegments.first().contains("local")
-                ) {
-                    showError(errorType = ErrorType.TIMEOUT_EXTERNAL_BUS)
-                }
-            },
-            CONNECTION_DELAY,
-        )
+        if (supportFragmentManager.backStackEntryCount > 0) {
+            Timber.i("Fragments ${supportFragmentManager.fragments} displayed, skipping connection wait")
+        } else {
+            Handler(Looper.getMainLooper()).postDelayed(
+                {
+                    if (
+                        !isConnected &&
+                        !loadedUrl.toHttpUrl().pathSegments.first().contains("api") &&
+                        !loadedUrl.toHttpUrl().pathSegments.first().contains("local")
+                    ) {
+                        showError(errorType = ErrorType.TIMEOUT_EXTERNAL_BUS)
+                    }
+                },
+                CONNECTION_DELAY,
+            )
+        }
     }
 
     override fun sendExternalBusMessage(message: ExternalBusMessage) {
