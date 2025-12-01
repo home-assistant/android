@@ -301,6 +301,6 @@ private fun WebViewContentScreenPreview() {
         webViewInitialized = true,
         customViewFromWebView = null,
         onFullscreenClicked = {},
-        onDiscardNotificationPermission = {},
+        onNotificationPermissionResult = {},
     )
 }

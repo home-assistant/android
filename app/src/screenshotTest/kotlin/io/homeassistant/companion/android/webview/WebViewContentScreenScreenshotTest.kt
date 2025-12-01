@@ -26,7 +26,7 @@ class WebViewContentScreenScreenshotTest {
             webViewInitialized = true,
             customViewFromWebView = null,
             onFullscreenClicked = {},
-            onDiscardNotificationPermission = {},
+            onNotificationPermissionResult = {},
         )
     }
 
@@ -46,7 +46,7 @@ class WebViewContentScreenScreenshotTest {
             webViewInitialized = true,
             customViewFromWebView = null,
             onFullscreenClicked = {},
-            onDiscardNotificationPermission = {},
+            onNotificationPermissionResult = {},
         )
     }
 
@@ -66,7 +66,7 @@ class WebViewContentScreenScreenshotTest {
             webViewInitialized = true,
             customViewFromWebView = null,
             onFullscreenClicked = {},
-            onDiscardNotificationPermission = {},
+            onNotificationPermissionResult = {},
         )
     }
 
@@ -86,7 +86,7 @@ class WebViewContentScreenScreenshotTest {
             webViewInitialized = true,
             customViewFromWebView = null,
             onFullscreenClicked = {},
-            onDiscardNotificationPermission = {},
+            onNotificationPermissionResult = {},
             supportsNotificationPermission = true,
         )
     }
