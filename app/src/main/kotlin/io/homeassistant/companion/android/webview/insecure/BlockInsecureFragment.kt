@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment
 import io.homeassistant.companion.android.settings.SettingsActivity
@@ -40,7 +41,7 @@ class BlockInsecureFragment private constructor() : Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        val serverId = arguments?.getInt(EXTRA_SERVER, -1) ?: -1
+        val serverId = arguments?.getInt(EXTRA_SERVER, ServerManager.SERVER_ID_ACTIVE) ?: ServerManager.SERVER_ID_ACTIVE
         val missingHomeSetup = arguments?.getBoolean(EXTRA_MISSING_HOME_SETUP, false) ?: false
         val missingLocation = arguments?.getBoolean(EXTRA_MISSING_LOCATION, false) ?: false
 

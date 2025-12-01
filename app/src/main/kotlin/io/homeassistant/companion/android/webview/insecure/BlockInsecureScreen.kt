@@ -17,7 +17,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.outlined.Replay
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,10 +25,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.mikepenz.iconics.compose.Image
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HABanner
@@ -67,43 +69,38 @@ internal fun BlockInsecureScreen(
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = { TopBar(onRetry = onRetry, onHelpClick = onHelpClick) },
+        modifier = modifier,
     ) { contentPadding ->
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(contentPadding),
+                .verticalScroll(rememberScrollState())
+                .padding(contentPadding)
+                .padding(horizontal = HADimens.SPACE4),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(HADimens.SPACE6),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = HADimens.SPACE4),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(HADimens.SPACE6),
-            ) {
-                Header()
+            Header()
 
-                if (missingLocation) {
-                    FixBanner(
-                        text = stringResource(commonR.string.block_insecure_missing_location),
-                        actionText = stringResource(commonR.string.block_insecure_action_enable_location),
-                        onFixClick = locationPermissions::launchMultiplePermissionRequest,
-                    )
-                }
-
-                if (missingHomeSetup) {
-                    FixBanner(
-                        text = stringResource(commonR.string.block_insecure_missing_home_setup),
-                        actionText = stringResource(commonR.string.block_insecure_action_configure_home),
-                        onFixClick = onConfigureHomeNetwork,
-                    )
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                BottomButtons(onOpenSettings = onOpenSettings, onChangeSecurityLevel = onChangeSecurityLevel)
+            if (missingLocation) {
+                FixBanner(
+                    text = stringResource(commonR.string.block_insecure_missing_location),
+                    actionText = stringResource(commonR.string.block_insecure_action_enable_location),
+                    onFixClick = locationPermissions::launchMultiplePermissionRequest,
+                )
             }
+
+            if (missingHomeSetup) {
+                FixBanner(
+                    text = stringResource(commonR.string.block_insecure_missing_home_setup),
+                    actionText = stringResource(commonR.string.block_insecure_action_configure_home),
+                    onFixClick = onConfigureHomeNetwork,
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            BottomButtons(onOpenSettings = onOpenSettings, onChangeSecurityLevel = onChangeSecurityLevel)
         }
     }
 }
@@ -132,12 +129,12 @@ private fun TopBar(onRetry: () -> Unit, onHelpClick: () -> Unit) {
 
 @Composable
 private fun ColumnScope.Header() {
-    Icon(
+    Image(
         modifier = Modifier
             .padding(all = 20.dp)
             .size(120.dp),
-        imageVector = Icons.Default.Lock,
-        tint = LocalHAColorScheme.current.colorOnPrimaryNormal,
+        asset = CommunityMaterial.Icon2.cmd_lock_open_alert,
+        colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorOnPrimaryNormal),
         contentDescription = null,
     )
 

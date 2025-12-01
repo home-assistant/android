@@ -274,11 +274,6 @@ class WebViewActivity :
 
     private val snackbarHostState = SnackbarHostState()
 
-    /**
-     * Indicates if the current state is insecure. If so we should not load the URL.
-     */
-    private var isInsecureState: Boolean = false
-
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         if (
@@ -1422,7 +1417,6 @@ class WebViewActivity :
     private suspend fun secureLoadUrl(url: String) {
         fun loadAndWait() {
             webView.loadUrl(url)
-            isInsecureState = false
             waitForConnection()
         }
 
@@ -1431,9 +1425,7 @@ class WebViewActivity :
             return
         }
 
-        val allowInsecureConnection = serverManager.integrationRepository(
-            presenter.getActiveServer(),
-        ).getAllowInsecureConnection()
+        val allowInsecureConnection = presenter.getAllowInsecureConnection()
 
         when (allowInsecureConnection) {
             null, true -> loadAndWait()
@@ -1443,7 +1435,6 @@ class WebViewActivity :
                 )?.connection?.currentSecurityStatusForUrl(this, url)
                 when (status) {
                     is SecurityStatus.Insecure, null -> {
-                        isInsecureState = true
                         showBlockInsecureFragment(
                             serverId = presenter.getActiveServer(),
                             missingHomeSetup = status?.missingHomeSetup ?: false,
