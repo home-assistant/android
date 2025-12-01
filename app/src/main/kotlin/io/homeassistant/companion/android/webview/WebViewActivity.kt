@@ -354,9 +354,9 @@ class WebViewActivity :
                     isExoFullScreen = isFullScreen
                     if (isFullScreen) hideSystemUI() else showSystemUI()
                 },
-                onDiscardNotificationPermission = {
+                onNotificationPermissionResult = { granted ->
                     coroutineScope.launch {
-                        presenter.discardNotificationPermission()
+                        presenter.onNotificationPermissionResult(granted)
                         shouldAskNotificationPermission = false
                     }
                 },

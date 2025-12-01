@@ -84,7 +84,7 @@ internal fun WebViewContentScreen(
     shouldAskNotificationPermission: Boolean,
     webViewInitialized: Boolean,
     onFullscreenClicked: (isFullscreen: Boolean) -> Unit,
-    onDiscardNotificationPermission: () -> Unit,
+    onNotificationPermissionResult: (Boolean) -> Unit,
     nightModeTheme: NightModeTheme? = null,
     statusBarColor: Color? = null,
     backgroundColor: Color? = null,
@@ -135,7 +135,7 @@ internal fun WebViewContentScreen(
         }
         if (webViewInitialized && shouldAskNotificationPermission && supportsNotificationPermission) {
             @SuppressLint("InlinedApi")
-            NotificationPermission(onDiscardNotificationPermission)
+            NotificationPermission(onNotificationPermissionResult)
         }
     }
 }
@@ -198,7 +198,7 @@ private fun SafeHAWebView(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-private fun NotificationPermission(onDiscardNotificationPermission: () -> Unit) {
+private fun NotificationPermission(onPermissionResult: (Boolean) -> Unit) {
     val bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = false)
     val coroutineScope = rememberCoroutineScope()
 
@@ -221,6 +221,7 @@ private fun NotificationPermission(onDiscardNotificationPermission: () -> Unit) 
         permission = Manifest.permission.POST_NOTIFICATIONS,
         previewPermissionStatus = PermissionStatus.Denied(true),
         onPermissionResult = {
+            onPermissionResult(it)
             closeSheet()
         },
     )
@@ -264,7 +265,7 @@ private fun NotificationPermission(onDiscardNotificationPermission: () -> Unit) 
                     HAPlainButton(
                         text = stringResource(commonR.string.notification_permission_dialog_deny),
                         onClick = {
-                            onDiscardNotificationPermission()
+                            onPermissionResult(false)
                             closeSheet()
                         },
                         modifier = Modifier

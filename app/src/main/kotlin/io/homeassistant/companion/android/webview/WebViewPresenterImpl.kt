@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ActivityContext
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -19,6 +20,10 @@ import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.common.util.HAGesture
+import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
+import io.homeassistant.companion.android.database.settings.Setting
+import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.improv.ImprovRepository
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
@@ -54,6 +59,7 @@ class WebViewPresenterImpl @Inject constructor(
     private val prefsRepository: PrefsRepository,
     private val matterUseCase: MatterManager,
     private val threadUseCase: ThreadManager,
+    private val settingsDao: SettingsDao,
 ) : WebViewPresenter {
 
     private val view = context as WebView
@@ -582,7 +588,16 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun discardNotificationPermission() {
+    override suspend fun onNotificationPermissionResult(granted: Boolean) {
+        if (granted && BuildConfig.FLAVOR != "full") {
+            settingsDao.insert(
+                Setting(
+                    serverId,
+                    WebsocketSetting.ALWAYS,
+                    SensorUpdateFrequencySetting.NORMAL,
+                ),
+            )
+        }
         prefsRepository.setAskNotificationPermission(false)
     }
 
