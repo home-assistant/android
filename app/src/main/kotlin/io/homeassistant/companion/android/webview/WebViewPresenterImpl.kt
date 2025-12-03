@@ -7,6 +7,7 @@ import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.graphics.Color
 import androidx.activity.result.ActivityResult
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.net.toUri
@@ -598,10 +599,33 @@ class WebViewPresenterImpl @Inject constructor(
                 ),
             )
         }
-        prefsRepository.setAskNotificationPermission(false)
+        serverManager.integrationRepository(serverId).setAskNotificationPermission(false)
     }
 
+    /**
+     * Determines whether to show the notification permission prompt for the current server.
+     *
+     * The behavior differs between flavors:
+     * - **Full flavor**: If notification permission is already granted, returns `false` and
+     *   persists this decision so future checks also return `false`. This is because in the full
+     *   flavor, FCM handles push notifications and there's no need to tweak the web socket connection.
+     * - **Minimal flavor**: Always respects the per-server stored preference, regardless of the
+     *   current system permission state. This allows the prompt to be shown to configure websocket
+     *   settings even if the system permission was granted outside the app.
+     *
+     * @return `true` if the notification permission prompt should be shown, `false` otherwise
+     */
     override suspend fun shouldAskNotificationPermission(): Boolean {
-        return prefsRepository.shouldAskNotificationPermission()
+        val isPermissionAlreadyGranted = NotificationManagerCompat.from(view as Context).areNotificationsEnabled()
+        val shouldAskNotificationPermission = serverManager.integrationRepository(
+            serverId,
+        ).shouldAskNotificationPermission()
+
+        if (isPermissionAlreadyGranted && BuildConfig.FLAVOR == "full") {
+            serverManager.integrationRepository(serverId).setAskNotificationPermission(false)
+            return false
+        }
+
+        return shouldAskNotificationPermission ?: true
     }
 }

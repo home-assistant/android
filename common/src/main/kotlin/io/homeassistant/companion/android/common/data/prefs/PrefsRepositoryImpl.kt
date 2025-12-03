@@ -44,7 +44,6 @@ private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displaye
 private const val PREF_GESTURE_ACTION_PREFIX = "gesture_action"
 private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
 private const val PREF_SHOW_PRIVACY_HINT = "show_privacy_hint"
-private const val PREF_ASK_NOTIFICATION_PERMISSION = "ask_notification_permission"
 
 /**
  * This class ensure that when we use the local storage in [PrefsRepositoryImpl] the migrations has been made
@@ -363,13 +362,5 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setShowPrivacyHint(showPrivacyHint: Boolean) {
         localStorage().putBoolean(PREF_SHOW_PRIVACY_HINT, showPrivacyHint)
-    }
-
-    override suspend fun setAskNotificationPermission(shouldAsk: Boolean) {
-        localStorage().putBoolean(PREF_ASK_NOTIFICATION_PERMISSION, shouldAsk)
-    }
-
-    override suspend fun shouldAskNotificationPermission(): Boolean {
-        return localStorage().getBooleanOrNull(PREF_ASK_NOTIFICATION_PERMISSION) ?: true
     }
 }

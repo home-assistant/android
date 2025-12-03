@@ -226,7 +226,7 @@ private fun NotificationPermission(onPermissionResult: (Boolean) -> Unit) {
         },
     )
 
-    if (notificationPermission.status is PermissionStatus.Denied && !isClosed) {
+    if (!isClosed) {
         HAModalBottomSheet(
             bottomSheetState = bottomSheetState,
             onDismissRequest = {
