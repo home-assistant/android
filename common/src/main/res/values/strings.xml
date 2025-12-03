@@ -952,6 +952,8 @@
     <string name="wear_os_settings_title">Wear OS settings</string>
     <string name="wear_set_favorites">Select your favorite entities to appear at the top of the Wear home screen. You can also drag and drop to change the order in which they appear.</string>
     <string name="wear_settings">Wear device settings</string>
+    <string name="wear_unsupported_title">Wear OS not supported</string>
+    <string name="wear_unsupported_message">Wear OS onboarding requires the full version of the Home Assistant app with Google Play Services.</string>
     <string name="websocket_listening">Connected to Home Assistant</string>
     <string name="websocket_restricted_title">Unable to open connection to Home Assistant</string>
     <string name="websocket_restricted_fix">Update settings to fix or disable</string>

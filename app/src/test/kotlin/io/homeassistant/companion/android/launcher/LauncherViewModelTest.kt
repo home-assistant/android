@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.launcher
 
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
+import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.network.NetworkState
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
@@ -10,6 +11,9 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
+import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
+import io.homeassistant.companion.android.onboarding.OnboardingRoute
+import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
@@ -43,8 +47,16 @@ class LauncherViewModelTest {
     private fun createViewModel(
         initialDeepLink: LauncherActivity.DeepLink? = null,
         hasLocationTrackingSupport: Boolean = false,
+        isAutomotive: Boolean = false,
     ) {
-        viewModel = LauncherViewModel(initialDeepLink, workManager, serverManager, networkStatusMonitor, hasLocationTrackingSupport)
+        viewModel = LauncherViewModel(
+            initialDeepLink,
+            workManager,
+            serverManager,
+            networkStatusMonitor,
+            hasLocationTrackingSupport,
+            isAutomotive,
+        )
     }
 
     @ParameterizedTest
@@ -68,8 +80,10 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Frontend(null, ServerManager.SERVER_ID_ACTIVE), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(
+            LauncherUiState.Ready(FrontendRoute(null, ServerManager.SERVER_ID_ACTIVE)),
+            viewModel.uiState.value,
+        )
         assertEquals(0, networkStateFlow.subscriptionCount.value)
 
         // verify resync registration
@@ -90,12 +104,12 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertTrue(viewModel.navigationEventsFlow.replayCache.isEmpty())
+        assertEquals(LauncherUiState.Loading, viewModel.uiState.value)
         assertEquals(1, networkStateFlow.subscriptionCount.value)
     }
 
     @Test
-    fun `Given active server connected and registered, when network is UNAVAILABLE, then do not navigate but continue observing network changes`() = runTest {
+    fun `Given active server connected and registered, when network is UNAVAILABLE, then show network unavailable but continue observing network changes`() = runTest {
         val server = mockk<Server>(relaxed = true)
         coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns server
         coEvery { serverManager.isRegistered() } returns true
@@ -106,7 +120,7 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertTrue(viewModel.navigationEventsFlow.replayCache.isEmpty())
+        assertEquals(LauncherUiState.NetworkUnavailable, viewModel.uiState.value)
         assertEquals(1, networkStateFlow.subscriptionCount.value)
     }
 
@@ -124,14 +138,16 @@ class LauncherViewModelTest {
 
         createViewModel()
         advanceUntilIdle()
-        assertTrue(viewModel.navigationEventsFlow.replayCache.isEmpty())
+        assertEquals(LauncherUiState.Loading, viewModel.uiState.value)
         assertEquals(1, networkStateFlow.subscriptionCount.value)
 
         networkStateFlow.emit(NetworkState.READY_REMOTE)
         advanceUntilIdle()
 
-        assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Frontend(null, ServerManager.SERVER_ID_ACTIVE), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(
+            LauncherUiState.Ready(FrontendRoute(null, ServerManager.SERVER_ID_ACTIVE)),
+            viewModel.uiState.value,
+        )
         assertEquals(0, networkStateFlow.subscriptionCount.value)
 
         // verify resync registration
@@ -147,7 +163,17 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false, hasLocationTrackingSupport = false), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(
+            LauncherUiState.Ready(
+                OnboardingRoute(
+                    hasLocationTracking = false,
+                    urlToOnboard = null,
+                    hideExistingServers = false,
+                    skipWelcome = false,
+                ),
+            ),
+            viewModel.uiState.value,
+        )
     }
 
     @Test
@@ -159,8 +185,17 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false, hasLocationTrackingSupport = false), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(
+            LauncherUiState.Ready(
+                OnboardingRoute(
+                    hasLocationTracking = false,
+                    urlToOnboard = null,
+                    hideExistingServers = false,
+                    skipWelcome = false,
+                ),
+            ),
+            viewModel.uiState.value,
+        )
     }
 
     @Test
@@ -173,8 +208,17 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false, hasLocationTrackingSupport = false), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(
+            LauncherUiState.Ready(
+                OnboardingRoute(
+                    hasLocationTracking = false,
+                    urlToOnboard = null,
+                    hideExistingServers = false,
+                    skipWelcome = false,
+                ),
+            ),
+            viewModel.uiState.value,
+        )
     }
 
     @Test
@@ -186,8 +230,17 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
-        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false, hasLocationTrackingSupport = false), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(
+            LauncherUiState.Ready(
+                OnboardingRoute(
+                    hasLocationTracking = false,
+                    urlToOnboard = null,
+                    hideExistingServers = false,
+                    skipWelcome = false,
+                ),
+            ),
+            viewModel.uiState.value,
+        )
     }
 
     @Test
@@ -232,20 +285,20 @@ class LauncherViewModelTest {
     }
 
     @Test
-    fun `Given no navigation event, when calling shouldShowSplashScreen, then return true`() = runTest {
+    fun `Given Loading state, when calling shouldShowSplashScreen, then return true`() = runTest {
         createViewModel()
 
         assertTrue(viewModel.shouldShowSplashScreen())
     }
 
     @Test
-    fun `Given a navigation event, when calling shouldShowSplashScreen, then return false`() = runTest {
+    fun `Given Ready state, when calling shouldShowSplashScreen, then return false`() = runTest {
         coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns null
 
         createViewModel()
         advanceUntilIdle()
 
-        assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false, hasLocationTrackingSupport = false), viewModel.navigationEventsFlow.replayCache.first())
+        assertTrue(viewModel.uiState.value is LauncherUiState.Ready)
         assertFalse(viewModel.shouldShowSplashScreen())
     }
 
@@ -262,11 +315,25 @@ class LauncherViewModelTest {
         hasLocationTrackingSupport: Boolean,
     ) = runTest {
         createViewModel(
-            initialDeepLink = LauncherActivity.DeepLink.OpenOnboarding("http://homeassistant.io", hideExistingServers = hideExistingServers, skipWelcome = skipWelcome),
+            initialDeepLink = LauncherActivity.DeepLink.OpenOnboarding(
+                "http://homeassistant.io",
+                hideExistingServers = hideExistingServers,
+                skipWelcome = skipWelcome,
+            ),
             hasLocationTrackingSupport = hasLocationTrackingSupport,
         )
         advanceUntilIdle()
-        assertEquals(LauncherNavigationEvent.Onboarding("http://homeassistant.io", hideExistingServers = hideExistingServers, skipWelcome = skipWelcome, hasLocationTrackingSupport = hasLocationTrackingSupport), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(
+            LauncherUiState.Ready(
+                OnboardingRoute(
+                    hasLocationTracking = hasLocationTrackingSupport,
+                    urlToOnboard = "http://homeassistant.io",
+                    hideExistingServers = hideExistingServers,
+                    skipWelcome = skipWelcome,
+                ),
+            ),
+            viewModel.uiState.value,
+        )
     }
 
     @Test
@@ -283,13 +350,56 @@ class LauncherViewModelTest {
 
         createViewModel(LauncherActivity.DeepLink.NavigateTo("/path", serverId))
         advanceUntilIdle()
-        assertEquals(LauncherNavigationEvent.Frontend("/path", serverId), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(
+            LauncherUiState.Ready(FrontendRoute("/path", serverId)),
+            viewModel.uiState.value,
+        )
     }
 
     @Test
-    fun `Given initial deep link is OpenWearOnboarding when creating viewModel, then navigate to wear onboarding with the server url and wear name`() = runTest {
-        createViewModel(LauncherActivity.DeepLink.OpenWearOnboarding("ha_wear", "http://ha"))
+    fun `Given initial deep link is OpenWearOnboarding and full flavor, when creating viewModel, then navigate to wear onboarding`() = runTest {
+        createViewModel(
+            initialDeepLink = LauncherActivity.DeepLink.OpenWearOnboarding("ha_wear", "http://ha"),
+            hasLocationTrackingSupport = true,
+        )
         advanceUntilIdle()
-        assertEquals(LauncherNavigationEvent.WearOnboarding("ha_wear", "http://ha"), viewModel.navigationEventsFlow.replayCache.first())
+        assertEquals(
+            LauncherUiState.Ready(WearOnboardingRoute("ha_wear", "http://ha")),
+            viewModel.uiState.value,
+        )
+    }
+
+    @Test
+    fun `Given initial deep link is OpenWearOnboarding and minimal flavor, when creating viewModel, then show wear unsupported`() = runTest {
+        createViewModel(
+            initialDeepLink = LauncherActivity.DeepLink.OpenWearOnboarding("ha_wear", "http://ha"),
+            hasLocationTrackingSupport = false,
+        )
+        advanceUntilIdle()
+        assertEquals(
+            LauncherUiState.WearUnsupported,
+            viewModel.uiState.value,
+        )
+    }
+
+    @Test
+    fun `Given isAutomotive is true, when network is READY, then navigate to automotive route`() = runTest {
+        val server = mockk<Server>(relaxed = true)
+
+        every { workManager.enqueue(any<OneTimeWorkRequest>()) } returns mockk()
+
+        coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns server
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
+        val networkStateFlow = MutableStateFlow(NetworkState.READY_REMOTE)
+        coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
+
+        createViewModel(isAutomotive = true)
+        advanceUntilIdle()
+
+        assertEquals(
+            LauncherUiState.Ready(AutomotiveRoute),
+            viewModel.uiState.value,
+        )
     }
 }

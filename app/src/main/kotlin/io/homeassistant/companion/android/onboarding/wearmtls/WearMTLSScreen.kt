@@ -269,7 +269,6 @@ private fun PasswordTextField(currentPassword: String, onPasswordChange: (String
             if (isError) {
                 Text(
                     stringResource(commonR.string.wear_mtls_open_error),
-                    // TODO probably wrong style and color/token
                     style = HATextStyle.BodyMedium.copy(color = LocalHAColorScheme.current.colorBorderDangerNormal),
                 )
             }
