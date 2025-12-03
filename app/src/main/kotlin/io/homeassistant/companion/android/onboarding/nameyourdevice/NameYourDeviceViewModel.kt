@@ -49,6 +49,13 @@ internal sealed interface NameYourDeviceNavigationEvent {
     data class Error(@StringRes val messageRes: Int) : NameYourDeviceNavigationEvent
 }
 
+/**
+ * ViewModel for the Name Your Device screen during phone/tablet onboarding.
+ *
+ * **Note:** This ViewModel is NOT used during Wear OS onboarding. The Wear onboarding flow
+ * uses the screen without this view model since it handles device naming differently, as it returns the result
+ * directly to the phone app via [io.homeassistant.companion.android.onboarding.WearOnboardApp.Output].
+ */
 @HiltViewModel
 internal class NameYourDeviceViewModel @VisibleForTesting constructor(
     private val route: NameYourDeviceRoute,

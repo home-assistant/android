@@ -46,6 +46,10 @@ internal fun NavGraphBuilder.nameYourWearDeviceScreen(
         // If the logic of the screen evolve we should consider introducing a viewModel instead.
         var deviceName by rememberSaveable { mutableStateOf(route.defaultDeviceName) }
 
+        // Unlike phone/tablet onboarding, we don't use NameYourDeviceViewModel here.
+        // In Wear onboarding, the phone acts as a proxy: it collects the device name and auth code,
+        // then forwards them to the watch via WearOnboardApp.Output. The watch itself handles
+        // server registration, not this device.
         NameYourDeviceScreen(
             onBackClick = onBackClick,
             onHelpClick = onHelpClick,
