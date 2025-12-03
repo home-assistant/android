@@ -9,8 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.wearable.Node
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.HomeAssistantApplication
-import io.homeassistant.companion.android.onboarding.OnboardApp
+import io.homeassistant.companion.android.onboarding.WearOnboardApp
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 import kotlinx.coroutines.cancel
@@ -23,7 +22,7 @@ class SettingsWearMainView : AppCompatActivity() {
     private val settingsWearViewModel by viewModels<SettingsWearViewModel>()
 
     private val registerActivityResult = registerForActivityResult(
-        OnboardApp(),
+        WearOnboardApp(),
         this::onOnboardingComplete,
     )
 
@@ -69,28 +68,21 @@ class SettingsWearMainView : AppCompatActivity() {
 
     private fun loginWearOs() {
         registerActivityResult.launch(
-            OnboardApp.Input(
+            WearOnboardApp.Input(
                 url = registerUrl,
                 defaultDeviceName = currentNodes.firstOrNull()?.displayName ?: "unknown",
-                locationTrackingPossible = false,
-                // While notifications are technically possible, the app can't handle this for the Wear device
-                notificationsPossible = false,
-                isWatch = true,
-                discoveryOptions = OnboardApp.DiscoveryOptions.ADD_EXISTING_EXTERNAL,
-                mayRequireTlsClientCertificate =
-                (application as HomeAssistantApplication).keyChainRepository.getPrivateKey() != null,
             ),
         )
     }
 
-    private fun onOnboardingComplete(result: OnboardApp.Output?) {
+    private fun onOnboardingComplete(result: WearOnboardApp.Output?) {
         result?.apply {
             settingsWearViewModel.sendAuthToWear(
                 url,
                 authCode,
                 deviceName,
-                deviceTrackingEnabled,
-                true,
+                deviceTrackingEnabled = false,
+                notificationsEnabled = true,
                 tlsClientCertificateUri,
                 tlsClientCertificatePassword,
             )
