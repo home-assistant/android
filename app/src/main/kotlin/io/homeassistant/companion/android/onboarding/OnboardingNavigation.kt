@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.onboarding.localfirst.navigation.Local
 import io.homeassistant.companion.android.onboarding.localfirst.navigation.localFirstScreen
 import io.homeassistant.companion.android.onboarding.localfirst.navigation.navigateToLocalFirst
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.LocationForSecureConnectionRoute
+import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.URL_SECURITY_LEVEL_DOCUMENTATION
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.locationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.navigateToLocationForSecureConnection
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.LocationSharingRoute
@@ -197,9 +198,7 @@ internal fun NavGraphBuilder.onboarding(
         )
         locationForSecureConnectionScreen(
             onHelpClick = {
-                navController.navigateToUri(
-                    "https://companion.home-assistant.io/docs/getting_started/connection-security-level",
-                )
+                navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION)
             },
             onGotoNextScreen = { allowInsecureConnection, serverId ->
                 if (allowInsecureConnection) {

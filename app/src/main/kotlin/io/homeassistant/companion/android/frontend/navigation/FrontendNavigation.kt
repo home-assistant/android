@@ -1,25 +1,23 @@
 package io.homeassistant.companion.android.frontend.navigation
 
-import android.content.ComponentName
-import androidx.activity.compose.LocalActivity
-import androidx.navigation.ActivityNavigator
-import androidx.navigation.ActivityNavigatorDestinationBuilder
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
+import androidx.navigation.activity
 import androidx.navigation.compose.composable
-import androidx.navigation.get
 import androidx.navigation.toRoute
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.launcher.HAStartDestinationRoute
+import io.homeassistant.companion.android.util.getActivity
+import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 internal data class FrontendActivityRoute(
-    val path: String? = null,
     // Override the serial name to match the name in WebViewActivity
     @SerialName("server") val serverId: Int = SERVER_ID_ACTIVE,
+    val path: String? = null,
 )
 
 @Serializable
@@ -44,27 +42,19 @@ internal fun NavController.navigateToFrontend(
  * to [FrontendRoute]. This route will then navigate to [FrontendActivityRoute] and finish the
  * current activity. This behavior is necessary until `WebViewActivity` is replaced with a
  * composable NavGraph entry, allowing for more direct navigation.
+ *
+ * Note: Security level verification is handled by [WebViewActivity] before loading any URL.
+ * If the security level is not set, [WebViewActivity] will show the
+ * [io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment].
  */
 internal fun NavGraphBuilder.frontendScreen(navController: NavController) {
     composable<FrontendRoute> {
-        val dummy = it.toRoute<FrontendRoute>()
-        navController.navigate(FrontendActivityRoute(dummy.path, dummy.serverId))
-        val activity = LocalActivity.current
-        activity?.finish()
+        val route = it.toRoute<FrontendRoute>()
+        navController.navigate(FrontendActivityRoute(route.serverId, route.path))
+        navController.context.getActivity()?.finish()
     }
 
-    // TODO replace with strong types when WebViewActivity is available to onboarding module
-    // Inspired from activity<T> { } to be able to give a ComponentName instead of a class since :onboarding doesn't know :app
-    val destination = ActivityNavigatorDestinationBuilder(
-        provider[ActivityNavigator::class],
-        FrontendActivityRoute::class,
-        emptyMap(),
-    ).build().setComponentName(
-        ComponentName(
-            navController.context,
-            "io.homeassistant.companion.android.webview.WebViewActivity",
-        ),
-    )
-
-    addDestination(destination)
+    activity<FrontendActivityRoute> {
+        activityClass = WebViewActivity::class
+    }
 }
