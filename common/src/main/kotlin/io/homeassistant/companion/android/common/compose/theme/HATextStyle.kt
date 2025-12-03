@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle.Body
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle.BodyMedium
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle.Button
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle.Headline
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle.HeadlineMedium
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle.UserInput
 
 /**
@@ -20,6 +21,7 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle.UserI
  *
  * Available text styles:
  * - [Headline]: Used for main titles and headings.
+ * - [HeadlineMedium]: Used for sub titles and headings.
  * - [Body]: Default text style for body content.
  * - [BodyMedium]: A variation of the Body style with medium font size.
  * - [UserInput]: Text style for user input fields.
@@ -32,6 +34,17 @@ object HATextStyle {
         get() = TextStyle(
             fontStyle = FontStyle.Normal,
             fontSize = HAFontSize.X4L,
+            lineHeight = HAFontSize.X5L,
+            fontWeight = FontWeight.W500,
+            textAlign = TextAlign.Center,
+            color = LocalHAColorScheme.current.colorTextPrimary,
+        )
+
+    val HeadlineMedium
+        @Composable
+        get() = TextStyle(
+            fontStyle = FontStyle.Normal,
+            fontSize = HAFontSize.X3L,
             lineHeight = HAFontSize.X5L,
             fontWeight = FontWeight.W500,
             textAlign = TextAlign.Center,

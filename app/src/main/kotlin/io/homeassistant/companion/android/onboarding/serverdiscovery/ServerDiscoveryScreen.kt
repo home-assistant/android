@@ -185,7 +185,7 @@ private fun OneServerFound(
             ) {
                 Text(
                     text = serverDiscovered.name,
-                    style = HATextStyle.Headline,
+                    style = HATextStyle.HeadlineMedium,
                 )
                 Icon(
                     imageVector = Icons.Default.Storage,

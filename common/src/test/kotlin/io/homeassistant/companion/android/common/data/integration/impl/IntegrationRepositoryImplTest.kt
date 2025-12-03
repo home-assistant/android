@@ -2,10 +2,12 @@ package io.homeassistant.companion.android.common.data.integration.impl
 
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl.Companion.PREF_ASK_NOTIFICATION_PERMISSION
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.net.URL
@@ -14,6 +16,8 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -85,5 +89,74 @@ class IntegrationRepositoryImplTest {
         val result = repository.renderTemplate("whatever", emptyMap())
 
         assertEquals("[true,false]", result)
+    }
+
+    @Test
+    fun `Given no preference set when checking shouldAskNotificationPermission then returns null`() = runTest {
+        coEvery { localStorage.getBooleanOrNull("${serverID}_$PREF_ASK_NOTIFICATION_PERMISSION") } returns null
+
+        val result = repository.shouldAskNotificationPermission()
+
+        assertNull(result)
+    }
+
+    @Test
+    fun `Given preference set to true when checking shouldAskNotificationPermission then returns true`() = runTest {
+        coEvery { localStorage.getBooleanOrNull("${serverID}_$PREF_ASK_NOTIFICATION_PERMISSION") } returns true
+
+        val result = repository.shouldAskNotificationPermission()
+
+        assertTrue(result == true)
+    }
+
+    @Test
+    fun `Given preference set to false when checking shouldAskNotificationPermission then returns false`() = runTest {
+        coEvery { localStorage.getBooleanOrNull("${serverID}_$PREF_ASK_NOTIFICATION_PERMISSION") } returns false
+
+        val result = repository.shouldAskNotificationPermission()
+
+        assertEquals(false, result)
+    }
+
+    @Test
+    fun `Given setAskNotificationPermission called with true then stores true for server`() = runTest {
+        coEvery { localStorage.putBoolean(any(), any()) } returns Unit
+
+        repository.setAskNotificationPermission(true)
+
+        coVerify { localStorage.putBoolean("${serverID}_$PREF_ASK_NOTIFICATION_PERMISSION", true) }
+    }
+
+    @Test
+    fun `Given setAskNotificationPermission called with false then stores false for server`() = runTest {
+        coEvery { localStorage.putBoolean(any(), any()) } returns Unit
+
+        repository.setAskNotificationPermission(false)
+
+        coVerify { localStorage.putBoolean("${serverID}_$PREF_ASK_NOTIFICATION_PERMISSION", false) }
+    }
+
+    @Test
+    fun `Given different server IDs then notification permission is stored separately per server`() = runTest {
+        val otherServerId = 99
+        coEvery { serverManager.getServer(otherServerId) } returns server
+        val otherRepository = IntegrationRepositoryImpl(
+            integrationService,
+            serverManager,
+            otherServerId,
+            localStorage,
+            "",
+            "",
+            "",
+            "",
+        )
+
+        coEvery { localStorage.putBoolean(any(), any()) } returns Unit
+
+        repository.setAskNotificationPermission(true)
+        otherRepository.setAskNotificationPermission(false)
+
+        coVerify { localStorage.putBoolean("${serverID}_$PREF_ASK_NOTIFICATION_PERMISSION", true) }
+        coVerify { localStorage.putBoolean("${otherServerId}_$PREF_ASK_NOTIFICATION_PERMISSION", false) }
     }
 }

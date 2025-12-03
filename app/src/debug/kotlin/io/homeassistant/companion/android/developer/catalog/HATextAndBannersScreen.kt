@@ -45,6 +45,11 @@ private fun LazyListScope.textStyles() {
                 modifier = Modifier.fillMaxWidth(),
             )
             Text(
+                text = "HeadlineMedium",
+                style = HATextStyle.HeadlineMedium,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
                 text = "Body",
                 style = HATextStyle.Body,
                 modifier = Modifier.fillMaxWidth(),
