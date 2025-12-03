@@ -54,6 +54,11 @@ private enum class SelectionKey {
 /**
  * Public screen so it can be used in other places than the onboarding,
  * to update the choice of the user.
+ *
+ * @param onBackClick callback for back navigation (shows back arrow). Use when navigating within settings.
+ * @param onCloseClick callback for close action (shows X button). Use when dismissing from WebView.
+ *
+ * Note: `onBackClick` and `onCloseClick` are mutually exclusive - only one should be provided.
  */
 @Composable
 fun LocationForSecureConnectionScreen(
@@ -63,6 +68,7 @@ fun LocationForSecureConnectionScreen(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
     onBackClick: (() -> Unit)? = null,
+    onCloseClick: (() -> Unit)? = null,
     isStandaloneScreen: Boolean = false,
 ) {
     val initialAllowInsecureConnection by viewModel.allowInsecureConnection.collectAsState(null)
@@ -70,6 +76,7 @@ fun LocationForSecureConnectionScreen(
     LocationForSecureConnectionScreen(
         initialAllowInsecureConnection = initialAllowInsecureConnection,
         onBackClick = onBackClick,
+        onCloseClick = onCloseClick,
         isStandaloneScreen = isStandaloneScreen,
         onAllowInsecureConnection = { allowInsecureConnection ->
             viewModel.allowInsecureConnection(allowInsecureConnection)
@@ -89,11 +96,12 @@ internal fun LocationForSecureConnectionScreen(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
     onBackClick: (() -> Unit)? = null,
+    onCloseClick: (() -> Unit)? = null,
     isStandaloneScreen: Boolean = false,
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { HATopBar(onHelpClick = onHelpClick, onCloseClick = onBackClick) },
+        topBar = { HATopBar(onHelpClick = onHelpClick, onBackClick = onBackClick, onCloseClick = onCloseClick) },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { contentPadding ->
         LocationForSecureConnectionContent(

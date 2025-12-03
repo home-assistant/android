@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -54,12 +53,25 @@ class ConnectionSecurityLevelFragment private constructor() : Fragment() {
         const val RESULT_KEY = "connection_security_level_result"
         private const val EXTRA_SERVER = "server_id"
         private const val EXTRA_HANDLE_ALL_INSETS = "handle_all_insets"
+        private const val EXTRA_USE_CLOSE_BUTTON = "use_close_button"
 
-        fun newInstance(serverId: Int, handleAllInsets: Boolean = false): ConnectionSecurityLevelFragment {
+        /**
+         * Creates a new instance of the fragment.
+         *
+         * @param serverId The server ID to configure security level for
+         * @param handleAllInsets Whether to handle all window insets or only bottom if false
+         * @param useCloseButton If true, shows an X close button; if false, shows a back arrow.
+         */
+        fun newInstance(
+            serverId: Int,
+            handleAllInsets: Boolean = false,
+            useCloseButton: Boolean = false,
+        ): ConnectionSecurityLevelFragment {
             return ConnectionSecurityLevelFragment().apply {
                 arguments = bundleOf(
                     EXTRA_SERVER to serverId,
                     EXTRA_HANDLE_ALL_INSETS to handleAllInsets,
+                    EXTRA_USE_CLOSE_BUTTON to useCloseButton,
                 )
             }
         }
@@ -91,7 +103,6 @@ class ConnectionSecurityLevelFragment private constructor() : Fragment() {
         requireActivity().onBackPressedDispatcher.addCallback(this, backPressedCallback)
     }
 
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
@@ -110,6 +121,12 @@ class ConnectionSecurityLevelFragment private constructor() : Fragment() {
                         )
                     }
 
+                val useCloseButton = arguments?.getBoolean(EXTRA_USE_CLOSE_BUTTON) == true
+                val onDismiss: () -> Unit = {
+                    setFragmentResult(RESULT_KEY, Bundle())
+                    parentFragmentManager.popBackStack()
+                }
+
                 HATheme {
                     Scaffold(
                         snackbarHost = {
@@ -123,14 +140,9 @@ class ConnectionSecurityLevelFragment private constructor() : Fragment() {
                         LocationForSecureConnectionScreen(
                             isStandaloneScreen = true,
                             viewModel = viewModel,
-                            onGoToNextScreen = {
-                                setFragmentResult(RESULT_KEY, Bundle())
-                                parentFragmentManager.popBackStack()
-                            },
-                            onBackClick = {
-                                setFragmentResult(RESULT_KEY, Bundle())
-                                parentFragmentManager.popBackStack()
-                            },
+                            onGoToNextScreen = { onDismiss() },
+                            onBackClick = if (useCloseButton) null else onDismiss,
+                            onCloseClick = if (useCloseButton) onDismiss else null,
                             onHelpClick = {
                                 uriHandler.openUri(URL_SECURITY_LEVEL_DOCUMENTATION)
                             },

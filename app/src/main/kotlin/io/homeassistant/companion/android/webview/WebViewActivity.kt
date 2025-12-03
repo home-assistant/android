@@ -1425,7 +1425,14 @@ class WebViewActivity :
         }
 
         supportFragmentManager.beginTransaction()
-            .replace(android.R.id.content, ConnectionSecurityLevelFragment.newInstance(serverId, true))
+            .replace(
+                android.R.id.content,
+                ConnectionSecurityLevelFragment.newInstance(
+                    serverId = serverId,
+                    handleAllInsets = true,
+                    useCloseButton = true,
+                ),
+            )
             .addToBackStack(null)
             .commit()
     }
