@@ -608,7 +608,7 @@ class WebViewPresenterImpl @Inject constructor(
      * The behavior differs between flavors:
      * - **Full flavor**: If notification permission is already granted, returns `false` and
      *   persists this decision so future checks also return `false`. This is because in the full
-     *   flavor, FCM handles push notifications and there's no need to tweak the web socket connection.
+     *   flavor, FCM usually handles push notifications and there's no need to tweak the websocket settings.
      * - **Minimal flavor**: Always respects the per-server stored preference, regardless of the
      *   current system permission state. This allows the prompt to be shown to configure websocket
      *   settings even if the system permission was granted outside the app.
