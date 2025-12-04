@@ -49,6 +49,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
 
     companion object {
         private const val UNIQUE_WORK_NAME = "WebSocketManager"
+        private const val OLD_UNIQUE_WORK_NAME = "WebSockManager"
         private const val SOURCE = "Websocket"
         private const val NOTIFICATION_ID = 65423
         private const val NOTIFICATION_RESTRICTED_ID = 65424
@@ -66,7 +67,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
                     .build()
 
             val workManager = WorkManager.getInstance(context)
-            workManager.cancelUniqueWork("WebSockManager")
+            workManager.cancelUniqueWork(OLD_UNIQUE_WORK_NAME)
             val workInfo = workManager.getWorkInfosForUniqueWork(UNIQUE_WORK_NAME).await().firstOrNull()
 
             if (workInfo == null || workInfo.state.isFinished || workInfo.state == WorkInfo.State.ENQUEUED) {
