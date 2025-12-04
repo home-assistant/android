@@ -48,7 +48,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     CoroutineWorker(appContext, workerParams) {
 
     companion object {
-        private const val TAG = "WebSocketManager"
+        private const val UNIQUE_WORK_NAME = "WebSocketManager"
         private const val SOURCE = "Websocket"
         private const val NOTIFICATION_ID = 65423
         private const val NOTIFICATION_RESTRICTED_ID = 65424
@@ -67,17 +67,17 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
 
             val workManager = WorkManager.getInstance(context)
             workManager.cancelUniqueWork("WebSockManager")
-            val workInfo = workManager.getWorkInfosForUniqueWork(TAG).await().firstOrNull()
+            val workInfo = workManager.getWorkInfosForUniqueWork(UNIQUE_WORK_NAME).await().firstOrNull()
 
             if (workInfo == null || workInfo.state.isFinished || workInfo.state == WorkInfo.State.ENQUEUED) {
                 workManager.enqueueUniquePeriodicWork(
-                    TAG,
+                    UNIQUE_WORK_NAME,
                     ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
                     websocketNotifications,
                 )
             } else {
                 workManager.enqueueUniquePeriodicWork(
-                    TAG,
+                    UNIQUE_WORK_NAME,
                     ExistingPeriodicWorkPolicy.KEEP,
                     websocketNotifications,
                 )
