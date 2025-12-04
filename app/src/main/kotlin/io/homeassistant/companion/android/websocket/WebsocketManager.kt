@@ -66,6 +66,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
                     .build()
 
             val workManager = WorkManager.getInstance(context)
+            workManager.cancelUniqueWork("WebSockManager")
             val workInfo = workManager.getWorkInfosForUniqueWork(TAG).await().firstOrNull()
 
             if (workInfo == null || workInfo.state.isFinished || workInfo.state == WorkInfo.State.ENQUEUED) {
