@@ -67,7 +67,12 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
                     .build()
 
             val workManager = WorkManager.getInstance(context)
+
+            // This is needed because the unique work name had been renamed, and it caused two scheduled periodic workers to exist,
+            // and it resulted in duplicate notifications over WebSocket.
+            // https://github.com/home-assistant/android/issues/6066#issuecomment-3608649429
             workManager.cancelUniqueWork(OLD_UNIQUE_WORK_NAME)
+
             val workInfo = workManager.getWorkInfosForUniqueWork(UNIQUE_WORK_NAME).await().firstOrNull()
 
             if (workInfo == null || workInfo.state.isFinished || workInfo.state == WorkInfo.State.ENQUEUED) {
