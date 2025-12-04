@@ -11,6 +11,6 @@
     android:resizeMode="horizontal|vertical"
     android:widgetFeatures="reconfigurable"
     android:description="@string/media_player_widget_desc"
-    android:widgetCategory="home_screen"
+    android:widgetCategory="keyguard|home_screen"
     android:previewImage="@drawable/widget_example_media_player_controls"
     android:previewLayout="@layout/widget_media_controls_wrapper_dynamiccolor" />
