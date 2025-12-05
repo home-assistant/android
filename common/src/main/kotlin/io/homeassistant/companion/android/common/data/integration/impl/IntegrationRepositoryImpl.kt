@@ -97,7 +97,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val PREF_LAST_USED_PIPELINE_ID = "last_used_pipeline"
         private const val PREF_LAST_USED_PIPELINE_STT = "last_used_pipeline_stt"
         private const val PREF_THREAD_BORDER_AGENT_IDS = "thread_border_agent_ids"
-        private const val PREF_ALLOW_INSECURE_CONNECTION = "allow_insecure_connection"
 
         private const val APPLOCK_TIMEOUT_GRACE_MS = 1000
     }
@@ -203,7 +202,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         localStorage.remove("${serverId}_$PREF_SEC_WARNING_NEXT")
         localStorage.remove("${serverId}_$PREF_LAST_USED_PIPELINE_ID")
         localStorage.remove("${serverId}_$PREF_LAST_USED_PIPELINE_STT")
-        localStorage.remove("${serverId}_$PREF_ALLOW_INSECURE_CONNECTION")
 
         // Thread credentials are managed in the app module and can't be deleted now, so store them
         val threadBorderAgentIds = getThreadBorderAgentIds()
@@ -704,13 +702,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun getAllowInsecureConnection(): Boolean? {
-        return localStorage.getBooleanOrNull("${serverId}_$PREF_ALLOW_INSECURE_CONNECTION")
-    }
-
-    override suspend fun setAllowInsecureConnection(allowInsecureConnection: Boolean) {
-        localStorage.putBoolean("${serverId}_$PREF_ALLOW_INSECURE_CONNECTION", allowInsecureConnection)
-    }
-
     private suspend fun Server.callWebhookOnUrls(
         request: IntegrationRequest,
         onSuccess: suspend (response: Response<ResponseBody>) -> Unit = {},
