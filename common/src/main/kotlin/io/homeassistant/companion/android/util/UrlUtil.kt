@@ -168,3 +168,15 @@ private fun InetAddress.isPrivateOrLocal(): Boolean {
         // 169.254.0.0/16 or fe80::/10
         this.isAnyLocalAddress // 0.0.0.0 or ::
 }
+
+/**
+ * Checks if this URL has the same origin (scheme, host, and port) as the other URL.
+ *
+ * @param other the URL to compare against
+ * @return `true` if both URLs have the same scheme, host, and port
+ */
+fun HttpUrl.hasSameOrigin(other: HttpUrl): Boolean {
+    return scheme == other.scheme &&
+        host == other.host &&
+        port == other.port
+}
