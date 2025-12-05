@@ -37,8 +37,8 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
             tasks.withType<PreviewScreenshotValidationTask>().configureEach {
                 // Hack until we get the update of the screenshot libray
                 // https://issuetracker.google.com/issues/444048026
-                // 3g is the minimal value for our tests to pass currently
-                maxHeapSize = "3g"
+                // 4g is the minimal value for our tests to pass currently
+                maxHeapSize = "4g"
             }
 
             androidConfig {
