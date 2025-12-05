@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
+import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -242,9 +243,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 )
 
                 val entityPictureUrl = entity?.attributes?.get("entity_picture")?.toString()
-                val baseUrl = serverManager.getServer(
+                val baseUrl = serverManager.connectionStateProvider(
                     widget.serverId,
-                )?.connection?.getUrl().toString().removeSuffix("/")
+                ).urlFlow().firstUrlOrNull()?.toString()?.removeSuffix("/") ?: ""
                 val url = if (entityPictureUrl?.startsWith("http") ==
                     true
                 ) {

@@ -283,8 +283,11 @@ class BluetoothSensorManager : SensorManager {
         )
     }
 
-    private fun isPermittedOnThisNetwork(context: Context) = serverManager(context).defaultServers.any {
-        it.connection.isInternal(requiresUrl = false)
+    private suspend fun isPermittedOnThisNetwork(context: Context): Boolean {
+        val serverMgr = serverManager(context)
+        return serverMgr.defaultServers.any { server ->
+            serverMgr.connectionStateProvider(server.id).isInternal(requiresUrl = false)
+        }
     }
 
     private suspend fun updateBLEDevice(context: Context) {
