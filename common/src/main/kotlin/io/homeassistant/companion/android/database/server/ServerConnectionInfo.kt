@@ -44,9 +44,9 @@ data class ServerConnectionInfo(
     val internalVpn: Boolean? = null,
     @ColumnInfo(name = "prioritize_internal")
     val prioritizeInternal: Boolean = false,
+    @ColumnInfo(name = "allow_insecure_connection")
+    val allowInsecureConnection: Boolean? = null,
 ) {
-    @Ignore
-    lateinit var wifiHelper: WifiHelper
 
     @Ignore
     lateinit var networkHelper: NetworkHelper

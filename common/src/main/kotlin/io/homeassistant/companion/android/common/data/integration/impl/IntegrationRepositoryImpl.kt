@@ -98,7 +98,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val PREF_LAST_USED_PIPELINE_ID = "last_used_pipeline"
         private const val PREF_LAST_USED_PIPELINE_STT = "last_used_pipeline_stt"
         private const val PREF_THREAD_BORDER_AGENT_IDS = "thread_border_agent_ids"
-        private const val PREF_ALLOW_INSECURE_CONNECTION = "allow_insecure_connection"
 
         @VisibleForTesting internal const val PREF_ASK_NOTIFICATION_PERMISSION = "ask_notification_permission"
 
@@ -206,7 +205,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         localStorage.remove("${serverId}_$PREF_SEC_WARNING_NEXT")
         localStorage.remove("${serverId}_$PREF_LAST_USED_PIPELINE_ID")
         localStorage.remove("${serverId}_$PREF_LAST_USED_PIPELINE_STT")
-        localStorage.remove("${serverId}_$PREF_ALLOW_INSECURE_CONNECTION")
 
         // Thread credentials are managed in the app module and can't be deleted now, so store them
         val threadBorderAgentIds = getThreadBorderAgentIds()
@@ -707,13 +705,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun getAllowInsecureConnection(): Boolean? {
-        return localStorage.getBooleanOrNull("${serverId}_$PREF_ALLOW_INSECURE_CONNECTION")
-    }
-
-    override suspend fun setAllowInsecureConnection(allowInsecureConnection: Boolean) {
-        localStorage.putBoolean("${serverId}_$PREF_ALLOW_INSECURE_CONNECTION", allowInsecureConnection)
-    }
-
     override suspend fun shouldAskNotificationPermission(): Boolean? {
         return localStorage.getBooleanOrNull("${serverId}_$PREF_ASK_NOTIFICATION_PERMISSION")
     }
