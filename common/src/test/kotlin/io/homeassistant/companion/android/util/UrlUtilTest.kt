@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.util
 
 import java.net.URL
 import kotlinx.coroutines.test.runTest
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -171,5 +172,30 @@ class UrlUtilTest {
         // Google's public DNS IP
         val url = URL("http://8.8.8.8:80")
         assertTrue(url.isPubliclyAccessible())
+    }
+
+    @ParameterizedTest(name = "hasSameOrigin: {0} vs {1} -> {2}")
+    @CsvSource(
+        "https://example.com, https://example.com, true",
+        "https://example.com/path, https://example.com, true",
+        "https://example.com?query=1, https://example.com, true",
+        "https://example.com:443, https://example.com, true",
+        "http://example.com:80, http://example.com, true",
+        "https://example.com:8123, https://example.com:8123, true",
+        "https://example.com, https://other.com, false",
+        "https://example.com, http://example.com, false",
+        "https://example.com:8123, https://example.com:8124, false",
+        "https://example.com, https://example.com.evil.com, false",
+        "https://sub.example.com, https://example.com, false",
+    )
+    fun `hasSameOrigin returns expected value`(
+        url1: String,
+        url2: String,
+        expected: Boolean,
+    ) {
+        val httpUrl1 = url1.toHttpUrl()
+        val httpUrl2 = url2.toHttpUrl()
+
+        assertEquals(expected, httpUrl1.hasSameOrigin(httpUrl2))
     }
 }
