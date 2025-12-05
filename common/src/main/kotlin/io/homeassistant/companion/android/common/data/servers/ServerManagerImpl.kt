@@ -34,6 +34,7 @@ class ServerManagerImpl @Inject constructor(
     private val authenticationRepositoryFactory: AuthenticationRepositoryFactory,
     private val integrationRepositoryFactory: IntegrationRepositoryFactory,
     private val webSocketRepositoryFactory: WebSocketRepositoryFactory,
+    private val serverConnectionStateProviderFactory: ServerConnectionStateProviderFactory,
     private val prefsRepository: PrefsRepository,
     private val serverDao: ServerDao,
     private val sensorDao: SensorDao,
@@ -51,6 +52,7 @@ class ServerManagerImpl @Inject constructor(
     private val authenticationRepos = mutableMapOf<Int, AuthenticationRepository>()
     private val integrationRepos = mutableMapOf<Int, IntegrationRepository>()
     private val webSocketRepos = mutableMapOf<Int, WebSocketRepository>()
+    private val connectionRepos = mutableMapOf<Int, ServerConnectionStateProvider>()
 
     companion object {
         private const val PREF_ACTIVE_SERVER = "active_server"
@@ -66,10 +68,7 @@ class ServerManagerImpl @Inject constructor(
         // Initial (blocking) load
         runBlocking {
             serverDao.getAll().forEach {
-                mutableServers[it.id] = it.apply {
-                    connection.wifiHelper = wifiHelper
-                    connection.networkHelper = networkHelper
-                }
+                mutableServers[it.id] = it
             }
         }
 
@@ -86,10 +85,7 @@ class ServerManagerImpl @Inject constructor(
                         removeServerFromManager(it.key)
                     }
                 servers.forEach {
-                    mutableServers[it.id] = it.apply {
-                        connection.wifiHelper = wifiHelper
-                        connection.networkHelper = networkHelper
-                    }
+                    mutableServers[it.id] = it
                 }
                 mutableDefaultServersFlow.emit(defaultServers)
             }
@@ -98,7 +94,7 @@ class ServerManagerImpl @Inject constructor(
 
     override suspend fun isRegistered(): Boolean = mutableServers.values.any {
         it.type == ServerType.DEFAULT &&
-            it.connection.isRegistered() &&
+            it.connection.isRegistered &&
             FailFast.failOnCatchSuspend(
                 message = {
                     """Failed to get authenticationRepository for ${it.id}. Current repository ids: ${authenticationRepos.keys}."""
@@ -117,10 +113,7 @@ class ServerManagerImpl @Inject constructor(
         return if (server.type == ServerType.DEFAULT) {
             serverDao.add(newServer).toInt()
         } else {
-            mutableServers[newServer.id] = newServer.apply {
-                connection.wifiHelper = wifiHelper
-                connection.networkHelper = networkHelper
-            }
+            mutableServers[newServer.id] = newServer
             newServer.id
         }
     }
@@ -138,20 +131,13 @@ class ServerManagerImpl @Inject constructor(
     override suspend fun getServer(id: Int): Server? {
         val serverId = if (id == SERVER_ID_ACTIVE) activeServerId() else id
         return serverId?.let {
-            mutableServers[serverId]
-                ?: serverDao.get(serverId)?.apply {
-                    connection.wifiHelper = wifiHelper
-                    connection.networkHelper = networkHelper
-                }
+            mutableServers[serverId] ?: serverDao.get(serverId)
         }
     }
 
     override suspend fun getServer(webhookId: String): Server? =
         mutableServers.values.firstOrNull { it.connection.webhookId == webhookId }
-            ?: serverDao.get(webhookId)?.apply {
-                connection.wifiHelper = wifiHelper
-                connection.networkHelper = networkHelper
-            }
+            ?: serverDao.get(webhookId)
 
     override fun activateServer(id: Int) {
         if (id != SERVER_ID_ACTIVE && mutableServers[id] != null && mutableServers[id]?.type == ServerType.DEFAULT) {
@@ -160,10 +146,7 @@ class ServerManagerImpl @Inject constructor(
     }
 
     override fun updateServer(server: Server) {
-        mutableServers[server.id] = server.apply {
-            connection.wifiHelper = wifiHelper
-            connection.networkHelper = networkHelper
-        }
+        mutableServers[server.id] = server
         if (server.type == ServerType.DEFAULT) {
             ioScope.launch { serverDao.update(server) }
         }
@@ -200,6 +183,7 @@ class ServerManagerImpl @Inject constructor(
         integrationRepos.remove(id)
         webSocketRepos[id]?.shutdown()
         webSocketRepos.remove(id)
+        connectionRepos.remove(id)
         mutableServers.remove(id)
     }
 
@@ -230,6 +214,16 @@ class ServerManagerImpl @Inject constructor(
             val repository = webSocketRepositoryFactory.create(id)
             webSocketRepos[id] = repository
             checkNotNull(webSocketRepos[id]) { "Should not be null since we've just caled create ($repository)" }
+        }
+    }
+
+    override suspend fun connectionStateProvider(serverId: Int): ServerConnectionStateProvider {
+        val id = if (serverId == SERVER_ID_ACTIVE) activeServerId() else serverId
+        return connectionRepos[id] ?: run {
+            if (id == null || mutableServers[id] == null) throw IllegalArgumentException("No server for ID")
+            val provider = serverConnectionStateProviderFactory.create(id)
+            connectionRepos[id] = provider
+            checkNotNull(connectionRepos[id]) { "Should not be null since we've just called create ($provider)" }
         }
     }
 }
