@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.common.data.integration.applyCompresse
 import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
@@ -301,7 +302,10 @@ class HaControlsProviderService : ControlsProviderService() {
             }
         }
         val entities = mutableMapOf<String, Entity>()
-        val baseUrl = serverManager.getServer(serverId)?.connection?.getUrl()?.toString()?.removeSuffix("/") ?: ""
+        // TODO see what we do about this one we should get the url only when we need it not prefetching it
+        val baseUrl =
+            serverManager.connectionStateProvider(serverId).urlFlow().firstUrlOrNull()?.toString()?.removeSuffix("/")
+                ?: ""
 
         areaRegistry[serverId] = getAreaRegistry.await()
         deviceRegistry[serverId] = getDeviceRegistry.await()

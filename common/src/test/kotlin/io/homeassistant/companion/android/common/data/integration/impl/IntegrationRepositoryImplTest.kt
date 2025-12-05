@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.integration.impl
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl.Companion.PREF_ASK_NOTIFICATION_PERMISSION
+import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -28,6 +29,7 @@ class IntegrationRepositoryImplTest {
     private val serverID = 42
     private val server = mockk<Server>()
     private val serverConnection = mockk<ServerConnectionInfo>()
+    private val connectionStateProvider = mockk<ServerConnectionStateProvider>()
     private val localStorage = mockk<LocalStorage>()
 
     private lateinit var repository: IntegrationRepository
@@ -36,7 +38,8 @@ class IntegrationRepositoryImplTest {
     fun setUp() {
         coEvery { serverManager.getServer(serverID) } returns server
         every { server.connection } returns serverConnection
-        every { serverConnection.getApiUrls() } returns listOf(URL("http://homeassistant:8123"))
+        coEvery { serverManager.connectionStateProvider(serverID) } returns connectionStateProvider
+        coEvery { connectionStateProvider.getApiUrls() } returns listOf(URL("http://homeassistant:8123"))
 
         repository = IntegrationRepositoryImpl(integrationService, serverManager, serverID, localStorage, "", "", "", "")
     }

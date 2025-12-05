@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companio
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
@@ -174,13 +175,17 @@ internal class WebSocketCoreImpl(
 
     override suspend fun server() = serverManager.getServer(serverId)
 
+    private suspend fun connectionStateProvider() = serverManager.connectionStateProvider(serverId)
+
     override suspend fun connect(): Boolean {
         connectedMutex.withLock {
             if (connection != null && connected.isCompleted) {
                 return !connected.isCancelled
             }
 
-            val url = server()?.connection?.getUrl()
+            val url = connectionStateProvider().urlFlow().firstUrlOrNull {
+                "Insecure state not opening WebSocket connection"
+            }
             if (url == null) {
                 Timber.w("No url to connect websocket too.")
                 return false

@@ -49,6 +49,7 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.notifications.NotificationData
 import io.homeassistant.companion.android.common.notifications.clearNotification
@@ -98,6 +99,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -1257,10 +1259,15 @@ class MessagingManager @Inject constructor(
         if (!iconUrl.isNullOrBlank()) {
             val dataIcon = iconUrl.trim().replace(" ", "%20")
             val serverId = data[THIS_SERVER_ID]!!.toInt()
-            val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), dataIcon)
-            val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(dataIcon))
-            if (bitmap != null) {
-                builder.setLargeIcon(bitmap)
+            val urlState = serverManager.connectionStateProvider(serverId).urlFlow().first()
+            if (urlState is UrlState.HasUrl) {
+                val url = UrlUtil.handle(urlState.url, dataIcon)
+                val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(dataIcon))
+                if (bitmap != null) {
+                    builder.setLargeIcon(bitmap)
+                }
+            } else {
+                Timber.w("Not fetching image since URL is insecure")
             }
         }
     }
@@ -1270,27 +1277,32 @@ class MessagingManager @Inject constructor(
         if (!imageUrl.isNullOrBlank()) {
             val dataImage = imageUrl.trim().replace(" ", "%20")
             val serverId = data[THIS_SERVER_ID]!!.toInt()
-            val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), dataImage)
-            val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(dataImage))
-            if (bitmap != null) {
-                builder
-                    .setLargeIcon(bitmap)
-                    .setStyle(
-                        NotificationCompat.BigPictureStyle().also { style ->
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                                saveTempAnimatedImage(
-                                    serverId,
-                                    url,
-                                    !UrlUtil.isAbsoluteUrl(dataImage),
-                                )?.let { filePath ->
-                                    style.bigPicture(Icon.createWithContentUri(filePath))
-                                } ?: run { style.bigPicture(bitmap) }
-                            } else {
-                                style.bigPicture(bitmap)
+            val urlState = serverManager.connectionStateProvider(serverId).urlFlow().first()
+            if (urlState is UrlState.HasUrl) {
+                val url = UrlUtil.handle(urlState.url, dataImage)
+                val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(dataImage))
+                if (bitmap != null) {
+                    builder
+                        .setLargeIcon(bitmap)
+                        .setStyle(
+                            NotificationCompat.BigPictureStyle().also { style ->
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                    saveTempAnimatedImage(
+                                        serverId,
+                                        url,
+                                        !UrlUtil.isAbsoluteUrl(dataImage),
+                                    )?.let { filePath ->
+                                        style.bigPicture(Icon.createWithContentUri(filePath))
+                                    } ?: run { style.bigPicture(bitmap) }
+                                } else {
+                                    style.bigPicture(bitmap)
+                                }
                             }
-                        }
-                            .bigLargeIcon(null as Bitmap?),
-                    )
+                                .bigLargeIcon(null as Bitmap?),
+                        )
+                }
+            } else {
+                Timber.w("Not fetching image since URL is insecure")
             }
         }
     }
@@ -1363,35 +1375,40 @@ class MessagingManager @Inject constructor(
         if (!videoUrl.isNullOrBlank()) {
             val dataVideo = videoUrl.trim().replace(" ", "%20")
             val serverId = data[THIS_SERVER_ID]!!.toInt()
-            val url = UrlUtil.handle(serverManager.getServer(serverId)?.connection?.getUrl(), dataVideo)
-            getVideoFrames(serverId, url, !UrlUtil.isAbsoluteUrl(dataVideo))?.let { frames ->
-                Timber.d("Found ${frames.size} frames for video notification")
-                RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
-                    if (frames.isNotEmpty()) {
-                        frames.forEach { frame ->
-                            remoteViewFlipper.addView(
-                                R.id.frame_flipper,
-                                RemoteViews(context.packageName, R.layout.view_single_frame).apply {
-                                    setImageViewBitmap(
-                                        R.id.frame,
-                                        frame,
-                                    )
-                                },
-                            )
-                        }
+            val urlState = serverManager.connectionStateProvider(serverId).urlFlow().first()
+            if (urlState is UrlState.HasUrl) {
+                val url = UrlUtil.handle(urlState.url, dataVideo)
+                getVideoFrames(serverId, url, !UrlUtil.isAbsoluteUrl(dataVideo))?.let { frames ->
+                    Timber.d("Found ${frames.size} frames for video notification")
+                    RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
+                        if (frames.isNotEmpty()) {
+                            frames.forEach { frame ->
+                                remoteViewFlipper.addView(
+                                    R.id.frame_flipper,
+                                    RemoteViews(context.packageName, R.layout.view_single_frame).apply {
+                                        setImageViewBitmap(
+                                            R.id.frame,
+                                            frame,
+                                        )
+                                    },
+                                )
+                            }
 
-                        data[NotificationData.TITLE]?.let { rawTitle ->
-                            remoteViewFlipper.setTextViewText(R.id.title, rawTitle)
-                        }
+                            data[NotificationData.TITLE]?.let { rawTitle ->
+                                remoteViewFlipper.setTextViewText(R.id.title, rawTitle)
+                            }
 
-                        data[NotificationData.MESSAGE]?.let { rawMessage ->
-                            remoteViewFlipper.setTextViewText(R.id.info, rawMessage)
-                        }
+                            data[NotificationData.MESSAGE]?.let { rawMessage ->
+                                remoteViewFlipper.setTextViewText(R.id.info, rawMessage)
+                            }
 
-                        builder.setCustomBigContentView(remoteViewFlipper)
-                        builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                            builder.setCustomBigContentView(remoteViewFlipper)
+                            builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                        }
                     }
                 }
+            } else {
+                Timber.w("Not fetching video since URL is insecure")
             }
         }
     }
