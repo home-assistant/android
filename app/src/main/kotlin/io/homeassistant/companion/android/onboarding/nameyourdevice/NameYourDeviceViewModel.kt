@@ -144,7 +144,15 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
             // Until https://github.com/home-assistant/android/issues/6005 is not addressed this is going to fail.
             // It means that the flag allow insecure won't be set for HTTPS
             runCatching {
-                serverManager.integrationRepository(serverId).setAllowInsecureConnection(false)
+                serverManager.getServer(serverId)?.let { server ->
+                    serverManager.updateServer(
+                        server.copy(
+                            connection = server.connection.copy(
+                                allowInsecureConnection = false,
+                            ),
+                        ),
+                    )
+                }
             }.onFailure { exception ->
                 Timber.e(exception, "Failed to enforce secure connection for server $serverId")
             }
