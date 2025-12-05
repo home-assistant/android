@@ -88,4 +88,10 @@ interface ServerManager {
      * @throws [IllegalArgumentException] if there is no server with the provided ID
      */
     suspend fun webSocketRepository(serverId: Int = SERVER_ID_ACTIVE): WebSocketRepository
+
+    /**
+     * @return [ServerConnectionStateProvider] for the server with the provided ID
+     * @throws [IllegalArgumentException] if there is no server with the provided ID
+     */
+    suspend fun connectionStateProvider(serverId: Int = SERVER_ID_ACTIVE): ServerConnectionStateProvider
 }

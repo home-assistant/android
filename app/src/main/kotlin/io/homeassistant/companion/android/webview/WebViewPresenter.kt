@@ -5,12 +5,13 @@ import android.content.IntentSender
 import androidx.activity.result.ActivityResult
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.JsonObject
 
 interface WebViewPresenter {
 
-    fun onViewReady(path: String?)
+    suspend fun load(path: String?, isInternalOverride: ((ServerConnectionInfo) -> Boolean)? = null)
 
     fun getActiveServer(): Int
     suspend fun getActiveServerName(): String?
