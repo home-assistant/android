@@ -36,7 +36,7 @@ internal fun mockServer(
     // If serverManager is provided, also mock the connectionStateProvider for this server
     serverManager?.let { sm ->
         coEvery { sm.connectionStateProvider(serverId) } returns mockk<ServerConnectionStateProvider> {
-            every { getExternalUrl() } returns url?.let { URL(it) }
+            coEvery { getExternalUrl() } returns url?.let { URL(it) }
         }
     }
 
