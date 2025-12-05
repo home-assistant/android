@@ -33,4 +33,6 @@ interface WebView {
         error: SslError? = null,
         description: String? = null,
     )
+
+    fun showBlockInsecure(serverId: Int, missingHomeSetup: Boolean, missingLocation: Boolean)
 }
