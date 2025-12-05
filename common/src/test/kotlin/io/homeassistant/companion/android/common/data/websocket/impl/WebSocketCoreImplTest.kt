@@ -70,7 +70,7 @@ class WebSocketCoreImplTest {
         mockOkHttpClient = mockk<OkHttpClient>(relaxed = true)
         val mockServerManager = mockk<ServerManager>(relaxed = true)
         val mockAuthenticationRepository = mockk<AuthenticationRepository>(relaxed = true)
-        val mockConnectionRepository = mockk<ServerConnectionStateProvider>(relaxed = true)
+        val mockConnectionStateProvider = mockk<ServerConnectionStateProvider>(relaxed = true)
 
         val testServerId = 1
         val testServer = Server(
@@ -86,11 +86,11 @@ class WebSocketCoreImplTest {
         mockConnection = mockk(relaxed = true)
         coEvery { mockServerManager.getServer(any<Int>()) } returns testServer
         coEvery { mockServerManager.authenticationRepository(testServerId) } returns mockAuthenticationRepository
-        coEvery { mockServerManager.connectionStateProvider(testServerId) } returns mockConnectionRepository
+        coEvery { mockServerManager.connectionStateProvider(testServerId) } returns mockConnectionStateProvider
         coEvery { mockAuthenticationRepository.retrieveAccessToken() } returns "mock_access_token"
         // Use OkHttp's URL parsing to normalize URLs (adds trailing slash) like the real implementation
         val parsedUrl = url.takeIf { it.startsWith("http") }?.toHttpUrlOrNull()?.toUrl()
-        every { mockConnectionRepository.urlFlow() } returns flowOf(UrlState.HasUrl(parsedUrl))
+        every { mockConnectionStateProvider.urlFlow() } returns flowOf(UrlState.HasUrl(parsedUrl))
         // The implementation use a background scope to properly handle async messages, to not block the test
         // we are injecting a background scope to properly control it within the tests, the scope will close itself at the end of the test
         webSocketCore = WebSocketCoreImpl(
@@ -163,9 +163,11 @@ connect()
     }
 
     @Test
-    fun `Given no server When connect is invoked Then it returns false and connection state is null`() = runTest {
+    fun `Given no URL When connect is invoked Then it returns false and connection state is null`() = runTest {
         val serverManager = mockk<ServerManager>(relaxed = true)
-        coEvery { serverManager.getServer(any<Int>()) } returns null
+        val mockConnectionStateProvider = mockk<ServerConnectionStateProvider>(relaxed = true)
+        coEvery { serverManager.connectionStateProvider(1) } returns mockConnectionStateProvider
+        coEvery { mockConnectionStateProvider.urlFlow() } returns flowOf(UrlState.HasUrl(null))
 
         val webSocketCore = WebSocketCoreImpl(
             okHttpClient = mockk(),
