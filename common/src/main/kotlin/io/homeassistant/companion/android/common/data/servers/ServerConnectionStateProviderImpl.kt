@@ -224,7 +224,6 @@ class ServerConnectionStateProviderImpl @AssistedInject constructor(
             }
 
             override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
-                Timber.e("Hello net changed $network")
                 trySend(Unit)
             }
         }

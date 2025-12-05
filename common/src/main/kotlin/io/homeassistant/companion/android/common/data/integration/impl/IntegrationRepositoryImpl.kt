@@ -34,6 +34,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateSensorStatesIntegrationRequest
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
@@ -107,6 +108,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     private suspend fun webSocketRepository(): WebSocketRepository = serverManager.webSocketRepository(serverId)
 
+    private suspend fun connectionStateProvider() = serverManager.connectionStateProvider(serverId)
+
     private var appActive = false
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -117,7 +120,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         request.supportsEncryption = false
         request.deviceId = deviceId
 
-        val url = server().connection.getUrl()?.toHttpUrlOrNull()
+        val url = connectionStateProvider().urlFlow().firstUrlOrNull {
+            "Insecure state to register a device"
+        }?.toHttpUrlOrNull()
         if (url == null) {
             Timber.e("Unable to register device due to missing URL")
             return
@@ -150,7 +155,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration, allowReregistration: Boolean) {
         val request = RegisterDeviceIntegrationRequest(createUpdateRegistrationRequest(deviceRegistration))
-        server().callWebhookOnUrls(
+        callWebhookOnUrls(
             request,
             onSuccess = { response ->
                 // The server should return a body with the registration, but might return:
@@ -218,12 +223,12 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     private suspend fun isRegistered(): Boolean {
-        return server().connection.getApiUrls().isNotEmpty()
+        return connectionStateProvider().getApiUrls().isNotEmpty()
     }
 
     override suspend fun renderTemplate(template: String, variables: Map<String, String>): String? {
         var causeException: Exception? = null
-        for (it in server().connection.getApiUrls()) {
+        for (it in connectionStateProvider().getApiUrls()) {
             try {
                 val templateResult = integrationService.getTemplate(
                     it.toHttpUrlOrNull()!!,
@@ -255,11 +260,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun updateLocation(updateLocation: UpdateLocation) {
         val updateLocationRequest = createUpdateLocation(updateLocation)
-        server().callWebhookOnUrls(updateLocationRequest)
+        callWebhookOnUrls(updateLocationRequest)
     }
 
     override suspend fun callAction(domain: String, action: String, actionData: Map<String, Any?>) {
-        server().callWebhookOnUrls(
+        callWebhookOnUrls(
             CallServiceIntegrationRequest(
                 ActionRequest(
                     domain,
@@ -271,11 +276,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun scanTag(data: Map<String, String>) {
-        server().callWebhookOnUrls(ScanTagIntegrationRequest(data))
+        callWebhookOnUrls(ScanTagIntegrationRequest(data))
     }
 
     override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>) {
-        server().callWebhookOnUrls(
+        callWebhookOnUrls(
             FireEventIntegrationRequest(
                 FireEventRequest(
                     eventType,
@@ -288,7 +293,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     override suspend fun getZones(): List<Entity> {
         var causeException: Exception? = null
         var zones: List<EntityResponse>? = null
-        for (it in server().connection.getApiUrls()) {
+        for (it in connectionStateProvider().getApiUrls()) {
             try {
                 zones = integrationService.getZones(it.toHttpUrlOrNull()!!, GetZonesIntegrationRequest)
             } catch (e: Exception) {
@@ -401,7 +406,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         var response: GetConfigResponse? = null
         var causeException: Exception? = null
 
-        for (it in server().connection.getApiUrls()) {
+        for (it in connectionStateProvider().getApiUrls()) {
             try {
                 response = integrationService.getConfig(it.toHttpUrlOrNull()!!, GetConfigIntegrationRequest)
             } catch (e: Exception) {
@@ -524,7 +529,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun getEntity(entityId: String): Entity? {
-        val url = server().connection.getUrl()?.toHttpUrlOrNull()
+        val url = connectionStateProvider().urlFlow().firstUrlOrNull {
+            "Insecure state to get entity"
+        }?.toHttpUrlOrNull()
         if (url == null) {
             Timber.e("Unable to register device due to missing URL")
             return null
@@ -647,10 +654,13 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         val integrationRequest = RegisterSensorIntegrationRequest(registrationData)
 
-        server.callWebhookOnUrls(integrationRequest) { response ->
-            // If we created sensor or it already exists
-            response.isSuccessful || response.code() == 409
-        }
+        callWebhookOnUrls(
+            integrationRequest,
+            isValidResponse = { response ->
+                // If we created sensor or it already exists
+                response.isSuccessful || response.code() == 409
+            },
+        )
     }
 
     override suspend fun updateSensors(sensors: List<SensorRegistration<Any>>): Boolean {
@@ -667,7 +677,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         )
 
         var causeException: Exception? = null
-        for (it in server().connection.getApiUrls()) {
+        for (it in connectionStateProvider().getApiUrls()) {
             try {
                 integrationService.updateSensors(it.toHttpUrlOrNull()!!, integrationRequest).let {
                     it.forEach { (_, response) ->
@@ -701,18 +711,18 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun getAllowInsecureConnection(): Boolean? {
-    private suspend fun Server.callWebhookOnUrls(
+    private suspend fun callWebhookOnUrls(
         request: IntegrationRequest,
         onSuccess: suspend (response: Response<ResponseBody>) -> Unit = {},
         isValidResponse: (response: Response<ResponseBody>) -> Boolean = { response -> response.isSuccessful },
     ) {
         var firstCauseException: Exception? = null
-        val httpURLs = connection.getApiUrls().mapNotNull { it.toHttpUrlOrNull() }
+        val apiUrls = connectionStateProvider().getApiUrls()
+        val httpURLs = apiUrls.mapNotNull { it.toHttpUrlOrNull() }
 
         if (httpURLs.isEmpty()) {
             throw IntegrationException(
-                "No valid url can be found in server connection ${if (BuildConfig.DEBUG) connection.getApiUrls() else ""}",
+                "No valid url can be found in server connection ${if (BuildConfig.DEBUG) apiUrls else ""}",
             )
         }
 
