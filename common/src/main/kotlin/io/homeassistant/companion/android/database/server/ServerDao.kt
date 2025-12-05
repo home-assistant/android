@@ -22,6 +22,9 @@ interface ServerDao {
     @Query("SELECT * FROM servers ORDER BY `list_order` ASC")
     fun getAllFlow(): Flow<List<Server>>
 
+    @Query("SELECT * FROM servers WHERE id = :serverId")
+    fun observeServer(serverId: Int): Flow<Server?>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun add(server: Server): Long
 
