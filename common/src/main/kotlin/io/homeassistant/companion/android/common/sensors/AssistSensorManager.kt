@@ -3,14 +3,22 @@ package io.homeassistant.companion.android.common.sensors
 import android.content.Context
 import android.content.Intent
 import io.homeassistant.companion.android.common.R
-
+/**
+ * Manages the Assist sensor that reports the current state of assist.
+ *
+ * Assist can have four states:
+ * SPEAKING - Assist is speaking
+ * LISTENING - Assist is listening
+ * IDLE - Assist is opened but not doing anything
+ * CLOSED - Assist is blocked
+*/
 class AssistSensorManager : SensorManager {
 
     enum class AssistState(val value: String) {
-        SPEAKING("speaking"), // Assist is speaking
-        LISTENING("listening"), // Assist is listening
-        IDLE("idle"), // Assist is opened but not doing anything
-        CLOSED("closed"), // Assist is blocked
+        SPEAKING("speaking"),
+        LISTENING("listening"),
+        IDLE("idle"),
+        CLOSED("closed"),
     }
 
     companion object {
