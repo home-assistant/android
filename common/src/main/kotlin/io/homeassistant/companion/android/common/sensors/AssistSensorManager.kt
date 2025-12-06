@@ -7,15 +7,15 @@ import io.homeassistant.companion.android.common.R
 class AssistSensorManager : SensorManager {
 
     enum class AssistState(val value: String) {
-        SPEAKING("speaking"),
-        LISTENING("listening"),
-        IDLE("idle"),
-        CLOSED("closed"),
+        SPEAKING("speaking"), // Assist is speaking
+        LISTENING("listening"), // Assist is listening
+        IDLE("idle"), // Assist is opened but not doing anything
+        CLOSED("closed"), // Assist is blocked
     }
 
     companion object {
         const val ASSIST_STATE_CHANGED = "io.homeassistant.companion.android.assist.STATE_UPDATE"
-        const val STATE = "STATE"
+        private const val STATE = "STATE"
 
         val assistSensor = SensorManager.BasicSensor(
             id = "assist_sensor",
@@ -25,9 +25,10 @@ class AssistSensorManager : SensorManager {
             statelessIcon = "mdi:robot",
         )
 
-        fun updateState(context: Context, state: String) {
+        fun updateState(context: Context, state: AssistState) {
+            val stateString = state.value
             val intent = Intent(ASSIST_STATE_CHANGED)
-            intent.putExtra(STATE, state)
+            intent.putExtra(STATE, stateString)
             context.sendBroadcast(intent)
         }
     }
@@ -52,12 +53,7 @@ class AssistSensorManager : SensorManager {
             basicSensor = assistSensor,
             state = state,
             attributes = mapOf(
-                "options" to listOf(
-                    AssistState.SPEAKING.value,
-                    AssistState.LISTENING.value,
-                    AssistState.IDLE.value,
-                    AssistState.CLOSED.value,
-                ),
+                "options" to AssistState.entries.map(AssistState::value),
             ),
             mdiIcon = "mdi:robot",
         )

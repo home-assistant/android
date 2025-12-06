@@ -194,9 +194,9 @@ abstract class AssistViewModelBase(
 
     private suspend fun playAudio(path: String): Boolean {
         return UrlUtil.handle(serverManager.getServer(selectedServerId)?.connection?.getUrl(), path)?.let {
-            AssistSensorManager.updateState(app, AssistSensorManager.AssistState.SPEAKING.value)
+            AssistSensorManager.updateState(app, AssistSensorManager.AssistState.SPEAKING)
             val result = audioUrlPlayer.playAudio(it.toString())
-            AssistSensorManager.updateState(app, AssistSensorManager.AssistState.IDLE.value)
+            AssistSensorManager.updateState(app, AssistSensorManager.AssistState.IDLE)
             result
         } ?: false
     }

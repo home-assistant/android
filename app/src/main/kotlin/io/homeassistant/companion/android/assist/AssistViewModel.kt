@@ -152,15 +152,13 @@ class AssistViewModel @Inject constructor(
     override fun setInput(inputMode: AssistInputMode) {
         this.inputMode = inputMode
 
-        val intent = Intent(AssistSensorManager.ASSIST_STATE_CHANGED)
         val state = when (inputMode) {
-            AssistInputMode.VOICE_ACTIVE -> AssistSensorManager.AssistState.LISTENING.value
-            AssistInputMode.VOICE_INACTIVE, AssistInputMode.TEXT -> AssistSensorManager.AssistState.IDLE.value
-            AssistInputMode.BLOCKED -> AssistSensorManager.AssistState.CLOSED.value
-            else -> AssistSensorManager.AssistState.IDLE.value
+            AssistInputMode.VOICE_ACTIVE -> AssistSensorManager.AssistState.LISTENING
+            AssistInputMode.VOICE_INACTIVE, AssistInputMode.TEXT -> AssistSensorManager.AssistState.IDLE
+            AssistInputMode.BLOCKED -> AssistSensorManager.AssistState.CLOSED
+            else -> AssistSensorManager.AssistState.IDLE
         }
-        intent.putExtra(AssistSensorManager.STATE, state)
-        app.sendBroadcast(intent)
+        AssistSensorManager.updateState(app, state)
     }
 
     private suspend fun checkSupport(): Boolean? {
