@@ -52,6 +52,14 @@ interface WebViewPresenter {
 
     suspend fun isSsidUsed(): Boolean
 
+    /**
+     * Checks whether the user needs to configure their insecure connection preference.
+     *
+     * @return `true` if the server uses a plain text (HTTP) URL and the user has not yet set their
+     * preference for allowing insecure connections, `false` otherwise
+     */
+    suspend fun shouldSetSecurityLevel(): Boolean
+
     suspend fun getAuthorizationHeader(): String
 
     suspend fun parseWebViewColor(webViewColor: String): Int

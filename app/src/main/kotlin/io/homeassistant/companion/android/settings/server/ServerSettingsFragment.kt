@@ -182,11 +182,7 @@ class ServerSettingsFragment :
         findPreference<Preference>("connection_security_level")?.let {
             it.setOnPreferenceClickListener {
                 parentFragmentManager.commit {
-                    replace(
-                        R.id.content_full_screen,
-                        ConnectionSecurityLevelFragment::class.java,
-                        Bundle().apply { putInt(ConnectionSecurityLevelFragment.EXTRA_SERVER, serverId) },
-                    )
+                    replace(R.id.content_full_screen, ConnectionSecurityLevelFragment.newInstance(serverId))
                     addToBackStack(null)
                 }
                 return@setOnPreferenceClickListener true
