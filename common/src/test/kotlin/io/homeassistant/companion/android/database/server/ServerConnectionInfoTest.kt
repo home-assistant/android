@@ -90,6 +90,61 @@ class ServerConnectionInfoTest {
     }
 
     @Nested
+    inner class HasAtLeastOneUrl {
+
+        @Test
+        fun `Given valid externalUrl then hasAtLeastOneUrl is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+            )
+
+            assertTrue(connection.hasAtLeastOneUrl)
+        }
+
+        @Test
+        fun `Given invalid externalUrl but valid internalUrl then hasAtLeastOneUrl is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "not-a-valid-url",
+                internalUrl = "https://192.168.1.1:8123",
+            )
+
+            assertTrue(connection.hasAtLeastOneUrl)
+        }
+
+        @Test
+        fun `Given invalid externalUrl but valid cloudUrl then hasAtLeastOneUrl is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "not-a-valid-url",
+                cloudUrl = "https://cloud.example.com",
+            )
+
+            assertTrue(connection.hasAtLeastOneUrl)
+        }
+
+        @Test
+        fun `Given invalid externalUrl but valid cloudhookUrl then hasAtLeastOneUrl is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "not-a-valid-url",
+                cloudhookUrl = "https://hooks.nabu.casa/abc123",
+            )
+
+            assertTrue(connection.hasAtLeastOneUrl)
+        }
+
+        @Test
+        fun `Given all invalid URLs then hasAtLeastOneUrl is false`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "not-a-valid-url",
+                internalUrl = "also-invalid",
+                cloudUrl = "still-invalid",
+                cloudhookUrl = "nope",
+            )
+
+            assertFalse(connection.hasAtLeastOneUrl)
+        }
+    }
+
+    @Nested
     inner class IsRegistered {
 
         @ParameterizedTest(name = "isRegistered is false: externalUrl={0}, webhookId={1}")

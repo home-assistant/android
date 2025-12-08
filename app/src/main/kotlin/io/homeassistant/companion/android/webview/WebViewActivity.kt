@@ -1000,7 +1000,10 @@ class WebViewActivity :
                         ->
                         if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
                             lifecycleScope.launch {
-                                presenter.switchActiveServer(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
+                                presenter.switchActiveServer(
+                                    lifecycle,
+                                    bundle.getInt(ServerChooserFragment.RESULT_SERVER),
+                                )
                             }
                         }
                         supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
@@ -1008,9 +1011,9 @@ class WebViewActivity :
                     serverChooser.show(supportFragmentManager, ServerChooserFragment.TAG)
                 }
 
-                GestureAction.SERVER_NEXT -> presenter.nextServer()
+                GestureAction.SERVER_NEXT -> presenter.nextServer(lifecycle)
 
-                GestureAction.SERVER_PREVIOUS -> presenter.previousServer()
+                GestureAction.SERVER_PREVIOUS -> presenter.previousServer(lifecycle)
 
                 GestureAction.OPEN_APP_SETTINGS -> startActivity(SettingsActivity.newInstance(this@WebViewActivity))
 
@@ -1330,7 +1333,7 @@ class WebViewActivity :
                         moreInfoEntity = entity
                     }
                 }
-                presenter.load(path)
+                presenter.load(lifecycle, path)
                 intent.removeExtra(EXTRA_PATH)
 
                 if (presenter.isFullScreen() || isVideoFullScreen) {
@@ -1425,7 +1428,7 @@ class WebViewActivity :
             supportFragmentManager.clearFragmentResultListener(ConnectionSecurityLevelFragment.RESULT_KEY)
 
             lifecycleScope.launch {
-                presenter.load("/")
+                presenter.load(lifecycle, "/")
             }
         }
 
@@ -1454,7 +1457,7 @@ class WebViewActivity :
             supportFragmentManager.clearFragmentResultListener(BlockInsecureFragment.RESULT_KEY)
 
             lifecycleScope.launch {
-                presenter.load("/")
+                presenter.load(lifecycle, "/")
             }
         }
         // Make sure the WebView won't load anything in background to avoid leaking
@@ -1635,6 +1638,7 @@ class WebViewActivity :
                         // TODO Once we do this it's going to keep the override until load is called again even if
                         //  the network state changes. Maybe we want to avoid this and only override on the first call
                         presenter.load(
+                            lifecycle,
                             "/",
                             isInternalOverride = {
                                 buttonRefreshesInternal
@@ -2014,7 +2018,7 @@ class WebViewActivity :
                         if (NavigateTo.isAvailable(version)) {
                             sendExternalBusMessage(NavigateTo(path))
                         } else {
-                            presenter.load(path)
+                            presenter.load(lifecycle, path)
                         }
                     }
                 }

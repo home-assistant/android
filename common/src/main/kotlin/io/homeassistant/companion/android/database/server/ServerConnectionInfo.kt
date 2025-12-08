@@ -87,6 +87,15 @@ data class ServerConnectionInfo(
     }
 
     /**
+     * Indicates whether at least one URL (external, internal, cloud, or cloudhook) is configured
+     * and parsable.
+     */
+    @get:Ignore
+    val hasAtLeastOneUrl: Boolean by lazy {
+        httpUrls.isNotEmpty()
+    }
+
+    /**
      * Indicates whether the user has configured any home network detection method.
      *
      * Returns `true` if at least one of the following is set:
