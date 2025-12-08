@@ -11,6 +11,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
 import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
@@ -21,6 +22,7 @@ import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.common.util.HAGesture
+import io.homeassistant.companion.android.common.util.cancelOnLifecycle
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.improv.ImprovRepository
 import io.homeassistant.companion.android.matter.MatterManager
@@ -41,7 +43,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -91,7 +92,11 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun load(path: String?, isInternalOverride: ((ServerConnectionInfo) -> Boolean)?) {
+    override suspend fun load(
+        lifecycle: Lifecycle,
+        path: String?,
+        isInternalOverride: ((ServerConnectionInfo) -> Boolean)?,
+    ) {
         // Cancel any previous URL flow collection to avoid duplicate subscriptions
         urlFlowJob?.cancel()
 
@@ -116,7 +121,8 @@ class WebViewPresenterImpl @Inject constructor(
         }
 
         var shouldConsumePath = path != null
-        urlFlowJob = CoroutineScope(currentCoroutineContext()).launch {
+
+        urlFlowJob = lifecycle.cancelOnLifecycle(Lifecycle.State.STARTED) {
             serverManager.connectionStateProvider(serverId).urlFlow(isInternalOverride).collect { urlState ->
                 when (urlState) {
                     is UrlState.HasUrl -> {
@@ -207,20 +213,20 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun switchActiveServer(id: Int) {
+    override suspend fun switchActiveServer(lifecycle: Lifecycle, id: Int) {
         if (serverId != id && serverId != ServerManager.SERVER_ID_ACTIVE) {
             setAppActive(false) // 'Lock' old server
         }
         setActiveServer(id)
-        load(null)
+        load(lifecycle = lifecycle, null)
         view.unlockAppIfNeeded()
     }
 
-    override suspend fun nextServer() = moveToServer(next = true)
+    override suspend fun nextServer(lifecycle: Lifecycle) = moveToServer(lifecycle, next = true)
 
-    override suspend fun previousServer() = moveToServer(next = false)
+    override suspend fun previousServer(lifecycle: Lifecycle) = moveToServer(lifecycle, next = false)
 
-    private suspend fun moveToServer(next: Boolean) {
+    private suspend fun moveToServer(lifecycle: Lifecycle, next: Boolean) {
         val servers = serverManager.defaultServers
         if (servers.size < 2) return
         val currentServerIndex = servers.indexOfFirst { it.id == serverId }
@@ -228,7 +234,7 @@ class WebViewPresenterImpl @Inject constructor(
             var newServerIndex = if (next) currentServerIndex + 1 else currentServerIndex - 1
             if (newServerIndex == servers.size) newServerIndex = 0
             if (newServerIndex < 0) newServerIndex = servers.size - 1
-            servers.getOrNull(newServerIndex)?.let { switchActiveServer(it.id) }
+            servers.getOrNull(newServerIndex)?.let { switchActiveServer(lifecycle, it.id) }
         }
     }
 

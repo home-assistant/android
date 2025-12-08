@@ -134,7 +134,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
         val server = server()
         return if (server.session.isComplete() &&
             server.session.installId == installId() &&
-            connectionStateProvider().urlFlow().firstUrlOrNull() != null
+            server.connection.hasAtLeastOneUrl
         ) {
             SessionState.CONNECTED
         } else {
