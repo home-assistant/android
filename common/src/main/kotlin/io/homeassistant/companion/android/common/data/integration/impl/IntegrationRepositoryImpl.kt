@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.integration.impl
 
+import androidx.annotation.VisibleForTesting
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import io.homeassistant.companion.android.common.BuildConfig
@@ -98,6 +99,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val PREF_LAST_USED_PIPELINE_STT = "last_used_pipeline_stt"
         private const val PREF_THREAD_BORDER_AGENT_IDS = "thread_border_agent_ids"
         private const val PREF_ALLOW_INSECURE_CONNECTION = "allow_insecure_connection"
+
+        @VisibleForTesting internal const val PREF_ASK_NOTIFICATION_PERMISSION = "ask_notification_permission"
 
         private const val APPLOCK_TIMEOUT_GRACE_MS = 1000
     }
@@ -709,6 +712,14 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun setAllowInsecureConnection(allowInsecureConnection: Boolean) {
         localStorage.putBoolean("${serverId}_$PREF_ALLOW_INSECURE_CONNECTION", allowInsecureConnection)
+    }
+
+    override suspend fun shouldAskNotificationPermission(): Boolean? {
+        return localStorage.getBooleanOrNull("${serverId}_$PREF_ASK_NOTIFICATION_PERMISSION")
+    }
+
+    override suspend fun setAskNotificationPermission(shouldAsk: Boolean) {
+        localStorage.putBoolean("${serverId}_$PREF_ASK_NOTIFICATION_PERMISSION", shouldAsk)
     }
 
     private suspend fun Server.callWebhookOnUrls(
