@@ -135,7 +135,7 @@
 
     <issue
         id="PrivateResource"
-        message="Overriding `@string/state_off` which is marked as private in androidx.compose.ui:ui-android:1.9.5. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
+        message="Overriding `@string/state_off` which is marked as private in androidx.compose.ui:ui-android:1.10.0. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
         errorLine1="    &lt;string name=&quot;state_off&quot;>Off&lt;/string>"
         errorLine2="                  ~~~~~~~~~">
         <location
@@ -146,7 +146,7 @@
 
     <issue
         id="PrivateResource"
-        message="Overriding `@string/state_on` which is marked as private in androidx.compose.ui:ui-android:1.9.5. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
+        message="Overriding `@string/state_on` which is marked as private in androidx.compose.ui:ui-android:1.10.0. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
         errorLine1="    &lt;string name=&quot;state_on&quot;>On&lt;/string>"
         errorLine2="                  ~~~~~~~~">
         <location
