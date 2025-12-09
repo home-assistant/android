@@ -14,6 +14,12 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 
+/**
+ * Tests for [UrlUtil] and related extension functions that don't require Android framework classes.
+ *
+ * For tests involving [android.net.Uri] extension functions (which require Robolectric),
+ * see [UriExtensionsTest].
+ */
 class UrlUtilTest {
 
     private lateinit var baseUrl: URL

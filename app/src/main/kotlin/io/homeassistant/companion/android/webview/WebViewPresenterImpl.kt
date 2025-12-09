@@ -294,7 +294,7 @@ class WebViewPresenterImpl @Inject constructor(
             setAppActive(false) // 'Lock' old server
         }
         setActiveServer(id)
-        load(lifecycle = lifecycle, null)
+        load(lifecycle = lifecycle)
         view.unlockAppIfNeeded()
     }
 

@@ -123,6 +123,8 @@ import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.compose.initializePlayer
+import io.homeassistant.companion.android.util.hasMeaningfulPath
+import io.homeassistant.companion.android.util.hasSameBase
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
@@ -1439,11 +1441,14 @@ class WebViewActivity :
                 } else {
                     val oldUrl = if (::loadedUrl.isInitialized) loadedUrl else null
                     loadedUrl = url
-                    if (oldUrl != url) {
+                    // It means that if we loaded an URL with a path previously and we try to load the same URL without
+                    // a path we don't do anything.
+                    val shouldLoadUrl = !url.hasSameBase(oldUrl) || url.hasMeaningfulPath()
+                    if (shouldLoadUrl) {
                         webView.loadUrl(url.toString())
                         waitForConnection()
                     } else {
-                        Timber.d("Already loaded the url skipping")
+                        Timber.d("Same base URL without meaningful path, skipping load")
                     }
                 }
             }
@@ -1511,7 +1516,7 @@ class WebViewActivity :
             // loadUrl() is called (conditions met) - fragment is popped in loadUrl()
 
             lifecycleScope.launch {
-                presenter.load(lifecycle, "/")
+                presenter.load(lifecycle)
             }
         }
         // Make sure the WebView won't load anything in background to avoid leaking
@@ -1689,11 +1694,12 @@ class WebViewActivity :
                     },
                 ) { _, _ ->
                     lifecycleScope.launch {
-                        // TODO Once we do this it's going to keep the override until load is called again even if
-                        //  the network state changes. Maybe we want to avoid this and only override on the first call
+                        // TODO Once we do this it's going to keep the override until load is called again
+                        //  in onWindowFocusChanged that should happen right after the dialog is canceled.
+                        //  Then it might fail again if the user internal URL is always failing but the user is
+                        //  at home. (I guess)
                         presenter.load(
                             lifecycle,
-                            "/",
                             isInternalOverride = {
                                 buttonRefreshesInternal
                             },

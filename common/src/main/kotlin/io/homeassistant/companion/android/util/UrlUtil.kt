@@ -99,7 +99,7 @@ object UrlUtil {
     fun URL.baseIsEqual(other: URL?): Boolean = if (other == null) {
         false
     } else {
-        host?.lowercase() == other.host?.lowercase() &&
+        host.equals(other.host, ignoreCase = true) &&
             port.let {
                 if (it ==
                     -1
@@ -109,7 +109,7 @@ object UrlUtil {
                     it
                 }
             } == other.port.let { if (it == -1) defaultPort else it } &&
-            protocol?.lowercase() == other.protocol?.lowercase() &&
+            protocol.equals(other.protocol, ignoreCase = true) &&
             userInfo == other.userInfo
     }
 
@@ -179,4 +179,27 @@ fun HttpUrl.hasSameOrigin(other: HttpUrl): Boolean {
     return scheme == other.scheme &&
         host == other.host &&
         port == other.port
+}
+
+/**
+ * Checks if this Uri has the same base (scheme, host, and port) as the other Uri.
+ *
+ * @param other the Uri to compare against
+ * @return `true` if both URIs have the same scheme, host, and port
+ */
+fun Uri.hasSameBase(other: Uri?): Boolean {
+    if (other == null) return false
+    return scheme.equals(other.scheme, ignoreCase = true) &&
+        host.equals(other.host, ignoreCase = true) &&
+        port == other.port
+}
+
+/**
+ * Checks if this Uri has a meaningful path (not empty, not just "/").
+ *
+ * @return `true` if the Uri has a path that is not blank and not just "/"
+ */
+fun Uri.hasMeaningfulPath(): Boolean {
+    val path = this.path ?: return false
+    return path.isNotBlank() && path != "/"
 }
