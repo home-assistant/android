@@ -143,7 +143,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -237,7 +236,7 @@ class WebViewActivity :
     lateinit var entityAddToHandler: EntityAddToHandler
 
     private lateinit var webView: WebView
-    private lateinit var loadedUrl: String
+    private lateinit var loadedUrl: Uri
     private lateinit var decor: FrameLayout
     private var customViewFromWebView = mutableStateOf<View?>(null)
     private lateinit var authenticator: Authenticator
@@ -263,6 +262,15 @@ class WebViewActivity :
     private var statusBarColor = mutableStateOf<Color?>(null)
     private var backgroundColor = mutableStateOf<Color?>(null)
     private var failedConnection = "external"
+
+    /**
+     * Tracks whether the user has already dismissed the [ConnectionSecurityLevelFragment] for each
+     * server during this activity's lifecycle. Once dismissed for a specific server, the fragment
+     * won't be shown again for that server's URL loads in the same session.
+     *
+     * Key: server ID, Value: `true` if dismissed
+     */
+    private val connectionSecurityLevelFragmentClosed = hashMapOf<Int, Boolean>()
     private var clearHistory = false
     private var moreInfoEntity = ""
     private val moreInfoMutex = Mutex()
@@ -398,7 +406,7 @@ class WebViewActivity :
                     failingUrl: String?,
                 ) {
                     Timber.e("onReceivedError: errorCode: $errorCode url:$failingUrl")
-                    if (failingUrl == loadedUrl) {
+                    if (failingUrl == loadedUrl.toString()) {
                         showError()
                     }
                 }
@@ -434,7 +442,7 @@ class WebViewActivity :
                     Timber.e(
                         "onReceivedHttpError: ${errorResponse?.statusCode} : ${errorResponse?.reasonPhrase} for: ${request?.url}",
                     )
-                    if (request?.url.toString() == loadedUrl) {
+                    if (request?.url == loadedUrl) {
                         showError()
                     }
                 }
@@ -1392,26 +1400,33 @@ class WebViewActivity :
         finish()
     }
 
-    override fun loadUrl(url: String, keepHistory: Boolean, openInApp: Boolean) {
+    override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean) {
         if (openInApp) {
             // Remove any displayed fragments (e.g., BlockInsecureFragment, ConnectionSecurityLevelFragment)
             supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
 
-            loadedUrl = url
             clearHistory = !keepHistory
             lifecycleScope.launch {
-                if (!presenter.shouldSetSecurityLevel()) {
-                    webView.loadUrl(url)
-                    waitForConnection()
-                } else {
-                    val serverId = presenter.getActiveServer()
+                val serverId = presenter.getActiveServer()
+                val shouldShowSecurityFragment = presenter.shouldSetSecurityLevel() &&
+                    !connectionSecurityLevelFragmentClosed.getOrPut(serverId) { false }
+                if (shouldShowSecurityFragment) {
                     Timber.d("Security level not set for server $serverId, showing ConnectionSecurityLevelFragment")
-                    showConnectionSecurityLevelFragment(serverId)
+                    showConnectionSecurityLevelFragment(serverId, url)
+                } else {
+                    val oldUrl = if (::loadedUrl.isInitialized) loadedUrl else null
+                    loadedUrl = url
+                    if (oldUrl != url) {
+                        webView.loadUrl(url.toString())
+                        waitForConnection()
+                    } else {
+                        Timber.d("Already loaded the url skipping")
+                    }
                 }
             }
         } else {
             try {
-                val browserIntent = Intent(Intent.ACTION_VIEW, url.toUri())
+                val browserIntent = Intent(Intent.ACTION_VIEW, url)
                 startActivity(browserIntent)
             } catch (e: Exception) {
                 Timber.e(e, "Unable to view url")
@@ -1419,7 +1434,9 @@ class WebViewActivity :
         }
     }
 
-    private fun showConnectionSecurityLevelFragment(serverId: Int) {
+    private fun showConnectionSecurityLevelFragment(serverId: Int, url: Uri) {
+        val pathToPreserve = url.path?.takeIf { it.isNotBlank() && it != "/" }
+
         supportFragmentManager.setFragmentResultListener(
             ConnectionSecurityLevelFragment.RESULT_KEY,
             this,
@@ -1427,8 +1444,15 @@ class WebViewActivity :
             Timber.d("Security level screen exited by user, proceeding with URL loading")
             supportFragmentManager.clearFragmentResultListener(ConnectionSecurityLevelFragment.RESULT_KEY)
 
+            // We don't care of the result we always assume that the fragment bash been closed and we should
+            // show it again.
+            connectionSecurityLevelFragmentClosed[serverId] = true
+
             lifecycleScope.launch {
-                presenter.load(lifecycle, "/")
+                // Trigger a reload of the URL to trigger to trigger loadUrl in the view,
+                // it is important to use the presenter to apply the potential changes
+                // made in the fragment.
+                presenter.load(lifecycle, path = pathToPreserve)
             }
         }
 
@@ -1749,12 +1773,14 @@ class WebViewActivity :
         if (supportFragmentManager.backStackEntryCount > 0) {
             Timber.i("Fragments ${supportFragmentManager.fragments} displayed, skipping connection wait")
         } else {
+            Timber.d("Waiting for loadedUrl $loadedUrl")
             Handler(Looper.getMainLooper()).postDelayed(
                 {
+                    val firstSegment = loadedUrl.pathSegments.firstOrNull().orEmpty()
                     if (
                         !isConnected &&
-                        !loadedUrl.toHttpUrl().pathSegments.first().contains("api") &&
-                        !loadedUrl.toHttpUrl().pathSegments.first().contains("local")
+                        !firstSegment.contains("api") &&
+                        !firstSegment.contains("local")
                     ) {
                         showError(errorType = ErrorType.TIMEOUT_EXTERNAL_BUS)
                     }
