@@ -57,6 +57,7 @@ class NameYourDeviceViewModelTest {
         coEvery { serverManager.authenticationRepository(any()) } returns authRepository
         coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
         coEvery { integrationRepository.setAllowInsecureConnection(any()) } just Runs
+        coEvery { serverManager.activateServer(any()) } just Runs
 
         viewModel = NameYourDeviceViewModel(
             route,
@@ -144,6 +145,7 @@ class NameYourDeviceViewModelTest {
                 authRepository.registerAuthorizationCode(route.authCode)
                 integrationRepository.registerDevice(any())
                 serverManager.convertTemporaryServer(tempServerId)
+                serverManager.activateServer(testServerId)
             }
             coVerify(exactly = 0) {
                 integrationRepository.setAllowInsecureConnection(any())
@@ -152,7 +154,7 @@ class NameYourDeviceViewModelTest {
     }
 
     @Test
-    fun `Given custom deviceName and successful add server when onSaveClick then emits DeviceNameSaved event and registered with custom name`() = runTest {
+    fun `Given custom deviceName and successful add server when onSaveClick then emits DeviceNameSaved event and registered with custom name and server activated`() = runTest {
         val customDeviceName = "Pixel"
         viewModel.onDeviceNameChange(customDeviceName)
         advanceUntilIdle()
@@ -193,6 +195,7 @@ class NameYourDeviceViewModelTest {
                         messagingTokenProvider(),
                     ),
                 )
+                serverManager.activateServer(testServerId)
             }
         }
     }
@@ -236,6 +239,7 @@ class NameYourDeviceViewModelTest {
 
             coVerify(exactly = 1) {
                 integrationRepository.setAllowInsecureConnection(false)
+                serverManager.activateServer(testServerId)
             }
         }
     }
@@ -280,6 +284,7 @@ class NameYourDeviceViewModelTest {
             coVerify(exactly = 1) {
                 integrationRepository.setAllowInsecureConnection(false)
                 serverManager.convertTemporaryServer(tempServerId)
+                serverManager.activateServer(testServerId)
             }
         }
     }
@@ -300,6 +305,7 @@ class NameYourDeviceViewModelTest {
                 authRepository.registerAuthorizationCode(any())
                 integrationRepository.registerDevice(any())
                 serverManager.convertTemporaryServer(any())
+                serverManager.activateServer(any())
                 authRepository.revokeSession()
                 serverManager.removeServer(any())
             }
@@ -331,6 +337,7 @@ class NameYourDeviceViewModelTest {
             coVerify(exactly = 0) {
                 integrationRepository.registerDevice(any())
                 serverManager.convertTemporaryServer(any())
+                serverManager.activateServer(any())
             }
         }
     }
@@ -358,7 +365,10 @@ class NameYourDeviceViewModelTest {
                 authRepository.revokeSession()
                 serverManager.removeServer(tempServerId)
             }
-            coVerify(exactly = 0) { serverManager.convertTemporaryServer(any()) }
+            coVerify(exactly = 0) {
+                serverManager.convertTemporaryServer(any())
+                serverManager.activateServer(any())
+            }
         }
     }
 
@@ -387,6 +397,7 @@ class NameYourDeviceViewModelTest {
                 authRepository.revokeSession()
                 serverManager.removeServer(tempServerId)
             }
+            coVerify(exactly = 0) { serverManager.activateServer(any()) }
         }
     }
 

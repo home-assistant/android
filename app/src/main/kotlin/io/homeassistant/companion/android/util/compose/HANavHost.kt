@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.util.compose
 
 import android.app.Activity
-import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
@@ -17,6 +16,7 @@ import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.loading.navigation.LoadingRoute
 import io.homeassistant.companion.android.loading.navigation.loadingScreen
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
+import io.homeassistant.companion.android.onboarding.WearOnboardApp
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
 import io.homeassistant.companion.android.onboarding.onboarding
 import io.homeassistant.companion.android.onboarding.wearOnboarding
@@ -76,17 +76,15 @@ internal fun HANavHost(
                             certUri: Uri?,
                             certPassword: String?,
                         ->
-                        // TODO Use OnboardApp contract or similar to avoid using const
-                        //  OnboardApp should accept null for TLSCients
                         activity?.setResult(
                             Activity.RESULT_OK,
-                            Intent().apply {
-                                putExtra("URL", serverUrl)
-                                putExtra("AuthCode", authCode)
-                                putExtra("DeviceName", deviceName)
-                                putExtra("TLSClientCertificateUri", certUri?.toString() ?: "")
-                                putExtra("TLSClientCertificatePassword", certPassword ?: "")
-                            },
+                            WearOnboardApp.Output(
+                                url = serverUrl,
+                                authCode = authCode,
+                                deviceName = deviceName,
+                                tlsClientCertificateUri = certUri?.toString(),
+                                tlsClientCertificatePassword = certPassword,
+                            ).toIntent(),
                         )
                         activity?.finish()
                     },
