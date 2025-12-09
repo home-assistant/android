@@ -93,7 +93,7 @@ class WebViewPresenterImplTest {
     private val testDispatcher = UnconfinedTestDispatcher()
 
     @JvmField
-    @RegisterExtension // Option 2: Apply as a field
+    @RegisterExtension
     val mainDispatcherExtension = MainDispatcherJUnit5Extension(testDispatcher)
 
     private val webView: WebView = mockk(relaxed = true)
@@ -150,10 +150,8 @@ class WebViewPresenterImplTest {
     }
 
     private fun createMockUri(uriString: String): Uri {
-        val javaURL = URL(uriString.split("?")[0]) // Handle URLs with query params
         return mockk<Uri> {
             every { this@mockk.toString() } returns uriString
-            every { host } returns javaURL.host
             every { buildUpon() } answers {
                 createMockUriBuilder(uriString)
             }
