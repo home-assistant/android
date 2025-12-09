@@ -68,8 +68,6 @@ class WebViewPresenterImpl @Inject constructor(
 
     private var serverId: Int = ServerManager.SERVER_ID_ACTIVE
 
-    private var url: URL? = null
-
     private var improvJob: Job? = null
     private var improvJobStarted = 0L
 
@@ -97,95 +95,173 @@ class WebViewPresenterImpl @Inject constructor(
         path: String?,
         isInternalOverride: ((ServerConnectionInfo) -> Boolean)?,
     ) {
-        // Cancel any previous URL flow collection to avoid duplicate subscriptions
         urlFlowJob?.cancel()
 
-        val onInvocationServerId = serverId
-
-        serverManager.getServer(serverId) ?: run {
-            // TODO when does this happen? (server deletion?)
-            setActiveServer(ServerManager.SERVER_ID_ACTIVE)
-        }
-
-        val isNewServer = serverId != onInvocationServerId
-
-        try {
-            if (serverManager.authenticationRepository(serverId).getSessionState() ==
-                SessionState.ANONYMOUS
-            ) {
-                return
-            }
-        } catch (e: IllegalArgumentException) {
-            Timber.w(e, "Unable to get server session state, not continuing")
-            return
-        }
-
-        var shouldConsumePath = path != null
+        val isNewServer = ensureServerIsAvailable()
+        if (!isSessionConnected()) return
 
         urlFlowJob = lifecycle.cancelOnLifecycle(Lifecycle.State.STARTED) {
-            serverManager.connectionStateProvider(serverId).urlFlow(isInternalOverride).collect { urlState ->
-                when (urlState) {
-                    is UrlState.HasUrl -> {
-                        val isNewUrl = urlState.url != url
-                        url = urlState.url
-
-                        if (shouldConsumePath) {
-                            shouldConsumePath = false
-
-                            val firstUrlToLoad = if (path != null && !path.startsWith("entityId:")) {
-                                UrlUtil.handle(urlState.url, path)
-                            } else {
-                                urlState.url
-                            }
-
-                            firstUrlToLoad?.let {
-                                withContext(Dispatchers.Main) {
-                                    view.loadUrl(
-                                        url = firstUrlToLoad.toString().toUri()
-                                            .buildUpon()
-                                            .appendQueryParameter("external_auth", "1")
-                                            .build()
-                                            .toString(),
-                                        // TODO does it make sense to keep history if the URL changed?
-                                        keepHistory = !isNewServer,
-                                        openInApp = firstUrlToLoad.baseIsEqual(urlState.url),
-                                    )
-                                }
-                            } ?: Timber.w("Url is null")
-                        } else if (isNewUrl) {
-                            urlState.url?.let {
-                                withContext(Dispatchers.Main) {
-                                    view.loadUrl(
-                                        url = it.toString().toUri().buildUpon()
-                                            .appendQueryParameter("external_auth", "1")
-                                            .build()
-                                            .toString(),
-                                        keepHistory = !isNewServer,
-                                        openInApp = true, // We get the URL from the server info so we trust it
-                                    )
-                                }
-                            } ?: Timber.w("Url is null")
-                        } else {
-                            Timber.i("Skipping we are already on this URL")
-                        }
-                    }
-
-                    UrlState.InsecureState -> {
-                        // reset URL loaded
-                        url = null
-
-                        // TODO probably not needed anymore since we could simply check directly in the fragment
-                        Timber.d("Insecure state detected, showing blocking screen")
-                        val info = serverManager.connectionStateProvider(serverId).getSecurityInfo()
-                        view.showBlockInsecure(
-                            serverId = serverId,
-                            missingHomeSetup = !info.hasHomeSetup,
-                            missingLocation = !info.locationEnabled,
-                        )
-                    }
-                }
-            }
+            collectUrlStateChanges(
+                isInternalOverride = isInternalOverride,
+                path = path,
+                isNewServer = isNewServer,
+            )
         }
+    }
+
+    private suspend fun collectUrlStateChanges(
+        isInternalOverride: ((ServerConnectionInfo) -> Boolean)?,
+        path: String?,
+        isNewServer: Boolean,
+    ) {
+        var pathConsumed = false
+
+        serverManager.connectionStateProvider(serverId).urlFlow(isInternalOverride).collect { urlState ->
+            val shouldConsumePath = !pathConsumed && path != null
+            if (shouldConsumePath) pathConsumed = true
+
+            handleUrlState(
+                urlState = urlState,
+                path = path,
+                shouldConsumePath = shouldConsumePath,
+                isNewServer = isNewServer,
+            )
+        }
+    }
+
+    /**
+     * Ensures a valid server is available by checking the current server ID.
+     *
+     * If the current server doesn't exist (e.g., after deletion), it falls back to the active
+     * server.
+     *
+     * @return `true` if the server changed during this call
+     */
+    private suspend fun ensureServerIsAvailable(): Boolean {
+        val previousServerId = serverId
+        serverManager.getServer(serverId) ?: setActiveServer(ServerManager.SERVER_ID_ACTIVE)
+        return serverId != previousServerId
+    }
+
+    /**
+     * Checks if the current server has an authenticated session.
+     *
+     * @return `true` if the session is connected, `false` if anonymous or unavailable
+     */
+    private suspend fun isSessionConnected(): Boolean {
+        return try {
+            serverManager.authenticationRepository(serverId).getSessionState() != SessionState.ANONYMOUS
+        } catch (e: IllegalArgumentException) {
+            Timber.w(e, "Unable to get server session state, not continuing")
+            false
+        }
+    }
+
+    private suspend fun handleUrlState(
+        urlState: UrlState,
+        path: String?,
+        shouldConsumePath: Boolean,
+        isNewServer: Boolean,
+    ) {
+        when (urlState) {
+            is UrlState.HasUrl -> handleHasUrlState(
+                urlState = urlState,
+                path = path,
+                shouldConsumePath = shouldConsumePath,
+                isNewServer = isNewServer,
+            )
+            UrlState.InsecureState -> handleInsecureState()
+        }
+    }
+
+    private suspend fun handleHasUrlState(
+        urlState: UrlState.HasUrl,
+        path: String?,
+        shouldConsumePath: Boolean,
+        isNewServer: Boolean,
+    ) {
+        if (shouldConsumePath) {
+            loadInitialUrl(
+                baseUrl = urlState.url,
+                path = path,
+                isNewServer = isNewServer,
+            )
+        } else {
+            // TODO not sure if we need to handle the path here, since if we end up into this
+            //  we would have already consumed the path and we are changing to another base URL
+            //  like going from internal to external.
+            loadServerUrl(
+                serverUrl = urlState.url,
+                isNewServer = isNewServer,
+            )
+        }
+    }
+
+    /**
+     * Loads the initial URL, optionally applying a path override.
+     *
+     * @param baseUrl the base server URL
+     * @param path optional path to append (ignored if starts with "entityId:")
+     * @param isNewServer whether this is a new server (affects history behavior)
+     */
+    private suspend fun loadInitialUrl(baseUrl: URL?, path: String?, isNewServer: Boolean) {
+        val urlToLoad = if (path != null && !path.startsWith("entityId:")) {
+            UrlUtil.handle(baseUrl, path)
+        } else {
+            baseUrl
+        }
+
+        urlToLoad?.let {
+            loadUrlInWebView(
+                url = it,
+                keepHistory = !isNewServer,
+                openInApp = it.baseIsEqual(baseUrl),
+            )
+        } ?: Timber.w("Url is null")
+    }
+
+    /**
+     * Loads a server URL directly without path modification.
+     *
+     * @param serverUrl the URL to load
+     * @param isNewServer whether this is a new server (affects history behavior)
+     */
+    private suspend fun loadServerUrl(serverUrl: URL?, isNewServer: Boolean) {
+        serverUrl?.let {
+            loadUrlInWebView(
+                url = it,
+                keepHistory = !isNewServer,
+                openInApp = true,
+            )
+        } ?: Timber.w("Url is null")
+    }
+
+    /**
+     * Loads a URL in the WebView with external authentication parameter.
+     */
+    private suspend fun loadUrlInWebView(url: URL, keepHistory: Boolean, openInApp: Boolean) {
+        val urlWithAuth = url.toString().toUri()
+            .buildUpon()
+            .appendQueryParameter("external_auth", "1")
+            .build()
+
+        withContext(Dispatchers.Main) {
+            view.loadUrl(
+                url = urlWithAuth,
+                keepHistory = keepHistory,
+                openInApp = openInApp,
+            )
+        }
+    }
+
+    private suspend fun handleInsecureState() {
+        Timber.d("Insecure state detected, showing blocking screen")
+        val info = serverManager.connectionStateProvider(serverId).getSecurityInfo()
+        view.showBlockInsecure(
+            serverId = serverId,
+            missingHomeSetup = !info.hasHomeSetup,
+            missingLocation = !info.locationEnabled,
+        )
     }
 
     override fun getActiveServer(): Int = serverId
