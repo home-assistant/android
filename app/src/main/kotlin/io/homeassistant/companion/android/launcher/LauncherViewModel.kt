@@ -47,7 +47,6 @@ internal sealed interface LauncherUiState {
 
     /**
      * Wear OS onboarding was requested but is not supported in the minimal flavor.
-     * Wear OS communication requires Google Play Services which is only available in the full flavor.
      */
     data object WearUnsupported : LauncherUiState
 }
