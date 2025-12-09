@@ -14,7 +14,7 @@ interface WebViewPresenter {
 
     suspend fun load(
         lifecycle: Lifecycle,
-        path: String?,
+        path: String? = null,
         isInternalOverride: ((ServerConnectionInfo) -> Boolean)? = null,
     )
 
