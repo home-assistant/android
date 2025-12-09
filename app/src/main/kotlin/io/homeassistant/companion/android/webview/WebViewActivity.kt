@@ -1426,6 +1426,7 @@ class WebViewActivity :
         if (openInApp) {
             // Remove any displayed fragments (e.g., BlockInsecureFragment, ConnectionSecurityLevelFragment)
             supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            supportFragmentManager.clearFragmentResultListener(BlockInsecureFragment.RESULT_KEY)
 
             clearHistory = !keepHistory
             lifecycleScope.launch {
@@ -1496,11 +1497,18 @@ class WebViewActivity :
     }
 
     private fun showBlockInsecureFragment(serverId: Int, missingHomeSetup: Boolean, missingLocation: Boolean) {
+        // Skip if already showing BlockInsecureFragment to avoid blinking on retry
+        if (supportFragmentManager.fragments.any { it is BlockInsecureFragment }) {
+            Timber.d("BlockInsecureFragment already showing, skipping")
+            return
+        }
+
         supportFragmentManager.setFragmentResultListener(
             BlockInsecureFragment.RESULT_KEY,
             this,
         ) { _, _ ->
-            supportFragmentManager.clearFragmentResultListener(BlockInsecureFragment.RESULT_KEY)
+            // Don't clear the listener yet - it will be cleared when:
+            // loadUrl() is called (conditions met) - fragment is popped in loadUrl()
 
             lifecycleScope.launch {
                 presenter.load(lifecycle, "/")

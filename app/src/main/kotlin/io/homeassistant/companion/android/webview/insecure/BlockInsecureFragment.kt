@@ -52,7 +52,7 @@ class BlockInsecureFragment private constructor() : Fragment() {
                     BlockInsecureScreen(
                         missingHomeSetup = missingHomeSetup,
                         missingLocation = missingLocation,
-                        onRetry = ::retryAndClose,
+                        onRetry = ::retry,
                         onHelpClick = {
                             uriHandler.openUri(
                                 "https://companion.home-assistant.io/docs/getting_started/connection-security-level/",
@@ -81,7 +81,7 @@ class BlockInsecureFragment private constructor() : Fragment() {
 
     private fun openLocationSettings() {
         if (DisabledLocationHandler.isLocationEnabled(requireContext())) {
-            retryAndClose()
+            retry()
             return
         }
         val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply {
@@ -95,9 +95,10 @@ class BlockInsecureFragment private constructor() : Fragment() {
         startActivity(intent)
     }
 
-    private fun retryAndClose() {
+    private fun retry() {
+        // Only set the result - the Activity will handle closing the fragment
+        // if conditions allow (avoids blink when still insecure)
         setFragmentResult(RESULT_KEY, Bundle())
-        parentFragmentManager.popBackStack()
     }
 
     private fun showConnectionSecurityLevelFragment(serverId: Int) {
