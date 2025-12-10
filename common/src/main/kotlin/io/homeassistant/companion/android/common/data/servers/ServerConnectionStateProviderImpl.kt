@@ -89,32 +89,36 @@ class ServerConnectionStateProviderImpl @AssistedInject constructor(
         return url
     }
 
-    override suspend fun getApiUrls(): List<URL> {
+    override suspend fun getApiUrls(): List<HttpUrl> {
         val connection = connection()
+        val webhookId = connection.webhookId
 
-        // If we don't have a webhook id we don't have any urls.
-        if (connection.webhookId.isNullOrBlank()) {
+        if (webhookId.isNullOrBlank()) {
             return emptyList()
         }
 
-        val retVal = mutableListOf<URL?>()
+        val allowInsecure = connection.allowInsecureConnection ?: true
+        val isOnHomeNetwork = isInternal(requiresUrl = false)
 
-        // If we are local then add the local URL in the first position, otherwise no reason to try
-        if (isInternal() || connection.prioritizeInternal) {
-            connection.internalHttpUrl?.let {
-                retVal.add(it.buildWebhookUrl(connection.webhookId))
+        return buildList {
+            // Internal URL: use when on home network, or when prioritized and connection is secure/allowed
+            val internalUrlIsSecure = connection.internalUrl?.startsWith("https://") == true
+            val canUseInternalUrl = isOnHomeNetwork ||
+                (connection.prioritizeInternal && (internalUrlIsSecure || allowInsecure))
+            if (canUseInternalUrl) {
+                connection.internalHttpUrl?.buildWebhookUrl(webhookId)?.let(::add)
+            }
+
+            // Cloud URL: always add if available
+            connection.cloudHttpUrl?.let(::add)
+
+            // External URL: use when on home network, or when connection is secure/allowed
+            val externalUrlIsSecure = connection.externalUrl.startsWith("https://")
+            val canUseExternalUrl = isOnHomeNetwork || externalUrlIsSecure || allowInsecure
+            if (canUseExternalUrl) {
+                connection.externalHttpUrl?.buildWebhookUrl(webhookId)?.let(::add)
             }
         }
-
-        connection.cloudHttpUrl?.let {
-            retVal.add(it.toUrl())
-        }
-
-        connection.externalHttpUrl?.let {
-            retVal.add(it.buildWebhookUrl(connection.webhookId))
-        }
-
-        return retVal.filterNotNull()
     }
 
     override suspend fun getSecurityState(): SecurityState {
@@ -236,11 +240,10 @@ class ServerConnectionStateProviderImpl @AssistedInject constructor(
     }
 }
 
-private fun HttpUrl.buildWebhookUrl(webhookId: String): URL {
+private fun HttpUrl.buildWebhookUrl(webhookId: String): HttpUrl {
     return newBuilder()
         .addPathSegments("api/webhook/$webhookId")
         .build()
-        .toUrl()
 }
 
 private fun ServerConnectionInfo.getUrl(isInternal: Boolean): URL? {
