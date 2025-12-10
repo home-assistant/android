@@ -132,7 +132,8 @@ class NameYourDeviceViewModelTest {
     fun `Given successful add server when onSaveClick then emits DeviceNameSaved event`() = runTest {
         val testServerId = 1
         val tempServerId = 0
-        coEvery { serverManager.addServer(any()) } returns tempServerId
+        val serverSlot = slot<Server>()
+        coEvery { serverManager.addServer(capture(serverSlot)) } returns tempServerId
         coEvery { authRepository.registerAuthorizationCode(route.authCode) } just Runs
         coEvery {
             integrationRepository.registerDevice(
@@ -161,10 +162,8 @@ class NameYourDeviceViewModelTest {
                 integrationRepository.registerDevice(any())
                 serverManager.convertTemporaryServer(tempServerId)
             }
-            // HTTP URL means allowInsecureConnection is not enforced to false
-            coVerify(exactly = 0) {
-                serverManager.updateServer(match { it.connection.allowInsecureConnection == false })
-            }
+            // HTTP URL means allowInsecureConnection is null (not enforced)
+            assertEquals(null, serverSlot.captured.connection.allowInsecureConnection)
         }
     }
 
@@ -226,7 +225,8 @@ class NameYourDeviceViewModelTest {
 
         val testServerId = 1
         val tempServerId = 0
-        coEvery { serverManager.addServer(any()) } returns tempServerId
+        val serverSlot = slot<Server>()
+        coEvery { serverManager.addServer(capture(serverSlot)) } returns tempServerId
         coEvery { authRepository.registerAuthorizationCode("auth_code") } just Runs
         coEvery {
             integrationRepository.registerDevice(
@@ -251,55 +251,8 @@ class NameYourDeviceViewModelTest {
             assertFalse(event.hasPlainTextAccess)
             assertTrue(event.isPubliclyAccessible)
 
-            val serverSlot = slot<Server>()
-            coVerify(exactly = 1) {
-                serverManager.updateServer(capture(serverSlot))
-            }
+            // Secure connection is enforced during server creation, not via updateServer
             assertEquals(false, serverSlot.captured.connection.allowInsecureConnection)
-        }
-    }
-
-    @Test
-    fun `Given updateServer throws when onSaveClick with HTTPS then logs error but continues successfully`() = runTest {
-        viewModel = NameYourDeviceViewModel(
-            NameYourDeviceRoute("https://ha.local", "auth_code"),
-            serverManager,
-            appVersionProvider,
-            messagingTokenProvider,
-            defaultName = DEFAULT_DEVICE_NAME,
-        )
-
-        val testServerId = 1
-        val tempServerId = 0
-        coEvery { serverManager.addServer(any()) } returns tempServerId
-        coEvery { authRepository.registerAuthorizationCode("auth_code") } just Runs
-        coEvery {
-            integrationRepository.registerDevice(
-                DeviceRegistration(
-                    appVersionProvider(),
-                    DEFAULT_DEVICE_NAME,
-                    messagingTokenProvider(),
-                ),
-            )
-        } just Runs
-        coEvery { serverManager.convertTemporaryServer(tempServerId) } returns testServerId
-        coEvery { serverManager.updateServer(any()) } throws RuntimeException("Failed to set connection security")
-
-        turbineScope {
-            val navEvents = viewModel.navigationEventsFlow.testIn(backgroundScope)
-
-            viewModel.onSaveClick()
-            advanceUntilIdle()
-
-            val event = navEvents.awaitItem()
-            assertTrue(event is NameYourDeviceNavigationEvent.DeviceNameSaved)
-            assertEquals(testServerId, (event as NameYourDeviceNavigationEvent.DeviceNameSaved).serverId)
-            assertFalse(event.hasPlainTextAccess)
-
-            coVerify(exactly = 1) {
-                serverManager.updateServer(match { it.connection.allowInsecureConnection == false })
-                serverManager.convertTemporaryServer(tempServerId)
-            }
         }
     }
 

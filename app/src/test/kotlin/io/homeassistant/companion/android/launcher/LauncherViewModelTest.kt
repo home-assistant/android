@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -245,7 +246,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(LauncherNavigationEvent.Onboarding(null, hideExistingServers = false, skipWelcome = false, hasLocationTrackingSupport = false), viewModel.navigationEventsFlow.replayCache.first())
-        assertTrue(!viewModel.shouldShowSplashScreen())
+        assertFalse(viewModel.shouldShowSplashScreen())
     }
 
     @ParameterizedTest

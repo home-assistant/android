@@ -39,7 +39,7 @@ class ExternalUrlViewModel @Inject constructor(
             serverManager.getServer(serverId)?.let {
                 canUseCloud = it.connection.canUseCloud
                 useCloud = it.connection.useCloud
-                externalUrl = serverManager.getServer(it.id)?.connection?.externalUrl ?: ""
+                externalUrl = it.connection.externalUrl
             }
         }
     }

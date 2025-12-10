@@ -117,7 +117,7 @@ class ServerConnectionStateProviderImpl @AssistedInject constructor(
         return retVal.filterNotNull()
     }
 
-    override suspend fun getSecurityInfo(): SecurityInfo {
+    override suspend fun getSecurityState(): SecurityState {
         val connection = connection()
 
         val hasLocationPermission = ContextCompat.checkSelfPermission(
@@ -126,8 +126,8 @@ class ServerConnectionStateProviderImpl @AssistedInject constructor(
         ) == PackageManager.PERMISSION_GRANTED
         val isLocationEnabled = DisabledLocationHandler.isLocationEnabled(context)
 
-        return SecurityInfo(
-            isOnInternalNetwork = isInternal(requiresUrl = false),
+        return SecurityState(
+            isOnHomeNetwork = isInternal(requiresUrl = false),
             hasHomeSetup = connection.hasHomeNetworkSetup,
             locationEnabled = hasLocationPermission && isLocationEnabled,
         )
@@ -144,17 +144,9 @@ class ServerConnectionStateProviderImpl @AssistedInject constructor(
         return allowInsecure || isInternal(requiresUrl = false)
     }
 
-    // If permission is denied then the process restart so initial state is going to be updated
-
-    // TODO this needs to be shared within this class to avoid multiple registration
-    private fun observeConnectionInfoChanges(): Flow<ServerConnectionInfo> {
-        return serverDao.observeServer(serverId)
-            .mapNotNull { it?.connection }
-            .distinctUntilChanged()
-    }
-
     // TODO this could be cache too, the idea would be to have better logging experience regarding
     //  which URL is currently being used
+    //  https://github.com/home-assistant/android/issues/6147
     override fun urlFlow(isInternalOverride: ((ServerConnectionInfo) -> Boolean)?): Flow<UrlState> {
         return merge(
             flowOf(Unit), // Used to trigger a getUrl
@@ -187,7 +179,13 @@ class ServerConnectionStateProviderImpl @AssistedInject constructor(
         }.distinctUntilChanged()
     }
 
-    // TODO this needs to be shared across all the server
+    private fun observeConnectionInfoChanges(): Flow<ServerConnectionInfo> {
+        return serverDao.getFlow(serverId)
+            .mapNotNull { it?.connection }
+            .distinctUntilChanged()
+    }
+
+    // If permission is denied to the app then the process restart so initial state is going to be updated
     private fun observeLocationState(): Flow<Unit> = callbackFlow {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
@@ -210,7 +208,6 @@ class ServerConnectionStateProviderImpl @AssistedInject constructor(
         }
     }
 
-    // TODO this needs to be shared across all the server
     private fun observeHomeNetworkState(): Flow<Unit> = callbackFlow {
         val networkRequest = NetworkRequest.Builder().build()
 

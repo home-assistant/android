@@ -176,30 +176,39 @@ private fun InetAddress.isPrivateOrLocal(): Boolean {
  * @return `true` if both URLs have the same scheme, host, and port
  */
 fun HttpUrl.hasSameOrigin(other: HttpUrl): Boolean {
-    return scheme == other.scheme &&
-        host == other.host &&
-        port == other.port
-}
-
-/**
- * Checks if this Uri has the same base (scheme, host, and port) as the other Uri.
- *
- * @param other the Uri to compare against
- * @return `true` if both URIs have the same scheme, host, and port
- */
-fun Uri.hasSameBase(other: Uri?): Boolean {
-    if (other == null) return false
     return scheme.equals(other.scheme, ignoreCase = true) &&
         host.equals(other.host, ignoreCase = true) &&
         port == other.port
 }
 
 /**
- * Checks if this Uri has a meaningful path (not empty, not just "/").
+ * Checks if this Uri has the same origin (scheme, host, and port) as the other Uri.
+ * Default ports (443 for HTTPS, 80 for HTTP) are normalized for comparison.
+ *
+ * @param other the Uri to compare against
+ * @return `true` if both URIs have the same scheme, host, and port
+ */
+fun Uri.hasSameOrigin(other: Uri?): Boolean {
+    if (other == null) return false
+    return scheme.equals(other.scheme, ignoreCase = true) &&
+        host.equals(other.host, ignoreCase = true) &&
+        effectivePort == other.effectivePort
+}
+
+private val Uri.effectivePort: Int
+    get() = when {
+        port != -1 -> port
+        scheme.equals("https", ignoreCase = true) -> 443
+        scheme.equals("http", ignoreCase = true) -> 80
+        else -> -1
+    }
+
+/**
+ * Checks if this Uri has a non root path (not empty, not just "/").
  *
  * @return `true` if the Uri has a path that is not blank and not just "/"
  */
-fun Uri.hasMeaningfulPath(): Boolean {
+fun Uri.hasNonRootPath(): Boolean {
     val path = this.path ?: return false
     return path.isNotBlank() && path != "/"
 }

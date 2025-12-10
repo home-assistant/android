@@ -10,7 +10,7 @@ import androidx.lifecycle.LifecycleRegistry
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
-import io.homeassistant.companion.android.common.data.servers.SecurityInfo
+import io.homeassistant.companion.android.common.data.servers.SecurityState
 import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
@@ -39,6 +39,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -310,15 +311,15 @@ class WebViewPresenterImplTest {
 
         // entityId paths should be ignored and base URL should be loaded
         assertTrue(urlSlot.captured.toString().startsWith("https://example.com"))
-        assertTrue(!urlSlot.captured.toString().contains("entityId"))
+        assertFalse(urlSlot.captured.toString().contains("entityId"))
     }
 
     @Test
     fun `Given url state is InsecureState when load called then shows block insecure screen`() = runTest(testDispatcher) {
         val server = mockk<Server>(relaxed = true)
         val urlFlow = MutableStateFlow<UrlState>(UrlState.InsecureState)
-        val securityInfo = SecurityInfo(
-            isOnInternalNetwork = false,
+        val securityState = SecurityState(
+            isOnHomeNetwork = false,
             hasHomeSetup = false,
             locationEnabled = false,
         )
@@ -326,7 +327,7 @@ class WebViewPresenterImplTest {
         coEvery { serverManager.getServer(any<Int>()) } returns server
         coEvery { authenticationRepository.getSessionState() } returns SessionState.CONNECTED
         coEvery { connectionStateProvider.urlFlow(any()) } returns urlFlow
-        coEvery { connectionStateProvider.getSecurityInfo() } returns securityInfo
+        coEvery { connectionStateProvider.getSecurityState() } returns securityState
 
         lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
         lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
@@ -351,8 +352,8 @@ class WebViewPresenterImplTest {
     fun `Given url state changes from HasUrl to InsecureState when collecting then shows block insecure`() = runTest(testDispatcher) {
         val server = mockk<Server>(relaxed = true)
         val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl(URL("https://example.com")))
-        val securityInfo = SecurityInfo(
-            isOnInternalNetwork = false,
+        val securityState = SecurityState(
+            isOnHomeNetwork = false,
             hasHomeSetup = true,
             locationEnabled = false,
         )
@@ -360,7 +361,7 @@ class WebViewPresenterImplTest {
         coEvery { serverManager.getServer(any<Int>()) } returns server
         coEvery { authenticationRepository.getSessionState() } returns SessionState.CONNECTED
         coEvery { connectionStateProvider.urlFlow(any()) } returns urlFlow
-        coEvery { connectionStateProvider.getSecurityInfo() } returns securityInfo
+        coEvery { connectionStateProvider.getSecurityState() } returns securityState
 
         lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
         lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
@@ -507,7 +508,7 @@ class WebViewPresenterImplTest {
         verify(atLeast = 2) { webView.loadUrl(capture(urlSlots), any(), any()) }
         val secondUrl = urlSlots.last().toString()
         assertTrue(secondUrl.contains("external.example.com"))
-        assertTrue(!secondUrl.contains("/dashboard"))
+        assertFalse(secondUrl.contains("/dashboard"))
     }
 
     @Test
