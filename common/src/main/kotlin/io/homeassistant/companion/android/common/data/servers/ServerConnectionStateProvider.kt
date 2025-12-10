@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import java.net.URL
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import okhttp3.HttpUrl
 import timber.log.Timber
 
 /**
@@ -91,7 +92,7 @@ interface ServerConnectionStateProvider {
      *
      * @return list of valid webhook API URLs, empty if not registered (no webhook ID)
      */
-    suspend fun getApiUrls(): List<URL>
+    suspend fun getApiUrls(): List<HttpUrl>
 
     /**
      * Returns security information about the current connection state.
