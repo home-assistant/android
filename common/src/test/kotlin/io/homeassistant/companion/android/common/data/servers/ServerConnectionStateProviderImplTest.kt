@@ -190,7 +190,7 @@ class ServerConnectionStateProviderImplTest {
         }
 
         @Test
-        fun `Given no internal network configuration when calling isInternal then returns false`() = runTest {
+        fun `Given no home network configuration when calling isInternal then returns false`() = runTest {
             val provider = createServerConnectionStateProvider(
                 externalUrl = "https://external.example.com",
                 internalUrl = "http://192.168.1.1:8123",
@@ -201,10 +201,10 @@ class ServerConnectionStateProviderImplTest {
     }
 
     @Nested
-    inner class GetSecurityInfo {
+    inner class GetSecurityState {
 
         @Test
-        fun `Given device is on internal network via ethernet then canMakePlainTextCallSecurely returns true`() = runTest {
+        fun `Given device is on home network via ethernet then canMakePlainTextCallSecurely returns true`() = runTest {
             val repository = createServerConnectionStateProvider(
                 externalUrl = "http://external.example.com",
                 internalUrl = "http://192.168.1.1:8123",
@@ -216,15 +216,15 @@ class ServerConnectionStateProviderImplTest {
             } returns PackageManager.PERMISSION_GRANTED
             every { DisabledLocationHandler.isLocationEnabled(context) } returns true
 
-            val result = repository.getSecurityInfo()
+            val result = repository.getSecurityState()
 
-            assertTrue(result.isOnInternalNetwork)
+            assertTrue(result.isOnHomeNetwork)
             assertTrue(result.hasHomeSetup)
             assertTrue(result.locationEnabled)
         }
 
         @Test
-        fun `Given device is on internal network via VPN then isOnInternalNetwork returns true`() = runTest {
+        fun `Given device is on home network via VPN then isOnHomeNetwork returns true`() = runTest {
             val repository = createServerConnectionStateProvider(
                 externalUrl = "http://external.example.com",
                 internalUrl = "http://192.168.1.1:8123",
@@ -237,13 +237,13 @@ class ServerConnectionStateProviderImplTest {
             } returns PackageManager.PERMISSION_GRANTED
             every { DisabledLocationHandler.isLocationEnabled(context) } returns true
 
-            val result = repository.getSecurityInfo()
+            val result = repository.getSecurityState()
 
-            assertTrue(result.isOnInternalNetwork)
+            assertTrue(result.isOnHomeNetwork)
         }
 
         @Test
-        fun `Given device is on internal network via SSID then isOnInternalNetwork returns true`() = runTest {
+        fun `Given device is on home network via SSID then isOnHomeNetwork returns true`() = runTest {
             val repository = createServerConnectionStateProvider(
                 externalUrl = "http://external.example.com",
                 internalUrl = "http://192.168.1.1:8123",
@@ -258,13 +258,13 @@ class ServerConnectionStateProviderImplTest {
             } returns PackageManager.PERMISSION_GRANTED
             every { DisabledLocationHandler.isLocationEnabled(context) } returns true
 
-            val result = repository.getSecurityInfo()
+            val result = repository.getSecurityState()
 
-            assertTrue(result.isOnInternalNetwork)
+            assertTrue(result.isOnHomeNetwork)
         }
 
         @Test
-        fun `Given not on internal network and no home setup then hasHomeSetup is false`() = runTest {
+        fun `Given not on home network and no home setup then hasHomeSetup is false`() = runTest {
             val repository = createServerConnectionStateProvider(
                 externalUrl = "http://external.example.com",
                 internalUrl = null,
@@ -276,15 +276,15 @@ class ServerConnectionStateProviderImplTest {
             } returns PackageManager.PERMISSION_GRANTED
             every { DisabledLocationHandler.isLocationEnabled(context) } returns true
 
-            val result = repository.getSecurityInfo()
+            val result = repository.getSecurityState()
 
-            assertFalse(result.isOnInternalNetwork)
+            assertFalse(result.isOnHomeNetwork)
             assertFalse(result.hasHomeSetup)
             assertTrue(result.locationEnabled)
         }
 
         @Test
-        fun `Given not on internal network and has internalSSID then hasHomeSetup is true`() = runTest {
+        fun `Given not on home network and has internalSSID then hasHomeSetup is true`() = runTest {
             val repository = createServerConnectionStateProvider(
                 externalUrl = "http://external.example.com",
                 internalUrl = "http://192.168.1.1:8123",
@@ -301,15 +301,15 @@ class ServerConnectionStateProviderImplTest {
             } returns PackageManager.PERMISSION_GRANTED
             every { DisabledLocationHandler.isLocationEnabled(context) } returns true
 
-            val result = repository.getSecurityInfo()
+            val result = repository.getSecurityState()
 
-            assertFalse(result.isOnInternalNetwork)
+            assertFalse(result.isOnHomeNetwork)
             assertTrue(result.hasHomeSetup)
             assertTrue(result.locationEnabled)
         }
 
         @Test
-        fun `Given not on internal network and VPN enabled then hasHomeSetup is true`() = runTest {
+        fun `Given not on home network and VPN enabled then hasHomeSetup is true`() = runTest {
             val repository = createServerConnectionStateProvider(
                 externalUrl = "http://external.example.com",
                 internalUrl = null,
@@ -323,14 +323,14 @@ class ServerConnectionStateProviderImplTest {
             } returns PackageManager.PERMISSION_GRANTED
             every { DisabledLocationHandler.isLocationEnabled(context) } returns true
 
-            val result = repository.getSecurityInfo()
+            val result = repository.getSecurityState()
 
-            assertFalse(result.isOnInternalNetwork)
+            assertFalse(result.isOnHomeNetwork)
             assertTrue(result.hasHomeSetup)
         }
 
         @Test
-        fun `Given not on internal network and Ethernet enabled then hasHomeSetup is true`() = runTest {
+        fun `Given not on home network and Ethernet enabled then hasHomeSetup is true`() = runTest {
             val repository = createServerConnectionStateProvider(
                 externalUrl = "http://external.example.com",
                 internalUrl = null,
@@ -343,9 +343,9 @@ class ServerConnectionStateProviderImplTest {
             } returns PackageManager.PERMISSION_GRANTED
             every { DisabledLocationHandler.isLocationEnabled(context) } returns true
 
-            val result = repository.getSecurityInfo()
+            val result = repository.getSecurityState()
 
-            assertFalse(result.isOnInternalNetwork)
+            assertFalse(result.isOnHomeNetwork)
             assertTrue(result.hasHomeSetup)
         }
 
@@ -365,9 +365,9 @@ class ServerConnectionStateProviderImplTest {
             } returns PackageManager.PERMISSION_DENIED
             every { DisabledLocationHandler.isLocationEnabled(context) } returns true
 
-            val result = repository.getSecurityInfo()
+            val result = repository.getSecurityState()
 
-            assertFalse(result.isOnInternalNetwork)
+            assertFalse(result.isOnHomeNetwork)
             assertFalse(result.locationEnabled)
         }
 
@@ -387,9 +387,9 @@ class ServerConnectionStateProviderImplTest {
             } returns PackageManager.PERMISSION_GRANTED
             every { DisabledLocationHandler.isLocationEnabled(context) } returns false
 
-            val result = repository.getSecurityInfo()
+            val result = repository.getSecurityState()
 
-            assertFalse(result.isOnInternalNetwork)
+            assertFalse(result.isOnHomeNetwork)
             assertFalse(result.locationEnabled)
         }
 
@@ -409,14 +409,14 @@ class ServerConnectionStateProviderImplTest {
             } returns PackageManager.PERMISSION_DENIED
             every { DisabledLocationHandler.isLocationEnabled(context) } returns false
 
-            val result = repository.getSecurityInfo()
+            val result = repository.getSecurityState()
 
-            assertFalse(result.isOnInternalNetwork)
+            assertFalse(result.isOnHomeNetwork)
             assertFalse(result.locationEnabled)
         }
 
         @Test
-        fun `Given null internalVpn and internalEthernet then hasHomeSetup is false`() = runTest {
+        fun `Given no internalSsids and null internalVpn and internalEthernet then hasHomeSetup is false`() = runTest {
             val repository = createServerConnectionStateProvider(
                 externalUrl = "http://external.example.com",
                 internalUrl = null,
@@ -428,9 +428,9 @@ class ServerConnectionStateProviderImplTest {
             } returns PackageManager.PERMISSION_GRANTED
             every { DisabledLocationHandler.isLocationEnabled(context) } returns true
 
-            val result = repository.getSecurityInfo()
+            val result = repository.getSecurityState()
 
-            assertFalse(result.isOnInternalNetwork)
+            assertFalse(result.isOnHomeNetwork)
             assertFalse(result.hasHomeSetup)
         }
     }
@@ -502,7 +502,7 @@ class ServerConnectionStateProviderImplTest {
         }
 
         @Test
-        fun `Given on internal network when calling getApiUrls then internal URL is first`() = runTest {
+        fun `Given on home network when calling getApiUrls then internal URL is first`() = runTest {
             val provider = createServerConnectionStateProvider(
                 externalUrl = "https://external.example.com",
                 internalUrl = "http://192.168.1.1:8123",
@@ -550,7 +550,7 @@ class ServerConnectionStateProviderImplTest {
         }
 
         @Test
-        fun `Given on internal network with cloudUrl when calling getApiUrls then internal is first followed by cloudUrl`() = runTest {
+        fun `Given on home network with cloudUrl when calling getApiUrls then internal is first followed by cloudUrl`() = runTest {
             val provider = createServerConnectionStateProvider(
                 externalUrl = "https://external.example.com",
                 internalUrl = "http://192.168.1.1:8123",
@@ -601,7 +601,7 @@ class ServerConnectionStateProviderImplTest {
         }
 
         @Test
-        fun `Given HTTP URL belonging to server and allowInsecure false but on internal network when calling canSafelySendCredentials then returns true`() = runTest {
+        fun `Given HTTP URL belonging to server and allowInsecure false but on home network when calling canSafelySendCredentials then returns true`() = runTest {
             val provider = createServerConnectionStateProvider(
                 externalUrl = "http://external.example.com",
                 internalUrl = "http://192.168.1.1:8123",
@@ -642,7 +642,7 @@ class ServerConnectionStateProviderImplTest {
             val provider = createServerConnectionStateProvider(
                 externalUrl = "https://external.example.com",
             )
-            every { serverDao.observeServer(serverId) } returns flowOf(null)
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
 
             val result = provider.urlFlow().first()
 
@@ -656,7 +656,7 @@ class ServerConnectionStateProviderImplTest {
                 externalUrl = "http://external.example.com",
                 allowInsecureConnection = true,
             )
-            every { serverDao.observeServer(serverId) } returns flowOf(null)
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
 
             val result = provider.urlFlow().first()
 
@@ -670,7 +670,7 @@ class ServerConnectionStateProviderImplTest {
                 externalUrl = "http://external.example.com",
                 allowInsecureConnection = false,
             )
-            every { serverDao.observeServer(serverId) } returns flowOf(null)
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
 
             val result = provider.urlFlow().first()
 
@@ -678,7 +678,7 @@ class ServerConnectionStateProviderImplTest {
         }
 
         @Test
-        fun `Given HTTP URL with allowInsecure false but on internal network when collecting urlFlow then emits HasUrl`() = runTest {
+        fun `Given HTTP URL with allowInsecure false but on home network when collecting urlFlow then emits HasUrl`() = runTest {
             val provider = createServerConnectionStateProvider(
                 externalUrl = "http://external.example.com",
                 internalUrl = "http://192.168.1.1:8123",
@@ -686,7 +686,7 @@ class ServerConnectionStateProviderImplTest {
                 internalEthernet = true,
             )
             every { networkHelper.isUsingEthernet() } returns true
-            every { serverDao.observeServer(serverId) } returns flowOf(null)
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
 
             val result = provider.urlFlow().first()
 
@@ -699,7 +699,7 @@ class ServerConnectionStateProviderImplTest {
                 externalUrl = "http://external.example.com",
                 allowInsecureConnection = null,
             )
-            every { serverDao.observeServer(serverId) } returns flowOf(null)
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
 
             val result = provider.urlFlow().first()
 
@@ -713,7 +713,7 @@ class ServerConnectionStateProviderImplTest {
                 internalUrl = "http://192.168.1.1:8123",
                 allowInsecureConnection = true,
             )
-            every { serverDao.observeServer(serverId) } returns flowOf(null)
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
 
             val result = provider.urlFlow(isInternalOverride = { true }).first()
 
@@ -722,7 +722,7 @@ class ServerConnectionStateProviderImplTest {
         }
 
         @Test
-        fun `Given on internal network when collecting urlFlow then uses internal URL`() = runTest {
+        fun `Given on home network when collecting urlFlow then uses internal URL`() = runTest {
             val provider = createServerConnectionStateProvider(
                 externalUrl = "https://external.example.com",
                 internalUrl = "http://192.168.1.1:8123",
@@ -730,7 +730,7 @@ class ServerConnectionStateProviderImplTest {
                 allowInsecureConnection = true,
             )
             every { networkHelper.isUsingEthernet() } returns true
-            every { serverDao.observeServer(serverId) } returns flowOf(null)
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
 
             val result = provider.urlFlow().first()
 
@@ -745,7 +745,7 @@ class ServerConnectionStateProviderImplTest {
                 cloudUrl = "https://cloud.example.com",
                 useCloud = true,
             )
-            every { serverDao.observeServer(serverId) } returns flowOf(null)
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
 
             val result = provider.urlFlow().first()
 

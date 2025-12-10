@@ -32,7 +32,7 @@ sealed interface UrlState {
      *
      * This state is emitted when:
      * - The URL uses HTTPS, or
-     * - The device is on an internal network (HTTP is acceptable internally), or
+     * - The device is on an home network (HTTP is acceptable internally), or
      * - The user has explicitly allowed insecure connections
      *
      * @property url the server URL to use, may be `null` if no valid URL is configured
@@ -42,7 +42,7 @@ sealed interface UrlState {
     /**
      * The connection would be insecure and is not allowed.
      *
-     * This state is emitted when the URL uses HTTP, the device is not on an internal network,
+     * This state is emitted when the URL uses HTTP, the device is not on an home network,
      * and the user has not allowed insecure connections.
      */
     data object InsecureState : UrlState
@@ -60,16 +60,17 @@ sealed interface UrlState {
 interface ServerConnectionStateProvider {
 
     /**
-     * Indicates if the device's current connection should be treated as internal for this server.
+     * Indicates if the device's current connection should be treated as on the home network.
+     * When on the home network, the internal URL should be used.
      *
-     * Internal network detection is based on the server's configuration:
+     * Home network detection is based on the server's configuration:
      * - Connected to a configured Wi-Fi SSID (requires location permission)
      * - Connected via Ethernet (if enabled in settings)
      * - Connected via VPN (if enabled in settings)
      *
      * @param requiresUrl whether a valid internal URL must be configured. Set to `true` when
      *   determining which URL to use, `false` when just checking network state.
-     * @return `true` if the device is currently on an internal network
+     * @return `true` if the device is currently on the home network
      */
     suspend fun isInternal(requiresUrl: Boolean = true): Boolean
 
@@ -84,11 +85,9 @@ interface ServerConnectionStateProvider {
     /**
      * Gets all API URLs for webhook communication, ordered by priority.
      *
-     * The order depends on whether the device is on an internal network:
+     * The order depends on whether the device is on an home network:
      * - Internal: internal URL, then cloudhook, then external
      * - External: cloudhook first (if available), then external
-     *
-     * Each URL has `/api/webhook/{webhookId}` appended for webhook calls.
      *
      * @return list of valid webhook API URLs, empty if not registered (no webhook ID)
      */
@@ -97,17 +96,17 @@ interface ServerConnectionStateProvider {
     /**
      * Returns security information about the current connection state.
      *
-     * @return [SecurityInfo] containing internal network status, home setup status,
+     * @return [SecurityState] containing home network status, home setup status,
      *   and location permission state
      */
-    suspend fun getSecurityInfo(): SecurityInfo
+    suspend fun getSecurityState(): SecurityState
 
     /**
      * Checks if it's safe to send authentication credentials to the given URL.
      *
      * Credentials are safe to send when:
      * - The URL uses HTTPS (always safe), or
-     * - The URL belongs to this server AND the device is on an internal network, or
+     * - The URL belongs to this server AND the device is on an home network, or
      * - The URL belongs to this server AND insecure connections are explicitly allowed
      *
      * @param url the URL to check
@@ -123,7 +122,7 @@ interface ServerConnectionStateProvider {
      * - Network connectivity (Wi-Fi SSID, Ethernet, VPN)
      * - Server connection configuration changes in the database
      *
-     * @param isInternalOverride optional callback to override internal network detection.
+     * @param isInternalOverride optional callback to override home network detection.
      *   When provided, this function is called with the current [ServerConnectionInfo] to
      *   determine if the device should be treated as internal.
      * @return a Flow of [UrlState] that emits whenever conditions change

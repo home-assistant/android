@@ -47,7 +47,7 @@ class ServerConnectionInfoTest {
         }
 
         @Test
-        fun `Given internalVpn disabled then hasHomeNetworkSetup is false`() {
+        fun `Given no internalSsids and internalVpn disabled then hasHomeNetworkSetup is false`() {
             val connection = ServerConnectionInfo(
                 externalUrl = "https://example.com",
                 internalVpn = false,
@@ -67,7 +67,7 @@ class ServerConnectionInfoTest {
         }
 
         @Test
-        fun `Given internalEthernet disabled then hasHomeNetworkSetup is false`() {
+        fun `Given no internalSsids and internalVpn null and internalEthernet disabled then hasHomeNetworkSetup is false`() {
             val connection = ServerConnectionInfo(
                 externalUrl = "https://example.com",
                 internalEthernet = false,

@@ -164,36 +164,13 @@ class WebViewPresenterImpl @Inject constructor(
         isNewServer: Boolean,
     ) {
         when (urlState) {
-            is UrlState.HasUrl -> handleHasUrlState(
-                urlState = urlState,
-                path = path,
-                shouldConsumePath = shouldConsumePath,
-                isNewServer = isNewServer,
-            )
-            UrlState.InsecureState -> handleInsecureState()
-        }
-    }
-
-    private suspend fun handleHasUrlState(
-        urlState: UrlState.HasUrl,
-        path: String?,
-        shouldConsumePath: Boolean,
-        isNewServer: Boolean,
-    ) {
-        if (shouldConsumePath) {
-            loadInitialUrl(
+            is UrlState.HasUrl -> loadUrl(
                 baseUrl = urlState.url,
-                path = path,
+                path = if (shouldConsumePath) path else null,
                 isNewServer = isNewServer,
             )
-        } else {
-            // TODO not sure if we need to handle the path here, since if we end up into this
-            //  we would have already consumed the path and we are changing to another base URL
-            //  like going from internal to external.
-            loadServerUrl(
-                serverUrl = urlState.url,
-                isNewServer = isNewServer,
-            )
+
+            UrlState.InsecureState -> handleInsecureState()
         }
     }
 
@@ -204,7 +181,7 @@ class WebViewPresenterImpl @Inject constructor(
      * @param path optional path to append (ignored if starts with "entityId:")
      * @param isNewServer whether this is a new server (affects history behavior)
      */
-    private suspend fun loadInitialUrl(baseUrl: URL?, path: String?, isNewServer: Boolean) {
+    private suspend fun loadUrl(baseUrl: URL?, path: String?, isNewServer: Boolean) {
         val urlToLoad = if (path != null && !path.startsWith("entityId:")) {
             UrlUtil.handle(baseUrl, path)
         } else {
@@ -212,51 +189,24 @@ class WebViewPresenterImpl @Inject constructor(
         }
 
         urlToLoad?.let {
-            loadUrlInWebView(
-                url = it,
-                keepHistory = !isNewServer,
-                openInApp = it.baseIsEqual(baseUrl),
-            )
+            val urlWithAuth = it.toString().toUri()
+                .buildUpon()
+                .appendQueryParameter("external_auth", "1")
+                .build()
+
+            withContext(Dispatchers.Main) {
+                view.loadUrl(
+                    url = urlWithAuth,
+                    keepHistory = !isNewServer,
+                    openInApp = it.baseIsEqual(baseUrl),
+                )
+            }
         } ?: Timber.w("Url is null")
-    }
-
-    /**
-     * Loads a server URL directly without path modification.
-     *
-     * @param serverUrl the URL to load
-     * @param isNewServer whether this is a new server (affects history behavior)
-     */
-    private suspend fun loadServerUrl(serverUrl: URL?, isNewServer: Boolean) {
-        serverUrl?.let {
-            loadUrlInWebView(
-                url = it,
-                keepHistory = !isNewServer,
-                openInApp = true,
-            )
-        } ?: Timber.w("Url is null")
-    }
-
-    /**
-     * Loads a URL in the WebView with external authentication parameter.
-     */
-    private suspend fun loadUrlInWebView(url: URL, keepHistory: Boolean, openInApp: Boolean) {
-        val urlWithAuth = url.toString().toUri()
-            .buildUpon()
-            .appendQueryParameter("external_auth", "1")
-            .build()
-
-        withContext(Dispatchers.Main) {
-            view.loadUrl(
-                url = urlWithAuth,
-                keepHistory = keepHistory,
-                openInApp = openInApp,
-            )
-        }
     }
 
     private suspend fun handleInsecureState() {
         Timber.d("Insecure state detected, showing blocking screen")
-        val info = serverManager.connectionStateProvider(serverId).getSecurityInfo()
+        val info = serverManager.connectionStateProvider(serverId).getSecurityState()
         view.showBlockInsecure(
             serverId = serverId,
             missingHomeSetup = !info.hasHomeSetup,

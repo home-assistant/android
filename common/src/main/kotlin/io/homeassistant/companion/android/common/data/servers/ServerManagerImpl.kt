@@ -52,7 +52,7 @@ class ServerManagerImpl @Inject constructor(
     private val authenticationRepos = mutableMapOf<Int, AuthenticationRepository>()
     private val integrationRepos = mutableMapOf<Int, IntegrationRepository>()
     private val webSocketRepos = mutableMapOf<Int, WebSocketRepository>()
-    private val connectionRepos = mutableMapOf<Int, ServerConnectionStateProvider>()
+    private val connectionStateProviders = mutableMapOf<Int, ServerConnectionStateProvider>()
 
     companion object {
         private const val PREF_ACTIVE_SERVER = "active_server"
@@ -183,7 +183,7 @@ class ServerManagerImpl @Inject constructor(
         integrationRepos.remove(id)
         webSocketRepos[id]?.shutdown()
         webSocketRepos.remove(id)
-        connectionRepos.remove(id)
+        connectionStateProviders.remove(id)
         mutableServers.remove(id)
     }
 
@@ -219,11 +219,13 @@ class ServerManagerImpl @Inject constructor(
 
     override suspend fun connectionStateProvider(serverId: Int): ServerConnectionStateProvider {
         val id = if (serverId == SERVER_ID_ACTIVE) activeServerId() else serverId
-        return connectionRepos[id] ?: run {
+        return connectionStateProviders[id] ?: run {
             if (id == null || mutableServers[id] == null) throw IllegalArgumentException("No server for ID")
             val provider = serverConnectionStateProviderFactory.create(id)
-            connectionRepos[id] = provider
-            checkNotNull(connectionRepos[id]) { "Should not be null since we've just called create ($provider)" }
+            connectionStateProviders[id] = provider
+            checkNotNull(connectionStateProviders[id]) {
+                "Should not be null since we've just called create ($provider)"
+            }
         }
     }
 }

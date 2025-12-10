@@ -17,7 +17,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
  *
  * @property externalUrl The primary URL used to connect to the server from outside the home network.
  * @property internalUrl Optional URL used when the device is on the home network.
- * @property cloudUrl Optional Home Assistant Cloud remote UI URL. When available and [useCloud] is enabled.
+ * @property cloudUrl Optional Home Assistant Cloud remote UI URL, automatically updated from the server.
  * @property webhookId Unique identifier assigned by Home Assistant during device registration.
  * @property secret Shared secret for webhook authentication, if configured on the server.
  * @property cloudhookUrl Direct webhook URL provided by Home Assistant Cloud.
@@ -31,9 +31,9 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
  *   `null` means the user hasn't configured this setting.
  * @property prioritizeInternal When `true`, always try the internal URL first regardless of
  *   detected network state.
- * @property allowInsecureConnection Controls whether HTTP (non-HTTPS) connections are permitted
+ * @property allowInsecureConnection Controls whether non-HTTPS connections are permitted
  *   when not on the home network. `null` means the user hasn't set their preference yet (legacy
- *   installs), `true` allows insecure connections, `false` blocks them and shows a warning.
+ *   installs), `true` allows insecure connections, when `false` insecure connections should be blocked.
  */
 data class ServerConnectionInfo(
     @ColumnInfo(name = "external_url")
@@ -61,9 +61,7 @@ data class ServerConnectionInfo(
     @ColumnInfo(name = "allow_insecure_connection")
     val allowInsecureConnection: Boolean? = null,
 ) {
-    /**
-     * Keep the parsing of the URLs from String to HTTPUrl to avoid doing it multiple times
-     */
+    // Keep the parsing of the URLs from String to HttpUrl to avoid doing it multiple times
     @get:Ignore
     internal val externalHttpUrl: HttpUrl? by lazy { externalUrl.toHttpUrlOrNull() }
 
@@ -87,8 +85,7 @@ data class ServerConnectionInfo(
     }
 
     /**
-     * Indicates whether at least one URL (external, internal, cloud, or cloudhook) is configured
-     * and parsable.
+     * Indicates whether at least one URL is configured and parsable.
      */
     @get:Ignore
     val hasAtLeastOneUrl: Boolean by lazy {

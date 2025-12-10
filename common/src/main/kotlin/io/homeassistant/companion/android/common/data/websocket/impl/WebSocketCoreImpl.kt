@@ -184,7 +184,7 @@ internal class WebSocketCoreImpl(
             }
 
             val url = connectionStateProvider().urlFlow().firstUrlOrNull {
-                "Insecure state not opening WebSocket connection"
+                "Unavailable URL not opening WebSocket connection"
             }
             if (url == null) {
                 Timber.w("No url to connect websocket too.")

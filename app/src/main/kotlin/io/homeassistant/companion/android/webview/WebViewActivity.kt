@@ -123,8 +123,8 @@ import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.compose.initializePlayer
-import io.homeassistant.companion.android.util.hasMeaningfulPath
-import io.homeassistant.companion.android.util.hasSameBase
+import io.homeassistant.companion.android.util.hasNonRootPath
+import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
@@ -1443,7 +1443,7 @@ class WebViewActivity :
                     loadedUrl = url
                     // It means that if we loaded an URL with a path previously and we try to load the same URL without
                     // a path we don't do anything.
-                    val shouldLoadUrl = !url.hasSameBase(oldUrl) || url.hasMeaningfulPath()
+                    val shouldLoadUrl = !url.hasSameOrigin(oldUrl) || url.hasNonRootPath()
                     if (shouldLoadUrl) {
                         webView.loadUrl(url.toString())
                         waitForConnection()
@@ -1472,14 +1472,13 @@ class WebViewActivity :
             Timber.d("Security level screen exited by user, proceeding with URL loading")
             supportFragmentManager.clearFragmentResultListener(ConnectionSecurityLevelFragment.RESULT_KEY)
 
-            // We don't care of the result we always assume that the fragment bash been closed and we should
-            // show it again.
+            // Don't show this fragment again for this server during the activity's lifetime,
+            // regardless of what action the user took.
             connectionSecurityLevelFragmentClosed[serverId] = true
 
             lifecycleScope.launch {
-                // Trigger a reload of the URL to trigger to trigger loadUrl in the view,
-                // it is important to use the presenter to apply the potential changes
-                // made in the fragment.
+                // Trigger a reload of the URL via the presenter to trigger loadUrl in the view.
+                // The presenter will apply the potential changes made in the fragment.
                 presenter.load(lifecycle, path = pathToPreserve)
             }
         }
@@ -1498,10 +1497,6 @@ class WebViewActivity :
     }
 
     override fun showBlockInsecure(serverId: Int, missingHomeSetup: Boolean, missingLocation: Boolean) {
-        showBlockInsecureFragment(serverId, missingHomeSetup, missingLocation)
-    }
-
-    private fun showBlockInsecureFragment(serverId: Int, missingHomeSetup: Boolean, missingLocation: Boolean) {
         // Skip if already showing BlockInsecureFragment to avoid blinking on retry
         if (supportFragmentManager.fragments.any { it is BlockInsecureFragment }) {
             Timber.d("BlockInsecureFragment already showing, skipping")

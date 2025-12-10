@@ -1267,7 +1267,7 @@ class MessagingManager @Inject constructor(
                     builder.setLargeIcon(bitmap)
                 }
             } else {
-                Timber.w("Not fetching image since URL is insecure")
+                Timber.w("Not fetching icon since URL is unavailable")
             }
         }
     }
@@ -1302,7 +1302,7 @@ class MessagingManager @Inject constructor(
                         )
                 }
             } else {
-                Timber.w("Not fetching image since URL is insecure")
+                Timber.w("Not fetching image since URL is unavailable")
             }
         }
     }
@@ -1408,7 +1408,7 @@ class MessagingManager @Inject constructor(
                     }
                 }
             } else {
-                Timber.w("Not fetching video since URL is insecure")
+                Timber.w("Not fetching video since URL is unavailable")
             }
         }
     }

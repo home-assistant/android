@@ -130,8 +130,6 @@ class CameraWidget : AppWidgetProvider() {
             try {
                 val entityPictureUrl = retrieveCameraImageUrl(widget.serverId, widget.entityId)
 
-                // TODO we should change the look of the widget in that case
-
                 val urlState = serverManager.connectionStateProvider(
                     widget.serverId,
                 ).urlFlow().first()
@@ -139,7 +137,7 @@ class CameraWidget : AppWidgetProvider() {
                     val baseUrl = urlState.url?.toString()?.removeSuffix("/") ?: ""
                     url = "$baseUrl$entityPictureUrl"
                 } else {
-                    throw IllegalStateException("Insecure state to retrieve picture url")
+                    throw IllegalStateException("Unavailable URL to retrieve picture")
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to fetch entity or entity does not exist")
