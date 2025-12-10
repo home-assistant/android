@@ -323,12 +323,10 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val requestBody = RateLimitRequest(pushToken)
 
         return try {
-            checkNotNull(
-                integrationService.getRateLimit(
-                    RATE_LIMIT_URL,
-                    requestBody,
-                ).rateLimits,
-            ) { "Rate limit response is null" }
+            integrationService.getRateLimit(
+                RATE_LIMIT_URL,
+                requestBody,
+            ).rateLimits
         } catch (e: Exception) {
             Timber.e(e, "Unable to get notification rate limits")
             throw IntegrationException(e)
