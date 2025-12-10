@@ -9,11 +9,11 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import java.net.URL
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -35,7 +35,7 @@ class IntegrationRepositoryImplTest {
         coEvery { serverManager.getServer(serverID) } returns server
         every { server.connection } returns serverConnection
         coEvery { serverManager.connectionStateProvider(serverID) } returns connectionStateProvider
-        coEvery { connectionStateProvider.getApiUrls() } returns listOf(URL("http://homeassistant:8123"))
+        coEvery { connectionStateProvider.getApiUrls() } returns listOf("http://homeassistant:8123".toHttpUrl())
 
         repository = IntegrationRepositoryImpl(integrationService, serverManager, serverID, localStorage, "", "", "", "")
     }
