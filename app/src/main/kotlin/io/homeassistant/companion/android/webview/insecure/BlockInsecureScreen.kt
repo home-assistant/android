@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.webview.insecure
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -23,8 +25,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -44,8 +49,10 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.rememberLocationPermission
+import kotlinx.coroutines.launch
 
 private val MaxContentWidth = MaxButtonWidth
+private const val ROTATION_ANIMATION_DURATION_MS = 500
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -107,12 +114,26 @@ internal fun BlockInsecureScreen(
 
 @Composable
 private fun TopBar(onRetry: () -> Unit, onHelpClick: () -> Unit) {
+    val rotation = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+
     HATopBar(
         navigationIcon = {
-            IconButton(onClick = onRetry) {
+            IconButton(
+                onClick = {
+                    scope.launch {
+                        rotation.animateTo(
+                            targetValue = rotation.value - 360f,
+                            animationSpec = tween(durationMillis = ROTATION_ANIMATION_DURATION_MS),
+                        )
+                    }
+                    onRetry()
+                },
+            ) {
                 Icon(
                     imageVector = Icons.Outlined.Replay,
                     contentDescription = stringResource(commonR.string.block_insecure_retry),
+                    modifier = Modifier.rotate(rotation.value),
                 )
             }
         },
