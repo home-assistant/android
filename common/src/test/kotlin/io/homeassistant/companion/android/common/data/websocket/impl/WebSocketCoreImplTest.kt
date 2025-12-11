@@ -26,8 +26,11 @@ import io.mockk.slot
 import io.mockk.unmockkAll
 import io.mockk.verify
 import io.mockk.verifyOrder
+import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -41,7 +44,6 @@ import okio.ByteString
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
@@ -66,6 +68,7 @@ class WebSocketCoreImplTest {
     private fun TestScope.setupServer(
         url: String = "https://io.ha",
         backgroundScope: CoroutineScope = this.backgroundScope,
+        urlFlow: Flow<UrlState>? = null,
     ) {
         mockOkHttpClient = mockk<OkHttpClient>(relaxed = true)
         val mockServerManager = mockk<ServerManager>(relaxed = true)
@@ -90,7 +93,7 @@ class WebSocketCoreImplTest {
         coEvery { mockAuthenticationRepository.retrieveAccessToken() } returns "mock_access_token"
         // Use OkHttp's URL parsing to normalize URLs (adds trailing slash) like the real implementation
         val parsedUrl = url.takeIf { it.startsWith("http") }?.toHttpUrlOrNull()?.toUrl()
-        every { mockConnectionStateProvider.urlFlow() } returns flowOf(UrlState.HasUrl(parsedUrl))
+        every { mockConnectionStateProvider.urlFlow() } returns (urlFlow ?: flowOf(UrlState.HasUrl(parsedUrl)))
         // The implementation use a background scope to properly handle async messages, to not block the test
         // we are injecting a background scope to properly control it within the tests, the scope will close itself at the end of the test
         webSocketCore = WebSocketCoreImpl(
@@ -122,7 +125,7 @@ class WebSocketCoreImplTest {
                 },
             )
         } answers {
-            assertSame(WebSocketState.AUTHENTICATING, webSocketCore.getConnectionState())
+            assertEquals(WebSocketState.AUTHENTICATING, webSocketCore.getConnectionState())
             webSocketListener.onMessage(
                 mockConnection,
                 """{"type":"${if (successfulAuth) "auth_ok" else "auth_invalid"}","ha_version":"$haVersion"}""",
@@ -182,6 +185,25 @@ connect()
     }
 
     @Test
+    fun `Given InsecureState When connect is invoked Then it returns false and connection state is null`() = runTest {
+        val serverManager = mockk<ServerManager>(relaxed = true)
+        val mockConnectionStateProvider = mockk<ServerConnectionStateProvider>(relaxed = true)
+        coEvery { serverManager.connectionStateProvider(1) } returns mockConnectionStateProvider
+        coEvery { mockConnectionStateProvider.urlFlow() } returns flowOf(UrlState.InsecureState)
+
+        val webSocketCore = WebSocketCoreImpl(
+            okHttpClient = mockk(),
+            serverManager = serverManager,
+            serverId = 1,
+        )
+
+        val result = webSocketCore.connect()
+
+        assertFalse(result)
+        assertNull(webSocketCore.getConnectionState())
+    }
+
+    @Test
     fun `Given failure to send auth message after socket creation When connect is invoked Then it returns false and connection state is null`() = runTest {
         setupServer()
         every { mockConnection.send(any<String>()) } returns false
@@ -214,7 +236,7 @@ connect()
 
         val result = webSocketCore.connect()
         assertTrue(result)
-        assertSame(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
     }
 
     @Test
@@ -225,7 +247,7 @@ connect()
         val result = webSocketCore.connect()
 
         assertFalse(result)
-        assertSame(WebSocketState.CLOSED_AUTH, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.CLOSED_AUTH, webSocketCore.getConnectionState())
     }
 
     @Test
@@ -253,7 +275,7 @@ connect()
         }
         // auth and supported_features
         coVerify(exactly = 2) { mockConnection.send(any<String>()) }
-        assertSame(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
     }
 
     @Test
@@ -266,7 +288,71 @@ connect()
         assertTrue(result)
         // auth
         coVerify(exactly = 1) { mockConnection.send(any<String>()) }
-        assertSame(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+    }
+
+    @Test
+    fun `Given an active connection When URL changes Then it cancels the connection`() = runTest {
+        val urlStateFlow = MutableStateFlow<UrlState>(UrlState.HasUrl("https://io.ha".toHttpUrlOrNull()?.toUrl()))
+        setupServer(urlFlow = urlStateFlow, backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+
+        // Simulate WebSocket behavior: cancel() triggers onFailure callback
+        every { mockConnection.cancel() } answers {
+            webSocketListener.onFailure(mockConnection, IOException("Canceled"), null)
+        }
+
+        assertTrue(webSocketCore.connect())
+        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+
+        urlStateFlow.value = UrlState.HasUrl("https://new.io.ha".toHttpUrlOrNull()?.toUrl())
+        advanceUntilIdle()
+
+        verify { mockConnection.cancel() }
+        assertEquals(WebSocketState.CLOSED_OTHER, webSocketCore.getConnectionState())
+    }
+
+    @Test
+    fun `Given an active connection When state changes to InsecureState Then it cancels the connection`() = runTest {
+        val urlStateFlow = MutableStateFlow<UrlState>(UrlState.HasUrl("https://io.ha".toHttpUrlOrNull()?.toUrl()))
+        setupServer(urlFlow = urlStateFlow, backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+
+        // Simulate WebSocket behavior: cancel() triggers onFailure callback
+        every { mockConnection.cancel() } answers {
+            webSocketListener.onFailure(mockConnection, IOException("Canceled"), null)
+        }
+
+        assertTrue(webSocketCore.connect())
+        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+
+        urlStateFlow.value = UrlState.InsecureState
+        advanceUntilIdle()
+
+        verify { mockConnection.cancel() }
+        assertEquals(WebSocketState.CLOSED_OTHER, webSocketCore.getConnectionState())
+    }
+
+    @Test
+    fun `Given an active connection When URL emits the same value Then it does not cancel the connection`() = runTest {
+        val initialUrl = "https://io.ha".toHttpUrlOrNull()?.toUrl()
+        val urlStateFlow = MutableStateFlow<UrlState>(UrlState.HasUrl(initialUrl))
+        setupServer(urlFlow = urlStateFlow, backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+
+        assertTrue(webSocketCore.connect())
+        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+
+        // Emit the same URL again
+        urlStateFlow.value = UrlState.HasUrl(initialUrl)
+        advanceUntilIdle()
+
+        verify(exactly = 0) { mockConnection.cancel() }
+        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+
+        // Clean up by closing the connection to stop the URL observer
+        closeConnection()
+        advanceUntilIdle()
     }
 
     /*
