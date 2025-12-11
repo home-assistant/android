@@ -40,11 +40,9 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun registerAuthorizationCode(authorizationCode: String) {
         val server = server()
-        val url = connectionStateProvider().urlFlow().firstUrlOrNull {
-            "Unavailable URL to register auth code"
-        }?.toHttpUrlOrNull()
+        val url = connectionStateProvider().urlFlow().firstUrlOrNull()?.toHttpUrlOrNull()
         if (url == null) {
-            Timber.e("Unable to register auth code.")
+            Timber.e("No URL available to register auth code")
             return
         }
         authenticationService.getToken(
@@ -68,11 +66,9 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun registerRefreshToken(refreshToken: String) {
-        val url = connectionStateProvider().urlFlow().firstUrlOrNull {
-            "Unavailable URL to register refresh token"
-        }?.toHttpUrlOrNull()
+        val url = connectionStateProvider().urlFlow().firstUrlOrNull()?.toHttpUrlOrNull()
         if (url == null) {
-            Timber.e("Unable to register session with refresh token.")
+            Timber.e("Unable to register session with refresh token. No available URL")
             return
         }
         refreshSessionWithToken(url, refreshToken)
@@ -98,7 +94,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     override suspend fun revokeSession() {
         val server = server()
         val url = connectionStateProvider().urlFlow().firstUrlOrNull {
-            "Unavailable URL to revoke session"
+            "No URL available to revoke session"
         }?.toHttpUrlOrNull()
         if (!server.session.isComplete() || url == null) {
             Timber.e("Unable to revoke session.")

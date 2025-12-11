@@ -302,7 +302,6 @@ class HaControlsProviderService : ControlsProviderService() {
             }
         }
         val entities = mutableMapOf<String, Entity>()
-        // TODO see what we do about this one we should get the url only when we need it not prefetching it
         val baseUrl =
             serverManager.connectionStateProvider(serverId).urlFlow().firstUrlOrNull()?.toString()?.removeSuffix("/")
                 ?: ""
