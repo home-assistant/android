@@ -6,8 +6,6 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepositoryFactory
-import io.homeassistant.companion.android.common.data.network.NetworkHelper
-import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
@@ -39,8 +37,6 @@ class ServerManagerImpl @Inject constructor(
     private val serverDao: ServerDao,
     private val sensorDao: SensorDao,
     private val settingsDao: SettingsDao,
-    private val wifiHelper: WifiHelper,
-    private val networkHelper: NetworkHelper,
     @NamedSessionStorage private val localStorage: LocalStorage,
 ) : ServerManager {
 

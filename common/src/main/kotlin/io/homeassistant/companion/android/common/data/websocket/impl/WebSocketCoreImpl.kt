@@ -183,11 +183,9 @@ internal class WebSocketCoreImpl(
                 return !connected.isCancelled
             }
 
-            val url = connectionStateProvider().urlFlow().firstUrlOrNull {
-                "Unavailable URL not opening WebSocket connection"
-            }
+            val url = connectionStateProvider().urlFlow().firstUrlOrNull()
             if (url == null) {
-                Timber.w("No url to connect websocket too.")
+                Timber.w("No URL available to open WebSocket connection")
                 return false
             }
 

@@ -204,7 +204,7 @@ class ServerConnectionStateProviderImplTest {
     inner class GetSecurityState {
 
         @Test
-        fun `Given device is on home network via ethernet then canMakePlainTextCallSecurely returns true`() = runTest {
+        fun `Given device is on home network via ethernet then isOnHomeNetwork returns true`() = runTest {
             val repository = createServerConnectionStateProvider(
                 externalUrl = "http://external.example.com",
                 internalUrl = "http://192.168.1.1:8123",
