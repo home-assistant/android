@@ -264,7 +264,7 @@ internal class WearOnboardingNavigationTest {
             onNodeWithText(WEAR_NAME).assertIsDisplayed()
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
-            verify { any<NavController>().navigateToUri("https://www.home-assistant.io/installation/") }
+            verify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION) }
 
             onNodeWithText(stringResource(commonR.string.name_your_device_save)).performScrollTo().assertIsDisplayed().performClick()
 

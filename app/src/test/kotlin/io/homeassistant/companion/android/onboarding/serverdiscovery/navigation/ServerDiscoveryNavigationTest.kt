@@ -20,6 +20,7 @@ import dagger.hilt.android.testing.UninstallModules
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.onboarding.BaseOnboardingNavigationTest
+import io.homeassistant.companion.android.onboarding.URL_GETTING_STARTED_DOCUMENTATION
 import io.homeassistant.companion.android.onboarding.connection.CONNECTION_SCREEN_TAG
 import io.homeassistant.companion.android.onboarding.connection.ConnectionNavigationEvent
 import io.homeassistant.companion.android.onboarding.connection.ConnectionViewModel
@@ -96,7 +97,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
-            verify { any<NavController>().navigateToUri("https://www.home-assistant.io/installation/") }
+            verify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION) }
 
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up))
                 .assertIsDisplayed()
@@ -137,7 +138,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
-            verify { any<NavController>().navigateToUri("https://www.home-assistant.io/installation/") }
+            verify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION) }
 
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up))
                 .assertIsDisplayed()
@@ -162,7 +163,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             )
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
-            verify { any<NavController>().navigateToUri("https://www.home-assistant.io/installation/") }
+            verify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION) }
 
             waitUntilAtLeastOneExists(
                 hasText(instanceUrl),

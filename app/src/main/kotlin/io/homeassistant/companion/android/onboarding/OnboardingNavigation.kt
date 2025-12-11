@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.onboarding
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.net.Uri
+import androidx.annotation.VisibleForTesting
 import androidx.compose.ui.util.fastAny
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
@@ -18,6 +19,7 @@ import io.homeassistant.companion.android.onboarding.localfirst.navigation.Local
 import io.homeassistant.companion.android.onboarding.localfirst.navigation.localFirstScreen
 import io.homeassistant.companion.android.onboarding.localfirst.navigation.navigateToLocalFirst
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.LocationForSecureConnectionRoute
+import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.URL_SECURITY_LEVEL_DOCUMENTATION
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.locationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.navigateToLocationForSecureConnection
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.LocationSharingRoute
@@ -43,6 +45,10 @@ import io.homeassistant.companion.android.util.canGoBack
 import io.homeassistant.companion.android.util.compose.locationPermissions
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import kotlinx.serialization.Serializable
+
+@VisibleForTesting
+const val URL_GETTING_STARTED_DOCUMENTATION =
+    "https://companion.home-assistant.io/docs/getting_started/"
 
 /**
  * Navigation route for the main onboarding flow.
@@ -127,8 +133,7 @@ internal fun NavGraphBuilder.onboarding(
                 }
             },
             onLearnMoreClick = {
-                // TODO validate the URL to use
-                navController.navigateToUri("https://www.home-assistant.io")
+                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
             },
         )
         commonScreens(navController = navController)
@@ -152,8 +157,7 @@ internal fun NavGraphBuilder.onboarding(
             },
             onShowSnackbar = onShowSnackbar,
             onHelpClick = {
-                // TODO validate the URL to use
-                navController.navigateToUri("https://www.home-assistant.io/installation/")
+                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
             },
         )
         localFirstScreen(
@@ -180,8 +184,7 @@ internal fun NavGraphBuilder.onboarding(
         )
         locationSharingScreen(
             onHelpClick = {
-                // TODO validate the URL to use
-                navController.navigateToUri("https://www.home-assistant.io/installation/")
+                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
             },
             onGotoNextScreen = { serverId, hasPlainTextAccess ->
                 navController.navigateForMinimalFlavor(
@@ -197,9 +200,7 @@ internal fun NavGraphBuilder.onboarding(
         )
         locationForSecureConnectionScreen(
             onHelpClick = {
-                navController.navigateToUri(
-                    "https://companion.home-assistant.io/docs/getting_started/connection-security-level",
-                )
+                navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION)
             },
             onGotoNextScreen = { allowInsecureConnection, serverId ->
                 if (allowInsecureConnection) {
@@ -219,8 +220,7 @@ internal fun NavGraphBuilder.onboarding(
 
         setHomeNetworkScreen(
             onHelpClick = {
-                // TODO validate the URL to use
-                navController.navigateToUri("https://www.home-assistant.io/installation/")
+                navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION)
             },
             onGotoNextScreen = {
                 onOnboardingDone()
@@ -254,8 +254,7 @@ private fun NavGraphBuilder.commonScreens(navController: NavController, wearName
         },
         onManualSetupClick = navController::navigateToManualServer,
         onHelpClick = {
-            // TODO validate the URL to use
-            navController.navigateToUri("https://www.home-assistant.io/installation/")
+            navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
         },
     )
     manualServerScreen(
@@ -264,8 +263,7 @@ private fun NavGraphBuilder.commonScreens(navController: NavController, wearName
             navController.navigateToConnection(it.toString())
         },
         onHelpClick = {
-            // TODO validate the URL to use
-            navController.navigateToUri("https://www.home-assistant.io/installation/")
+            navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
         },
     )
     connectionScreen(
@@ -437,8 +435,7 @@ internal fun NavGraphBuilder.wearOnboarding(
                 }
             },
             onHelpClick = {
-                // TODO validate the URL to use
-                navController.navigateToUri("https://www.home-assistant.io/installation/")
+                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
             },
         )
         wearMTLSScreen(
