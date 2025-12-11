@@ -22,6 +22,7 @@ import coil3.size.Size
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
@@ -37,6 +38,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import timber.log.Timber
@@ -127,10 +129,16 @@ class CameraWidget : AppWidgetProvider() {
         if (widget != null) {
             try {
                 val entityPictureUrl = retrieveCameraImageUrl(widget.serverId, widget.entityId)
-                val baseUrl = serverManager.getServer(
+
+                val urlState = serverManager.connectionStateProvider(
                     widget.serverId,
-                )?.connection?.getUrl().toString().removeSuffix("/")
-                url = "$baseUrl$entityPictureUrl"
+                ).urlFlow().first()
+                if (urlState is UrlState.HasUrl) {
+                    val baseUrl = urlState.url?.toString()?.removeSuffix("/") ?: ""
+                    url = "$baseUrl$entityPictureUrl"
+                } else {
+                    throw IllegalStateException("No URL available to retrieve picture")
+                }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to fetch entity or entity does not exist")
                 widgetCameraError = true

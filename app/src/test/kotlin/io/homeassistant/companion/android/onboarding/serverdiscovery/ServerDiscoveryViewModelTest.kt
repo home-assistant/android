@@ -58,10 +58,10 @@ private class ServerDiscoveryViewModelTest {
 
     @Test
     fun `Given ADD_EXISTING mode with existing servers when view model created then discoveryFlow emits existing servers after delay`() = runTest {
-        val server0 = mockServer("http://ha", haVersion = null, name = "server0")
-        val server1 = mockServer("http://ha1.local:8123", name = "server1")
-        val server2 = mockServer("http://ha2.local:8123", name = "server2")
-        val server3 = mockServer(null, name = "server3")
+        val server0 = mockServer("http://ha", haVersion = null, name = "server0", serverId = 0, serverManager = serverManager)
+        val server1 = mockServer("http://ha1.local:8123", name = "server1", serverId = 1, serverManager = serverManager)
+        val server2 = mockServer("http://ha2.local:8123", name = "server2", serverId = 2, serverManager = serverManager)
+        val server3 = mockServer(null, name = "server3", serverId = 3, serverManager = serverManager)
 
         every { serverManager.defaultServers } returns listOf(
             server0,

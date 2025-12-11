@@ -67,9 +67,9 @@ data class ServersDiscovered(val servers: List<ServerDiscovered>) : DiscoverySta
 @OptIn(FlowPreview::class)
 @HiltViewModel
 internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
-    discoveryMode: ServerDiscoveryMode,
+    private val discoveryMode: ServerDiscoveryMode,
     private val searcher: HomeAssistantSearcher,
-    serverManager: ServerManager,
+    private val serverManager: ServerManager,
 ) : ViewModel() {
 
     @Inject
@@ -96,14 +96,7 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
         emptyList()
     }
 
-    private val _discoveryFlow =
-        MutableStateFlow(
-            if (discoveryMode == ServerDiscoveryMode.ADD_EXISTING) {
-                getInstances(serverManager)
-            } else {
-                Started
-            },
-        )
+    private val _discoveryFlow = MutableStateFlow<DiscoveryState>(Started)
 
     /**
      * A flow that emits the current [DiscoveryState] of the server discovery process.
@@ -124,6 +117,9 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
 
     private fun discoverInstances() {
         viewModelScope.launch {
+            if (discoveryMode == ServerDiscoveryMode.ADD_EXISTING) {
+                _discoveryFlow.value = getExistingInstances(serverManager)
+            }
             try {
                 searcher.discoveredInstanceFlow()
                     .filter { instanceFound ->
@@ -196,10 +192,11 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
     }
 }
 
-private fun getInstances(serverManager: ServerManager): DiscoveryState {
+private suspend fun getExistingInstances(serverManager: ServerManager): DiscoveryState {
     return serverManager.defaultServers
         .mapNotNull { server ->
-            val url = server.connection.getUrl(isInternal = false) ?: return@mapNotNull null
+            val url =
+                serverManager.connectionStateProvider(server.id).getExternalUrl() ?: return@mapNotNull null
             val version = server.version ?: return@mapNotNull null
             ServerDiscovered(server.friendlyName, url, version)
         }

@@ -3,7 +3,9 @@ package io.homeassistant.companion.android.common.data.websocket.impl
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS
@@ -26,10 +28,12 @@ import io.mockk.verify
 import io.mockk.verifyOrder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
@@ -66,6 +70,7 @@ class WebSocketCoreImplTest {
         mockOkHttpClient = mockk<OkHttpClient>(relaxed = true)
         val mockServerManager = mockk<ServerManager>(relaxed = true)
         val mockAuthenticationRepository = mockk<AuthenticationRepository>(relaxed = true)
+        val mockConnectionStateProvider = mockk<ServerConnectionStateProvider>(relaxed = true)
 
         val testServerId = 1
         val testServer = Server(
@@ -81,7 +86,11 @@ class WebSocketCoreImplTest {
         mockConnection = mockk(relaxed = true)
         coEvery { mockServerManager.getServer(any<Int>()) } returns testServer
         coEvery { mockServerManager.authenticationRepository(testServerId) } returns mockAuthenticationRepository
+        coEvery { mockServerManager.connectionStateProvider(testServerId) } returns mockConnectionStateProvider
         coEvery { mockAuthenticationRepository.retrieveAccessToken() } returns "mock_access_token"
+        // Use OkHttp's URL parsing to normalize URLs (adds trailing slash) like the real implementation
+        val parsedUrl = url.takeIf { it.startsWith("http") }?.toHttpUrlOrNull()?.toUrl()
+        every { mockConnectionStateProvider.urlFlow() } returns flowOf(UrlState.HasUrl(parsedUrl))
         // The implementation use a background scope to properly handle async messages, to not block the test
         // we are injecting a background scope to properly control it within the tests, the scope will close itself at the end of the test
         webSocketCore = WebSocketCoreImpl(
@@ -154,9 +163,11 @@ connect()
     }
 
     @Test
-    fun `Given no server When connect is invoked Then it returns false and connection state is null`() = runTest {
+    fun `Given no URL When connect is invoked Then it returns false and connection state is null`() = runTest {
         val serverManager = mockk<ServerManager>(relaxed = true)
-        coEvery { serverManager.getServer(any<Int>()) } returns null
+        val mockConnectionStateProvider = mockk<ServerConnectionStateProvider>(relaxed = true)
+        coEvery { serverManager.connectionStateProvider(1) } returns mockConnectionStateProvider
+        coEvery { mockConnectionStateProvider.urlFlow() } returns flowOf(UrlState.HasUrl(null))
 
         val webSocketCore = WebSocketCoreImpl(
             okHttpClient = mockk(),

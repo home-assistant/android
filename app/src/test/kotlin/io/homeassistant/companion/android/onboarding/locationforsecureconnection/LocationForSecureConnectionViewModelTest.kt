@@ -1,13 +1,18 @@
 package io.homeassistant.companion.android.onboarding.locationforsecureconnection
 
 import app.cash.turbine.test
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
+import io.homeassistant.companion.android.database.server.ServerSessionInfo
+import io.homeassistant.companion.android.database.server.ServerType
+import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -24,11 +29,20 @@ import org.junit.jupiter.params.provider.ValueSource
 class LocationForSecureConnectionViewModelTest {
 
     private val serverId = 42
-    private val integrationRepository: IntegrationRepository = mockk(relaxUnitFun = true)
-    private val serverManager: ServerManager = mockk {
-        coEvery { integrationRepository(serverId) } returns integrationRepository
-    }
+    private val serverManager: ServerManager = mockk(relaxUnitFun = true)
     private lateinit var viewModel: LocationForSecureConnectionViewModel
+
+    private fun createServer(allowInsecureConnection: Boolean? = null) = Server(
+        id = serverId,
+        _name = "Test Server",
+        type = ServerType.DEFAULT,
+        connection = ServerConnectionInfo(
+            externalUrl = "https://example.com",
+            allowInsecureConnection = allowInsecureConnection,
+        ),
+        session = ServerSessionInfo(),
+        user = ServerUserInfo(),
+    )
 
     @BeforeEach
     fun setup() {
@@ -40,39 +54,47 @@ class LocationForSecureConnectionViewModelTest {
 
     @ParameterizedTest
     @ValueSource(booleans = [true, false])
-    fun `Given allow insecure value when allowInsecureConnection is invoked then repository is updated accordingly`(
+    fun `Given allow insecure value when allowInsecureConnection is invoked then server is updated accordingly`(
         allow: Boolean,
     ) = runTest {
-        viewModel.allowInsecureConnection(allow)
+        val server = createServer()
+        coEvery { serverManager.getServer(serverId) } returns server
 
+        viewModel.allowInsecureConnection(allow)
         runCurrent()
 
+        val serverSlot = slot<Server>()
         coVerify {
-            serverManager.integrationRepository(serverId)
-            integrationRepository.setAllowInsecureConnection(allow)
+            serverManager.getServer(serverId)
+            serverManager.updateServer(capture(serverSlot))
         }
+        assertEquals(allow, serverSlot.captured.connection.allowInsecureConnection)
     }
 
     @Test
-    fun `Given repository throws exception When allowInsecureConnection is called Then exception is caught`() = runTest {
+    fun `Given server throws exception When allowInsecureConnection is called Then exception is caught`() = runTest {
         val allow = true
         val exception = RuntimeException("Test repository exception")
-        coEvery { serverManager.integrationRepository(serverId).setAllowInsecureConnection(allow) } throws exception
+        coEvery { serverManager.getServer(serverId) } throws exception
 
         viewModel.allowInsecureConnection(allow)
         runCurrent()
 
         coVerify {
-            serverManager.integrationRepository(serverId).setAllowInsecureConnection(allow)
+            serverManager.getServer(serverId)
+        }
+        coVerify(exactly = 0) {
+            serverManager.updateServer(any())
         }
     }
 
     @ParameterizedTest
     @ValueSource(booleans = [true, false])
-    fun `Given integration repository returns value When allowInsecureConnection is collected Then emits the value`(
+    fun `Given server returns value When allowInsecureConnection is collected Then emits the value`(
         allowInsecure: Boolean,
     ) = runTest {
-        coEvery { integrationRepository.getAllowInsecureConnection() } returns allowInsecure
+        val server = createServer(allowInsecureConnection = allowInsecure)
+        coEvery { serverManager.getServer(serverId) } returns server
 
         viewModel.allowInsecureConnection.test {
             assertEquals(allowInsecure, awaitItem())
@@ -80,15 +102,14 @@ class LocationForSecureConnectionViewModelTest {
         }
 
         coVerify {
-            serverManager.integrationRepository(serverId)
-            integrationRepository.getAllowInsecureConnection()
+            serverManager.getServer(serverId)
         }
     }
 
     @Test
-    fun `Given integration  repository throws exception When allowInsecureConnection is collected Then emits null`() = runTest {
+    fun `Given server throws exception When allowInsecureConnection is collected Then emits null`() = runTest {
         val exception = RuntimeException("Failed to get allow insecure connection")
-        coEvery { integrationRepository.getAllowInsecureConnection() } throws exception
+        coEvery { serverManager.getServer(serverId) } throws exception
 
         viewModel.allowInsecureConnection.test {
             assertNull(awaitItem())
@@ -96,8 +117,7 @@ class LocationForSecureConnectionViewModelTest {
         }
 
         coVerify {
-            serverManager.integrationRepository(serverId)
-            integrationRepository.getAllowInsecureConnection()
+            serverManager.getServer(serverId)
         }
     }
 }

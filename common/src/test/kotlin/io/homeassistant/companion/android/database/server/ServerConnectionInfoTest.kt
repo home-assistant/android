@@ -1,335 +1,349 @@
 package io.homeassistant.companion.android.database.server
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
-import android.location.LocationManager
-import androidx.core.content.ContextCompat
-import io.homeassistant.companion.android.common.data.network.NetworkHelper
-import io.homeassistant.companion.android.common.data.network.WifiHelper
-import io.homeassistant.companion.android.common.util.DisabledLocationHandler
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
-import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.ValueSource
 
 class ServerConnectionInfoTest {
-    private val context: Context = mockk(relaxed = true)
-    private val wifiHelper: WifiHelper = mockk()
-    private val networkHelper: NetworkHelper = mockk()
-    private val locationManager: LocationManager = mockk()
 
-    @BeforeEach
-    fun setup() {
-        mockkStatic(ContextCompat::class)
-        mockkObject(DisabledLocationHandler)
-        every { context.getSystemService(LocationManager::class.java) } returns locationManager
-    }
+    @Nested
+    inner class HasHomeNetworkSetup {
 
-    @AfterEach
-    fun tearDown() {
-        unmockkAll()
-    }
+        @Test
+        fun `Given no home network configuration then hasHomeNetworkSetup is false`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+                internalSsids = emptyList(),
+                internalVpn = null,
+                internalEthernet = null,
+            )
 
-    private fun createServerConnectionInfo(
-        externalUrl: String = "https://external.example.com",
-        internalUrl: String? = null,
-        cloudUrl: String? = null,
-        internalSsids: List<String> = emptyList(),
-        internalEthernet: Boolean? = null,
-        internalVpn: Boolean? = null,
-    ): ServerConnectionInfo {
-        return ServerConnectionInfo(
-            externalUrl = externalUrl,
-            internalUrl = internalUrl,
-            cloudUrl = cloudUrl,
-            internalSsids = internalSsids,
-            internalEthernet = internalEthernet,
-            internalVpn = internalVpn,
-        ).apply {
-            this.wifiHelper = this@ServerConnectionInfoTest.wifiHelper
-            this.networkHelper = this@ServerConnectionInfoTest.networkHelper
+            assertFalse(connection.hasHomeNetworkSetup)
+        }
+
+        @Test
+        fun `Given internalSsids configured then hasHomeNetworkSetup is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+                internalSsids = listOf("HomeWiFi"),
+            )
+
+            assertTrue(connection.hasHomeNetworkSetup)
+        }
+
+        @Test
+        fun `Given internalVpn enabled then hasHomeNetworkSetup is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+                internalVpn = true,
+            )
+
+            assertTrue(connection.hasHomeNetworkSetup)
+        }
+
+        @Test
+        fun `Given no internalSsids and internalVpn disabled then hasHomeNetworkSetup is false`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+                internalVpn = false,
+            )
+
+            assertFalse(connection.hasHomeNetworkSetup)
+        }
+
+        @Test
+        fun `Given internalEthernet enabled then hasHomeNetworkSetup is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+                internalEthernet = true,
+            )
+
+            assertTrue(connection.hasHomeNetworkSetup)
+        }
+
+        @Test
+        fun `Given no internalSsids and internalVpn null and internalEthernet disabled then hasHomeNetworkSetup is false`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+                internalEthernet = false,
+            )
+
+            assertFalse(connection.hasHomeNetworkSetup)
+        }
+
+        @Test
+        fun `Given multiple home network options configured then hasHomeNetworkSetup is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+                internalSsids = listOf("HomeWiFi"),
+                internalVpn = true,
+                internalEthernet = true,
+            )
+
+            assertTrue(connection.hasHomeNetworkSetup)
         }
     }
 
-    @Test
-    fun `Given HTTPS URL when checking security status then returns Secure`() {
-        val serverInfo = createServerConnectionInfo()
-        val httpsUrl = "https://example.com"
+    @Nested
+    inner class HasAtLeastOneUrl {
 
-        val result = serverInfo.currentSecurityStatusForUrl(context, httpsUrl)
+        @Test
+        fun `Given valid externalUrl then hasAtLeastOneUrl is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+            )
 
-        assertInstanceOf(SecurityStatus.Secure::class.java, result)
+            assertTrue(connection.hasAtLeastOneUrl)
+        }
+
+        @Test
+        fun `Given invalid externalUrl but valid internalUrl then hasAtLeastOneUrl is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "not-a-valid-url",
+                internalUrl = "https://192.168.1.1:8123",
+            )
+
+            assertTrue(connection.hasAtLeastOneUrl)
+        }
+
+        @Test
+        fun `Given invalid externalUrl but valid cloudUrl then hasAtLeastOneUrl is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "not-a-valid-url",
+                cloudUrl = "https://cloud.example.com",
+            )
+
+            assertTrue(connection.hasAtLeastOneUrl)
+        }
+
+        @Test
+        fun `Given invalid externalUrl but valid cloudhookUrl then hasAtLeastOneUrl is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "not-a-valid-url",
+                cloudhookUrl = "https://hooks.nabu.casa/abc123",
+            )
+
+            assertTrue(connection.hasAtLeastOneUrl)
+        }
+
+        @Test
+        fun `Given all invalid URLs then hasAtLeastOneUrl is false`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "not-a-valid-url",
+                internalUrl = "also-invalid",
+                cloudUrl = "still-invalid",
+                cloudhookUrl = "nope",
+            )
+
+            assertFalse(connection.hasAtLeastOneUrl)
+        }
     }
 
-    @Test
-    fun `Given HTTP URL when device is on internal network via ethernet then returns Secure`() {
-        val serverInfo = createServerConnectionInfo(
+    @Nested
+    inner class IsRegistered {
+
+        @ParameterizedTest(name = "isRegistered is false: externalUrl={0}, webhookId={1}")
+        @CsvSource(
+            "https://example.com, null",
+            "https://example.com, '   '",
+            "not-a-valid-url, webhook123",
+        )
+        fun `Given invalid registration then isRegistered is false`(
+            externalUrl: String,
+            webhookId: String?,
+        ) {
+            val connection = ServerConnectionInfo(
+                externalUrl = externalUrl,
+                webhookId = webhookId?.takeIf { it != "null" },
+            )
+
+            assertFalse(connection.isRegistered)
+        }
+
+        @Test
+        fun `Given webhookId and valid externalUrl then isRegistered is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+                webhookId = "webhook123",
+            )
+
+            assertTrue(connection.isRegistered)
+        }
+
+        @Test
+        fun `Given webhookId and valid internalUrl then isRegistered is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "invalid",
+                internalUrl = "https://192.168.1.1:8123",
+                webhookId = "webhook123",
+            )
+
+            assertTrue(connection.isRegistered)
+        }
+
+        @Test
+        fun `Given webhookId and valid cloudhookUrl then isRegistered is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "invalid",
+                cloudhookUrl = "https://hooks.nabu.casa/abc123",
+                webhookId = "webhook123",
+            )
+
+            assertTrue(connection.isRegistered)
+        }
+    }
+
+    @Nested
+    inner class HasPlainTextUrl {
+
+        @ParameterizedTest(name = "hasPlainTextUrl is true: external={0}, internal={1}, cloud={2}")
+        @CsvSource(
+            "http://example.com, null, null",
+            "https://example.com, http://192.168.1.1:8123, null",
+            "https://example.com, null, http://cloud.example.com",
+        )
+        fun `Given HTTP URL then hasPlainTextUrl is true`(
+            externalUrl: String,
+            internalUrl: String?,
+            cloudUrl: String?,
+        ) {
+            val connection = ServerConnectionInfo(
+                externalUrl = externalUrl,
+                internalUrl = internalUrl?.takeIf { it != "null" },
+                cloudUrl = cloudUrl?.takeIf { it != "null" },
+            )
+
+            assertTrue(connection.hasPlainTextUrl)
+        }
+
+        @ParameterizedTest(name = "hasPlainTextUrl is false: external={0}, internal={1}, cloud={2}")
+        @CsvSource(
+            "https://example.com, https://192.168.1.1:8123, https://cloud.example.com",
+            "https://example.com, null, null",
+        )
+        fun `Given all HTTPS URLs then hasPlainTextUrl is false`(
+            externalUrl: String,
+            internalUrl: String?,
+            cloudUrl: String?,
+        ) {
+            val connection = ServerConnectionInfo(
+                externalUrl = externalUrl,
+                internalUrl = internalUrl?.takeIf { it != "null" },
+                cloudUrl = cloudUrl?.takeIf { it != "null" },
+            )
+
+            assertFalse(connection.hasPlainTextUrl)
+        }
+    }
+
+    @Nested
+    inner class CanUseCloud {
+
+        @Test
+        fun `Given no cloudUrl then canUseCloud is false`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+                cloudUrl = null,
+            )
+
+            assertFalse(connection.canUseCloud)
+        }
+
+        @Test
+        fun `Given blank cloudUrl then canUseCloud is false`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+                cloudUrl = "   ",
+            )
+
+            assertFalse(connection.canUseCloud)
+        }
+
+        @Test
+        fun `Given valid cloudUrl then canUseCloud is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+                cloudUrl = "https://cloud.example.com",
+            )
+
+            assertTrue(connection.canUseCloud)
+        }
+    }
+
+    @Nested
+    inner class IsKnownUrl {
+        private val connection = ServerConnectionInfo(
+            externalUrl = "https://external.example.com",
             internalUrl = "http://192.168.1.1:8123",
-            internalEthernet = true,
+            cloudUrl = "https://cloud.example.com",
         )
-        every { networkHelper.isUsingEthernet() } returns true
-        val httpUrl = "http://192.168.1.1:8123"
 
-        val result = serverInfo.currentSecurityStatusForUrl(context, httpUrl)
+        @ParameterizedTest
+        @ValueSource(
+            strings = [
+                "https://external.example.com/api/states",
+                "http://192.168.1.1:8123/api/webhook/abc",
+                "https://cloud.example.com/some/path",
+            ],
+        )
+        fun `Given URL matching known URL then isKnownUrl returns true`(url: String) {
+            assertTrue(connection.isKnownUrl(url))
+        }
 
-        assertInstanceOf(SecurityStatus.Secure::class.java, result)
+        @ParameterizedTest
+        @ValueSource(strings = ["https://unknown.example.com/api", "not-a-valid-url"])
+        fun `Given URL not matching then isKnownUrl returns false`(url: String) {
+            assertFalse(connection.isKnownUrl(url))
+        }
     }
 
-    @Test
-    fun `Given HTTP URL when device is on internal network via VPN then returns Secure`() {
-        val serverInfo = createServerConnectionInfo(
-            internalUrl = "http://192.168.1.1:8123",
-            internalVpn = true,
-        )
-        every { networkHelper.isUsingVpn() } returns true
-        every { networkHelper.isUsingEthernet() } returns false
-        val httpUrl = "http://192.168.1.1:8123"
+    @Nested
+    inner class InternalSsidTypeConverterTest {
 
-        val result = serverInfo.currentSecurityStatusForUrl(context, httpUrl)
+        private val converter = InternalSsidTypeConverter()
 
-        assertInstanceOf(SecurityStatus.Secure::class.java, result)
-    }
+        @Test
+        fun `Given empty list then fromListToString returns empty array`() {
+            assertEquals("[]", converter.fromListToString(emptyList()))
+        }
 
-    @Test
-    fun `Given HTTP URL when device is on internal network via SSID then returns Secure`() {
-        val serverInfo = createServerConnectionInfo(
-            internalUrl = "http://192.168.1.1:8123",
-            internalSsids = listOf("HomeWiFi"),
-        )
-        every { networkHelper.isUsingEthernet() } returns false
-        every { networkHelper.isUsingVpn() } returns false
-        every { wifiHelper.isUsingSpecificWifi(listOf("HomeWiFi")) } returns true
-        every { wifiHelper.isUsingWifi() } returns true
-        val httpUrl = "http://192.168.1.1:8123"
+        @Test
+        fun `Given list with values then fromListToString returns JSON array`() {
+            val result = converter.fromListToString(listOf("WiFi1", "WiFi2"))
 
-        val result = serverInfo.currentSecurityStatusForUrl(context, httpUrl)
+            assertEquals("[\"WiFi1\",\"WiFi2\"]", result)
+        }
 
-        assertInstanceOf(SecurityStatus.Secure::class.java, result)
-    }
+        @ParameterizedTest
+        @ValueSource(strings = ["    ", "[]"])
+        fun `Given empty array string then fromStringToList returns empty list`(value: String) {
+            assertEquals(emptyList<String>(), converter.fromStringToList(value))
+        }
 
-    @Test
-    fun `Given HTTP URL when not on internal network and no home setup then returns Insecure with missingHomeSetup true`() {
-        val serverInfo = createServerConnectionInfo(
-            externalUrl = "http://external.example.com",
-            internalUrl = null,
-            internalVpn = false,
-            internalEthernet = false,
-        )
-        every {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-        } returns PackageManager.PERMISSION_GRANTED
-        every { DisabledLocationHandler.isLocationEnabled(context) } returns true
+        @Test
+        fun `Given JSON array string then fromStringToList returns list`() {
+            val result = converter.fromStringToList("[\"WiFi1\",\"WiFi2\"]")
 
-        val httpUrl = "http://external.example.com"
+            assertEquals(listOf("WiFi1", "WiFi2"), result)
+        }
 
-        val result = serverInfo.currentSecurityStatusForUrl(context, httpUrl)
+        @Test
+        fun `Given invalid JSON then fromStringToList returns empty list`() {
+            assertEquals(emptyList<String>(), converter.fromStringToList("not valid json"))
+        }
 
-        assertInstanceOf(SecurityStatus.Insecure::class.java, result)
-        val insecure = result as SecurityStatus.Insecure
-        assertTrue(insecure.missingHomeSetup)
-        assertFalse(insecure.missingLocation)
-    }
+        @Test
+        fun `Given round trip conversion then values are preserved`() {
+            val original = listOf("Home WiFi", "Office Network")
+            val serialized = converter.fromListToString(original)
+            val deserialized = converter.fromStringToList(serialized)
 
-    @Test
-    fun `Given HTTP URL when not on internal network and has internalSSID then returns Insecure with missingHomeSetup false`() {
-        val serverInfo = createServerConnectionInfo(
-            externalUrl = "http://external.example.com",
-            internalUrl = "http://192.168.1.1:8123",
-            internalVpn = false,
-            internalEthernet = false,
-            internalSsids = listOf("helloworld"),
-        )
-        every { networkHelper.isUsingEthernet() } returns false
-        every { networkHelper.isUsingVpn() } returns false
-        every { wifiHelper.isUsingWifi() } returns true
-        every { wifiHelper.isUsingSpecificWifi(any()) } returns false
-        every {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-        } returns PackageManager.PERMISSION_GRANTED
-        every { DisabledLocationHandler.isLocationEnabled(context) } returns true
-
-        val httpUrl = "http://external.example.com"
-
-        val result = serverInfo.currentSecurityStatusForUrl(context, httpUrl)
-
-        assertInstanceOf(SecurityStatus.Insecure::class.java, result)
-        val insecure = result as SecurityStatus.Insecure
-        assertFalse(insecure.missingHomeSetup)
-        assertFalse(insecure.missingLocation)
-    }
-
-    @Test
-    fun `Given HTTP URL when not on internal network and VPN enabled then returns Insecure with missingHomeSetup false`() {
-        val serverInfo = createServerConnectionInfo(
-            externalUrl = "http://external.example.com",
-            internalUrl = null,
-            internalVpn = true,
-            internalEthernet = false,
-        )
-        every { networkHelper.isUsingVpn() } returns false
-        every { networkHelper.isUsingEthernet() } returns false
-        every {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-        } returns PackageManager.PERMISSION_GRANTED
-        every { DisabledLocationHandler.isLocationEnabled(context) } returns true
-
-        val httpUrl = "http://external.example.com"
-
-        val result = serverInfo.currentSecurityStatusForUrl(context, httpUrl)
-
-        assertInstanceOf(SecurityStatus.Insecure::class.java, result)
-        val insecure = result as SecurityStatus.Insecure
-        assertFalse(insecure.missingHomeSetup)
-    }
-
-    @Test
-    fun `Given HTTP URL when not on internal network and Ethernet enabled then returns Insecure with missingHomeSetup false`() {
-        val serverInfo = createServerConnectionInfo(
-            externalUrl = "http://external.example.com",
-            internalUrl = null,
-            internalVpn = false,
-            internalEthernet = true,
-        )
-        every { networkHelper.isUsingEthernet() } returns false
-        every {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-        } returns PackageManager.PERMISSION_GRANTED
-        every { DisabledLocationHandler.isLocationEnabled(context) } returns true
-
-        val httpUrl = "http://external.example.com"
-
-        val result = serverInfo.currentSecurityStatusForUrl(context, httpUrl)
-
-        assertInstanceOf(SecurityStatus.Insecure::class.java, result)
-        val insecure = result as SecurityStatus.Insecure
-        assertFalse(insecure.missingHomeSetup)
-    }
-
-    @Test
-    fun `Given HTTP URL when location permission denied then returns Insecure with missingLocation true`() {
-        val serverInfo = createServerConnectionInfo(
-            externalUrl = "http://external.example.com",
-            internalUrl = "http://192.168.1.1:8123",
-            internalVpn = false,
-            internalEthernet = false,
-        )
-        every { networkHelper.isUsingEthernet() } returns false
-        every { networkHelper.isUsingVpn() } returns false
-        every { wifiHelper.isUsingSpecificWifi(any()) } returns false
-        every {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-        } returns PackageManager.PERMISSION_DENIED
-        every { DisabledLocationHandler.isLocationEnabled(context) } returns true
-
-        val httpUrl = "http://external.example.com"
-
-        val result = serverInfo.currentSecurityStatusForUrl(context, httpUrl)
-
-        assertInstanceOf(SecurityStatus.Insecure::class.java, result)
-        val insecure = result as SecurityStatus.Insecure
-        assertTrue(insecure.missingLocation)
-    }
-
-    @Test
-    fun `Given HTTP URL when location services disabled then returns Insecure with missingLocation true`() {
-        val serverInfo = createServerConnectionInfo(
-            externalUrl = "http://external.example.com",
-            internalUrl = "http://192.168.1.1:8123",
-            internalVpn = false,
-            internalEthernet = false,
-        )
-        every { networkHelper.isUsingEthernet() } returns false
-        every { networkHelper.isUsingVpn() } returns false
-        every { wifiHelper.isUsingSpecificWifi(any()) } returns false
-        every {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-        } returns PackageManager.PERMISSION_GRANTED
-        every { DisabledLocationHandler.isLocationEnabled(context) } returns false
-
-        val httpUrl = "http://external.example.com"
-
-        val result = serverInfo.currentSecurityStatusForUrl(context, httpUrl)
-
-        assertInstanceOf(SecurityStatus.Insecure::class.java, result)
-        val insecure = result as SecurityStatus.Insecure
-        assertTrue(insecure.missingLocation)
-    }
-
-    @Test
-    fun `Given HTTP URL when both location permission denied and services disabled then returns Insecure with missingLocation true`() {
-        val serverInfo = createServerConnectionInfo(
-            externalUrl = "http://external.example.com",
-            internalUrl = "http://192.168.1.1:8123",
-            internalVpn = false,
-            internalEthernet = false,
-        )
-        every { networkHelper.isUsingEthernet() } returns false
-        every { networkHelper.isUsingVpn() } returns false
-        every { wifiHelper.isUsingSpecificWifi(any()) } returns false
-        every {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-        } returns PackageManager.PERMISSION_DENIED
-        every { DisabledLocationHandler.isLocationEnabled(context) } returns false
-
-        val httpUrl = "http://external.example.com"
-
-        val result = serverInfo.currentSecurityStatusForUrl(context, httpUrl)
-
-        assertInstanceOf(SecurityStatus.Insecure::class.java, result)
-        val insecure = result as SecurityStatus.Insecure
-        assertTrue(insecure.missingLocation)
-    }
-
-    @Test
-    fun `Given HTTP URL when both missingHomeSetup and missingLocation conditions met then returns Insecure with both flags true`() {
-        val serverInfo = createServerConnectionInfo(
-            externalUrl = "http://external.example.com",
-            internalUrl = null,
-            internalVpn = false,
-            internalEthernet = false,
-        )
-        every {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-        } returns PackageManager.PERMISSION_DENIED
-        every { DisabledLocationHandler.isLocationEnabled(context) } returns false
-
-        val httpUrl = "http://external.example.com"
-
-        val result = serverInfo.currentSecurityStatusForUrl(context, httpUrl)
-
-        assertInstanceOf(SecurityStatus.Insecure::class.java, result)
-        val insecure = result as SecurityStatus.Insecure
-        assertTrue(insecure.missingHomeSetup)
-        assertTrue(insecure.missingLocation)
-    }
-
-    @Test
-    fun `Given HTTP URL with null internalVpn and internalEthernet when checking security then missingHomeSetup is true`() {
-        val serverInfo = createServerConnectionInfo(
-            externalUrl = "http://external.example.com",
-            internalUrl = null,
-            internalVpn = null,
-            internalEthernet = null,
-        )
-        every {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-        } returns PackageManager.PERMISSION_GRANTED
-        every { DisabledLocationHandler.isLocationEnabled(context) } returns true
-
-        val httpUrl = "http://external.example.com"
-
-        val result = serverInfo.currentSecurityStatusForUrl(context, httpUrl)
-
-        assertInstanceOf(SecurityStatus.Insecure::class.java, result)
-        val insecure = result as SecurityStatus.Insecure
-        assertTrue(insecure.missingHomeSetup)
+            assertEquals(original, deserialized)
+        }
     }
 }

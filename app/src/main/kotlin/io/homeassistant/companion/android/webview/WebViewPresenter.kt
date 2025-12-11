@@ -3,22 +3,28 @@ package io.homeassistant.companion.android.webview
 import android.content.Context
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
+import androidx.lifecycle.Lifecycle
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.JsonObject
 
 interface WebViewPresenter {
 
-    fun onViewReady(path: String?)
+    suspend fun load(
+        lifecycle: Lifecycle,
+        path: String? = null,
+        isInternalOverride: ((ServerConnectionInfo) -> Boolean)? = null,
+    )
 
     fun getActiveServer(): Int
     suspend fun getActiveServerName(): String?
     suspend fun updateActiveServer()
     suspend fun setActiveServer(id: Int)
-    suspend fun switchActiveServer(id: Int)
-    suspend fun nextServer()
-    suspend fun previousServer()
+    suspend fun switchActiveServer(lifecycle: Lifecycle, id: Int)
+    suspend fun nextServer(lifecycle: Lifecycle)
+    suspend fun previousServer(lifecycle: Lifecycle)
 
     fun onGetExternalAuth(context: Context, callback: String, force: Boolean)
 
