@@ -238,7 +238,7 @@ class WebViewActivity :
     lateinit var entityAddToHandler: EntityAddToHandler
 
     private lateinit var webView: WebView
-    private lateinit var loadedUrl: Uri
+    private var loadedUrl: Uri? = null
     private lateinit var decor: FrameLayout
     private var customViewFromWebView = mutableStateOf<View?>(null)
     private lateinit var authenticator: Authenticator
@@ -1113,7 +1113,7 @@ class WebViewActivity :
             changeLog.showChangeLog(this@WebViewActivity, false)
         }
 
-        if (::loadedUrl.isInitialized) {
+        if (loadedUrl != null) {
             waitForConnection()
         }
     }
@@ -1417,12 +1417,12 @@ class WebViewActivity :
                     Timber.d("Security level not set for server $serverId, showing ConnectionSecurityLevelFragment")
                     showConnectionSecurityLevelFragment(serverId, url)
                 } else {
-                    val oldUrl = if (::loadedUrl.isInitialized) loadedUrl else null
-                    loadedUrl = url
+                    val oldUrl = loadedUrl
                     // It means that if we loaded an URL with a path previously and we try to load the same URL without
                     // a path we don't do anything.
                     val shouldLoadUrl = !url.hasSameOrigin(oldUrl) || url.hasNonRootPath()
                     if (shouldLoadUrl) {
+                        loadedUrl = url
                         webView.loadUrl(url.toString())
                         waitForConnection()
                     } else {
@@ -1494,6 +1494,7 @@ class WebViewActivity :
         }
         // Make sure the WebView won't load anything in background to avoid leaking
         webView.loadUrl("about:blank")
+        loadedUrl = null
         supportFragmentManager.beginTransaction()
             .replace(
                 android.R.id.content,
@@ -1785,7 +1786,7 @@ class WebViewActivity :
             Timber.d("Waiting for loadedUrl $loadedUrl")
             Handler(Looper.getMainLooper()).postDelayed(
                 {
-                    val firstSegment = loadedUrl.pathSegments.firstOrNull().orEmpty()
+                    val firstSegment = loadedUrl?.pathSegments?.firstOrNull().orEmpty()
                     if (
                         !isConnected &&
                         !firstSegment.contains("api") &&
