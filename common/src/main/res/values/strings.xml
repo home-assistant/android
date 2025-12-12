@@ -1493,4 +1493,6 @@
     <string name="connection_error_github_content_description">Home Assistant GitHub</string>
     <string name="connection_error_unknown_error">There was an error loading Home Assistant. Please review the connection settings and try again.</string>
     <string name="back">Back</string>
+    <string name="sensor_name_assist">Assist state</string>
+    <string name="sensor_description_assist">The state of assist</string>
 </resources>

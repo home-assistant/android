@@ -13,6 +13,7 @@ import android.os.PowerManager
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.sensors.AndroidOsSensorManager
+import io.homeassistant.companion.android.common.sensors.AssistSensorManager
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.BatterySensorManager
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
@@ -53,6 +54,7 @@ class SensorReceiver : SensorReceiverBase() {
             AndroidAutoSensorManager(),
             AndroidOsSensorManager(),
             AppSensorManager(),
+            AssistSensorManager(),
             AudioSensorManager(),
             BatterySensorManager(),
             BluetoothSensorManager(),
@@ -103,6 +105,7 @@ class SensorReceiver : SensorReceiverBase() {
         "android.bluetooth.device.action.ACL_DISCONNECTED" to listOf(BluetoothSensorManager.bluetoothConnection.id),
         "com.oculus.intent.action.MOUNT_STATE_CHANGED" to listOf(QuestSensorManager.headsetMounted.id),
         "android.net.wifi.WIFI_AP_STATE_CHANGED" to listOf(NetworkSensorManager.hotspotState.id),
+        AssistSensorManager.ASSIST_STATE_CHANGED to listOf(AssistSensorManager.assistSensor.id),
         BluetoothAdapter.ACTION_STATE_CHANGED to listOf(BluetoothSensorManager.bluetoothState.id),
         Intent.ACTION_SCREEN_OFF to listOf(PowerSensorManager.interactiveDevice.id),
         Intent.ACTION_SCREEN_ON to listOf(PowerSensorManager.interactiveDevice.id),

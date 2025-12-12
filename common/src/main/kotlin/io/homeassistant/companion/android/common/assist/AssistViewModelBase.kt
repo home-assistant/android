@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineRunStart
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineSttEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineTtsEnd
+import io.homeassistant.companion.android.common.sensors.AssistSensorManager
 import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import io.homeassistant.companion.android.util.UrlUtil
@@ -193,7 +194,10 @@ abstract class AssistViewModelBase(
 
     private suspend fun playAudio(path: String): Boolean {
         return UrlUtil.handle(serverManager.getServer(selectedServerId)?.connection?.getUrl(), path)?.let {
-            audioUrlPlayer.playAudio(it.toString())
+            AssistSensorManager.updateState(app, AssistSensorManager.AssistState.SPEAKING)
+            val result = audioUrlPlayer.playAudio(it.toString())
+            AssistSensorManager.updateState(app, AssistSensorManager.AssistState.IDLE)
+            result
         } ?: false
     }
 
