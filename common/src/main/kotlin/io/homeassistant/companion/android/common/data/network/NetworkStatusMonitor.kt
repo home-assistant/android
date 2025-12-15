@@ -65,42 +65,28 @@ internal class NetworkStatusMonitorImpl @Inject constructor(
         var firstEmission = true
         var lastEmittedState: NetworkState? = null
 
+        fun emitStateIfChanged() {
+            val newState = getCurrentNetworkState(serverConfig, firstEmission)
+            if (newState != lastEmittedState) {
+                trySend(newState)
+                lastEmittedState = newState
+                firstEmission = false
+            }
+        }
+
         val callback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                val newState = getCurrentNetworkState(serverConfig, firstEmission)
-                if (newState != lastEmittedState) {
-                    trySend(newState)
-                    lastEmittedState = newState
-                    firstEmission = false
-                }
-            }
+            override fun onAvailable(network: Network) = emitStateIfChanged()
 
-            override fun onLost(network: Network) {
-                val newState = getCurrentNetworkState(serverConfig, firstEmission)
-                if (newState != lastEmittedState) {
-                    trySend(newState)
-                    lastEmittedState = newState
-                    firstEmission = false
-                }
-            }
+            override fun onLost(network: Network) = emitStateIfChanged()
 
-            override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
-                val newState = getCurrentNetworkState(serverConfig, firstEmission)
-                if (newState != lastEmittedState) {
-                    trySend(newState)
-                    lastEmittedState = newState
-                    firstEmission = false
-                }
-            }
+            override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) =
+                emitStateIfChanged()
         }
 
         connectivityManager.registerNetworkCallback(networkRequest, callback)
 
         // Emit initial status
-        val initialState = getCurrentNetworkState(serverConfig, firstEmission)
-        trySend(initialState)
-        lastEmittedState = initialState
-        firstEmission = false
+        emitStateIfChanged()
 
         awaitClose {
             connectivityManager.unregisterNetworkCallback(callback)
