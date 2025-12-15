@@ -11,6 +11,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import timber.log.Timber
 
 interface NetworkStatusMonitor {
     /**
@@ -61,23 +62,45 @@ internal class NetworkStatusMonitorImpl @Inject constructor(
 
     override fun observeNetworkStatus(serverConfig: ServerConnectionInfo): Flow<NetworkState> = callbackFlow {
         val networkRequest = NetworkRequest.Builder().build()
+        var firstEmission = true
+        var lastEmittedState: NetworkState? = null
 
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
-                trySend(getCurrentNetworkState(serverConfig))
+                val newState = getCurrentNetworkState(serverConfig, firstEmission)
+                if (newState != lastEmittedState) {
+                    trySend(newState)
+                    lastEmittedState = newState
+                    firstEmission = false
+                }
             }
 
             override fun onLost(network: Network) {
-                trySend(getCurrentNetworkState(serverConfig))
+                val newState = getCurrentNetworkState(serverConfig, firstEmission)
+                if (newState != lastEmittedState) {
+                    trySend(newState)
+                    lastEmittedState = newState
+                    firstEmission = false
+                }
             }
 
             override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
-                trySend(getCurrentNetworkState(serverConfig))
+                val newState = getCurrentNetworkState(serverConfig, firstEmission)
+                if (newState != lastEmittedState) {
+                    trySend(newState)
+                    lastEmittedState = newState
+                    firstEmission = false
+                }
             }
         }
 
         connectivityManager.registerNetworkCallback(networkRequest, callback)
-        trySend(getCurrentNetworkState(serverConfig)) // Emit status at start
+
+        // Emit initial status
+        val initialState = getCurrentNetworkState(serverConfig, firstEmission)
+        trySend(initialState)
+        lastEmittedState = initialState
+        firstEmission = false
 
         awaitClose {
             connectivityManager.unregisterNetworkCallback(callback)
@@ -91,15 +114,57 @@ internal class NetworkStatusMonitorImpl @Inject constructor(
      * 1. If no active network -> [NetworkState.UNAVAILABLE]
      * 2. If device is considered internal (SSID, VPN, Ethernet match) -> [NetworkState.READY_LOCAL]
      * 3. If network is validated (but not internal) -> [NetworkState.READY_REMOTE]
-     * 4. Otherwise -> [NetworkState.CONNECTING]
+     * 4. If network exists but not validated:
+     *    - If we have an external URL configured -> [NetworkState.READY_REMOTE] (assume LAN-only network)
+     *    - Otherwise -> [NetworkState.CONNECTING] (wait for validation)
      *
      * Note: Both internal and validated may be true, but internal takes precedence
      * as it typically represents a faster and preferred path.
+     *
+     * @param isFirstCheck True if this is the first network check, false for subsequent checks.
+     *                     On the first check, we're more lenient for LAN-only networks.
      */
-    private fun getCurrentNetworkState(serverConfig: ServerConnectionInfo): NetworkState = when {
-        !networkHelper.hasActiveNetwork() -> NetworkState.UNAVAILABLE
-        serverConfig.isInternal(requiresUrl = false) -> NetworkState.READY_LOCAL
-        networkHelper.isNetworkValidated() -> NetworkState.READY_REMOTE
-        else -> NetworkState.CONNECTING
+    private fun getCurrentNetworkState(serverConfig: ServerConnectionInfo, isFirstCheck: Boolean): NetworkState {
+        val hasActiveNetwork = networkHelper.hasActiveNetwork()
+        val isInternal = serverConfig.isInternal(requiresUrl = false)
+        val isValidated = networkHelper.isNetworkValidated()
+        val hasExternalUrl = !serverConfig.externalUrl.isNullOrBlank()
+
+        Timber.d(
+            "[DEBUG #6099] Network state check: hasActiveNetwork=$hasActiveNetwork, " +
+                "isInternal=$isInternal, isValidated=$isValidated, " +
+                "hasExternalUrl=$hasExternalUrl, isFirstCheck=$isFirstCheck, " +
+                "internalSSID=${serverConfig.internalSsids}",
+        )
+
+        return when {
+            !hasActiveNetwork -> {
+                Timber.d("[DEBUG #6099] Result: UNAVAILABLE (no active network)")
+                NetworkState.UNAVAILABLE
+            }
+            isInternal -> {
+                Timber.d("[DEBUG #6099] Result: READY_LOCAL (internal network detected)")
+                NetworkState.READY_LOCAL
+            }
+            isValidated -> {
+                Timber.d("[DEBUG #6099] Result: READY_REMOTE (network validated)")
+                NetworkState.READY_REMOTE
+            }
+            hasExternalUrl -> {
+                // Fix for issue #6099: On LAN-only networks without internet access,
+                // NET_CAPABILITY_VALIDATED will never be true. If we have an active network
+                // and an external URL configured, assume the network is ready and attempt connection.
+                // The WebView/API layer will handle actual connectivity failures.
+                Timber.d(
+                    "[DEBUG #6099] Result: READY_REMOTE (LAN-only network assumed - " +
+                        "network exists but not validated, external URL configured)",
+                )
+                NetworkState.READY_REMOTE
+            }
+            else -> {
+                Timber.d("[DEBUG #6099] Result: CONNECTING (waiting for network validation)")
+                NetworkState.CONNECTING
+            }
+        }
     }
 }
