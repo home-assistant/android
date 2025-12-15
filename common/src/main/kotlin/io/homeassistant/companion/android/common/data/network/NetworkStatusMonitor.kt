@@ -61,29 +61,23 @@ internal class NetworkStatusMonitorImpl @Inject constructor(
 
     override fun observeNetworkStatus(serverConfig: ServerConnectionInfo): Flow<NetworkState> = callbackFlow {
         val networkRequest = NetworkRequest.Builder().build()
-        var lastEmittedState: NetworkState? = null
 
-        fun emitStateIfChanged() {
-            val newState = getCurrentNetworkState(serverConfig)
-            if (newState != lastEmittedState) {
-                trySend(newState)
-                lastEmittedState = newState
-            }
+        fun emitCurrentState() {
+            trySend(getCurrentNetworkState(serverConfig))
         }
 
         val callback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) = emitStateIfChanged()
+            override fun onAvailable(network: Network) = emitCurrentState()
 
-            override fun onLost(network: Network) = emitStateIfChanged()
+            override fun onLost(network: Network) = emitCurrentState()
 
-            override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) =
-                emitStateIfChanged()
+            override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) = emitCurrentState()
         }
 
         connectivityManager.registerNetworkCallback(networkRequest, callback)
 
         // Emit initial status
-        emitStateIfChanged()
+        emitCurrentState()
 
         awaitClose {
             connectivityManager.unregisterNetworkCallback(callback)
@@ -108,6 +102,7 @@ internal class NetworkStatusMonitorImpl @Inject constructor(
         val hasActiveNetwork = networkHelper.hasActiveNetwork()
         val isInternal = serverConfig.isInternal(requiresUrl = false)
         val isValidated = networkHelper.isNetworkValidated()
+        // External URL includes both internet-accessible URLs and LAN IPs (e.g., http://192.168.1.100:8123)
         val hasExternalUrl = !serverConfig.externalUrl.isNullOrBlank()
 
         return when {
