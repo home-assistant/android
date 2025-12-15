@@ -10,6 +10,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.BaseOnboardingNavigationTest
+import io.homeassistant.companion.android.onboarding.URL_GETTING_STARTED_DOCUMENTATION
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.mockk.verify
@@ -35,7 +36,7 @@ internal class WelcomeNavigationTest : BaseOnboardingNavigationTest() {
                 .performScrollTo()
                 .assertIsDisplayed()
                 .performClick()
-            verify { any<NavController>().navigateToUri("https://www.home-assistant.io") }
+            verify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION) }
         }
     }
 }
