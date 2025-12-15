@@ -93,8 +93,7 @@ class ConnectionSecurityLevelFragment private constructor() : Fragment() {
 
     private val backPressedCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
-            setFragmentResult(RESULT_KEY, Bundle())
-            parentFragmentManager.popBackStack()
+            onDismiss()
         }
     }
 
@@ -122,11 +121,6 @@ class ConnectionSecurityLevelFragment private constructor() : Fragment() {
                     }
 
                 val useCloseButton = arguments?.getBoolean(EXTRA_USE_CLOSE_BUTTON) == true
-                val onDismiss: () -> Unit = {
-                    setFragmentResult(RESULT_KEY, Bundle())
-                    parentFragmentManager.popBackStack()
-                }
-
                 HATheme {
                     Scaffold(
                         snackbarHost = {
@@ -141,8 +135,8 @@ class ConnectionSecurityLevelFragment private constructor() : Fragment() {
                             isStandaloneScreen = true,
                             viewModel = viewModel,
                             onGoToNextScreen = { onDismiss() },
-                            onBackClick = if (useCloseButton) null else onDismiss,
-                            onCloseClick = if (useCloseButton) onDismiss else null,
+                            onBackClick = if (useCloseButton) null else ::onDismiss,
+                            onCloseClick = if (useCloseButton) ::onDismiss else null,
                             onHelpClick = {
                                 uriHandler.openUri(URL_SECURITY_LEVEL_DOCUMENTATION)
                             },
@@ -162,5 +156,10 @@ class ConnectionSecurityLevelFragment private constructor() : Fragment() {
                 }
             }
         }
+    }
+
+    private fun onDismiss() {
+        setFragmentResult(RESULT_KEY, Bundle())
+        parentFragmentManager.popBackStack()
     }
 }
