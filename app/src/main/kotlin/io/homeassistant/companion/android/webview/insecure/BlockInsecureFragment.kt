@@ -6,16 +6,24 @@ import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment
 import io.homeassistant.companion.android.settings.SettingsActivity
+import kotlinx.coroutines.launch
 
 /**
  * Fragment explaining why the current connection is blocked.
@@ -26,33 +34,46 @@ class BlockInsecureFragment private constructor() : Fragment() {
     companion object {
         const val RESULT_KEY = "block_insecure_result"
         private const val EXTRA_SERVER = "server_id"
-        private const val EXTRA_MISSING_HOME_SETUP = "missing_home_setup"
-        private const val EXTRA_MISSING_LOCATION = "missing_location"
 
-        fun newInstance(serverId: Int, missingHomeSetup: Boolean, missingLocation: Boolean): BlockInsecureFragment {
+        fun newInstance(serverId: Int): BlockInsecureFragment {
             return BlockInsecureFragment().apply {
                 arguments = Bundle().apply {
                     putInt(EXTRA_SERVER, serverId)
-                    putBoolean(EXTRA_MISSING_HOME_SETUP, missingHomeSetup)
-                    putBoolean(EXTRA_MISSING_LOCATION, missingLocation)
                 }
             }
         }
     }
 
+    private val serverId: Int
+        get() = arguments?.getInt(EXTRA_SERVER, ServerManager.SERVER_ID_ACTIVE) ?: ServerManager.SERVER_ID_ACTIVE
+
+    private val viewModel: BlockInsecureViewModel by viewModels(
+        extrasProducer = {
+            defaultViewModelCreationExtras.withCreationCallback<BlockInsecureViewModelFactory> { factory ->
+                factory.create(serverId)
+            }
+        },
+    )
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        val serverId = arguments?.getInt(EXTRA_SERVER, ServerManager.SERVER_ID_ACTIVE) ?: ServerManager.SERVER_ID_ACTIVE
-        val missingHomeSetup = arguments?.getBoolean(EXTRA_MISSING_HOME_SETUP, false) ?: false
-        val missingLocation = arguments?.getBoolean(EXTRA_MISSING_LOCATION, false) ?: false
+        lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                viewModel.refresh()
+            }
+        }
 
         return ComposeView(requireContext()).apply {
             setContent {
                 val uriHandler = LocalUriHandler.current
+                val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                 HATheme {
                     BlockInsecureScreen(
-                        missingHomeSetup = missingHomeSetup,
-                        missingLocation = missingLocation,
-                        onRetry = ::retry,
+                        missingHomeSetup = uiState.missingHomeSetup,
+                        missingLocation = uiState.missingLocation,
+                        onRetry = {
+                            viewModel.refresh()
+                            retry()
+                        },
                         onHelpClick = {
                             uriHandler.openUri(
                                 "https://companion.home-assistant.io/docs/getting_started/connection-security-level/",

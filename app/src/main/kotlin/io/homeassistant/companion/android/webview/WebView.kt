@@ -50,5 +50,5 @@ interface WebView {
         description: String? = null,
     )
 
-    fun showBlockInsecure(serverId: Int, missingHomeSetup: Boolean, missingLocation: Boolean)
+    fun showBlockInsecure(serverId: Int)
 }

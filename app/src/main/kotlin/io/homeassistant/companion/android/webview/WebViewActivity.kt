@@ -1496,7 +1496,7 @@ class WebViewActivity :
             .commit()
     }
 
-    override fun showBlockInsecure(serverId: Int, missingHomeSetup: Boolean, missingLocation: Boolean) {
+    override fun showBlockInsecure(serverId: Int) {
         // Skip if already showing BlockInsecureFragment to avoid blinking on retry
         if (supportFragmentManager.fragments.any { it is BlockInsecureFragment }) {
             Timber.d("BlockInsecureFragment already showing, skipping")
@@ -1522,8 +1522,6 @@ class WebViewActivity :
                 android.R.id.content,
                 BlockInsecureFragment.newInstance(
                     serverId = serverId,
-                    missingHomeSetup = missingHomeSetup,
-                    missingLocation = missingLocation,
                 ),
             )
             .addToBackStack(null)

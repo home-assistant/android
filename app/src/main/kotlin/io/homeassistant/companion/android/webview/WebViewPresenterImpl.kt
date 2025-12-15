@@ -170,7 +170,7 @@ class WebViewPresenterImpl @Inject constructor(
                 isNewServer = isNewServer,
             )
 
-            UrlState.InsecureState -> handleInsecureState()
+            UrlState.InsecureState -> view.showBlockInsecure(serverId = serverId)
         }
     }
 
@@ -202,16 +202,6 @@ class WebViewPresenterImpl @Inject constructor(
                 )
             }
         } ?: Timber.w("Url is null")
-    }
-
-    private suspend fun handleInsecureState() {
-        Timber.d("Insecure state detected, showing blocking screen")
-        val info = serverManager.connectionStateProvider(serverId).getSecurityState()
-        view.showBlockInsecure(
-            serverId = serverId,
-            missingHomeSetup = !info.hasHomeSetup,
-            missingLocation = !info.locationEnabled,
-        )
     }
 
     override fun getActiveServer(): Int = serverId
