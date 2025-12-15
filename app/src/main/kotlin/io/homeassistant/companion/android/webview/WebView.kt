@@ -51,4 +51,6 @@ interface WebView {
     )
 
     fun showBlockInsecure(serverId: Int)
+
+    fun showConnectionSecurityLevel(serverId: Int)
 }

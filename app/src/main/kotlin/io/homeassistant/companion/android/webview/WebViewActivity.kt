@@ -1425,32 +1425,23 @@ class WebViewActivity :
     }
 
     override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean) {
+        Timber.d("Loading $url (keepHistory $keepHistory, openInApp $openInApp)")
         if (openInApp) {
             // Remove any displayed fragments (e.g., BlockInsecureFragment, ConnectionSecurityLevelFragment)
             supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
             supportFragmentManager.clearFragmentResultListener(BlockInsecureFragment.RESULT_KEY)
 
             clearHistory = !keepHistory
-            lifecycleScope.launch {
-                val serverId = presenter.getActiveServer()
-                val shouldShowSecurityFragment = presenter.shouldSetSecurityLevel() &&
-                    !connectionSecurityLevelFragmentClosed.getOrPut(serverId) { false }
-                if (shouldShowSecurityFragment) {
-                    Timber.d("Security level not set for server $serverId, showing ConnectionSecurityLevelFragment")
-                    showConnectionSecurityLevelFragment(serverId, url)
-                } else {
-                    val oldUrl = loadedUrl
-                    // It means that if we loaded an URL with a path previously and we try to load the same URL without
-                    // a path we don't do anything.
-                    val shouldLoadUrl = !url.hasSameOrigin(oldUrl) || url.hasNonRootPath()
-                    if (shouldLoadUrl) {
-                        loadedUrl = url
-                        webView.loadUrl(url.toString())
-                        waitForConnection()
-                    } else {
-                        Timber.d("Same base URL without meaningful path, skipping load")
-                    }
-                }
+            val oldUrl = loadedUrl
+            // It means that if we loaded an URL with a path previously and we try to load the same URL without
+            // a path we don't do anything.
+            val shouldLoadUrl = !url.hasSameOrigin(oldUrl) || url.hasNonRootPath()
+            if (shouldLoadUrl) {
+                loadedUrl = url
+                webView.loadUrl(url.toString())
+                waitForConnection()
+            } else {
+                Timber.d("Same base URL without meaningful path, skipping load")
             }
         } else {
             try {
@@ -1462,8 +1453,12 @@ class WebViewActivity :
         }
     }
 
-    private fun showConnectionSecurityLevelFragment(serverId: Int, url: Uri) {
-        val pathToPreserve = url.path?.takeIf { it.isNotBlank() && it != "/" }
+    override fun showConnectionSecurityLevel(serverId: Int) {
+        // Skip if already showing ConnectionSecurityLevelFragment to avoid blinking
+        if (supportFragmentManager.fragments.any { it is ConnectionSecurityLevelFragment }) {
+            Timber.d("ConnectionSecurityLevelFragment already showing, skipping")
+            return
+        }
 
         supportFragmentManager.setFragmentResultListener(
             ConnectionSecurityLevelFragment.RESULT_KEY,
@@ -1472,9 +1467,8 @@ class WebViewActivity :
             Timber.d("Security level screen exited by user, proceeding with URL loading")
             supportFragmentManager.clearFragmentResultListener(ConnectionSecurityLevelFragment.RESULT_KEY)
 
-            // Don't show this fragment again for this server during the activity's lifetime,
-            // regardless of what action the user took.
-            connectionSecurityLevelFragmentClosed[serverId] = true
+            // Mark as shown so we don't show the fragment again for this server
+            presenter.onConnectionSecurityLevelShown()
 
             lifecycleScope.launch {
                 // Trigger a reload of the URL via the presenter to trigger loadUrl in the view.

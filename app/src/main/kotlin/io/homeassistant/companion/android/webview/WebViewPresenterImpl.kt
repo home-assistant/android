@@ -77,6 +77,15 @@ class WebViewPresenterImpl @Inject constructor(
 
     private var urlFlowJob: Job? = null
 
+    /**
+     * Tracks whether the ConnectionSecurityLevelFragment has been shown for each server
+     * during this presenter's lifecycle. Once shown for a specific server, the fragment
+     * won't be shown again for that server.
+     *
+     * Key: server ID, Value: `true` if already shown
+     */
+    private val connectionSecurityLevelShown = hashMapOf<Int, Boolean>()
+
     init {
         mainScope.launch {
             updateActiveServer()
@@ -115,6 +124,10 @@ class WebViewPresenterImpl @Inject constructor(
         isNewServer: Boolean,
     ) {
         var pathConsumed = false
+
+        if (isInternalOverride != null) {
+            Timber.d("Using isInternalOverride to get URL")
+        }
 
         serverManager.connectionStateProvider(serverId).urlFlow(isInternalOverride).collect { urlState ->
             val shouldConsumePath = !pathConsumed && path != null
@@ -177,6 +190,9 @@ class WebViewPresenterImpl @Inject constructor(
     /**
      * Loads the initial URL, optionally applying a path override.
      *
+     * If the user needs to configure security settings and hasn't been shown the prompt
+     * for this server yet, shows the security level configuration screen instead.
+     *
      * @param baseUrl the base server URL
      * @param path optional path to append (ignored if starts with "entityId:")
      * @param isNewServer whether this is a new server (affects history behavior)
@@ -194,12 +210,20 @@ class WebViewPresenterImpl @Inject constructor(
                 .appendQueryParameter("external_auth", "1")
                 .build()
 
+            val shouldShowSecurityLevel = shouldSetSecurityLevel() &&
+                !connectionSecurityLevelShown.getOrPut(serverId) { false }
+
             withContext(Dispatchers.Main) {
-                view.loadUrl(
-                    url = urlWithAuth,
-                    keepHistory = !isNewServer,
-                    openInApp = it.baseIsEqual(baseUrl),
-                )
+                if (shouldShowSecurityLevel) {
+                    Timber.d("Security level not set for server $serverId, showing ConnectionSecurityLevelFragment")
+                    view.showConnectionSecurityLevel(serverId)
+                } else {
+                    view.loadUrl(
+                        url = urlWithAuth,
+                        keepHistory = !isNewServer,
+                        openInApp = it.baseIsEqual(baseUrl),
+                    )
+                }
             }
         } ?: Timber.w("Url is null")
     }
@@ -417,12 +441,8 @@ class WebViewPresenterImpl @Inject constructor(
     override suspend fun isSsidUsed(): Boolean =
         serverManager.getServer(serverId)?.connection?.internalSsids?.isNotEmpty() == true
 
-    override suspend fun shouldSetSecurityLevel(): Boolean {
-        val connection = serverManager.getServer(serverId)?.connection ?: return false
-        if (!connection.hasPlainTextUrl) {
-            return false
-        }
-        return connection.allowInsecureConnection == null
+    override fun onConnectionSecurityLevelShown() {
+        connectionSecurityLevelShown[serverId] = true
     }
 
     override suspend fun getAllowInsecureConnection(): Boolean? =
@@ -693,5 +713,19 @@ class WebViewPresenterImpl @Inject constructor(
         }
 
         return shouldAskNotificationPermission ?: true
+    }
+
+    /**
+     * Checks whether the user needs to configure their insecure connection preference.
+     *
+     * @return `true` if the server uses a plain text (HTTP) URL and the user has not yet set their
+     * preference for allowing insecure connections, `false` otherwise
+     */
+    private suspend fun shouldSetSecurityLevel(): Boolean {
+        val connection = serverManager.getServer(serverId)?.connection ?: return false
+        if (!connection.hasPlainTextUrl) {
+            return false
+        }
+        return connection.allowInsecureConnection == null
     }
 }

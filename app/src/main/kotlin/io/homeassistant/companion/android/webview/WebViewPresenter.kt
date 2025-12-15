@@ -59,12 +59,11 @@ interface WebViewPresenter {
     suspend fun isSsidUsed(): Boolean
 
     /**
-     * Checks whether the user needs to configure their insecure connection preference.
-     *
-     * @return `true` if the server uses a plain text (HTTP) URL and the user has not yet set their
-     * preference for allowing insecure connections, `false` otherwise
+     * Marks the security level screen as having been shown for the current server.
+     * Should be called when the user dismisses
+     * the [io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment].
      */
-    suspend fun shouldSetSecurityLevel(): Boolean
+    fun onConnectionSecurityLevelShown()
 
     suspend fun getAllowInsecureConnection(): Boolean?
 

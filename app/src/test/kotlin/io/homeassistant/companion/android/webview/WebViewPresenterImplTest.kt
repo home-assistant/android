@@ -10,11 +10,11 @@ import androidx.lifecycle.LifecycleRegistry
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
-import io.homeassistant.companion.android.common.data.servers.SecurityState
 import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.improv.ImprovRepository
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
@@ -82,8 +82,12 @@ private class FakeWebViewContext(
         webViewDelegate.showError(errorType, error, description)
     }
 
-    override fun showBlockInsecure(serverId: Int, missingHomeSetup: Boolean, missingLocation: Boolean) {
-        webViewDelegate.showBlockInsecure(serverId, missingHomeSetup, missingLocation)
+    override fun showBlockInsecure(serverId: Int) {
+        webViewDelegate.showBlockInsecure(serverId)
+    }
+
+    override fun showConnectionSecurityLevel(serverId: Int) {
+        webViewDelegate.showConnectionSecurityLevel(serverId)
     }
 }
 
@@ -318,16 +322,10 @@ class WebViewPresenterImplTest {
     fun `Given url state is InsecureState when load called then shows block insecure screen`() = runTest(testDispatcher) {
         val server = mockk<Server>(relaxed = true)
         val urlFlow = MutableStateFlow<UrlState>(UrlState.InsecureState)
-        val securityState = SecurityState(
-            isOnHomeNetwork = false,
-            hasHomeSetup = false,
-            locationEnabled = false,
-        )
 
         coEvery { serverManager.getServer(any<Int>()) } returns server
         coEvery { authenticationRepository.getSessionState() } returns SessionState.CONNECTED
         coEvery { connectionStateProvider.urlFlow(any()) } returns urlFlow
-        coEvery { connectionStateProvider.getSecurityState() } returns securityState
 
         lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
         lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
@@ -338,13 +336,7 @@ class WebViewPresenterImplTest {
             presenter.load(lifecycle, path = null, isInternalOverride = null)
         }
 
-        verify {
-            webView.showBlockInsecure(
-                serverId = any(),
-                missingHomeSetup = true,
-                missingLocation = true,
-            )
-        }
+        verify { webView.showBlockInsecure(serverId = any()) }
         verify(exactly = 0) { webView.loadUrl(any(), any(), any()) }
     }
 
@@ -352,16 +344,10 @@ class WebViewPresenterImplTest {
     fun `Given url state changes from HasUrl to InsecureState when collecting then shows block insecure`() = runTest(testDispatcher) {
         val server = mockk<Server>(relaxed = true)
         val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl(URL("https://example.com")))
-        val securityState = SecurityState(
-            isOnHomeNetwork = false,
-            hasHomeSetup = true,
-            locationEnabled = false,
-        )
 
         coEvery { serverManager.getServer(any<Int>()) } returns server
         coEvery { authenticationRepository.getSessionState() } returns SessionState.CONNECTED
         coEvery { connectionStateProvider.urlFlow(any()) } returns urlFlow
-        coEvery { connectionStateProvider.getSecurityState() } returns securityState
 
         lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
         lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
@@ -378,13 +364,7 @@ class WebViewPresenterImplTest {
         // Emit insecure state
         urlFlow.emit(UrlState.InsecureState)
 
-        verify {
-            webView.showBlockInsecure(
-                serverId = any(),
-                missingHomeSetup = false,
-                missingLocation = true,
-            )
-        }
+        verify { webView.showBlockInsecure(serverId = any()) }
         // was not called a second time
         verify(exactly = 1) { webView.loadUrl(any(), any(), any()) }
     }
@@ -522,5 +502,124 @@ class WebViewPresenterImplTest {
         advanceUntilIdle()
 
         assertEquals(42, presenter.getActiveServer())
+    }
+
+    @Test
+    fun `Given security level not set when load called then shows security level fragment`() = runTest(testDispatcher) {
+        val server = mockk<Server>(relaxed = true)
+        val connection = mockk<ServerConnectionInfo>(relaxed = true)
+        val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl(URL("http://example.com")))
+
+        every { server.connection } returns connection
+        every { connection.hasPlainTextUrl } returns true
+        every { connection.allowInsecureConnection } returns null
+
+        coEvery { serverManager.getServer(any<Int>()) } returns server
+        coEvery { authenticationRepository.getSessionState() } returns SessionState.CONNECTED
+        coEvery { connectionStateProvider.urlFlow(any()) } returns urlFlow
+
+        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
+
+        createPresenter()
+
+        backgroundScope.launch {
+            presenter.load(lifecycle, path = null, isInternalOverride = null)
+        }
+
+        verify { webView.showConnectionSecurityLevel(serverId = any()) }
+        verify(exactly = 0) { webView.loadUrl(any(), any(), any()) }
+    }
+
+    @Test
+    fun `Given security level already shown when load called again then loads url`() = runTest(testDispatcher) {
+        val server = mockk<Server>(relaxed = true)
+        val connection = mockk<ServerConnectionInfo>(relaxed = true)
+        val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl(URL("http://example.com")))
+
+        every { server.connection } returns connection
+        every { connection.hasPlainTextUrl } returns true
+        every { connection.allowInsecureConnection } returns null
+
+        coEvery { serverManager.getServer(any<Int>()) } returns server
+        coEvery { authenticationRepository.getSessionState() } returns SessionState.CONNECTED
+        coEvery { connectionStateProvider.urlFlow(any()) } returns urlFlow
+
+        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
+
+        createPresenter()
+
+        // First load should show security level fragment
+        backgroundScope.launch {
+            presenter.load(lifecycle, path = null, isInternalOverride = null)
+        }
+
+        verify(exactly = 1) { webView.showConnectionSecurityLevel(serverId = any()) }
+
+        // Simulate user dismissing the fragment (which calls onConnectionSecurityLevelShown)
+        presenter.onConnectionSecurityLevelShown()
+
+        // Second load should go directly to loadUrl (fragment already shown for this server)
+        backgroundScope.launch {
+            presenter.load(lifecycle, path = null, isInternalOverride = null)
+        }
+
+        verify { webView.loadUrl(any(), any(), any()) }
+        // Still only 1 call to showConnectionSecurityLevel
+        verify(exactly = 1) { webView.showConnectionSecurityLevel(serverId = any()) }
+    }
+
+    @Test
+    fun `Given security level already set when load called then loads url directly`() = runTest(testDispatcher) {
+        val server = mockk<Server>(relaxed = true)
+        val connection = mockk<ServerConnectionInfo>(relaxed = true)
+        val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl(URL("http://example.com")))
+
+        every { server.connection } returns connection
+        every { connection.hasPlainTextUrl } returns true
+        every { connection.allowInsecureConnection } returns true // Already set
+
+        coEvery { serverManager.getServer(any<Int>()) } returns server
+        coEvery { authenticationRepository.getSessionState() } returns SessionState.CONNECTED
+        coEvery { connectionStateProvider.urlFlow(any()) } returns urlFlow
+
+        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
+
+        createPresenter()
+
+        backgroundScope.launch {
+            presenter.load(lifecycle, path = null, isInternalOverride = null)
+        }
+
+        verify { webView.loadUrl(any(), any(), any()) }
+        verify(exactly = 0) { webView.showConnectionSecurityLevel(serverId = any()) }
+    }
+
+    @Test
+    fun `Given https url when load called then loads url without security level prompt`() = runTest(testDispatcher) {
+        val server = mockk<Server>(relaxed = true)
+        val connection = mockk<ServerConnectionInfo>(relaxed = true)
+        val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl(URL("https://example.com")))
+
+        every { server.connection } returns connection
+        every { connection.hasPlainTextUrl } returns false // HTTPS - no plain text URL
+
+        coEvery { serverManager.getServer(any<Int>()) } returns server
+        coEvery { authenticationRepository.getSessionState() } returns SessionState.CONNECTED
+        coEvery { connectionStateProvider.urlFlow(any()) } returns urlFlow
+
+        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
+
+        createPresenter()
+
+        backgroundScope.launch {
+            presenter.load(lifecycle, path = null, isInternalOverride = null)
+        }
+
+        verify { webView.loadUrl(any(), any(), any()) }
+        verify(exactly = 0) { webView.showConnectionSecurityLevel(serverId = any()) }
     }
 }
