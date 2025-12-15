@@ -103,7 +103,7 @@ internal class NetworkStatusMonitorImpl @Inject constructor(
         val isInternal = serverConfig.isInternal(requiresUrl = false)
         val isValidated = networkHelper.isNetworkValidated()
         // External URL includes both internet-accessible URLs and LAN IPs (e.g., http://192.168.1.100:8123)
-        val hasExternalUrl = !serverConfig.externalUrl.isNullOrBlank()
+        val hasExternalUrl = !serverConfig.externalUrl.isBlank()
 
         return when {
             !hasActiveNetwork -> NetworkState.UNAVAILABLE
