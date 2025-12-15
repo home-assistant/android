@@ -5,12 +5,15 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
+import io.homeassistant.companion.android.util.isPubliclyAccessible
+import java.net.URL
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 
 interface NetworkStatusMonitor {
     /**
@@ -62,22 +65,28 @@ internal class NetworkStatusMonitorImpl @Inject constructor(
     override fun observeNetworkStatus(serverConfig: ServerConnectionInfo): Flow<NetworkState> = callbackFlow {
         val networkRequest = NetworkRequest.Builder().build()
 
-        fun emitCurrentState() {
+        suspend fun checkUrlAndEmitState() {
             trySend(getCurrentNetworkState(serverConfig))
         }
 
         val callback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) = emitCurrentState()
+            override fun onAvailable(network: Network) {
+                this@callbackFlow.launch { checkUrlAndEmitState() }
+            }
 
-            override fun onLost(network: Network) = emitCurrentState()
+            override fun onLost(network: Network) {
+                this@callbackFlow.launch { checkUrlAndEmitState() }
+            }
 
-            override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) = emitCurrentState()
+            override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
+                this@callbackFlow.launch { checkUrlAndEmitState() }
+            }
         }
 
         connectivityManager.registerNetworkCallback(networkRequest, callback)
 
         // Emit initial status
-        emitCurrentState()
+        checkUrlAndEmitState()
 
         awaitClose {
             connectivityManager.unregisterNetworkCallback(callback)
@@ -92,31 +101,42 @@ internal class NetworkStatusMonitorImpl @Inject constructor(
      * 2. If device is considered internal (SSID, VPN, Ethernet match) -> [NetworkState.READY_LOCAL]
      * 3. If network is validated (but not internal) -> [NetworkState.READY_REMOTE]
      * 4. If network exists but not validated:
-     *    - If we have an external URL configured -> [NetworkState.READY_REMOTE] (assume LAN-only network)
+     *    - If the external URL is a private address -> [NetworkState.READY_REMOTE] (assume LAN-only network)
      *    - Otherwise -> [NetworkState.CONNECTING] (wait for validation)
      *
      * Note: Both internal and validated may be true, but internal takes precedence
      * as it typically represents a faster and preferred path.
      */
-    private fun getCurrentNetworkState(serverConfig: ServerConnectionInfo): NetworkState {
+    private suspend fun getCurrentNetworkState(serverConfig: ServerConnectionInfo): NetworkState {
         val hasActiveNetwork = networkHelper.hasActiveNetwork()
         val isInternal = serverConfig.isInternal(requiresUrl = false)
         val isValidated = networkHelper.isNetworkValidated()
-        // External URL includes both internet-accessible URLs and LAN IPs (e.g., http://192.168.1.100:8123)
-        val hasExternalUrl = !serverConfig.externalUrl.isBlank()
 
         return when {
             !hasActiveNetwork -> NetworkState.UNAVAILABLE
             isInternal -> NetworkState.READY_LOCAL
             isValidated -> NetworkState.READY_REMOTE
-            hasExternalUrl -> {
-                // Fix for issue #6099: On LAN-only networks without internet access,
-                // NET_CAPABILITY_VALIDATED will never be true. If we have an active network
-                // and an external URL configured, assume the network is ready and attempt connection.
-                // The WebView/API layer will handle actual connectivity failures.
-                NetworkState.READY_REMOTE
+            else -> {
+                // Check URL only when we need it - when network exists but not validated and not internal
+                val urlIsPrivate = serverConfig.externalUrl?.let { urlString ->
+                    try {
+                        !URL(urlString).isPubliclyAccessible()
+                    } catch (e: Exception) {
+                        false
+                    }
+                } ?: false
+
+                if (urlIsPrivate) {
+                    // Fix for issue #6099: On LAN-only networks without internet access,
+                    // NET_CAPABILITY_VALIDATED will never be true. If we have an active network
+                    // and the external URL is a local/private address (e.g., http://192.168.1.100:8123,
+                    // http://ha.local, http://ha.home), assume the network is ready and attempt connection.
+                    // The WebView/API layer will handle actual connectivity failures.
+                    NetworkState.READY_REMOTE
+                } else {
+                    NetworkState.CONNECTING
+                }
             }
-            else -> NetworkState.CONNECTING
         }
     }
 }

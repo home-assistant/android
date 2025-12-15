@@ -120,18 +120,33 @@ class NetworkStatusMonitorImplTest {
     }
 
     @Test
-    fun `Given LAN-only network when network is not validated but external URL exists then state is READY_REMOTE (issue 6099)`() = runTest {
+    fun `Given LAN-only network when network is not validated but external URL is local IP then state is READY_REMOTE (issue 6099)`() = runTest {
         // Given - Simulating a LAN-only network without internet (like an isolated IoT VLAN)
         every { networkHelper.hasActiveNetwork() } returns true
         every { serverConfig.isInternal(false) } returns false
         every { networkHelper.isNetworkValidated() } returns false // Network not validated because no internet
-        every { serverConfig.externalUrl } returns "http://192.168.1.100:8123" // External URL configured
+        every { serverConfig.externalUrl } returns "http://192.168.1.100:8123" // Local IP address
 
         // When
         val result = networkMonitor.observeNetworkStatus(serverConfig).first()
 
         // Then - Should be READY_REMOTE instead of stuck in CONNECTING
         assertEquals(NetworkState.READY_REMOTE, result)
+    }
+
+    @Test
+    fun `Given public URL when network is not validated then state is CONNECTING`() = runTest {
+        // Given - Public URL that requires internet validation
+        every { networkHelper.hasActiveNetwork() } returns true
+        every { serverConfig.isInternal(false) } returns false
+        every { networkHelper.isNetworkValidated() } returns false
+        every { serverConfig.externalUrl } returns "https://my-ha.duckdns.org" // Public URL
+
+        // When
+        val result = networkMonitor.observeNetworkStatus(serverConfig).first()
+
+        // Then - Should wait for validation (CONNECTING) for public URLs
+        assertEquals(NetworkState.CONNECTING, result)
     }
 
     @Test
