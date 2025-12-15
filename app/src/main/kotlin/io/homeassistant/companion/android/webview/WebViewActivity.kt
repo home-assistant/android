@@ -106,6 +106,7 @@ import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
@@ -273,15 +274,25 @@ class WebViewActivity :
     private var webViewInitialized = mutableStateOf(false)
     private var failedConnection = "external"
 
-    /**
-     * Tracks whether the user has already dismissed the [ConnectionSecurityLevelFragment] for each
-     * server during this activity's lifecycle. Once dismissed for a specific server, the fragment
-     * won't be shown again for that server's URL loads in the same session.
-     *
-     * Key: server ID, Value: `true` if dismissed
-     */
-    private val connectionSecurityLevelFragmentClosed = hashMapOf<Int, Boolean>()
     private var clearHistory = false
+
+    /**
+     * Optional override for the internal/external URL selection logic.
+     *
+     * When set, this function is passed to [WebViewPresenter.load] to override the automatic
+     * internal/external URL detection. This is used when the user explicitly requests to refresh
+     * using the internal or external URL from the error dialog (e.g., after a connection failure).
+     *
+     * The override persists for the activity's lifecycle so that subsequent loads
+     * continue to use the user's preference.
+     *
+     * Keep in mind that it only applies to the Webview not for anything else like
+     * background sync, widgets, ... It is used as a temporary fix for the user to
+     * access his instance, but something might need to be fixed on user side.
+     *
+     * Defaults to `null`, meaning automatic URL selection is used.
+     */
+    private var isInternalOverride: ((ServerConnectionInfo) -> Boolean)? = null
     private var moreInfoEntity = ""
     private val moreInfoMutex = Mutex()
     private var currentAutoplay: Boolean? = null
@@ -1365,7 +1376,7 @@ class WebViewActivity :
                         moreInfoEntity = entity
                     }
                 }
-                presenter.load(lifecycle, path)
+                presenter.load(lifecycle, path, isInternalOverride)
                 intent.removeExtra(EXTRA_PATH)
 
                 if (presenter.isFullScreen() || isVideoFullScreen) {
@@ -1473,7 +1484,7 @@ class WebViewActivity :
             lifecycleScope.launch {
                 // Trigger a reload of the URL via the presenter to trigger loadUrl in the view.
                 // The presenter will apply the potential changes made in the fragment.
-                presenter.load(lifecycle, path = pathToPreserve)
+                presenter.load(lifecycle, isInternalOverride = isInternalOverride)
             }
         }
 
@@ -1505,7 +1516,7 @@ class WebViewActivity :
             // loadUrl() is called (conditions met) - fragment is popped in loadUrl()
 
             lifecycleScope.launch {
-                presenter.load(lifecycle)
+                presenter.load(lifecycle, isInternalOverride = isInternalOverride)
             }
         }
         // Make sure the WebView won't load anything in background to avoid leaking
@@ -1682,15 +1693,13 @@ class WebViewActivity :
                     },
                 ) { _, _ ->
                     lifecycleScope.launch {
-                        // TODO Once we do this it's going to keep the override until load is called again
-                        //  in onWindowFocusChanged that should happen right after the dialog is canceled.
-                        //  Then it might fail again if the user internal URL is always failing but the user is
-                        //  at home. (I guess)
+                        isInternalOverride = { buttonRefreshesInternal }
+                        // Reset URL loaded to force webview reloading
+                        loadedUrl = null
+
                         presenter.load(
                             lifecycle,
-                            isInternalOverride = {
-                                buttonRefreshesInternal
-                            },
+                            isInternalOverride = isInternalOverride,
                         )
                     }
                 }
@@ -2068,7 +2077,7 @@ class WebViewActivity :
                         if (NavigateTo.isAvailable(version)) {
                             sendExternalBusMessage(NavigateTo(path))
                         } else {
-                            presenter.load(lifecycle, path)
+                            presenter.load(lifecycle, path, isInternalOverride)
                         }
                     }
                 }
