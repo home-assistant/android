@@ -11,6 +11,8 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
+import io.homeassistant.companion.android.common.util.DefaultFailFastHandler
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
@@ -27,11 +29,14 @@ import io.mockk.unmockkAll
 import io.mockk.verify
 import io.mockk.verifyOrder
 import java.io.IOException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.async
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -46,6 +51,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
@@ -60,6 +66,11 @@ class WebSocketCoreImplTest {
     private lateinit var mockConnection: WebSocket
     private lateinit var webSocketCore: WebSocketCoreImpl
     private lateinit var webSocketListener: WebSocketListener
+
+    @BeforeEach
+    fun setup() {
+        FailFast.setHandler(DefaultFailFastHandler)
+    }
 
     @AfterEach
     fun tearDown() {
@@ -376,7 +387,7 @@ sendMessage()
         assertNotNull(response)
         assertEquals(2, response.id)
         assertTrue(response is MessageSocketResponse)
-        assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
+        assertTrue(webSocketCore.activeMessages.isEmpty())
     }
 
     @Test
@@ -391,7 +402,7 @@ sendMessage()
 
         coVerify { mockConnection.send(expectedMessageSent) }
         assertNull(response)
-        assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
+        assertTrue(webSocketCore.activeMessages.isEmpty())
     }
 
     @Test
@@ -429,6 +440,33 @@ sendMessage()
     }
 
     @Test
+    fun `Given an active connection waiting for response When sendMessage coroutine is cancelled Then message is removed from activeMessages`() = runTest {
+        setupServer()
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        // Don't mock response so sendMessage hangs waiting for it
+        every { mockConnection.send(match<String> { it.contains(""""id":2""") }) } returns true
+
+        // Start sendMessage in a cancellable coroutine
+        val sendJob = async {
+            webSocketCore.sendMessage(mapOf("type" to "test"))
+        }
+        runCurrent()
+
+        // Message should be in activeMessages while waiting for response
+        assertEquals(1, webSocketCore.activeMessages.size)
+        assertTrue(webSocketCore.activeMessages.containsKey(2L))
+
+        // Cancel the sendMessage coroutine
+        sendJob.cancel(CancellationException("Test cancellation"))
+        runCurrent()
+
+        // Message should be removed from activeMessages after cancellation
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+    }
+
+    @Test
     fun `Given reconnection to a closed connection When sendMessage is invoked Then the unique ID is not reset`() = runTest {
         setupServer()
         prepareAuthenticationAnswer()
@@ -457,7 +495,7 @@ sendMessage()
 
         // We sent 1 supported_features message then 5 messages then 1 supported_features message then 1 message
         assertTrue(request.captured.contains(""""id":8"""))
-        assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
+        assertTrue(webSocketCore.activeMessages.isEmpty())
     }
 
     /*
@@ -493,10 +531,10 @@ sendBytes()
     }
 
     @Test
-    fun `Given an invalid url When sendBytes is invoked Then it returns null`() = runTest {
+    fun `Given an invalid url When sendBytes is invoked Then it returns false`() = runTest {
         setupServer("an invalid url ")
 
-        assertNull(webSocketCore.sendBytes(byteArrayOf(1, 2, 3)))
+        assertFalse(webSocketCore.sendBytes(byteArrayOf(1, 2, 3)))
         assertNull(webSocketCore.getConnectionState())
     }
 
@@ -517,7 +555,7 @@ subscribeTo
         )
 
         coVerify { mockConnection.send(match<String> { it.contains("testSubscription") }) }
-        assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
+        assertTrue(webSocketCore.activeMessages.isEmpty())
     }
 
     @Test
@@ -542,13 +580,9 @@ subscribeTo
         coVerify { mockConnection.send(match<String> { it.contains("testSubscription") }) }
         assertEquals(1, webSocketCore.activeMessages.size)
         webSocketCore.activeMessages.values.first().apply {
-            // asserts the internal of the implementation to check that the active message is an event
-            assertNotNull(eventFlow)
-            assertNotNull(onEvent)
-            assertNotNull(onResponse)
-            assertTrue(onResponse!!.isCompleted)
-            assertNotNull(message)
-            assertEquals(expectedData.plus("type" to expectedType), message)
+            assertTrue(this is ActiveMessage.SubscriptionActiveMessage)
+            assertTrue(responseDeferred.isCompleted)
+            assertEquals(expectedData.plus("type" to expectedType), (this as ActiveMessage.SubscriptionActiveMessage).request.message)
         }
     }
 
@@ -583,7 +617,7 @@ subscribeTo
         }
 
         advanceUntilIdle()
-        assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
+        assertTrue(webSocketCore.activeMessages.isEmpty())
 
         verifyOrder {
             mockConnection.send(match<String> { it.contains("testSubscription") && it.contains(""""id":2""") })
@@ -602,7 +636,12 @@ subscribeTo
         assertTrue(webSocketCore.connect())
 
         // Dummy request to create a fake active message
-        webSocketCore.activeMessages[42] = WebSocketRequest(emptyMap<String, String>())
+        webSocketCore.activeMessages[42] = ActiveMessage.SubscriptionActiveMessage(
+            eventFlow = mockk(),
+            onEvent = mockk(),
+            responseDeferred = CompletableDeferred(),
+            request = WebSocketRequest(emptyMap<String, String>()),
+        )
 
         // Message sent by subscribeTo to request for events
         mockResultSuccessForId(2)
@@ -768,9 +807,15 @@ misc
      */
 
     @Test
-    fun `Given an unknown event received When listening for messages Then it unsubscribes from the event`() = runTest {
+    fun `Given an unknown event received When listening for messages Then it unsubscribes from the event or crash in Debug`() = runTest {
         // The unsubscribes message is sent from the background so we need to control it
         val customScope = TestScope(UnconfinedTestDispatcher())
+        var errorMessageCaptured: String? = null
+
+        FailFast.setHandler { error, _ ->
+            errorMessageCaptured = error.message
+        }
+
         setupServer(backgroundScope = customScope)
         prepareAuthenticationAnswer()
         assertTrue(webSocketCore.connect())
@@ -782,6 +827,7 @@ misc
         customScope.advanceUntilIdle()
         advanceUntilIdle()
         coVerify { mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""id":2""") }) }
+        assertEquals("Event should always be associated to a ActiveMessage.SubscriptionActiveMessage", errorMessageCaptured)
     }
 
     /*

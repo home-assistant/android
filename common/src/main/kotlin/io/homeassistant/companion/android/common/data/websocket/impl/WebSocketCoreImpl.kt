@@ -52,7 +52,8 @@ import java.io.IOException
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -74,7 +75,6 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
@@ -118,7 +118,8 @@ private val DELAY_BEFORE_RECONNECT = 10.seconds
  * - If the connected server version is 2022.9 or above, the implementation automatically sends a `supported_features` message after the connection is established.
  *
  * #### Threading:
- * - All access to the [connection] is synchronized using the [connectedMutex] to ensure thread safety.
+ * - Connection lifecycle (creation, authentication, closure) is protected by [connectedMutex].
+ * - Outbound messages are serialized through a dedicated channel to ensure ordering.
  * - The [eventSubscriptionMutex] ensures that only one subscription is created for multiple invocations with the same parameters.
  * - The implementation uses coroutines extensively for asynchronous operations, ensuring non-blocking behavior.
  *
@@ -146,7 +147,7 @@ internal class WebSocketCoreImpl(
      * We never modify the entries in the map, only add or remove.
      */
     @VisibleForTesting
-    val activeMessages = ConcurrentHashMap<Long, WebSocketRequest>()
+    val activeMessages = ConcurrentHashMap<Long, ActiveMessage>()
 
     // Each message that we send needs a unique ID to match it to the answer
     private val id = AtomicLong(1)
@@ -172,6 +173,63 @@ internal class WebSocketCoreImpl(
     private val messageQueue = Channel<Job>(capacity = Channel.UNLIMITED).apply {
         backgroundScope.launch {
             consumeEach { it.join() } // Run a job, and wait for it to complete before starting the next one
+        }
+    }
+
+    /**
+     * Channel for send commands one by one in sequential order. It could have been
+     * a coroutine Actor but the Actor API is obsolete.
+     *
+     * This is to ensure that the order of sending command is respected.
+     *
+     * It uses the [backgroundScope] scope to do the send operation.
+     */
+    private val sendCommandChannel = Channel<CommandSender<*>>(capacity = Channel.UNLIMITED).apply {
+        backgroundScope.launch {
+            consumeEach {
+                processSendCommand(it)
+            }
+        }
+    }
+
+    // TODO check the base type and if we want to keep this public
+    class HAWebSocketException(override val message: String?) : Exception()
+
+    /**
+     * This complete when the message has been processed and sent or not.
+     * This is not making any network call directly it enqueue the send into the WebSocket connection.
+     */
+    private fun processSendCommand(command: CommandSender<*>) {
+        // TODO do we need any protection on the connection like in connect() with the Mutex
+        val currentConnection = connection
+        when (command) {
+            is CommandSender.WithAnswer -> {
+                if (currentConnection == null) {
+                    command.sendCompleted.completeExceptionally(
+                        HAWebSocketException("No connection to send the message to"),
+                    )
+                    return
+                }
+                val id = id.getAndIncrement()
+                val outbound = command.request.message.plus("id" to id)
+                Timber.d("Sending message $id: $outbound")
+                activeMessages[id] = command.toActiveMessage()
+                val result = currentConnection.send(
+                    kotlinJsonMapper.encodeToString(MapAnySerializer, outbound),
+                )
+                if (!result) {
+                    Timber.e("Failed to send message $id")
+                    activeMessages.remove(id)
+                    command.sendCompleted.completeExceptionally(HAWebSocketException("Failed to send message"))
+                } else {
+                    command.sendCompleted.complete(id)
+                }
+            }
+
+            is CommandSender.BytesCommandSender -> {
+                val result = currentConnection?.send(command.data.toByteString()) ?: false
+                command.sendCompleted.complete(result)
+            }
         }
     }
 
@@ -217,6 +275,9 @@ internal class WebSocketCoreImpl(
                         return false
                     }
                 }
+            } catch (e: CancellationException) {
+                connectionState = null
+                throw e
             } catch (e: Exception) {
                 Timber.e(e, "Unable to connect")
                 connectionState = null
@@ -252,6 +313,8 @@ internal class WebSocketCoreImpl(
                         urlObserverJob?.cancel()
                     }
                     didConnect
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Unable to authenticate")
                     urlObserverJob?.cancel()
@@ -303,60 +366,63 @@ internal class WebSocketCoreImpl(
         sendMessage(WebSocketRequest(request))
 
     override suspend fun sendMessage(request: WebSocketRequest): RawMessageSocketResponse? {
-        return if (connect()) {
-            withTimeoutOrNull(request.timeout) {
-                var requestId: Long? = null
-                try {
-                    suspendCancellableCoroutine { cont ->
-                        // Lock on the connection so that we fully send before allowing another send.
-                        // This should prevent out of order errors.
-                        connection?.let {
-                            synchronized(it) {
-                                requestId = id.getAndIncrement()
-                                val outbound = request.message.plus("id" to requestId)
-                                Timber.d("Sending message $requestId: $outbound")
-                                activeMessages[requestId] = request.apply {
-                                    onResponse = cont
-                                }
-                                val result = connection?.send(
-                                    kotlinJsonMapper.encodeToString(MapAnySerializer, outbound),
-                                )
-                                if (result == false) {
-                                    // Something got wrong when sending the message we won't get any answer let's stop there
-                                    cont.resumeWithException(IOException("Error sending message"))
-                                } else {
-                                    Timber.d("Message number $requestId sent awaiting answer from WebSocket")
-                                }
-                            }
-                        }
-                    }
-                } catch (e: Exception) {
-                    // It can be either IOException or CancellationException
-                    // In any case we remove the message from the activeMessages to not keep it forever since it won't get remove otherwise.
-                    Timber.e(e, "Exception while sending message")
-                    requestId?.let {
-                        activeMessages.remove(it)
-                    }
-                    null
-                }
-            }
-        } else {
-            Timber.w("Unable to send message, not connected: $request")
-            null
-        }
+        return sendMessage(
+            CommandSender.WithAnswer.MessageCommandSender(request),
+        )
     }
 
-    override suspend fun sendBytes(data: ByteArray): Boolean? {
-        return if (connect()) {
-            connection?.let {
-                synchronized(it) {
-                    it.send(data.toByteString())
-                }
-            }
-        } else {
-            Timber.w("Unable to send bytes, not connected")
-            null
+    private suspend fun sendMessage(command: CommandSender.WithAnswer): RawMessageSocketResponse? {
+        if (!connect()) {
+            Timber.w("Unable to send message, not connected: ${command.request}")
+            return null
         }
+
+        sendCommandChannel.send(command)
+
+        val id: Long
+        try {
+            id = command.sendCompleted.await()
+        } catch (e: HAWebSocketException) {
+            Timber.e(e, "Failed to send message ${command.request}")
+            return null
+        }
+
+        Timber.d("Message number $id sent, awaiting response from WebSocket")
+
+        // Wait for response with timeout
+        val response = try {
+            withTimeoutOrNull(command.request.timeout) {
+                command.responseDeferred.await()
+            }
+        } catch (e: CancellationException) {
+            activeMessages.remove(id)
+            throw e
+        } catch (e: Exception) {
+            // Connection closed or other error while waiting for response
+            Timber.e(e, "Error waiting for response to message $id")
+            activeMessages.remove(id)
+            return null
+        }
+
+        if (response == null) {
+            activeMessages.remove(id)
+        }
+
+        return response
+    }
+
+    override suspend fun sendBytes(data: ByteArray): Boolean {
+        if (!connect()) {
+            Timber.w("Unable to send bytes, not connected")
+            return false
+        }
+
+        val command = CommandSender.BytesCommandSender(data)
+
+        // Send command to actor
+        sendCommandChannel.send(command)
+
+        return command.sendCompleted.await()
     }
 
     override suspend fun <T : Any> subscribeTo(
@@ -371,7 +437,7 @@ internal class WebSocketCoreImpl(
 
         return eventSubscriptionMutex.withLock<Flow<T>?> {
             ( // Check for existing subscription before creating a new one
-                activeMessages.entries.firstOrNull { it.value.message == subscribeMessage }?.value?.eventFlow
+                (findSubscription(subscribeMessage)?.value as? ActiveMessage.SubscriptionActiveMessage)?.eventFlow
                     ?: createSubscriptionFlow<T>(subscribeMessage, timeout)
                 ) as? Flow<T>
         }
@@ -448,10 +514,7 @@ internal class WebSocketCoreImpl(
         handleClosingSocket()
     }
 
-    private suspend fun <T> createSubscriptionFlow(
-        subscribeMessage: Map<String, Any?>,
-        timeout: kotlin.time.Duration,
-    ): Flow<T>? {
+    private suspend fun <T> createSubscriptionFlow(subscribeMessage: Map<String, Any?>, timeout: Duration): Flow<T>? {
         val channel = Channel<T>(capacity = Channel.BUFFERED)
         val flow = callbackFlow<T> {
             launch { channel.consumeAsFlow().collect(::send) }
@@ -459,7 +522,7 @@ internal class WebSocketCoreImpl(
                 wsScope.launch {
                     var subscription: Long? = null
                     eventSubscriptionMutex.withLock {
-                        activeMessages.entries.firstOrNull { it.value.message == subscribeMessage }
+                        findSubscription(subscribeMessage)
                             ?.let {
                                 subscription = it.key
                                 channel.close()
@@ -468,12 +531,7 @@ internal class WebSocketCoreImpl(
                     }
                     subscription?.let {
                         Timber.d("Unsubscribing from $subscribeMessage")
-                        sendMessage(
-                            mapOf(
-                                "type" to "unsubscribe_events",
-                                "subscription" to it,
-                            ),
-                        )
+                        unsubscribeEvents(it)
                     }
                     if (activeMessages.isEmpty()) {
                         Timber.i("No more subscriptions, closing connection.")
@@ -485,20 +543,26 @@ internal class WebSocketCoreImpl(
             }
         }.shareIn(backgroundScope, SharingStarted.WhileSubscribed(timeout.inWholeMilliseconds, 0))
 
-        val webSocketRequest = WebSocketRequest(
-            message = subscribeMessage,
-            eventFlow = flow as SharedFlow<Any>?,
-            onEvent = channel as Channel<Any>?,
+        val response = sendMessage(
+            CommandSender.WithAnswer.Subscription(
+                request = WebSocketRequest(message = subscribeMessage),
+                eventFlow = flow as SharedFlow<Any>,
+                onEvent = channel as Channel<Any>,
+            ),
         )
-        val response = sendMessage(webSocketRequest)
         if (response == null || response.success != true) {
             Timber.e("Unable to subscribe to $subscribeMessage")
-            activeMessages.entries
-                .firstOrNull { it.value.message == subscribeMessage }
-                ?.let { activeMessages.remove(it.key) }
+            findSubscription(subscribeMessage)?.let { activeMessages.remove(it.key) }
             return null
         } else {
             return flow
+        }
+    }
+
+    private fun findSubscription(subscribeMessage: Map<String, Any?>): Map.Entry<Long, ActiveMessage>? {
+        return activeMessages.entries.firstOrNull {
+            (it.value as? ActiveMessage.SubscriptionActiveMessage)?.request?.message ==
+                subscribeMessage
         }
     }
 
@@ -514,143 +578,156 @@ internal class WebSocketCoreImpl(
     }
 
     private fun handleMessage(response: RawMessageSocketResponse) {
-        val id = response.id!!
-        activeMessages[id]?.let {
-            it.onResponse?.let { cont ->
-                if (!it.hasContinuationBeenInvoked.getAndSet(true) && cont.isActive) {
-                    cont.resumeWith(Result.success(response))
-                } else {
-                    Timber.w("Response continuation has already been invoked for ${response.id}")
-                }
+        val id = checkNotNull(response.id) { "Response without ID" }
+        activeMessages[id]?.let { request ->
+            // Complete the deferred - this is safe to call multiple times (idempotent)
+            val completed = request.responseDeferred.complete(response)
+            if (!completed) {
+                Timber.w("Response deferred was already completed for ${response.id}")
             }
-            if (it.eventFlow == null) {
+            if (request !is ActiveMessage.SubscriptionActiveMessage) {
                 activeMessages.remove(id)
             }
-        } ?: { Timber.w("Response for message not in activeMessage id($id) skipping") }
+        } ?: run { Timber.w("Response for message not in activeMessage id($id) skipping") }
     }
 
     private suspend fun handleEvent(response: EventSocketResponse) {
         // TODO https://github.com/home-assistant/android/issues/5271
         val subscriptionId = response.id
-        activeMessages[subscriptionId]?.let { messageData ->
-            val subscriptionType = messageData.message["type"]
-            val eventResponseType = (response.event as? JsonObject)?.get("event_type")
+        val activeMessage = activeMessages[subscriptionId].let {
+            FailFast.failWhen(it !is ActiveMessage.SubscriptionActiveMessage) {
+                "Event should always be associated to a ActiveMessage.SubscriptionActiveMessage"
+            }
+            it as? ActiveMessage.SubscriptionActiveMessage
+        }
 
-            val message: Any =
-                if ((response.event as? JsonObject)?.contains("hass_confirm_id") == true) {
-                    kotlinJsonMapper.decodeFromJsonElement<Map<String, Any?>>(MapAnySerializer, response.event)
-                } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES) {
-                    if (response.event != null) {
-                        kotlinJsonMapper.decodeFromJsonElement<CompressedStateChangedEvent>(response.event)
-                    } else {
-                        Timber.w("Received no event for entity subscription, skipping")
-                        return
-                    }
-                } else if (subscriptionType == SUBSCRIBE_TYPE_RENDER_TEMPLATE) {
-                    if (response.event != null) {
-                        kotlinJsonMapper.decodeFromJsonElement<TemplateUpdatedEvent>(response.event)
-                    } else {
-                        Timber.w("Received no event for template subscription, skipping")
-                        return
-                    }
-                } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER) {
-                    val trigger = ((response.event as? JsonObject)?.get("variables") as? JsonObject)?.get("trigger")
-                    if (trigger != null) {
-                        kotlinJsonMapper.decodeFromJsonElement<TriggerEvent>(trigger)
-                    } else {
-                        Timber.w("Received no trigger value for trigger subscription, skipping")
-                        return
-                    }
-                } else if (subscriptionType == SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN) {
-                    val eventType = (response.event as? JsonObject)?.get("type")
-                    if ((eventType as? JsonPrimitive)?.isString == true) {
-                        val eventDataMap = response.event["data"]
-                        if (eventDataMap == null) {
-                            Timber.w("Received Assist pipeline event without data, skipping")
-                            return
-                        }
-                        val eventData = when (eventType.jsonPrimitive.content) {
-                            AssistPipelineEventType.RUN_START ->
-                                kotlinJsonMapper.decodeFromJsonElement<AssistPipelineRunStart>(eventDataMap)
+        if (activeMessage == null) {
+            Timber.d("Received event for unknown subscription id= $subscriptionId, unsubscribing")
+            subscriptionId?.let {
+                unsubscribeEvents(subscriptionId)
+            }
+            return
+        }
+        val subscriptionType = activeMessage.request.message["type"]
+        val eventResponseType = (response.event as? JsonObject)?.get("event_type")
 
-                            AssistPipelineEventType.STT_END ->
-                                kotlinJsonMapper.decodeFromJsonElement<AssistPipelineSttEnd>(eventDataMap)
-
-                            AssistPipelineEventType.INTENT_START ->
-                                kotlinJsonMapper.decodeFromJsonElement<AssistPipelineIntentStart>(eventDataMap)
-
-                            AssistPipelineEventType.INTENT_PROGRESS ->
-                                kotlinJsonMapper.decodeFromJsonElement<AssistPipelineIntentProgress>(eventDataMap)
-
-                            AssistPipelineEventType.INTENT_END ->
-                                kotlinJsonMapper.decodeFromJsonElement<AssistPipelineIntentEnd>(eventDataMap)
-
-                            AssistPipelineEventType.TTS_END ->
-                                kotlinJsonMapper.decodeFromJsonElement<AssistPipelineTtsEnd>(eventDataMap)
-
-                            AssistPipelineEventType.ERROR ->
-                                kotlinJsonMapper.decodeFromJsonElement<AssistPipelineError>(eventDataMap)
-
-                            else -> {
-                                Timber.d("Unknown event type ignoring. received data = \n$response")
-                                null
-                            }
-                        }
-                        AssistPipelineEvent(eventType.jsonPrimitive.content, eventData)
-                    } else {
-                        Timber.w("Received Assist pipeline event without type, skipping")
-                        return
-                    }
-                } else if (eventResponseType != null && (eventResponseType as? JsonPrimitive)?.isString == true) {
-                    when (eventResponseType.content) {
-                        EVENT_STATE_CHANGED -> {
-                            kotlinJsonMapper.decodeFromJsonElement<EventResponse<StateChangedEvent>>(
-                                response.event,
-                            ).data
-                        }
-
-                        EVENT_AREA_REGISTRY_UPDATED -> {
-                            kotlinJsonMapper.decodeFromJsonElement<EventResponse<AreaRegistryUpdatedEvent>>(
-                                response.event,
-                            ).data
-                        }
-
-                        EVENT_DEVICE_REGISTRY_UPDATED -> {
-                            kotlinJsonMapper.decodeFromJsonElement<EventResponse<DeviceRegistryUpdatedEvent>>(
-                                response.event,
-                            ).data
-                        }
-
-                        EVENT_ENTITY_REGISTRY_UPDATED -> {
-                            kotlinJsonMapper.decodeFromJsonElement<EventResponse<EntityRegistryUpdatedEvent>>(
-                                response.event,
-                            ).data
-                        }
-
-                        else -> {
-                            Timber.d("Unknown event type received ${response.event}")
-                            return
-                        }
-                    }
+        val message: Any =
+            if ((response.event as? JsonObject)?.contains("hass_confirm_id") == true) {
+                kotlinJsonMapper.decodeFromJsonElement<Map<String, Any?>>(MapAnySerializer, response.event)
+            } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES) {
+                if (response.event != null) {
+                    kotlinJsonMapper.decodeFromJsonElement<CompressedStateChangedEvent>(response.event)
                 } else {
-                    Timber.d("Unknown event for subscription received, skipping")
+                    Timber.w("Received no event for entity subscription, skipping")
                     return
                 }
+            } else if (subscriptionType == SUBSCRIBE_TYPE_RENDER_TEMPLATE) {
+                if (response.event != null) {
+                    kotlinJsonMapper.decodeFromJsonElement<TemplateUpdatedEvent>(response.event)
+                } else {
+                    Timber.w("Received no event for template subscription, skipping")
+                    return
+                }
+            } else if (subscriptionType == SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER) {
+                val trigger = ((response.event as? JsonObject)?.get("variables") as? JsonObject)?.get("trigger")
+                if (trigger != null) {
+                    kotlinJsonMapper.decodeFromJsonElement<TriggerEvent>(trigger)
+                } else {
+                    Timber.w("Received no trigger value for trigger subscription, skipping")
+                    return
+                }
+            } else if (subscriptionType == SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN) {
+                val eventType = (response.event as? JsonObject)?.get("type")
+                if ((eventType as? JsonPrimitive)?.isString == true) {
+                    val eventDataMap = response.event["data"]
+                    if (eventDataMap == null) {
+                        Timber.w("Received Assist pipeline event without data, skipping")
+                        return
+                    }
+                    val eventData = when (eventType.jsonPrimitive.content) {
+                        AssistPipelineEventType.RUN_START ->
+                            kotlinJsonMapper.decodeFromJsonElement<AssistPipelineRunStart>(eventDataMap)
 
-            try {
-                messageData.onEvent?.send(message)
-            } catch (e: Exception) {
-                Timber.e(e, "Unable to send event message to channel")
+                        AssistPipelineEventType.STT_END ->
+                            kotlinJsonMapper.decodeFromJsonElement<AssistPipelineSttEnd>(eventDataMap)
+
+                        AssistPipelineEventType.INTENT_START ->
+                            kotlinJsonMapper.decodeFromJsonElement<AssistPipelineIntentStart>(eventDataMap)
+
+                        AssistPipelineEventType.INTENT_PROGRESS ->
+                            kotlinJsonMapper.decodeFromJsonElement<AssistPipelineIntentProgress>(eventDataMap)
+
+                        AssistPipelineEventType.INTENT_END ->
+                            kotlinJsonMapper.decodeFromJsonElement<AssistPipelineIntentEnd>(eventDataMap)
+
+                        AssistPipelineEventType.TTS_END ->
+                            kotlinJsonMapper.decodeFromJsonElement<AssistPipelineTtsEnd>(eventDataMap)
+
+                        AssistPipelineEventType.ERROR ->
+                            kotlinJsonMapper.decodeFromJsonElement<AssistPipelineError>(eventDataMap)
+
+                        else -> {
+                            Timber.d("Unknown event type ignoring. received data = \n$response")
+                            null
+                        }
+                    }
+                    AssistPipelineEvent(eventType.jsonPrimitive.content, eventData)
+                } else {
+                    Timber.w("Received Assist pipeline event without type, skipping")
+                    return
+                }
+            } else if (eventResponseType != null && (eventResponseType as? JsonPrimitive)?.isString == true) {
+                when (eventResponseType.content) {
+                    EVENT_STATE_CHANGED -> {
+                        kotlinJsonMapper.decodeFromJsonElement<EventResponse<StateChangedEvent>>(
+                            response.event,
+                        ).data
+                    }
+
+                    EVENT_AREA_REGISTRY_UPDATED -> {
+                        kotlinJsonMapper.decodeFromJsonElement<EventResponse<AreaRegistryUpdatedEvent>>(
+                            response.event,
+                        ).data
+                    }
+
+                    EVENT_DEVICE_REGISTRY_UPDATED -> {
+                        kotlinJsonMapper.decodeFromJsonElement<EventResponse<DeviceRegistryUpdatedEvent>>(
+                            response.event,
+                        ).data
+                    }
+
+                    EVENT_ENTITY_REGISTRY_UPDATED -> {
+                        kotlinJsonMapper.decodeFromJsonElement<EventResponse<EntityRegistryUpdatedEvent>>(
+                            response.event,
+                        ).data
+                    }
+
+                    else -> {
+                        Timber.d("Unknown event type received ${response.event}")
+                        return
+                    }
+                }
+            } else {
+                Timber.d("Unknown event for subscription received, skipping")
+                return
             }
-        } ?: run {
-            Timber.d("Received event for unknown subscription, unsubscribing")
-            sendMessage(
-                mapOf(
-                    "type" to "unsubscribe_events",
-                    "subscription" to subscriptionId,
-                ),
-            )
+
+        try {
+            activeMessage.onEvent.send(message)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Unable to send event message to channel")
         }
+    }
+
+    private suspend fun unsubscribeEvents(id: Long) {
+        sendMessage(
+            mapOf(
+                "type" to "unsubscribe_events",
+                "subscription" to id,
+            ),
+        )
     }
 
     private fun handleClosingSocket() {
@@ -673,21 +750,20 @@ internal class WebSocketCoreImpl(
                     connectionState = WebSocketState.CLOSED_OTHER
                 }
                 activeMessages
-                    .filterValues { it.eventFlow == null }
-                    .forEach {
-                        it.value.onResponse?.let { cont ->
-                            if (!it.value.hasContinuationBeenInvoked.getAndSet(true) && cont.isActive) {
-                                cont.resumeWithException(IOException("Connection closed"))
-                            } else {
-                                Timber.w("Response continuation has already been invoked, skipping IOException")
-                            }
+                    .filterValues { it is ActiveMessage.SimpleActiveMessage }
+                    .forEach { (key, activeMessage) ->
+                        // Complete exceptionally - this is safe to call multiple times (idempotent)
+                        val completed =
+                            activeMessage.responseDeferred.completeExceptionally(IOException("Connection closed"))
+                        if (!completed) {
+                            Timber.w("Response deferred was already completed, skipping IOException")
                         }
-                        activeMessages.remove(it.key)
+                        activeMessages.remove(key)
                     }
             }
         }
         // If we still have flows flowing
-        val hasFlowMessages = activeMessages.any { it.value.eventFlow != null }
+        val hasFlowMessages = activeMessages.any { it.value is ActiveMessage.SubscriptionActiveMessage }
         if (hasFlowMessages && wsScope.isActive) {
             wsScope.launch {
                 cancelPendingMessagesJob.join()
@@ -697,19 +773,20 @@ internal class WebSocketCoreImpl(
                 }
                 if (connect()) {
                     Timber.d("Resubscribing to active subscriptions...")
-                    activeMessages.filterValues { it.eventFlow != null }.entries
-                        .forEach { (oldId, oldMessage) ->
+                    activeMessages.filterValues { it is ActiveMessage.SubscriptionActiveMessage }.entries
+                        .forEach { (oldId, oldActiveMessage) ->
+                            oldActiveMessage as ActiveMessage.SubscriptionActiveMessage
                             activeMessages.remove(oldId)
 
-                            val newMessage = WebSocketRequest(
-                                message = oldMessage.message,
-                                eventFlow = oldMessage.eventFlow,
-                                onEvent = oldMessage.onEvent,
+                            val response = sendMessage(
+                                CommandSender.WithAnswer.Subscription(
+                                    request = oldActiveMessage.request,
+                                    eventFlow = oldActiveMessage.eventFlow,
+                                    onEvent = oldActiveMessage.onEvent,
+                                ),
                             )
-
-                            val response = sendMessage(newMessage)
                             if (response == null || response.success != true) {
-                                Timber.e("Issue re-registering subscription with ${oldMessage.message}")
+                                Timber.e("Issue re-registering subscription with ${oldActiveMessage.request}")
                             }
                         }
                 } else {
@@ -725,5 +802,100 @@ internal class WebSocketCoreImpl(
             .replace("https://", "wss://")
             .replace("http://", "ws://")
             .plus("api/websocket")
+    }
+}
+
+/**
+ * Represents an active WebSocket message that has been sent and is awaiting a response.
+ *
+ * Stored in the active messages map to correlate incoming responses with their original requests.
+ */
+@VisibleForTesting
+internal sealed interface ActiveMessage {
+    /** Completes when the server sends a response for this message */
+    val responseDeferred: CompletableDeferred<RawMessageSocketResponse>
+
+    /**
+     * A one-shot message.
+     */
+    class SimpleActiveMessage(override val responseDeferred: CompletableDeferred<RawMessageSocketResponse>) :
+        ActiveMessage
+
+    /**
+     * A subscription that receive multiple events over time.
+     *
+     * @param responseDeferred Completes with the initial subscription confirmation response
+     * @param eventFlow The shared flow that emits events to external subscribers
+     * @param onEvent The channel used to send events into the flow
+     * @param request The original request, retained for resubscription after reconnection
+     */
+    class SubscriptionActiveMessage(
+        override val responseDeferred: CompletableDeferred<RawMessageSocketResponse>,
+        val eventFlow: SharedFlow<Any>,
+        val onEvent: Channel<Any>,
+        val request: WebSocketRequest,
+    ) : ActiveMessage
+}
+
+/**
+ * Represents a command to be sent through the send command channel for serialized WebSocket sending.
+ *
+ * @param T The type of result returned when the send operation completes
+ */
+private sealed interface CommandSender<T> {
+    /** Completes when the send operation finishes, with the result of type [T] */
+    val sendCompleted: CompletableDeferred<T>
+
+    /**
+     * A command that sends a message and expects a response from the server.
+     *
+     * @param request The request containing the message to send and timeout configuration
+     * @property sendCompleted Completes with the assigned message ID when sent successfully,
+     *                         or completes exceptionally with [HAWebSocketException] on failure
+     * @property responseDeferred Completes when the server responds to this message
+     */
+    sealed class WithAnswer(val request: WebSocketRequest) : CommandSender<Long> {
+        override val sendCompleted: CompletableDeferred<Long> = CompletableDeferred()
+        val responseDeferred: CompletableDeferred<RawMessageSocketResponse> = CompletableDeferred()
+
+        /** Creates an [ActiveMessage] to track this request while awaiting a response */
+        abstract fun toActiveMessage(): ActiveMessage
+
+        /** A simple one-shot message that expects a single response */
+        class MessageCommandSender(request: WebSocketRequest) : WithAnswer(request) {
+            override fun toActiveMessage(): ActiveMessage {
+                return ActiveMessage.SimpleActiveMessage(responseDeferred)
+            }
+        }
+
+        /**
+         * A subscription message that receives multiple events over time.
+         *
+         * @param eventFlow The shared flow that emits events to subscribers
+         * @param onEvent The channel used internally to send events to the flow
+         */
+        class Subscription(request: WebSocketRequest, val eventFlow: SharedFlow<Any>, val onEvent: Channel<Any>) :
+            WithAnswer(request) {
+
+            override fun toActiveMessage(): ActiveMessage {
+                return ActiveMessage.SubscriptionActiveMessage(
+                    responseDeferred,
+                    eventFlow,
+                    onEvent,
+                    request,
+                )
+            }
+        }
+    }
+
+    /**
+     * A command that sends raw bytes without expecting a typed response.
+     * Used for binary data like audio streams.
+     *
+     * @param data The raw bytes to send
+     * @property sendCompleted Completes with `true` if sent successfully, `false` otherwise
+     */
+    class BytesCommandSender(val data: ByteArray) : CommandSender<Boolean> {
+        override val sendCompleted: CompletableDeferred<Boolean> = CompletableDeferred()
     }
 }
