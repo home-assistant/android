@@ -58,7 +58,7 @@ internal interface WebSocketCore {
      * @param data The binary data to send. Maximum size of 16MiB
      * @return `true` if the data was sent successfully, `false` otherwise.
      */
-    suspend fun sendBytes(data: ByteArray): Boolean?
+    suspend fun sendBytes(data: ByteArray): Boolean
 
     /**
      * Start a subscription for events on the websocket connection and get a Flow for listening to
