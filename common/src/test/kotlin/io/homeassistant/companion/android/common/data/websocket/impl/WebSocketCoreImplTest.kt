@@ -29,6 +29,8 @@ import io.mockk.unmockkAll
 import io.mockk.verify
 import io.mockk.verifyOrder
 import java.io.IOException
+import kotlin.random.Random
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -37,8 +39,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -50,12 +55,15 @@ import okio.ByteString
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.fail
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
@@ -918,5 +926,251 @@ misc
             closeConnection()
             advanceUntilIdle()
         }
+    }
+
+    /*
+    Concurrency tests
+     */
+
+    @Test
+    fun `Given an active connection When multiple sendMessage calls are made concurrently Then messages are serialized in order`() = runTest {
+        setupServer()
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        val sentMessages = mutableListOf<String>()
+        every { mockConnection.send(match<String> { it.contains(""""type":"test"""") }) } answers {
+            sentMessages.add(firstArg())
+            // Simulate response for each message
+            val id = Regex(""""id":(\d+)""").find(firstArg<String>())?.groupValues?.get(1)?.toLong()
+            if (id != null) {
+                webSocketListener.onMessage(
+                    mockConnection,
+                    """{"id":$id,"type":"result","success":true,"result":{}}""",
+                )
+            } else {
+                fail { "Missing id" }
+            }
+            true
+        }
+
+        // Launch multiple sendMessage calls concurrently
+        val jobs = (1..50).map { i ->
+            async {
+                delay(Random.nextLong())
+                webSocketCore.sendMessage(mapOf("type" to "test", "value" to i))
+            }
+        }
+
+        // Wait for all to complete
+        jobs.awaitAll()
+        advanceUntilIdle()
+
+        // Verify all messages were sent
+        assertEquals(50, sentMessages.size)
+
+        // Verify IDs are sequential (starting from 2, after supported_features which is 1)
+        val ids = sentMessages.map { msg ->
+            Regex(""""id":(\d+)""").find(msg)?.groupValues?.get(1)?.toLong()
+        }
+        assertEquals((2L..51L).toList(), ids)
+
+        // Verify the "value" field is NOT in sequential order (proving async execution)
+        val values = sentMessages.map { msg ->
+            Regex(""""value":(\d+)""").find(msg)?.groupValues?.get(1)?.toInt()
+        }
+        // Values should contain all 1..50 but NOT in order (due to random delays)
+        assertEquals((1..50).toSet(), values.toSet())
+        assertNotEquals((1..50).toList(), values, "Values should not be in sequential order - async execution should shuffle them")
+    }
+
+    @Test
+    fun `Given no connection When multiple connect calls are made concurrently Then only one connection is created`() = runTest {
+        setupServer()
+        prepareAuthenticationAnswer()
+
+        // Launch multiple connect calls concurrently
+        val jobs = (1..50).map {
+            async {
+                delay(Random.nextLong())
+                webSocketCore.connect()
+            }
+        }
+
+        // Wait for all to complete
+        val results = jobs.awaitAll()
+
+        // All should succeed
+        assertTrue(results.all { it })
+
+        // Only one WebSocket should be created
+        verify(exactly = 1) { mockOkHttpClient.newWebSocket(any(), any()) }
+    }
+
+    @Test
+    fun `Given subscription setup in progress When coroutine is cancelled Then activeMessages is cleaned up`() = runTest {
+        setupServer()
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        // Don't mock response so subscribeTo hangs waiting for confirmation
+        every { mockConnection.send(match<String> { it.contains("test_subscription") }) } returns true
+
+        val subscribeJob = async {
+            webSocketCore.subscribeTo<String>(
+                "test_subscription",
+                emptyMap(),
+            )
+        }
+        runCurrent()
+
+        // auth - supported_features - test_subscription
+        verify(exactly = 3) { mockConnection.send(any<String>()) }
+
+        // Message should be in activeMessages while waiting for confirmation
+        assertEquals(1, webSocketCore.activeMessages.size)
+
+        // Cancel the subscription coroutine
+        subscribeJob.cancel()
+        runCurrent()
+
+        // activeMessages should be cleaned up
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+
+        verify(exactly = 3) { mockConnection.send(any<String>()) }
+    }
+
+    @Test
+    fun `Given a message waiting for response When response arrives after timeout Then it is handled gracefully`() = runTest {
+        setupServer()
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        every { mockConnection.send(match<String> { it.contains(""""id":2""") }) } returns true
+
+        // Use a short timeout for the test
+        val timeout = 5.seconds
+        val sendJob = async {
+            webSocketCore.sendMessage(WebSocketRequest(mapOf("type" to "test"), timeout))
+        }
+        runCurrent()
+
+        // Message should be in activeMessages while waiting
+        assertEquals(1, webSocketCore.activeMessages.size)
+
+        // Advance time but not past timeout - should still be waiting
+        advanceTimeBy(timeout.minus(1.seconds))
+        assertFalse(sendJob.isCompleted, "Should still be waiting before timeout")
+        assertEquals(1, webSocketCore.activeMessages.size)
+
+        // Advance past timeout
+        advanceTimeBy(2.seconds)
+        assertTrue(sendJob.isCompleted, "Should complete after timeout")
+
+        val response = sendJob.await()
+        assertNull(response)
+        // activeMessages should be cleaned up after timeout
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+
+        // Now send a late response - should not cause any issues
+        webSocketListener.onMessage(
+            mockConnection,
+            """{"id":2,"type":"result","success":true,"result":{}}""",
+        )
+        advanceUntilIdle()
+
+        // Should still be empty
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+    }
+
+    @Test
+    fun `Given a message waiting for response When response arrives after cancel Then it is handled gracefully`() = runTest {
+        setupServer()
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        every { mockConnection.send(match<String> { it.contains(""""id":2""") }) } returns true
+
+        // Use a short timeout for the test
+        val timeout = 5.seconds
+        val sendJob = async {
+            webSocketCore.sendMessage(WebSocketRequest(mapOf("type" to "test"), timeout))
+        }
+        runCurrent()
+
+        // Message should be in activeMessages while waiting
+        assertEquals(1, webSocketCore.activeMessages.size)
+
+        // Advance time but not past timeout - should still be waiting
+        advanceTimeBy(timeout.minus(1.seconds))
+        assertFalse(sendJob.isCompleted, "Should still be waiting before timeout")
+        assertEquals(1, webSocketCore.activeMessages.size)
+
+        sendJob.cancel()
+        runCurrent()
+
+        // activeMessages should be cleaned up after canceling
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+
+        // Now send a late response - should not cause any issues
+        webSocketListener.onMessage(
+            mockConnection,
+            """{"id":2,"type":"result","success":true,"result":{}}""",
+        )
+        advanceUntilIdle()
+
+        // Should still be empty
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+    }
+
+    @Test
+    fun `Given connection becomes null during send When sendMessage is invoked Then it returns null`() = runTest {
+        setupServer()
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        // Close connection when trying to send
+        every { mockConnection.send(match<String> { it.contains(""""type":"test"""") }) } answers {
+            closeConnection()
+            true
+        }
+
+        val response = webSocketCore.sendMessage(mapOf("type" to "test"))
+
+        assertNull(response)
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+    }
+
+    @Test
+    fun `Given a message received response When duplicate response arrives Then warning is logged and no crash occurs`() = runTest {
+        setupServer()
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        // First response
+        every { mockConnection.send(match<String> { it.contains(""""id":2""") }) } answers {
+            webSocketListener.onMessage(
+                mockConnection,
+                """{"id":2,"type":"result","success":true,"result":{}}""",
+            )
+            true
+        }
+
+        val response = webSocketCore.sendMessage(mapOf("type" to "test"))
+        assertNotNull(response)
+        advanceUntilIdle()
+
+        // activeMessages should be cleaned up
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+
+        // Send duplicate response - should be handled gracefully
+        webSocketListener.onMessage(
+            mockConnection,
+            """{"id":2,"type":"result","success":true,"result":{"duplicate":true}}""",
+        )
+        advanceUntilIdle()
+
+        // still empty
+        assertTrue(webSocketCore.activeMessages.isEmpty())
     }
 }
