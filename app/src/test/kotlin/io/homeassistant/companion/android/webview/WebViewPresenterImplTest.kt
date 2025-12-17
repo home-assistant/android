@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
+import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.improv.ImprovRepository
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
@@ -108,6 +109,7 @@ class WebViewPresenterImplTest {
     private val prefsRepository: PrefsRepository = mockk(relaxed = true)
     private val matterManager: MatterManager = mockk(relaxed = true)
     private val threadManager: ThreadManager = mockk(relaxed = true)
+    private val settingsDao: SettingsDao = mockk(relaxed = true)
     private val authenticationRepository: AuthenticationRepository = mockk(relaxed = true)
     private val connectionStateProvider: ServerConnectionStateProvider = mockk(relaxed = true)
 
@@ -143,6 +145,7 @@ class WebViewPresenterImplTest {
             prefsRepository = prefsRepository,
             matterUseCase = matterManager,
             threadUseCase = threadManager,
+            settingsDao = settingsDao,
         )
         return presenter
     }

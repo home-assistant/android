@@ -722,7 +722,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         localStorage.putBoolean("${serverId}_$PREF_ASK_NOTIFICATION_PERMISSION", shouldAsk)
     }
 
-    private suspend fun Server.callWebhookOnUrls(
+    private suspend fun callWebhookOnUrls(
         request: IntegrationRequest,
         onSuccess: suspend (response: Response<ResponseBody>) -> Unit = {},
         isValidResponse: (response: Response<ResponseBody>) -> Boolean = { response -> response.isSuccessful },
