@@ -288,7 +288,7 @@ class WebViewActivity :
      *
      * Keep in mind that it only applies to the Webview not for anything else like
      * background sync, widgets, ... It is used as a temporary fix for the user to
-     * access his instance, but something might need to be fixed on user side.
+     * access their server, but something might need to be fixed on user side.
      *
      * Defaults to `null`, meaning automatic URL selection is used.
      */
