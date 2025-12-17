@@ -398,6 +398,127 @@
     </issue>
 
     <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="                        context.getString(commonR.string.missing_camera_permission),"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/barcode/view/BarcodeScannerView.kt"
+            line="131"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="                        context.getString(commonR.string.settings),"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/barcode/view/BarcodeScannerView.kt"
+            line="132"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="                onToolbarTitleChanged(context.getString(R.string.gestures))"
+        errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/gestures/views/GesturesScreen.kt"
+            line="73"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="                onToolbarTitleChanged(context.getString(action.gesture.fullDescription))"
+        errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/gestures/views/GesturesScreen.kt"
+            line="76"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="                scaffoldState.snackbarHostState.showSnackbar(context.getString(it))"
+        errorLine2="                                                             ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/qs/views/ManageTilesView.kt"
+            line="59"
+            column="62"/>
+    </issue>
+
+    <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="                    onShowSnackbar(context.getString(it.messageRes), null)"
+        errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/onboarding/nameyourdevice/navigation/NameYourDeviceNavigation.kt"
+            line="68"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="                scaffoldState.snackbarHostState.showSnackbar(context.getString(it))"
+        errorLine2="                                                             ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/nfc/views/NfcNavigationView.kt"
+            line="60"
+            column="62"/>
+    </issue>
+
+    <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="                                                    context.getString("
+        errorLine2="                                                    ^">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/notification/views/NotificationChannelView.kt"
+            line="98"
+            column="53"/>
+    </issue>
+
+    <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="                                                    context.getString(R.string.undo),"
+        errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/notification/views/NotificationChannelView.kt"
+            line="102"
+            column="53"/>
+    </issue>
+
+    <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="                context.getString(it.message),"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
+            line="118"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="LocalContextGetResourceValueCall"
+        message="Querying resource values using LocalContext.current"
+        errorLine1="                context.getString(commonR.string.settings),"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
+            line="119"
+            column="17"/>
+    </issue>
+
+    <issue
         id="DiscouragedApi"
         message="Use of this function is discouraged because resource reflection makes it harder to perform build optimizations and compile-time verification of code. It is much more efficient to retrieve resources by identifier (e.g. `R.foo.bar`) than by name (e.g. `getIdentifier(&quot;bar&quot;, &quot;foo&quot;, null)`)."
         errorLine1="        val stringId = app.resources.getIdentifier(identifierString, &quot;string&quot;, app.packageName)"
@@ -1988,7 +2109,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="278"
+            line="286"
             column="13"/>
     </issue>
 
@@ -1999,7 +2120,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="540"
+            line="562"
             column="21"/>
     </issue>
 
@@ -2010,7 +2131,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="650"
+            line="672"
             column="13"/>
     </issue>
 
@@ -2021,7 +2142,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1249"
+            line="1271"
             column="21"/>
     </issue>
 
@@ -2032,7 +2153,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewActivity.kt"
-            line="1368"
+            line="1390"
             column="17"/>
     </issue>
 
@@ -2043,7 +2164,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/websocket/WebsocketManager.kt"
-            line="224"
+            line="231"
             column="13"/>
     </issue>
 
@@ -2054,7 +2175,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/websocket/WebsocketManager.kt"
-            line="279"
+            line="286"
             column="17"/>
     </issue>
 
@@ -2414,17 +2535,6 @@
 
     <issue
         id="UnusedResources"
-        message="The resource `R.layout.activity_onboarding` appears to be unused"
-        errorLine1="&lt;FrameLayout xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
-        errorLine2="^">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/activity_onboarding.xml"
-            line="2"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
         message="The resource `R.xml.changelog_master` appears to be unused"
         errorLine1="&lt;changelog xmlns:tools=&quot;http://schemas.android.com/tools&quot;"
         errorLine2="^">
@@ -2663,7 +2773,7 @@
         errorLine2="                                                          ~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
-            line="415"
+            line="416"
             column="59"/>
     </issue>
 
@@ -3556,17 +3666,6 @@
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/media/player/HAMediaPlayer.kt"
             line="315"
             column="45"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierWithoutDefault"
-        message="This @Composable function has a modifier parameter but it doesn&apos;t have a default value.See https://slackhq.github.io/compose-lints/rules/#modifiers-should-have-default-parameters for more information."
-        errorLine1="private fun Color.Overlay(modifier: Modifier) {"
-        errorLine2="                          ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/webview/WebViewContentScreen.kt"
-            line="169"
-            column="27"/>
     </issue>
 
     <issue
