@@ -11,7 +11,7 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.isSetup
-import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.launcher.LauncherActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -59,7 +59,7 @@ class TilePreferenceActivity : BaseActivity() {
             val tileData = tileDao.get(tileId)
 
             val intent = if (!serverManager.isRegistered()) {
-                Intent(this@TilePreferenceActivity, LaunchActivity::class.java)
+                Intent(this@TilePreferenceActivity, LauncherActivity::class.java)
             } else if (tileData?.isSetup == true) {
                 WebViewActivity.newInstance(
                     this@TilePreferenceActivity,

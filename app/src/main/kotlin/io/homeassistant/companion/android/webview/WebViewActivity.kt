@@ -54,6 +54,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
@@ -107,7 +108,7 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
-import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.launcher.LauncherActivity
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
@@ -259,6 +260,13 @@ class WebViewActivity :
     private var playerLeft = mutableStateOf(0.dp)
     private var statusBarColor = mutableStateOf<Color?>(null)
     private var backgroundColor = mutableStateOf<Color?>(null)
+
+    /**
+     * Flag to know when the webview has been fully initialized (loadUrl called).
+     * It is important to know to avoid opening a full screen dialog that
+     * could prevent the loading of the webview.
+     */
+    private var webViewInitialized = mutableStateOf(false)
     private var failedConnection = "external"
     private var clearHistory = false
     private var moreInfoEntity = ""
@@ -309,6 +317,7 @@ class WebViewActivity :
         }
 
         setContent {
+            val coroutineScope = rememberCoroutineScope()
             val player by remember { exoPlayer }
             val playerSize by remember { playerSize }
             val playerTop by remember { playerTop }
@@ -319,9 +328,12 @@ class WebViewActivity :
             val backgroundColor by remember { backgroundColor }
             var nightModeTheme by remember { mutableStateOf<NightModeTheme?>(null) }
             val snackbarHostState = remember { snackbarHostState }
+            var webViewInitialized by remember { webViewInitialized }
+            var shouldAskNotificationPermission by remember { mutableStateOf(false) }
 
             LaunchedEffect(Unit) {
                 nightModeTheme = nightModeManager.getCurrentNightMode()
+                shouldAskNotificationPermission = presenter.shouldAskNotificationPermission()
             }
 
             WebViewContentScreen(
@@ -333,13 +345,22 @@ class WebViewActivity :
                 playerLeft = playerLeft,
                 currentAppLocked,
                 customViewFromWebView,
+                shouldAskNotificationPermission = shouldAskNotificationPermission,
+                webViewInitialized = webViewInitialized,
                 nightModeTheme = nightModeTheme,
                 statusBarColor = statusBarColor,
                 backgroundColor = backgroundColor,
-            ) { isFullScreen ->
-                isExoFullScreen = isFullScreen
-                if (isFullScreen) hideSystemUI() else showSystemUI()
-            }
+                onFullscreenClicked = { isFullScreen ->
+                    isExoFullScreen = isFullScreen
+                    if (isFullScreen) hideSystemUI() else showSystemUI()
+                },
+                onNotificationPermissionResult = { granted ->
+                    coroutineScope.launch {
+                        presenter.onNotificationPermissionResult(granted)
+                        shouldAskNotificationPermission = false
+                    }
+                },
+            )
         }
 
         authenticator = Authenticator(this, this, ::authenticationResult)
@@ -401,6 +422,7 @@ class WebViewActivity :
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
+                    webViewInitialized.value = true
                     if (clearHistory) {
                         webView.clearHistory()
                         clearHistory = false
@@ -1381,7 +1403,7 @@ class WebViewActivity :
 
     override fun relaunchApp() {
         isRelaunching = true
-        startActivity(Intent(this, LaunchActivity::class.java))
+        startActivity(Intent(this, LauncherActivity::class.java))
         finish()
     }
 

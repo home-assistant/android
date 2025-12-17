@@ -1,9 +1,9 @@
 package io.homeassistant.companion.android.common.util
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.core.content.getSystemService
@@ -48,12 +48,28 @@ fun Context.isAutomotive(): Boolean {
  */
 fun Context.maybeAskForIgnoringBatteryOptimizations() {
     if (!isIgnoringBatteryOptimizations()) {
-        startActivity(
-            Intent(
-                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                "package:$packageName".toUri(),
-            ),
+        startActivity(createBatteryOptimizationIntent())
+    }
+}
+
+/**
+ * Creates an [Intent] to request ignoring battery optimizations.
+ *
+ * This intent can be used with an [androidx.activity.result.ActivityResultLauncher] to
+ * wait for the user to respond to the battery optimization dialog before proceeding.
+ *
+ * @return An [Intent] configured to request battery optimization exemption, or `null` if
+ *         the app is already ignoring battery optimizations or not available.
+ */
+@SuppressLint("BatteryLife")
+fun Context.createBatteryOptimizationIntent(): Intent? {
+    return if (!isIgnoringBatteryOptimizations()) {
+        Intent(
+            Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+            "package:$packageName".toUri(),
         )
+    } else {
+        null
     }
 }
 
@@ -64,8 +80,7 @@ fun Context.maybeAskForIgnoringBatteryOptimizations() {
  * @return `true` if the app is ignoring battery optimizations, `false` otherwise.
  */
 fun Context.isIgnoringBatteryOptimizations(): Boolean {
-    return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
-        getSystemService<PowerManager>()
-            ?.isIgnoringBatteryOptimizations(packageName ?: "")
-            ?: false
+    return getSystemService<PowerManager>()
+        ?.isIgnoringBatteryOptimizations(packageName ?: "")
+        ?: false
 }

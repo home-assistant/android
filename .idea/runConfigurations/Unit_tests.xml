@@ -13,7 +13,6 @@
           <option value=":common:testDebugUnitTest" />
           <option value=":app:testFullDebugUnitTest" />
           <option value=":wear:testDebugUnitTest" />
-          <option value=":onboarding:testDebugUnitTest" />
           <option value=":lint:test" />
         </list>
       </option>

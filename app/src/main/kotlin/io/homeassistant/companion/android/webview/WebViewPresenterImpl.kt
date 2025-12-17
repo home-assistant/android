@@ -7,10 +7,12 @@ import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.graphics.Color
 import androidx.activity.result.ActivityResult
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ActivityContext
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -19,6 +21,10 @@ import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.common.util.HAGesture
+import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
+import io.homeassistant.companion.android.database.settings.Setting
+import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.improv.ImprovRepository
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
@@ -54,6 +60,7 @@ class WebViewPresenterImpl @Inject constructor(
     private val prefsRepository: PrefsRepository,
     private val matterUseCase: MatterManager,
     private val threadUseCase: ThreadManager,
+    private val settingsDao: SettingsDao,
 ) : WebViewPresenter {
 
     private val view = context as WebView
@@ -580,5 +587,45 @@ class WebViewPresenterImpl @Inject constructor(
             improvRepository.stopScanning()
             improvJob?.cancel()
         }
+    }
+
+    override suspend fun onNotificationPermissionResult(granted: Boolean) {
+        if (granted && BuildConfig.FLAVOR != "full") {
+            settingsDao.insert(
+                Setting(
+                    serverId,
+                    WebsocketSetting.ALWAYS,
+                    SensorUpdateFrequencySetting.NORMAL,
+                ),
+            )
+        }
+        serverManager.integrationRepository(serverId).setAskNotificationPermission(false)
+    }
+
+    /**
+     * Determines whether to show the notification permission prompt for the current server.
+     *
+     * The behavior differs between flavors:
+     * - **Full flavor**: If notification permission is already granted, returns `false` and
+     *   persists this decision so future checks also return `false`. This is because in the full
+     *   flavor, FCM usually handles push notifications and there's no need to tweak the websocket settings.
+     * - **Minimal flavor**: Always respects the per-server stored preference, regardless of the
+     *   current system permission state. This allows the prompt to be shown to configure websocket
+     *   settings even if the system permission was granted outside the app.
+     *
+     * @return `true` if the notification permission prompt should be shown, `false` otherwise
+     */
+    override suspend fun shouldAskNotificationPermission(): Boolean {
+        val isPermissionAlreadyGranted = NotificationManagerCompat.from(view as Context).areNotificationsEnabled()
+        val shouldAskNotificationPermission = serverManager.integrationRepository(
+            serverId,
+        ).shouldAskNotificationPermission()
+
+        if (isPermissionAlreadyGranted && BuildConfig.FLAVOR == "full") {
+            serverManager.integrationRepository(serverId).setAskNotificationPermission(false)
+            return false
+        }
+
+        return shouldAskNotificationPermission ?: true
     }
 }

@@ -84,6 +84,10 @@ interface IntegrationRepository {
     suspend fun getAllowInsecureConnection(): Boolean?
 
     suspend fun setAllowInsecureConnection(allowInsecureConnection: Boolean)
+
+    suspend fun shouldAskNotificationPermission(): Boolean?
+
+    suspend fun setAskNotificationPermission(shouldAsk: Boolean)
 }
 
 @AssistedFactory

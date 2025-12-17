@@ -5,7 +5,7 @@ import androidx.car.app.CarContext
 import androidx.car.app.model.Action
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.launcher.LauncherActivity
 import timber.log.Timber
 
 fun nativeModeAction(carContext: CarContext): Action {
@@ -22,7 +22,7 @@ fun startNativeActivity(carContext: CarContext) {
         startActivity(
             Intent(
                 carContext,
-                LaunchActivity::class.java,
+                LauncherActivity::class.java,
             ).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             },
