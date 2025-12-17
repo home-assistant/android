@@ -96,6 +96,20 @@ data class ServerConnectionInfo(
         }
     }
 
+    /**
+     * Checks if any of the configured URLs use plain HTTP (non-HTTPS).
+     *
+     * @return `true` if external, internal, or cloud URL uses HTTP instead of HTTPS
+     */
+    fun hasPlainTextUrl(): Boolean {
+        val urls = listOfNotNull(
+            externalUrl,
+            internalUrl,
+            cloudUrl,
+        )
+        return urls.any { it.startsWith("http://") }
+    }
+
     fun canUseCloud(): Boolean = !this.cloudUrl.isNullOrBlank()
 
     /**
