@@ -21,6 +21,7 @@ import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.URL_SECURITY_LEVEL_DOCUMENTATION
 import io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment
 import io.homeassistant.companion.android.settings.SettingsActivity
 import kotlinx.coroutines.launch
@@ -75,9 +76,7 @@ class BlockInsecureFragment private constructor() : Fragment() {
                             retry()
                         },
                         onHelpClick = {
-                            uriHandler.openUri(
-                                "https://companion.home-assistant.io/docs/getting_started/connection-security-level/",
-                            )
+                            uriHandler.openUri(URL_SECURITY_LEVEL_DOCUMENTATION)
                         },
                         onOpenSettings = {
                             startActivity(SettingsActivity.newInstance(requireContext()))

@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.util.compose
 
+import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.CompositionLocalProvider
@@ -29,15 +31,18 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendActivityRo
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.launcher.HAStartDestinationRoute
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
+import io.homeassistant.companion.android.onboarding.WearOnboardApp
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.navigateToLocationForSecureConnection
+import io.homeassistant.companion.android.onboarding.nameyourweardevice.navigation.navigateToNameYourWearDevice
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.webview.HA_WEBVIEW_TAG
 import io.mockk.every
+import io.mockk.slot
 import io.mockk.spyk
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
@@ -66,6 +71,8 @@ class HAAppTest {
 
     private lateinit var navController: TestNavHostController
 
+    private lateinit var spyActivity: HiltComponentActivity
+
     lateinit var activityNavigator: ActivityNavigator
 
     private fun testApp(startDestination: HAStartDestinationRoute?, isAutomotive: Boolean = false, testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit) {
@@ -75,7 +82,7 @@ class HAAppTest {
             navController.navigatorProvider.addNavigator(ComposeNavigator())
             navController.navigatorProvider.addNavigator(activityNavigator)
 
-            val spyActivity = spyk(composeTestRule.activity)
+            spyActivity = spyk(composeTestRule.activity)
             val spyPackageManager = spyk(composeTestRule.activity.packageManager)
             every { spyActivity.packageManager } returns spyPackageManager
             every { spyPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) } returns isAutomotive
@@ -197,5 +204,33 @@ class HAAppTest {
         }
     }
 
-    // TODO find a way to test the activity result since setResult is not exposed.
+    @Test
+    fun `Given WearOnboarding done then setResult is called with correct output`() {
+        val wearName = "My Wear Device"
+        val serverUrl = "http://ha.local"
+        val authCode = "test-auth-code"
+
+        testApp(WearOnboardingRoute(wearName, serverUrl)) {
+            navController.navigateToNameYourWearDevice(
+                defaultDeviceName = wearName,
+                url = serverUrl,
+                authCode = authCode,
+                requiredMTLS = false,
+            )
+
+            onNodeWithText(stringResource(R.string.name_your_device_save)).performScrollTo().performClick()
+
+            val intentSlot = slot<Intent>()
+            verify { spyActivity.setResult(Activity.RESULT_OK, capture(intentSlot)) }
+
+            val output = WearOnboardApp.Output.fromIntent(intentSlot.captured)
+            assertEquals(serverUrl, output.url)
+            assertEquals(wearName, output.deviceName)
+            assertEquals(authCode, output.authCode)
+            assertNull(output.tlsClientCertificateUri)
+            assertNull(output.tlsClientCertificatePassword)
+
+            verify { spyActivity.finish() }
+        }
+    }
 }
