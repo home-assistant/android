@@ -58,6 +58,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
@@ -323,12 +324,21 @@ class WebViewActivity :
             val serverHandleInsets by remember { serverHandleInsets }
             var nightModeTheme by remember { mutableStateOf<NightModeTheme?>(null) }
 
-            insetsContext = InsetsContext(
+            val configuration = LocalConfiguration.current
+            val currentInsetsContext = InsetsContext(
                 windowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout),
                 density = LocalDensity.current,
                 displayMetrics = LocalResources.current.displayMetrics,
                 layoutDirection = LocalLayoutDirection.current,
             )
+            insetsContext = currentInsetsContext
+
+            // Apply insets when configuration changes (e.g., screen rotation)
+            LaunchedEffect(configuration, serverHandleInsets) {
+                if (serverHandleInsets) {
+                    currentInsetsContext.applyInsets(webView)
+                }
+            }
 
             LaunchedEffect(Unit) {
                 nightModeTheme = nightModeManager.getCurrentNightMode()
