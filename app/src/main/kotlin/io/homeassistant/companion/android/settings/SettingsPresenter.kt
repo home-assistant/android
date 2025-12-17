@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.onboarding.OnboardApp
 import kotlinx.coroutines.flow.StateFlow
 
 interface SettingsPresenter {
@@ -18,7 +17,6 @@ interface SettingsPresenter {
     fun onFinish()
     fun updateSuggestions(context: Context)
     fun cancelSuggestion(context: Context, id: String)
-    suspend fun addServer(result: OnboardApp.Output?)
     fun getSuggestionFlow(): StateFlow<SettingsHomeSuggestion?>
     fun getServersFlow(): StateFlow<List<Server>>
     fun getServerCount(): Int

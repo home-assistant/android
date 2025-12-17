@@ -85,7 +85,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1053"
+            line="1055"
             column="17"/>
     </issue>
 
@@ -129,7 +129,7 @@
         errorLine2="                             ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/controls/HaControlsProviderService.kt"
-            line="46"
+            line="47"
             column="30"/>
     </issue>
 
@@ -624,7 +624,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="542"
+            line="541"
             column="17"/>
     </issue>
 
@@ -635,7 +635,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="542"
+            line="541"
             column="17"/>
     </issue>
 

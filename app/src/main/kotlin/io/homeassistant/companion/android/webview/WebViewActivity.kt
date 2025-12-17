@@ -66,6 +66,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -105,6 +106,7 @@ import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
@@ -112,6 +114,7 @@ import io.homeassistant.companion.android.launcher.LauncherActivity
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.themes.NightModeManager
@@ -121,6 +124,8 @@ import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.compose.initializePlayer
+import io.homeassistant.companion.android.util.hasNonRootPath
+import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
@@ -131,6 +136,7 @@ import io.homeassistant.companion.android.webview.externalbus.ExternalConfigResp
 import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import io.homeassistant.companion.android.webview.externalbus.NavigateTo
 import io.homeassistant.companion.android.webview.externalbus.ShowSidebar
+import io.homeassistant.companion.android.webview.insecure.BlockInsecureFragment
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -141,7 +147,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -235,7 +240,7 @@ class WebViewActivity :
     lateinit var entityAddToHandler: EntityAddToHandler
 
     private lateinit var webView: WebView
-    private lateinit var loadedUrl: String
+    private var loadedUrl: Uri? = null
     private lateinit var decor: FrameLayout
     private var customViewFromWebView = mutableStateOf<View?>(null)
     private lateinit var authenticator: Authenticator
@@ -268,7 +273,26 @@ class WebViewActivity :
      */
     private var webViewInitialized = mutableStateOf(false)
     private var failedConnection = "external"
+
     private var clearHistory = false
+
+    /**
+     * Optional override for the internal/external URL selection logic.
+     *
+     * When set, this function is passed to [WebViewPresenter.load] to override the automatic
+     * internal/external URL detection. This is used when the user explicitly requests to refresh
+     * using the internal or external URL from the error dialog (e.g., after a connection failure).
+     *
+     * The override persists for the activity's lifecycle so that subsequent loads
+     * continue to use the user's preference.
+     *
+     * Keep in mind that it only applies to the Webview not for anything else like
+     * background sync, widgets, ... It is used as a temporary fix for the user to
+     * access their server, but something might need to be fixed on user side.
+     *
+     * Defaults to `null`, meaning automatic URL selection is used.
+     */
+    private var isInternalOverride: ((ServerConnectionInfo) -> Boolean)? = null
     private var moreInfoEntity = ""
     private val moreInfoMutex = Mutex()
     private var currentAutoplay: Boolean? = null
@@ -416,7 +440,7 @@ class WebViewActivity :
                     failingUrl: String?,
                 ) {
                     Timber.e("onReceivedError: errorCode: $errorCode url:$failingUrl")
-                    if (failingUrl == loadedUrl) {
+                    if (failingUrl == loadedUrl.toString()) {
                         showError()
                     }
                 }
@@ -453,7 +477,7 @@ class WebViewActivity :
                     Timber.e(
                         "onReceivedHttpError: ${errorResponse?.statusCode} : ${errorResponse?.reasonPhrase} for: ${request?.url}",
                     )
-                    if (request?.url.toString() == loadedUrl) {
+                    if (request?.url == loadedUrl) {
                         showError()
                     }
                 }
@@ -902,6 +926,7 @@ class WebViewActivity :
                                 "haptic" -> processHaptic(
                                     json["payload"]?.jsonObjectOrNull()?.getStringOrNull("hapticType") ?: "",
                                 )
+
                                 "theme-update" -> getAndSetStatusBarNavigationBarColors()
                                 "entity/add_to/get_actions" -> getActions(json)
                                 "entity/add_to" -> addEntityTo(json)
@@ -1018,7 +1043,10 @@ class WebViewActivity :
                         ->
                         if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
                             lifecycleScope.launch {
-                                presenter.switchActiveServer(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
+                                presenter.switchActiveServer(
+                                    lifecycle,
+                                    bundle.getInt(ServerChooserFragment.RESULT_SERVER),
+                                )
                             }
                         }
                         supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
@@ -1026,9 +1054,9 @@ class WebViewActivity :
                     serverChooser.show(supportFragmentManager, ServerChooserFragment.TAG)
                 }
 
-                GestureAction.SERVER_NEXT -> presenter.nextServer()
+                GestureAction.SERVER_NEXT -> presenter.nextServer(lifecycle)
 
-                GestureAction.SERVER_PREVIOUS -> presenter.previousServer()
+                GestureAction.SERVER_PREVIOUS -> presenter.previousServer(lifecycle)
 
                 GestureAction.OPEN_APP_SETTINGS -> startActivity(SettingsActivity.newInstance(this@WebViewActivity))
 
@@ -1118,7 +1146,7 @@ class WebViewActivity :
             changeLog.showChangeLog(this@WebViewActivity, false)
         }
 
-        if (::loadedUrl.isInitialized) {
+        if (loadedUrl != null) {
             waitForConnection()
         }
     }
@@ -1348,7 +1376,7 @@ class WebViewActivity :
                         moreInfoEntity = entity
                     }
                 }
-                presenter.onViewReady(path)
+                presenter.load(lifecycle, path, isInternalOverride)
                 intent.removeExtra(EXTRA_PATH)
 
                 if (presenter.isFullScreen() || isVideoFullScreen) {
@@ -1407,20 +1435,102 @@ class WebViewActivity :
         finish()
     }
 
-    override fun loadUrl(url: String, keepHistory: Boolean, openInApp: Boolean) {
+    override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean) {
+        Timber.d("Loading $url (keepHistory $keepHistory, openInApp $openInApp)")
         if (openInApp) {
-            loadedUrl = url
+            // Remove any displayed fragments (e.g., BlockInsecureFragment, ConnectionSecurityLevelFragment)
+            supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            supportFragmentManager.clearFragmentResultListener(BlockInsecureFragment.RESULT_KEY)
+
             clearHistory = !keepHistory
-            webView.loadUrl(url)
-            waitForConnection()
+            val oldUrl = loadedUrl
+            // It means that if we loaded an URL with a path previously and we try to load the same URL without
+            // a path we don't do anything.
+            val shouldLoadUrl = !url.hasSameOrigin(oldUrl) || url.hasNonRootPath()
+            if (shouldLoadUrl) {
+                loadedUrl = url
+                webView.loadUrl(url.toString())
+                waitForConnection()
+            } else {
+                Timber.d("Same base URL without meaningful path, skipping load")
+            }
         } else {
             try {
-                val browserIntent = Intent(Intent.ACTION_VIEW, url.toUri())
+                val browserIntent = Intent(Intent.ACTION_VIEW, url)
                 startActivity(browserIntent)
             } catch (e: Exception) {
                 Timber.e(e, "Unable to view url")
             }
         }
+    }
+
+    override fun showConnectionSecurityLevel(serverId: Int) {
+        // Skip if already showing ConnectionSecurityLevelFragment to avoid blinking
+        if (supportFragmentManager.fragments.any { it is ConnectionSecurityLevelFragment }) {
+            Timber.d("ConnectionSecurityLevelFragment already showing, skipping")
+            return
+        }
+
+        supportFragmentManager.setFragmentResultListener(
+            ConnectionSecurityLevelFragment.RESULT_KEY,
+            this,
+        ) { _, _ ->
+            Timber.d("Security level screen exited by user, proceeding with URL loading")
+            supportFragmentManager.clearFragmentResultListener(ConnectionSecurityLevelFragment.RESULT_KEY)
+
+            // Mark as shown so we don't show the fragment again for this server
+            presenter.onConnectionSecurityLevelShown()
+
+            lifecycleScope.launch {
+                // Trigger a reload of the URL via the presenter to trigger loadUrl in the view.
+                // The presenter will apply the potential changes made in the fragment.
+                presenter.load(lifecycle, isInternalOverride = isInternalOverride)
+            }
+        }
+
+        supportFragmentManager.beginTransaction()
+            .replace(
+                android.R.id.content,
+                ConnectionSecurityLevelFragment.newInstance(
+                    serverId = serverId,
+                    handleAllInsets = true,
+                    useCloseButton = true,
+                ),
+            )
+            .addToBackStack(null)
+            .commit()
+    }
+
+    override fun showBlockInsecure(serverId: Int) {
+        // Skip if already showing BlockInsecureFragment to avoid blinking on retry
+        if (supportFragmentManager.fragments.any { it is BlockInsecureFragment }) {
+            Timber.d("BlockInsecureFragment already showing, skipping")
+            return
+        }
+
+        supportFragmentManager.setFragmentResultListener(
+            BlockInsecureFragment.RESULT_KEY,
+            this,
+        ) { _, _ ->
+            // Don't clear the listener yet - it will be cleared when:
+            // loadUrl() is called (conditions met) - fragment is popped in loadUrl()
+
+            lifecycleScope.launch {
+                presenter.load(lifecycle, isInternalOverride = isInternalOverride)
+            }
+        }
+        // Make sure the WebView won't load anything in background to avoid leaking
+        webView.loadUrl("about:blank")
+        loadedUrl = null
+        supportFragmentManager.beginTransaction()
+            .replace(
+                android.R.id.content,
+                BlockInsecureFragment.newInstance(
+                    serverId = serverId,
+                ),
+            )
+            .addToBackStack(null)
+            .commit()
     }
 
     override fun setStatusBarAndBackgroundColor(statusBarColor: Int, backgroundColor: Int) {
@@ -1572,7 +1682,8 @@ class WebViewActivity :
                 alert.setPositiveButton(commonR.string.settings) { _, _ ->
                     startActivity(SettingsActivity.newInstance(this@WebViewActivity))
                 }
-                val isInternal = serverManager.getServer(presenter.getActiveServer())?.connection?.isInternal() == true
+                val activeServerId = presenter.getActiveServer()
+                val isInternal = serverManager.connectionStateProvider(activeServerId).isInternal()
                 val buttonRefreshesInternal = failedConnection == "external" && isInternal
                 alert.setNegativeButton(
                     if (buttonRefreshesInternal) {
@@ -1582,20 +1693,14 @@ class WebViewActivity :
                     },
                 ) { _, _ ->
                     lifecycleScope.launch {
-                        val url = serverManager.getServer(presenter.getActiveServer())?.let {
-                            val base = it.connection.getUrl(buttonRefreshesInternal) ?: return@let null
-                            base.toString().toUri()
-                                .buildUpon()
-                                .appendQueryParameter("external_auth", "1")
-                                .build()
-                                .toString()
-                        }
-                        failedConnection = if (buttonRefreshesInternal) "internal" else "external"
-                        if (url != null) {
-                            loadUrl(url = url, keepHistory = true, openInApp = true)
-                        } else {
-                            waitForConnection()
-                        }
+                        isInternalOverride = { buttonRefreshesInternal }
+                        // Reset URL loaded to force webview reloading
+                        loadedUrl = null
+
+                        presenter.load(
+                            lifecycle,
+                            isInternalOverride = isInternalOverride,
+                        )
                     }
                 }
                 if (errorType == ErrorType.TIMEOUT_EXTERNAL_BUS) {
@@ -1698,18 +1803,24 @@ class WebViewActivity :
     }
 
     private fun waitForConnection() {
-        Handler(Looper.getMainLooper()).postDelayed(
-            {
-                if (
-                    !isConnected &&
-                    !loadedUrl.toHttpUrl().pathSegments.first().contains("api") &&
-                    !loadedUrl.toHttpUrl().pathSegments.first().contains("local")
-                ) {
-                    showError(errorType = ErrorType.TIMEOUT_EXTERNAL_BUS)
-                }
-            },
-            CONNECTION_DELAY,
-        )
+        if (supportFragmentManager.backStackEntryCount > 0) {
+            Timber.i("Fragments ${supportFragmentManager.fragments} displayed, skipping connection wait")
+        } else {
+            Timber.d("Waiting for loadedUrl $loadedUrl")
+            Handler(Looper.getMainLooper()).postDelayed(
+                {
+                    val firstSegment = loadedUrl?.pathSegments?.firstOrNull().orEmpty()
+                    if (
+                        !isConnected &&
+                        !firstSegment.contains("api") &&
+                        !firstSegment.contains("local")
+                    ) {
+                        showError(errorType = ErrorType.TIMEOUT_EXTERNAL_BUS)
+                    }
+                },
+                CONNECTION_DELAY,
+            )
+        }
     }
 
     override fun sendExternalBusMessage(message: ExternalBusMessage) {
@@ -1749,8 +1860,9 @@ class WebViewActivity :
                             URLUtil.guessFileName(url, contentDisposition, mimetype),
                         )
                     val server = serverManager.getServer(presenter.getActiveServer())
-                    if (url.startsWith(server?.connection?.getUrl(true).toString()) ||
-                        url.startsWith(server?.connection?.getUrl(false).toString())
+                    if (server != null &&
+                        serverManager.connectionStateProvider(server.id)
+                            .canSafelySendCredentials(url)
                     ) {
                         request.addRequestHeader("Authorization", presenter.getAuthorizationHeader())
                     }
@@ -1895,7 +2007,7 @@ class WebViewActivity :
         webView.clearHistory()
 
         lifecycleScope.launch {
-            if (serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true) {
+            if (NavigateTo.isAvailable(serverManager.getServer(presenter.getActiveServer())?.version)) {
                 sendExternalBusMessage(
                     NavigateTo("/", true),
                 )
@@ -1957,18 +2069,15 @@ class WebViewActivity :
             if (bundle.containsKey(ImprovSetupDialog.RESULT_DOMAIN)) {
                 bundle.getString(ImprovSetupDialog.RESULT_DOMAIN)?.let { improvDomain ->
                     lifecycleScope.launch {
-                        val url = serverManager.getServer(presenter.getActiveServer())?.let url@{
-                            val base = it.connection.getUrl() ?: return@url null
-                            base.toString().toUri()
-                                .buildUpon()
-                                .appendEncodedPath("config/integrations/dashboard/add")
-                                .appendQueryParameter("domain", improvDomain)
-                                .appendQueryParameter("external_auth", "1")
-                                .build()
-                                .toString()
-                        }
-                        if (url != null) {
-                            loadUrl(url = url, keepHistory = true, openInApp = true)
+                        // Using My links since config/integrations/dashboard/add doesn't open the dialog
+                        // when already on the integrations page.
+                        val path = "/_my_redirect/config_flow_start?domain=$improvDomain"
+                        val version = serverManager.getServer(presenter.getActiveServer())?.version
+
+                        if (NavigateTo.isAvailable(version)) {
+                            sendExternalBusMessage(NavigateTo(path))
+                        } else {
+                            presenter.load(lifecycle, path, isInternalOverride)
                         }
                     }
                 }

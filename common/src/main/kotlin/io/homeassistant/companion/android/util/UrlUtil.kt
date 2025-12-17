@@ -99,7 +99,7 @@ object UrlUtil {
     fun URL.baseIsEqual(other: URL?): Boolean = if (other == null) {
         false
     } else {
-        host?.lowercase() == other.host?.lowercase() &&
+        host.equals(other.host, ignoreCase = true) &&
             port.let {
                 if (it ==
                     -1
@@ -109,7 +109,7 @@ object UrlUtil {
                     it
                 }
             } == other.port.let { if (it == -1) defaultPort else it } &&
-            protocol?.lowercase() == other.protocol?.lowercase() &&
+            protocol.equals(other.protocol, ignoreCase = true) &&
             userInfo == other.userInfo
     }
 
@@ -167,4 +167,48 @@ private fun InetAddress.isPrivateOrLocal(): Boolean {
         this.isLinkLocalAddress ||
         // 169.254.0.0/16 or fe80::/10
         this.isAnyLocalAddress // 0.0.0.0 or ::
+}
+
+/**
+ * Checks if this URL has the same origin (scheme, host, and port) as the other URL.
+ *
+ * @param other the URL to compare against
+ * @return `true` if both URLs have the same scheme, host, and port
+ */
+fun HttpUrl.hasSameOrigin(other: HttpUrl): Boolean {
+    return scheme.equals(other.scheme, ignoreCase = true) &&
+        host.equals(other.host, ignoreCase = true) &&
+        port == other.port
+}
+
+/**
+ * Checks if this Uri has the same origin (scheme, host, and port) as the other Uri.
+ * Default ports (443 for HTTPS, 80 for HTTP) are normalized for comparison.
+ *
+ * @param other the Uri to compare against
+ * @return `true` if both URIs have the same scheme, host, and port
+ */
+fun Uri.hasSameOrigin(other: Uri?): Boolean {
+    if (other == null) return false
+    return scheme.equals(other.scheme, ignoreCase = true) &&
+        host.equals(other.host, ignoreCase = true) &&
+        effectivePort == other.effectivePort
+}
+
+private val Uri.effectivePort: Int
+    get() = when {
+        port != -1 -> port
+        scheme.equals("https", ignoreCase = true) -> 443
+        scheme.equals("http", ignoreCase = true) -> 80
+        else -> -1
+    }
+
+/**
+ * Checks if this Uri has a non root path (not empty, not just "/").
+ *
+ * @return `true` if the Uri has a path that is not blank and not just "/"
+ */
+fun Uri.hasNonRootPath(): Boolean {
+    val path = this.path ?: return false
+    return path.isNotBlank() && path != "/"
 }

@@ -3,14 +3,38 @@ package io.homeassistant.companion.android.database.server
 import androidx.room.ColumnInfo
 import androidx.room.Ignore
 import androidx.room.TypeConverter
-import io.homeassistant.companion.android.common.data.network.NetworkHelper
-import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
-import java.net.URL
+import io.homeassistant.companion.android.util.hasSameOrigin
 import kotlinx.serialization.SerializationException
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import timber.log.Timber
 
+/**
+ * Holds connection configuration for a Home Assistant server.
+ *
+ * This data class is embedded in [Server] and stored in Room database. It contains all URL
+ * endpoints and network detection settings used to connect to the server.
+ *
+ * @property externalUrl The primary URL used to connect to the server from outside the home network.
+ * @property internalUrl Optional URL used when the device is on the home network.
+ * @property cloudUrl Optional Home Assistant Cloud remote UI URL, automatically updated from the server.
+ * @property webhookId Unique identifier assigned by Home Assistant during device registration.
+ * @property secret Shared secret for webhook authentication, if configured on the server.
+ * @property cloudhookUrl Direct webhook URL provided by Home Assistant Cloud.
+ * @property useCloud Whether to prefer the cloud URL over the external URL when not on the
+ *   home network.
+ * @property internalSsids List of Wi-Fi network names (SSIDs) that indicate the device is on
+ *   the home network.
+ * @property internalEthernet When `true`, Ethernet connections are treated as being on the home
+ *   network. `null` means the user hasn't configured this setting.
+ * @property internalVpn When `true`, VPN connections are treated as being on the home network.
+ *   `null` means the user hasn't configured this setting.
+ * @property prioritizeInternal When `true`, always try the internal URL first regardless of
+ *   detected network state.
+ * @property allowInsecureConnection Controls whether non-HTTPS connections are permitted
+ *   when not on the home network. `null` means the user hasn't set their preference yet (legacy
+ *   installs), `true` allows insecure connections, when `false` insecure connections should be blocked.
+ */
 data class ServerConnectionInfo(
     @ColumnInfo(name = "external_url")
     val externalUrl: String,
@@ -34,102 +58,107 @@ data class ServerConnectionInfo(
     val internalVpn: Boolean? = null,
     @ColumnInfo(name = "prioritize_internal")
     val prioritizeInternal: Boolean = false,
+    @ColumnInfo(name = "allow_insecure_connection")
+    val allowInsecureConnection: Boolean? = null,
 ) {
-    @Ignore
-    lateinit var wifiHelper: WifiHelper
+    // Keep the parsing of the URLs from String to HttpUrl to avoid doing it multiple times
+    @get:Ignore
+    internal val externalHttpUrl: HttpUrl? by lazy { externalUrl.toHttpUrlOrNull() }
 
-    @Ignore
-    lateinit var networkHelper: NetworkHelper
+    @get:Ignore
+    internal val internalHttpUrl: HttpUrl? by lazy { internalUrl?.toHttpUrlOrNull() }
 
-    fun isRegistered(): Boolean = getApiUrls().isNotEmpty()
+    @get:Ignore
+    internal val cloudHttpUrl: HttpUrl? by lazy { cloudUrl?.toHttpUrlOrNull() }
 
-    fun getApiUrls(): List<URL> {
-        // If we don't have a webhook id we don't have any urls.
-        if (webhookId.isNullOrBlank()) {
-            return emptyList()
-        }
+    @get:Ignore
+    internal val cloudhookHttpUrl: HttpUrl? by lazy { cloudhookUrl?.toHttpUrlOrNull() }
 
-        val retVal = mutableListOf<URL?>()
-
-        // If we are local then add the local URL in the first position, otherwise no reason to try
-        if (isInternal() || prioritizeInternal) {
-            internalUrl?.let {
-                retVal.add(
-                    it.toHttpUrlOrNull()?.newBuilder()
-                        ?.addPathSegments("api/webhook/$webhookId")
-                        ?.build()
-                        ?.toUrl(),
-                )
-            }
-        }
-
-        cloudhookUrl?.let {
-            retVal.add(it.toHttpUrlOrNull()?.toUrl())
-        }
-
-        externalUrl.let {
-            retVal.add(
-                it.toHttpUrlOrNull()?.newBuilder()
-                    ?.addPathSegments("api/webhook/$webhookId")
-                    ?.build()
-                    ?.toUrl(),
-            )
-        }
-
-        return retVal.filterNotNull()
+    @get:Ignore
+    internal val httpUrls: List<HttpUrl> by lazy {
+        listOfNotNull(
+            externalHttpUrl,
+            internalHttpUrl,
+            cloudHttpUrl,
+            cloudhookHttpUrl,
+        )
     }
-
-    fun getUrl(isInternal: Boolean? = null, force: Boolean = false): URL? {
-        val internal = internalUrl?.toHttpUrlOrNull()?.toUrl()
-        val external = externalUrl.toHttpUrlOrNull()?.toUrl()
-        val cloud = cloudUrl?.toHttpUrlOrNull()?.toUrl()
-
-        return if (isInternal ?: isInternal() && (internal != null || force)) {
-            Timber.d("Using internal URL")
-            internal
-        } else if (!force && useCloud && cloud != null) {
-            Timber.d("Using cloud / remote UI URL")
-            cloud
-        } else {
-            Timber.d("Using external URL")
-            external
-        }
-    }
-
-    fun canUseCloud(): Boolean = !this.cloudUrl.isNullOrBlank()
 
     /**
-     * Indicate if the device's current connection should be treated as internal for
-     * this server.
-     * @param requiresUrl Whether a valid internal url is required for internal or not.
-     *   Usually you want this `true` for url related actions and `false` for others.
+     * Indicates whether at least one URL is configured and parsable.
      */
-    fun isInternal(requiresUrl: Boolean = true): Boolean {
-        if (requiresUrl && internalUrl.isNullOrBlank()) return false
+    @get:Ignore
+    val hasAtLeastOneUrl: Boolean by lazy {
+        httpUrls.isNotEmpty()
+    }
 
-        if (internalEthernet == true) {
-            val usesEthernet = networkHelper.isUsingEthernet()
-            Timber.d("usesEthernet is: $usesEthernet")
-            if (usesEthernet) return true
-        }
+    /**
+     * Indicates whether the user has configured any home network detection method.
+     *
+     * Returns `true` if at least one of the following is set:
+     * - One or more internal SSIDs
+     * - Ethernet as internal network (`internalEthernet = true`)
+     * - VPN as internal network (`internalVpn = true`)
+     */
+    @Ignore
+    val hasHomeNetworkSetup: Boolean = internalSsids.isNotEmpty() ||
+        internalVpn == true ||
+        internalEthernet == true
 
-        if (internalVpn == true) {
-            val usesVpn = networkHelper.isUsingVpn()
-            Timber.d("usesVpn is: $usesVpn")
-            if (usesVpn) return true
-        }
+    /**
+     * Checks if the server is registered and has at least one valid API URL.
+     *
+     * A server is considered registered if it has a webhook ID and at least one
+     * of its URLs (external, internal, or cloudhook) can be parsed successfully.
+     *
+     * @return `true` if the server is registered with valid URLs
+     */
+    @get:Ignore
+    val isRegistered: Boolean by lazy {
+        !webhookId.isNullOrBlank() && httpUrls.isNotEmpty()
+    }
 
-        return if (internalSsids.isNotEmpty()) {
-            val usesInternalSsid = wifiHelper.isUsingSpecificWifi(internalSsids)
-            val usesWifi = wifiHelper.isUsingWifi()
-            Timber.d("usesInternalSsid is: $usesInternalSsid, usesWifi is: $usesWifi")
-            usesInternalSsid && usesWifi
-        } else {
-            false
-        }
+    /**
+     * Checks if any of the configured URLs use plain HTTP (non-HTTPS).
+     *
+     * @return `true` if external, internal, or cloud URL uses HTTP
+     */
+    @Ignore
+    val hasPlainTextUrl: Boolean = listOfNotNull(
+        externalUrl,
+        internalUrl,
+        cloudUrl,
+    ).any { it.startsWith("http://") }
+
+    /**
+     * Checks if cloud/remote UI URL is configured.
+     *
+     * @return `true` if a cloud URL is available
+     */
+    @Ignore
+    val canUseCloud: Boolean = !cloudUrl.isNullOrBlank()
+
+    /**
+     * Checks if the given URL belongs to this server by matching against configured URLs.
+     *
+     * Compares scheme, host, and port to determine if the URL belongs to one of the server's
+     * configured endpoints.
+     *
+     * @param url the URL to check (must be a valid URL string)
+     * @return `true` if the URL belongs to this server
+     */
+    fun isKnownUrl(url: String): Boolean {
+        val httpUrl = url.toHttpUrlOrNull() ?: return false
+        return httpUrls.any { httpUrl.hasSameOrigin(it) }
     }
 }
 
+/**
+ * Room [TypeConverter] for serializing SSID lists to/from JSON strings.
+ *
+ * Converts `List<String>` to a JSON array string for database storage and vice versa.
+ * Handles edge cases like empty lists, blank strings, and invalid JSON gracefully.
+ */
 class InternalSsidTypeConverter {
     @TypeConverter
     fun fromStringToList(value: String): List<String> {

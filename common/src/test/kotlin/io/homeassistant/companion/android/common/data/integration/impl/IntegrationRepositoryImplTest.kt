@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.integration.impl
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl.Companion.PREF_ASK_NOTIFICATION_PERMISSION
+import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -10,11 +11,11 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import java.net.URL
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -28,6 +29,7 @@ class IntegrationRepositoryImplTest {
     private val serverID = 42
     private val server = mockk<Server>()
     private val serverConnection = mockk<ServerConnectionInfo>()
+    private val connectionStateProvider = mockk<ServerConnectionStateProvider>()
     private val localStorage = mockk<LocalStorage>()
 
     private lateinit var repository: IntegrationRepository
@@ -36,7 +38,8 @@ class IntegrationRepositoryImplTest {
     fun setUp() {
         coEvery { serverManager.getServer(serverID) } returns server
         every { server.connection } returns serverConnection
-        every { serverConnection.getApiUrls() } returns listOf(URL("http://homeassistant:8123"))
+        coEvery { serverManager.connectionStateProvider(serverID) } returns connectionStateProvider
+        coEvery { connectionStateProvider.getApiUrls() } returns listOf("http://homeassistant:8123".toHttpUrl())
 
         repository = IntegrationRepositoryImpl(integrationService, serverManager, serverID, localStorage, "", "", "", "")
     }
