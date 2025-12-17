@@ -8,7 +8,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/database/AppDatabase.kt"
-            line="1034"
+            line="1035"
             column="17"/>
     </issue>
 
@@ -19,7 +19,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/database/AppDatabase.kt"
-            line="1034"
+            line="1035"
             column="17"/>
     </issue>
 
@@ -228,7 +228,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/authentication/impl/AuthenticationRepositoryImpl.kt"
-            line="77"
+            line="81"
             column="13"/>
     </issue>
 
@@ -250,7 +250,7 @@
         errorLine2="                                                                ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/websocket/impl/WebSocketCoreImpl.kt"
-            line="233"
+            line="236"
             column="65"/>
     </issue>
 
@@ -261,7 +261,7 @@
         errorLine2="                                                                    ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/websocket/impl/WebSocketCoreImpl.kt"
-            line="273"
+            line="276"
             column="69"/>
     </issue>
 

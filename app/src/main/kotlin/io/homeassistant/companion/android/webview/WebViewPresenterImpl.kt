@@ -11,16 +11,19 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
 import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.common.util.HAGesture
+import io.homeassistant.companion.android.common.util.cancelOnLifecycle
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
@@ -69,15 +72,23 @@ class WebViewPresenterImpl @Inject constructor(
 
     private var serverId: Int = ServerManager.SERVER_ID_ACTIVE
 
-    private var url: URL? = null
-    private var urlForServer: Int? = null
-
     private var improvJob: Job? = null
     private var improvJobStarted = 0L
 
     private val mutableMatterThreadStep = MutableStateFlow(MatterThreadStep.NOT_STARTED)
 
     private var matterThreadIntentSender: IntentSender? = null
+
+    private var urlFlowJob: Job? = null
+
+    /**
+     * Tracks whether the ConnectionSecurityLevelFragment has been shown for each server
+     * during this presenter's lifecycle. Once shown for a specific server, the fragment
+     * won't be shown again for that server.
+     *
+     * Key: server ID, Value: `true` if already shown
+     */
+    private val connectionSecurityLevelShown = hashMapOf<Int, Boolean>()
 
     init {
         mainScope.launch {
@@ -92,66 +103,133 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun onViewReady(path: String?) {
-        mainScope.launch {
-            val oldUrl = url
-            val oldUrlForServer = urlForServer
+    override suspend fun load(
+        lifecycle: Lifecycle,
+        path: String?,
+        isInternalOverride: ((ServerConnectionInfo) -> Boolean)?,
+    ) {
+        urlFlowJob?.cancel()
 
-            var server = serverManager.getServer(serverId)
-            if (server == null) {
-                setActiveServer(ServerManager.SERVER_ID_ACTIVE)
-                server = serverManager.getServer(serverId)
-            }
+        val isNewServer = ensureServerIsAvailable()
+        if (!isSessionConnected()) return
 
-            try {
-                if (serverManager.authenticationRepository(serverId).getSessionState() ==
-                    SessionState.ANONYMOUS
-                ) {
-                    return@launch
-                }
-            } catch (e: IllegalArgumentException) {
-                Timber.w(e, "Unable to get server session state, not continuing")
-                return@launch
-            }
-
-            val serverConnectionInfo = server?.connection
-            url = serverConnectionInfo?.getUrl(
-                serverConnectionInfo.isInternal() ||
-                    (
-                        serverConnectionInfo.prioritizeInternal &&
-                            !DisabledLocationHandler.isLocationEnabled(view as Context)
-                        ),
+        urlFlowJob = lifecycle.cancelOnLifecycle(Lifecycle.State.STARTED) {
+            collectUrlStateChanges(
+                isInternalOverride = isInternalOverride,
+                path = path,
+                isNewServer = isNewServer,
             )
-            urlForServer = server?.id
-            val baseUrl = url
-
-            if (path != null && !path.startsWith("entityId:")) {
-                url = UrlUtil.handle(url, path)
-            }
-
-            /*
-            We only want to cause the UI to reload if the server or URL that we need to load has
-            changed. An example of this would be opening the app on wifi with a local url then
-            loosing wifi signal and reopening app. Without this we would still be trying to use the
-            internal url externally.
-             */
-            if (
-                oldUrlForServer != urlForServer ||
-                oldUrl?.protocol != url?.protocol ||
-                oldUrl?.host != url?.host ||
-                oldUrl?.port != url?.port
-            ) {
-                view.loadUrl(
-                    url = url.toString().toUri()
-                        .buildUpon()
-                        .appendQueryParameter("external_auth", "1")
-                        .build()
-                        .toString(),
-                    keepHistory = oldUrlForServer == urlForServer,
-                    openInApp = url?.baseIsEqual(baseUrl) ?: false,
-                )
-            }
         }
+    }
+
+    private suspend fun collectUrlStateChanges(
+        isInternalOverride: ((ServerConnectionInfo) -> Boolean)?,
+        path: String?,
+        isNewServer: Boolean,
+    ) {
+        var pathConsumed = false
+
+        if (isInternalOverride != null) {
+            Timber.d("Using isInternalOverride to get URL")
+        }
+
+        serverManager.connectionStateProvider(serverId).urlFlow(isInternalOverride).collect { urlState ->
+            val shouldConsumePath = !pathConsumed && path != null
+            if (shouldConsumePath) pathConsumed = true
+
+            handleUrlState(
+                urlState = urlState,
+                path = path,
+                shouldConsumePath = shouldConsumePath,
+                isNewServer = isNewServer,
+            )
+        }
+    }
+
+    /**
+     * Ensures a valid server is available by checking the current server ID.
+     *
+     * If the current server doesn't exist (e.g., after deletion), it falls back to the active
+     * server.
+     *
+     * @return `true` if the server changed during this call
+     */
+    private suspend fun ensureServerIsAvailable(): Boolean {
+        val previousServerId = serverId
+        serverManager.getServer(serverId) ?: setActiveServer(ServerManager.SERVER_ID_ACTIVE)
+        return serverId != previousServerId
+    }
+
+    /**
+     * Checks if the current server has an authenticated session.
+     *
+     * @return `true` if the session is connected, `false` if anonymous or unavailable
+     */
+    private suspend fun isSessionConnected(): Boolean {
+        return try {
+            serverManager.authenticationRepository(serverId).getSessionState() != SessionState.ANONYMOUS
+        } catch (e: IllegalArgumentException) {
+            Timber.w(e, "Unable to get server session state, not continuing")
+            false
+        }
+    }
+
+    private suspend fun handleUrlState(
+        urlState: UrlState,
+        path: String?,
+        shouldConsumePath: Boolean,
+        isNewServer: Boolean,
+    ) {
+        when (urlState) {
+            is UrlState.HasUrl -> loadUrl(
+                baseUrl = urlState.url,
+                path = if (shouldConsumePath) path else null,
+                isNewServer = isNewServer,
+            )
+
+            UrlState.InsecureState -> view.showBlockInsecure(serverId = serverId)
+        }
+    }
+
+    /**
+     * Loads the initial URL, optionally applying a path override.
+     *
+     * If the user needs to configure security settings and hasn't been shown the prompt
+     * for this server yet, shows the security level configuration screen instead.
+     *
+     * @param baseUrl the base server URL
+     * @param path optional path to append (ignored if starts with "entityId:")
+     * @param isNewServer whether this is a new server (affects history behavior)
+     */
+    private suspend fun loadUrl(baseUrl: URL?, path: String?, isNewServer: Boolean) {
+        val urlToLoad = if (path != null && !path.startsWith("entityId:")) {
+            UrlUtil.handle(baseUrl, path)
+        } else {
+            baseUrl
+        }
+
+        urlToLoad?.let {
+            val urlWithAuth = it.toString().toUri()
+                .buildUpon()
+                .appendQueryParameter("external_auth", "1")
+                .build()
+
+            val shouldShowSecurityLevel = shouldSetSecurityLevel() &&
+                !connectionSecurityLevelShown.getOrPut(serverId) { false }
+
+            withContext(Dispatchers.Main) {
+                if (shouldShowSecurityLevel) {
+                    Timber.d("Security level not set for server $serverId, showing ConnectionSecurityLevelFragment")
+                    view.showConnectionSecurityLevel(serverId)
+                } else {
+                    view.loadUrl(
+                        url = urlWithAuth,
+                        keepHistory = !isNewServer,
+                        openInApp = it.baseIsEqual(baseUrl),
+                    )
+                }
+            }
+        } ?: Timber.w("Url is null")
     }
 
     override fun getActiveServer(): Int = serverId
@@ -179,20 +257,20 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun switchActiveServer(id: Int) {
+    override suspend fun switchActiveServer(lifecycle: Lifecycle, id: Int) {
         if (serverId != id && serverId != ServerManager.SERVER_ID_ACTIVE) {
             setAppActive(false) // 'Lock' old server
         }
         setActiveServer(id)
-        onViewReady(null)
+        load(lifecycle = lifecycle)
         view.unlockAppIfNeeded()
     }
 
-    override suspend fun nextServer() = moveToServer(next = true)
+    override suspend fun nextServer(lifecycle: Lifecycle) = moveToServer(lifecycle, next = true)
 
-    override suspend fun previousServer() = moveToServer(next = false)
+    override suspend fun previousServer(lifecycle: Lifecycle) = moveToServer(lifecycle, next = false)
 
-    private suspend fun moveToServer(next: Boolean) {
+    private suspend fun moveToServer(lifecycle: Lifecycle, next: Boolean) {
         val servers = serverManager.defaultServers
         if (servers.size < 2) return
         val currentServerIndex = servers.indexOfFirst { it.id == serverId }
@@ -200,7 +278,7 @@ class WebViewPresenterImpl @Inject constructor(
             var newServerIndex = if (next) currentServerIndex + 1 else currentServerIndex - 1
             if (newServerIndex == servers.size) newServerIndex = 0
             if (newServerIndex < 0) newServerIndex = servers.size - 1
-            servers.getOrNull(newServerIndex)?.let { switchActiveServer(it.id) }
+            servers.getOrNull(newServerIndex)?.let { switchActiveServer(lifecycle, it.id) }
         }
     }
 
@@ -224,9 +302,11 @@ class WebViewPresenterImpl @Inject constructor(
         mainScope.launch {
             try {
                 view.setExternalAuth(
-                    "$callback(true, ${serverManager.authenticationRepository(
-                        serverId,
-                    ).retrieveExternalAuthentication(force)})",
+                    "$callback(true, ${
+                        serverManager.authenticationRepository(
+                            serverId,
+                        ).retrieveExternalAuthentication(force)
+                    })",
                 )
             } catch (e: Exception) {
                 Timber.e(e, "Unable to retrieve external auth")
@@ -244,6 +324,7 @@ class WebViewPresenterImpl @Inject constructor(
                                         it is SSLException
                                     }
                                 ) -> WebView.ErrorType.SSL
+
                         else -> WebView.ErrorType.TIMEOUT_GENERAL
                     },
                     description = when {
@@ -255,6 +336,7 @@ class WebViewPresenterImpl @Inject constructor(
                                         it is SSLHandshakeException
                                     }
                                 ) -> context.getString(commonR.string.webview_error_FAILED_SSL_HANDSHAKE)
+
                         e is SSLException ||
                             (
                                 e is SocketTimeoutException &&
@@ -262,6 +344,7 @@ class WebViewPresenterImpl @Inject constructor(
                                         it is SSLException
                                     }
                                 ) -> context.getString(commonR.string.webview_error_SSL_INVALID)
+
                         else -> null
                     },
                 )
@@ -362,15 +445,12 @@ class WebViewPresenterImpl @Inject constructor(
     override suspend fun isSsidUsed(): Boolean =
         serverManager.getServer(serverId)?.connection?.internalSsids?.isNotEmpty() == true
 
-    override suspend fun shouldSetSecurityLevel(): Boolean {
-        if (serverManager.getServer(serverId)?.connection?.hasPlainTextUrl() == false) {
-            return false
-        }
-        return serverManager.integrationRepository(serverId).getAllowInsecureConnection() == null
+    override fun onConnectionSecurityLevelShown() {
+        connectionSecurityLevelShown[serverId] = true
     }
 
     override suspend fun getAllowInsecureConnection(): Boolean? =
-        serverManager.integrationRepository(serverId).getAllowInsecureConnection()
+        serverManager.getServer(serverId)?.connection?.allowInsecureConnection
 
     override suspend fun getAuthorizationHeader(): String {
         return serverManager.getServer(serverId)?.let {
@@ -637,5 +717,19 @@ class WebViewPresenterImpl @Inject constructor(
         }
 
         return shouldAskNotificationPermission ?: true
+    }
+
+    /**
+     * Checks whether the user needs to configure their insecure connection preference.
+     *
+     * @return `true` if the server uses a plain text (HTTP) URL and the user has not yet set their
+     * preference for allowing insecure connections, `false` otherwise
+     */
+    private suspend fun shouldSetSecurityLevel(): Boolean {
+        val connection = serverManager.getServer(serverId)?.connection ?: return false
+        if (!connection.hasPlainTextUrl) {
+            return false
+        }
+        return connection.allowInsecureConnection == null
     }
 }
