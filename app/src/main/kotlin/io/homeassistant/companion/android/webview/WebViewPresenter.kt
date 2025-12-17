@@ -90,4 +90,7 @@ interface WebViewPresenter {
     /** @return `true` if the app tried starting scanning or `false` if it was missing permissions */
     fun startScanningForImprov(): Boolean
     fun stopScanningForImprov(force: Boolean)
+
+    suspend fun onNotificationPermissionResult(granted: Boolean)
+    suspend fun shouldAskNotificationPermission(): Boolean
 }
