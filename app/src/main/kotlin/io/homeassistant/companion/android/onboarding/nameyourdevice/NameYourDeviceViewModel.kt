@@ -49,6 +49,13 @@ internal sealed interface NameYourDeviceNavigationEvent {
     data class Error(@StringRes val messageRes: Int) : NameYourDeviceNavigationEvent
 }
 
+/**
+ * ViewModel for the Name Your Device screen during phone/tablet onboarding.
+ *
+ * **Note:** This ViewModel is NOT used during Wear OS onboarding. The Wear onboarding flow
+ * uses the screen without this view model since it handles device naming differently, as it returns the result
+ * directly to the phone app via [io.homeassistant.companion.android.onboarding.WearOnboardApp.Output].
+ */
 @HiltViewModel
 internal class NameYourDeviceViewModel @VisibleForTesting constructor(
     private val route: NameYourDeviceRoute,
@@ -150,8 +157,13 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
                     messagingTokenProvider(),
                 ),
             )
-            return serverManager.convertTemporaryServer(tempServerId)
+            val serverId = serverManager.convertTemporaryServer(tempServerId)
                 ?: throw IllegalStateException("Server still temporary")
+
+            // Active the newly added server
+            serverManager.activateServer(serverId)
+
+            return serverId
         } catch (e: Exception) {
             // Fatal errors: if one of these calls fail, the app cannot proceed.
             // Show an error, clean up the session and require new registration.
