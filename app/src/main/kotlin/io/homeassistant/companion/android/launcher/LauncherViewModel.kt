@@ -96,7 +96,7 @@ internal class LauncherViewModel @AssistedInject constructor(
             getServerConnectedAndRegistered(serverId)?.let { server ->
                 Timber.d("Server (id=${server.id}) is connected and registered checking network status")
 
-                networkStatusMonitor.observeNetworkStatus(server.connection)
+                networkStatusMonitor.observeNetworkStatus(serverManager.connectionStateProvider(server.id))
                     .takeWhile { state ->
                         // Until the network is ready we continue to observe network status changes
                         !handleNetworkState(state, LauncherNavigationEvent.Frontend(path, serverId))

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,16 +24,22 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
  * Generic top bar for Home Assistant screens with optional buttons
  * - if onHelpClick is not null, a help button will be added
  * - if onBackClick is not null, a back button will be added
+ * - if onCloseClick is not null, a close button will be added
+ *
+ * Note: onBackClick and onCloseClick are mutually exclusive and cannot be set together.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HATopBar(
     modifier: Modifier = Modifier,
     title: @Composable () -> Unit = {},
     onHelpClick: (() -> Unit)? = null,
     onBackClick: (() -> Unit)? = null,
+    onCloseClick: (() -> Unit)? = null,
 ) {
-    TopAppBar(
+    require(onBackClick == null || onCloseClick == null) {
+        "onBackClick and onCloseClick are mutually exclusive and cannot be set together"
+    }
+    HATopBar(
         title = title,
         navigationIcon = {
             onBackClick?.let {
@@ -40,6 +47,14 @@ fun HATopBar(
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                         contentDescription = stringResource(commonR.string.navigate_up),
+                    )
+                }
+            }
+            onCloseClick?.let {
+                IconButton(onClick = onCloseClick) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = stringResource(commonR.string.close),
                     )
                 }
             }
@@ -53,6 +68,26 @@ fun HATopBar(
                     )
                 }
             }
+        },
+        modifier = modifier,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HATopBar(
+    modifier: Modifier = Modifier,
+    title: @Composable () -> Unit = {},
+    navigationIcon: (@Composable () -> Unit)? = null,
+    actions: (@Composable () -> Unit)? = null,
+) {
+    TopAppBar(
+        title = title,
+        navigationIcon = {
+            navigationIcon?.invoke()
+        },
+        actions = {
+            actions?.invoke()
         },
         colors = TopAppBarColors(
             containerColor = LocalHAColorScheme.current.colorSurfaceDefault,

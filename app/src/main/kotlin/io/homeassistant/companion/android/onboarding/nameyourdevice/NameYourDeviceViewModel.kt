@@ -101,11 +101,9 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
         viewModelScope.launch {
             try {
                 _isSavingFlow.emit(true)
-                val serverId = addServer()
                 val url = route.url
                 val hasPlainTextAccess = url.startsWith("http://")
-
-                enforceSecureConnectionIfNeeded(serverId = serverId, hasPlainTextAccess = hasPlainTextAccess)
+                val serverId = addServer(hasPlainTextAccess = hasPlainTextAccess)
 
                 _navigationEventsFlow.emit(
                     NameYourDeviceNavigationEvent.DeviceNameSaved(
@@ -116,10 +114,10 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
                 )
             } catch (e: Exception) {
                 Timber.e(e, "Error while adding server")
-                val messageRes = when {
-                    e is HttpException && e.code() == 404 -> commonR.string.error_with_registration
-                    e is SSLHandshakeException -> commonR.string.webview_error_FAILED_SSL_HANDSHAKE
-                    e is SSLException -> commonR.string.webview_error_SSL_INVALID
+                val messageRes = when (e) {
+                    is HttpException if e.code() == 404 -> commonR.string.error_with_registration
+                    is SSLHandshakeException -> commonR.string.webview_error_FAILED_SSL_HANDSHAKE
+                    is SSLException -> commonR.string.webview_error_SSL_INVALID
                     else -> commonR.string.webview_error
                 }
                 _navigationEventsFlow.emit(NameYourDeviceNavigationEvent.Error(messageRes))
@@ -137,33 +135,13 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
         return name.isNotEmpty()
     }
 
-    /**
-     * Enforces secure connections for servers that were onboarded using HTTPS.
-     *
-     * If the server was accessed via HTTPS during onboarding, this function ensures that future
-     * connections will only be allowed over secure channels to prevent future usage of HTTP.
-     *
-     * @param serverId The ID of the server to configure
-     * @param hasPlainTextAccess Whether the server was accessed via HTTP during onboarding
-     */
-    private suspend fun enforceSecureConnectionIfNeeded(serverId: Int, hasPlainTextAccess: Boolean) {
-        if (!hasPlainTextAccess) {
-            // Until https://github.com/home-assistant/android/issues/6005 is not addressed this is going to fail.
-            // It means that the flag allow insecure won't be set for HTTPS
-            runCatching {
-                serverManager.integrationRepository(serverId).setAllowInsecureConnection(false)
-            }.onFailure { exception ->
-                Timber.e(exception, "Failed to enforce secure connection for server $serverId")
-            }
-        }
-    }
-
-    private suspend fun addServer(): Int {
+    private suspend fun addServer(hasPlainTextAccess: Boolean): Int {
         val server = Server(
             _name = "",
             type = ServerType.TEMPORARY,
             connection = ServerConnectionInfo(
                 externalUrl = route.url,
+                allowInsecureConnection = if (!hasPlainTextAccess) false else null,
             ),
             session = ServerSessionInfo(),
             user = ServerUserInfo(),

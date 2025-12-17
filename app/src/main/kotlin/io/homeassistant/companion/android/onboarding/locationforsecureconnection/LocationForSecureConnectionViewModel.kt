@@ -27,7 +27,7 @@ class LocationForSecureConnectionViewModel @VisibleForTesting constructor(
 
     val allowInsecureConnection: Flow<Boolean?> = flow {
         try {
-            val value = serverManager.integrationRepository(serverId).getAllowInsecureConnection()
+            val value = serverManager.getServer(serverId)?.connection?.allowInsecureConnection
             emit(value)
         } catch (e: Exception) {
             Timber.e(e, "Failed to get initial AllowInsecureConnection for server $serverId")
@@ -38,7 +38,15 @@ class LocationForSecureConnectionViewModel @VisibleForTesting constructor(
     fun allowInsecureConnection(allowInsecureConnection: Boolean) {
         viewModelScope.launch {
             try {
-                serverManager.integrationRepository(serverId).setAllowInsecureConnection(allowInsecureConnection)
+                serverManager.getServer(serverId)?.let { server ->
+                    serverManager.updateServer(
+                        server.copy(
+                            connection = server.connection.copy(
+                                allowInsecureConnection = allowInsecureConnection,
+                            ),
+                        ),
+                    )
+                }
             } catch (e: Exception) {
                 Timber.e(
                     e,
