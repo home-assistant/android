@@ -1,15 +1,25 @@
 package io.homeassistant.companion.android.database.server
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import androidx.room.ColumnInfo
 import androidx.room.Ignore
 import androidx.room.TypeConverter
 import io.homeassistant.companion.android.common.data.network.NetworkHelper
 import io.homeassistant.companion.android.common.data.network.WifiHelper
+import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import java.net.URL
 import kotlinx.serialization.SerializationException
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
+
+sealed interface SecurityStatus {
+    data object Secure : SecurityStatus
+    data class Insecure(val missingHomeSetup: Boolean, val missingLocation: Boolean) : SecurityStatus
+}
 
 data class ServerConnectionInfo(
     @ColumnInfo(name = "external_url")
@@ -141,6 +151,39 @@ data class ServerConnectionInfo(
         } else {
             false
         }
+    }
+
+    /**
+     * Determines the security status of the connection for a given URL.
+     *
+     * A connection is considered [SecurityStatus.Secure] when:
+     * - The URL uses HTTPS, or
+     * - The device is currently on an internal network (VPN, Ethernet, or configured SSID)
+     *
+     * When insecure, [SecurityStatus.Insecure] provides guidance on what's missing:
+     * - [SecurityStatus.Insecure.missingHomeSetup]: No internal URL, VPN, or Ethernet configured
+     * - [SecurityStatus.Insecure.missingLocation]: Location permission denied or location services disabled,
+     *   which prevents SSID-based internal network detection
+     *
+     * @param context Android context for checking location permission and services
+     * @param url The URL being used for the connection
+     * @return [SecurityStatus.Secure] if the connection is secure, [SecurityStatus.Insecure] otherwise
+     */
+    fun currentSecurityStatusForUrl(context: Context, url: String): SecurityStatus {
+        if (url.startsWith("https://") || isInternal(false)) return SecurityStatus.Secure
+
+        val missingHomeSetup = internalSsids.isEmpty() && !(internalVpn ?: false) && !(internalEthernet ?: false)
+
+        val hasLocationPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+        ) == PackageManager.PERMISSION_GRANTED
+        val isLocationEnabled = DisabledLocationHandler.isLocationEnabled(context)
+
+        return SecurityStatus.Insecure(
+            missingHomeSetup = missingHomeSetup,
+            missingLocation = !hasLocationPermission || !isLocationEnabled,
+        )
     }
 }
 

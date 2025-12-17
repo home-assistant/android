@@ -369,6 +369,9 @@ class WebViewPresenterImpl @Inject constructor(
         return serverManager.integrationRepository(serverId).getAllowInsecureConnection() == null
     }
 
+    override suspend fun getAllowInsecureConnection(): Boolean? =
+        serverManager.integrationRepository(serverId).getAllowInsecureConnection()
+
     override suspend fun getAuthorizationHeader(): String {
         return serverManager.getServer(serverId)?.let {
             serverManager.authenticationRepository(serverId).buildBearerToken()

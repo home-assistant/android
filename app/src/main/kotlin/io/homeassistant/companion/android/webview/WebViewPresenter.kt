@@ -60,6 +60,8 @@ interface WebViewPresenter {
      */
     suspend fun shouldSetSecurityLevel(): Boolean
 
+    suspend fun getAllowInsecureConnection(): Boolean?
+
     suspend fun getAuthorizationHeader(): String
 
     suspend fun parseWebViewColor(webViewColor: String): Int

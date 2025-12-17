@@ -105,6 +105,7 @@ import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
+import io.homeassistant.companion.android.database.server.SecurityStatus
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
@@ -132,6 +133,7 @@ import io.homeassistant.companion.android.webview.externalbus.ExternalConfigResp
 import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import io.homeassistant.companion.android.webview.externalbus.NavigateTo
 import io.homeassistant.companion.android.webview.externalbus.ShowSidebar
+import io.homeassistant.companion.android.webview.insecure.BlockInsecureFragment
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -1414,8 +1416,7 @@ class WebViewActivity :
             clearHistory = !keepHistory
             lifecycleScope.launch {
                 if (!presenter.shouldSetSecurityLevel()) {
-                    webView.loadUrl(url)
-                    waitForConnection()
+                    secureLoadUrl(url)
                 } else {
                     val serverId = presenter.getActiveServer()
                     Timber.d("Security level not set for server $serverId, showing ConnectionSecurityLevelFragment")
@@ -1432,6 +1433,42 @@ class WebViewActivity :
         }
     }
 
+    /**
+     * Make sure we only load the url if the securityLevel and current states allow it.
+     */
+    private suspend fun secureLoadUrl(url: String) {
+        fun loadAndWait() {
+            webView.loadUrl(url)
+            waitForConnection()
+        }
+
+        if (url.startsWith("https")) {
+            loadAndWait()
+            return
+        }
+
+        val allowInsecureConnection = presenter.getAllowInsecureConnection()
+
+        when (allowInsecureConnection) {
+            null, true -> loadAndWait()
+            false -> {
+                val status = serverManager.getServer(
+                    presenter.getActiveServer(),
+                )?.connection?.currentSecurityStatusForUrl(this, url)
+                when (status) {
+                    is SecurityStatus.Insecure, null -> {
+                        showBlockInsecureFragment(
+                            serverId = presenter.getActiveServer(),
+                            missingHomeSetup = status?.missingHomeSetup ?: false,
+                            missingLocation = status?.missingLocation ?: false,
+                        )
+                    }
+                    SecurityStatus.Secure -> loadAndWait()
+                }
+            }
+        }
+    }
+
     private fun showConnectionSecurityLevelFragment(serverId: Int) {
         supportFragmentManager.setFragmentResultListener(
             ConnectionSecurityLevelFragment.RESULT_KEY,
@@ -1441,8 +1478,9 @@ class WebViewActivity :
             supportFragmentManager.clearFragmentResultListener(ConnectionSecurityLevelFragment.RESULT_KEY)
 
             if (::loadedUrl.isInitialized) {
-                webView.loadUrl(loadedUrl)
-                waitForConnection()
+                lifecycleScope.launch {
+                    secureLoadUrl(loadedUrl)
+                }
             }
         }
 
@@ -1453,6 +1491,33 @@ class WebViewActivity :
                     serverId = serverId,
                     handleAllInsets = true,
                     useCloseButton = true,
+                ),
+            )
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun showBlockInsecureFragment(serverId: Int, missingHomeSetup: Boolean, missingLocation: Boolean) {
+        supportFragmentManager.setFragmentResultListener(
+            BlockInsecureFragment.RESULT_KEY,
+            this,
+        ) { _, _ ->
+            Timber.d("Block insecure screen exited by user, retrying URL loading")
+            supportFragmentManager.clearFragmentResultListener(BlockInsecureFragment.RESULT_KEY)
+
+            if (::loadedUrl.isInitialized) {
+                lifecycleScope.launch {
+                    secureLoadUrl(loadedUrl)
+                }
+            }
+        }
+        supportFragmentManager.beginTransaction()
+            .replace(
+                android.R.id.content,
+                BlockInsecureFragment.newInstance(
+                    serverId = serverId,
+                    missingHomeSetup = missingHomeSetup,
+                    missingLocation = missingLocation,
                 ),
             )
             .addToBackStack(null)
