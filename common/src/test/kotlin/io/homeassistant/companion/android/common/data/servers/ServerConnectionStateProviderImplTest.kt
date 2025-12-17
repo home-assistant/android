@@ -534,7 +534,7 @@ class ServerConnectionStateProviderImplTest {
         }
 
         @Test
-        fun `Given not internal and has cloudUrl when calling getApiUrls then cloudUrl is first`() = runTest {
+        fun `Given not on home network and has cloudUrl when calling getApiUrls then cloudUrl is first`() = runTest {
             val provider = createServerConnectionStateProvider(
                 externalUrl = "https://external.example.com",
                 internalUrl = "http://192.168.1.1:8123",
@@ -566,6 +566,80 @@ class ServerConnectionStateProviderImplTest {
             assertEquals("http://192.168.1.1:8123/api/webhook/webhook123", result[0].toString())
             assertEquals("https://cloud.nabu.casa/abc123", result[1].toString())
             assertEquals("https://external.example.com/api/webhook/webhook123", result[2].toString())
+        }
+
+        @Test
+        fun `Given HTTP external URL and allowInsecure false and not on home network when calling getApiUrls then external URL is excluded`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "http://external.example.com",
+                webhookId = "webhook123",
+                allowInsecureConnection = false,
+            )
+
+            val result = provider.getApiUrls()
+
+            assertTrue(result.isEmpty())
+        }
+
+        @Test
+        fun `Given HTTP external URL and allowInsecure true and not on home network when calling getApiUrls then external URL is included`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "http://external.example.com",
+                webhookId = "webhook123",
+                allowInsecureConnection = true,
+            )
+
+            val result = provider.getApiUrls()
+
+            assertEquals(1, result.size)
+            assertEquals("http://external.example.com/api/webhook/webhook123", result[0].toString())
+        }
+
+        @Test
+        fun `Given HTTP internal URL and prioritizeInternal true and allowInsecure false and not on home network when calling getApiUrls then internal URL is excluded`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "https://external.example.com",
+                internalUrl = "http://192.168.1.1:8123",
+                webhookId = "webhook123",
+                prioritizeInternal = true,
+                allowInsecureConnection = false,
+            )
+
+            val result = provider.getApiUrls()
+
+            assertEquals(1, result.size)
+            assertEquals("https://external.example.com/api/webhook/webhook123", result[0].toString())
+        }
+
+        @Test
+        fun `Given HTTPS internal URL and prioritizeInternal true and allowInsecure false and not on home network when calling getApiUrls then internal URL is included`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "https://external.example.com",
+                internalUrl = "https://192.168.1.1:8123",
+                webhookId = "webhook123",
+                prioritizeInternal = true,
+                allowInsecureConnection = false,
+            )
+
+            val result = provider.getApiUrls()
+
+            assertEquals(2, result.size)
+            assertEquals("https://192.168.1.1:8123/api/webhook/webhook123", result[0].toString())
+            assertEquals("https://external.example.com/api/webhook/webhook123", result[1].toString())
+        }
+
+        @Test
+        fun `Given HTTPS external URL and allowInsecure false and not on home network when calling getApiUrls then external URL is included`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "https://external.example.com",
+                webhookId = "webhook123",
+                allowInsecureConnection = false,
+            )
+
+            val result = provider.getApiUrls()
+
+            assertEquals(1, result.size)
+            assertEquals("https://external.example.com/api/webhook/webhook123", result[0].toString())
         }
     }
 
