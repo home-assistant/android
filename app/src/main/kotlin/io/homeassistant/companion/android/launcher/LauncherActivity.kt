@@ -7,22 +7,16 @@ import android.os.Parcelable
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.getValue
 import androidx.core.content.IntentCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
-import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.compose.theme.HATheme
-import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
-import io.homeassistant.companion.android.launcher.HAStartDestinationRoute
-import io.homeassistant.companion.android.onboarding.OnboardingRoute
-import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
 import io.homeassistant.companion.android.util.compose.HAApp
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
-import kotlinx.coroutines.flow.first
 import kotlinx.parcelize.Parcelize
 
 private const val DEEP_LINK_KEY = "deep_link_key"
@@ -97,37 +91,16 @@ class LauncherActivity : AppCompatActivity() {
         setContent {
             HATheme {
                 val navController = rememberNavController()
-                val startDestinationState =
-                    produceState<HAStartDestinationRoute?>(null, viewModel) {
-                        val event = viewModel.navigationEventsFlow.first()
-                        value = when (event) {
-                            is LauncherNavigationEvent.Frontend -> {
-                                if (isAutomotive()) {
-                                    AutomotiveRoute
-                                } else {
-                                    FrontendRoute(event.path, event.serverId)
-                                }
-                            }
+                val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-                            is LauncherNavigationEvent.Onboarding -> OnboardingRoute(
-                                hasLocationTracking = event.hasLocationTrackingSupport,
-                                urlToOnboard = event.urlToOnboard,
-                                hideExistingServers = event.hideExistingServers,
-                                skipWelcome = event.skipWelcome,
-                            )
-
-                            is LauncherNavigationEvent.WearOnboarding -> {
-                                // TODO fail when not in FULL variant (maybe make a dedicated screen explaining that
-                                //  the wear only work with FULL variant)
-                                WearOnboardingRoute(
-                                    wearName = event.wearName,
-                                    urlToOnboard = event.urlToOnboard,
-                                )
-                            }
-                        }
+                when (val state = uiState) {
+                    is LauncherUiState.Ready -> HAApp(navController, state.startDestination)
+                    LauncherUiState.NetworkUnavailable -> NetworkUnavailableDialog(onBackClick = ::finish)
+                    LauncherUiState.WearUnsupported -> WearUnsupportedDialog(onBackClick = ::finish)
+                    LauncherUiState.Loading -> {
+                        // Splash screen is still showing
                     }
-
-                HAApp(navController, startDestinationState.value)
+                }
             }
         }
     }
