@@ -11,7 +11,7 @@ import io.homeassistant.companion.android.automotive.navigation.navigateToCarApp
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.frontend.navigation.frontendScreen
 import io.homeassistant.companion.android.frontend.navigation.navigateToFrontend
-import io.homeassistant.companion.android.launcher.HAStartDestinationRoute
+import io.homeassistant.companion.android.launch.HAStartDestinationRoute
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.loading.navigation.LoadingRoute
 import io.homeassistant.companion.android.loading.navigation.loadingScreen

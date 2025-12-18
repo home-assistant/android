@@ -265,7 +265,7 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name=".launcher.LauncherActivity"
+        <activity android:name=".launch.LaunchActivity"
             android:exported="true"
             android:theme="@style/Theme.LaunchScreen">
             <intent-filter>
@@ -279,7 +279,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".launcher.link.LinkActivity"
+        <activity android:name=".launch.link.LinkActivity"
             android:exported="true"
             android:launchMode="singleTask">
             <intent-filter android:autoVerify="true">

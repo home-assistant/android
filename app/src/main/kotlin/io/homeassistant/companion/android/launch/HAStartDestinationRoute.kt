@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.launcher
+package io.homeassistant.companion.android.launch
 
 /**
  * Simple interface used to identify a route as being usable as start destination

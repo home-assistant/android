@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.launcher
+package io.homeassistant.companion.android.launch
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -27,41 +27,41 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
- * Represents the UI state of the launcher screen.
+ * Represents the UI state of the launch screen.
  */
-internal sealed interface LauncherUiState {
+internal sealed interface LaunchUiState {
     /**
      * Initial loading state while determining where to navigate.
      */
-    data object Loading : LauncherUiState
+    data object Loading : LaunchUiState
 
     /**
      * The app is ready to navigate to the start destination.
      */
-    data class Ready(val startDestination: HAStartDestinationRoute) : LauncherUiState
+    data class Ready(val startDestination: HAStartDestinationRoute) : LaunchUiState
 
     /**
      * The network is unavailable and the app cannot connect to the server.
      */
-    data object NetworkUnavailable : LauncherUiState
+    data object NetworkUnavailable : LaunchUiState
 
     /**
      * Wear OS onboarding was requested but is not supported in the minimal flavor.
      */
-    data object WearUnsupported : LauncherUiState
+    data object WearUnsupported : LaunchUiState
 }
 
 /**
- * ViewModel for the launcher activity. Upon instantiation, it checks for servers to remove
+ * ViewModel for the launch activity. Upon instantiation, it checks for servers to remove
  * and verifies the presence of an active, registered, and connected server.
  *
  * If no such server is found, or if an error occurs during this check (e.g., network connectivity issues),
  * it navigates to onboarding. Otherwise, it schedules a resync of all server registrations
  * asynchronously and navigates to the frontend.
  */
-@HiltViewModel(assistedFactory = LauncherViewModelFactory::class)
-internal class LauncherViewModel @AssistedInject constructor(
-    @Assisted initialDeepLink: LauncherActivity.DeepLink?,
+@HiltViewModel(assistedFactory = LaunchViewModelFactory::class)
+internal class LaunchViewModel @AssistedInject constructor(
+    @Assisted initialDeepLink: LaunchActivity.DeepLink?,
     private val workManager: WorkManager,
     private val serverManager: ServerManager,
     private val networkStatusMonitor: NetworkStatusMonitor,
@@ -69,7 +69,7 @@ internal class LauncherViewModel @AssistedInject constructor(
     @param:IsAutomotive private val isAutomotive: Boolean,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<LauncherUiState>(LauncherUiState.Loading)
+    private val _uiState = MutableStateFlow<LaunchUiState>(LaunchUiState.Loading)
     val uiState = _uiState.asStateFlow()
 
     init {
@@ -82,20 +82,20 @@ internal class LauncherViewModel @AssistedInject constructor(
     /**
      * Determine when to hide the application's splash screen.
      */
-    fun shouldShowSplashScreen(): Boolean = _uiState.value is LauncherUiState.Loading
+    fun shouldShowSplashScreen(): Boolean = _uiState.value is LaunchUiState.Loading
 
-    private suspend fun handleInitialState(initialDeepLink: LauncherActivity.DeepLink?) {
+    private suspend fun handleInitialState(initialDeepLink: LaunchActivity.DeepLink?) {
         when (initialDeepLink) {
-            is LauncherActivity.DeepLink.OpenOnboarding -> navigateToOnboarding(
+            is LaunchActivity.DeepLink.OpenOnboarding -> navigateToOnboarding(
                 initialDeepLink.urlToOnboard,
                 hideExistingServers = initialDeepLink.hideExistingServers,
                 skipWelcome = initialDeepLink.skipWelcome,
             )
 
-            is LauncherActivity.DeepLink.NavigateTo,
+            is LaunchActivity.DeepLink.NavigateTo,
             -> connectToServer(initialDeepLink.serverId, initialDeepLink.path)
 
-            is LauncherActivity.DeepLink.OpenWearOnboarding -> navigateToWearOnboarding(
+            is LaunchActivity.DeepLink.OpenWearOnboarding -> navigateToWearOnboarding(
                 wearName = initialDeepLink.wearName,
                 urlToOnboard = initialDeepLink.urlToOnboard,
             )
@@ -134,10 +134,10 @@ internal class LauncherViewModel @AssistedInject constructor(
     private fun navigateToWearOnboarding(wearName: String, urlToOnboard: String? = null) {
         if (!hasLocationTrackingSupport) {
             // Wear OS requires Google Play Services for communication, which is only available in full flavor
-            _uiState.value = LauncherUiState.WearUnsupported
+            _uiState.value = LaunchUiState.WearUnsupported
             return
         }
-        _uiState.value = LauncherUiState.Ready(
+        _uiState.value = LaunchUiState.Ready(
             WearOnboardingRoute(wearName = wearName, urlToOnboard = urlToOnboard),
         )
     }
@@ -147,7 +147,7 @@ internal class LauncherViewModel @AssistedInject constructor(
         hideExistingServers: Boolean = false,
         skipWelcome: Boolean = false,
     ) {
-        _uiState.value = LauncherUiState.Ready(
+        _uiState.value = LaunchUiState.Ready(
             OnboardingRoute(
                 hasLocationTracking = hasLocationTrackingSupport,
                 urlToOnboard = urlToOnboard,
@@ -172,7 +172,7 @@ internal class LauncherViewModel @AssistedInject constructor(
         return when (state) {
             NetworkState.READY_LOCAL, NetworkState.READY_REMOTE -> {
                 workManager.enqueueResyncRegistration()
-                _uiState.value = LauncherUiState.Ready(
+                _uiState.value = LaunchUiState.Ready(
                     if (isAutomotive) {
                         AutomotiveRoute
                     } else {
@@ -187,7 +187,7 @@ internal class LauncherViewModel @AssistedInject constructor(
             }
 
             NetworkState.UNAVAILABLE -> {
-                _uiState.value = LauncherUiState.NetworkUnavailable
+                _uiState.value = LaunchUiState.NetworkUnavailable
                 false
             }
         }
@@ -195,6 +195,6 @@ internal class LauncherViewModel @AssistedInject constructor(
 }
 
 @AssistedFactory
-internal interface LauncherViewModelFactory {
-    fun create(initialDeepLink: LauncherActivity.DeepLink?): LauncherViewModel
+internal interface LaunchViewModelFactory {
+    fun create(initialDeepLink: LaunchActivity.DeepLink?): LaunchViewModel
 }

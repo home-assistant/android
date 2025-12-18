@@ -7,7 +7,7 @@ import androidx.navigation.activity
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
-import io.homeassistant.companion.android.launcher.HAStartDestinationRoute
+import io.homeassistant.companion.android.launch.HAStartDestinationRoute
 import io.homeassistant.companion.android.util.getActivity
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.serialization.SerialName

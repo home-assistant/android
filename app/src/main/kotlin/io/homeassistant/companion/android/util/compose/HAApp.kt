@@ -19,7 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import io.homeassistant.companion.android.launcher.HAStartDestinationRoute
+import io.homeassistant.companion.android.launch.HAStartDestinationRoute
 import io.homeassistant.companion.android.loading.LoadingScreen
 
 /**
