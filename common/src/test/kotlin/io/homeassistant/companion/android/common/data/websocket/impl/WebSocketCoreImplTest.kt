@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -292,7 +293,7 @@ connect()
     }
 
     @Test
-    fun `Given an active connection When URL changes Then it cancels the connection`() = runTest {
+    fun `Given an active connection When URL changes to a different URL Then it cancels the connection`() = runTest {
         val urlStateFlow = MutableStateFlow<UrlState>(UrlState.HasUrl("https://io.ha".toHttpUrlOrNull()?.toUrl()))
         setupServer(urlFlow = urlStateFlow, backgroundScope = backgroundScope)
         prepareAuthenticationAnswer()
@@ -309,7 +310,7 @@ connect()
         advanceUntilIdle()
 
         verify { mockConnection.cancel() }
-        assertEquals(WebSocketState.CLOSED_OTHER, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.CLOSED_URL_CHANGE, webSocketCore.getConnectionState())
     }
 
     @Test
@@ -330,7 +331,7 @@ connect()
         advanceUntilIdle()
 
         verify { mockConnection.cancel() }
-        assertEquals(WebSocketState.CLOSED_OTHER, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.CLOSED_URL_CHANGE, webSocketCore.getConnectionState())
     }
 
     @Test
@@ -781,5 +782,95 @@ misc
         customScope.advanceUntilIdle()
         advanceUntilIdle()
         coVerify { mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""id":2""") }) }
+    }
+
+    /*
+    URL change reconnection behavior
+     */
+
+    @Test
+    fun `Given an active subscription When URL changes Then it reconnects immediately without delay`() = runTest {
+        val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl("https://io.ha".toHttpUrlOrNull()?.toUrl()))
+        setupServer(urlFlow = urlFlow, backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        // Simulate WebSocket behavior: cancel() triggers onFailure callback
+        every { mockConnection.cancel() } answers {
+            webSocketListener.onFailure(mockConnection, IOException("Canceled"), null)
+        }
+
+        // Create a subscription so reconnection is triggered
+        mockResultSuccessForId(2)
+        checkNotNull(
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ),
+        ).test {
+            assertEquals(1, webSocketCore.activeMessages.size)
+
+            // Track reconnection attempts (first call was during initial connect)
+            var reconnectAttemptCount = 0
+            every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
+                reconnectAttemptCount++
+                mockConnection
+            }
+
+            // Simulate URL change - should trigger immediate reconnection (no 10s delay)
+            urlFlow.value = UrlState.HasUrl("https://new.url".toHttpUrlOrNull()?.toUrl())
+
+            // runCurrent() processes immediate work without advancing virtual time.
+            // Since URL change reconnection has no delay, this should trigger reconnection.
+            runCurrent()
+
+            // Reconnection should have already been attempted (no delay)
+            assertEquals(1, reconnectAttemptCount)
+
+            // Clean up by closing the connection
+            closeConnection()
+            advanceUntilIdle()
+        }
+    }
+
+    @Test
+    fun `Given an active subscription When disconnection occurs Then it waits before reconnecting`() = runTest {
+        setupServer(backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        // Create a subscription so reconnection is triggered
+        mockResultSuccessForId(2)
+        checkNotNull(
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ),
+        ).test {
+            assertEquals(1, webSocketCore.activeMessages.size)
+
+            // Track reconnection attempts (first call was during initial connect)
+            var reconnectAttemptCount = 0
+            every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
+                reconnectAttemptCount++
+                mockConnection
+            }
+
+            // Normal disconnection (not URL change)
+            closeConnection()
+
+            // Immediately after close, no reconnection should have happened yet (due to 10s delay)
+            runCurrent()
+            assertEquals(0, reconnectAttemptCount, "Should not reconnect immediately on normal close")
+
+            // After the delay passes, reconnection should happen
+            advanceUntilIdle()
+
+            assertEquals(1, reconnectAttemptCount)
+
+            // Clean up
+            closeConnection()
+            advanceUntilIdle()
+        }
     }
 }

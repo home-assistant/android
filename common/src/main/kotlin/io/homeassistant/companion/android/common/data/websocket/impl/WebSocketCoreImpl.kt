@@ -287,7 +287,8 @@ internal class WebSocketCoreImpl(
                         } else {
                             Timber.w("URL changed, disconnecting immediately.")
                         }
-                        // we abruptly cancel the connection since we might be in an insecure state
+                        // Set state before cancel() since cancel triggers onFailure -> handleClosingSocket
+                        connectionState = WebSocketState.CLOSED_URL_CHANGE
                         connection?.cancel()
                     }
                 }
@@ -654,13 +655,20 @@ internal class WebSocketCoreImpl(
     private fun handleClosingSocket() {
         urlObserverJob?.cancel()
         urlObserverJob = null
+        // Capture current state before it gets modified in the mutex block
+        val closingState = connectionState
         val cancelPendingMessagesJob = wsScope.launch {
             connectedMutex.withLock {
                 connected = CompletableDeferred()
                 connection = null
                 connectionHaVersion = null
                 connectedUrl = null
-                if (connectionState != WebSocketState.CLOSED_AUTH) {
+                // Preserve specific closure states, otherwise set to CLOSED_OTHER
+                if (connectionState !in listOf(
+                        WebSocketState.CLOSED_AUTH,
+                        WebSocketState.CLOSED_URL_CHANGE,
+                    )
+                ) {
                     connectionState = WebSocketState.CLOSED_OTHER
                 }
                 activeMessages
@@ -682,7 +690,10 @@ internal class WebSocketCoreImpl(
         if (hasFlowMessages && wsScope.isActive) {
             wsScope.launch {
                 cancelPendingMessagesJob.join()
-                delay(DELAY_BEFORE_RECONNECT)
+                // Try to reconnect immediately on URL change, otherwise use standard delay
+                if (closingState != WebSocketState.CLOSED_URL_CHANGE) {
+                    delay(DELAY_BEFORE_RECONNECT)
+                }
                 if (connect()) {
                     Timber.d("Resubscribing to active subscriptions...")
                     activeMessages.filterValues { it.eventFlow != null }.entries
