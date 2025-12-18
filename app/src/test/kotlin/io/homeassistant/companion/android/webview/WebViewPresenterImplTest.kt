@@ -263,7 +263,7 @@ class WebViewPresenterImplTest {
         }
 
         val urlSlot = slot<Uri>()
-        verify { webView.loadUrl(capture(urlSlot), any(), any()) }
+        verify { webView.loadUrl(capture(urlSlot), any(), any(), any()) }
 
         assertTrue(urlSlot.captured.toString().startsWith("https://example.com"))
         assertTrue(urlSlot.captured.toString().contains("external_auth=1"))
@@ -289,7 +289,7 @@ class WebViewPresenterImplTest {
         }
 
         val urlSlot = slot<Uri>()
-        verify { webView.loadUrl(capture(urlSlot), any(), any()) }
+        verify { webView.loadUrl(capture(urlSlot), any(), any(), any()) }
 
         assertTrue(urlSlot.captured.toString().contains("/dashboard"))
     }
@@ -314,7 +314,7 @@ class WebViewPresenterImplTest {
         }
 
         val urlSlot = slot<Uri>()
-        verify { webView.loadUrl(capture(urlSlot), any(), any()) }
+        verify { webView.loadUrl(capture(urlSlot), any(), any(), any()) }
 
         // entityId paths should be ignored and base URL should be loaded
         assertTrue(urlSlot.captured.toString().startsWith("https://example.com"))
@@ -340,7 +340,7 @@ class WebViewPresenterImplTest {
         }
 
         verify { webView.showBlockInsecure(serverId = any()) }
-        verify(exactly = 0) { webView.loadUrl(any(), any(), any()) }
+        verify(exactly = 0) { webView.loadUrl(any(), any(), any(), any()) }
     }
 
     @Test
@@ -362,14 +362,14 @@ class WebViewPresenterImplTest {
         }
 
         // Verify initial URL was loaded
-        verify { webView.loadUrl(any(), any(), any()) }
+        verify { webView.loadUrl(any(), any(), any(), any()) }
 
         // Emit insecure state
         urlFlow.emit(UrlState.InsecureState)
 
         verify { webView.showBlockInsecure(serverId = any()) }
         // was not called a second time
-        verify(exactly = 1) { webView.loadUrl(any(), any(), any()) }
+        verify(exactly = 1) { webView.loadUrl(any(), any(), any(), any()) }
     }
 
     @Test
@@ -401,7 +401,7 @@ class WebViewPresenterImplTest {
         secondUrlFlow.emit(UrlState.HasUrl(URL("https://second-updated.com")))
 
         val urlSlot = mutableListOf<Uri>()
-        verify(exactly = 3) { webView.loadUrl(capture(urlSlot), any(), any()) }
+        verify(exactly = 3) { webView.loadUrl(capture(urlSlot), any(), any(), any()) }
 
         // Verify both initial URLs were loaded
         assertEquals(3, urlSlot.size)
@@ -448,7 +448,7 @@ class WebViewPresenterImplTest {
         }
 
         // Verify initial load
-        verify(exactly = 1) { webView.loadUrl(any(), any(), any()) }
+        verify(exactly = 1) { webView.loadUrl(any(), any(), any(), any()) }
 
         // Stop lifecycle
         lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
@@ -457,7 +457,7 @@ class WebViewPresenterImplTest {
         urlFlow.emit(UrlState.HasUrl(URL("https://updated.com")))
 
         // Should still be only 1 call (no additional calls after stop)
-        verify(exactly = 1) { webView.loadUrl(any(), any(), any()) }
+        verify(exactly = 1) { webView.loadUrl(any(), any(), any(), any()) }
     }
 
     @Test
@@ -480,7 +480,7 @@ class WebViewPresenterImplTest {
 
         // First URL should have path
         val urlSlots = mutableListOf<Uri>()
-        verify { webView.loadUrl(capture(urlSlots), any(), any()) }
+        verify { webView.loadUrl(capture(urlSlots), any(), any(), any()) }
         assertEquals(1, urlSlots.size)
         assertTrue(urlSlots[0].toString().contains("/dashboard"))
 
@@ -488,7 +488,7 @@ class WebViewPresenterImplTest {
         urlFlow.emit(UrlState.HasUrl(URL("https://external.example.com")))
 
         // Second URL should NOT have path (already consumed)
-        verify(atLeast = 2) { webView.loadUrl(capture(urlSlots), any(), any()) }
+        verify(atLeast = 2) { webView.loadUrl(capture(urlSlots), any(), any(), any()) }
         val secondUrl = urlSlots.last().toString()
         assertTrue(secondUrl.contains("external.example.com"))
         assertFalse(secondUrl.contains("/dashboard"))
@@ -531,7 +531,7 @@ class WebViewPresenterImplTest {
         }
 
         verify { webView.showConnectionSecurityLevel(serverId = any()) }
-        verify(exactly = 0) { webView.loadUrl(any(), any(), any()) }
+        verify(exactly = 0) { webView.loadUrl(any(), any(), any(), any()) }
     }
 
     @Test
@@ -568,7 +568,7 @@ class WebViewPresenterImplTest {
             presenter.load(lifecycle, path = null, isInternalOverride = null)
         }
 
-        verify { webView.loadUrl(any(), any(), any()) }
+        verify { webView.loadUrl(any(), any(), any(), any()) }
         // Still only 1 call to showConnectionSecurityLevel
         verify(exactly = 1) { webView.showConnectionSecurityLevel(serverId = any()) }
     }
@@ -596,7 +596,7 @@ class WebViewPresenterImplTest {
             presenter.load(lifecycle, path = null, isInternalOverride = null)
         }
 
-        verify { webView.loadUrl(any(), any(), any()) }
+        verify { webView.loadUrl(any(), any(), any(), any()) }
         verify(exactly = 0) { webView.showConnectionSecurityLevel(serverId = any()) }
     }
 
@@ -622,7 +622,7 @@ class WebViewPresenterImplTest {
             presenter.load(lifecycle, path = null, isInternalOverride = null)
         }
 
-        verify { webView.loadUrl(any(), any(), any()) }
+        verify { webView.loadUrl(any(), any(), any(), any()) }
         verify(exactly = 0) { webView.showConnectionSecurityLevel(serverId = any()) }
     }
 }
