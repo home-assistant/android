@@ -3,7 +3,7 @@
     tools:ignore="MissingDefaultResource">
     <release version="2025.12.3 - Main" versioncode="3">
         <change>Redesigned onboarding experience for easier server setup</change>
-        <change>Added security measure for unencrypted connections</change>
+        <change>Added connection security level options</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2025.12.3 - Wear" versioncode="2">
@@ -11,7 +11,7 @@
     </release>
     <release version="2025.12.3 - Automotive" versioncode="1">
         <change>Redesigned onboarding experience for easier server setup</change>
-        <change>Added security measure for unencrypted connections</change>
+        <change>Added connection security level options</change>
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
