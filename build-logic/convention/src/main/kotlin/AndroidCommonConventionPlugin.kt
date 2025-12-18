@@ -1,4 +1,3 @@
-
 import com.android.build.api.dsl.ApplicationExtension
 import io.homeassistant.companion.android.androidConfig
 import io.homeassistant.companion.android.getPluginId
@@ -78,6 +77,7 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                 }
 
                 lint {
+                    checkReleaseBuilds = false
                     // Lint task should fail if there are issues so the CI doesn't allow addition of lint issue.
                     abortOnError = true
                     // This is an aggressive settings but it helps keeping the code base out of warnings
@@ -111,6 +111,8 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
 
                     "ksp"(libs.hilt.android.compiler)
                     "implementation"(libs.hilt.android)
+
+                    "implementation"(libs.core.ktx)
 
                     "testRuntimeOnly"(libs.junit.platform.launcher)
 

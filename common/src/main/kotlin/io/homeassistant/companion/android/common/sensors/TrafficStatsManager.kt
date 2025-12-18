@@ -71,7 +71,7 @@ class TrafficStatsManager : SensorManager {
         }
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return emptyArray()
     }
 

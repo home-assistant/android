@@ -193,8 +193,7 @@ fun parseColor(context: Context, colorString: String?, default: Int): Int {
 fun handleSmallIcon(context: Context, builder: NotificationCompat.Builder, data: Map<String, String>) {
     val notificationIcon = data[NotificationData.NOTIFICATION_ICON] ?: ""
     if (notificationIcon.startsWith("mdi:") &&
-        notificationIcon.substringAfter("mdi:").isNotBlank() &&
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+        notificationIcon.substringAfter("mdi:").isNotBlank()
     ) {
         val iconName = notificationIcon.split(":")[1]
         val iconDrawable =

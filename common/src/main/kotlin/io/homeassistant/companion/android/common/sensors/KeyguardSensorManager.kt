@@ -2,8 +2,6 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.app.KeyguardManager
 import android.content.Context
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -46,35 +44,27 @@ class KeyguardSensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#keyguard-sensors"
     }
+
     override val name: Int
         get() = commonR.string.sensor_name_keyguard
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return when {
-            (Build.VERSION.SDK_INT >= 23) -> listOf(deviceLocked, deviceSecure, keyguardLocked, keyguardSecure)
-            (Build.VERSION.SDK_INT >= 22) -> listOf(deviceLocked, keyguardLocked, keyguardSecure)
-            else -> listOf(keyguardLocked, keyguardSecure)
-        }
+        return listOf(deviceLocked, deviceSecure, keyguardLocked, keyguardSecure)
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return emptyArray()
     }
 
     override suspend fun requestSensorUpdate(context: Context) {
         val km = context.getSystemService<KeyguardManager>()!!
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            updateDeviceLocked(context, km)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            updateDeviceSecure(context, km)
-        }
+        updateDeviceLocked(context, km)
+        updateDeviceSecure(context, km)
 
         updateKeyguardLocked(context, km)
         updateKeyguardSecure(context, km)
     }
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     private suspend fun updateDeviceLocked(context: Context, km: KeyguardManager) {
         if (!isEnabled(context, deviceLocked)) {
             return
@@ -92,7 +82,6 @@ class KeyguardSensorManager : SensorManager {
         )
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     private suspend fun updateDeviceSecure(context: Context, km: KeyguardManager) {
         if (!isEnabled(context, deviceSecure)) {
             return

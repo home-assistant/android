@@ -20,6 +20,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
+import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -241,9 +243,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 )
 
                 val entityPictureUrl = entity?.attributes?.get("entity_picture")?.toString()
-                val baseUrl = serverManager.getServer(
+                val baseUrl = serverManager.connectionStateProvider(
                     widget.serverId,
-                )?.connection?.getUrl().toString().removeSuffix("/")
+                ).urlFlow().firstUrlOrNull()?.toString()?.removeSuffix("/") ?: ""
                 val url = if (entityPictureUrl?.startsWith("http") ==
                     true
                 ) {
@@ -494,7 +496,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                     "entity id: " + entity.entityId + System.lineSeparator(),
             )
 
-            val domain = "media_player"
             val action = "media_previous_track"
             val entityId: String = getEntity(
                 context,
@@ -505,7 +506,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
 
             val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
-            serverManager.integrationRepository().callAction(domain, action, actionDataMap)
+            serverManager.integrationRepository().callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
         }
     }
 
@@ -545,7 +546,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 return@launch
             }
 
-            val domain = "media_player"
             val action = "media_seek"
             val entityId: String = getEntity(
                 context,
@@ -560,7 +560,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
             )
 
             try {
-                serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
+                serverManager.integrationRepository(
+                    entity.serverId,
+                ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
             } catch (e: Exception) {
                 Timber.e(e, "Exception calling rewind action")
             }
@@ -582,7 +584,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                     "entity id: " + entity.entityId + System.lineSeparator(),
             )
 
-            val domain = "media_player"
             val action = "media_play_pause"
             val entityId: String = getEntity(
                 context,
@@ -594,7 +595,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
             val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
             try {
-                serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
+                serverManager.integrationRepository(
+                    entity.serverId,
+                ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
             } catch (e: Exception) {
                 Timber.e(e, "Exception calling play pause action")
             }
@@ -637,7 +640,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 return@launch
             }
 
-            val domain = "media_player"
             val action = "media_seek"
             val entityId: String = getEntity(
                 context,
@@ -652,7 +654,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
             )
 
             try {
-                serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
+                serverManager.integrationRepository(
+                    entity.serverId,
+                ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
             } catch (e: Exception) {
                 Timber.e(e, "Exception calling fast forward action")
             }
@@ -674,7 +678,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                     "entity id: " + entity.entityId + System.lineSeparator(),
             )
 
-            val domain = "media_player"
             val action = "media_next_track"
             val entityId: String = getEntity(
                 context,
@@ -686,7 +689,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
             val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
             try {
-                serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
+                serverManager.integrationRepository(
+                    entity.serverId,
+                ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
             } catch (e: Exception) {
                 Timber.e(e, "Exception calling next track action")
             }
@@ -708,7 +713,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                     "entity id: " + entity.entityId + System.lineSeparator(),
             )
 
-            val domain = "media_player"
             val action = "volume_down"
             val entityId: String = getEntity(
                 context,
@@ -720,7 +724,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
             val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
             try {
-                serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
+                serverManager.integrationRepository(
+                    entity.serverId,
+                ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
             } catch (e: Exception) {
                 Timber.e(e, "Exception calling volume down action")
             }
@@ -742,7 +748,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                     "entity id: " + entity.entityId + System.lineSeparator(),
             )
 
-            val domain = "media_player"
             val action = "volume_up"
             val entityId: String = getEntity(
                 context,
@@ -754,7 +759,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
             val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
             try {
-                serverManager.integrationRepository(entity.serverId).callAction(domain, action, actionDataMap)
+                serverManager.integrationRepository(
+                    entity.serverId,
+                ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
             } catch (e: Exception) {
                 Timber.e(e, "Exception calling volume up action")
             }

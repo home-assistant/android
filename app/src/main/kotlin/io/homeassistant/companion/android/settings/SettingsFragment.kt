@@ -34,8 +34,8 @@ import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.isIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.common.util.maybeAskForIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.launcher.intentLauncherOnboarding
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
-import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
 import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
 import io.homeassistant.companion.android.settings.gestures.GesturesFragment
@@ -51,6 +51,7 @@ import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoSett
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
+import io.homeassistant.companion.android.util.QuestUtil
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.time.Instant
@@ -76,9 +77,6 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             updateNotificationChannelPrefs()
         }
-
-    private val requestOnboardingResult = registerForActivityResult(OnboardApp(), this::onOnboardingComplete)
-
     private var serverAuth: Int? = null
     private val serverMutex = Mutex()
 
@@ -139,13 +137,15 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
 
         findPreference<Preference>("server_add")?.let {
             it.setOnPreferenceClickListener {
-                requestOnboardingResult.launch(
-                    OnboardApp.Input(
-                        // Empty url skips the 'Welcome' screen
-                        url = "",
-                        discoveryOptions = OnboardApp.DiscoveryOptions.HIDE_EXISTING,
-                    ),
-                )
+                requireContext().apply {
+                    startActivity(
+                        intentLauncherOnboarding(
+                            urlToOnboard = null,
+                            hideExistingServers = true,
+                            skipWelcome = true,
+                        ),
+                    )
+                }
                 return@setOnPreferenceClickListener true
             }
         }
@@ -189,7 +189,7 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
 
         findPreference<PreferenceCategory>("assist")?.isVisible = !isAutomotive
 
-        findPreference<PreferenceCategory>("widgets")?.isVisible = Build.MODEL != "Quest" && !isAutomotive
+        findPreference<PreferenceCategory>("widgets")?.isVisible = !QuestUtil.isQuest && !isAutomotive
         findPreference<Preference>("manage_widgets")?.setOnPreferenceClickListener {
             parentFragmentManager.commit {
                 replace(R.id.content, ManageWidgetsSettingsFragment::class.java, null)
@@ -198,7 +198,7 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
             return@setOnPreferenceClickListener true
         }
 
-        if (Build.MODEL != "Quest") {
+        if (!QuestUtil.isQuest) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
                 findPreference<PreferenceCategory>("shortcuts")?.let {
                     it.isVisible = true
@@ -557,12 +557,6 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
             }
         }
         return true
-    }
-
-    private fun onOnboardingComplete(result: OnboardApp.Output?) {
-        lifecycleScope.launch {
-            presenter.addServer(result)
-        }
     }
 
     private fun openNotificationSettings() {

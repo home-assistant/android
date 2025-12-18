@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.settings.server
 
 import android.content.Intent
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -17,6 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.commit
+import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
@@ -30,11 +30,13 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.launcher.LauncherActivity
+import io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
 import io.homeassistant.companion.android.settings.url.ExternalUrlFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
+import io.homeassistant.companion.android.util.QuestUtil
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.net.URLEncoder
@@ -177,7 +179,17 @@ class ServerSettingsFragment :
             it.isVisible = presenter.hasWifi()
         }
 
-        findPreference<PreferenceCategory>("security_category")?.isVisible = Build.MODEL != "Quest"
+        findPreference<Preference>("connection_security_level")?.let {
+            it.setOnPreferenceClickListener {
+                parentFragmentManager.commit {
+                    replace(R.id.content_full_screen, ConnectionSecurityLevelFragment.newInstance(serverId))
+                    addToBackStack(null)
+                }
+                return@setOnPreferenceClickListener true
+            }
+        }
+
+        findPreference<PreferenceCategory>("security_category")?.isVisible = !QuestUtil.isQuest
 
         findPreference<Preference>("websocket")?.let {
             it.setOnPreferenceClickListener {
@@ -221,6 +233,10 @@ class ServerSettingsFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         applyBottomSafeDrawingInsets()
+
+        setFragmentResultListener(ConnectionSecurityLevelFragment.RESULT_KEY) { _, _ ->
+            updateSecurityLevelSummary()
+        }
 
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(
@@ -352,7 +368,7 @@ class ServerSettingsFragment :
             if (hasAnyRemaining) { // Return to the main settings screen
                 parentFragmentManager.popBackStack()
             } else { // Relaunch app
-                startActivity(Intent(requireContext(), LaunchActivity::class.java))
+                startActivity(Intent(requireContext(), LauncherActivity::class.java))
                 requireActivity().finishAffinity()
             }
         }
@@ -363,6 +379,20 @@ class ServerSettingsFragment :
 
         presenter.updateServerName()
         presenter.updateUrlStatus()
+        updateSecurityLevelSummary()
+    }
+
+    private fun updateSecurityLevelSummary() {
+        lifecycleScope.launch {
+            findPreference<Preference>("connection_security_level")?.let { preference ->
+                val summaryId = when (presenter.getAllowInsecureConnection()) {
+                    true -> commonR.string.connection_security_less_secure
+                    false -> commonR.string.connection_security_most_secure
+                    null -> commonR.string.connection_security_level_default_summary
+                }
+                preference.summary = getString(summaryId)
+            }
+        }
     }
 
     override fun onDestroy() {

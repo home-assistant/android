@@ -173,7 +173,7 @@ class BluetoothSensorManager : SensorManager {
     }
 
     @SuppressLint("InlinedApi")
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return when {
             (sensorId == bleTransmitter.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
                 arrayOf(
@@ -283,8 +283,11 @@ class BluetoothSensorManager : SensorManager {
         )
     }
 
-    private fun isPermittedOnThisNetwork(context: Context) = serverManager(context).defaultServers.any {
-        it.connection.isInternal(requiresUrl = false)
+    private suspend fun isPermittedOnThisNetwork(context: Context): Boolean {
+        val serverMgr = serverManager(context)
+        return serverMgr.defaultServers.any { server ->
+            serverMgr.connectionStateProvider(server.id).isInternal(requiresUrl = false)
+        }
     }
 
     private suspend fun updateBLEDevice(context: Context) {

@@ -43,6 +43,7 @@ fun SensorUi(
             perm = it
         }
 
+    val context = LocalContext.current
     val permissionLaunch = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { isGranted ->
@@ -51,8 +52,14 @@ fun SensorUi(
             if (
                 it.key == Manifest.permission.ACCESS_FINE_LOCATION &&
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-                manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-                manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                manager.requiredPermissions(
+                    context,
+                    basicSensor.id,
+                ).contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
+                manager.requiredPermissions(
+                    context,
+                    basicSensor.id,
+                ).contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
             ) {
                 backgroundRequest.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                 return@forEach
@@ -60,8 +67,11 @@ fun SensorUi(
             if (
                 it.key == Manifest.permission.BODY_SENSORS &&
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.BODY_SENSORS) &&
-                manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.BODY_SENSORS_BACKGROUND)
+                manager.requiredPermissions(context, basicSensor.id).contains(Manifest.permission.BODY_SENSORS) &&
+                manager.requiredPermissions(
+                    context,
+                    basicSensor.id,
+                ).contains(Manifest.permission.BODY_SENSORS_BACKGROUND)
             ) {
                 backgroundRequest.launch(Manifest.permission.BODY_SENSORS_BACKGROUND)
                 return@forEach
@@ -74,14 +84,13 @@ fun SensorUi(
         perm = allGranted
     }
 
-    val context = LocalContext.current
     LaunchedEffect(Unit) { perm = manager.checkPermission(context, basicSensor.id) }
     val isChecked = (sensor == null && basicSensor.enabledByDefault) ||
         (sensor?.enabled == true && perm)
     SwitchButton(
         checked = isChecked,
         onCheckedChange = { enabled ->
-            val permissions = manager.requiredPermissions(basicSensor.id)
+            val permissions = manager.requiredPermissions(context, basicSensor.id)
             if (perm || !enabled) {
                 onSensorClicked(basicSensor.id, enabled)
             } else {

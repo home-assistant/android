@@ -3,14 +3,16 @@ package io.homeassistant.companion.android.common.data.prefs
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
+import io.homeassistant.companion.android.common.util.jsonArrayOrNull
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.toJsonObject
+import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.common.util.toStringList
 import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedWearStorage
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
-import org.json.JSONArray
-import org.json.JSONObject
+import kotlinx.serialization.json.Json
 
 class WearPrefsRepositoryImpl @Inject constructor(
     @NamedWearStorage private val localStorage: LocalStorage,
@@ -77,7 +79,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
                             kotlinJsonMapper.encodeToString(TemplateTileConfig(template, templateRefreshInterval)),
                     )
 
-                    localStorage.putString(PREF_TILE_TEMPLATES, JSONObject(templates).toString())
+                    localStorage.putString(PREF_TILE_TEMPLATES, templates.toJsonObject().toString())
                 }
 
                 localStorage.remove(legacyPrefTileTemplate)
@@ -108,26 +110,28 @@ class WearPrefsRepositoryImpl @Inject constructor(
     override suspend fun getAllTileShortcuts(): Map<Int?, List<String>> {
         return localStorage.getString(PREF_TILE_SHORTCUTS)?.let { jsonStr ->
             runCatching {
-                JSONObject(jsonStr)
+                jsonStr.toJsonObjectOrNull()
             }.fold(
                 onSuccess = { jsonObject ->
                     buildMap {
-                        jsonObject.keys().forEach { stringKey ->
+                        jsonObject?.keys?.forEach { stringKey ->
                             val intKey = stringKey.takeUnless { it == "null" }?.toInt()
-                            val jsonArray = jsonObject.getJSONArray(stringKey)
-                            val entities = jsonArray.toStringList()
+                            val jsonArray = jsonObject[stringKey]?.jsonArrayOrNull()
+                            val entities = jsonArray?.toStringList() ?: emptyList()
                             put(intKey, entities)
                         }
                     }
                 },
                 onFailure = {
                     // backward compatibility with the previous format when there was only one Shortcut Tile:
-                    val jsonArray = JSONArray(jsonStr)
-                    val entities = jsonArray.toStringList()
-                    mapOf(
-                        // the key is null since we don't (yet) have the tileId
-                        null to entities,
-                    )
+                    val jsonArray = jsonStr.toJsonObjectOrNull()?.jsonArrayOrNull()
+                    jsonArray?.let {
+                        val entities = jsonArray.toStringList()
+                        mapOf(
+                            // the key is null since we don't (yet) have the tileId
+                            null to entities,
+                        )
+                    }
                 },
             )
         } ?: emptyMap()
@@ -139,10 +143,7 @@ class WearPrefsRepositoryImpl @Inject constructor(
     }
 
     private suspend fun setTileShortcuts(map: Map<Int?, List<String>>) {
-        val jsonArrayMap = map.map { (tileId, entities) ->
-            tileId.toString() to JSONArray(entities)
-        }.toMap()
-        val jsonStr = JSONObject(jsonArrayMap).toString()
+        val jsonStr = Json.encodeToString(map)
         localStorage.putString(PREF_TILE_SHORTCUTS, jsonStr)
     }
 

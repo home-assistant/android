@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.app.AlarmManager
 import android.content.Context
-import android.os.Build
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
@@ -45,14 +44,10 @@ class NextAlarmManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            !context.isAutomotive()
-        } else {
-            true
-        }
+        return !context.isAutomotive()
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return emptyArray()
     }
 

@@ -139,21 +139,20 @@ class PhoneStateSensorManager : SensorManager {
                     sim1DataNetworkType,
                     sim2DataNetworkType,
                 )
+
             (
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                     context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
                 ) ->
                 listOf(phoneState, sim_1, sim_2, sim1DataNetworkType, sim2DataNetworkType)
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 -> {
-                listOf(phoneState, sim_1, sim_2)
-            }
+
             else -> {
-                listOf(phoneState)
+                listOf(phoneState, sim_1, sim_2)
             }
         }
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.READ_PHONE_STATE)
     }
 
@@ -221,43 +220,41 @@ class PhoneStateSensorManager : SensorManager {
         if (!isEnabled(context, basicSimSensor)) {
             return
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            var displayName = STATE_UNAVAILABLE
-            val attrs = mutableMapOf<String, Any>()
+        var displayName = STATE_UNAVAILABLE
+        val attrs = mutableMapOf<String, Any>()
 
-            if (checkPermission(context, basicSimSensor.id)) {
-                val subscriptionManager =
-                    context.applicationContext.getSystemService<SubscriptionManager>()
-                val info: SubscriptionInfo? =
-                    subscriptionManager?.getActiveSubscriptionInfoForSimSlotIndex(slotIndex)
+        if (checkPermission(context, basicSimSensor.id)) {
+            val subscriptionManager =
+                context.applicationContext.getSystemService<SubscriptionManager>()
+            val info: SubscriptionInfo? =
+                subscriptionManager?.getActiveSubscriptionInfoForSimSlotIndex(slotIndex)
 
-                if (info != null) {
-                    try {
-                        displayName = info.displayName?.toString() ?: info.carrierName.toString()
-                        attrs["carrier name"] = info.carrierName
-                        attrs["iso country code"] = info.countryIso
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            attrs["carrier id"] = info.carrierId
-                            attrs["mcc"] = info.mccString.toString()
-                            attrs["mnc"] = info.mncString.toString()
-                            attrs["is opportunistic"] = info.isOpportunistic
-                            attrs["data roaming"] =
-                                if (info.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) "enable" else "disable"
-                        }
-                    } catch (e: Exception) {
-                        Timber.e(e, "Unable to get SIM data")
+            if (info != null) {
+                try {
+                    displayName = info.displayName?.toString() ?: info.carrierName.toString()
+                    attrs["carrier name"] = info.carrierName
+                    attrs["iso country code"] = info.countryIso
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        attrs["carrier id"] = info.carrierId
+                        attrs["mcc"] = info.mccString.toString()
+                        attrs["mnc"] = info.mncString.toString()
+                        attrs["is opportunistic"] = info.isOpportunistic
+                        attrs["data roaming"] =
+                            if (info.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) "enable" else "disable"
                     }
+                } catch (e: Exception) {
+                    Timber.e(e, "Unable to get SIM data")
                 }
             }
-
-            onSensorUpdated(
-                context,
-                basicSimSensor,
-                displayName,
-                basicSimSensor.statelessIcon,
-                attrs,
-            )
         }
+
+        onSensorUpdated(
+            context,
+            basicSimSensor,
+            displayName,
+            basicSimSensor.statelessIcon,
+            attrs,
+        )
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)

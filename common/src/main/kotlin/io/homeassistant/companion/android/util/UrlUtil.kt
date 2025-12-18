@@ -3,8 +3,12 @@ package io.homeassistant.companion.android.util
 import android.net.Uri
 import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
+import java.net.InetAddress
 import java.net.URI
 import java.net.URL
+import java.net.UnknownHostException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -40,30 +44,51 @@ object UrlUtil {
             .toString()
     }
 
+    /**
+     * Resolves a URL input string against a base URL.
+     *
+     * @param base The base URL to resolve relative URLs against. Can be null if input is absolute.
+     * @param input The URL string to resolve. Supported formats:
+     *   - Absolute URL (http://... or https://...)
+     *   - Relative path to be resolved against base
+     *   - Deep link URL with homeassistant://navigate/ prefix
+     * @return The resolved URL, the base URL if input is invalid, or null if resolution fails
+     */
     fun handle(base: URL?, input: String): URL? {
-        val asURI = try {
-            URI(input.removePrefix("homeassistant://navigate/"))
+        val normalizedInput = input.removePrefix("homeassistant://navigate/")
+
+        val uri = try {
+            URI(normalizedInput)
         } catch (e: Exception) {
-            Timber.w("Invalid input, returning base only")
-            null
+            Timber.w(e, "Invalid URI input: $normalizedInput")
+            return base
         }
+
         return when {
-            asURI == null -> {
-                base
-            }
             isAbsoluteUrl(input) -> {
-                asURI.toURL()
+                uri.runCatching { toURL() }
+                    .onFailure { Timber.w(it, "Failed to convert URI to URL: $normalizedInput") }
+                    .getOrNull()
             }
-            else -> { // Input is relative to base URL
-                val builder = base
-                    ?.toHttpUrlOrNull()
-                    ?.newBuilder()
-                if (!asURI.path.isNullOrBlank()) builder?.addPathSegments(asURI.path.trim().removePrefix("/"))
-                if (!asURI.query.isNullOrBlank()) builder?.query(asURI.query.trim())
-                if (!asURI.fragment.isNullOrBlank()) builder?.fragment(asURI.fragment.trim())
-                builder?.build()?.toUrl()
-            }
+
+            else -> buildRelativeUrl(base, uri)
         }
+    }
+
+    private fun buildRelativeUrl(base: URL?, uri: URI): URL? {
+        val builder = base?.toHttpUrlOrNull()?.newBuilder() ?: return null
+
+        return builder.apply {
+            uri.path?.takeIf { it.isNotBlank() }?.let {
+                addPathSegments(it.trim().removePrefix("/"))
+            }
+            uri.query?.takeIf { it.isNotBlank() }?.let {
+                query(it.trim())
+            }
+            uri.fragment?.takeIf { it.isNotBlank() }?.let {
+                fragment(it.trim())
+            }
+        }.build().toUrl()
     }
 
     fun isAbsoluteUrl(it: String?): Boolean {
@@ -74,7 +99,7 @@ object UrlUtil {
     fun URL.baseIsEqual(other: URL?): Boolean = if (other == null) {
         false
     } else {
-        host?.lowercase() == other.host?.lowercase() &&
+        host.equals(other.host, ignoreCase = true) &&
             port.let {
                 if (it ==
                     -1
@@ -84,7 +109,7 @@ object UrlUtil {
                     it
                 }
             } == other.port.let { if (it == -1) defaultPort else it } &&
-            protocol?.lowercase() == other.protocol?.lowercase() &&
+            protocol.equals(other.protocol, ignoreCase = true) &&
             userInfo == other.userInfo
     }
 
@@ -95,4 +120,95 @@ object UrlUtil {
             )
         return matches?.groups?.get(1)?.value
     }
+}
+
+/**
+ * Determines if this URL is publicly accessible using Fully Qualified Domain Name (FQDN) or a public IP.
+ *
+ * A URL is considered to be publicly accessible if:
+ * 1. Its hostname does NOT end with a known local TLD (`.local`, `.lan`, `.home`, `.internal`,
+ *    `.localdomain`), AND
+ * 2. When resolved via DNS, ALL of its IP addresses are public (not private RFC 1918 addresses,
+ *    not loopback, not link-local, and not any-local addresses).
+ *
+ * This function performs DNS resolution on the IO dispatcher and may block briefly while
+ * resolving the hostname.
+ *
+ * @return `true` if the URL is publicly accessible, `false` if it is local/private or
+ *         if DNS resolution fails.
+ */
+suspend fun URL.isPubliclyAccessible(): Boolean {
+    return isPubliclyAccessible(host)
+}
+
+private suspend fun isPubliclyAccessible(fqdn: String): Boolean {
+    // Check TLD
+    val localTlds = listOf(".local", ".lan", ".home", ".internal", ".localdomain")
+    if (localTlds.any { fqdn.endsWith(it, ignoreCase = true) }) {
+        return false
+    }
+
+    // Resolve and check IP
+    return try {
+        val addresses = withContext(Dispatchers.IO) {
+            InetAddress.getAllByName(fqdn)
+        }
+        addresses.none { it.isPrivateOrLocal() }
+    } catch (e: UnknownHostException) {
+        false
+    }
+}
+
+private fun InetAddress.isPrivateOrLocal(): Boolean {
+    return this.isSiteLocalAddress ||
+        // Private IP ranges (RFC 1918)
+        this.isLoopbackAddress ||
+        // 127.0.0.0/8 or ::1
+        this.isLinkLocalAddress ||
+        // 169.254.0.0/16 or fe80::/10
+        this.isAnyLocalAddress // 0.0.0.0 or ::
+}
+
+/**
+ * Checks if this URL has the same origin (scheme, host, and port) as the other URL.
+ *
+ * @param other the URL to compare against
+ * @return `true` if both URLs have the same scheme, host, and port
+ */
+fun HttpUrl.hasSameOrigin(other: HttpUrl): Boolean {
+    return scheme.equals(other.scheme, ignoreCase = true) &&
+        host.equals(other.host, ignoreCase = true) &&
+        port == other.port
+}
+
+/**
+ * Checks if this Uri has the same origin (scheme, host, and port) as the other Uri.
+ * Default ports (443 for HTTPS, 80 for HTTP) are normalized for comparison.
+ *
+ * @param other the Uri to compare against
+ * @return `true` if both URIs have the same scheme, host, and port
+ */
+fun Uri.hasSameOrigin(other: Uri?): Boolean {
+    if (other == null) return false
+    return scheme.equals(other.scheme, ignoreCase = true) &&
+        host.equals(other.host, ignoreCase = true) &&
+        effectivePort == other.effectivePort
+}
+
+private val Uri.effectivePort: Int
+    get() = when {
+        port != -1 -> port
+        scheme.equals("https", ignoreCase = true) -> 443
+        scheme.equals("http", ignoreCase = true) -> 80
+        else -> -1
+    }
+
+/**
+ * Checks if this Uri has a non root path (not empty, not just "/").
+ *
+ * @return `true` if the Uri has a path that is not blank and not just "/"
+ */
+fun Uri.hasNonRootPath(): Boolean {
+    val path = this.path ?: return false
+    return path.isNotBlank() && path != "/"
 }

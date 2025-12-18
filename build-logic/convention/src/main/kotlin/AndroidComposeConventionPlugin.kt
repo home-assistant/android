@@ -1,5 +1,7 @@
 
 import com.android.compose.screenshot.gradle.ScreenshotTestOptions
+import com.android.compose.screenshot.tasks.PreviewScreenshotUpdateTask
+import com.android.compose.screenshot.tasks.PreviewScreenshotValidationTask
 import io.homeassistant.companion.android.androidConfig
 import io.homeassistant.companion.android.getPluginId
 import org.gradle.api.Plugin
@@ -7,6 +9,7 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.withType
 
 /**
  * A convention plugin that applies common configurations to Android Compose modules.
@@ -30,12 +33,27 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
                 extensions.configure<ScreenshotTestOptions> {
                     imageDifferenceThreshold = 0.00025f // 0.025%
                 }
+            }
 
+            // Screenshot test worker memory grows with test count. Increase as needed.
+            // Tracking: https://issuetracker.google.com/issues/469819154
+            val maxHeapSizeScreenshotTesting = "4g"
+
+            tasks.withType<PreviewScreenshotValidationTask>().configureEach {
+                maxHeapSize = maxHeapSizeScreenshotTesting
+            }
+
+            tasks.withType<PreviewScreenshotUpdateTask>().configureEach {
+                maxHeapSize = maxHeapSizeScreenshotTesting
+            }
+
+            androidConfig {
                 dependencies {
                     "implementation"(platform(libs.compose.bom))
                     "implementation"(libs.compose.foundation)
                     "implementation"(libs.compose.material3)
                     "implementation"(libs.compose.material.icons.core)
+                    "implementation"(libs.compose.material.icons.extended)
                     "implementation"(libs.compose.ui)
                     "implementation"(libs.compose.uiTooling)
                     "implementation"(libs.androidx.lifecycle.runtime.compose)

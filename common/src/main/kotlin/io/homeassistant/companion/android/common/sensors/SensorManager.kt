@@ -24,6 +24,7 @@ import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
 
 interface SensorManager {
 
@@ -75,10 +76,10 @@ interface SensorManager {
     /**
      * Get list of Android permissions that are required to use this sensor
      */
-    fun requiredPermissions(sensorId: String): Array<String>
+    fun requiredPermissions(context: Context, sensorId: String): Array<String>
 
     suspend fun checkPermission(context: Context, sensorId: String): Boolean {
-        return requiredPermissions(sensorId).all {
+        return requiredPermissions(context, sensorId).all {
             if (sensorId != "last_used_app") {
                 context.checkPermission(it, myPid(), myUid()) == PackageManager.PERMISSION_GRANTED
             } else {
@@ -248,10 +249,10 @@ interface SensorManager {
         mdiIcon: String,
         attributes: Map<String, Any?>,
         forceUpdate: Boolean = false,
-    ) {
+    ) = withContext(Dispatchers.Default) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensors = sensorDao.get(basicSensor.id)
-        if (sensors.isEmpty()) return
+        if (sensors.isEmpty()) return@withContext
 
         sensors.forEach {
             val sensor = it.copy(

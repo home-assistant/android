@@ -16,11 +16,7 @@ fun NotificationManagerCompat.getNotificationManager(): NotificationManager {
 }
 
 fun NotificationManagerCompat.getActiveNotification(tag: String?, id: Int): StatusBarNotification? {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        this.getNotificationManager().activeNotifications.singleOrNull { s -> s.id == id && s.tag == tag }
-    } else {
-        return null
-    }
+    return this.getNotificationManager().activeNotifications.singleOrNull { s -> s.id == id && s.tag == tag }
 }
 
 fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolean = cancelNotificationGroupIfNeeded(

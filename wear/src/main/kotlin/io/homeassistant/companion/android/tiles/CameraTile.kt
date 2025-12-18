@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.home.HomeActivity
@@ -32,6 +33,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -124,7 +126,13 @@ class CameraTile : TileService() {
                         serverManager.integrationRepository().getEntity(it)
                     }
                     val picture = entity?.attributes?.get("entity_picture")?.toString()
-                    val url = UrlUtil.handle(serverManager.getServer()?.connection?.getUrl(), picture ?: "")
+                    val urlState = serverManager.connectionStateProvider().urlFlow().first()
+                    val baseUrl = if (urlState is UrlState.HasUrl) {
+                        urlState.url
+                    } else {
+                        null
+                    }
+                    val url = UrlUtil.handle(baseUrl, picture ?: "")
                     if (picture != null && url != null) {
                         var byteArray: ByteArray?
                         val maxWidth =

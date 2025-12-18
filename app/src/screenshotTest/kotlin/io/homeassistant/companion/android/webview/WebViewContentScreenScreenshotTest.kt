@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.webview
 
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpSize
@@ -16,12 +17,16 @@ class WebViewContentScreenScreenshotTest {
         WebViewContentScreen(
             webView = null,
             player = null,
+            snackbarHostState = SnackbarHostState(),
             playerSize = null,
             playerTop = 0.dp,
             playerLeft = 0.dp,
             currentAppLocked = false,
+            shouldAskNotificationPermission = false,
+            webViewInitialized = true,
             customViewFromWebView = null,
-            onFullscreenClicked = { },
+            onFullscreenClicked = {},
+            onNotificationPermissionResult = {},
             serverHandleInsets = false,
         )
     }
@@ -50,12 +55,16 @@ class WebViewContentScreenScreenshotTest {
         WebViewContentScreen(
             webView = null,
             player = null,
+            snackbarHostState = SnackbarHostState(),
             playerSize = null,
             playerTop = 0.dp,
             playerLeft = 0.dp,
             currentAppLocked = true,
+            shouldAskNotificationPermission = false,
+            webViewInitialized = true,
             customViewFromWebView = null,
-            onFullscreenClicked = { },
+            onFullscreenClicked = {},
+            onNotificationPermissionResult = {},
             serverHandleInsets = false,
         )
     }
@@ -67,13 +76,38 @@ class WebViewContentScreenScreenshotTest {
         WebViewContentScreen(
             webView = null,
             player = FakePlayer(),
+            snackbarHostState = SnackbarHostState(),
             playerSize = DpSize(100.dp, 100.dp),
             playerTop = 50.dp,
             playerLeft = 10.dp,
             currentAppLocked = false,
+            shouldAskNotificationPermission = false,
+            webViewInitialized = true,
             customViewFromWebView = null,
-            onFullscreenClicked = { },
+            onFullscreenClicked = {},
+            onNotificationPermissionResult = {},
             serverHandleInsets = false,
+        )
+    }
+
+    @PreviewTest
+    @Preview
+    @Composable
+    fun `WebView request notification permission`() {
+        WebViewContentScreen(
+            webView = null,
+            player = null,
+            snackbarHostState = SnackbarHostState(),
+            playerSize = null,
+            playerTop = 0.dp,
+            playerLeft = 0.dp,
+            currentAppLocked = false,
+            shouldAskNotificationPermission = true,
+            webViewInitialized = true,
+            customViewFromWebView = null,
+            onFullscreenClicked = {},
+            onNotificationPermissionResult = {},
+            supportsNotificationPermission = true,
         )
     }
 }

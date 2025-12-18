@@ -1,20 +1,46 @@
 package io.homeassistant.companion.android.developer
 
-import android.content.res.Configuration.UI_MODE_NIGHT_YES
-import android.content.res.Configuration.UI_MODE_TYPE_NORMAL
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import com.android.tools.screenshot.PreviewTest
-import io.homeassistant.companion.android.developer.catalog.HAComposeCatalogScreen
+import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.developer.catalog.catalogButtonsAndIndicatorsSection
+import io.homeassistant.companion.android.developer.catalog.catalogTextAndBannersSection
+import io.homeassistant.companion.android.developer.catalog.catalogUserInputSection
 
 class HAComposeCatalogScreenshotTest {
 
-    // Use static heightDp to see the whole content of the screen
-    @Preview(name = "Light", heightDp = 2000, widthDp = 1000)
-    @Preview(name = "Dark", uiMode = UI_MODE_NIGHT_YES or UI_MODE_TYPE_NORMAL, heightDp = 2000, widthDp = 1000)
+    @CatalogScreenPreview
     @PreviewTest
     @Composable
-    fun `HAComposeCatalog default screen`() {
-        HAComposeCatalogScreen()
+    fun HAButtonsAndIndicatorsScreen() {
+        HAThemeForPreview {
+            LazyColumn {
+                catalogButtonsAndIndicatorsSection(ButtonVariant.PRIMARY)
+            }
+        }
+    }
+
+    @CatalogScreenPreview
+    @PreviewTest
+    @Composable
+    fun HAUserInputScreen() {
+        HAThemeForPreview {
+            LazyColumn {
+                catalogUserInputSection()
+            }
+        }
+    }
+
+    @CatalogScreenPreview
+    @PreviewTest
+    @Composable
+    fun HATextAndBannersScreen() {
+        HAThemeForPreview {
+            LazyColumn {
+                catalogTextAndBannersSection()
+            }
+        }
     }
 }

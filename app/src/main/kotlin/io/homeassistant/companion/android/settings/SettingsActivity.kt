@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.settings.notification.NotificationHist
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
 import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
+import io.homeassistant.companion.android.settings.ssid.SsidFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import javax.inject.Inject
@@ -62,6 +63,7 @@ class SettingsActivity : BaseActivity() {
     @Parcelize
     sealed interface Deeplink : Parcelable {
         data object Developer : Deeplink
+        data class HomeNetwork(val serverId: Int) : Deeplink
         data object NotificationHistory : Deeplink
         data class QSTile(val tileId: String) : Deeplink
         data class Sensor(val sensorId: String) : Deeplink
@@ -100,12 +102,17 @@ class SettingsActivity : BaseActivity() {
                             SettingsFragment::class.java
                         }
                         Deeplink.Developer -> DeveloperSettingsFragment::class.java
+                        is Deeplink.HomeNetwork -> SsidFragment::class.java
                         Deeplink.NotificationHistory -> NotificationHistoryFragment::class.java
                         is Deeplink.Sensor -> SensorDetailFragment::class.java
                         is Deeplink.QSTile -> ManageTilesFragment::class.java
                         else -> SettingsFragment::class.java
                     },
                     when (settingsNavigation) {
+                        is Deeplink.HomeNetwork -> {
+                            Bundle().apply { putInt(SsidFragment.EXTRA_SERVER, settingsNavigation.serverId) }
+                        }
+
                         is Deeplink.Sensor -> {
                             SensorDetailFragment.newInstance(settingsNavigation.sensorId).arguments
                         }

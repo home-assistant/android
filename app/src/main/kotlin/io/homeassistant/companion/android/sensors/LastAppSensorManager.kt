@@ -5,7 +5,6 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
@@ -35,24 +34,17 @@ class LastAppSensorManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        return if (context.isAutomotive()) {
-            false
-        } else {
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-        }
+        return !context.isAutomotive()
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.PACKAGE_USAGE_STATS)
     }
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     override suspend fun requestSensorUpdate(context: Context) {
         updateLastApp(context)
     }
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     private suspend fun updateLastApp(context: Context) {
         if (!isEnabled(context, last_used)) {
             return

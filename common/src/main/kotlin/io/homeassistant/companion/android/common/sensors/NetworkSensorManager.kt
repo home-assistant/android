@@ -9,25 +9,25 @@ import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.getStringOrElse
+import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.lang.reflect.Method
 import java.net.Inet6Address
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.serialization.SerializationException
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okio.IOException
-import org.json.JSONException
-import org.json.JSONObject
 import timber.log.Timber
 
 class NetworkSensorManager : SensorManager {
@@ -159,33 +159,31 @@ class NetworkSensorManager : SensorManager {
             wifiSignalStrength,
         )
         val list = if (hasWifi(context)) {
-            val withPublicIp = wifiSensors.plus(publicIp)
+            val withPublicIp = wifiSensors + publicIp
             if (hasHotspot(context)) {
-                withPublicIp.plus(hotspotState)
+                withPublicIp + hotspotState
             } else {
                 withPublicIp
             }
         } else {
             listOf(publicIp)
         }
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            list.plus(networkType).plus(ip6Addresses)
-        } else {
-            list
-        }
+        return list + networkType + ip6Addresses
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return when {
             sensorId == hotspotState.id || sensorId == publicIp.id || sensorId == networkType.id -> {
                 arrayOf()
             }
+
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                 )
             }
+
             else -> {
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
             }
@@ -202,10 +200,8 @@ class NetworkSensorManager : SensorManager {
         updateWifiFrequencySensor(context)
         updateWifiSignalStrengthSensor(context)
         updatePublicIpSensor(context)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            updateNetworkType(context)
-            updateIP6Sensor(context)
-        }
+        updateNetworkType(context)
+        updateIP6Sensor(context)
     }
 
     private fun hasWifi(context: Context): Boolean = context.applicationContext.getSystemService<WifiManager>() != null
@@ -367,7 +363,6 @@ class NetworkSensorManager : SensorManager {
         )
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     private suspend fun updateIP6Sensor(context: Context) {
         if (!isEnabled(context, ip6Addresses)) {
             return
@@ -556,9 +551,9 @@ class NetworkSensorManager : SensorManager {
                 override fun onResponse(call: Call, response: Response) {
                     if (!response.isSuccessful) throw IOException("Unexpected response code $response")
                     try {
-                        val jsonObject = JSONObject(response.body.string())
-                        ip = jsonObject.getString("ip")
-                    } catch (e: JSONException) {
+                        val jsonObject = response.body.string().toJsonObjectOrNull()
+                        ip = jsonObject?.getStringOrElse("ip", "") ?: ""
+                    } catch (e: SerializationException) {
                         Timber.e(e, "Unable to parse ip address from response")
                     }
 
@@ -578,7 +573,6 @@ class NetworkSensorManager : SensorManager {
     }
 
     @SuppressLint("MissingPermission")
-    @RequiresApi(Build.VERSION_CODES.M)
     private suspend fun updateNetworkType(context: Context) {
         if (!isEnabled(context, networkType)) {
             return

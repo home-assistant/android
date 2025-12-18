@@ -20,7 +20,7 @@ class ActivitySensorManager :
         return listOf()
     }
 
-    override fun requiredPermissions(sensorId: String): Array<String> {
+    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         // Noop
         return emptyArray()
     }
