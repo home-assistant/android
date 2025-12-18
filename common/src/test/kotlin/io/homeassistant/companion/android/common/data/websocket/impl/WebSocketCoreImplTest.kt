@@ -29,6 +29,7 @@ import io.mockk.unmockkAll
 import io.mockk.verify
 import io.mockk.verifyOrder
 import java.io.IOException
+import kotlin.math.sin
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
@@ -41,6 +42,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -74,6 +76,13 @@ class WebSocketCoreImplTest {
     private lateinit var mockConnection: WebSocket
     private lateinit var webSocketCore: WebSocketCoreImpl
     private lateinit var webSocketListener: WebSocketListener
+
+    /**
+     * Computes a deterministic delay based on the index using a sine function.
+     * Returns a delay that is always positive but non linear for concurrent test scenarios.
+     * Values are between 5 and 25.
+     */
+    private fun deterministicDelay(index: Long): Long = ((sin(index.toDouble()) + 1.5) * 10).toLong()
 
     @BeforeEach
     fun setup() {
@@ -588,9 +597,9 @@ subscribeTo
         coVerify { mockConnection.send(match<String> { it.contains("testSubscription") }) }
         assertEquals(1, webSocketCore.activeMessages.size)
         webSocketCore.activeMessages.values.first().apply {
-            assertTrue(this is ActiveMessage.SubscriptionActiveMessage)
+            assertTrue(this is ActiveMessage.Subscription)
             assertTrue(responseDeferred.isCompleted)
-            assertEquals(expectedData.plus("type" to expectedType), (this as ActiveMessage.SubscriptionActiveMessage).request.message)
+            assertEquals(expectedData.plus("type" to expectedType), (this as ActiveMessage.Subscription).request.message)
         }
     }
 
@@ -644,7 +653,7 @@ subscribeTo
         assertTrue(webSocketCore.connect())
 
         // Dummy request to create a fake active message
-        webSocketCore.activeMessages[42] = ActiveMessage.SubscriptionActiveMessage(
+        webSocketCore.activeMessages[42] = ActiveMessage.Subscription(
             eventFlow = mockk(),
             onEvent = mockk(),
             responseDeferred = CompletableDeferred(),
@@ -955,9 +964,10 @@ misc
         }
 
         // Launch multiple sendMessage calls concurrently
-        val jobs = (1..50).map { i ->
+        val nbMessages = 50
+        val jobs = (1..nbMessages).map { i ->
             async {
-                delay(Random.nextLong())
+                delay(deterministicDelay(i.toLong()))
                 webSocketCore.sendMessage(mapOf("type" to "test", "value" to i))
             }
         }
@@ -967,7 +977,7 @@ misc
         advanceUntilIdle()
 
         // Verify all messages were sent
-        assertEquals(50, sentMessages.size)
+        assertEquals(nbMessages, sentMessages.size)
 
         // Verify IDs are sequential (starting from 2, after supported_features which is 1)
         val ids = sentMessages.map { msg ->
@@ -990,9 +1000,9 @@ misc
         prepareAuthenticationAnswer()
 
         // Launch multiple connect calls concurrently
-        val jobs = (1..50).map {
+        val jobs = (1..50).map { i ->
             async {
-                delay(Random.nextLong())
+                delay(deterministicDelay(i.toLong()))
                 webSocketCore.connect()
             }
         }
