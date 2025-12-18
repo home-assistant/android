@@ -1484,8 +1484,10 @@ class WebViewActivity :
         finish()
     }
 
-    override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean) {
-        Timber.d("Loading $url (keepHistory $keepHistory, openInApp $openInApp)")
+    override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean, serverHandleInsets: Boolean) {
+        Timber.d(
+            "Loading $url (keepHistory $keepHistory, openInApp $openInApp, servverHandleInsets $serverHandleInsets)",
+        )
         this.serverHandleInsets.value = serverHandleInsets
         if (openInApp) {
             // Remove any displayed fragments (e.g., BlockInsecureFragment, ConnectionSecurityLevelFragment)

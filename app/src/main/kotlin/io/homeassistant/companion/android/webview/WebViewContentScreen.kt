@@ -110,10 +110,10 @@ internal fun WebViewContentScreen(
                 SafeHAWebView(
                     webView,
                     nightModeTheme,
-                    currentAppLocked,
-                    statusBarColor,
-                    backgroundColor,
-                    serverHandleInsets,
+                    currentAppLocked = currentAppLocked,
+                    statusBarColor = statusBarColor,
+                    backgroundColor = backgroundColor,
+                    serverHandleInsets = serverHandleInsets,
                 )
 
                 player?.let { player ->

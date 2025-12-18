@@ -32,7 +32,7 @@ interface WebView {
      *   loading
      * @param openInApp if `true`, loads in the WebView; if `false`, opens in external browser
      */
-    fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean)
+    fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean, serverHandleInsets: Boolean)
 
     fun setStatusBarAndBackgroundColor(statusBarColor: Int, backgroundColor: Int)
 
