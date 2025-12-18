@@ -70,7 +70,6 @@ import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 internal fun WebViewContentScreen(
     webView: WebView?,
@@ -148,6 +147,7 @@ internal fun WebViewContentScreen(
     }
 }
 
+@OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 private fun SafeHAWebView(
     webView: WebView?,
@@ -157,15 +157,48 @@ private fun SafeHAWebView(
     backgroundColor: Color?,
     serverHandleInsets: Boolean,
 ) {
-    // We add colored small spacer all around the WebView based on the `safeDrawing` insets.
-    // TODO This should be disable when the frontend supports edge to edge
-    // https://github.com/home-assistant/frontend/pull/25566
+    val hazeModifier = if (currentAppLocked) Modifier.hazeEffect(style = HazeMaterials.thin()) else Modifier
 
+    if (serverHandleInsets) {
+        Box(modifier = hazeModifier) {
+            HAWebView(
+                nightModeTheme = nightModeTheme,
+                factory = { webView },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Transparent),
+            )
+        }
+    } else {
+        HAWebViewWithInsets(
+            webView = webView,
+            nightModeTheme = nightModeTheme,
+            statusBarColor = statusBarColor,
+            backgroundColor = backgroundColor,
+            modifier = hazeModifier,
+        )
+    }
+}
+
+/**
+ * Wraps the WebView with colored overlays matching the safe area insets.
+ *
+ * Used when the Home Assistant frontend does not handle edge-to-edge insets
+ * version prior 2026.1.1
+ */
+@Composable
+private fun HAWebViewWithInsets(
+    webView: WebView?,
+    nightModeTheme: NightModeTheme?,
+    statusBarColor: Color?,
+    backgroundColor: Color?,
+    modifier: Modifier = Modifier,
+) {
     val insets = WindowInsets.safeDrawing
     val insetsPaddingValues = insets.asPaddingValues()
 
-    Column(modifier = if (currentAppLocked) Modifier.hazeEffect(style = HazeMaterials.thin()) else Modifier) {
-        statusBarColor?.takeIf { !serverHandleInsets }?.Overlay(
+    Column(modifier = modifier) {
+        statusBarColor?.Overlay(
             modifier = Modifier
                 .height(insetsPaddingValues.calculateTopPadding())
                 .fillMaxWidth()
@@ -175,28 +208,26 @@ private fun SafeHAWebView(
         // The height is based on whatever is left between the statusBar and navigationBar
         Row(modifier = Modifier.weight(1f)) {
             // Left safe area
-            backgroundColor?.takeIf { !serverHandleInsets }?.Overlay(
+            backgroundColor?.Overlay(
                 modifier = Modifier
                     .fillMaxHeight()
                     .width(insetsPaddingValues.calculateLeftPadding(LayoutDirection.Ltr)),
             )
             HAWebView(
                 nightModeTheme = nightModeTheme,
-                factory = {
-                    webView
-                },
+                factory = { webView },
                 modifier = Modifier
                     .weight(1f)
                     .background(Color.Transparent),
             )
             // Right safe area
-            backgroundColor?.takeIf { !serverHandleInsets }?.Overlay(
+            backgroundColor?.Overlay(
                 modifier = Modifier
                     .fillMaxHeight()
                     .width(insetsPaddingValues.calculateRightPadding(LayoutDirection.Ltr)),
             )
         }
-        backgroundColor?.takeIf { !serverHandleInsets }?.Overlay(
+        backgroundColor?.Overlay(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(insetsPaddingValues.calculateBottomPadding()),
