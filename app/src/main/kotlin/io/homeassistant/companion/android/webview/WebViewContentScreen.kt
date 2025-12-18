@@ -184,7 +184,7 @@ private fun SafeHAWebView(
  * Wraps the WebView with colored overlays matching the safe area insets.
  *
  * Used when the Home Assistant frontend does not handle edge-to-edge insets
- * version prior 2026.1.1
+ * version prior 2025.12.x
  */
 @Composable
 private fun HAWebViewWithInsets(

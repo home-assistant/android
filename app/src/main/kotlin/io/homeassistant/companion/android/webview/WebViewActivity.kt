@@ -105,7 +105,6 @@ import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
-import io.homeassistant.companion.android.common.util.applyInsets
 import io.homeassistant.companion.android.common.util.getBooleanOrElse
 import io.homeassistant.companion.android.common.util.getBooleanOrNull
 import io.homeassistant.companion.android.common.util.getIntOrElse
@@ -135,6 +134,7 @@ import io.homeassistant.companion.android.util.DataUriDownloadManager
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
+import io.homeassistant.companion.android.util.applyInsets
 import io.homeassistant.companion.android.util.compose.initializePlayer
 import io.homeassistant.companion.android.util.hasNonRootPath
 import io.homeassistant.companion.android.util.hasSameOrigin
@@ -1486,7 +1486,7 @@ class WebViewActivity :
 
     override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean, serverHandleInsets: Boolean) {
         Timber.d(
-            "Loading $url (keepHistory $keepHistory, openInApp $openInApp, servverHandleInsets $serverHandleInsets)",
+            "Loading $url (keepHistory $keepHistory, openInApp $openInApp, serverHandleInsets $serverHandleInsets)",
         )
         this.serverHandleInsets.value = serverHandleInsets
         if (openInApp) {
@@ -1590,7 +1590,7 @@ class WebViewActivity :
         if (statusBarColor != 0) {
             this.statusBarColor.value = Color(statusBarColor)
         } else {
-            Timber.e("Skipping coloring status bar...")
+            Timber.e("Cannot set status bar color. Skipping coloring...")
         }
         if (backgroundColor != 0) {
             this.backgroundColor.value = Color(backgroundColor)

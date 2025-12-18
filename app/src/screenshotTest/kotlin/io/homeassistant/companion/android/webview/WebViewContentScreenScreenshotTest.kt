@@ -38,12 +38,16 @@ class WebViewContentScreenScreenshotTest {
         WebViewContentScreen(
             webView = null,
             player = null,
+            snackbarHostState = SnackbarHostState(),
             playerSize = null,
             playerTop = 0.dp,
             playerLeft = 0.dp,
             currentAppLocked = false,
+            shouldAskNotificationPermission = false,
+            webViewInitialized = true,
             customViewFromWebView = null,
-            onFullscreenClicked = { },
+            onFullscreenClicked = {},
+            onNotificationPermissionResult = {},
             serverHandleInsets = true,
         )
     }
@@ -108,6 +112,7 @@ class WebViewContentScreenScreenshotTest {
             onFullscreenClicked = {},
             onNotificationPermissionResult = {},
             supportsNotificationPermission = true,
+            serverHandleInsets = false,
         )
     }
 }
