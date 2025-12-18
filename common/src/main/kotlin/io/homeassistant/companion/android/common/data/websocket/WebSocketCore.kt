@@ -93,3 +93,12 @@ internal class WebSocketCoreFactory @Inject constructor(
         return WebSocketCoreImpl(okHttpClient, serverManagerProvider.get(), serverId)
     }
 }
+
+/**
+ * Exception thrown when a WebSocket operation fails.
+ *
+ * This exception is used to signal failures in the WebSocket communication layer,
+ * such as when attempting to send a message without an active connection or when
+ * the underlying send operation fails.
+ */
+class HAWebSocketException(override val message: String?) : Exception()

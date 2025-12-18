@@ -7,6 +7,8 @@ import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companio
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
+import io.homeassistant.companion.android.common.data.websocket.HAWebSocketException
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
@@ -192,24 +194,20 @@ internal class WebSocketCoreImpl(
         }
     }
 
-    // TODO check the base type and if we want to keep this public
-    class HAWebSocketException(override val message: String?) : Exception()
-
     /**
      * This complete when the message has been processed and sent or not.
      * This is not making any network call directly it enqueue the send into the WebSocket connection.
      */
     private fun processSendCommand(command: Command<*>) {
-        // TODO do we need any protection on the connection like in connect() with the Mutex
         val currentConnection = connection
+        if (currentConnection == null) {
+            command.sendCompleted.completeExceptionally(
+                HAWebSocketException("No connection to send the message to"),
+            )
+            return
+        }
         when (command) {
             is Command.WithAnswer -> {
-                if (currentConnection == null) {
-                    command.sendCompleted.completeExceptionally(
-                        HAWebSocketException("No connection to send the message to"),
-                    )
-                    return
-                }
                 val id = id.getAndIncrement()
                 val outbound = command.request.message.plus("id" to id)
                 Timber.d("Sending message $id: $outbound")
@@ -227,7 +225,7 @@ internal class WebSocketCoreImpl(
             }
 
             is Command.Bytes -> {
-                val result = currentConnection?.send(command.data.toByteString()) ?: false
+                val result = currentConnection.send(command.data.toByteString())
                 command.sendCompleted.complete(result)
             }
         }
@@ -421,7 +419,12 @@ internal class WebSocketCoreImpl(
 
         sendCommandChannel.send(command)
 
-        return command.sendCompleted.await()
+        return try {
+            command.sendCompleted.await()
+        } catch (e: HAWebSocketException) {
+            Timber.e(e, "Failed to send bytes")
+            false
+        }
     }
 
     override suspend fun <T : Any> subscribeTo(
