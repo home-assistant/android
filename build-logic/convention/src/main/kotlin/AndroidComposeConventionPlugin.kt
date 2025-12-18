@@ -1,5 +1,6 @@
 
 import com.android.compose.screenshot.gradle.ScreenshotTestOptions
+import com.android.compose.screenshot.tasks.PreviewScreenshotUpdateTask
 import com.android.compose.screenshot.tasks.PreviewScreenshotValidationTask
 import io.homeassistant.companion.android.androidConfig
 import io.homeassistant.companion.android.getPluginId
@@ -35,9 +36,10 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
             }
 
             tasks.withType<PreviewScreenshotValidationTask>().configureEach {
-                // Hack until we get the update of the screenshot libray
-                // https://issuetracker.google.com/issues/444048026
-                // 4g is the minimal value for our tests to pass currently
+                maxHeapSize = "4g"
+            }
+
+            tasks.withType<PreviewScreenshotUpdateTask>().configureEach {
                 maxHeapSize = "4g"
             }
 
