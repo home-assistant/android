@@ -182,7 +182,7 @@ internal class WebSocketCoreImpl(
      *
      * It uses the [backgroundScope] scope to do the send operation.
      */
-    private val sendCommandChannel = Channel<CommandSender<*>>(capacity = Channel.UNLIMITED).apply {
+    private val sendCommandChannel = Channel<Command<*>>(capacity = Channel.UNLIMITED).apply {
         backgroundScope.launch {
             consumeEach {
                 processSendCommand(it)
@@ -197,11 +197,11 @@ internal class WebSocketCoreImpl(
      * This complete when the message has been processed and sent or not.
      * This is not making any network call directly it enqueue the send into the WebSocket connection.
      */
-    private fun processSendCommand(command: CommandSender<*>) {
+    private fun processSendCommand(command: Command<*>) {
         // TODO do we need any protection on the connection like in connect() with the Mutex
         val currentConnection = connection
         when (command) {
-            is CommandSender.WithAnswer -> {
+            is Command.WithAnswer -> {
                 if (currentConnection == null) {
                     command.sendCompleted.completeExceptionally(
                         HAWebSocketException("No connection to send the message to"),
@@ -224,7 +224,7 @@ internal class WebSocketCoreImpl(
                 }
             }
 
-            is CommandSender.BytesCommandSender -> {
+            is Command.Bytes -> {
                 val result = currentConnection?.send(command.data.toByteString()) ?: false
                 command.sendCompleted.complete(result)
             }
@@ -321,11 +321,11 @@ internal class WebSocketCoreImpl(
 
     override suspend fun sendMessage(request: WebSocketRequest): RawMessageSocketResponse? {
         return sendMessage(
-            CommandSender.WithAnswer.MessageCommandSender(request),
+            Command.WithAnswer.Message(request),
         )
     }
 
-    private suspend fun sendMessage(command: CommandSender.WithAnswer): RawMessageSocketResponse? {
+    private suspend fun sendMessage(command: Command.WithAnswer): RawMessageSocketResponse? {
         if (!connect()) {
             Timber.w("Unable to send message, not connected: ${command.request}")
             return null
@@ -371,9 +371,8 @@ internal class WebSocketCoreImpl(
             return false
         }
 
-        val command = CommandSender.BytesCommandSender(data)
+        val command = Command.Bytes(data)
 
-        // Send command to actor
         sendCommandChannel.send(command)
 
         return command.sendCompleted.await()
@@ -386,7 +385,7 @@ internal class WebSocketCoreImpl(
 
         return eventSubscriptionMutex.withLock<Flow<T>?> {
             ( // Check for existing subscription before creating a new one
-                (findSubscription(subscribeMessage)?.value as? ActiveMessage.SubscriptionActiveMessage)?.eventFlow
+                (findSubscription(subscribeMessage)?.value as? ActiveMessage.Subscription)?.eventFlow
                     ?: createSubscriptionFlow<T>(subscribeMessage, timeout)
                 ) as? Flow<T>
         }
@@ -493,7 +492,7 @@ internal class WebSocketCoreImpl(
         }.shareIn(backgroundScope, SharingStarted.WhileSubscribed(timeout.inWholeMilliseconds, 0))
 
         val response = sendMessage(
-            CommandSender.WithAnswer.Subscription(
+            Command.WithAnswer.Subscription(
                 request = WebSocketRequest(message = subscribeMessage),
                 eventFlow = flow as SharedFlow<Any>,
                 onEvent = channel as Channel<Any>,
@@ -510,7 +509,7 @@ internal class WebSocketCoreImpl(
 
     private fun findSubscription(subscribeMessage: Map<String, Any?>): Map.Entry<Long, ActiveMessage>? {
         return activeMessages.entries.firstOrNull {
-            (it.value as? ActiveMessage.SubscriptionActiveMessage)?.request?.message ==
+            (it.value as? ActiveMessage.Subscription)?.request?.message ==
                 subscribeMessage
         }
     }
@@ -534,7 +533,7 @@ internal class WebSocketCoreImpl(
             if (!completed) {
                 Timber.w("Response deferred was already completed for ${response.id}")
             }
-            if (request !is ActiveMessage.SubscriptionActiveMessage) {
+            if (request !is ActiveMessage.Subscription) {
                 activeMessages.remove(id)
             }
         } ?: run { Timber.w("Response for message not in activeMessage id($id) skipping") }
@@ -544,10 +543,10 @@ internal class WebSocketCoreImpl(
         // TODO https://github.com/home-assistant/android/issues/5271
         val subscriptionId = response.id
         val activeMessage = activeMessages[subscriptionId].let {
-            FailFast.failWhen(it !is ActiveMessage.SubscriptionActiveMessage) {
+            FailFast.failWhen(it !is ActiveMessage.Subscription) {
                 "Event should always be associated to a ActiveMessage.SubscriptionActiveMessage"
             }
-            it as? ActiveMessage.SubscriptionActiveMessage
+            it as? ActiveMessage.Subscription
         }
 
         if (activeMessage == null) {
@@ -689,7 +688,7 @@ internal class WebSocketCoreImpl(
                     connectionState = WebSocketState.CLOSED_OTHER
                 }
                 activeMessages
-                    .filterValues { it is ActiveMessage.SimpleActiveMessage }
+                    .filterValues { it is ActiveMessage.Simple }
                     .forEach { (key, activeMessage) ->
                         // Complete exceptionally - this is safe to call multiple times (idempotent)
                         val completed =
@@ -702,20 +701,20 @@ internal class WebSocketCoreImpl(
             }
         }
         // If we still have flows flowing
-        val hasFlowMessages = activeMessages.any { it.value is ActiveMessage.SubscriptionActiveMessage }
+        val hasFlowMessages = activeMessages.any { it.value is ActiveMessage.Subscription }
         if (hasFlowMessages && wsScope.isActive) {
             wsScope.launch {
                 cancelPendingMessagesJob.join()
                 delay(DELAY_BEFORE_RECONNECT)
                 if (connect()) {
                     Timber.d("Resubscribing to active subscriptions...")
-                    activeMessages.filterValues { it is ActiveMessage.SubscriptionActiveMessage }.entries
+                    activeMessages.filterValues { it is ActiveMessage.Subscription }.entries
                         .forEach { (oldId, oldActiveMessage) ->
-                            oldActiveMessage as ActiveMessage.SubscriptionActiveMessage
+                            oldActiveMessage as ActiveMessage.Subscription
                             activeMessages.remove(oldId)
 
                             val response = sendMessage(
-                                CommandSender.WithAnswer.Subscription(
+                                Command.WithAnswer.Subscription(
                                     request = oldActiveMessage.request,
                                     eventFlow = oldActiveMessage.eventFlow,
                                     onEvent = oldActiveMessage.onEvent,
@@ -754,8 +753,7 @@ internal sealed interface ActiveMessage {
     /**
      * A one-shot message.
      */
-    class SimpleActiveMessage(override val responseDeferred: CompletableDeferred<RawMessageSocketResponse>) :
-        ActiveMessage
+    class Simple(override val responseDeferred: CompletableDeferred<RawMessageSocketResponse>) : ActiveMessage
 
     /**
      * A subscription that receive multiple events over time.
@@ -765,7 +763,7 @@ internal sealed interface ActiveMessage {
      * @param onEvent The channel used to send events into the flow
      * @param request The original request, retained for resubscription after reconnection
      */
-    class SubscriptionActiveMessage(
+    class Subscription(
         override val responseDeferred: CompletableDeferred<RawMessageSocketResponse>,
         val eventFlow: SharedFlow<Any>,
         val onEvent: Channel<Any>,
@@ -778,7 +776,7 @@ internal sealed interface ActiveMessage {
  *
  * @param T The type of result returned when the send operation completes
  */
-private sealed interface CommandSender<T> {
+private sealed interface Command<T> {
     /** Completes when the send operation finishes, with the result of type [T] */
     val sendCompleted: CompletableDeferred<T>
 
@@ -790,7 +788,7 @@ private sealed interface CommandSender<T> {
      *                         or completes exceptionally with [HAWebSocketException] on failure
      * @property responseDeferred Completes when the server responds to this message
      */
-    sealed class WithAnswer(val request: WebSocketRequest) : CommandSender<Long> {
+    sealed class WithAnswer(val request: WebSocketRequest) : Command<Long> {
         override val sendCompleted: CompletableDeferred<Long> = CompletableDeferred()
         val responseDeferred: CompletableDeferred<RawMessageSocketResponse> = CompletableDeferred()
 
@@ -798,9 +796,9 @@ private sealed interface CommandSender<T> {
         abstract fun toActiveMessage(): ActiveMessage
 
         /** A simple one-shot message that expects a single response */
-        class MessageCommandSender(request: WebSocketRequest) : WithAnswer(request) {
+        class Message(request: WebSocketRequest) : WithAnswer(request) {
             override fun toActiveMessage(): ActiveMessage {
-                return ActiveMessage.SimpleActiveMessage(responseDeferred)
+                return ActiveMessage.Simple(responseDeferred)
             }
         }
 
@@ -814,7 +812,7 @@ private sealed interface CommandSender<T> {
             WithAnswer(request) {
 
             override fun toActiveMessage(): ActiveMessage {
-                return ActiveMessage.SubscriptionActiveMessage(
+                return ActiveMessage.Subscription(
                     responseDeferred,
                     eventFlow,
                     onEvent,
@@ -831,7 +829,7 @@ private sealed interface CommandSender<T> {
      * @param data The raw bytes to send
      * @property sendCompleted Completes with `true` if sent successfully, `false` otherwise
      */
-    class BytesCommandSender(val data: ByteArray) : CommandSender<Boolean> {
+    class Bytes(val data: ByteArray) : Command<Boolean> {
         override val sendCompleted: CompletableDeferred<Boolean> = CompletableDeferred()
     }
 }
