@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.launcher.link
+package io.homeassistant.companion.android.launch.link
 
 import android.content.Context
 import android.content.Intent
@@ -23,8 +23,8 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.launcher.startLauncherOnboarding
-import io.homeassistant.companion.android.launcher.startLauncherWithNavigateTo
+import io.homeassistant.companion.android.launch.startLaunchOnboarding
+import io.homeassistant.companion.android.launch.startLaunchWithNavigateTo
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import javax.inject.Inject
@@ -67,7 +67,7 @@ class LinkActivity : BaseActivity() {
                 when (val destination = linkHandler.handleLink(dataUri)) {
                     LinkDestination.NoDestination -> finish()
                     is LinkDestination.Onboarding -> {
-                        startLauncherOnboarding(
+                        startLaunchOnboarding(
                             destination.serverUrl,
                             hideExistingServers = false,
                             skipWelcome = false,
@@ -92,14 +92,14 @@ class LinkActivity : BaseActivity() {
             ServerManager.SERVER_ID_ACTIVE
         }
 
-        startLauncherWithNavigateTo(path, effectiveServerId)
+        startLaunchWithNavigateTo(path, effectiveServerId)
         finish()
     }
 
     private fun openServerChooser(path: String) {
         supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
             if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
-                startLauncherWithNavigateTo(path, bundle.getInt(ServerChooserFragment.RESULT_SERVER))
+                startLaunchWithNavigateTo(path, bundle.getInt(ServerChooserFragment.RESULT_SERVER))
                 finish()
             }
             supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)

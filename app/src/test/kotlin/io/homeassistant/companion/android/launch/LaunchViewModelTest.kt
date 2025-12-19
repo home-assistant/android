@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.launcher
+package io.homeassistant.companion.android.launch
 
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
@@ -36,20 +36,20 @@ import org.junit.jupiter.params.provider.EnumSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
-class LauncherViewModelTest {
+class LaunchViewModelTest {
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val networkStatusMonitor: NetworkStatusMonitor = mockk(relaxed = true)
 
     private val workManager: WorkManager = mockk()
 
-    private lateinit var viewModel: LauncherViewModel
+    private lateinit var viewModel: LaunchViewModel
 
     private fun createViewModel(
-        initialDeepLink: LauncherActivity.DeepLink? = null,
+        initialDeepLink: LaunchActivity.DeepLink? = null,
         hasLocationTrackingSupport: Boolean = false,
         isAutomotive: Boolean = false,
     ) {
-        viewModel = LauncherViewModel(
+        viewModel = LaunchViewModel(
             initialDeepLink,
             workManager,
             serverManager,
@@ -81,7 +81,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            LauncherUiState.Ready(FrontendRoute(null, ServerManager.SERVER_ID_ACTIVE)),
+            LaunchUiState.Ready(FrontendRoute(null, ServerManager.SERVER_ID_ACTIVE)),
             viewModel.uiState.value,
         )
         assertEquals(0, networkStateFlow.subscriptionCount.value)
@@ -104,7 +104,7 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertEquals(LauncherUiState.Loading, viewModel.uiState.value)
+        assertEquals(LaunchUiState.Loading, viewModel.uiState.value)
         assertEquals(1, networkStateFlow.subscriptionCount.value)
     }
 
@@ -120,7 +120,7 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertEquals(LauncherUiState.NetworkUnavailable, viewModel.uiState.value)
+        assertEquals(LaunchUiState.NetworkUnavailable, viewModel.uiState.value)
         assertEquals(1, networkStateFlow.subscriptionCount.value)
     }
 
@@ -138,14 +138,14 @@ class LauncherViewModelTest {
 
         createViewModel()
         advanceUntilIdle()
-        assertEquals(LauncherUiState.Loading, viewModel.uiState.value)
+        assertEquals(LaunchUiState.Loading, viewModel.uiState.value)
         assertEquals(1, networkStateFlow.subscriptionCount.value)
 
         networkStateFlow.emit(NetworkState.READY_REMOTE)
         advanceUntilIdle()
 
         assertEquals(
-            LauncherUiState.Ready(FrontendRoute(null, ServerManager.SERVER_ID_ACTIVE)),
+            LaunchUiState.Ready(FrontendRoute(null, ServerManager.SERVER_ID_ACTIVE)),
             viewModel.uiState.value,
         )
         assertEquals(0, networkStateFlow.subscriptionCount.value)
@@ -164,7 +164,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            LauncherUiState.Ready(
+            LaunchUiState.Ready(
                 OnboardingRoute(
                     hasLocationTracking = false,
                     urlToOnboard = null,
@@ -186,7 +186,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            LauncherUiState.Ready(
+            LaunchUiState.Ready(
                 OnboardingRoute(
                     hasLocationTracking = false,
                     urlToOnboard = null,
@@ -209,7 +209,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            LauncherUiState.Ready(
+            LaunchUiState.Ready(
                 OnboardingRoute(
                     hasLocationTracking = false,
                     urlToOnboard = null,
@@ -231,7 +231,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            LauncherUiState.Ready(
+            LaunchUiState.Ready(
                 OnboardingRoute(
                     hasLocationTracking = false,
                     urlToOnboard = null,
@@ -298,7 +298,7 @@ class LauncherViewModelTest {
         createViewModel()
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.value is LauncherUiState.Ready)
+        assertTrue(viewModel.uiState.value is LaunchUiState.Ready)
         assertFalse(viewModel.shouldShowSplashScreen())
     }
 
@@ -315,7 +315,7 @@ class LauncherViewModelTest {
         hasLocationTrackingSupport: Boolean,
     ) = runTest {
         createViewModel(
-            initialDeepLink = LauncherActivity.DeepLink.OpenOnboarding(
+            initialDeepLink = LaunchActivity.DeepLink.OpenOnboarding(
                 "http://homeassistant.io",
                 hideExistingServers = hideExistingServers,
                 skipWelcome = skipWelcome,
@@ -324,7 +324,7 @@ class LauncherViewModelTest {
         )
         advanceUntilIdle()
         assertEquals(
-            LauncherUiState.Ready(
+            LaunchUiState.Ready(
                 OnboardingRoute(
                     hasLocationTracking = hasLocationTrackingSupport,
                     urlToOnboard = "http://homeassistant.io",
@@ -348,10 +348,10 @@ class LauncherViewModelTest {
         val networkStateFlow = MutableStateFlow(NetworkState.READY_REMOTE)
         coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
 
-        createViewModel(LauncherActivity.DeepLink.NavigateTo("/path", serverId))
+        createViewModel(LaunchActivity.DeepLink.NavigateTo("/path", serverId))
         advanceUntilIdle()
         assertEquals(
-            LauncherUiState.Ready(FrontendRoute("/path", serverId)),
+            LaunchUiState.Ready(FrontendRoute("/path", serverId)),
             viewModel.uiState.value,
         )
     }
@@ -359,12 +359,12 @@ class LauncherViewModelTest {
     @Test
     fun `Given initial deep link is OpenWearOnboarding and full flavor, when creating viewModel, then navigate to wear onboarding`() = runTest {
         createViewModel(
-            initialDeepLink = LauncherActivity.DeepLink.OpenWearOnboarding("ha_wear", "http://ha"),
+            initialDeepLink = LaunchActivity.DeepLink.OpenWearOnboarding("ha_wear", "http://ha"),
             hasLocationTrackingSupport = true,
         )
         advanceUntilIdle()
         assertEquals(
-            LauncherUiState.Ready(WearOnboardingRoute("ha_wear", "http://ha")),
+            LaunchUiState.Ready(WearOnboardingRoute("ha_wear", "http://ha")),
             viewModel.uiState.value,
         )
     }
@@ -372,12 +372,12 @@ class LauncherViewModelTest {
     @Test
     fun `Given initial deep link is OpenWearOnboarding and minimal flavor, when creating viewModel, then show wear unsupported`() = runTest {
         createViewModel(
-            initialDeepLink = LauncherActivity.DeepLink.OpenWearOnboarding("ha_wear", "http://ha"),
+            initialDeepLink = LaunchActivity.DeepLink.OpenWearOnboarding("ha_wear", "http://ha"),
             hasLocationTrackingSupport = false,
         )
         advanceUntilIdle()
         assertEquals(
-            LauncherUiState.WearUnsupported,
+            LaunchUiState.WearUnsupported,
             viewModel.uiState.value,
         )
     }
@@ -398,7 +398,7 @@ class LauncherViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            LauncherUiState.Ready(AutomotiveRoute),
+            LaunchUiState.Ready(AutomotiveRoute),
             viewModel.uiState.value,
         )
     }

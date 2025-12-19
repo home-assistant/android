@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContract
-import io.homeassistant.companion.android.launcher.intentLauncherWearOnboarding
+import io.homeassistant.companion.android.launch.intentLaunchWearOnboarding
 
 class WearOnboardApp : ActivityResultContract<WearOnboardApp.Input, WearOnboardApp.Output?>() {
     data class Input(val url: String? = null, val defaultDeviceName: String = Build.MODEL)
@@ -46,7 +46,7 @@ class WearOnboardApp : ActivityResultContract<WearOnboardApp.Input, WearOnboardA
     }
 
     override fun createIntent(context: Context, input: Input): Intent {
-        return context.intentLauncherWearOnboarding(input.defaultDeviceName, input.url)
+        return context.intentLaunchWearOnboarding(input.defaultDeviceName, input.url)
     }
 
     override fun parseResult(resultCode: Int, intent: Intent?): Output? {

@@ -102,8 +102,13 @@
         tools:ignore="GoogleAppIndexingWarning,UnusedAttribute"
         tools:targetApi="tiramisu">
 
+        <!--
+        WARNING: Do not change the fully qualified name of this activity.
+        Android shortcuts are tied to its component name; renaming it will permanently
+        break all user-created shortcuts from previous versions.
+        -->
         <activity
-            android:name="io.homeassistant.companion.android.launcher.LauncherActivity"
+            android:name="io.homeassistant.companion.android.launch.LaunchActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.LaunchScreen">
@@ -118,11 +123,16 @@
             </intent-filter>
         </activity>
 
+        <!--
+        WARNING: Do not change the fully qualified name of this alias.
+        It is hardcoded in settings to enable it programmatically. Renaming it would also
+        break the app for users who set it as their default launcher when updating.
+        -->
         <activity-alias
-            android:name="io.homeassistant.companion.android.launcher.LauncherAlias"
+            android:name="io.homeassistant.companion.android.launch.LauncherAlias"
             android:enabled="false"
             android:exported="true"
-            android:targetActivity="io.homeassistant.companion.android.launcher.LauncherActivity">
+            android:targetActivity="io.homeassistant.companion.android.launch.LaunchActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -340,7 +350,7 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name=".launcher.link.LinkActivity"
+        <activity android:name=".launch.link.LinkActivity"
             android:exported="true"
             android:launchMode="singleTask">
             <intent-filter android:autoVerify="true">

@@ -8,7 +8,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.get
-import io.homeassistant.companion.android.launcher.HAStartDestinationRoute
+import io.homeassistant.companion.android.launch.HAStartDestinationRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
