@@ -34,7 +34,7 @@ import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.isIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.common.util.maybeAskForIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.launcher.intentLauncherOnboarding
+import io.homeassistant.companion.android.launch.intentLaunchOnboarding
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
 import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
@@ -139,7 +139,7 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
             it.setOnPreferenceClickListener {
                 requireContext().apply {
                     startActivity(
-                        intentLauncherOnboarding(
+                        intentLaunchOnboarding(
                             urlToOnboard = null,
                             hideExistingServers = true,
                             skipWelcome = true,

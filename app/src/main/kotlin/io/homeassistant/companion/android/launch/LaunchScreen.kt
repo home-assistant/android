@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.launcher
+package io.homeassistant.companion.android.launch
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text

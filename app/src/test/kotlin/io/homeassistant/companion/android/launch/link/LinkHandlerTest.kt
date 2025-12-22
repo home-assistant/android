@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.launcher.link
+package io.homeassistant.companion.android.launch.link
 
 import androidx.core.net.toUri
 import io.homeassistant.companion.android.common.data.servers.ServerManager
