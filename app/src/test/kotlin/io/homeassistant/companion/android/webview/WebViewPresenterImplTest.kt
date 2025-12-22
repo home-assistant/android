@@ -55,8 +55,8 @@ private class FakeWebViewContext(
     private val webViewDelegate: WebView,
 ) : ContextWrapper(base),
     WebView {
-    override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean) {
-        webViewDelegate.loadUrl(url, keepHistory, openInApp)
+    override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean, serverHandleInsets: Boolean) {
+        webViewDelegate.loadUrl(url, keepHistory, openInApp, serverHandleInsets)
     }
 
     override fun setStatusBarAndBackgroundColor(statusBarColor: Int, backgroundColor: Int) {

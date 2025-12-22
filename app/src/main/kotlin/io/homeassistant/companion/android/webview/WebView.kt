@@ -31,6 +31,7 @@ interface WebView {
      * @param keepHistory if `true`, preserves navigation history; if `false`, clears history after
      *   loading
      * @param openInApp if `true`, loads in the WebView; if `false`, opens in external browser
+     * @param serverHandleInsets if `true`, the server handles window insets for edge-to-edge display
      */
     fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean, serverHandleInsets: Boolean)
 
