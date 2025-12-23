@@ -273,7 +273,7 @@ open class HomeAssistantApplication :
             this,
             sensorReceiver,
             IntentFilter(AssistSensorManager.ASSIST_STATE_CHANGED),
-            ContextCompat.RECEIVER_EXPORTED,
+            ContextCompat.RECEIVER_NOT_EXPORTED,
         )
 
         // Register for all saved user intents

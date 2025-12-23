@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.content.Intent
-import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.R as commonR
 /**
  * Manages the Assist sensor that reports the current state of assist.
  *
@@ -28,9 +28,11 @@ class AssistSensorManager : SensorManager {
         val assistSensor = SensorManager.BasicSensor(
             id = "assist_sensor",
             type = "sensor",
-            name = R.string.sensor_name_assist,
-            descriptionId = R.string.sensor_description_assist,
+            name = commonR.string.sensor_name_assist,
+            descriptionId = commonR.string.sensor_description_assist,
             statelessIcon = "mdi:robot",
+            deviceClass = "enum",
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
         )
 
         fun updateState(context: Context, state: AssistState) {
@@ -42,7 +44,7 @@ class AssistSensorManager : SensorManager {
     }
 
     override val name: Int
-        get() = R.string.sensor_name_assist
+        get() = commonR.string.sensor_name_assist
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(assistSensor)
     }
@@ -73,6 +75,5 @@ class AssistSensorManager : SensorManager {
     }
 
     override suspend fun requestSensorUpdate(context: Context) {
-        updateAssistSensor(context, AssistState.IDLE.value)
     }
 }

@@ -156,7 +156,7 @@ class AssistViewModel @Inject constructor(
             AssistInputMode.VOICE_ACTIVE -> AssistSensorManager.AssistState.LISTENING
             AssistInputMode.VOICE_INACTIVE, AssistInputMode.TEXT -> AssistSensorManager.AssistState.IDLE
             AssistInputMode.BLOCKED -> AssistSensorManager.AssistState.CLOSED
-            else -> AssistSensorManager.AssistState.IDLE
+            AssistInputMode.TEXT_ONLY -> AssistSensorManager.AssistState.IDLE
         }
         AssistSensorManager.updateState(app, state)
     }
