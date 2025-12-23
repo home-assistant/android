@@ -17,11 +17,17 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineTtsEnd
 import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
+import io.homeassistant.companion.android.common.util.PlaybackState
 import io.homeassistant.companion.android.util.UrlUtil
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 sealed interface AssistEvent {
     sealed class Message(val message: String) : AssistEvent {
@@ -29,6 +35,7 @@ sealed interface AssistEvent {
         class Output(message: String) : Message(message)
         class Error(message: String) : Message(message)
     }
+
     class MessageChunk(val chunk: String) : AssistEvent
     data object ContinueConversation : AssistEvent
 }
@@ -77,6 +84,10 @@ abstract class AssistViewModelBase(
         conversationId = null
     }
 
+    private var currentPlayAudioJob: Job? = null
+
+    private var currentPathBeingPlayed: String? = null
+
     /**
      * @param text input to run an intent pipeline with, or `null` to run a STT pipeline (check if
      * STT is supported _before_ calling this function)
@@ -106,73 +117,133 @@ abstract class AssistViewModelBase(
                 )
             }
 
-            flow?.collect {
-                when (it.type) {
-                    AssistPipelineEventType.RUN_START -> {
-                        if (!isVoice) return@collect
-                        val data = (it.data as? AssistPipelineRunStart)?.runnerData
-                        binaryHandlerId = data?.get("stt_binary_handler_id") as? Int
-                    }
-                    AssistPipelineEventType.STT_START -> {
-                        viewModelScope.launch {
-                            binaryHandlerId?.let { id ->
-                                // Manually loop here to avoid the queue being reset too soon
-                                recorderQueue?.forEach { data ->
-                                    serverManager.webSocketRepository(selectedServerId).sendVoiceData(id, data)
-                                }
-                            }
-                            recorderQueue = null
-                        }
-                    }
-                    AssistPipelineEventType.STT_END -> {
-                        stopRecording()
-                        (it.data as? AssistPipelineSttEnd)?.sttOutput?.let { response ->
-                            onEvent(AssistEvent.Message.Input(response["text"] as String))
-                        }
-                    }
-                    AssistPipelineEventType.INTENT_PROGRESS -> {
-                        (it.data as? AssistPipelineIntentProgress)?.chatLogDelta?.content?.let { delta ->
-                            onEvent(AssistEvent.MessageChunk(delta))
-                        }
-                    }
-                    AssistPipelineEventType.INTENT_END -> {
-                        val data = (it.data as? AssistPipelineIntentEnd)?.intentOutput ?: return@collect
-                        conversationId = data.conversationId
-                        continueConversation.set(data.continueConversation)
-                        data.response.speech?.plain?.get("speech")?.let { speech ->
-                            onEvent(AssistEvent.Message.Output(speech))
-                        }
-                    }
-                    AssistPipelineEventType.TTS_END -> {
-                        if (!isVoice) return@collect
-                        viewModelScope.launch {
-                            val audioPath = (it.data as? AssistPipelineTtsEnd)?.ttsOutput?.url
-                            if (!audioPath.isNullOrBlank()) {
-                                playAudio(audioPath)
-                            }
-                            // We send the continueConversation flag here after getting it from AssistPipelineEventType.INTENT_END so that
-                            // we let the mediaplayer finishing playing the audio before recording a new entry from the user.
-                            if (continueConversation.getAndSet(false)) {
-                                onEvent(AssistEvent.ContinueConversation)
-                            }
-                        }
-                    }
+            flow?.collect { event ->
+                when (event.type) {
+                    AssistPipelineEventType.RUN_START -> handleRunStart(
+                        event.data as? AssistPipelineRunStart,
+                        isVoice,
+                        onEvent,
+                    )
+
+                    AssistPipelineEventType.STT_START -> handleSttStart()
+                    AssistPipelineEventType.STT_END -> handleSttEnd(event.data as? AssistPipelineSttEnd, onEvent)
+                    AssistPipelineEventType.INTENT_PROGRESS -> handleIntentProgress(
+                        event.data as? AssistPipelineIntentProgress,
+                        onEvent,
+                    )
+
+                    AssistPipelineEventType.INTENT_END -> handleIntentEnd(
+                        event.data as? AssistPipelineIntentEnd,
+                        onEvent,
+                    )
+
+                    AssistPipelineEventType.TTS_END -> handleTtsEnd(
+                        event.data as? AssistPipelineTtsEnd,
+                        isVoice,
+                        onEvent,
+                    )
+
                     AssistPipelineEventType.RUN_END -> {
                         stopRecording()
                         job?.cancel()
                     }
-                    AssistPipelineEventType.ERROR -> {
-                        val errorMessage = (it.data as? AssistPipelineError)?.message ?: return@collect
-                        onEvent(AssistEvent.Message.Error(errorMessage))
-                        stopRecording()
+
+                    AssistPipelineEventType.ERROR -> if (handleError(event.data as? AssistPipelineError, onEvent)) {
                         job?.cancel()
                     }
-                    else -> { /* Do nothing */ }
+
+                    else -> {
+                        /*No op*/
+                    }
                 }
             } ?: run {
                 onEvent(AssistEvent.Message.Output(app.getString(R.string.assist_error)))
             }
         }
+    }
+
+    private fun handleRunStart(data: AssistPipelineRunStart?, isVoice: Boolean, onEvent: (AssistEvent) -> Unit) {
+        Timber.d("Pipeline run started")
+        if (!isVoice) return
+
+        data?.ttsOutput?.let { ttsOutput ->
+            val audioPath = ttsOutput.url
+            if (audioPath.isNotBlank() && currentPathBeingPlayed != audioPath) {
+                currentPathBeingPlayed = audioPath
+                stopPlayback()
+                currentPlayAudioJob = viewModelScope.launch {
+                    playAudio(audioPath).collect { state ->
+                        if (state == PlaybackState.STOP_PLAYING) {
+                            notifyContinueConversationIfNeeded(onEvent)
+                        }
+                    }
+                }
+            }
+        }
+
+        binaryHandlerId = data?.runnerData?.get("stt_binary_handler_id") as? Int
+    }
+
+    private fun handleSttStart() {
+        viewModelScope.launch {
+            binaryHandlerId?.let { id ->
+                // Manually loop here to avoid the queue being reset too soon
+                recorderQueue?.forEach { data ->
+                    serverManager.webSocketRepository(selectedServerId).sendVoiceData(id, data)
+                }
+            }
+            recorderQueue = null
+        }
+    }
+
+    private fun handleSttEnd(data: AssistPipelineSttEnd?, onEvent: (AssistEvent) -> Unit) {
+        stopRecording()
+        data?.sttOutput?.get("text")?.let { text ->
+            onEvent(AssistEvent.Message.Input(text as String))
+        }
+    }
+
+    private fun handleIntentProgress(data: AssistPipelineIntentProgress?, onEvent: (AssistEvent) -> Unit) {
+        data?.chatLogDelta?.content?.let { delta ->
+            onEvent(AssistEvent.MessageChunk(delta))
+        }
+    }
+
+    private fun handleIntentEnd(data: AssistPipelineIntentEnd?, onEvent: (AssistEvent) -> Unit) {
+        val intentOutput = data?.intentOutput ?: return
+        conversationId = intentOutput.conversationId
+        continueConversation.set(intentOutput.continueConversation)
+        intentOutput.response.speech?.plain?.get("speech")?.let { speech ->
+            onEvent(AssistEvent.Message.Output(speech))
+        }
+    }
+
+    /*
+     * Handles TTS_END events for backward compatibility with servers that don't support
+     * streaming TTS in RUN_START. If [currentPathBeingPlayed] is set, audio is already
+     * playing from RUN_START and this handler is skipped.
+     */
+    private fun handleTtsEnd(data: AssistPipelineTtsEnd?, isVoice: Boolean, onEvent: (AssistEvent) -> Unit) {
+        Timber.d("TTS ended")
+        if (!isVoice || currentPathBeingPlayed != null) return
+
+        currentPlayAudioJob = viewModelScope.launch {
+            val audioPath = data?.ttsOutput?.url
+            if (!audioPath.isNullOrBlank()) {
+                playAudio(audioPath).first { state -> state == PlaybackState.STOP_PLAYING }
+            }
+            notifyContinueConversationIfNeeded(onEvent)
+        }
+    }
+
+    /**
+     * Return true if we need to cancel the job
+     */
+    private fun handleError(data: AssistPipelineError?, onEvent: (AssistEvent) -> Unit): Boolean {
+        val errorMessage = data?.message ?: return false
+        onEvent(AssistEvent.Message.Error(errorMessage))
+        stopRecording()
+        return true
     }
 
     protected fun setupRecorderQueue() {
@@ -193,16 +264,18 @@ abstract class AssistViewModelBase(
         }
     }
 
-    private suspend fun playAudio(path: String): Boolean {
-        val urlState = serverManager.connectionStateProvider(selectedServerId).urlFlow().first()
-        val baseUrl = if (urlState is UrlState.HasUrl) {
-            urlState.url
-        } else {
-            null
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private suspend fun playAudio(path: String): Flow<PlaybackState> {
+        return serverManager.connectionStateProvider(selectedServerId).urlFlow().flatMapLatest { urlState ->
+            val baseUrl = if (urlState is UrlState.HasUrl) {
+                urlState.url
+            } else {
+                null
+            }
+            UrlUtil.handle(baseUrl, path)?.let {
+                audioUrlPlayer.playAudio(it.toString())
+            } ?: emptyFlow()
         }
-        return UrlUtil.handle(baseUrl, path)?.let {
-            audioUrlPlayer.playAudio(it.toString())
-        } ?: false
     }
 
     protected fun stopRecording(sendRecorded: Boolean = true) {
@@ -229,5 +302,16 @@ abstract class AssistViewModelBase(
         recorderProactive = false
     }
 
-    protected fun stopPlayback() = audioUrlPlayer.stop()
+    protected fun stopPlayback() = currentPlayAudioJob?.cancel()
+
+    /**
+     * Checks if the conversation should continue and notifies the UI if so.
+     * This is called after audio playback finishes to let the player complete before
+     * recording a new entry from the user.
+     */
+    private fun notifyContinueConversationIfNeeded(onEvent: (AssistEvent) -> Unit) {
+        if (continueConversation.getAndSet(false)) {
+            onEvent(AssistEvent.ContinueConversation)
+        }
+    }
 }
