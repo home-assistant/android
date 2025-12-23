@@ -684,11 +684,13 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             try {
                 return action(url)
             } catch (e: Exception) {
+                Timber.w(e, "Failed $requestName on $url")
                 if (firstException == null) firstException = e
             }
         }
 
         throw IntegrationException(
+            "All URLs failed for $requestName",
             firstException ?: Exception("Error calling integration request $requestName"),
         )
     }
