@@ -202,7 +202,10 @@ abstract class AssistViewModelBase(
             null
         }
         return UrlUtil.handle(baseUrl, path)?.let {
-            audioUrlPlayer.playAudio(it.toString())
+            AssistSensorManager.updateState(app, AssistSensorManager.AssistState.SPEAKING)
+            val result = audioUrlPlayer.playAudio(it.toString())
+            AssistSensorManager.updateState(app, AssistSensorManager.AssistState.IDLE)
+            result
         } ?: false
     }
 
