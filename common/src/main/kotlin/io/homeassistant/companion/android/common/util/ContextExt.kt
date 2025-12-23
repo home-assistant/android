@@ -47,9 +47,7 @@ fun Context.isAutomotive(): Boolean {
  * TODO this should not be exposed to the wear module https://github.com/home-assistant/android/discussions/5771
  */
 fun Context.maybeAskForIgnoringBatteryOptimizations() {
-    if (!isIgnoringBatteryOptimizations()) {
-        startActivity(createBatteryOptimizationIntent())
-    }
+    createBatteryOptimizationIntent()?.let { startActivity(it) }
 }
 
 /**
@@ -59,15 +57,19 @@ fun Context.maybeAskForIgnoringBatteryOptimizations() {
  * wait for the user to respond to the battery optimization dialog before proceeding.
  *
  * @return An [Intent] configured to request battery optimization exemption, or `null` if
- *         the app is already ignoring battery optimizations or not available.
+ *         the app is already ignoring battery optimizations or the intent cannot be resolved
+ *         (some OEM devices don't support this intent).
  */
 @SuppressLint("BatteryLife")
 fun Context.createBatteryOptimizationIntent(): Intent? {
-    return if (!isIgnoringBatteryOptimizations()) {
-        Intent(
-            Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-            "package:$packageName".toUri(),
-        )
+    if (isIgnoringBatteryOptimizations()) return null
+
+    val intent = Intent(
+        Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+        "package:$packageName".toUri(),
+    )
+    return if (intent.resolveActivity(packageManager) != null) {
+        intent
     } else {
         null
     }
