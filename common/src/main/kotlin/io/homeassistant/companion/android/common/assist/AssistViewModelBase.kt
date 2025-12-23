@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineError
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
@@ -20,6 +21,7 @@ import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import io.homeassistant.companion.android.util.UrlUtil
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 sealed interface AssistEvent {
@@ -193,11 +195,14 @@ abstract class AssistViewModelBase(
     }
 
     private suspend fun playAudio(path: String): Boolean {
-        return UrlUtil.handle(serverManager.getServer(selectedServerId)?.connection?.getUrl(), path)?.let {
-            AssistSensorManager.updateState(app, AssistSensorManager.AssistState.SPEAKING)
-            val result = audioUrlPlayer.playAudio(it.toString())
-            AssistSensorManager.updateState(app, AssistSensorManager.AssistState.IDLE)
-            result
+        val urlState = serverManager.connectionStateProvider(selectedServerId).urlFlow().first()
+        val baseUrl = if (urlState is UrlState.HasUrl) {
+            urlState.url
+        } else {
+            null
+        }
+        return UrlUtil.handle(baseUrl, path)?.let {
+            audioUrlPlayer.playAudio(it.toString())
         } ?: false
     }
 

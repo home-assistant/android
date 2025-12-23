@@ -55,10 +55,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
         when (key) {
             "server_name" -> serverManager.getServer(serverId)?.nameOverride
             "registration_name" -> serverManager.getServer(serverId)?.deviceName
-            "connection_internal" -> (
-                serverManager.getServer(serverId)?.connection?.getUrl(isInternal = true, force = true)
-                    ?: ""
-                ).toString()
+            "connection_internal" -> serverManager.getServer(serverId)?.connection?.internalUrl ?: ""
             "session_timeout" -> serverManager.integrationRepository(serverId).getSessionTimeOut().toString()
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
@@ -148,8 +145,8 @@ class ServerSettingsPresenterImpl @Inject constructor(
         mainScope.launch {
             serverManager.getServer(serverId)?.let {
                 view.updateExternalUrl(
-                    it.connection.getUrl(false)?.toString() ?: "",
-                    it.connection.useCloud && it.connection.canUseCloud(),
+                    serverManager.connectionStateProvider(it.id).getExternalUrl()?.toString() ?: "",
+                    it.connection.useCloud && it.connection.canUseCloud,
                 )
             }
         }
@@ -190,10 +187,10 @@ class ServerSettingsPresenterImpl @Inject constructor(
     }
 
     override suspend fun serverURL(): String? {
-        return serverManager.getServer(serverId)?.connection?.getUrl()?.toString()
+        return serverManager.connectionStateProvider(serverId).getExternalUrl()?.toString()
     }
 
     override suspend fun getAllowInsecureConnection(): Boolean? {
-        return serverManager.integrationRepository(serverId).getAllowInsecureConnection()
+        return serverManager.getServer(serverId)?.connection?.allowInsecureConnection
     }
 }

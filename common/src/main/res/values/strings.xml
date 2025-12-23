@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="aa_app_not_logged_in">Not logged in</string>
     <string name="aa_launch_native">Native mode</string>
     <string name="aa_driving_optimized_change">Use Home Assistant in drive mode?</string>
     <string name="aa_navigation">Navigation</string>
@@ -27,7 +26,6 @@
     <string name="add_to_todo_widget">Add list to home screen</string>
     <string name="add_to_watch_favorite">Add to %s favorite</string>
     <string name="add_to_watch_favorite_disconnected">Watch disconnected</string>
-    <string name="disable_all_sensors">Disable all %1$d sensors</string>
     <string name="add_ssid">Add</string>
     <string name="add_ssid_name_suggestion">Add %1$s</string>
     <string name="add_widget">Add widget</string>
@@ -46,7 +44,6 @@
     <string name="attributes">Attributes</string>
     <string name="auth_cancel">Authentication cancelled</string>
     <string name="auth_error_message">The \'Username\' and \'Password\' fields must be completed</string>
-    <string name="auth_error">Authentication error</string>
     <string name="auth_request">Authentication requested</string>
     <string name="automation">Automation</string>
     <string name="autoplay_video_summary">Autoplay videos when dashboard is active. Enabling this setting may increase data usage unexpectedly, proceed with caution.</string>
@@ -55,7 +52,6 @@
     <string name="background_access_disabled">Home Assistant does not have access to run in the background. Without this permission the app will not be able to reliably send data back to your server. Select to update permissions.</string>
     <string name="background_access_enabled">Home Assistant has access to run in the background</string>
     <string name="background_access_title">Background access</string>
-    <string name="basic_sensor_lullaby">Lullaby</string>
     <string name="basic_sensor_name_active_calories_burned">Active calories burned</string>
     <string name="basic_sensor_name_active_notification_count">Active notification count</string>
     <string name="basic_sensor_name_activity">Detected activity</string>
@@ -132,7 +128,6 @@
     <string name="basic_sensor_name_wifi">Wi-Fi connection</string>
     <string name="basic_sensor_name_hotspot_state">Hotspot state</string>
     <string name="binary_sensor">Binary sensor</string>
-    <string name="biometric_message">Unlock using your biometric or screen lock credentials</string>
     <string name="biometric_set_title">Confirm to continue</string>
     <string name="biometric_title">Home Assistant is locked</string>
     <string name="brightness">Brightness: %1$d%%</string>
@@ -140,7 +135,6 @@
     <string name="buttons">Buttons</string>
     <string name="button_forward">Next</string>
     <string name="button_widget_desc">Perform an action</string>
-    <string name="calendar">Calendar</string>
     <string name="camera">Camera</string>
     <string name="camera_tile">Camera tile</string>
     <string name="camera_tile_desc">See what\'s on your camera</string>
@@ -153,9 +147,7 @@
     <string name="camera_widget_desc">Displays the latest picture from a camera or image entity</string>
     <string name="cancel">Cancel</string>
     <string name="changelog">View full change log</string>
-    <string name="checking_with_home_assistant">Checking with Home Assistant</string>
     <string name="choose_entity">Choose entity</string>
-    <string name="choose_server">Choose server</string>
     <string name="clear_favorites">Clear favorites</string>
     <string name="clear_search">Clear search</string>
     <string name="clear_webview_cache">Reset frontend cache</string>
@@ -171,7 +163,6 @@
     <string name="complication_entity_state_preview">Preview</string>
     <string name="config">Configuration</string>
     <string name="configure_action">Configure action</string>
-    <string name="configure_widget_label">Widget label</string>
     <string name="confirm_delete_all_notification_message">Are you sure? This cannot be undone</string>
     <string name="confirm_delete_all_notification_title">Confirm deleting all notifications</string>
     <string name="confirm_delete_this_notification_message">Are you sure? This cannot be undone</string>
@@ -179,10 +170,7 @@
     <string name="confirm_negative">NO</string>
     <string name="confirm_positive">YES</string>
     <string name="continue_on_phone">Continue on your phone</string>
-    <string name="connect_to_home_assistant">Connect to Home Assistant</string>
-    <string name="connect_to_home_internet">Make sure your phone is connected\nto your home internet.</string>
     <string name="connect">Connect</string>
-    <string name="connected_to_home_assistant">Connected to Home Assistant</string>
     <string name="continue_connect">Continue</string>
     <string name="controls_setting_category">Device controls</string>
     <string name="controls_setting_title">Manage device controls</string>
@@ -207,15 +195,11 @@
     <string name="delete">Delete</string>
     <string name="delete_all_notifications">Delete all notifications from history</string>
     <string name="delete_shortcut">Delete shortcut</string>
-    <string name="delete_this_notification">Delete this notification from history</string>
     <string name="description">Description</string>
     <string name="details">Details</string>
-    <string name="developer_tools">Developer tools</string>
     <string name="device_name">Device name</string>
     <string name="device_registration">Device registration</string>
     <string name="device_tracker">Device tracker</string>
-    <string name="dialog_add_panel_shortcut_content">Create a shortcut to this item?</string>
-    <string name="dialog_add_panel_shortcut_title">Add shortcut</string>
     <string name="disable">Disable</string>
     <string name="disabled">Disabled</string>
     <string name="documentation">Documentation</string>
@@ -239,12 +223,6 @@
     <string name="downloads_complete">Download complete.</string>
     <string name="downloads_failed">Download failed.</string>
     <string name="empty_template">Template value must not be blank</string>
-    <string name="enable_all_sensors_summary">All required permissions will be requested upon enabling</string>
-    <string name="enable_all_sensors">Enable all sensors</string>
-    <string name="enable_location_tracking_description">Enabling this sensor will allow the Home Assistant application to track your location and report it back to your instance of Home Assistant. Ensure that you enable background access to location, otherwise we cannot enable location tracking. Your location data is sent directly to your Home Assistant instance and is never sent to a 3rd party.</string>
-    <string name="enable_location_tracking_prompt">This app collects location data to enable location tracking, Wi-Fi connection status, and URL decision making even when the app is closed or not in use.</string>
-    <string name="enable_location_tracking">Enable location tracking</string>
-    <string name="enable_remaining_sensors">Enable %1$d sensors</string>
     <string name="enable_sensor">Enable sensor</string>
     <string name="enable_sensor_missing_permission_activity_recognition">Requires \'Physical activity\' permission</string>
     <string name="enable_sensor_missing_permission_general">Missing required permission</string>
@@ -262,7 +240,6 @@
         <item quantity="other">%d entities</item>
     </plurals>
     <string name="entity_attribute_checkbox">Append attribute value</string>
-    <string name="entity_id">Entity ID</string>
     <string name="entity_id_name">Entity ID: %1$s</string>
     <string name="entity_widget_desc">View any entity\'s current state and toggle it</string>
     <string name="todo_widget_desc">View any configured to-do list and mark items as completed</string>
@@ -271,25 +248,20 @@
     <string name="error_connection_failed_to">Unable to connect to %1$s</string>
     <string name="error_connection_failed_no_network">Network unavailable, please check your connection</string>
     <string name="error_loading_entities">Error loading entities</string>
-    <string name="error_onboarding_connection_failed">Unable to connect to Home Assistant.</string>
     <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error. Please ensure your certificate is valid.</string>
     <string name="error_with_registration">The \'Mobile App\' integration is required to use the app, but it is not available on your Home Assistant server. Please check your server configuration and try again.</string>
     <string name="errors">Errors</string>
-    <string name="error_http_generic">There was an error loading Home Assistant. Please review the connection settings and try again.\n\nError Code: %1$d \nDescription: %2$s</string>
     <string name="event_error">Failed to notify HA of picked option.</string>
     <string name="exit">Exit</string>
     <string name="expand">Expand</string>
-    <string name="failed_authentication">Could not authenticate</string>
     <string name="failed_connection">Could not connect</string>
     <string name="failed_phone_connection">Could not connect to phone</string>
     <string name="failed_watch_connection">Could not connect to watch</string>
     <string name="failed_registration">Could not register</string>
     <string name="failed_watch_registration">Could not register watch</string>
     <string name="failed_unsupported">Not supported</string>
-    <string name="failed_scan">Scanning for Home Assistant failed.</string>
     <string name="failure_send_favorites_wear">Failed to send favorites selection to watch</string>
     <string name="fans">Fans</string>
-    <string name="favorite_settings">Favorite settings</string>
     <string name="favorite">Set favorites</string>
     <string name="favorites">Favorites</string>
     <string name="filter_notifications">Filter notifications</string>
@@ -298,8 +270,6 @@
     <string name="filter_sensors_enabled">Enabled sensors</string>
     <string name="filter_sensors_disabled">Disabled sensors</string>
     <string name="filter_updates">Filter updates</string>
-    <string name="firebase_error_message">This means you will be unable to receive cloud notifications.\n\nLocal notifications will still be available via persistent connection settings in Companion app settings</string>
-    <string name="firebase_error_title">Firebase error</string>
     <string name="fullscreen_def">Put application in full screen</string>
     <string name="fullscreen">Fullscreen</string>
     <string name="screen_orientation_title_settings">Screen orientation</string>
@@ -339,15 +309,11 @@
     <string name="gestures_pointers_two">Using two fingers</string>
     <string name="gestures_pointers_three">Using three fingers</string>
     <string name="get_help">Get help</string>
-    <string name="grant_permission">Grant permission</string>
     <string name="help">Help</string>
-    <string name="hide">Hide</string>
     <string name="hide_password">Hide password</string>
     <string name="high_accuracy_mode_channel_name">High accuracy location</string>
     <string name="high_accuracy_mode_notification_title">High accuracy (GPS) mode enabled</string>
-    <string name="history">History</string>
     <string name="hold_to_reorder">Hold to reorder</string>
-    <string name="home_assistant_not_discover">Unable to find your\nHome Assistant instance</string>
     <string name="icon">Icon</string>
     <string name="input_booleans">Input booleans</string>
     <string name="input_buttons">Input buttons</string>
@@ -408,16 +374,13 @@
     <string name="lang_option_value_default">default</string>
     <string name="lang_summary_settings">Changing default language may have influence on device entities naming</string>
     <string name="lang_title_settings">Language</string>
-    <string name="last_25_notifications">Last 25 notifications</string>
     <string name="last_changed">Last changed: %1$s</string>
     <string name="last_num_notifications">Last %1$d notifications</string>
     <string name="last_updated">Last updated: %1$s</string>
-    <string name="learn_more">Learn more</string>
     <string name="lights">Lights</string>
     <string name="button_widgets">Button widgets</string>
     <string name="entity_state_widgets">Entity state widgets</string>
     <string name="list_header_instances">Instances</string>
-    <string name="list_header_other">Other</string>
     <string name="media_player_widgets">Media player widgets</string>
     <string name="template_widgets">Template widgets</string>
     <string name="loading_entities">Please wait while we load your entities</string>
@@ -455,13 +418,11 @@
     <string name="lock_home_bypass_summary">Disable app lock when connected to the home network</string>
     <string name="lock_home_bypass_title">Unlock on home network</string>
     <string name="locks">Locks</string>
-    <string name="lockscreen_title">App locked!</string>
     <string name="log_file_not_created">Log file could not be created.</string>
     <string name="log_loader_text">Collecting logs…</string>
     <string name="log_loader_process">Current log</string>
     <string name="log_loader_crash">Recent crash</string>
     <string name="log">Log</string>
-    <string name="logbook">Logbook</string>
     <string name="logged_in">Logged in</string>
     <string name="login">Log in</string>
     <string name="login_on_phone">Log in on your phone</string>
@@ -469,10 +430,6 @@
     <string name="logout">Log out</string>
     <string name="lovelace_view_dashboard">Dashboard view or Dashboard</string>
     <string name="lovelace">Dashboard</string>
-    <string name="mailbox">Mailbox</string>
-    <string name="manage_all_notifications">Manage all notifications</string>
-    <string name="manage_all_sensors_summary">This device has %1$d available sensors to utilize.</string>
-    <string name="manage_all_sensors">Manage all sensors</string>
     <string name="manage_shortcuts_summary">Manage launcher shortcuts</string>
     <string name="manage_shortcuts">Manage shortcuts</string>
     <string name="manage_ssids_ethernet">Ethernet connected</string>
@@ -483,17 +440,13 @@
     <string name="manage_ssids_wifi">Wi-Fi network connected</string>
     <string name="manage_ssids_vpn">VPN connected</string>
     <string name="manage_ssids_warning">Make sure to set up your home network correctly. Adding public Wi-Fi networks or using multiple ethernet/VPN connections may unintentionally expose information about or access to your app or server.</string>
-    <string name="manage_this_notification">Manage this notification</string>
     <string name="manage_tiles_summary">Set up and manage quick settings tiles here. They will not function until you set them up here.</string>
     <string name="manage_tiles">Manage tiles</string>
     <string name="manage_wear_device">Manage device %1$s</string>
     <string name="manage_widgets_summary">Edit your widgets. Adding/deleting can only be done from the home screen.</string>
     <string name="manage_widgets">Manage widgets</string>
-    <string name="manual_desc">Enter the URL of your Home Assistant server. Make sure it includes the protocol and port. For example:\n\nhttp://homeassistant.local:8123 or \nhttps://example.duckdns.org.</string>
     <string name="manual_setup">Enter address manually</string>
-    <string name="manual_setup_hint">Not finding your server?</string>
     <string name="manual_title">What is your Home Assistant address?</string>
-    <string name="map">Map</string>
     <string name="matter_commissioning_unavailable">Matter is currently unavailable</string>
     <string name="matter_shared_title">Add Matter device</string>
     <string name="matter_shared_status_not_registered">Please connect to your Home Assistant server before adding a Matter device.</string>
@@ -556,7 +509,6 @@
     <string name="not_private">Your connection to this site is not private.</string>
     <string name="not_set">Not set</string>
     <string name="notification_data">Full notification data</string>
-    <string name="notification_dismiss_failure">Failed to send event on notification dismissed</string>
     <string name="notification_history_summary">History of notifications</string>
     <string name="notification_history">Notification history</string>
     <string name="notification_message">Message</string>
@@ -564,22 +516,13 @@
     <string name="notification_source">Notification source</string>
     <string name="notifications">Notifications</string>
     <string name="ok">OK</string>
-    <string name="onboarding_notifications_denied">If you want to enable notifications in the future, you can change this in Settings.</string>
-    <string name="onboarding_notifications_bullet_alert">Get alerted from notifications</string>
-    <string name="onboarding_notifications_bullet_commands">Send commands to your device</string>
-    <string name="onboarding_notifications_subtitle">Enable notifications to create a notify action for your device</string>
     <string name="open_with_headphone_button">Open with headset button</string>
     <string name="open_with_headphone_button_summary">Use Assist with the assistant/voice command button on supported headphones and earbuds</string>
     <string name="other_settings">Other settings</string>
     <string name="other">Other</string>
     <string name="password">Password</string>
-    <string name="password_correct">Correct password</string>
-    <string name="password_incorrect">Incorrect password</string>
     <string name="persistent_notification">Persistent notification</string>
     <string name="person">Person</string>
-    <string name="pin_shortcut">Pin shortcut</string>
-    <string name="pref_call_tracking_summary">Allow application to detect call occurrence and notify server about it.</string>
-    <string name="pref_call_tracking_title">Calls tracking</string>
     <string name="pref_connection_internal">Internal connection URL</string>
     <string name="pref_connection_title">Connection information</string>
     <string name="pref_connection_url">Home Assistant URL</string>
@@ -590,11 +533,8 @@
     <string name="prioritize_internal_off">Use Home Assistant URL (recommended)</string>
     <string name="privacy_policy">Privacy policy</string>
     <string name="privacy_url">https://www.home-assistant.io/privacy</string>
-    <string name="profile">Profile</string>
     <string name="qrcode_processing_tag_error">Error while processing QR code tag</string>
     <string name="quick_settings">Quick settings</string>
-    <string name="rate_limit_notification.body">You have now sent more than %s notifications today. You will not receive new notifications until midnight UTC.</string>
-    <string name="rate_limit_notification.title">Notifications rate limited</string>
     <string name="rate_limit_summary">Rate limit data</string>
     <string name="rate_limit_title">Notification rate limit</string>
     <string name="refresh_external">Refresh external URL</string>
@@ -610,9 +550,6 @@
     <string name="resets_at">Resets at</string>
     <string name="retry">Retry</string>
     <string name="save">Save</string>
-    <string name="scan_again">scan again</string>
-    <string name="scanning_network">Scanning the network\nfor Home Assistant</string>
-    <string name="scene">Scene</string>
     <string name="scenes">Scenes</string>
     <string name="scripts">Scripts</string>
     <string name="search_clear_selection">Clear selection</string>
@@ -630,7 +567,6 @@
     <string name="select">Select</string>
     <string name="select_entity_to_display">Select entity to display</string>
     <string name="select_file">Select file</string>
-    <string name="select_instance">Select your Home Assistant server</string>
     <string name="sensor_description_active_calories_burned">Last recorded active calories burned from Health Connect</string>
     <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the sensor updates notifications. Attributes will include the contents of all notifications if the corresponding setting is enabled. It\'s enabled by default.</string>
     <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be</string>
@@ -686,7 +622,6 @@
     <string name="sensor_description_location_accurate">Allow a forced, accurate location update for the device. Review the documentation for options to force a location update.\n\nThe \"Minimum accuracy\" setting allows you to decide how accurate the device location (in meters) has to be to send it to Home Assistant.\nThe \"Minimum time between updates\" setting (in milliseconds) keeps the device from sending the accurate location too often.\nThe \"Include in sensor update\" setting will make a location request with each sensor update.</string>
     <string name="sensor_description_location_background">Update your location behind the scenes, periodically.\n\nThe \"Minimum accuracy\" setting allows you to decide how accurate the device location (in meters) has to be to send it to Home Assistant.\nThe "Location sent" setting allows you to change how detailed the location information is that is sent to your server.</string>
     <string name="sensor_description_location_zone">Use existing Home Assistant zones as geofences for zone based tracking.\n\nThe \"Minimum accuracy\" setting allows you to decide how accurate the device location (in meters) has to be to send it to Home Assistant.</string>
-    <string name="sensor_description_lullaby">If a lullaby is playing</string>
     <string name="sensor_description_media_session">The state will either be the playback state of the primary media session or it will be unavailable when you have no active sessions. Attributes will include data from all active sessions including total count.</string>
     <string name="sensor_description_mic_muted">Whether the microphone is muted on the device</string>
     <string name="sensor_description_mobile_data_roaming">Whether mobile data roaming is enabled on the device</string>
@@ -708,7 +643,6 @@
     <string name="sensor_description_sleep_segment">Details about the last sleep session</string>
     <string name="sensor_description_speakerphone">Whether speakerphone is enabled on the device</string>
     <string name="sensor_description_steps_sensor">The total number of steps since the last reboot of the device</string>
-    <string name="sensor_description_storage_sensor">Information about the total and available storage space internally and externally</string>
     <string name="sensor_description_total_calories_burned">Total amount of calories burned since midnight from Health Connect</string>
     <string name="sensor_description_total_rx_gb">Total Rx GB since last device reboot</string>
     <string name="sensor_description_total_tx_gb">Total Tx GB since last device reboot</string>
@@ -819,7 +753,6 @@
     <string name="sensor_unfold_less">Hide server settings</string>
     <string name="sensor_unfold_more">Show server settings</string>
     <string name="sensor">Sensor</string>
-    <string name="sensors_with_settings">The following sensors offer custom settings: %1$s</string>
     <string name="sensors">Sensors</string>
     <string name="server">Server</string>
     <string name="server_settings">Server settings</string>
@@ -849,12 +782,9 @@
     <string name="share_logs">Share logs</string>
     <string name="share_server">Share server</string>
     <string name="share_success">Shared with Home Assistant</string>
-    <string name="shopping_list">Shopping list</string>
     <string name="shortcut_icon">Select an icon for this shortcut</string>
     <string name="shortcut_instruction_desc">Use the below sections to create your shortcuts. Once you have added a shortcut you will need to drag it on your home screen after long pressing on the app icon. Although Android supports up to 5 dynamic shortcuts most launchers will only show 4 shortcuts.</string>
-    <string name="shortcut_instruction_title">Shortcut instructions</string>
     <string name="shortcut_n">Shortcut %d</string>
-    <string name="shortcut_pinned_category">Pinned shortcut category</string>
     <string name="shortcut_pinned_desc">Pinned shortcut description</string>
     <string name="shortcut_pinned_id">Pinned shortcut ID</string>
     <string name="shortcut_pinned_label">Pinned shortcut label</string>
@@ -865,7 +795,6 @@
     <string name="shortcut">Shortcut</string>
     <string name="shortcuts_choose">Choose shortcuts</string>
     <string name="shortcut5_note">Not all launchers support displaying 5 shortcuts, you may not see this shortcut if the above 4 are already added.</string>
-    <string name="shortcuts_summary">Add shortcuts to launcher</string>
     <string name="shortcut_tiles">Shortcuts tiles</string>
     <string name="shortcuts_tile_n">Shortcuts tile #%d</string>
     <string name="shortcuts_tile_select">Select shortcuts tile to manage</string>
@@ -881,13 +810,11 @@
     <string name="show_share_logs">Show and share logs</string>
     <string name="show_entity_title">Show entity name</string>
     <string name="show_unit_title">Show entity unit</string>
-    <string name="sign_in_on_phone">Sign in on phone</string>
     <string name="slider_decreased">%1$s decreased</string>
     <string name="slider_increased">%1$s increased</string>
     <string name="slider_fan_speed">Fan speed</string>
     <string name="slider_light_brightness">Brightness</string>
     <string name="slider_light_colortemp">Color temperature</string>
-    <string name="slow_scan">Scanning… Make sure your server is on and you\'re connected to the same network.</string>
     <string name="skip">Skip</string>
     <string name="speed">Speed: %1$d%%</string>
     <string name="state_auto">Auto</string>
@@ -919,8 +846,6 @@
     <string name="state_streaming">Streaming</string>
     <string name="state">State</string>
     <string name="state_name">State: %1$s</string>
-    <string name="states">Overview</string>
-    <string name="status_of_mobile_app_integration">Status of mobile app integration:</string>
     <string name="store_request_successful">Request to install app on wear device sent successfully</string>
     <string name="store_request_unsuccessful">Play Store request failed. Wear device(s) may not support Play Store, that is, the Wear device may be version 1.0.</string>
     <string name="successful">Successful</string>
@@ -936,7 +861,6 @@
     <string name="template_tile_n">Template tile #%d</string>
     <string name="template_tiles">Template tiles</string>
     <string name="template_tile_configure">Configure Template tiles</string>
-    <string name="template_tile_select">Select Template tile to manage</string>
     <string name="template_tile_no_tiles_yet">There are no Template tiles added yet - add one from the watch face to set it up</string>
     <string name="template_tile_set_on_watch">Configure templates to use as Wear OS tiles</string>
     <string name="template_tile_change_message">Change template in phone settings</string>
@@ -1001,9 +925,6 @@
     <string name="tile_data_missing">You need to set up the tile before using it</string>
     <string name="tile_entity">Select a entity to toggle or call (required)</string>
     <string name="tile_label">Tile label (required)</string>
-    <string name="tile_list">List of tiles</string>
-    <string name="tile_missing_entity_summary">You must have one of the following domains to use this feature: cover, fan, input_boolean, light, remote, scene, script, switch</string>
-    <string name="tile_missing_entity_title">Missing valid entity domains</string>
     <string name="tile_not_setup">Requires setup</string>
     <string name="tile_save">Update tile data</string>
     <string name="tile_server">Select a server (required)</string>
@@ -1017,16 +938,13 @@
     <string name="tts_error_utterance">Unable to process notification \"%1$s\" as text to speech.</string>
     <string name="tts_error_init">Failed to initialize a text to speech engine.</string>
     <string name="tts_no_text">Please set the text for text to speech to process</string>
-    <string name="unable_to_register">Unable to register application</string>
     <string name="unknown_address">Unknown address</string>
-    <string name="update_pinned_shortcut">Update pinned shortcut data</string>
     <string name="update_shortcut">Update shortcut data</string>
     <string name="update_widget">Update widget</string>
     <string name="updating_sensors">Updating sensors</string>
     <string name="url_invalid">URL invalid</string>
     <string name="url_parse_error">Unable to parse your URL. It should look like this: https://example.com.</string>
     <string name="username">Username</string>
-    <string name="version">Version: %s</string>
     <string name="view_password">View password</string>
     <string name="wait">Wait</string>
     <string name="wear_favorite_entities">Favorite entities</string>
@@ -1034,6 +952,8 @@
     <string name="wear_os_settings_title">Wear OS settings</string>
     <string name="wear_set_favorites">Select your favorite entities to appear at the top of the Wear home screen. You can also drag and drop to change the order in which they appear.</string>
     <string name="wear_settings">Wear device settings</string>
+    <string name="wear_unsupported_title">Wear OS not supported</string>
+    <string name="wear_unsupported_message">Wear OS onboarding requires the full version of the Home Assistant app with Google Play Services</string>
     <string name="websocket_listening">Connected to Home Assistant</string>
     <string name="websocket_restricted_title">Unable to open connection to Home Assistant</string>
     <string name="websocket_restricted_fix">Update settings to fix or disable</string>
@@ -1050,9 +970,7 @@
     <string name="webview_error_SSL_NOTYETVALID">The Home Assistant certificate is not yet valid, please review the Home Assistant certificate or the connection settings and try again.</string>
     <string name="webview_error_SSL_UNTRUSTED">The Home Assistant certificate authority is not trusted, please review the Home Assistant certificate or the connection settings and try again.</string>
     <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again. We will attempt to try another provided URL when you select Refresh.</string>
-    <string name="welcome_hass_desc">This app connects to your Home Assistant server and allows integrating data about you and your phone.\n\nHome Assistant is free and open source home automation software with a focus on local control and privacy.</string>
     <string name="welcome_hass">Welcome to Home Assistant Companion!</string>
-    <string name="what_is_this_crash">Unable to load Home Assistant home page, do you have a browser installed?</string>
     <string name="widget_attribute_separator_label">Separator between attributes:</string>
     <string name="widget_background_type_title">Select widget theme</string>
     <string name="widget_background_type_label">Widget theme:</string>
@@ -1065,7 +983,6 @@
     <string name="widget_config_action_error">A custom component is preventing action data from loading.</string>
     <string name="widget_creation_error">Unable to create widget.</string>
     <string name="widget_entity_fetch_error">Unable to fetch data for configured entity.</string>
-    <string name="widget_image_description">Home Assistant widget</string>
     <string name="widget_label_placeholder_text_button">Toggle</string>
     <string name="widget_label_placeholder_text_media_player">Living room</string>
     <string name="widget_label_placeholder_text_static_state">72.9 °F</string>
@@ -1086,8 +1003,6 @@
     <string name="widget_media_show_source">Show source label</string>
     <string name="widget_no_configuration">Oops. It looks like this widget is not configured.</string>
     <string name="widget_separator_input_hint">No separator</string>
-    <string name="widget_separator_label">State and attribute separator:</string>
-    <string name="widget_spinner_icon">Icon:</string>
     <string name="widget_spinner_server">Server:</string>
     <string name="widget_state_separator_label">State and attribute separator:</string>
     <string name="widget_static_image_description">Entity state</string>
@@ -1103,9 +1018,6 @@
     <string name="widget_tap_action_toggle">Toggle</string>
     <string name="widget_template_error">Unable to render the template</string>
     <string name="widget_text_hint_label">Label</string>
-    <string name="widget_text_hint_action_data">Entity ID</string>
-    <string name="widget_text_hint_action_domain">Domain</string>
-    <string name="widget_text_hint_action_action">Action</string>
     <string name="widget_text_size_default">30</string>
     <string name="widget_text_size_label">Widget text size:</string>
     <string name="widget_text_size_template">12</string>
@@ -1116,7 +1028,6 @@
     <string name="widget_text_color_white">White</string>
     <string name="widget_update_error">Unable to update widget.</string>
     <string name="widgets">Widgets</string>
-    <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
     <string name="companion_app">Companion app</string>
     <string name="basic_sensor_name_last_used_app">Last used app</string>
     <string name="sensor_description_last_used_app">Application name or package name of the last used application on the device</string>
@@ -1205,7 +1116,6 @@
     <string name="tls_cert_title">TLS client certificate error</string>
     <string name="tls_cert_not_found_message">The remote site requires a client certificate.\nPlease install the required credential on your phone and try again.</string>
     <string name="tls_cert_expired_message">The certificate is not yet or no longer valid.\nPlease install a new credential on your phone and try again.</string>
-    <string name="tls_cert_onboarding_description">If your Home Assistant instance requires TLS client certificate authentication, select a TLS client certificate file to install it on your Wear OS device.</string>
     <string name="tls_cert_onboarding_title">TLS client certificate</string>
     <string name="basic_sensor_name_battery_power">Battery power</string>
     <string name="widget_checkbox_require_authentication">Require authentication</string>
@@ -1260,11 +1170,9 @@
     <string name="thread_export_unavailable">Thread is currently unavailable</string>
     <string name="tile_vibrate">Vibrate when selected</string>
     <string name="tile_auth_required">Requires unlocked device</string>
-    <string name="no_results">No results yet</string>
     <string name="no_assist_support">You must be at least on Home Assistant %1$s and have the %2$s integration enabled</string>
     <string name="no_assist_support_conversation">conversation</string>
     <string name="no_assist_support_assist_pipeline">Assist pipeline</string>
-    <string name="conversation">Conversation</string>
     <string name="assist">Assist</string>
     <string name="assist_connnect">Assist couldn\'t reach Home Assistant, check your connection</string>
     <string name="assist_change_pipeline">Change assistant</string>
@@ -1472,7 +1380,15 @@
     <string name="location_secure_connection_next">Next</string>
     <string name="location_secure_connection_save">Save</string>
     <string name="location_secure_connection_discard_permission">Location permission denied. Allow access or choose the \'Less secure\' option.</string>
-    <string name="wear_mtls_no_filename">No file name</string>
+    <string name="block_insecure_title">Insecure connection blocked</string>
+    <string name="block_insecure_content">This connection is not secure because it uses HTTP. You have chosen to block insecure connections when not at home.</string>
+    <string name="block_insecure_missing_home_setup">The app cannot determine whether you are at home because no home network has been configured.</string>
+    <string name="block_insecure_missing_location">Location access is required to detect your home network. Android requires this because network information can be used to infer your location.</string>
+    <string name="block_insecure_action_enable_location">Enable location</string>
+    <string name="block_insecure_action_configure_home">Configure home network</string>
+    <string name="block_insecure_retry">Retry</string>
+    <string name="block_insecure_open_settings">Open settings</string>
+    <string name="block_insecure_change_security_level">Change security level</string>
     <string name="wear_mtls_content">Your Home Assistant server requires TLS client certificate authentication. Select a TLS client certificate file to install it on your Wear OS device.</string>
     <string name="wear_mtls_next">Next</string>
     <string name="wear_mtls_open_error">This password does not open this file.</string>
@@ -1495,4 +1411,8 @@
     <string name="back">Back</string>
     <string name="sensor_name_assist">Assist state</string>
     <string name="sensor_description_assist">Reports whether Assist is currently listening, speaking, idle, or closed</string>
+    <string name="notification_permission_dialog_title">Allow notifications?</string>
+    <string name="notification_permission_dialog_content">Enable notifications and get what\'s happening in your home, from detecting leaks to doors left open. You have full control over the notifications you receive and what they tell you.</string>
+    <string name="notification_permission_dialog_allow">Allow notifications</string>
+    <string name="notification_permission_dialog_deny">Do not allow</string>
 </resources>

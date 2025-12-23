@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.webview.externalbus
 
 import android.content.Context
 import android.webkit.ValueCallback
+import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.toJsonObject
@@ -37,7 +38,13 @@ class NavigateTo(path: String, replace: Boolean = false) :
                 "replace" to replace,
             ),
         ),
-    )
+    ) {
+    companion object {
+        fun isAvailable(homeAssistantVersion: HomeAssistantVersion?): Boolean {
+            return homeAssistantVersion?.isAtLeast(2025, 6, 0) == true
+        }
+    }
+}
 
 object ShowSidebar : ExternalBusMessage(
     id = -1,

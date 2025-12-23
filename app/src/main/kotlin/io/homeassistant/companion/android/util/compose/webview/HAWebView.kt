@@ -7,15 +7,30 @@ import android.os.Build
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.FrameLayout
+import androidx.activity.compose.BackHandler
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import timber.log.Timber
+
+/*
+ * [HAWebView] is on the onboarding module for convenience, since we don't have yet
+ * a place to share components between app modules. Common is shared with wear and
+ * we don't want the webview code in the wear app.
+ */
+
+@VisibleForTesting const val HA_WEBVIEW_TAG = "ha_web_view_tag"
 
 /**
  * A composable that displays a WebView specifically configured for Home Assistant.
@@ -40,31 +55,26 @@ import timber.log.Timber
  */
 @Composable
 fun HAWebView(
-    nightModeTheme: NightModeTheme?,
     modifier: Modifier = Modifier,
     configure: WebView.() -> Unit = {},
     factory: () -> WebView? = { null },
+    // Only used when the backstack of the webView is empty
+    onBackPressed: (() -> Unit)? = null,
+    nightModeTheme: NightModeTheme? = null,
 ) {
+    var webview by remember { mutableStateOf<WebView?>(null) }
     val uiMode = LocalConfiguration.current.uiMode
 
     AndroidView(
         factory = { context ->
             (factory() ?: WebView(context)).apply {
+                webview = this
                 // We want the modifier to determine the size so the WebView should match the parent
                 this.layoutParams = FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.MATCH_PARENT,
                 )
-
-                settings {
-                    // Use DSL to catch `NoSuchMethodError`
-                    defaultSettings()
-                }
-
-                // Set WebView background color to transparent, so that the theme of the android activity has control over it.
-                // This enables the ability to have the launch screen behind the WebView until the web frontend gets rendered
-                setBackgroundColor(Color.TRANSPARENT)
-
+                defaultSettings()
                 configure(this)
             }
         },
@@ -73,12 +83,20 @@ fun HAWebView(
                 webView.settings.setNightModeTheme(it, uiMode)
             }
         },
+        modifier = modifier.testTag(HA_WEBVIEW_TAG),
         onRelease = {
             Timber.d("onRelease WebView, stopping loading")
             it.stopLoading()
+            webview = null
         },
-        modifier = modifier,
     )
+
+    // To avoid checking doUpdateVisitedHistory from the webViewClient we simply delegate the back button handling
+    // to the webView and when the webview backstack is empty we call the callback given in parameter that should be
+    // handle by the navHost.
+    BackHandler(onBackPressed != null) {
+        webview.takeIf { it?.canGoBack() == true }?.goBack() ?: onBackPressed?.invoke()
+    }
 }
 
 fun WebView.settings(configureDsl: WebSettings.() -> Unit) {
@@ -95,14 +113,19 @@ fun WebView.settings(configureDsl: WebSettings.() -> Unit) {
 }
 
 @SuppressLint("SetJavaScriptEnabled")
-private fun WebSettings.defaultSettings() {
-    // https://github.com/home-assistant/android/pull/3353
-    minimumFontSize = 5
-    javaScriptEnabled = true
-    domStorageEnabled = true
-    // https://github.com/home-assistant/android/pull/2252
-    displayZoomControls = false
-    userAgentString += " ${HomeAssistantApis.USER_AGENT_STRING}"
+private fun WebView.defaultSettings() {
+    settings {
+        // https://github.com/home-assistant/android/pull/3353
+        minimumFontSize = 5
+        javaScriptEnabled = true
+        domStorageEnabled = true
+        // https://github.com/home-assistant/android/pull/2252
+        displayZoomControls = false
+        userAgentString += " ${HomeAssistantApis.USER_AGENT_STRING}"
+    }
+    // Set WebView background color to transparent, so that the theme of the android activity has control over it.
+    // This enables the ability to have the launch screen behind the WebView until the web frontend gets rendered
+    setBackgroundColor(Color.TRANSPARENT)
 }
 
 @Suppress("DEPRECATION")
