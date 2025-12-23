@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
  * Fragment explaining why the current connection is blocked.
  */
 @AndroidEntryPoint
-class BlockInsecureFragment private constructor() : Fragment() {
+class BlockInsecureFragment : Fragment() {
 
     companion object {
         const val RESULT_KEY = "block_insecure_result"
