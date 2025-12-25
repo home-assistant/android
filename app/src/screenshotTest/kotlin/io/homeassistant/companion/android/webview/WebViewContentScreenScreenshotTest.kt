@@ -27,6 +27,28 @@ class WebViewContentScreenScreenshotTest {
             customViewFromWebView = null,
             onFullscreenClicked = {},
             onNotificationPermissionResult = {},
+            serverHandleInsets = false,
+        )
+    }
+
+    @PreviewTest
+    @Preview
+    @Composable
+    fun `WebView with app unlocked server handle insets`() {
+        WebViewContentScreen(
+            webView = null,
+            player = null,
+            snackbarHostState = SnackbarHostState(),
+            playerSize = null,
+            playerTop = 0.dp,
+            playerLeft = 0.dp,
+            currentAppLocked = false,
+            shouldAskNotificationPermission = false,
+            webViewInitialized = true,
+            customViewFromWebView = null,
+            onFullscreenClicked = {},
+            onNotificationPermissionResult = {},
+            serverHandleInsets = true,
         )
     }
 
@@ -47,6 +69,7 @@ class WebViewContentScreenScreenshotTest {
             customViewFromWebView = null,
             onFullscreenClicked = {},
             onNotificationPermissionResult = {},
+            serverHandleInsets = false,
         )
     }
 
@@ -67,6 +90,7 @@ class WebViewContentScreenScreenshotTest {
             customViewFromWebView = null,
             onFullscreenClicked = {},
             onNotificationPermissionResult = {},
+            serverHandleInsets = false,
         )
     }
 
@@ -88,6 +112,7 @@ class WebViewContentScreenScreenshotTest {
             onFullscreenClicked = {},
             onNotificationPermissionResult = {},
             supportsNotificationPermission = true,
+            serverHandleInsets = false,
         )
     }
 }
