@@ -534,27 +534,29 @@ class ServerConnectionStateProviderImplTest {
         }
 
         @Test
-        fun `Given not on home network and has cloudUrl when calling getApiUrls then cloudUrl is first`() = runTest {
+        fun `Given not on home network and has cloudhookUrl when calling getApiUrls then cloudhookUrl is first`() = runTest {
             val provider = createServerConnectionStateProvider(
                 externalUrl = "https://external.example.com",
                 internalUrl = "http://192.168.1.1:8123",
-                cloudUrl = "https://cloud.nabu.casa/abc123",
+                cloudUrl = "https://abc123.ui.nabu.casa",
+                cloudhookUrl = "https://hooks.nabu.casa/cloudhook123",
                 webhookId = "webhook123",
             )
 
             val result = provider.getApiUrls()
 
             assertEquals(2, result.size)
-            assertEquals("https://cloud.nabu.casa/abc123", result[0].toString())
+            assertEquals("https://hooks.nabu.casa/cloudhook123", result[0].toString())
             assertEquals("https://external.example.com/api/webhook/webhook123", result[1].toString())
         }
 
         @Test
-        fun `Given on home network with cloudUrl when calling getApiUrls then internal is first followed by cloudUrl`() = runTest {
+        fun `Given on home network with cloudhookUrl when calling getApiUrls then internal is first followed by cloudhookUrl`() = runTest {
             val provider = createServerConnectionStateProvider(
                 externalUrl = "https://external.example.com",
                 internalUrl = "http://192.168.1.1:8123",
-                cloudUrl = "https://cloud.nabu.casa/abc123",
+                cloudUrl = "https://abc123.ui.nabu.casa",
+                cloudhookUrl = "https://hooks.nabu.casa/cloudhook123",
                 webhookId = "webhook123",
                 internalEthernet = true,
             )
@@ -564,7 +566,7 @@ class ServerConnectionStateProviderImplTest {
 
             assertEquals(3, result.size)
             assertEquals("http://192.168.1.1:8123/api/webhook/webhook123", result[0].toString())
-            assertEquals("https://cloud.nabu.casa/abc123", result[1].toString())
+            assertEquals("https://hooks.nabu.casa/cloudhook123", result[1].toString())
             assertEquals("https://external.example.com/api/webhook/webhook123", result[2].toString())
         }
 
