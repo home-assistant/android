@@ -62,6 +62,10 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
 
+    // Used for Assist audio playing, we need to add it here since GMS is not included in the :common module and the
+    // watch need it.
+    implementation(libs.media3.datasource.cronet)
+
     androidTestImplementation(libs.bundles.androidx.test)
     testImplementation(libs.bundles.androidx.test)
     testImplementation(libs.androidx.test.core)
