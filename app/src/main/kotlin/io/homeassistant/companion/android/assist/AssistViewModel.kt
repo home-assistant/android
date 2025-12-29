@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.common.assist.AssistEvent
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
+import io.homeassistant.companion.android.common.sensors.AssistSensorManager
 import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import javax.inject.Inject
@@ -150,6 +151,14 @@ class AssistViewModel @Inject constructor(
 
     override fun setInput(inputMode: AssistInputMode) {
         this.inputMode = inputMode
+
+        val state = when (inputMode) {
+            AssistInputMode.VOICE_ACTIVE -> AssistSensorManager.AssistState.LISTENING
+            AssistInputMode.VOICE_INACTIVE, AssistInputMode.TEXT -> AssistSensorManager.AssistState.IDLE
+            AssistInputMode.BLOCKED -> AssistSensorManager.AssistState.CLOSED
+            AssistInputMode.TEXT_ONLY -> AssistSensorManager.AssistState.IDLE
+        }
+        AssistSensorManager.updateState(app, state)
     }
 
     private suspend fun checkSupport(): Boolean? {

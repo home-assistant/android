@@ -1409,6 +1409,8 @@
     <string name="connection_error_github_content_description">Home Assistant GitHub</string>
     <string name="connection_error_unknown_error">There was an error loading Home Assistant. Please review the connection settings and try again.</string>
     <string name="back">Back</string>
+    <string name="sensor_name_assist">Assist state</string>
+    <string name="sensor_description_assist">Reports whether Assist is currently listening, speaking, idle, or closed</string>
     <string name="notification_permission_dialog_title">Allow notifications?</string>
     <string name="notification_permission_dialog_content">Enable notifications and get what\'s happening in your home, from detecting leaks to doors left open. You have full control over the notifications you receive and what they tell you.</string>
     <string name="notification_permission_dialog_allow">Allow notifications</string>
