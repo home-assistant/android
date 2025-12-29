@@ -47,7 +47,7 @@ import io.homeassistant.companion.android.onboarding.locationforsecureconnection
  * This fragment is temporary and should be removed once the app fully migrates to Compose Navigation.
  */
 @AndroidEntryPoint
-class ConnectionSecurityLevelFragment private constructor() : Fragment() {
+class ConnectionSecurityLevelFragment : Fragment() {
 
     companion object {
         const val RESULT_KEY = "connection_security_level_result"

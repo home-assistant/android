@@ -15,7 +15,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.launcher.LauncherActivity
+import io.homeassistant.companion.android.launch.LaunchActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -64,7 +64,7 @@ class LoginScreen(context: CarContext, val serverManager: ServerManager) : Scree
             startActivity(
                 Intent(
                     carContext,
-                    LauncherActivity::class.java,
+                    LaunchActivity::class.java,
                 ).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 },

@@ -109,8 +109,8 @@ class ServerConnectionStateProviderImpl @AssistedInject constructor(
                 connection.internalHttpUrl?.buildWebhookUrl(webhookId)?.let(::add)
             }
 
-            // Cloud URL: always add if available
-            connection.cloudHttpUrl?.let(::add)
+            // Cloudhook URL: always add if available
+            connection.cloudhookHttpUrl?.let(::add)
 
             // External URL: use when on home network, or when connection is secure/allowed
             val externalUrlIsSecure = connection.externalUrl.startsWith("https://")

@@ -19,7 +19,7 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.assist.ui.AssistSheetView
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.launcher.LauncherActivity
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.launch
@@ -64,7 +64,7 @@ class AssistActivity : BaseActivity() {
         if (savedInstanceState == null) {
             lifecycleScope.launch {
                 if (!viewModel.isRegistered()) {
-                    startActivity(Intent(this@AssistActivity, LauncherActivity::class.java))
+                    startActivity(Intent(this@AssistActivity, LaunchActivity::class.java))
                     finish()
                 }
             }

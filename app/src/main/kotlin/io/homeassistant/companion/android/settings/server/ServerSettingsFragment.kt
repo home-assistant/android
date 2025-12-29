@@ -30,7 +30,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.launcher.LauncherActivity
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
@@ -368,7 +368,7 @@ class ServerSettingsFragment :
             if (hasAnyRemaining) { // Return to the main settings screen
                 parentFragmentManager.popBackStack()
             } else { // Relaunch app
-                startActivity(Intent(requireContext(), LauncherActivity::class.java))
+                startActivity(Intent(requireContext(), LaunchActivity::class.java))
                 requireActivity().finishAffinity()
             }
         }

@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.launcher.link
+package io.homeassistant.companion.android.launch.link
 
 import dagger.Binds
 import dagger.Module

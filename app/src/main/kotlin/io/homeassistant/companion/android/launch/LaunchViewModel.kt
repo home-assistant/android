@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.launcher
+package io.homeassistant.companion.android.launch
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,56 +7,70 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.network.NetworkState
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.ResyncRegistrationWorker.Companion.enqueueResyncRegistration
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.di.qualifiers.LocationTrackingSupport
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
+import io.homeassistant.companion.android.onboarding.OnboardingRoute
+import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
- * Sealed interface for navigation events that can occur in the launcher.
- * These events are used to determine where the app should navigate to
- * after launching.
+ * Represents the UI state of the launch screen.
  */
-internal sealed interface LauncherNavigationEvent {
-    data class Frontend(val path: String?, val serverId: Int) : LauncherNavigationEvent
-    data class Onboarding(
-        val urlToOnboard: String?,
-        val hideExistingServers: Boolean,
-        val skipWelcome: Boolean,
-        val hasLocationTrackingSupport: Boolean,
-    ) : LauncherNavigationEvent
+internal sealed interface LaunchUiState {
+    /**
+     * Initial loading state while determining where to navigate.
+     */
+    data object Loading : LaunchUiState
 
-    data class WearOnboarding(val wearName: String, val urlToOnboard: String?) : LauncherNavigationEvent
+    /**
+     * The app is ready to navigate to the start destination.
+     */
+    data class Ready(val startDestination: HAStartDestinationRoute) : LaunchUiState
+
+    /**
+     * The network is unavailable and the app cannot connect to the server.
+     */
+    data object NetworkUnavailable : LaunchUiState
+
+    /**
+     * Wear OS onboarding was requested but is not supported in the minimal flavor.
+     */
+    data object WearUnsupported : LaunchUiState
 }
 
 /**
- * ViewModel for the launcher activity. Upon instantiation, it checks for servers to remove
+ * ViewModel for the launch activity. Upon instantiation, it checks for servers to remove
  * and verifies the presence of an active, registered, and connected server.
  *
  * If no such server is found, or if an error occurs during this check (e.g., network connectivity issues),
- * it emits [LauncherNavigationEvent.Onboarding]. Otherwise, it schedules a resync of all server
- * registrations asynchronously and emits [LauncherNavigationEvent.Frontend].
+ * it navigates to onboarding. Otherwise, it schedules a resync of all server registrations
+ * asynchronously and navigates to the frontend.
  */
-@HiltViewModel(assistedFactory = LauncherViewModelFactory::class)
-internal class LauncherViewModel @AssistedInject constructor(
-    @Assisted initialDeepLink: LauncherActivity.DeepLink?,
+@HiltViewModel(assistedFactory = LaunchViewModelFactory::class)
+internal class LaunchViewModel @AssistedInject constructor(
+    @Assisted initialDeepLink: LaunchActivity.DeepLink?,
     private val workManager: WorkManager,
     private val serverManager: ServerManager,
     private val networkStatusMonitor: NetworkStatusMonitor,
     @param:LocationTrackingSupport private val hasLocationTrackingSupport: Boolean,
+    @param:IsAutomotive private val isAutomotive: Boolean,
 ) : ViewModel() {
 
-    private val _navigationEventsFlow = MutableSharedFlow<LauncherNavigationEvent>(replay = 1)
-    val navigationEventsFlow = _navigationEventsFlow.asSharedFlow()
+    private val _uiState = MutableStateFlow<LaunchUiState>(LaunchUiState.Loading)
+    val uiState = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -68,21 +82,20 @@ internal class LauncherViewModel @AssistedInject constructor(
     /**
      * Determine when to hide the application's splash screen.
      */
-    fun shouldShowSplashScreen(): Boolean = navigationEventsFlow.replayCache.isEmpty()
+    fun shouldShowSplashScreen(): Boolean = _uiState.value is LaunchUiState.Loading
 
-    private suspend fun handleInitialState(initialDeepLink: LauncherActivity.DeepLink?) {
+    private suspend fun handleInitialState(initialDeepLink: LaunchActivity.DeepLink?) {
         when (initialDeepLink) {
-            is LauncherActivity.DeepLink.OpenOnboarding -> navigateToOnboarding(
-
+            is LaunchActivity.DeepLink.OpenOnboarding -> navigateToOnboarding(
                 initialDeepLink.urlToOnboard,
                 hideExistingServers = initialDeepLink.hideExistingServers,
                 skipWelcome = initialDeepLink.skipWelcome,
             )
 
-            is LauncherActivity.DeepLink.NavigateTo,
+            is LaunchActivity.DeepLink.NavigateTo,
             -> connectToServer(initialDeepLink.serverId, initialDeepLink.path)
 
-            is LauncherActivity.DeepLink.OpenWearOnboarding -> navigateToWearOnboarding(
+            is LaunchActivity.DeepLink.OpenWearOnboarding -> navigateToWearOnboarding(
                 wearName = initialDeepLink.wearName,
                 urlToOnboard = initialDeepLink.urlToOnboard,
             )
@@ -99,7 +112,7 @@ internal class LauncherViewModel @AssistedInject constructor(
                 networkStatusMonitor.observeNetworkStatus(serverManager.connectionStateProvider(server.id))
                     .takeWhile { state ->
                         // Until the network is ready we continue to observe network status changes
-                        !handleNetworkState(state, LauncherNavigationEvent.Frontend(path, serverId))
+                        !handleNetworkState(state, path, serverId)
                     }.collect()
             } ?: navigateToOnboarding()
         } catch (e: IllegalArgumentException) {
@@ -118,23 +131,28 @@ internal class LauncherViewModel @AssistedInject constructor(
         }
     }
 
-    private suspend fun navigateToWearOnboarding(wearName: String, urlToOnboard: String? = null) {
-        _navigationEventsFlow.emit(
-            LauncherNavigationEvent.WearOnboarding(wearName = wearName, urlToOnboard = urlToOnboard),
+    private fun navigateToWearOnboarding(wearName: String, urlToOnboard: String? = null) {
+        if (!hasLocationTrackingSupport) {
+            // Wear OS requires Google Play Services for communication, which is only available in full flavor
+            _uiState.value = LaunchUiState.WearUnsupported
+            return
+        }
+        _uiState.value = LaunchUiState.Ready(
+            WearOnboardingRoute(wearName = wearName, urlToOnboard = urlToOnboard),
         )
     }
 
-    private suspend fun navigateToOnboarding(
+    private fun navigateToOnboarding(
         urlToOnboard: String? = null,
         hideExistingServers: Boolean = false,
         skipWelcome: Boolean = false,
     ) {
-        _navigationEventsFlow.emit(
-            LauncherNavigationEvent.Onboarding(
-                urlToOnboard,
+        _uiState.value = LaunchUiState.Ready(
+            OnboardingRoute(
+                hasLocationTracking = hasLocationTrackingSupport,
+                urlToOnboard = urlToOnboard,
                 hideExistingServers = hideExistingServers,
                 skipWelcome = skipWelcome,
-                hasLocationTrackingSupport = hasLocationTrackingSupport,
             ),
         )
     }
@@ -149,15 +167,18 @@ internal class LauncherViewModel @AssistedInject constructor(
             .forEach { serverManager.removeServer(it.id) }
     }
 
-    private suspend fun handleNetworkState(
-        state: NetworkState,
-        destinationOnReady: LauncherNavigationEvent.Frontend,
-    ): Boolean {
+    private fun handleNetworkState(state: NetworkState, path: String?, serverId: Int): Boolean {
         Timber.i("Current network state $state")
         return when (state) {
             NetworkState.READY_LOCAL, NetworkState.READY_REMOTE -> {
                 workManager.enqueueResyncRegistration()
-                _navigationEventsFlow.emit(destinationOnReady)
+                _uiState.value = LaunchUiState.Ready(
+                    if (isAutomotive) {
+                        AutomotiveRoute
+                    } else {
+                        FrontendRoute(path, serverId)
+                    },
+                )
                 true
             }
 
@@ -166,7 +187,7 @@ internal class LauncherViewModel @AssistedInject constructor(
             }
 
             NetworkState.UNAVAILABLE -> {
-                // TODO Make a page that simply show the message R.string.error_connection_failed_no_network
+                _uiState.value = LaunchUiState.NetworkUnavailable
                 false
             }
         }
@@ -174,6 +195,6 @@ internal class LauncherViewModel @AssistedInject constructor(
 }
 
 @AssistedFactory
-internal interface LauncherViewModelFactory {
-    fun create(initialDeepLink: LauncherActivity.DeepLink?): LauncherViewModel
+internal interface LaunchViewModelFactory {
+    fun create(initialDeepLink: LaunchActivity.DeepLink?): LaunchViewModel
 }

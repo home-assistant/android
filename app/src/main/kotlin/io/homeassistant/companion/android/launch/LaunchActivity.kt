@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.launcher
+package io.homeassistant.companion.android.launch
 
 import android.content.Context
 import android.content.Intent
@@ -7,34 +7,28 @@ import android.os.Parcelable
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.getValue
 import androidx.core.content.IntentCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
-import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.compose.theme.HATheme
-import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
-import io.homeassistant.companion.android.launcher.HAStartDestinationRoute
-import io.homeassistant.companion.android.onboarding.OnboardingRoute
-import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
 import io.homeassistant.companion.android.util.compose.HAApp
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
-import kotlinx.coroutines.flow.first
 import kotlinx.parcelize.Parcelize
 
 private const val DEEP_LINK_KEY = "deep_link_key"
 
 /**
  * Main entry point of the application, it is mostly responsible to hold the whole navigation of the application.
- * It also handles the splash screen display based on a condition exposed by the [LauncherViewModel].
+ * It also handles the splash screen display based on a condition exposed by the [LaunchViewModel].
  */
 @AndroidEntryPoint
-class LauncherActivity : AppCompatActivity() {
+class LaunchActivity : AppCompatActivity() {
     /**
-     * Represents deep link actions that can be passed to [LauncherActivity] to navigate to specific destinations.
+     * Represents deep link actions that can be passed to [LaunchActivity] to navigate to specific destinations.
      */
     @Parcelize
     sealed interface DeepLink : Parcelable {
@@ -68,7 +62,7 @@ class LauncherActivity : AppCompatActivity() {
 
     companion object {
         fun newInstance(context: Context, deepLink: DeepLink? = null): Intent {
-            return Intent(context, LauncherActivity::class.java).apply {
+            return Intent(context, LaunchActivity::class.java).apply {
                 if (deepLink != null) {
                     putExtra(DEEP_LINK_KEY, deepLink)
                 }
@@ -76,9 +70,9 @@ class LauncherActivity : AppCompatActivity() {
         }
     }
 
-    private val viewModel: LauncherViewModel by viewModels(
+    private val viewModel: LaunchViewModel by viewModels(
         extrasProducer = {
-            defaultViewModelCreationExtras.withCreationCallback<LauncherViewModelFactory> {
+            defaultViewModelCreationExtras.withCreationCallback<LaunchViewModelFactory> {
                 it.create(IntentCompat.getParcelableExtra(intent, DEEP_LINK_KEY, DeepLink::class.java))
             }
         },
@@ -97,37 +91,16 @@ class LauncherActivity : AppCompatActivity() {
         setContent {
             HATheme {
                 val navController = rememberNavController()
-                val startDestinationState =
-                    produceState<HAStartDestinationRoute?>(null, viewModel) {
-                        val event = viewModel.navigationEventsFlow.first()
-                        value = when (event) {
-                            is LauncherNavigationEvent.Frontend -> {
-                                if (isAutomotive()) {
-                                    AutomotiveRoute
-                                } else {
-                                    FrontendRoute(event.path, event.serverId)
-                                }
-                            }
+                val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-                            is LauncherNavigationEvent.Onboarding -> OnboardingRoute(
-                                hasLocationTracking = event.hasLocationTrackingSupport,
-                                urlToOnboard = event.urlToOnboard,
-                                hideExistingServers = event.hideExistingServers,
-                                skipWelcome = event.skipWelcome,
-                            )
-
-                            is LauncherNavigationEvent.WearOnboarding -> {
-                                // TODO fail when not in FULL variant (maybe make a dedicated screen explaining that
-                                //  the wear only work with FULL variant)
-                                WearOnboardingRoute(
-                                    wearName = event.wearName,
-                                    urlToOnboard = event.urlToOnboard,
-                                )
-                            }
-                        }
+                when (val state = uiState) {
+                    is LaunchUiState.Ready -> HAApp(navController, state.startDestination)
+                    LaunchUiState.NetworkUnavailable -> NetworkUnavailableDialog(onBackClick = ::finish)
+                    LaunchUiState.WearUnsupported -> WearUnsupportedDialog(onBackClick = ::finish)
+                    LaunchUiState.Loading -> {
+                        // Splash screen is still showing
                     }
-
-                HAApp(navController, startDestinationState.value)
+                }
             }
         }
     }

@@ -71,6 +71,7 @@ class NameYourDeviceViewModelTest {
     fun setup() {
         coEvery { serverManager.authenticationRepository(any()) } returns authRepository
         coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
+        coEvery { serverManager.activateServer(any()) } just Runs
         coEvery { serverManager.getServer(any<Int>()) } answers { createServer(firstArg<Int>()) }
         coEvery { serverManager.updateServer(any()) } just Runs
 
@@ -161,6 +162,7 @@ class NameYourDeviceViewModelTest {
                 authRepository.registerAuthorizationCode(route.authCode)
                 integrationRepository.registerDevice(any())
                 serverManager.convertTemporaryServer(tempServerId)
+                serverManager.activateServer(testServerId)
             }
             // HTTP URL means allowInsecureConnection is null (not enforced)
             assertEquals(null, serverSlot.captured.connection.allowInsecureConnection)
@@ -168,7 +170,7 @@ class NameYourDeviceViewModelTest {
     }
 
     @Test
-    fun `Given custom deviceName and successful add server when onSaveClick then emits DeviceNameSaved event and registered with custom name`() = runTest {
+    fun `Given custom deviceName and successful add server when onSaveClick then emits DeviceNameSaved event and registered with custom name and server activated`() = runTest {
         val customDeviceName = "Pixel"
         viewModel.onDeviceNameChange(customDeviceName)
         advanceUntilIdle()
@@ -209,6 +211,7 @@ class NameYourDeviceViewModelTest {
                         messagingTokenProvider(),
                     ),
                 )
+                serverManager.activateServer(testServerId)
             }
         }
     }
@@ -251,6 +254,9 @@ class NameYourDeviceViewModelTest {
             assertFalse(event.hasPlainTextAccess)
             assertTrue(event.isPubliclyAccessible)
 
+            coVerify(exactly = 1) {
+                serverManager.activateServer(testServerId)
+            }
             // Secure connection is enforced during server creation, not via updateServer
             assertEquals(false, serverSlot.captured.connection.allowInsecureConnection)
         }
@@ -272,6 +278,7 @@ class NameYourDeviceViewModelTest {
                 authRepository.registerAuthorizationCode(any())
                 integrationRepository.registerDevice(any())
                 serverManager.convertTemporaryServer(any())
+                serverManager.activateServer(any())
                 authRepository.revokeSession()
                 serverManager.removeServer(any())
             }
@@ -303,6 +310,7 @@ class NameYourDeviceViewModelTest {
             coVerify(exactly = 0) {
                 integrationRepository.registerDevice(any())
                 serverManager.convertTemporaryServer(any())
+                serverManager.activateServer(any())
             }
         }
     }
@@ -330,7 +338,10 @@ class NameYourDeviceViewModelTest {
                 authRepository.revokeSession()
                 serverManager.removeServer(tempServerId)
             }
-            coVerify(exactly = 0) { serverManager.convertTemporaryServer(any()) }
+            coVerify(exactly = 0) {
+                serverManager.convertTemporaryServer(any())
+                serverManager.activateServer(any())
+            }
         }
     }
 
@@ -359,6 +370,7 @@ class NameYourDeviceViewModelTest {
                 authRepository.revokeSession()
                 serverManager.removeServer(tempServerId)
             }
+            coVerify(exactly = 0) { serverManager.activateServer(any()) }
         }
     }
 
