@@ -87,6 +87,6 @@ interface IntegrationRepository {
 }
 
 @AssistedFactory
-interface IntegrationRepositoryFactory {
+internal interface IntegrationRepositoryFactory {
     fun create(serverId: Int): IntegrationRepositoryImpl
 }

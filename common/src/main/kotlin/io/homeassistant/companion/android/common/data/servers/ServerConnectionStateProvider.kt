@@ -134,7 +134,7 @@ interface ServerConnectionStateProvider {
 }
 
 @AssistedFactory
-interface ServerConnectionStateProviderFactory {
+internal interface ServerConnectionStateProviderFactory {
     /**
      * Creates a [ServerConnectionStateProviderImpl] for the specified server.
      *

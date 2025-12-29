@@ -52,12 +52,12 @@ interface ServerManager {
      * provided. Only IDs for servers with the type [ServerType.DEFAULT] are accepted, other IDs are
      * ignored.
      */
-    fun activateServer(id: Int)
+    suspend fun activateServer(id: Int)
 
     /**
      * Update a server based on the provided object.
      */
-    fun updateServer(server: Server)
+    suspend fun updateServer(server: Server)
 
     /**
      * Convert a temporary server in the manager to a default server.

@@ -22,6 +22,9 @@ interface ServerDao {
     @Query("SELECT * FROM servers ORDER BY `list_order` ASC")
     suspend fun getAll(): List<Server>
 
+    @Query("SELECT * FROM servers ORDER BY id DESC LIMIT 1")
+    suspend fun getLast(): Server?
+
     @Query("SELECT * FROM servers ORDER BY `list_order` ASC")
     fun getAllFlow(): Flow<List<Server>>
 

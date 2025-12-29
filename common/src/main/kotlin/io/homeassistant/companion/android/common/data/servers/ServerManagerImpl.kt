@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class ServerManagerImpl @Inject constructor(
+internal class ServerManagerImpl @Inject constructor(
     private val authenticationRepositoryFactory: AuthenticationRepositoryFactory,
     private val integrationRepositoryFactory: IntegrationRepositoryFactory,
     private val webSocketRepositoryFactory: WebSocketRepositoryFactory,
@@ -135,16 +135,16 @@ class ServerManagerImpl @Inject constructor(
         mutableServers.values.firstOrNull { it.connection.webhookId == webhookId }
             ?: serverDao.get(webhookId)
 
-    override fun activateServer(id: Int) {
+    override suspend fun activateServer(id: Int) {
         if (id != SERVER_ID_ACTIVE && mutableServers[id] != null && mutableServers[id]?.type == ServerType.DEFAULT) {
-            ioScope.launch { localStorage.putInt(PREF_ACTIVE_SERVER, id) }
+            localStorage.putInt(PREF_ACTIVE_SERVER, id)
         }
     }
 
-    override fun updateServer(server: Server) {
+    override suspend fun updateServer(server: Server) {
         mutableServers[server.id] = server
         if (server.type == ServerType.DEFAULT) {
-            ioScope.launch { serverDao.update(server) }
+            serverDao.update(server)
         }
     }
 
