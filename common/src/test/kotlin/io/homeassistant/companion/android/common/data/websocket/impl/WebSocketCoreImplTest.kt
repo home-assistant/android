@@ -844,7 +844,7 @@ misc
         customScope.advanceUntilIdle()
         advanceUntilIdle()
         coVerify { mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""id":2""") }) }
-        assertEquals("Event should always be associated to a ActiveMessage.SubscriptionActiveMessage", errorMessageCaptured)
+        assertEquals("Event should always be associated to a ActiveMessage.Subscription message", errorMessageCaptured)
     }
 
     /*
