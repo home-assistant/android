@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.common.assist
 
 import android.app.Application
 import android.content.pm.PackageManager
+import androidx.annotation.VisibleForTesting
+import androidx.annotation.VisibleForTesting.Companion.PROTECTED
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.homeassistant.companion.android.common.R
@@ -17,11 +19,14 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineTtsEnd
 import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.PlaybackState
 import io.homeassistant.companion.android.util.UrlUtil
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
@@ -64,12 +69,31 @@ abstract class AssistViewModelBase(
     protected var selectedServerId = ServerManager.SERVER_ID_ACTIVE
 
     protected var recorderProactive = false
+
+    /**
+     * Parent job managing the audio recording pipeline. Contains both the producer
+     * (collecting from [AudioRecorder.audioBytes]) and consumer (forwarding to server).
+     * Joining this job ensures all buffered audio has been sent before cleanup.
+     */
     private var recorderJob: Job? = null
-    private var recorderQueue: MutableList<ByteArray>? = null
+
+    /**
+     * Child job that collects audio bytes from [AudioRecorder.audioBytes] SharedFlow
+     * and buffers them in a channel. Cancelled separately from [recorderJob] to stop
+     * collecting while still allowing the consumer to drain buffered data.
+     */
+    private var producerJob: Job? = null
+
+    /**
+     * Signals when the server is ready to receive audio data. Completed with the
+     * binary handler ID when [handleSttStart] is called. The consumer coroutine
+     * awaits this before forwarding buffered audio to the server.
+     */
+    private var sttReady: CompletableDeferred<Int>? = null
     protected val hasMicrophone = app.packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)
     protected var hasPermission = false
 
-    private var binaryHandlerId: Int? = null
+    @VisibleForTesting var binaryHandlerId: Int? = null
     private var conversationId: String? = null
     private var continueConversation = AtomicBoolean(false)
 
@@ -183,14 +207,8 @@ abstract class AssistViewModelBase(
     }
 
     private fun handleSttStart() {
-        viewModelScope.launch {
-            binaryHandlerId?.let { id ->
-                // Manually loop here to avoid the queue being reset too soon
-                recorderQueue?.forEach { data ->
-                    serverManager.webSocketRepository(selectedServerId).sendVoiceData(id, data)
-                }
-            }
-            recorderQueue = null
+        binaryHandlerId?.let { id ->
+            sttReady?.complete(id)
         }
     }
 
@@ -243,20 +261,45 @@ abstract class AssistViewModelBase(
         return true
     }
 
-    protected fun setupRecorderQueue() {
-        recorderQueue = mutableListOf()
-        recorderJob = viewModelScope.launch {
-            audioRecorder.audioBytes.collect {
-                recorderQueue?.add(it) ?: sendVoiceData(it)
-            }
-        }
-    }
+    /**
+     * Sets up audio recording and buffering for voice input.
+     *
+     * Must be called before [runAssistPipelineInternal] for voice pipelines.
+     * Audio data is buffered until [handleSttStart] signals that the server is ready
+     * to receive, then all buffered and subsequent audio is forwarded.
+     *
+     * Note: [AudioRecorder.audioBytes] is a SharedFlow which never completes, so we use
+     * explicit channel management to allow graceful shutdown with buffer draining.
+     */
+    @VisibleForTesting(otherwise = PROTECTED)
+    fun setupRecorder() {
+        Timber.d("Setting up recorder")
+        sttReady = CompletableDeferred()
 
-    private fun sendVoiceData(data: ByteArray) {
-        binaryHandlerId?.let {
-            viewModelScope.launch {
-                // Launch to prevent blocking the output flow if the network is slow
-                serverManager.webSocketRepository(selectedServerId).sendVoiceData(it, data)
+        recorderJob = viewModelScope.launch {
+            val audioChannel = Channel<ByteArray>(Channel.UNLIMITED)
+
+            // Producer: collect from SharedFlow and buffer in channel
+            producerJob = launch {
+                audioRecorder.audioBytes.collect { data ->
+                    audioChannel.send(data)
+                }
+            }.apply {
+                invokeOnCompletion {
+                    audioChannel.close()
+                }
+            }
+
+            // Consumer: wait for STT to be ready, then forward all buffered and new data
+            val handlerId = sttReady?.await() ?: run {
+                FailFast.fail { "sttReady not set" }
+                producerJob?.cancel()
+                audioChannel.close()
+                return@launch
+            }
+
+            for (data in audioChannel) {
+                serverManager.webSocketRepository(selectedServerId).sendVoiceData(handlerId, data)
             }
         }
     }
@@ -276,23 +319,49 @@ abstract class AssistViewModelBase(
     }
 
     protected fun stopRecording(sendRecorded: Boolean = true) {
+        stopAudioCapture()
+
+        binaryHandlerId?.let { handlerId ->
+            finalizeRecording(handlerId, sendRecorded)
+        } ?: cancelRecorderJob()
+
+        updateInputModeAfterRecording()
+    }
+
+    private fun stopAudioCapture() {
         audioRecorder.stopRecording()
+        producerJob?.cancel()
+        producerJob = null
+    }
+
+    private fun finalizeRecording(handlerId: Int, sendRecorded: Boolean) {
+        viewModelScope.launch {
+            if (sendRecorded) {
+                recorderJob?.join()
+                serverManager.webSocketRepository(selectedServerId).sendVoiceData(
+                    handlerId,
+                    byteArrayOf(),
+                )
+            } else {
+                recorderJob?.cancel()
+            }
+            clearRecorderState()
+        }
+    }
+
+    private fun cancelRecorderJob() {
         recorderJob?.cancel()
         recorderJob = null
-        if (binaryHandlerId != null) {
-            viewModelScope.launch {
-                if (sendRecorded) {
-                    recorderQueue?.forEach {
-                        sendVoiceData(it)
-                    }
-                    sendVoiceData(byteArrayOf()) // Empty message to indicate end of recording
-                }
-                recorderQueue = null
-                binaryHandlerId = null
-            }
-        } else {
-            recorderQueue = null
-        }
+        sttReady = null
+    }
+
+    private fun clearRecorderState() {
+        recorderJob = null
+        sttReady = null
+        binaryHandlerId = null
+    }
+
+    private fun updateInputModeAfterRecording() {
         if (getInput() == AssistInputMode.VOICE_ACTIVE) {
             setInput(if (recorderProactive) AssistInputMode.BLOCKED else AssistInputMode.VOICE_INACTIVE)
         }
