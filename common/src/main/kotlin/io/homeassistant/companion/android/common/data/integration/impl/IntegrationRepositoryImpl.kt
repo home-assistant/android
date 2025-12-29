@@ -684,7 +684,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             try {
                 return action(url)
             } catch (e: Exception) {
-                Timber.w(e, "Failed $requestName on $url")
+                Timber.w(e, "Failed $requestName ${if (BuildConfig.DEBUG) "on $url" else ""}")
                 if (firstException == null) firstException = e
             }
         }
