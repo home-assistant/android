@@ -102,6 +102,7 @@ import io.homeassistant.companion.android.common.util.getStringOrElse
 import io.homeassistant.companion.android.common.util.getStringOrNull
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.jsonObjectOrNull
+import io.homeassistant.companion.android.common.util.runFragmentTransactionIfStateSafe
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.authentication.Authentication
@@ -1438,8 +1439,10 @@ class WebViewActivity :
     override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean) {
         Timber.d("Loading $url (keepHistory $keepHistory, openInApp $openInApp)")
         if (openInApp) {
-            // Remove any displayed fragments (e.g., BlockInsecureFragment, ConnectionSecurityLevelFragment)
-            supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            runFragmentTransactionIfStateSafe {
+                // Remove any displayed fragments (e.g., BlockInsecureFragment, ConnectionSecurityLevelFragment)
+                supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            }
             supportFragmentManager.clearFragmentResultListener(BlockInsecureFragment.RESULT_KEY)
 
             clearHistory = !keepHistory
@@ -1471,34 +1474,36 @@ class WebViewActivity :
             return
         }
 
-        supportFragmentManager.setFragmentResultListener(
-            ConnectionSecurityLevelFragment.RESULT_KEY,
-            this,
-        ) { _, _ ->
-            Timber.d("Security level screen exited by user, proceeding with URL loading")
-            supportFragmentManager.clearFragmentResultListener(ConnectionSecurityLevelFragment.RESULT_KEY)
+        runFragmentTransactionIfStateSafe {
+            supportFragmentManager.setFragmentResultListener(
+                ConnectionSecurityLevelFragment.RESULT_KEY,
+                this,
+            ) { _, _ ->
+                Timber.d("Security level screen exited by user, proceeding with URL loading")
+                supportFragmentManager.clearFragmentResultListener(ConnectionSecurityLevelFragment.RESULT_KEY)
 
-            // Mark as shown so we don't show the fragment again for this server
-            presenter.onConnectionSecurityLevelShown()
+                // Mark as shown so we don't show the fragment again for this server
+                presenter.onConnectionSecurityLevelShown()
 
-            lifecycleScope.launch {
-                // Trigger a reload of the URL via the presenter to trigger loadUrl in the view.
-                // The presenter will apply the potential changes made in the fragment.
-                presenter.load(lifecycle, isInternalOverride = isInternalOverride)
+                lifecycleScope.launch {
+                    // Trigger a reload of the URL via the presenter to trigger loadUrl in the view.
+                    // The presenter will apply the potential changes made in the fragment.
+                    presenter.load(lifecycle, isInternalOverride = isInternalOverride)
+                }
             }
-        }
 
-        supportFragmentManager.beginTransaction()
-            .replace(
-                android.R.id.content,
-                ConnectionSecurityLevelFragment.newInstance(
-                    serverId = serverId,
-                    handleAllInsets = true,
-                    useCloseButton = true,
-                ),
-            )
-            .addToBackStack(null)
-            .commit()
+            supportFragmentManager.beginTransaction()
+                .replace(
+                    android.R.id.content,
+                    ConnectionSecurityLevelFragment.newInstance(
+                        serverId = serverId,
+                        handleAllInsets = true,
+                        useCloseButton = true,
+                    ),
+                )
+                .addToBackStack(null)
+                .commit()
+        }
     }
 
     override fun showBlockInsecure(serverId: Int) {
@@ -1508,29 +1513,31 @@ class WebViewActivity :
             return
         }
 
-        supportFragmentManager.setFragmentResultListener(
-            BlockInsecureFragment.RESULT_KEY,
-            this,
-        ) { _, _ ->
-            // Don't clear the listener yet - it will be cleared when:
-            // loadUrl() is called (conditions met) - fragment is popped in loadUrl()
+        runFragmentTransactionIfStateSafe {
+            supportFragmentManager.setFragmentResultListener(
+                BlockInsecureFragment.RESULT_KEY,
+                this,
+            ) { _, _ ->
+                // Don't clear the listener yet - it will be cleared when:
+                // loadUrl() is called (conditions met) - fragment is popped in loadUrl()
 
-            lifecycleScope.launch {
-                presenter.load(lifecycle, isInternalOverride = isInternalOverride)
+                lifecycleScope.launch {
+                    presenter.load(lifecycle, isInternalOverride = isInternalOverride)
+                }
             }
+            // Make sure the WebView won't load anything in background to avoid leaking
+            webView.loadUrl("about:blank")
+            loadedUrl = null
+            supportFragmentManager.beginTransaction()
+                .replace(
+                    android.R.id.content,
+                    BlockInsecureFragment.newInstance(
+                        serverId = serverId,
+                    ),
+                )
+                .addToBackStack(null)
+                .commit()
         }
-        // Make sure the WebView won't load anything in background to avoid leaking
-        webView.loadUrl("about:blank")
-        loadedUrl = null
-        supportFragmentManager.beginTransaction()
-            .replace(
-                android.R.id.content,
-                BlockInsecureFragment.newInstance(
-                    serverId = serverId,
-                ),
-            )
-            .addToBackStack(null)
-            .commit()
     }
 
     override fun setStatusBarAndBackgroundColor(statusBarColor: Int, backgroundColor: Int) {
