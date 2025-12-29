@@ -20,7 +20,7 @@ jobs:
 
       - uses: ruby/setup-ruby@ae195bbe749a7cef685ac729197124a48305c1cb # v1.276.0
         with:
-          ruby-version: "3.4.8"
+          ruby-version: "4.0.0"
           bundler-cache: true
 
       - uses: ./.github/actions/inflate-secrets
