@@ -78,7 +78,6 @@ fun Context.createBatteryOptimizationIntent(): Intent? {
 /**
  * Checks if the app is ignoring battery optimizations.
  *
- * TODO this should not be exposed to the wear module https://github.com/home-assistant/android/discussions/5771
  * @return `true` if the app is ignoring battery optimizations, `false` otherwise.
  */
 fun Context.isIgnoringBatteryOptimizations(): Boolean {
