@@ -102,6 +102,7 @@ import io.homeassistant.companion.android.common.util.getStringOrElse
 import io.homeassistant.companion.android.common.util.getStringOrNull
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.jsonObjectOrNull
+import io.homeassistant.companion.android.common.util.runFragmentTransactionIfStateSafe
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.authentication.Authentication
@@ -1433,20 +1434,6 @@ class WebViewActivity :
         isRelaunching = true
         startActivity(Intent(this, LaunchActivity::class.java))
         finish()
-    }
-
-    /**
-     * Executes fragment transactions only if the FragmentManager state hasn't been saved.
-     * This prevents IllegalStateException when called from the presenter that might call this after
-     * onSaveInstanceState (e.g., when the user backgrounds the app). Due to the fact that
-     * coroutines cancel are async.
-     */
-    private inline fun runFragmentTransactionIfStateSafe(block: () -> Unit) {
-        if (!supportFragmentManager.isStateSaved) {
-            block()
-        } else {
-            Timber.d("Skipping fragment transaction - state already saved")
-        }
     }
 
     override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean) {
