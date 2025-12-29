@@ -1,5 +1,9 @@
 package io.homeassistant.companion.android.onboarding.locationsharing
 
+import android.content.ComponentName
+import android.content.Intent
+import android.content.IntentFilter
+import android.provider.Settings
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.ActivityResultRegistryOwner
@@ -11,6 +15,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.test.core.app.ApplicationProvider
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -20,11 +25,13 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.LocationPermissionActivityResultRegistry
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -39,6 +46,23 @@ class LocationSharingScreenTest {
 
     @get:Rule(order = 2)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
+
+    @Before
+    fun setUp() {
+        // Mock PackageManager to resolve the battery optimization intent.
+        val context = ApplicationProvider.getApplicationContext<HiltTestApplication>()
+        val shadowPackageManager = shadowOf(context.packageManager)
+
+        // Register a fake activity that handles the battery optimization intent
+        val component = ComponentName("com.android.settings", "BatteryOptimizationActivity")
+        shadowPackageManager.addActivityIfNotPresent(component)
+        // IntentFilter needs CATEGORY_DEFAULT for MATCH_DEFAULT_ONLY and data scheme for the URI
+        val intentFilter = IntentFilter(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+            addCategory(Intent.CATEGORY_DEFAULT)
+            addDataScheme("package")
+        }
+        shadowPackageManager.addIntentFilterForActivity(component, intentFilter)
+    }
 
     @Test
     fun `Given screen displayed when clicking on share and granting permission then go to next screen and location response set to true and ask for battery optimization`() {
