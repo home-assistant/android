@@ -192,8 +192,10 @@ internal class WebSocketCoreImpl(
     }
 
     /**
-     * This complete when the message has been processed and sent or not.
-     * This is not making any network call directly it enqueue the send into the WebSocket connection.
+     * Processes the send command by enqueuing it on the connection, it does not directly make the network call.
+     *
+     * @param command The command to process. Its [Command.sendCompleted] will be completed
+     *                to indicate success or failure for sending.
      */
     private fun processSendCommand(command: Command<*>) {
         val currentConnection = connection
@@ -337,8 +339,6 @@ internal class WebSocketCoreImpl(
             Timber.e(e, "Failed to send message ${command.request}")
             return null
         }
-
-        Timber.d("Message number $id sent, awaiting response from WebSocket")
 
         // Wait for response with timeout
         val response = try {
@@ -546,7 +546,7 @@ internal class WebSocketCoreImpl(
         val subscriptionId = response.id
         val activeMessage = activeMessages[subscriptionId].let {
             FailFast.failWhen(it !is ActiveMessage.Subscription) {
-                "Event should always be associated to a ActiveMessage.SubscriptionActiveMessage"
+                "Event should always be associated to a ActiveMessage.Subscription message"
             }
             it as? ActiveMessage.Subscription
         }
