@@ -75,7 +75,7 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
     }
 
     private suspend fun webviewDestination(path: String, serverId: Int? = null): LinkDestination {
-        return if (serverId == null || serverManager.defaultServers().size <= 1) {
+        return if (serverId != null || serverManager.defaultServers().size <= 1) {
             LinkDestination.Webview(path, serverId ?: ServerManager.SERVER_ID_ACTIVE)
         } else {
             LinkDestination.ServerPicker(path)
