@@ -54,7 +54,7 @@ internal class ServerManagerImpl @Inject constructor(
         private const val PREF_ACTIVE_SERVER = "active_server"
     }
 
-    override val defaultServers: List<Server>
+    private val cachedDefaultServers: List<Server>
         get() = mutableServers.values.filter { it.type == ServerType.DEFAULT }.toList()
 
     override val defaultServersFlow: StateFlow<List<Server>>
@@ -70,7 +70,7 @@ internal class ServerManagerImpl @Inject constructor(
 
         // Listen for updates and update flow
         ioScope.launch {
-            mutableDefaultServersFlow.emit(defaultServers)
+            mutableDefaultServersFlow.emit(cachedDefaultServers)
             serverDao.getAllFlow().collect { servers ->
                 mutableServers
                     .filter {
@@ -83,7 +83,7 @@ internal class ServerManagerImpl @Inject constructor(
                 servers.forEach {
                     mutableServers[it.id] = it
                 }
-                mutableDefaultServersFlow.emit(defaultServers)
+                mutableDefaultServersFlow.emit(cachedDefaultServers)
             }
         }
     }
@@ -224,4 +224,6 @@ internal class ServerManagerImpl @Inject constructor(
             }
         }
     }
+
+    override suspend fun defaultServers(): List<Server> = serverDao.getAll().filter { it.type == ServerType.DEFAULT }
 }

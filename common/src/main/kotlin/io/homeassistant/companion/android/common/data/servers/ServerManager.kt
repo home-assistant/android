@@ -5,7 +5,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerType
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 
 interface ServerManager {
 
@@ -14,15 +14,15 @@ interface ServerManager {
     }
 
     /**
-     * A list of all [Server]s managed by the app of the type [ServerType.DEFAULT].
+     * Returns a list of all [Server]s managed by the app of the type [ServerType.DEFAULT].
      */
-    val defaultServers: List<Server>
+    suspend fun defaultServers(): List<Server>
 
     /**
-     * A [StateFlow] that holds the current list of all [Server]s managed by the app of the type
+     * A [Flow] that emits the list of all [Server]s managed by the app of the type
      * [ServerType.DEFAULT].
      */
-    val defaultServersFlow: StateFlow<List<Server>>
+    val defaultServersFlow: Flow<List<Server>>
 
     /**
      * @return `true` if the app is registered with any server

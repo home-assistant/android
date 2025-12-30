@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.mockServer
 import io.homeassistant.companion.android.util.testHAVersion
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import java.net.URL

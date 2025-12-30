@@ -27,6 +27,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -144,7 +145,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun getSuggestionFlow(): StateFlow<SettingsHomeSuggestion?> = suggestionFlow
 
-    override fun getServersFlow(): StateFlow<List<Server>> = serverManager.defaultServersFlow
+    override suspend fun getServersFlow(): Flow<List<Server>> = serverManager.defaultServersFlow
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse? = withContext(Dispatchers.IO) {
         try {

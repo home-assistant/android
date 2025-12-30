@@ -18,7 +18,7 @@ import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.di.qualifiers.NamedSessionStorage
 import javax.inject.Inject
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
@@ -74,13 +74,12 @@ internal class NewServerManagerImpl @Inject constructor(
     private val connectionStateProviders =
         ServerMap<ServerConnectionStateProvider>(serverConnectionStateProviderFactory::create)
 
-    // TODO Replace this with a proper suspend function that makes a call to the DB
-    override val defaultServers: List<Server>
-        get() = TODO("Not yet implemented")
+    override suspend fun defaultServers(): List<Server> {
+        return serverDao.getAll()
+    }
 
-    // TODO Replace this with a proper suspend function that makes a call to the DB
-    override val defaultServersFlow: StateFlow<List<Server>>
-        get() = TODO("Not yet implemented")
+    override val defaultServersFlow: Flow<List<Server>>
+        get() = serverDao.getAllFlow()
 
     override suspend fun isRegistered(): Boolean {
         return serverDao.getAll().any {
