@@ -4,7 +4,6 @@ import android.app.Application
 import app.cash.turbine.turbineScope
 import com.google.android.gms.wearable.Node
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.fakes.FakeCapabilityClient
 import io.homeassistant.companion.android.fakes.FakeNodeClient
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
@@ -25,7 +24,7 @@ private const val CAPABILITY_WEAR_APP = "verify_wear_app"
 @ExtendWith(ConsoleLogExtension::class)
 class SettingsWearViewModelTest {
 
-    private val serverManager: ServerManager = mockk()
+    private val settingsWearUseCase: SettingsWearUseCase = mockk()
     private lateinit var viewModel: SettingsWearViewModel
 
     private lateinit var nodeClient: FakeNodeClient
@@ -41,7 +40,7 @@ class SettingsWearViewModelTest {
         capabilityClient.capabilities[CAPABILITY_WEAR_APP] = setOf("1234")
         nodeClient = FakeNodeClient(application)
         nodeClient.setNodes(listOf("1234"))
-        viewModel = SettingsWearViewModel(serverManager, application)
+        viewModel = SettingsWearViewModel(settingsWearUseCase, application)
     }
 
     @Test
