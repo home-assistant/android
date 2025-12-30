@@ -126,7 +126,8 @@ class ServerSettingsPresenterImpl @Inject constructor(
 
     override fun onFinish() {
         runBlocking {
-            if (serverManager.getServer()?.id != serverId) {
+            val currentServer = serverManager.getServer()
+            if (currentServer != null && currentServer.id != serverId) {
                 setAppActive(false)
             }
         }
@@ -181,8 +182,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
         try {
             serverManager.integrationRepository(serverId).setAppActive(active)
         } catch (e: IllegalArgumentException) {
-            Timber.w("Cannot set app active $active for server $serverId")
-            Unit
+            Timber.w(e, "Cannot set app active $active for server $serverId")
         }
     }
 

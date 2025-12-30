@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.database.server
 
+import android.os.Parcelable
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
@@ -7,6 +8,7 @@ import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
+import kotlinx.parcelize.Parcelize
 
 @Entity(tableName = "servers")
 @TypeConverters(InternalSsidTypeConverter::class)
@@ -21,6 +23,7 @@ data class Server(
     val _version: String? = null,
     @ColumnInfo(name = "device_registry_id")
     val deviceRegistryId: String? = null,
+    // TODO remove type
     @Ignore
     val type: ServerType = ServerType.DEFAULT,
     @ColumnInfo(name = "list_order")
@@ -31,6 +34,21 @@ data class Server(
     @Embedded val session: ServerSessionInfo,
     @Embedded val user: ServerUserInfo,
 ) {
+
+    companion object {
+        fun fromTemporaryServer(temporaryServer: TemporaryServer): Server {
+            return Server(
+                _name = "",
+                connection = ServerConnectionInfo(
+                    externalUrl = temporaryServer.externalUrl,
+                    allowInsecureConnection = temporaryServer.allowInsecureConnection,
+                ),
+                session = temporaryServer.session,
+                user = ServerUserInfo(),
+            )
+        }
+    }
+
     constructor(
         id: Int,
         _name: String,
@@ -68,3 +86,10 @@ enum class ServerType {
     TEMPORARY,
     DEFAULT,
 }
+
+@Parcelize
+data class TemporaryServer(
+    val externalUrl: String,
+    val session: ServerSessionInfo,
+    val allowInsecureConnection: Boolean?,
+) : Parcelable

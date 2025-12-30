@@ -1,8 +1,12 @@
 package io.homeassistant.companion.android.common.data.servers
 
 import dagger.assisted.AssistedFactory
+import io.homeassistant.companion.android.common.BuildConfig
+import io.homeassistant.companion.android.common.data.integration.IntegrationException
+import io.homeassistant.companion.android.common.data.integration.NoUrlAvailableException
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import java.net.URL
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import okhttp3.HttpUrl
@@ -22,6 +26,44 @@ suspend fun Flow<UrlState>.firstUrlOrNull(onNullMessage: (() -> String)? = null)
         onNullMessage?.let { Timber.d(it()) }
         null
     }
+}
+
+/**
+ * Tries to execute an action on multiple URLs in order, returning the first successful result.
+ *
+ * This function iterates through the provided URLs and attempts to execute the given action
+ * on each one. If an action succeeds, its result is returned immediately. If an action fails
+ * with an exception, the next URL is tried. If all URLs fail, an [IntegrationException] is
+ * thrown containing the first exception encountered.
+ *
+ * @param urls the list of URLs to try, in priority order
+ * @param requestName a descriptive name for the request, used in error messages and logging
+ * @param action the suspend function to execute on each URL
+ * @return the result from the first successful URL
+ * @throws NoUrlAvailableException if [urls] is empty
+ * @throws IntegrationException if all URLs fail, with the first exception as the cause
+ */
+suspend fun <T> tryOnUrls(urls: List<HttpUrl>, requestName: String, action: suspend (HttpUrl) -> T): T {
+    if (urls.isEmpty()) {
+        throw NoUrlAvailableException()
+    }
+
+    var firstException: Exception? = null
+    for (url in urls) {
+        try {
+            return action(url)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "Failed $requestName ${if (BuildConfig.DEBUG) "on $url" else ""}")
+            if (firstException == null) firstException = e
+        }
+    }
+
+    throw IntegrationException(
+        "All URLs failed for $requestName",
+        firstException ?: Exception("Error calling integration request $requestName"),
+    )
 }
 
 /**

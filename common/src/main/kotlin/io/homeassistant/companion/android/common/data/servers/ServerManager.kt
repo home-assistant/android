@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerType
+import io.homeassistant.companion.android.database.server.TemporaryServer
 import kotlinx.coroutines.flow.Flow
 
 interface ServerManager {
@@ -33,7 +34,7 @@ interface ServerManager {
      * Add a new server to the manager, and if the [ServerType] is not temporary also to the database.
      * @return ID for the added server
      */
-    suspend fun addServer(server: Server): Int
+    suspend fun addServer(server: TemporaryServer): Int
 
     /**
      * Get the server for the provided ID.
@@ -58,12 +59,6 @@ interface ServerManager {
      * Update a server based on the provided object.
      */
     suspend fun updateServer(server: Server)
-
-    /**
-     * Convert a temporary server in the manager to a default server.
-     * @return ID for the added server, or null if the server wasn't converted
-     */
-    suspend fun convertTemporaryServer(id: Int): Int?
 
     /**
      * Remove the server for the provided ID from the manager and if required the database, and

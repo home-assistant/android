@@ -13,6 +13,7 @@ import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.data.authentication.ServerRegistrationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepository
@@ -25,11 +26,6 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.common.util.WearDataMessages
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
-import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
-import io.homeassistant.companion.android.database.server.ServerType
-import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.replaceAll
@@ -39,7 +35,6 @@ import io.homeassistant.companion.android.tiles.CameraTile
 import io.homeassistant.companion.android.tiles.ConversationTile
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
-import io.homeassistant.companion.android.util.UrlUtil
 import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
@@ -59,6 +54,9 @@ class PhoneSettingsListener :
 
     @Inject
     lateinit var serverManager: ServerManager
+
+    @Inject
+    lateinit var serverRegistrationRepository: ServerRegistrationRepository
 
     @Inject
     lateinit var wearPrefsRepository: WearPrefsRepository
@@ -152,9 +150,11 @@ class PhoneSettingsListener :
                         "/authenticate" -> {
                             login(DataMapItem.fromDataItem(item).dataMap)
                         }
+
                         "/updateFavorites" -> {
                             saveFavorites(DataMapItem.fromDataItem(item).dataMap)
                         }
+
                         "/updateTemplateTiles" -> {
                             saveTemplateTiles(DataMapItem.fromDataItem(item).dataMap)
                         }
@@ -194,18 +194,15 @@ class PhoneSettingsListener :
                 }
             }
 
-            val formattedUrl = UrlUtil.formattedUrlString(url)
-            val server = Server(
-                _name = "",
-                type = ServerType.TEMPORARY,
-                connection = ServerConnectionInfo(
-                    externalUrl = formattedUrl,
+            val temporaryServer = checkNotNull(
+                serverRegistrationRepository.registerAuthorizationCode(
+                    url,
+                    authCode,
+                    null,
                 ),
-                session = ServerSessionInfo(),
-                user = ServerUserInfo(),
-            )
-            serverId = serverManager.addServer(server)
-            serverManager.authenticationRepository(serverId).registerAuthorizationCode(authCode)
+            ) { "Registration failed" }
+
+            serverId = serverManager.addServer(temporaryServer)
             serverManager.integrationRepository(serverId).registerDevice(
                 DeviceRegistration(
                     appVersionProvider(),
@@ -214,7 +211,6 @@ class PhoneSettingsListener :
                     false,
                 ),
             )
-            serverManager.convertTemporaryServer(serverId)
             launch {
                 sendLoginResult(authId, true, null)
                 updateTiles()
