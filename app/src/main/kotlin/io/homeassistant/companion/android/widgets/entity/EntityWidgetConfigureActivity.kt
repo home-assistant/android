@@ -83,19 +83,17 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity<StaticWidgetEn
         binding.root.applySafeDrawingInsets()
 
         binding.addButton.setOnClickListener {
-            if (requestLauncherSetup) {
-                if (
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                    isValidServerId()
-                ) {
-                    lifecycleScope.launch {
+            lifecycleScope.launch {
+                if (requestLauncherSetup) {
+                    if (
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                        isValidServerId()
+                    ) {
                         requestWidgetCreation()
+                    } else {
+                        showAddWidgetError()
                     }
                 } else {
-                    showAddWidgetError()
-                }
-            } else {
-                lifecycleScope.launch {
                     updateWidget()
                 }
             }
@@ -240,8 +238,8 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity<StaticWidgetEn
             }
         }
 
-        serverManager.defaultServers.forEach { server ->
-            lifecycleScope.launch {
+        lifecycleScope.launch {
+            serverManager.defaultServers().forEach { server ->
                 try {
                     val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
                     entities[server.id] = fetchedEntities

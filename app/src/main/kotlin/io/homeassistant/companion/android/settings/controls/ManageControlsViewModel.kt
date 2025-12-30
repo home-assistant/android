@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.controls.HaControlsPanelActivity
 import io.homeassistant.companion.android.controls.HaControlsProviderService
+import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -53,12 +54,14 @@ class ManageControlsViewModel @Inject constructor(
     var structureEnabled by mutableStateOf(false)
         private set
 
-    val defaultServers = serverManager.defaultServers
+    var defaultServers by mutableStateOf<List<Server>>(emptyList())
+        private set
 
     var defaultServerId by mutableIntStateOf(0)
 
     init {
         viewModelScope.launch {
+            defaultServers = serverManager.defaultServers()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 panelEnabled =
                     application.packageManager.getComponentEnabledSetting(
@@ -81,7 +84,7 @@ class ManageControlsViewModel @Inject constructor(
 
             defaultServerId = serverManager.getServer()?.id ?: 0
 
-            serverManager.defaultServers.map { server ->
+            serverManager.defaultServers().map { server ->
                 async {
                     val entities = serverManager.integrationRepository(server.id).getEntities()
                         ?.filter { it.domain in HaControlsProviderService.getSupportedDomains() }

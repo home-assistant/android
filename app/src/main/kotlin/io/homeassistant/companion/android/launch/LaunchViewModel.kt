@@ -159,7 +159,7 @@ internal class LaunchViewModel @AssistedInject constructor(
 
     private suspend fun cleanupServers() {
         // Remove any invalid servers (incomplete, partly migrated from another device)
-        serverManager.defaultServers
+        serverManager.defaultServers()
             .filter {
                 serverManager.authenticationRepository(it.id)
                     .getSessionState() == SessionState.ANONYMOUS

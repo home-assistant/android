@@ -34,7 +34,9 @@ sealed interface LinkDestination {
     /**
      * Open a WebView with the given [path] and an optional [serverId].
      */
-    data class Webview(val path: String, val serverId: Int? = null) : LinkDestination
+    data class Webview(val path: String, val serverId: Int) : LinkDestination
+
+    data class ServerPicker(val path: String) : LinkDestination
 
     /**
      * Nowhere to go from this link.
@@ -69,6 +71,14 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
                 }
                 LinkDestination.NoDestination
             }
+        }
+    }
+
+    private suspend fun webviewDestination(path: String, serverId: Int? = null): LinkDestination {
+        return if (serverId == null || serverManager.defaultServers().size <= 1) {
+            LinkDestination.Webview(path, serverId ?: ServerManager.SERVER_ID_ACTIVE)
+        } else {
+            LinkDestination.ServerPicker(path)
         }
     }
 
@@ -139,6 +149,7 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
      * Requires a registered server to proceed.
      *
      * @param uri The redirect URI to process.
+     * TODO update the doc
      * @return [LinkDestination.Webview] with the transformed path, or [LinkDestination.NoDestination] if no server is registered
      *         or if the mobile flag is already set.
      */
@@ -162,7 +173,7 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
             .build().toString()
             .replaceFirst(BASE_MY_REDIRECT_URL, INTERNAL_MY_REDIRECT_PREFIX)
 
-        return LinkDestination.Webview(path)
+        return webviewDestination(path)
     }
 
     /**
@@ -184,12 +195,13 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
         val serverName = uri.getQueryParameter("server").takeIf { !it.isNullOrBlank() }
         val serverId = when (serverName) {
             "default", null -> serverManager.getServer()?.id
-            else -> serverManager.defaultServers.find {
+            else -> serverManager.defaultServers().find {
                 it.friendlyName.equals(serverName, ignoreCase = true)
             }?.id
         }
 
-        return LinkDestination.Webview(uri.toString(), serverId)
+        val path = uri.toString()
+        return serverId?.let { LinkDestination.Webview(uri.toString(), serverId) } ?: webviewDestination(path)
     }
 
     private suspend fun requireServerRegistered(): Boolean {

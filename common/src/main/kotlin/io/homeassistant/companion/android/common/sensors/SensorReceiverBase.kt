@@ -189,7 +189,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         }
 
         try {
-            serverManager.defaultServers.map { server ->
+            serverManager.defaultServers().map { server ->
                 ioScope.async { syncSensorsWithServer(context, serverManager, server, sensorDao) }
             }.awaitAll()
             Timber.i("Sensor updates and sync completed")

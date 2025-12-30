@@ -416,7 +416,7 @@ class LocationSensorManager :
             lastHighAccuracyMode = highAccuracyModeEnabled
             lastHighAccuracyUpdateInterval = updateIntervalHighAccuracySeconds
 
-            serverManager(latestContext).defaultServers.forEach {
+            serverManager(latestContext).defaultServers().forEach {
                 getSendLocationAsSetting(it.id) // Sets up the setting, value isn't used right now
             }
         }

@@ -92,50 +92,52 @@ class SettingsActivity : BaseActivity() {
 
         if (savedInstanceState == null) {
             val settingsNavigation = IntentCompat.getParcelableExtra(intent, EXTRA_FRAGMENT, Deeplink::class.java)
-            supportFragmentManager.commit {
-                replace(
-                    R.id.content,
-                    when (settingsNavigation) {
-                        Deeplink.Websocket -> if (serverManager.defaultServers.size == 1) {
-                            WebsocketSettingFragment::class.java
-                        } else {
-                            SettingsFragment::class.java
-                        }
-                        Deeplink.Developer -> DeveloperSettingsFragment::class.java
-                        is Deeplink.HomeNetwork -> SsidFragment::class.java
-                        Deeplink.NotificationHistory -> NotificationHistoryFragment::class.java
-                        is Deeplink.Sensor -> SensorDetailFragment::class.java
-                        is Deeplink.QSTile -> ManageTilesFragment::class.java
-                        else -> SettingsFragment::class.java
-                    },
-                    when (settingsNavigation) {
-                        is Deeplink.HomeNetwork -> {
-                            Bundle().apply { putInt(SsidFragment.EXTRA_SERVER, settingsNavigation.serverId) }
-                        }
-
-                        is Deeplink.Sensor -> {
-                            SensorDetailFragment.newInstance(settingsNavigation.sensorId).arguments
-                        }
-
-                        is Deeplink.QSTile -> {
-                            val tileId = settingsNavigation.tileId
-                            Bundle().apply { putString("id", tileId) }
-                        }
-
-                        Deeplink.Websocket -> {
-                            val servers = serverManager.defaultServers
-                            if (servers.size == 1) {
-                                Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, servers[0].id) }
+            lifecycleScope.launch {
+                supportFragmentManager.commit {
+                    replace(
+                        R.id.content,
+                        when (settingsNavigation) {
+                            Deeplink.Websocket -> if (serverManager.defaultServers().size == 1) {
+                                WebsocketSettingFragment::class.java
                             } else {
+                                SettingsFragment::class.java
+                            }
+                            Deeplink.Developer -> DeveloperSettingsFragment::class.java
+                            is Deeplink.HomeNetwork -> SsidFragment::class.java
+                            Deeplink.NotificationHistory -> NotificationHistoryFragment::class.java
+                            is Deeplink.Sensor -> SensorDetailFragment::class.java
+                            is Deeplink.QSTile -> ManageTilesFragment::class.java
+                            else -> SettingsFragment::class.java
+                        },
+                        when (settingsNavigation) {
+                            is Deeplink.HomeNetwork -> {
+                                Bundle().apply { putInt(SsidFragment.EXTRA_SERVER, settingsNavigation.serverId) }
+                            }
+
+                            is Deeplink.Sensor -> {
+                                SensorDetailFragment.newInstance(settingsNavigation.sensorId).arguments
+                            }
+
+                            is Deeplink.QSTile -> {
+                                val tileId = settingsNavigation.tileId
+                                Bundle().apply { putString("id", tileId) }
+                            }
+
+                            Deeplink.Websocket -> {
+                                val servers = serverManager.defaultServers()
+                                if (servers.size == 1) {
+                                    Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, servers[0].id) }
+                                } else {
+                                    null
+                                }
+                            }
+
+                            else -> {
                                 null
                             }
-                        }
-
-                        else -> {
-                            null
-                        }
-                    },
-                )
+                        },
+                    )
+                }
             }
         }
     }

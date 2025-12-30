@@ -71,7 +71,7 @@ class LaunchViewModelTest {
 
         every { notActiveServer.id } returns 1
         coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns activeServer
-        every { serverManager.defaultServers } returns listOf(activeServer, notActiveServer)
+        coEvery { serverManager.defaultServers() } returns listOf(activeServer, notActiveServer)
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
         val networkStateFlow = MutableStateFlow(state)
@@ -273,7 +273,7 @@ class LaunchViewModelTest {
                 isAdmin = false,
             ),
         )
-        coEvery { serverManager.defaultServers } returns listOf(invalidServer, connectedServer)
+        coEvery { serverManager.defaultServers() } returns listOf(invalidServer, connectedServer)
         coEvery { serverManager.authenticationRepository(invalidServer.id).getSessionState() } returns SessionState.ANONYMOUS
         coEvery { serverManager.authenticationRepository(connectedServer.id).getSessionState() } returns SessionState.CONNECTED
 

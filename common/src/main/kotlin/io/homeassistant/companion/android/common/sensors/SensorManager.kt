@@ -112,7 +112,7 @@ interface SensorManager {
         val permission = checkPermission(context, basicSensor.id)
         return sensorDao.getAnyIsEnabled(
             basicSensor.id,
-            serverManager(context).defaultServers.map { it.id },
+            serverManager(context).defaultServers().map { it.id },
             permission,
             basicSensor.enabledByDefault,
         )

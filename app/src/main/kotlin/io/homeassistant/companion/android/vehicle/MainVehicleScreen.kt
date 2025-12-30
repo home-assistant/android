@@ -62,6 +62,8 @@ class MainVehicleScreen(
 
     private val isAutomotive get() = carContext.isAutomotive()
 
+    private var shouldSwitchServers = false
+
     init {
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -108,6 +110,11 @@ class MainVehicleScreen(
                             if (invalidate) invalidate()
                         }
                     }
+                }
+
+                if (serverManager.defaultServers().size > 1 && !shouldSwitchServers) {
+                    shouldSwitchServers = true
+                    invalidate()
                 }
             }
         }
@@ -174,10 +181,11 @@ class MainVehicleScreen(
                 ).build(),
             )
 
-            if (serverManager.defaultServers.size > 1) {
+            if (shouldSwitchServers) {
                 builder.addItem(
                     getChangeServerGridItem(
                         carContext,
+                        lifecycleScope,
                         screenManager,
                         serverManager,
                         serverId,

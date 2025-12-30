@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.qs.getHighestInUse
 import io.homeassistant.companion.android.database.qs.isSetup
 import io.homeassistant.companion.android.database.qs.numberedId
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.qs.Tile10Service
 import io.homeassistant.companion.android.qs.Tile11Service
 import io.homeassistant.companion.android.qs.Tile12Service
@@ -142,7 +143,7 @@ class ManageTilesViewModel @Inject constructor(
     var selectedTile by mutableStateOf(slots[0])
         private set
 
-    var servers by mutableStateOf(serverManager.defaultServers)
+    var servers by mutableStateOf(emptyList<Server>())
         private set
     var sortedEntities by mutableStateOf<List<Entity>>(emptyList())
         private set
@@ -180,7 +181,10 @@ class ManageTilesViewModel @Inject constructor(
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            serverManager.defaultServers.map {
+            // TODO verify if IO is fine
+            val defaultServers = serverManager.defaultServers()
+            servers = defaultServers
+            defaultServers.map {
                 async {
                     entities[it.id] = try {
                         serverManager.integrationRepository(it.id).getEntities().orEmpty()

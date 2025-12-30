@@ -1246,7 +1246,7 @@ class MessagingManager @Inject constructor(
 
     private suspend fun handleServer(builder: NotificationCompat.Builder, data: Map<String, String>) {
         data[NotificationData.WEBHOOK_ID]?.let { webhookId ->
-            if (serverManager.defaultServers.size > 1) {
+            if (serverManager.defaultServers().size > 1) {
                 serverManager.getServer(webhookId = webhookId)?.let {
                     builder.setSubText(it.friendlyName)
                 }

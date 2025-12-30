@@ -38,6 +38,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.IconDialogCompat
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -66,7 +67,7 @@ class ManageShortcutsViewModel @Inject constructor(
     var dynamicShortcuts = mutableListOf<ShortcutInfoCompat>()
         private set
 
-    var servers by mutableStateOf(serverManager.defaultServers)
+    var servers by mutableStateOf(emptyList<Server>())
         private set
     var entities = mutableStateMapOf<Int, List<Entity>>()
         private set
@@ -109,7 +110,9 @@ class ManageShortcutsViewModel @Inject constructor(
             val currentServerId = currentServerId()
             shortcuts.forEach { it.serverId.value = currentServerId }
 
-            serverManager.defaultServers.forEach { server ->
+            val defaultServers = serverManager.defaultServers()
+            servers = defaultServers
+            defaultServers.forEach { server ->
                 launch {
                     entities[server.id] = try {
                         serverManager.integrationRepository(server.id).getEntities().orEmpty()
@@ -129,7 +132,7 @@ class ManageShortcutsViewModel @Inject constructor(
                 Timber.d("We have ${pinnedShortcuts.size} pinned shortcuts")
             }
 
-            if (dynamicShortcuts.size > 0) {
+            if (dynamicShortcuts.isNotEmpty()) {
                 for (i in 0 until dynamicShortcuts.size) {
                     setDynamicShortcutData(dynamicShortcuts[i].id, i)
                 }

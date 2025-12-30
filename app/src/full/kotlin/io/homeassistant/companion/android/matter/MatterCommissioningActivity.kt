@@ -14,26 +14,18 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.home.matter.Matter
 import com.google.android.gms.home.matter.commissioning.SharedDeviceData
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.matter.views.MatterCommissioningView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 import io.homeassistant.companion.android.webview.WebViewActivity
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
 class MatterCommissioningActivity : AppCompatActivity() {
-
-    @Inject
-    lateinit var serverManager: ServerManager
-
     private val viewModel: MatterCommissioningViewModel by viewModels()
     private var deviceCode: String? = null
     private var deviceName by mutableStateOf<String?>(null)
-    private var servers by mutableStateOf<List<Server>>(emptyList())
     private var newMatterDevice = false
 
     private val threadPermissionLauncher =
@@ -50,7 +42,7 @@ class MatterCommissioningActivity : AppCompatActivity() {
                 MatterCommissioningView(
                     step = viewModel.step,
                     deviceName = deviceName,
-                    servers = servers,
+                    servers = viewModel.servers,
                     onSelectServer = viewModel::checkSupport,
                     onConfirmCommissioning = { startCommissioning() },
                     onClose = { finish() },
@@ -58,7 +50,6 @@ class MatterCommissioningActivity : AppCompatActivity() {
                 )
             }
         }
-        servers = serverManager.defaultServers
     }
 
     override fun onResume() {

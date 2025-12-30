@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineListResponse
+import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
@@ -20,7 +21,7 @@ class AssistShortcutViewModel @Inject constructor(val serverManager: ServerManag
     var serverId by mutableIntStateOf(ServerManager.SERVER_ID_ACTIVE)
         private set
 
-    var servers by mutableStateOf(serverManager.defaultServers)
+    var servers by mutableStateOf(emptyList<Server>())
         private set
 
     var supported by mutableStateOf<Boolean?>(null)
@@ -31,6 +32,7 @@ class AssistShortcutViewModel @Inject constructor(val serverManager: ServerManag
 
     init {
         viewModelScope.launch {
+            servers = serverManager.defaultServers()
             if (serverManager.isRegistered()) {
                 serverManager.getServer()?.id?.let { serverId = it }
                 getData()

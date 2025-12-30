@@ -12,8 +12,10 @@ import androidx.paging.PagingConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.location.LocationHistoryDao
 import io.homeassistant.companion.android.database.location.LocationHistoryItemResult
+import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +27,7 @@ import timber.log.Timber
 class LocationTrackingViewModel @Inject constructor(
     private val locationHistoryDao: LocationHistoryDao,
     private val prefsRepository: PrefsRepository,
+    private val serverManager: ServerManager,
     application: Application,
 ) : AndroidViewModel(application) {
 
@@ -40,11 +43,14 @@ class LocationTrackingViewModel @Inject constructor(
         ;
 
         companion object {
-            val menuItemIdToFilter = values().associateBy { it.menuItemId }
+            val menuItemIdToFilter = entries.associateBy { it.menuItemId }
         }
     }
 
     var historyEnabled by mutableStateOf(false)
+        private set
+
+    var servers by mutableStateOf(emptyList<Server>())
         private set
 
     private val historyResultFilter = MutableStateFlow(HistoryFilter.ALL)
@@ -58,7 +64,7 @@ class LocationTrackingViewModel @Inject constructor(
                     locationHistoryDao.getAll(listOf(LocationHistoryItemResult.SENT.name))
                 HistoryFilter.SKIPPED -> locationHistoryDao.getAll(
                     (
-                        LocationHistoryItemResult.values().toMutableList() - LocationHistoryItemResult.SENT -
+                        LocationHistoryItemResult.entries.toMutableList() - LocationHistoryItemResult.SENT -
                             LocationHistoryItemResult.FAILED_SEND
                         )
                         .map { it.name },
@@ -72,6 +78,7 @@ class LocationTrackingViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            servers = serverManager.defaultServers()
             historyEnabled = prefsRepository.isLocationHistoryEnabled()
         }
     }

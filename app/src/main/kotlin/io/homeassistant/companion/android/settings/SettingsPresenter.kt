@@ -19,7 +19,6 @@ interface SettingsPresenter {
     fun cancelSuggestion(context: Context, id: String)
     fun getSuggestionFlow(): StateFlow<SettingsHomeSuggestion?>
     fun getServersFlow(): StateFlow<List<Server>>
-    fun getServerCount(): Int
     suspend fun getNotificationRateLimits(): RateLimitResponse?
     suspend fun showChangeLog(context: Context)
     suspend fun isChangeLogPopupEnabled(): Boolean

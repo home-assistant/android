@@ -135,7 +135,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         return@withContext Result.success()
     }
 
-    private suspend fun shouldWeRun(): Boolean = serverManager.defaultServers.any { shouldRunForServer(it.id) }
+    private suspend fun shouldWeRun(): Boolean = serverManager.defaultServers().any { shouldRunForServer(it.id) }
 
     private suspend fun shouldRunForServer(serverId: Int): Boolean {
         val setting = settingsDao.get(serverId)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
@@ -156,7 +156,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     }
 
     private suspend fun manageServerJobs(jobs: MutableMap<Int, Job>, coroutineScope: CoroutineScope): Boolean {
-        val servers = serverManager.defaultServers
+        val servers = serverManager.defaultServers()
 
         // Clean up...
         jobs.filter { (serverId, _) ->

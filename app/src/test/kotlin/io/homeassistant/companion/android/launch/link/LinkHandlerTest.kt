@@ -222,7 +222,7 @@ class LinkHandlerTest {
     @Test
     fun `Given navigate deep link with registered server and specific server name when invoking handleLink then returns Webview with matching server`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.defaultServers } returns listOf(
+        coEvery { serverManager.defaultServers() } returns listOf(
             mockk {
                 coEvery { friendlyName } returns "Home"
                 coEvery { id } returns 1
@@ -242,7 +242,7 @@ class LinkHandlerTest {
     @Test
     fun `Given navigate deep link with registered server and case-insensitive server name when invoking handleLink then returns Webview with matching server`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.defaultServers } returns listOf(
+        coEvery { serverManager.defaultServers() } returns listOf(
             mockk {
                 coEvery { friendlyName } returns "Home"
                 coEvery { id } returns 1
@@ -262,7 +262,7 @@ class LinkHandlerTest {
     @Test
     fun `Given navigate deep link with registered server and non-existing server name when invoking handleLink then returns Webview with null serverId`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.defaultServers } returns listOf(
+        coEvery { serverManager.defaultServers() } returns listOf(
             mockk {
                 coEvery { friendlyName } returns "Home"
                 coEvery { id } returns 1

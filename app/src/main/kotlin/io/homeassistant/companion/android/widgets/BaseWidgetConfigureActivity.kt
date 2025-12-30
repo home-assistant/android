@@ -46,8 +46,8 @@ abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<
     var selectedServerId: Int? = null
 
     protected fun setupServerSelect(widgetServerId: Int?) {
-        val servers = serverManager.defaultServers
         lifecycleScope.launch {
+            val servers = serverManager.defaultServers()
             val activeServerId = serverManager.getServer()?.id
             serverSelectList.adapter =
                 ArrayAdapter(
@@ -66,7 +66,7 @@ abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<
             )
 
             if (
-                serverManager.defaultServers.size > 1 ||
+                servers.size > 1 ||
                 (widgetServerId != null && serverManager.getServer(widgetServerId) == null)
             ) {
                 serverSelect.visibility = View.VISIBLE
@@ -75,7 +75,7 @@ abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<
             selectedServerId = widgetServerId ?: serverManager.getServer()?.id
             serverSelectList.onItemSelectedListener = object : OnItemSelectedListener {
                 override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                    val newId = serverManager.defaultServers.getOrNull(position)?.id
+                    val newId = servers.getOrNull(position)?.id
                     val isDifferent = selectedServerId != newId
                     selectedServerId = newId
                     if (isDifferent && newId != null) {
@@ -92,7 +92,7 @@ abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<
 
     abstract fun onServerSelected(serverId: Int)
 
-    protected fun isValidServerId() = selectedServerId in serverManager.defaultServers.map { it.id }
+    protected suspend fun isValidServerId() = selectedServerId in serverManager.defaultServers().map { it.id }
 
     protected fun showAddWidgetError() {
         Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG).show()

@@ -63,7 +63,7 @@ private class ServerDiscoveryViewModelTest {
         val server2 = mockServer("http://ha2.local:8123", name = "server2", serverId = 2, serverManager = serverManager)
         val server3 = mockServer(null, name = "server3", serverId = 3, serverManager = serverManager)
 
-        every { serverManager.defaultServers } returns listOf(
+        coEvery { serverManager.defaultServers() } returns listOf(
             server0,
             server1,
             server2,
@@ -91,7 +91,7 @@ private class ServerDiscoveryViewModelTest {
 
     @Test
     fun `Given ADD_EXISTING mode with no servers when view model created then discoveryFlow emits Started after delay`() = runTest {
-        every { serverManager.defaultServers } returns emptyList()
+        coEvery { serverManager.defaultServers() } returns emptyList()
 
         createViewModel(ServerDiscoveryMode.ADD_EXISTING)
 
@@ -272,7 +272,7 @@ private class ServerDiscoveryViewModelTest {
     @Test
     fun `Given HIDE_EXISTING mode with existing server when discovered server matches existing then discoveryFlow filters out matching server`() = runTest {
         val existingServerUrl = "http://server1.local:8123"
-        every { serverManager.defaultServers } returns listOf(mockServer(existingServerUrl, name = "Existing Server"), mockServer(url = null, name = "Broken server"))
+        coEvery { serverManager.defaultServers() } returns listOf(mockServer(existingServerUrl, name = "Existing Server"), mockServer(url = null, name = "Broken server"))
 
         createViewModel(ServerDiscoveryMode.HIDE_EXISTING)
 

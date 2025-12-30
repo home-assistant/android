@@ -67,7 +67,7 @@ class ResyncRegistrationWorker(context: Context, params: WorkerParameters) :
             }
 
             var result = Result.success()
-            serverManager.defaultServers.map {
+            serverManager.defaultServers().map {
                 launch {
                     try {
                         serverManager.integrationRepository(it.id).apply {

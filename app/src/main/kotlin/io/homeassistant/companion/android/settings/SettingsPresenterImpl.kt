@@ -146,8 +146,6 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun getServersFlow(): StateFlow<List<Server>> = serverManager.defaultServersFlow
 
-    override fun getServerCount(): Int = serverManager.defaultServers.size
-
     override suspend fun getNotificationRateLimits(): RateLimitResponse? = withContext(Dispatchers.IO) {
         try {
             if (serverManager.isRegistered()) {
@@ -191,7 +189,7 @@ class SettingsPresenterImpl @Inject constructor(
         val suggestions = mutableListOf<SettingsHomeSuggestion>()
 
         // Assist
-        var assistantSuggestion = serverManager.defaultServers.any { it.version?.isAtLeast(2023, 5) == true }
+        var assistantSuggestion = serverManager.defaultServers().any { it.version?.isAtLeast(2023, 5) == true }
         assistantSuggestion = if (
             assistantSuggestion &&
             context.isAutomotive()

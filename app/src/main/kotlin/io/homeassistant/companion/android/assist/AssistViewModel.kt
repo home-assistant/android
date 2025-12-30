@@ -164,7 +164,7 @@ class AssistViewModel @Inject constructor(
     }
 
     private suspend fun loadPipelines() {
-        val serverIds = filteredServerId?.let { listOf(it) } ?: serverManager.defaultServers.map { it.id }
+        val serverIds = filteredServerId?.let { listOf(it) } ?: serverManager.defaultServers().map { it.id }
         serverIds.forEach { serverId ->
             viewModelScope.launch {
                 val server = serverManager.getServer(serverId)

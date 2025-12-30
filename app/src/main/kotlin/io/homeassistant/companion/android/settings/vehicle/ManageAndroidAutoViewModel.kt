@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.prefs.AutoFavorite
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
 import javax.inject.Inject
 import kotlinx.coroutines.async
@@ -37,15 +38,17 @@ class ManageAndroidAutoViewModel @Inject constructor(
         private set
     val entities = mutableMapOf<Int, List<Entity>>()
 
-    val defaultServers = serverManager.defaultServers
+    var defaultServers by mutableStateOf(emptyList<Server>())
+        private set
 
     var defaultServerId by mutableIntStateOf(0)
 
     init {
         viewModelScope.launch {
+            defaultServers = serverManager.defaultServers()
             defaultServerId = serverManager.getServer()?.id ?: 0
             favoritesList.addAll(prefsRepository.getAutoFavorites())
-            serverManager.defaultServers.map {
+            defaultServers.map {
                 async {
                     entities[it.id] = try {
                         serverManager.integrationRepository(it.id).getEntities().orEmpty()

@@ -70,16 +70,14 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetEn
         binding.root.applySafeDrawingInsets()
 
         binding.addButton.setOnClickListener {
-            if (requestLauncherSetup) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && isValidServerId() && selectedEntity != null) {
-                    lifecycleScope.launch {
+            lifecycleScope.launch {
+                if (requestLauncherSetup) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && isValidServerId() && selectedEntity != null) {
                         requestWidgetCreation()
+                    } else {
+                        showAddWidgetError()
                     }
                 } else {
-                    showAddWidgetError()
-                }
-            } else {
-                lifecycleScope.launch {
                     updateWidget()
                 }
             }
@@ -139,8 +137,8 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetEn
         binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
         binding.widgetTextConfigEntityId.onItemClickListener = entityDropDownOnItemClick
 
-        serverManager.defaultServers.forEach { server ->
-            lifecycleScope.launch {
+        lifecycleScope.launch {
+            serverManager.defaultServers().forEach { server ->
                 try {
                     val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
                         .filter { it.domain == CAMERA_DOMAIN || it.domain == IMAGE_DOMAIN }

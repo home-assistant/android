@@ -66,7 +66,7 @@ class EntityGridVehicleScreen(
     private var loading = true
     var entities: List<Entity> = listOf()
     private val isFavorites = title == carContext.getString(R.string.favorites)
-    private val shouldSwitchServers = serverManager.defaultServers.size > 1
+    private var shouldSwitchServers = false
 
     init {
         lifecycleScope.launch {
@@ -76,6 +76,11 @@ class EntityGridVehicleScreen(
                     val hasChanged = entities.size != it.size || entities.toSet() != it.toSet()
                     entities = it
                     if (hasChanged) invalidate()
+                }
+
+                if (serverManager.defaultServers().size > 1 && !shouldSwitchServers) {
+                    shouldSwitchServers = true
+                    invalidate()
                 }
             }
         }
@@ -124,6 +129,7 @@ class EntityGridVehicleScreen(
                 listBuilder.addItem(
                     getChangeServerGridItem(
                         carContext,
+                        lifecycleScope,
                         screenManager,
                         serverManager,
                         serverId,
