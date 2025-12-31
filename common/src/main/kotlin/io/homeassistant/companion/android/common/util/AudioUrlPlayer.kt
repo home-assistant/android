@@ -55,9 +55,10 @@ class AudioUrlPlayer @VisibleForTesting constructor(
     /**
      * Streams and plays audio from the provided [url].
      *
-     * The player starts when the Flow is collected. The flow makes sure that the interaction with the player
+     * The player starts when the Flow is collected. The flow ensures that all interactions with the
+     * player happen on the main thread.
      *
-     * The Flow emits [PlaybackState] changes and completes if an error occurs or the upstreams ends.
+     * The Flow emits [PlaybackState] changes and completes if an error occurs or the upstream ends.
      * If the [audioManager] is null or the current volume of [STREAM_MUSIC] is 0,
      * the Flow completes immediately without playing.
      *
