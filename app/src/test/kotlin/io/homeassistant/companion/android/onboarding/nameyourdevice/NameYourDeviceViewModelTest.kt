@@ -15,7 +15,6 @@ import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
-import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.database.server.TemporaryServer
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.NameYourDeviceRoute
@@ -65,7 +64,6 @@ class NameYourDeviceViewModelTest {
     private fun createServer(serverId: Int, externalUrl: String = route.url) = Server(
         id = serverId,
         _name = "Test Server",
-        type = ServerType.DEFAULT,
         connection = ServerConnectionInfo(externalUrl = externalUrl),
         session = ServerSessionInfo(),
         user = ServerUserInfo(),

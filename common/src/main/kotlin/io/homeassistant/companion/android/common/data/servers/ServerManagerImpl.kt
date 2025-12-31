@@ -14,7 +14,6 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerDao
-import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.server.TemporaryServer
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.di.qualifiers.NamedSessionStorage
@@ -84,8 +83,7 @@ internal class ServerManagerImpl @Inject constructor(
 
     override suspend fun isRegistered(): Boolean {
         return serverDao.getAll().any {
-            it.type == ServerType.DEFAULT &&
-                it.connection.isRegistered &&
+            it.connection.isRegistered &&
                 FailFast.failOnCatchSuspend(
                     message = {
                         """Failed to get authenticationRepository for ${it.id}."""
@@ -114,7 +112,7 @@ internal class ServerManagerImpl @Inject constructor(
         if (id != SERVER_ID_ACTIVE) {
             localStorage.putInt(PREF_ACTIVE_SERVER, id)
         } else {
-            Timber.w("Activate with SERVER_ID_ACTIVE (-1) is not doing anything")
+            Timber.w("Activate with SERVER_ID_ACTIVE is not doing anything")
         }
     }
 
