@@ -25,6 +25,8 @@ data class WearServer(
     val accessToken: String?,
 ) {
     fun getBaseUrls(): List<HttpUrl> = buildList {
+        cloudUrl?.toHttpUrlOrNull()?.let(::add)
+        externalUrl.toHttpUrlOrNull()?.let(::add)
     }
     fun getWebhookUrls(): List<HttpUrl> = buildList {
         cloudhookUrl?.toHttpUrlOrNull()?.let(::add)

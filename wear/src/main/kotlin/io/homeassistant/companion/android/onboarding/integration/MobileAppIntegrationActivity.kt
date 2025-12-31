@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.IntentCompat
 import androidx.wear.activity.ConfirmationActivity
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
@@ -36,7 +37,8 @@ class MobileAppIntegrationActivity :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val temporaryServer = intent.getParcelableExtra(EXTRA_TEMP_SERVER, TemporaryServer::class.java)
+        val temporaryServer =
+            IntentCompat.getParcelableExtra<TemporaryServer>(intent, EXTRA_TEMP_SERVER, TemporaryServer::class.java)
         if (temporaryServer == null) {
             finish()
             return
