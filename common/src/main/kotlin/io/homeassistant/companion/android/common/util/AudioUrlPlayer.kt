@@ -61,7 +61,7 @@ class AudioUrlPlayer @VisibleForTesting constructor(
      * If the [audioManager] is null or the current volume of [STREAM_MUSIC] is 0,
      * the Flow completes immediately without playing.
      *
-     * The player is properly release once the flow is canceled.
+     * The player is properly released once the flow is canceled.
      *
      * @param url the URL to stream audio from
      * @param isAssistant whether the usage/stream should be set to Assistant on supported versions
@@ -169,7 +169,7 @@ class AudioUrlPlayer @VisibleForTesting constructor(
             request
         } catch (e: Exception) {
             // Focus request failed, continue without audio focus
-            Timber.w(e, "Fail to request focus")
+            Timber.w(e, "Failed to request focus")
             null
         }
     }

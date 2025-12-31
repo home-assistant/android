@@ -163,7 +163,6 @@ abstract class AssistViewModelBase(
     }
 
     private fun handleRunStart(data: AssistPipelineRunStart?, isVoice: Boolean, onEvent: (AssistEvent) -> Unit) {
-        Timber.d("Pipeline run started")
         if (!isVoice) return
 
         data?.ttsOutput?.let { ttsOutput ->
@@ -224,7 +223,6 @@ abstract class AssistViewModelBase(
      * playing from RUN_START and this handler is skipped.
      */
     private fun handleTtsEnd(data: AssistPipelineTtsEnd?, isVoice: Boolean, onEvent: (AssistEvent) -> Unit) {
-        Timber.d("TTS ended")
         if (!isVoice || currentPathBeingPlayed != null) return
 
         currentPlayAudioJob = viewModelScope.launch {
