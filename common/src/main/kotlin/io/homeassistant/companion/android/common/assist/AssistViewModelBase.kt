@@ -265,8 +265,8 @@ abstract class AssistViewModelBase(
      * Sets up audio recording and buffering for voice input.
      *
      * Must be called before [runAssistPipelineInternal] for voice pipelines.
-     * Audio data is buffered until [handleSttStart] signals that the server is ready
-     * to receive, then all buffered and subsequent audio is forwarded.
+     * Audio data is buffered until the server is ready to receive, then all
+     * buffered and subsequent audio is forwarded.
      *
      * Note: [AudioRecorder.audioBytes] is a SharedFlow which never completes, so we use
      * explicit channel management to allow graceful shutdown with buffer draining.
@@ -323,7 +323,7 @@ abstract class AssistViewModelBase(
 
         binaryHandlerId?.let { handlerId ->
             finalizeRecording(handlerId, sendRecorded)
-        } ?: cancelRecorderJob()
+        } ?: clearRecorderState()
 
         updateInputModeAfterRecording()
     }
@@ -342,20 +342,13 @@ abstract class AssistViewModelBase(
                     handlerId,
                     byteArrayOf(),
                 )
-            } else {
-                recorderJob?.cancel()
             }
             clearRecorderState()
         }
     }
 
-    private fun cancelRecorderJob() {
-        recorderJob?.cancel()
-        recorderJob = null
-        sttReady = null
-    }
-
     private fun clearRecorderState() {
+        recorderJob?.cancel()
         recorderJob = null
         sttReady = null
         binaryHandlerId = null
