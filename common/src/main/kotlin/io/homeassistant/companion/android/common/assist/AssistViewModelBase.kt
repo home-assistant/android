@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 sealed interface AssistEvent {
     sealed class Message(val message: String) : AssistEvent {
