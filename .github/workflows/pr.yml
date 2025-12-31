@@ -297,32 +297,6 @@ jobs:
           sudo udevadm trigger --name-match=kvm
           ls /dev/kvm
 
-      - name: AVD cache
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
-        id: avd-cache
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-${{ matrix.configuration.target }}-${{ matrix.configuration.api-level }}
-
-      - name: Create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@b530d96654c385303d652368551fb075bc2f0b6b # v2.35.0
-        with:
-          api-level: ${{ matrix.configuration.api-level }}
-          arch: ${{ matrix.configuration.arch }}
-          force-avd-creation: false
-          disable-animations: true
-          disk-size: 2G # We need to ensure that there is enough space for the emulator to run. If not we get 'Failed to commit install' errors.
-          heap-size: 1G
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          profile: ${{ matrix.configuration.profile }}
-          target: ${{ matrix.configuration.target }}
-          system-image-api-level: ${{ matrix.configuration.system-image-api-level }}
-          script: |
-            echo "Generated AVD snapshot for caching."
-
       - name: Build projects and run instrumentation tests
         uses: reactivecircus/android-emulator-runner@b530d96654c385303d652368551fb075bc2f0b6b # v2.35.0
         with:
@@ -330,7 +304,7 @@ jobs:
           arch: ${{ matrix.configuration.arch }}
           force-avd-creation: false
           disable-animations: true
-          disk-size: 2G
+          disk-size: 2G # We need to ensure that there is enough space for the emulator to run. If not we get 'Failed to commit install' errors.
           heap-size: 1G
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           profile: ${{ matrix.configuration.profile }}
