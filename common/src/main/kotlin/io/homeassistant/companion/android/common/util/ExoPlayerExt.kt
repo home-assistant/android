@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.util.compose
+package io.homeassistant.companion.android.common.util
 
 import android.content.Context
 import androidx.annotation.OptIn
@@ -8,11 +8,18 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import java.util.concurrent.Executors
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.chromium.net.CronetEngine
 
 /**
  * Initializes and returns an ExoPlayer instance optimized for live streaming,
  * utilizing Cronet with QUIC support for enhanced network performance and reduced latency.
+ *
+ * This function is called off the main thread ([Dispatchers.Default]) because [CronetEngine] initialization
+ * triggers a GMS Dynamite module load, which is a slow operation that would block the UI.
+ * Dynamite is used by the `full` flavor to load Cronet from Google Play Services at runtime.
+ * This does not impact the `minimal` flavor which has Cronet embedded directly.
  *
  * Key features of this initialization:
  * - **Network Stack:** Uses Cronet as the underlying HTTP stack, enabling QUIC protocol support.
@@ -28,8 +35,8 @@ import org.chromium.net.CronetEngine
  * @see Executors.newSingleThreadExecutor
  */
 @OptIn(UnstableApi::class)
-fun initializePlayer(context: Context): ExoPlayer {
-    return ExoPlayer.Builder(context).setMediaSourceFactory(
+suspend fun initializePlayer(context: Context): ExoPlayer = withContext(Dispatchers.Default) {
+    return@withContext ExoPlayer.Builder(context).setMediaSourceFactory(
         DefaultMediaSourceFactory(
             CronetDataSource.Factory(
                 CronetEngine.Builder(context).enableQuic(true).build(),

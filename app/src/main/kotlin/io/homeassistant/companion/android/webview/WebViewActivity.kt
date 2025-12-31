@@ -100,6 +100,7 @@ import io.homeassistant.companion.android.common.util.getIntOrElse
 import io.homeassistant.companion.android.common.util.getIntOrNull
 import io.homeassistant.companion.android.common.util.getStringOrElse
 import io.homeassistant.companion.android.common.util.getStringOrNull
+import io.homeassistant.companion.android.common.util.initializePlayer
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.jsonObjectOrNull
 import io.homeassistant.companion.android.common.util.runFragmentTransactionIfStateSafe
@@ -124,7 +125,6 @@ import io.homeassistant.companion.android.util.DataUriDownloadManager
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
-import io.homeassistant.companion.android.util.compose.initializePlayer
 import io.homeassistant.companion.android.util.hasNonRootPath
 import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.isStarted
@@ -1205,8 +1205,8 @@ class WebViewActivity :
         val payload = json["payload"]?.jsonObjectOrNull()
         val uri = payload?.getStringOrNull("url")?.toUri() ?: return
         val isMuted = payload.getBooleanOrElse("muted", false)
-        runOnUiThread {
-            exoPlayer.value = initializePlayer(this).apply {
+        lifecycleScope.launch {
+            exoPlayer.value = initializePlayer(this@WebViewActivity).apply {
                 setMediaItem(MediaItem.fromUri(uri))
                 playWhenReady = true
                 addListener(
