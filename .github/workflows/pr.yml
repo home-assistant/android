@@ -314,7 +314,7 @@ jobs:
           arch: ${{ matrix.configuration.arch }}
           force-avd-creation: false
           disable-animations: true
-          disk-size: 1G # We need to ensure that there is enough space for the emulator to run. If not we get 'Failed to commit install' errors.
+          disk-size: 2G # We need to ensure that there is enough space for the emulator to run. If not we get 'Failed to commit install' errors.
           heap-size: 1G
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           profile: ${{ matrix.configuration.profile }}
@@ -330,7 +330,7 @@ jobs:
           arch: ${{ matrix.configuration.arch }}
           force-avd-creation: false
           disable-animations: true
-          disk-size: 1G
+          disk-size: 2G
           heap-size: 1G
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           profile: ${{ matrix.configuration.profile }}
