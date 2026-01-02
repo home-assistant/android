@@ -379,6 +379,13 @@ class SettingsWearViewModel @Inject constructor(
     }
 
     private suspend fun updateServer(data: DataMap) {
+        val wearServerId = data.getInt(WearDataMessages.CONFIG_SERVER_ID, 0)
+
+        if (wearServerId == this.wearServer?.serverId) {
+            Timber.i("Server already updated")
+            return
+        }
+
         val wearExternalUrl = data.getString(WearDataMessages.CONFIG_SERVER_EXTERNAL_URL) ?: return
         val wearWebhookId = data.getString(WearDataMessages.CONFIG_SERVER_WEBHOOK_ID)?.ifBlank { null } ?: return
         val wearCloudUrl = data.getString(WearDataMessages.CONFIG_SERVER_CLOUD_URL, "").ifBlank { null }
@@ -388,18 +395,21 @@ class SettingsWearViewModel @Inject constructor(
         try {
             val wearServer = settingsWearUseCase.registerRefreshToken(
                 WearServer(
+                    serverId = wearServerId,
                     externalUrl = wearExternalUrl,
                     cloudUrl = wearCloudUrl,
                     webhookId = wearWebhookId,
                     cloudhookUrl = wearCloudhookUrl,
-                    null,
+                    accessToken = null,
                 ),
                 wearRefreshToken,
             )
             this.wearServer = wearServer
 
             viewModelScope.launch { wearServer.loadEntities() }
-        } catch (e: IntegrationException) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
             Timber.e(e, "Unable to add Wear server from data")
             wearServer = null
         }

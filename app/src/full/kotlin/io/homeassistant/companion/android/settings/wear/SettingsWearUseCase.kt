@@ -29,6 +29,7 @@ import timber.log.Timber
  * the integration layer, but this is acceptable to maintain clear separation of concerns.
  */
 data class WearServer(
+    val serverId: Int,
     val externalUrl: String,
     val cloudUrl: String?,
     val webhookId: String,
@@ -128,7 +129,7 @@ class SettingsWearUseCase @Inject constructor(
      */
     suspend fun getEntities(wearServer: WearServer): List<Entity> {
         if (wearServer.accessToken == null) {
-            FailFast.fail { "Missing access token you should invoke registerRefreshToken first" }
+            FailFast.fail { "Missing access token, you should invoke registerRefreshToken first" }
             return emptyList()
         }
 

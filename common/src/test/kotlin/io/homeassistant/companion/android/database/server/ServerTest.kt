@@ -71,6 +71,7 @@ class ServerTest {
     @Nested
     inner class Version {
 
+        @Test
         fun `Given valid version string then version returns HomeAssistantVersion`() {
             val server = createServer(version = "2025.12.1")
 
