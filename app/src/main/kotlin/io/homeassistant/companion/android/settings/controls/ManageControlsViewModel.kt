@@ -84,7 +84,7 @@ class ManageControlsViewModel @Inject constructor(
 
             defaultServerId = serverManager.getServer()?.id ?: 0
 
-            serverManager.defaultServers().map { server ->
+            defaultServers.map { server ->
                 async {
                     val entities = serverManager.integrationRepository(server.id).getEntities()
                         ?.filter { it.domain in HaControlsProviderService.getSupportedDomains() }

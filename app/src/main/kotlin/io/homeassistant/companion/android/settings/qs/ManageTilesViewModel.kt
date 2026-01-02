@@ -181,7 +181,6 @@ class ManageTilesViewModel @Inject constructor(
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            // TODO verify if IO is fine
             val defaultServers = serverManager.defaultServers()
             servers = defaultServers
             defaultServers.map {

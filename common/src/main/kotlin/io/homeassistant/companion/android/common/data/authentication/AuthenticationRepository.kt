@@ -13,7 +13,6 @@ interface AuthenticationRepository {
 
     suspend fun revokeSession()
 
-    // TODO I would like to not expose this outside of the serverManager
     suspend fun deletePreferences()
 
     suspend fun getSessionState(): SessionState

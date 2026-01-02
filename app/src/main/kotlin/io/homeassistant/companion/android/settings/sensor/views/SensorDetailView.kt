@@ -309,7 +309,6 @@ fun SensorDetailView(
                                     val summaryValues = setting.value.split(", ")
                                         .mapNotNull { it.ifBlank { null } }
                                     val noneSelected = stringResource(commonR.string.none_selected)
-                                    // TODO not sure if we should go the produceState way
                                     val summary by produceState(
                                         initialValue = "",
                                         key1 = setting,

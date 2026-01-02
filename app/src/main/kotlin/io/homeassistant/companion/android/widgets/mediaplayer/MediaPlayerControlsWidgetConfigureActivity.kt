@@ -167,15 +167,17 @@ class MediaPlayerControlsWidgetConfigureActivity :
 
         lifecycleScope.launch {
             serverManager.defaultServers().forEach { server ->
-                try {
-                    val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
-                        .filter { it.domain == MEDIA_PLAYER_DOMAIN }
-                    entities[server.id] = fetchedEntities
-                    if (server.id == selectedServerId) setAdapterEntities(server.id)
-                } catch (e: Exception) {
-                    // If entities fail to load, it's okay to pass
-                    // an empty map to the dynamicFieldAdapter
-                    Timber.e(e, "Failed to query entities")
+                launch {
+                    try {
+                        val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
+                            .filter { it.domain == MEDIA_PLAYER_DOMAIN }
+                        entities[server.id] = fetchedEntities
+                        if (server.id == selectedServerId) setAdapterEntities(server.id)
+                    } catch (e: Exception) {
+                        // If entities fail to load, it's okay to pass
+                        // an empty map to the dynamicFieldAdapter
+                        Timber.e(e, "Failed to query entities")
+                    }
                 }
             }
         }

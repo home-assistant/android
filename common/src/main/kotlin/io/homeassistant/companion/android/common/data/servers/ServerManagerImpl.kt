@@ -25,6 +25,16 @@ import timber.log.Timber
 
 private const val PREF_ACTIVE_SERVER = "active_server"
 
+/**
+ * A thread-safe map that associates server IDs with lazily-created values.
+ *
+ * This class provides concurrent access protection using a [Mutex] and supports
+ * lazy initialization of values via the [creator] function when using [getOrCreate].
+ *
+ * @param T The type of values stored in the map.
+ * @param creator A suspend function that creates a new value for a given server ID
+ *                when the ID is not yet present in the map.
+ */
 private class ServerMap<T>(private val creator: suspend (Int) -> T) {
     private val internalMap = mutableMapOf<Int, T>()
     private val mutex = Mutex()
@@ -165,7 +175,7 @@ internal class ServerManagerImpl @Inject constructor(
     }
 
     private suspend fun validateServerId(serverId: Int): Int {
-        val id = checkNotNull(getServerIdSanitize(serverId)) { "Impossible to determine the serverID" }
+        val id = checkNotNull(getServerIdSanitize(serverId)) { "Impossible to determine the serverID from $serverId" }
         checkNotNull(serverDao.get(id)) { "No server for ID ($id)" }
         return id
     }

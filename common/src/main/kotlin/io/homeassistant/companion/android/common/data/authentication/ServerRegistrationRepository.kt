@@ -10,11 +10,25 @@ import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
 
+/**
+ * Handles the registration of new Home Assistant servers by exchanging OAuth authorization
+ * codes.
+ */
 class ServerRegistrationRepository @Inject constructor(
     private val authenticationService: AuthenticationService,
-    @NamedInstallId private val installId: SuspendProvider<String>,
+    @param:NamedInstallId private val installId: SuspendProvider<String>,
 ) {
 
+    /**
+     * Exchanges an OAuth authorization code for access and refresh tokens, creating a temporary
+     * server configuration that can be used to complete the onboarding process.
+     *
+     * @param url The base URL of the Home Assistant server (e.g., "https://homeassistant.local:8123").
+     * @param authorizationCode The OAuth authorization code received from the authentication flow.
+     * @param allowInsecureConnection Whether to allow insecure connections (null to let this handle later in the flow).
+     * @return A [TemporaryServer] containing the session tokens and server URL if successful,
+     *         or `null` if the URL is invalid or the token response is missing a refresh token.
+     */
     suspend fun registerAuthorizationCode(
         url: String,
         authorizationCode: String,
