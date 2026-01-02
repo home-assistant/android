@@ -18,8 +18,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.NullSource
+import org.junit.jupiter.params.provider.ValueSource
 
 @ExtendWith(ConsoleLogExtension::class)
 class ServerRegistrationRepositoryTest {
@@ -122,7 +122,7 @@ class ServerRegistrationRepositoryTest {
     }
 
     @ParameterizedTest
-    @CsvSource(value = ["true", "false", "null"])
+    @ValueSource(booleans = [true, false])
     @NullSource
     fun `Given allowInsecureConnection value, when registering, then pass through to TemporaryServer`(
         allowInsecure: Boolean?,

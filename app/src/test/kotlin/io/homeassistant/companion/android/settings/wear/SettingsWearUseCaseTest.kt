@@ -44,6 +44,21 @@ class SettingsWearUseCaseTest {
         }
     }
 
+    private fun createWearServer(
+        externalUrl: String = "https://ha.local:8123",
+        cloudUrl: String? = null,
+        webhookId: String = "test_webhook",
+        cloudhookUrl: String? = null,
+        accessToken: String? = null,
+    ) = WearServer(
+        serverId = 42,
+        externalUrl = externalUrl,
+        cloudUrl = cloudUrl,
+        webhookId = webhookId,
+        cloudhookUrl = cloudhookUrl,
+        accessToken = accessToken,
+    )
+
     @Nested
     inner class WearServerTest {
 
@@ -126,20 +141,6 @@ class SettingsWearUseCaseTest {
 
             assertTrue(urls.isEmpty())
         }
-
-        private fun createWearServer(
-            externalUrl: String = "https://ha.local:8123",
-            cloudUrl: String? = null,
-            webhookId: String = "test_webhook",
-            cloudhookUrl: String? = null,
-            accessToken: String? = null,
-        ) = WearServer(
-            externalUrl = externalUrl,
-            cloudUrl = cloudUrl,
-            webhookId = webhookId,
-            cloudhookUrl = cloudhookUrl,
-            accessToken = accessToken,
-        )
     }
 
     @Nested
@@ -202,14 +203,6 @@ class SettingsWearUseCaseTest {
                 // Continue
             }
         }
-
-        private fun createWearServer() = WearServer(
-            externalUrl = "https://ha.local:8123",
-            cloudUrl = null,
-            webhookId = "webhook_id",
-            cloudhookUrl = null,
-            accessToken = null,
-        )
     }
 
     @Nested
@@ -256,14 +249,6 @@ class SettingsWearUseCaseTest {
 
             assertEquals(jsonObject.toString(), result)
         }
-
-        private fun createWearServer() = WearServer(
-            externalUrl = "https://ha.local:8123",
-            cloudUrl = null,
-            webhookId = "webhook_id",
-            cloudhookUrl = "https://hooks.nabu.casa/webhook",
-            accessToken = "access_token",
-        )
     }
 
     @Nested
@@ -323,13 +308,5 @@ class SettingsWearUseCaseTest {
 
             assertTrue(result.isEmpty())
         }
-
-        private fun createWearServer(accessToken: String? = null) = WearServer(
-            externalUrl = "https://ha.local:8123",
-            cloudUrl = null,
-            webhookId = "webhook_id",
-            cloudhookUrl = null,
-            accessToken = accessToken,
-        )
     }
 }
