@@ -16,9 +16,7 @@ import io.homeassistant.companion.android.onboarding.locationforsecureconnection
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.LocationSharingRoute
 import io.homeassistant.companion.android.onboarding.nameyourdevice.NameYourDeviceNavigationEvent
 import io.homeassistant.companion.android.onboarding.nameyourdevice.NameYourDeviceViewModel
-import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.SetHomeNetworkRoute
 import io.homeassistant.companion.android.testing.unit.stringResource
-import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import junit.framework.TestCase.assertTrue
@@ -150,7 +148,7 @@ internal class NameYourDeviceNavigationTest : BaseOnboardingNavigationTest() {
     }
 
     @Test
-    fun `Given no location tracking with HTTP public server and no location permission when device named then show LocationForSecureConnection`() {
+    fun `Given no location tracking with HTTP public server when device named then show LocationForSecureConnection`() {
         every { nameYourDeviceViewModel.onSaveClick() } coAnswers {
             nameYourDeviceNavigationFlow.emit(
                 NameYourDeviceNavigationEvent.DeviceNameSaved(
@@ -161,7 +159,6 @@ internal class NameYourDeviceNavigationTest : BaseOnboardingNavigationTest() {
             )
         }
         testNavigation(hasLocationTracking = false) {
-            mockCheckPermission(false)
             navController.navigateToNameYourDevice("http://homeassistant.local", "code")
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
 
@@ -174,32 +171,6 @@ internal class NameYourDeviceNavigationTest : BaseOnboardingNavigationTest() {
             assertTrue(
                 navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true,
             )
-        }
-    }
-
-    @Test
-    fun `Given no location tracking with HTTP public server and has location permission when device named then show SetHomeNetwork`() {
-        coEvery { nameYourDeviceViewModel.onSaveClick() } coAnswers {
-            nameYourDeviceNavigationFlow.emit(
-                NameYourDeviceNavigationEvent.DeviceNameSaved(
-                    serverId = 42,
-                    hasPlainTextAccess = true,
-                    isPubliclyAccessible = true,
-                ),
-            )
-        }
-        testNavigation(hasLocationTracking = false) {
-            mockCheckPermission(true)
-            navController.navigateToNameYourDevice("http://homeassistant.local", "code")
-            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourDeviceRoute>() == true)
-
-            onNodeWithText(stringResource(commonR.string.name_your_device_save))
-                .performScrollTo()
-                .assertIsDisplayed()
-                .assertIsEnabled()
-                .performClick()
-
-            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
         }
     }
 }

@@ -1,11 +1,8 @@
 package io.homeassistant.companion.android.onboarding
 
 import android.app.Activity
-import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.annotation.VisibleForTesting
-import androidx.compose.ui.util.fastAny
-import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -42,7 +39,6 @@ import io.homeassistant.companion.android.onboarding.wearmtls.navigation.wearMTL
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.welcomeScreen
 import io.homeassistant.companion.android.util.canGoBack
-import io.homeassistant.companion.android.util.compose.locationPermissions
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import kotlinx.serialization.Serializable
 
@@ -84,15 +80,17 @@ data class WearOnboardingRoute(val wearName: String, val urlToOnboard: String? =
  * - Server accessibility (local vs public)
  * - App flavor (full with Google Play Services vs minimal FOSS)
  * - Connection security (HTTP vs HTTPS)
- * - Permission state (location access)
  *
  * ## Flow Overview
- * 1. Welcome screen (only shown if [skipWelcome] is false)
- * 2. Server discovery (only shown if [urlToOnboard] is empty)
- * 3. Connection
- * 3. Device naming and registration
- * 4. Location/security configuration (conditional)
- * 5. Home network configuration (if applicable)
+ * 1. Welcome screen (skipped if [skipWelcome] is true)
+ * 2. Server discovery (skipped if [urlToOnboard] is provided)
+ * 3. Connection and authentication
+ * 4. Device naming and registration
+ * 5. Post-registration flow based on server configuration:
+ *    - Local-only servers: Local first screen → full: Location sharing; minimal secure connection (HTTP) or done (HTTPS)
+ *    - Public servers with full flavor: Location sharing → Secure connection (HTTP only)
+ *    - Public servers with minimal flavor: Secure connection (HTTP) or done (HTTPS)
+ * 6. Home network configuration (if user opts for secure-only connection)
  *
  * @param navController Navigation controller for managing navigation actions
  * @param onShowSnackbar Callback to display snackbar messages to the user
@@ -100,7 +98,7 @@ data class WearOnboardingRoute(val wearName: String, val urlToOnboard: String? =
  * @param urlToOnboard Optional server URL to onboard directly, bypassing server discovery
  * @param hideExistingServers When true, hides already registered servers from discovery
  * @param skipWelcome When true, skips the welcome screen and goes directly to server discovery or connection
- * @param hasLocationTracking Whether location tracking is available (default to full flavor = true, minimal = false)
+ * @param hasLocationTracking Whether location tracking is available (full flavor = true, minimal = false)
  */
 internal fun NavGraphBuilder.onboarding(
     navController: NavController,
@@ -172,7 +170,7 @@ internal fun NavGraphBuilder.onboarding(
                         navOptions = navOptions,
                     )
                 } else {
-                    navController.navigateForMinimalFlavor(
+                    navController.navigateToLocationForSecureConnectionConditionally(
                         serverId = serverId,
                         hasPlainTextAccess = hasPlainTextAccess,
                         navOptions = navOptions,
@@ -187,12 +185,12 @@ internal fun NavGraphBuilder.onboarding(
                 navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
             },
             onGotoNextScreen = { serverId, hasPlainTextAccess ->
-                navController.navigateForMinimalFlavor(
+                navController.navigateToLocationForSecureConnectionConditionally(
                     serverId = serverId,
-                    hasPlainTextAccess = hasPlainTextAccess,
                     navOptions = navOptions {
                         popUpTo<LocationSharingRoute> { inclusive = true }
                     },
+                    hasPlainTextAccess = hasPlainTextAccess,
                     onOnboardingDone = onOnboardingDone,
                 )
             },
@@ -298,25 +296,12 @@ private fun NavGraphBuilder.commonScreens(navController: NavController, wearName
 }
 
 /**
- * Checks if location permissions need to be requested.
- *
- * @return `true` if any location permission is not granted, `false` if all are granted
- */
-private fun NavController.shouldRequestLocationPermissions(): Boolean {
-    return locationPermissions.fastAny {
-        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_DENIED
-    }
-}
-
-/**
  * Navigates to the appropriate next screen after device registration based on server configuration.
  *
- * This function encapsulates the complex decision tree for post-registration navigation,
- * considering:
- * - Whether the server is publicly accessible
- * - Whether location tracking is available (full vs minimal flavor)
- * - Whether the connection uses plain text HTTP
- * - Whether location permissions are already granted
+ * Navigation decision tree:
+ * - Local-only server (!isPubliclyAccessible) → Local first screen
+ * - Public server with location tracking (full flavor) → Location sharing screen
+ * - Public server without location tracking (minimal flavor) → Secure connection (HTTP) or done (HTTPS)
  *
  * @param serverId The ID of the registered server
  * @param hasPlainTextAccess Whether the server connection uses HTTP (insecure)
@@ -346,8 +331,7 @@ private fun NavController.navigateAfterDeviceRegistration(
             hasPlainTextAccess = hasPlainTextAccess,
             navOptions = navOptions,
         )
-        // Minimal flavor: handle location and security based on connection type
-        else -> navigateForMinimalFlavor(
+        else -> navigateToLocationForSecureConnectionConditionally(
             serverId = serverId,
             hasPlainTextAccess = hasPlainTextAccess,
             navOptions = navOptions,
@@ -357,14 +341,13 @@ private fun NavController.navigateAfterDeviceRegistration(
 }
 
 /**
- * Navigates to the appropriate screen for minimal flavor after location-related setup.
+ * Conditionally navigates to the secure connection screen based on connection security.
  *
- * For minimal flavor (without location tracking), the flow is:
- * - If HTTPS: onboarding is complete
- * - If HTTP and no location permission: ask for location to enable secure connection detection
- * - If HTTP and has location permission: configure home network
+ * Navigation decision:
+ * - HTTPS connection (!hasPlainTextAccess) → Onboarding complete
+ * - HTTP connection → Navigate to secure connection screen to configure home network detection
  */
-private fun NavController.navigateForMinimalFlavor(
+private fun NavController.navigateToLocationForSecureConnectionConditionally(
     serverId: Int,
     hasPlainTextAccess: Boolean,
     navOptions: NavOptions,
@@ -376,12 +359,7 @@ private fun NavController.navigateForMinimalFlavor(
         return
     }
 
-    // HTTP connection: need location for secure connection detection
-    if (shouldRequestLocationPermissions()) {
-        navigateToLocationForSecureConnection(serverId = serverId, navOptions = navOptions)
-    } else {
-        navigateToSetHomeNetworkRoute(serverId = serverId, navOptions = navOptions)
-    }
+    navigateToLocationForSecureConnection(serverId = serverId, navOptions = navOptions)
 }
 
 /**
