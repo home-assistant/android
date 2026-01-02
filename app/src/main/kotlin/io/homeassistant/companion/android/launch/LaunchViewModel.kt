@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.launch
 
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
@@ -7,6 +8,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.network.NetworkState
@@ -60,14 +62,42 @@ internal sealed interface LaunchUiState {
  * asynchronously and navigates to the frontend.
  */
 @HiltViewModel(assistedFactory = LaunchViewModelFactory::class)
-internal class LaunchViewModel @AssistedInject constructor(
-    @Assisted initialDeepLink: LaunchActivity.DeepLink?,
+internal class LaunchViewModel @VisibleForTesting constructor(
+    initialDeepLink: LaunchActivity.DeepLink?,
     private val workManager: WorkManager,
     private val serverManager: ServerManager,
     private val networkStatusMonitor: NetworkStatusMonitor,
-    @param:LocationTrackingSupport private val hasLocationTrackingSupport: Boolean,
-    @param:IsAutomotive private val isAutomotive: Boolean,
+    private val hasLocationTrackingSupport: Boolean,
+    isAutomotive: Boolean,
+    isFullFlavor: Boolean,
 ) : ViewModel() {
+
+    @AssistedInject
+    constructor(
+        @Assisted initialDeepLink: LaunchActivity.DeepLink?,
+        workManager: WorkManager,
+        serverManager: ServerManager,
+        networkStatusMonitor: NetworkStatusMonitor,
+        @LocationTrackingSupport hasLocationTrackingSupport: Boolean,
+        @IsAutomotive isAutomotive: Boolean,
+    ) : this(
+        initialDeepLink,
+        workManager,
+        serverManager,
+        networkStatusMonitor,
+        hasLocationTrackingSupport,
+        isAutomotive = isAutomotive,
+        isFullFlavor = BuildConfig.FLAVOR == "full",
+    )
+
+    /**
+     * Indicates whether the app should navigate to the automotive-specific screen.
+     *
+     * This is only true when running on Android Automotive with the full flavor.
+     * The Play Store requires automotive apps to use a dedicated UI instead of a WebView,
+     * otherwise the app gets rejected.
+     */
+    private val shouldNavigateToAutomotive: Boolean = isAutomotive && isFullFlavor
 
     private val _uiState = MutableStateFlow<LaunchUiState>(LaunchUiState.Loading)
     val uiState = _uiState.asStateFlow()
@@ -173,7 +203,7 @@ internal class LaunchViewModel @AssistedInject constructor(
             NetworkState.READY_LOCAL, NetworkState.READY_REMOTE -> {
                 workManager.enqueueResyncRegistration()
                 _uiState.value = LaunchUiState.Ready(
-                    if (isAutomotive) {
+                    if (shouldNavigateToAutomotive) {
                         AutomotiveRoute
                     } else {
                         FrontendRoute(path, serverId)
