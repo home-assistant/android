@@ -8,7 +8,7 @@
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.1.1 - Wear" versioncode="2">
-        <change>Support text to speach streaming in Assist</change>
+        <change>Support streaming text-to-speech in Assist</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.1.1 - Automotive" versioncode="1">
