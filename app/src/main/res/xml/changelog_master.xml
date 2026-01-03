@@ -14,7 +14,7 @@
     <release version="2026.1.1 - Automotive" versioncode="1">
         <change>Redesigned onboarding experience for easier server setup</change>
         <change>Added connection security level options</change>
-        <change>Support text to speach in Assist</change>
+        <change>Support text to speach streaming in Assist</change>
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
