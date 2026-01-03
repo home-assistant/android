@@ -4,7 +4,7 @@
     <release version="2026.1.1 - Main" versioncode="3">
         <change>Redesigned onboarding experience for easier server setup</change>
         <change>Added connection security level options</change>
-        <change>Support text to speach in Assist</change>
+        <change>Support text to speach streaming in Assist</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.1.1 - Wear" versioncode="2">
