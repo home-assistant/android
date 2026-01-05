@@ -37,6 +37,7 @@ import org.chromium.net.CronetEngine
  * @see DefaultLoadControl
  * @see Executors.newSingleThreadExecutor
  */
+@OptIn(UnstableApi::class)
 suspend fun initializePlayer(context: Context): ExoPlayer = withContext(Dispatchers.Default) {
     val dataSourceFactory = createDataSourceFactory(context)
     return@withContext ExoPlayer.Builder(context).setMediaSourceFactory(
@@ -55,7 +56,6 @@ suspend fun initializePlayer(context: Context): ExoPlayer = withContext(Dispatch
  * Creates a [DataSource.Factory] for ExoPlayer, preferring Cronet with QUIC support.
  * Falls back to [DefaultHttpDataSource] if Cronet providers are unavailable on the device.
  */
-@OptIn(UnstableApi::class)
 private fun createDataSourceFactory(context: Context): DataSource.Factory {
     return FailFast.failOnCatch(
         message = { "Cronet unavailable, falling back to DefaultHttpDataSource" },
