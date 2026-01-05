@@ -7,7 +7,6 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.text.SimpleDateFormat
@@ -65,8 +64,8 @@ class NextAlarmManager : SensorManager {
         var utc = STATE_UNAVAILABLE
         var pendingIntent = ""
 
-        val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        val sensorSetting = sensorDao.getSettings(nextAlarm.id)
+        val dao = sensorDao(context)
+        val sensorSetting = dao.getSettings(nextAlarm.id)
         val allowPackageList = sensorSetting.firstOrNull { it.name == SETTING_ALLOW_LIST }?.value ?: ""
 
         try {
@@ -86,7 +85,7 @@ class NextAlarmManager : SensorManager {
                         return
                     }
                 } else {
-                    sensorDao.add(
+                    dao.add(
                         SensorSetting(nextAlarm.id, SETTING_ALLOW_LIST, allowPackageList, SensorSettingType.LIST_APPS),
                     )
                 }

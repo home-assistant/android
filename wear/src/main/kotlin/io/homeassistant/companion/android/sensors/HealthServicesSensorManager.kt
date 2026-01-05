@@ -20,7 +20,6 @@ import androidx.health.services.client.data.UserActivityState
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
-import io.homeassistant.companion.android.database.AppDatabase
 import java.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -240,8 +239,7 @@ class HealthServicesSensorManager : SensorManager {
                         ),
                         forceUpdate = forceUpdate,
                     )
-                    val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-                    val sensorData = sensorDao.get(userActivityState.id)
+                    val sensorData = sensorDao(latestContext).get(userActivityState.id)
 
                     if (sensorData.any { it.state != it.lastSentState } || forceUpdate) {
                         SensorReceiver.updateAllSensors(latestContext)
@@ -281,10 +279,10 @@ class HealthServicesSensorManager : SensorManager {
             }
 
             override fun onPermissionLost() {
-                val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
                 runBlocking {
+                    val dao = sensorDao(latestContext)
                     serverManager(latestContext).defaultServers.forEach {
-                        sensorDao.setSensorsEnabled(listOf(userActivityState.id), it.id, false)
+                        dao.setSensorsEnabled(listOf(userActivityState.id), it.id, false)
                     }
                 }
             }

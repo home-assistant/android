@@ -13,7 +13,7 @@ import androidx.work.WorkerParameters
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_WORKER
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.DatabaseEntryPoint
 import java.lang.IllegalStateException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -33,7 +33,7 @@ abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerPar
     private val notificationManager = appContext.getSystemService<NotificationManager>()!!
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
+        val sensorDao = DatabaseEntryPoint.resolve(applicationContext).sensorDao()
         val enabledSensorCount = sensorDao.getEnabledCount() ?: 0
         if (
             enabledSensorCount > 0 ||

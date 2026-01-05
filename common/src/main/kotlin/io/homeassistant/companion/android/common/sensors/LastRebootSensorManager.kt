@@ -5,7 +5,6 @@ import android.content.Context
 import android.os.SystemClock
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
@@ -62,13 +61,13 @@ class LastRebootSensorManager : SensorManager {
         var local = ""
         var utc = STATE_UNAVAILABLE
 
-        val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        val fullSensor = sensorDao.getFull(lastRebootSensor.id).toSensorWithAttributes()
-        val sensorSetting = sensorDao.getSettings(lastRebootSensor.id)
+        val dao = sensorDao(context)
+        val fullSensor = dao.getFull(lastRebootSensor.id).toSensorWithAttributes()
+        val sensorSetting = dao.getSettings(lastRebootSensor.id)
         val lastTimeMillis =
             fullSensor?.attributes?.firstOrNull { it.name == TIME_MILLISECONDS }?.value?.toLongOrNull() ?: 0L
         val settingDeadband = sensorSetting.firstOrNull { it.name == SETTING_DEADBAND }?.value?.toIntOrNull() ?: 60000
-        sensorDao.add(
+        dao.add(
             SensorSetting(lastRebootSensor.id, SETTING_DEADBAND, settingDeadband.toString(), SensorSettingType.NUMBER),
         )
         try {
