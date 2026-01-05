@@ -6,6 +6,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.cronet.CronetDataSource
+import androidx.media3.datasource.cronet.CronetUtil
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
@@ -13,6 +14,7 @@ import java.util.concurrent.Executors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.chromium.net.CronetEngine
+import timber.log.Timber
 
 /**
  * Initializes and returns an ExoPlayer instance optimized for live streaming,
@@ -56,12 +58,14 @@ suspend fun initializePlayer(context: Context): ExoPlayer = withContext(Dispatch
  * Creates a [DataSource.Factory] for ExoPlayer, preferring Cronet with QUIC support.
  * Falls back to [DefaultHttpDataSource] if Cronet providers are unavailable on the device.
  */
+@OptIn(UnstableApi::class)
 private fun createDataSourceFactory(context: Context): DataSource.Factory {
-    return FailFast.failOnCatch(
-        message = { "Cronet unavailable, falling back to DefaultHttpDataSource" },
-        fallback = DefaultHttpDataSource.Factory(),
-    ) {
-        val cronetEngine = CronetEngine.Builder(context).enableQuic(true).build()
+    val cronetEngine = CronetUtil.buildCronetEngine(context, null, true)
+
+    return if (cronetEngine == null) {
+        Timber.w("Failed to build cronet engine fallback to DefaultHttpDataSource")
+        DefaultHttpDataSource.Factory()
+    } else {
         CronetDataSource.Factory(cronetEngine, Executors.newSingleThreadExecutor())
     }
 }
