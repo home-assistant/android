@@ -25,11 +25,14 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import io.homeassistant.companion.android.common.util.initializePlayer
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import io.homeassistant.companion.android.util.compose.initializePlayer
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
+import kotlinx.coroutines.launch
 
 /**
  * Very basic demo of the ExoPlayer usage and the PlayerView.
@@ -80,6 +83,7 @@ private fun HAMediaPlayer(
 ) {
     val context = LocalContext.current
     var player by remember { mutableStateOf<Player?>(null) }
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     fun releasePlayer() {
         player?.release()
@@ -91,7 +95,9 @@ private fun HAMediaPlayer(
         // apps can be visible at the same time. The apps that are out-of-focus are paused, but video
         // playback should continue.
         LifecycleStartEffect(Unit) {
-            player = initializePlayer(context)
+            lifecycleOwner.lifecycleScope.launch {
+                player = initializePlayer(context)
+            }
             onStopOrDispose {
                 releasePlayer()
             }
@@ -99,7 +105,9 @@ private fun HAMediaPlayer(
     } else {
         // Call to onStop() is not guaranteed, hence we release the Player in onPause() instead
         LifecycleResumeEffect(Unit) {
-            player = initializePlayer(context)
+            lifecycleOwner.lifecycleScope.launch {
+                player = initializePlayer(context)
+            }
             onPauseOrDispose {
                 releasePlayer()
             }

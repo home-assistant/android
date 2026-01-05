@@ -276,8 +276,8 @@ class SettingsWearViewModel @Inject constructor(private val serverManager: Serve
         }
     }
 
-    private fun readUriData(uri: String): ByteArray {
-        if (uri.isEmpty()) return ByteArray(0)
+    private fun readUriData(uri: String?): ByteArray {
+        if (uri.isNullOrEmpty()) return ByteArray(0)
         return getApplication<HomeAssistantApplication>().contentResolver.openInputStream(
             uri.toUri(),
         )!!.buffered().use {
@@ -291,8 +291,8 @@ class SettingsWearViewModel @Inject constructor(private val serverManager: Serve
         deviceName: String,
         deviceTrackingEnabled: Boolean,
         notificationsEnabled: Boolean,
-        tlsClientCertificateUri: String,
-        tlsClientCertificatePassword: String,
+        tlsClientCertificateUri: String?,
+        tlsClientCertificatePassword: String?,
     ) {
         _hasData.value = false // Show loading indicator
         val putDataRequest = PutDataMapRequest.create("/authenticate").run {
@@ -304,7 +304,7 @@ class SettingsWearViewModel @Inject constructor(private val serverManager: Serve
             dataMap.putBoolean("LocationTracking", deviceTrackingEnabled)
             dataMap.putBoolean("Notifications", notificationsEnabled)
             dataMap.putByteArray("TLSClientCertificateData", readUriData(tlsClientCertificateUri))
-            dataMap.putString("TLSClientCertificatePassword", tlsClientCertificatePassword)
+            dataMap.putString("TLSClientCertificatePassword", tlsClientCertificatePassword.orEmpty())
             setUrgent()
             asPutDataRequest()
         }

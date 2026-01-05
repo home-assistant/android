@@ -28,7 +28,11 @@ data class AssistPipelineRunStart(
     // TODO replace the map https://github.com/home-assistant/android/issues/5341
     @Serializable(with = MapAnySerializer::class)
     val runnerData: Map<String, @Polymorphic Any?>,
+    val ttsOutput: StreamTtsOutputResponse? = null,
 ) : AssistPipelineEventData
+
+@Serializable
+data class StreamTtsOutputResponse(val mimeType: String, val url: String, val streamResponse: Boolean)
 
 @Serializable
 data class AssistPipelineSttEnd(
@@ -42,7 +46,7 @@ data class AssistPipelineIntentStart(val engine: String, val language: String, v
     AssistPipelineEventData
 
 @Serializable
-data class AssistPipelineIntentProgress(val chatLogDelta: AssistChatLogDelta?) : AssistPipelineEventData
+data class AssistPipelineIntentProgress(val chatLogDelta: AssistChatLogDelta? = null) : AssistPipelineEventData
 
 @Serializable
 data class AssistChatLogDelta(val content: String? = null)

@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.common.data.integration
 
 import okhttp3.ResponseBody
 
-class IntegrationException : Exception {
+open class IntegrationException : Exception {
     constructor() : super()
     constructor(message: String) : super(message)
     constructor(cause: Throwable) : super(cause)
@@ -13,3 +13,6 @@ class IntegrationException : Exception {
         errorBody: ResponseBody?,
     ) : super("$message, httpCode: $httpCode, errorBody: ${errorBody?.string()}")
 }
+
+class NoUrlAvailableException :
+    IntegrationException("No URL available at the moment, check networks and URL configuration")

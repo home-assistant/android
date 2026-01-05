@@ -352,7 +352,7 @@
                     android:path="/request_home_assistant_instance" />
             </intent-filter>
         </service>
-        
+
         <activity
             android:name=".webview.WebViewActivity"
             android:supportsPictureInPicture="true"
