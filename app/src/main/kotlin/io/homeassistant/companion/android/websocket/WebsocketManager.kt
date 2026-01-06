@@ -48,7 +48,8 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     CoroutineWorker(appContext, workerParams) {
 
     companion object {
-        private const val TAG = "WebSocketManager"
+        private const val UNIQUE_WORK_NAME = "WebSocketManager"
+        private const val OLD_UNIQUE_WORK_NAME = "WebSockManager"
         private const val SOURCE = "Websocket"
         private const val NOTIFICATION_ID = 65423
         private const val NOTIFICATION_RESTRICTED_ID = 65424
@@ -66,17 +67,23 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
                     .build()
 
             val workManager = WorkManager.getInstance(context)
-            val workInfo = workManager.getWorkInfosForUniqueWork(TAG).await().firstOrNull()
+
+            // Renaming the unique work name created two periodic workers and caused duplicate WebSocket notifications.
+            // See: https://github.com/home-assistant/android/issues/6066#issuecomment-3608649429
+            // Please don't remove before December 2026 to allow enough time for users to upgrade.
+            workManager.cancelUniqueWork(OLD_UNIQUE_WORK_NAME)
+
+            val workInfo = workManager.getWorkInfosForUniqueWork(UNIQUE_WORK_NAME).await().firstOrNull()
 
             if (workInfo == null || workInfo.state.isFinished || workInfo.state == WorkInfo.State.ENQUEUED) {
                 workManager.enqueueUniquePeriodicWork(
-                    TAG,
+                    UNIQUE_WORK_NAME,
                     ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
                     websocketNotifications,
                 )
             } else {
                 workManager.enqueueUniquePeriodicWork(
-                    TAG,
+                    UNIQUE_WORK_NAME,
                     ExistingPeriodicWorkPolicy.KEEP,
                     websocketNotifications,
                 )
@@ -131,9 +138,8 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     private suspend fun shouldWeRun(): Boolean = serverManager.defaultServers.any { shouldRunForServer(it.id) }
 
     private suspend fun shouldRunForServer(serverId: Int): Boolean {
-        val server = serverManager.getServer(serverId) ?: return false
         val setting = settingsDao.get(serverId)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
-        val isHome = server.connection.isInternal(requiresUrl = false)
+        val isHome = serverManager.connectionStateProvider(serverId).isInternal(requiresUrl = false)
 
         // Check for connectivity but not internet access, based on WorkManager's NetworkConnectedController API <26
         val powerManager = applicationContext.getSystemService<PowerManager>()!!

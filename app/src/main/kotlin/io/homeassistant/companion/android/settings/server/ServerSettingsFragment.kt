@@ -28,7 +28,6 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.USE_NEW_LAUNCHER
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.launch.LaunchActivity
@@ -183,11 +182,7 @@ class ServerSettingsFragment :
         findPreference<Preference>("connection_security_level")?.let {
             it.setOnPreferenceClickListener {
                 parentFragmentManager.commit {
-                    replace(
-                        R.id.content_full_screen,
-                        ConnectionSecurityLevelFragment::class.java,
-                        Bundle().apply { putInt(ConnectionSecurityLevelFragment.EXTRA_SERVER, serverId) },
-                    )
+                    replace(R.id.content_full_screen, ConnectionSecurityLevelFragment.newInstance(serverId))
                     addToBackStack(null)
                 }
                 return@setOnPreferenceClickListener true
@@ -385,16 +380,8 @@ class ServerSettingsFragment :
         presenter.updateServerName()
         presenter.updateUrlStatus()
         updateSecurityLevelSummary()
-        potentiallyShowSecurityLevel()
     }
 
-    private fun potentiallyShowSecurityLevel() {
-        lifecycleScope.launch {
-            findPreference<Preference>("connection_security_level")?.let {
-                it.isVisible = USE_NEW_LAUNCHER
-            }
-        }
-    }
     private fun updateSecurityLevelSummary() {
         lifecycleScope.launch {
             findPreference<Preference>("connection_security_level")?.let { preference ->

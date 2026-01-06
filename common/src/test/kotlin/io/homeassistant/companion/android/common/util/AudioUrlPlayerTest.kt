@@ -1,240 +1,259 @@
 package io.homeassistant.companion.android.common.util
 
-import android.media.AudioAttributes
 import android.media.AudioManager
-import android.media.MediaPlayer
-import android.os.Build
+import androidx.media.AudioFocusRequestCompat
+import androidx.media.AudioManagerCompat
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
+import app.cash.turbine.test
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
+import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.Runs
+import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.unmockkAll
 import io.mockk.verify
 import io.mockk.verifyOrder
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
-@RunWith(RobolectricTestRunner::class)
-@Config(sdk = [Build.VERSION_CODES.M])
+@ExtendWith(ConsoleLogExtension::class, MainDispatcherJUnit5Extension::class)
 class AudioUrlPlayerTest {
     private lateinit var audioManager: AudioManager
-    private lateinit var mediaPlayer: MediaPlayer
+    private lateinit var exoPlayer: ExoPlayer
     private lateinit var player: AudioUrlPlayer
 
-    @Before
+    @BeforeEach
     fun setUp() {
         audioManager = mockk(relaxed = true)
-        mediaPlayer = mockk(relaxed = true)
+        exoPlayer = mockk(relaxed = true)
 
-        val mediaPlayerCreator: () -> MediaPlayer = { mediaPlayer }
-        player = AudioUrlPlayer(audioManager, mediaPlayerCreator)
+        player = AudioUrlPlayer(audioManager) { block ->
+            exoPlayer.apply { block() }
+            exoPlayer
+        }
     }
 
-    @After
+    @AfterEach
     fun tearDown() {
         unmockkAll()
     }
 
     @Test
-    fun `Given volume equal to 0 when playAudio then returns false and no audio is played`() {
+    fun `Given volume equal to 0 when playAudio then emits nothing and no audio is played`() = runTest {
         every { audioManager.getStreamVolume(any()) } returns 0
 
-        runTest {
-            assertFalse(player.playAudio(""))
-            verify(exactly = 0) { mediaPlayer.start() }
-        }
+        val states = player.playAudio("").toList()
+
+        assertTrue(states.isEmpty())
+        verify(exactly = 0) { exoPlayer.play() }
     }
 
     @Test
-    fun `Given no audio manager when playAudio then returns false and no audio is played`() {
-        val player = AudioUrlPlayer(null)
-
-        runTest {
-            assertFalse(player.playAudio(""))
-            verify(exactly = 0) { mediaPlayer.start() }
-        }
-    }
-
-    @Test
-    @Config(sdk = [Build.VERSION_CODES.M, Build.VERSION_CODES.VANILLA_ICE_CREAM])
-    fun `Given volume above 0 and url when playAudio then play audio returns true`() = runTest {
-        val onCompletionListener = slot<MediaPlayer.OnCompletionListener>()
-        val onPreparedListener = slot<MediaPlayer.OnPreparedListener>()
+    fun `Given volume above 0 and url when playAudio then emits READY, PLAYING, STOP_PLAYING`() = runTest {
+        val listenerSlot = slot<Player.Listener>()
 
         every { audioManager.getStreamVolume(any()) } returns 1
-
-        every { mediaPlayer.setOnCompletionListener(capture(onCompletionListener)) } just Runs
-        every { mediaPlayer.setOnPreparedListener(capture(onPreparedListener)) } just Runs
-        // We replicate the happy path of a media player while calling prepare async by invoking onPrepared and then onCompletion
-        every { mediaPlayer.prepareAsync() } answers {
-            onPreparedListener.captured.onPrepared(mediaPlayer)
-            onCompletionListener.captured.onCompletion(mediaPlayer)
+        every { exoPlayer.addListener(capture(listenerSlot)) } just Runs
+        every { exoPlayer.prepare() } answers {
+            listenerSlot.captured.onPlaybackStateChanged(Player.STATE_READY)
+            listenerSlot.captured.onPlaybackStateChanged(Player.STATE_ENDED)
         }
 
-        val result = player.playAudio("test_url")
+        player.playAudio("test_url").test {
+            assertEquals(PlaybackState.READY, awaitItem())
+            assertEquals(PlaybackState.PLAYING, awaitItem())
+            assertEquals(PlaybackState.STOP_PLAYING, awaitItem())
+            expectNoEvents()
+        }
 
         verifyOrder {
-            mediaPlayer.setDataSource("test_url")
-            mediaPlayer.prepareAsync()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                audioManager.requestAudioFocus(any())
-            } else {
-                audioManager.requestAudioFocus(any(), any(), any())
-            }
-            mediaPlayer.start()
-            mediaPlayer.release()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                audioManager.abandonAudioFocusRequest(any())
-            } else {
-                audioManager.abandonAudioFocus(any())
-            }
+            exoPlayer.setAudioAttributes(
+                eq(
+                    AudioAttributes.Builder()
+                        .setContentType(C.AUDIO_CONTENT_TYPE_SPEECH)
+                        .setUsage(C.USAGE_ASSISTANT)
+                        .build(),
+                ),
+                eq(false),
+            )
+            exoPlayer.addListener(any())
+            exoPlayer.setMediaItem(any())
+            exoPlayer.prepare()
+            exoPlayer.play()
+            exoPlayer.release()
         }
-
-        verify { mediaPlayer.setAudioAttributes(any()) }
-        verify { mediaPlayer.setOnPreparedListener(any()) }
-        verify { mediaPlayer.setOnErrorListener(any()) }
-        verify { mediaPlayer.setOnCompletionListener(any()) }
-
-        assertTrue(result)
+        confirmVerified(exoPlayer)
     }
 
     @Test
-    fun `Given wrong URL and sound above 0 when playAudio then no audio is played and returns false`() = runTest {
-        val onErrorCompletionListener = slot<MediaPlayer.OnErrorListener>()
+    fun `Given player error when playAudio then releases player without emitting states`() = runTest {
+        val listenerSlot = slot<Player.Listener>()
 
         every { audioManager.getStreamVolume(any()) } returns 1
-
-        every { mediaPlayer.setOnErrorListener(capture(onErrorCompletionListener)) } just Runs
-        every { mediaPlayer.prepareAsync() } answers {
-            onErrorCompletionListener.captured.onError(mediaPlayer, 0, 0)
+        every { exoPlayer.addListener(capture(listenerSlot)) } just Runs
+        every { exoPlayer.prepare() } answers {
+            listenerSlot.captured.onPlayerError(
+                PlaybackException("Test error", null, PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED),
+            )
         }
 
-        assertFalse(player.playAudio("test_url"))
-        verify(exactly = 0) { mediaPlayer.start() }
+        val states = player.playAudio("test_url").toList()
+
+        assertTrue(states.isEmpty())
+        verify(exactly = 0) { exoPlayer.play() }
+        verify { exoPlayer.release() }
     }
 
     @Test
-    fun `Given wrong player state and sound above 0 when playAudio then no audio is played and returns false`() = runTest {
-        every { audioManager.getStreamVolume(any()) } returns 1
-        every { mediaPlayer.setDataSource("test_url") } throws IllegalStateException()
+    fun `Given stream ends with EOF when playAudio then emits STOP_PLAYING`() = runTest {
+        val listenerSlot = slot<Player.Listener>()
 
-        assertFalse(player.playAudio("test_url"))
-        verify(exactly = 0) { mediaPlayer.start() }
+        every { audioManager.getStreamVolume(any()) } returns 1
+        every { exoPlayer.addListener(capture(listenerSlot)) } just Runs
+        every { exoPlayer.prepare() } answers {
+            listenerSlot.captured.onPlaybackStateChanged(Player.STATE_READY)
+            listenerSlot.captured.onPlayerError(
+                PlaybackException(
+                    "Stream ended",
+                    java.io.EOFException("End of stream"),
+                    PlaybackException.ERROR_CODE_IO_UNSPECIFIED,
+                ),
+            )
+        }
+
+        val states = player.playAudio("test_url").toList()
+
+        assertEquals(listOf(PlaybackState.READY, PlaybackState.PLAYING, PlaybackState.STOP_PLAYING), states)
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.M, Build.VERSION_CODES.VANILLA_ICE_CREAM])
-    fun `Given a player already started when playAudio then the previous player is stopped and focus abandoned`() = runTest {
-        every { audioManager.getStreamVolume(any()) } returns 1
-
-        val onCompletionListener = slot<MediaPlayer.OnCompletionListener>()
-        val onPreparedListener = slot<MediaPlayer.OnPreparedListener>()
-
-        every { audioManager.getStreamVolume(any()) } returns 1
-
-        every { mediaPlayer.setOnPreparedListener(capture(onPreparedListener)) } just Runs
-        every { mediaPlayer.setOnCompletionListener(capture(onCompletionListener)) } just Runs
-
-        every { mediaPlayer.prepareAsync() } answers {
-            onPreparedListener.captured.onPrepared(mediaPlayer)
-            onCompletionListener.captured.onCompletion(mediaPlayer)
+    fun `Given null audioManager when playAudio then does not play audio nor create an instance of ExoPlayer`() = runTest {
+        val playerWithNullAudioManager = AudioUrlPlayer(null) { block ->
+            exoPlayer.apply { block() }
+            exoPlayer
         }
 
-        val playerToStop = mockk<MediaPlayer>(relaxed = true)
-        player.player = playerToStop
-        player.focusRequest = mockk(relaxed = true)
+        val states = playerWithNullAudioManager.playAudio("test_url").toList()
 
-        // create a new player
-        assertTrue(player.playAudio("test_url"))
-
-        verifyOrder {
-            playerToStop.stop()
-            playerToStop.release()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                audioManager.abandonAudioFocusRequest(any())
-            } else {
-                audioManager.abandonAudioFocus(any())
-            }
-            mediaPlayer.setDataSource("test_url")
-            mediaPlayer.prepareAsync()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                audioManager.requestAudioFocus(any())
-            } else {
-                audioManager.requestAudioFocus(any(), any(), any())
-            }
-            mediaPlayer.start()
-            mediaPlayer.release()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                audioManager.abandonAudioFocusRequest(any())
-            } else {
-                audioManager.abandonAudioFocus(any())
-            }
-        }
+        assertEquals(emptyList<PlaybackState>(), states)
+        confirmVerified(exoPlayer)
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.M, Build.VERSION_CODES.VANILLA_ICE_CREAM])
-    fun `Given a URL and is assistant when playAudio then set proper audio attributes`() = runTest {
+    fun `Given isAssistant false when playAudio then uses media audio attributes`() = runTest {
+        val listenerSlot = slot<Player.Listener>()
+
         every { audioManager.getStreamVolume(any()) } returns 1
-        val audioAttributes = slot<AudioAttributes>()
-        every { mediaPlayer.setAudioAttributes(capture(audioAttributes)) } just Runs
+        every { exoPlayer.addListener(capture(listenerSlot)) } just Runs
+        every { exoPlayer.prepare() } answers {
+            listenerSlot.captured.onPlaybackStateChanged(Player.STATE_READY)
+            listenerSlot.captured.onPlaybackStateChanged(Player.STATE_ENDED)
+        }
 
-        // We don't need to play anything to set the attributes but we still need to get out of the suspendCoroutine
-        every { mediaPlayer.setDataSource("test_url") } throws IllegalStateException()
+        player.playAudio("test_url", isAssistant = false).test {
+            assertEquals(PlaybackState.READY, awaitItem())
+            assertEquals(PlaybackState.PLAYING, awaitItem())
+            assertEquals(PlaybackState.STOP_PLAYING, awaitItem())
+            expectNoEvents()
+        }
 
-        player.playAudio("test_url", true)
-
-        with(audioAttributes.captured) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                assertEquals(AudioAttributes.USAGE_ASSISTANT, usage)
-            } else {
-                assertEquals(AudioAttributes.USAGE_MEDIA, usage)
-            }
-            assertEquals(AudioAttributes.CONTENT_TYPE_SPEECH, contentType)
+        verify {
+            exoPlayer.setAudioAttributes(
+                eq(
+                    AudioAttributes.Builder()
+                        .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                        .setUsage(C.USAGE_MEDIA)
+                        .build(),
+                ),
+                eq(false),
+            )
         }
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.M, Build.VERSION_CODES.VANILLA_ICE_CREAM])
-    fun `Given a URL and is not assistant when playAudio then set proper audio attributes`() = runTest {
+    fun `Given audio focus request fails when playAudio then still plays audio`() = runTest {
+        val listenerSlot = slot<Player.Listener>()
+
+        mockkStatic(AudioManagerCompat::class)
         every { audioManager.getStreamVolume(any()) } returns 1
-        val audioAttributes = slot<AudioAttributes>()
-        every { mediaPlayer.setAudioAttributes(capture(audioAttributes)) } just Runs
-
-        // We don't need to play anything to set the attributes but we still need to get out of the suspendCoroutine
-        every { mediaPlayer.setDataSource("test_url") } throws IllegalStateException()
-
-        player.playAudio("test_url", false)
-
-        with(audioAttributes.captured) {
-            assertEquals(AudioAttributes.USAGE_MEDIA, usage)
-            assertEquals(AudioAttributes.CONTENT_TYPE_MUSIC, contentType)
+        every { AudioManagerCompat.requestAudioFocus(audioManager, any()) } throws SecurityException("Focus denied")
+        every { exoPlayer.addListener(capture(listenerSlot)) } just Runs
+        every { exoPlayer.prepare() } answers {
+            listenerSlot.captured.onPlaybackStateChanged(Player.STATE_READY)
+            listenerSlot.captured.onPlaybackStateChanged(Player.STATE_ENDED)
         }
+
+        player.playAudio("test_url").test {
+            assertEquals(PlaybackState.READY, awaitItem())
+            assertEquals(PlaybackState.PLAYING, awaitItem())
+            assertEquals(PlaybackState.STOP_PLAYING, awaitItem())
+            expectNoEvents()
+        }
+
+        verify { exoPlayer.play() }
+        verify { AudioManagerCompat.requestAudioFocus(audioManager, any()) }
+        confirmVerified(AudioManagerCompat::class)
     }
 
     @Test
-    fun `Given anything that happens when invoking playAudio then it does not throw IllegalStateException Already resumed`() = runTest {
+    fun `Given successful playback when flow completes then player is released and focus abandoned with same request`() = runTest {
+        val listenerSlot = slot<Player.Listener>()
+        val focusRequestSlot = slot<AudioFocusRequestCompat>()
+
+        mockkStatic(AudioManagerCompat::class)
+        every { AudioManagerCompat.requestAudioFocus(any(), capture(focusRequestSlot)) } returns AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        every { AudioManagerCompat.abandonAudioFocusRequest(any(), any()) } returns AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         every { audioManager.getStreamVolume(any()) } returns 1
-
-        val onCompletionListener = slot<MediaPlayer.OnCompletionListener>()
-        val onErrorListener = slot<MediaPlayer.OnErrorListener>()
-        every { mediaPlayer.setOnCompletionListener(capture(onCompletionListener)) } answers {
-            onCompletionListener.captured.onCompletion(mediaPlayer)
+        every { exoPlayer.addListener(capture(listenerSlot)) } just Runs
+        every { exoPlayer.prepare() } answers {
+            listenerSlot.captured.onPlaybackStateChanged(Player.STATE_READY)
+            listenerSlot.captured.onPlaybackStateChanged(Player.STATE_ENDED)
         }
-        every { mediaPlayer.setOnErrorListener(capture(onErrorListener)) } answers {
-            onErrorListener.captured.onError(mediaPlayer, 1, 42)
-        }
-        every { mediaPlayer.prepareAsync() } throws IllegalStateException("dummy")
 
-        player.playAudio("test_url", false)
+        player.playAudio("test_url").test {
+            awaitItem() // READY
+            awaitItem() // PLAYING
+            awaitItem() // STOP_PLAYING
+            expectNoEvents()
+        }
+
+        verify { exoPlayer.release() }
+        verify { AudioManagerCompat.requestAudioFocus(audioManager, any()) }
+        verify { AudioManagerCompat.abandonAudioFocusRequest(audioManager, eq(focusRequestSlot.captured)) }
+    }
+
+    @Test
+    fun `Given getStreamVolume throws RuntimeException when playAudio then still plays audio`() = runTest {
+        val listenerSlot = slot<Player.Listener>()
+
+        every { audioManager.getStreamVolume(any()) } throws RuntimeException("Permission denied")
+        every { exoPlayer.addListener(capture(listenerSlot)) } just Runs
+        every { exoPlayer.prepare() } answers {
+            listenerSlot.captured.onPlaybackStateChanged(Player.STATE_READY)
+            listenerSlot.captured.onPlaybackStateChanged(Player.STATE_ENDED)
+        }
+
+        player.playAudio("test_url").test {
+            assertEquals(PlaybackState.READY, awaitItem())
+            assertEquals(PlaybackState.PLAYING, awaitItem())
+            assertEquals(PlaybackState.STOP_PLAYING, awaitItem())
+            expectNoEvents()
+        }
+
+        verify { exoPlayer.play() }
     }
 }

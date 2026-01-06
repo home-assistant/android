@@ -1,5 +1,6 @@
 
 import com.android.compose.screenshot.gradle.ScreenshotTestOptions
+import com.android.compose.screenshot.tasks.PreviewScreenshotUpdateTask
 import com.android.compose.screenshot.tasks.PreviewScreenshotValidationTask
 import io.homeassistant.companion.android.androidConfig
 import io.homeassistant.companion.android.getPluginId
@@ -34,11 +35,16 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
                 }
             }
 
+            // Screenshot test worker memory grows with test count. Increase as needed.
+            // Tracking: https://issuetracker.google.com/issues/469819154
+            val maxHeapSizeScreenshotTesting = "4g"
+
             tasks.withType<PreviewScreenshotValidationTask>().configureEach {
-                // Hack until we get the update of the screenshot libray
-                // https://issuetracker.google.com/issues/444048026
-                // 3g is the minimal value for our tests to pass currently
-                maxHeapSize = "3g"
+                maxHeapSize = maxHeapSizeScreenshotTesting
+            }
+
+            tasks.withType<PreviewScreenshotUpdateTask>().configureEach {
+                maxHeapSize = maxHeapSizeScreenshotTesting
             }
 
             androidConfig {
@@ -47,6 +53,7 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
                     "implementation"(libs.compose.foundation)
                     "implementation"(libs.compose.material3)
                     "implementation"(libs.compose.material.icons.core)
+                    "implementation"(libs.compose.material.icons.extended)
                     "implementation"(libs.compose.ui)
                     "implementation"(libs.compose.uiTooling)
                     "implementation"(libs.androidx.lifecycle.runtime.compose)

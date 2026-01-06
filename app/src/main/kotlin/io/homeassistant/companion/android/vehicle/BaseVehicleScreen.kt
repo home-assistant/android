@@ -14,11 +14,10 @@ abstract class BaseVehicleScreen(carContext: CarContext) : Screen(carContext) {
     private var carRestrictionManager: CarUxRestrictionsManager? = null
     protected val isDrivingOptimized
         get() = try {
-            car?.let {
-                (
-                    it.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
-                    ).currentCarUxRestrictions.isRequiresDistractionOptimization
-            } ?: false
+            (car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as? CarUxRestrictionsManager)
+                ?.currentCarUxRestrictions
+                ?.isRequiresDistractionOptimization
+                ?: false
         } catch (e: Exception) {
             Timber.e(e, "Error getting UX Restrictions")
             false
@@ -46,7 +45,7 @@ abstract class BaseVehicleScreen(carContext: CarContext) : Screen(carContext) {
             Timber.i("Register for Automotive Restrictions")
             car = Car.createCar(carContext)
             carRestrictionManager =
-                car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as CarUxRestrictionsManager
+                car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as? CarUxRestrictionsManager
             val listener =
                 CarUxRestrictionsManager.OnUxRestrictionsChangedListener { restrictions ->
                     onDrivingOptimizedChanged(restrictions.isRequiresDistractionOptimization)

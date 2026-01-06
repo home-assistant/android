@@ -21,15 +21,12 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.USE_NEW_LAUNCHER
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.launch.LaunchActivity
-import io.homeassistant.companion.android.launch.startLauncherOnboarding
-import io.homeassistant.companion.android.launch.startLauncherWithNavigateTo
+import io.homeassistant.companion.android.launch.startLaunchOnboarding
+import io.homeassistant.companion.android.launch.startLaunchWithNavigateTo
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
@@ -70,15 +67,11 @@ class LinkActivity : BaseActivity() {
                 when (val destination = linkHandler.handleLink(dataUri)) {
                     LinkDestination.NoDestination -> finish()
                     is LinkDestination.Onboarding -> {
-                        if (USE_NEW_LAUNCHER) {
-                            startLauncherOnboarding(
-                                destination.serverUrl,
-                                hideExistingServers = false,
-                                skipWelcome = false,
-                            )
-                        } else {
-                            startActivity(LaunchActivity.newInstance(this@LinkActivity, destination.serverUrl))
-                        }
+                        startLaunchOnboarding(
+                            destination.serverUrl,
+                            hideExistingServers = false,
+                            skipWelcome = false,
+                        )
                         finish()
                     }
 
@@ -99,33 +92,14 @@ class LinkActivity : BaseActivity() {
             ServerManager.SERVER_ID_ACTIVE
         }
 
-        if (USE_NEW_LAUNCHER) {
-            startLauncherWithNavigateTo(path, effectiveServerId)
-        } else {
-            val intent = if (serverId != null) {
-                WebViewActivity.newInstance(context = this, path = path, serverId = effectiveServerId)
-            } else {
-                WebViewActivity.newInstance(context = this, path = path)
-            }
-            startActivity(intent)
-        }
+        startLaunchWithNavigateTo(path, effectiveServerId)
         finish()
     }
 
     private fun openServerChooser(path: String) {
         supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
             if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
-                if (USE_NEW_LAUNCHER) {
-                    startLauncherWithNavigateTo(path, bundle.getInt(ServerChooserFragment.RESULT_SERVER))
-                } else {
-                    startActivity(
-                        WebViewActivity.newInstance(
-                            context = this,
-                            path = path,
-                            serverId = bundle.getInt(ServerChooserFragment.RESULT_SERVER),
-                        ),
-                    )
-                }
+                startLaunchWithNavigateTo(path, bundle.getInt(ServerChooserFragment.RESULT_SERVER))
                 finish()
             }
             supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)

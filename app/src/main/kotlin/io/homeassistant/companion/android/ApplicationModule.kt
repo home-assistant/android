@@ -10,6 +10,8 @@ import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.data.integration.PushWebsocketSupport
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.AppVersionProvider
+import io.homeassistant.companion.android.common.util.isAutomotive
+import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.di.qualifiers.LocationTrackingSupport
 import javax.inject.Singleton
 import kotlin.time.Clock
@@ -48,5 +50,12 @@ object ApplicationModule {
     @LocationTrackingSupport
     fun providesLocationTrackingSupport(): Boolean {
         return BuildConfig.FLAVOR == "full"
+    }
+
+    @Provides
+    @Singleton
+    @IsAutomotive
+    fun providesIsAutomotive(@ApplicationContext context: Context): Boolean {
+        return context.isAutomotive()
     }
 }

@@ -31,12 +31,13 @@ class WearOnboardingListener : WearableListenerService() {
     private fun sendHomeAssistantInstance(nodeId: String) = runBlocking {
         Timber.d("sendHomeAssistantInstance: $nodeId")
         // Retrieve current instance
-        val url = serverManager.getServer()?.connection?.getUrl(false)
+        val server = serverManager.getServer()
+        val url = server?.let { serverManager.connectionStateProvider(it.id).getExternalUrl() }
 
         if (url != null) {
             // Put as DataMap in data layer
             val putDataReq: PutDataRequest = PutDataMapRequest.create("/home_assistant_instance").run {
-                dataMap.putString("name", url.host.toString())
+                dataMap.putString("name", url.host.orEmpty())
                 dataMap.putString("url", url.toString())
                 setUrgent()
                 asPutDataRequest()
