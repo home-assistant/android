@@ -371,7 +371,7 @@ internal class WebSocketCoreImpl(
     private suspend fun attemptWebSocketConnection(url: URL): ConnectionAttemptResult {
         var webSocket: WebSocket? = null
         try {
-            Timber.d("connect() creating WebSocket connection")
+            Timber.d("Creating WebSocket connection")
             webSocket = okHttpClient.newWebSocket(
                 Request.Builder().url(url.toWebSocketURL())
                     .header(USER_AGENT, USER_AGENT_STRING)
@@ -390,7 +390,7 @@ internal class WebSocketCoreImpl(
             )
             if (!result) {
                 Timber.e("Unable to send auth message")
-                webSocket.cancel()
+                webSocket.cancel() // Won't do anything in handleClosingSocket since holder is null
                 return ConnectionAttemptResult.Failed(socketCreated = true)
             }
             return ConnectionAttemptResult.Success(webSocket)
@@ -433,7 +433,6 @@ internal class WebSocketCoreImpl(
                     ),
                 )
 
-                // Send supported features if server supports it
                 if (haVersion?.isAtLeast(2022, 9) == true) {
                     sendSupportedFeatures(webSocket)
                 }
@@ -490,16 +489,12 @@ internal class WebSocketCoreImpl(
         urlObserverJob: Job,
         setPendingWebSocket: (WebSocket?) -> Unit,
     ) {
-        // Not completed means this is a new connection OR the URL changed before
-        // the connection was fully established.
-        connectionHolder.set(null)
-
         // Clean up any partial connection before using this URL.
+        connectionHolder.set(null)
         pendingWebSocket?.cancel()
         setPendingWebSocket(null)
         authCompleted = CompletableDeferred()
 
-        // Handle null URL case first
         if (url == null) {
             Timber.w("No URL available to open WebSocket connection")
             connectionState = WebSocketState.ClosedOther
@@ -508,7 +503,6 @@ internal class WebSocketCoreImpl(
             return
         }
 
-        // url is now smart-cast to non-null
         when (val attemptResult = attemptWebSocketConnection(url)) {
             is ConnectionAttemptResult.Failed -> {
                 connectDeferred.complete(false)
