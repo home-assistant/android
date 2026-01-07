@@ -64,8 +64,8 @@ class NextAlarmManager : SensorManager {
         var utc = STATE_UNAVAILABLE
         var pendingIntent = ""
 
-        val dao = sensorDao(context)
-        val sensorSetting = dao.getSettings(nextAlarm.id)
+        val sensorDao = sensorDao(context)
+        val sensorSetting = sensorDao.getSettings(nextAlarm.id)
         val allowPackageList = sensorSetting.firstOrNull { it.name == SETTING_ALLOW_LIST }?.value ?: ""
 
         try {
@@ -85,7 +85,7 @@ class NextAlarmManager : SensorManager {
                         return
                     }
                 } else {
-                    dao.add(
+                    sensorDao.add(
                         SensorSetting(nextAlarm.id, SETTING_ALLOW_LIST, allowPackageList, SensorSettingType.LIST_APPS),
                     )
                 }

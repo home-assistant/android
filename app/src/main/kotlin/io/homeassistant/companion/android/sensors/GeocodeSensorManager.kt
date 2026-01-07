@@ -99,12 +99,12 @@ class GeocodeSensorManager : SensorManager {
         }
 
         var address: Address? = null
-        val dao = sensorDao(context)
-        val sensorSettings = dao.getSettings(geocodedLocation.id)
+        val sensorDao = sensorDao(context)
+        val sensorSettings = sensorDao.getSettings(geocodedLocation.id)
         val minAccuracy = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
             ?: DEFAULT_MINIMUM_ACCURACY
-        dao.add(
+        sensorDao.add(
             SensorSetting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER),
         )
 

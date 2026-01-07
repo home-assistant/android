@@ -59,12 +59,12 @@ class LastUpdateManager : SensorManager {
             mapOf(),
         )
 
-        val dao = sensorDao(context)
-        val (settingsToRemove, allSettings) = dao.getSettings(lastUpdate.id).partition { setting ->
+        val sensorDao = sensorDao(context)
+        val (settingsToRemove, allSettings) = sensorDao.getSettings(lastUpdate.id).partition { setting ->
             setting.value.isEmpty()
         }
         if (settingsToRemove.isNotEmpty()) {
-            dao.removeSettings(lastUpdate.id, settingsToRemove.map { it.name })
+            sensorDao.removeSettings(lastUpdate.id, settingsToRemove.map { it.name })
         }
         val intentSettings = allSettings.filter {
             it.name.startsWith(INTENT_SETTING_PREFIX)
@@ -81,24 +81,24 @@ class LastUpdateManager : SensorManager {
                 it.copy(name = "$INTENT_SETTING_PREFIX${index + 1}:")
             }
             // delete old settings from DB:
-            dao.removeSettings(lastUpdate.id, intentSettings.map { it.name })
+            sensorDao.removeSettings(lastUpdate.id, intentSettings.map { it.name })
             // add new settings to DB:
             newIntentSettings.forEach {
-                dao.add(it)
+                sensorDao.add(it)
             }
         }
         val addNewIntentToggle = allSettings.firstOrNull { it.name == SETTING_ADD_NEW_INTENT }
         if (addNewIntentToggle == null) {
             // add the toggle if it was not already added.
-            dao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
+            sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
         } else if (addNewIntentToggle.value == "true") {
             val newIntentSettingOrdinal = intentSettings.size + 1
             val newIntentSettingName = "$INTENT_SETTING_PREFIX$newIntentSettingOrdinal:"
             if (allSettings.none { it.name == newIntentSettingName }) {
                 // turn off the toggle:
-                dao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
+                sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
                 // add the new Intent:
-                dao.add(
+                sensorDao.add(
                     SensorSetting(lastUpdate.id, newIntentSettingName, intentAction, SensorSettingType.STRING),
                 )
             }

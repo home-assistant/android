@@ -279,10 +279,10 @@ class HealthServicesSensorManager : SensorManager {
             }
 
             override fun onPermissionLost() {
+                val sensorDao = sensorDao(latestContext)
                 runBlocking {
-                    val dao = sensorDao(latestContext)
                     serverManager(latestContext).defaultServers.forEach {
-                        dao.setSensorsEnabled(listOf(userActivityState.id), it.id, false)
+                        sensorDao.setSensorsEnabled(listOf(userActivityState.id), it.id, false)
                     }
                 }
             }

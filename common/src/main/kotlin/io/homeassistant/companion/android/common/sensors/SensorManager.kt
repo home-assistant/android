@@ -225,13 +225,13 @@ interface SensorManager {
         enabled: Boolean = true,
         entries: List<String> = arrayListOf(),
     ): String {
-        val dao = sensorDao(context)
-        val setting = dao
+        val sensorDao = sensorDao(context)
+        val setting = sensorDao
             .getSettings(sensor.id)
             .firstOrNull { it.name == settingName }
             ?.value
         if (setting == null) {
-            dao.add(SensorSetting(sensor.id, settingName, default, settingType, enabled, entries = entries))
+            sensorDao.add(SensorSetting(sensor.id, settingName, default, settingType, enabled, entries = entries))
         }
 
         return setting ?: default
@@ -245,8 +245,8 @@ interface SensorManager {
         attributes: Map<String, Any?>,
         forceUpdate: Boolean = false,
     ) = withContext(Dispatchers.Default) {
-        val dao = sensorDao(context)
-        val sensors = dao.get(basicSensor.id)
+        val sensorDao = sensorDao(context)
+        val sensors = sensorDao.get(basicSensor.id)
         if (sensors.isEmpty()) return@withContext
 
         sensors.forEach {
@@ -269,9 +269,9 @@ interface SensorManager {
                 lastSentState = if (forceUpdate) null else it.lastSentState,
                 lastSentIcon = if (forceUpdate) null else it.lastSentIcon,
             )
-            dao.update(sensor)
+            sensorDao.update(sensor)
         }
-        dao.replaceAllAttributes(
+        sensorDao.replaceAllAttributes(
             basicSensor.id,
             attributes = attributes.map { item ->
                 val valueType = when (item.value) {
