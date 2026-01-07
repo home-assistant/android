@@ -151,7 +151,9 @@ class WebSocketCoreImplTest {
                 },
             )
         } answers {
-            assertEquals(WebSocketState.AUTHENTICATING, webSocketCore.getConnectionState())
+            // Trigger onOpen to set state to Authenticating (in real OkHttp this happens async)
+            webSocketListener.onOpen(mockConnection, mockk(relaxed = true))
+            assertEquals(WebSocketState.Authenticating, webSocketCore.getConnectionState())
             webSocketListener.onMessage(
                 mockConnection,
                 """{"type":"${if (successfulAuth) "auth_ok" else "auth_invalid"}","ha_version":"$haVersion"}""",
@@ -174,13 +176,19 @@ class WebSocketCoreImplTest {
         webSocketListener.onClosed(mockConnection, 1000, "test")
     }
 
+    private fun mockCancelTriggersOnFailure() {
+        every { mockConnection.cancel() } answers {
+            webSocketListener.onFailure(mockConnection, IOException("Canceled"), null)
+        }
+    }
+
     /*
 connect()
      */
 
     @ParameterizedTest
     @ValueSource(strings = ["", "htt://io.ha", "ws://io.ha", "wss://io.ha"])
-    fun `Given invalid url When connect is invoked Then it returns false and connection state is null`(
+    fun `Given invalid url When connect is invoked Then it returns false and connection state is ClosedOther`(
         url: String,
     ) = runTest {
         setupServer(url)
@@ -188,11 +196,11 @@ connect()
         val result = webSocketCore.connect()
 
         assertFalse(result)
-        assertNull(webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.ClosedOther, webSocketCore.getConnectionState())
     }
 
     @Test
-    fun `Given no URL When connect is invoked Then it returns false and connection state is null`() = runTest {
+    fun `Given no URL When connect is invoked Then it returns false and connection state is ClosedOther`() = runTest {
         val serverManager = mockk<ServerManager>(relaxed = true)
         val mockConnectionStateProvider = mockk<ServerConnectionStateProvider>(relaxed = true)
         coEvery { serverManager.connectionStateProvider(1) } returns mockConnectionStateProvider
@@ -207,11 +215,11 @@ connect()
         val result = webSocketCore.connect()
 
         assertFalse(result)
-        assertNull(webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.ClosedOther, webSocketCore.getConnectionState())
     }
 
     @Test
-    fun `Given InsecureState When connect is invoked Then it returns false and connection state is null`() = runTest {
+    fun `Given InsecureState When connect is invoked Then it returns false and connection state is ClosedOther`() = runTest {
         val serverManager = mockk<ServerManager>(relaxed = true)
         val mockConnectionStateProvider = mockk<ServerConnectionStateProvider>(relaxed = true)
         coEvery { serverManager.connectionStateProvider(1) } returns mockConnectionStateProvider
@@ -226,22 +234,24 @@ connect()
         val result = webSocketCore.connect()
 
         assertFalse(result)
-        assertNull(webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.ClosedOther, webSocketCore.getConnectionState())
     }
 
     @Test
-    fun `Given failure to send auth message after socket creation When connect is invoked Then it returns false and connection state is null`() = runTest {
+    fun `Given failure to send auth message after socket creation When connect is invoked Then it returns false and connection state is ClosedOther`() = runTest {
         setupServer()
         every { mockConnection.send(any<String>()) } returns false
+        // When cancel is called after send fails, trigger onFailure to clean up state
+        mockCancelTriggersOnFailure()
 
         val result = webSocketCore.connect()
 
         assertFalse(result)
-        assertNull(webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.ClosedOther, webSocketCore.getConnectionState())
     }
 
     @Test
-    fun `Given failure at socket creation When connect is invoked Then it returns false and connection state is null`() = runTest {
+    fun `Given failure at socket creation When connect is invoked Then it returns false and connection state is ClosedOther`() = runTest {
         setupServer()
         // Simulate a failure while creating the socket
         every { mockOkHttpClient.newWebSocket(any(), any()) } throws IllegalStateException()
@@ -249,12 +259,12 @@ connect()
         val result = webSocketCore.connect()
 
         assertFalse(result)
-        assertNull(webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.ClosedOther, webSocketCore.getConnectionState())
     }
 
     @ParameterizedTest
     @ValueSource(strings = ["http://io.ha", "https://io.ha", "http://192.168.0.42:8123", "https://192.168.0.42:8123"])
-    fun `Given valid url When connect is invoked Then it returns true and connection state is ACTIVE`(
+    fun `Given valid url When connect is invoked Then it returns true and connection state is Active`(
         url: String,
     ) = runTest {
         setupServer(url)
@@ -262,7 +272,7 @@ connect()
 
         val result = webSocketCore.connect()
         assertTrue(result)
-        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
     }
 
     @Test
@@ -273,11 +283,11 @@ connect()
         val result = webSocketCore.connect()
 
         assertFalse(result)
-        assertEquals(WebSocketState.CLOSED_AUTH, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.ClosedAuth, webSocketCore.getConnectionState())
     }
 
     @Test
-    fun `Given a valid configuration for 2023 1 1 server When connect is invoked Then it returns true, sends the supported_features message, and connection state is ACTIVE`() = runTest {
+    fun `Given a valid configuration for 2023 1 1 server When connect is invoked Then it returns true, sends the supported_features message, and connection state is Active`() = runTest {
         setupServer()
         prepareAuthenticationAnswer("2023.1.1")
 
@@ -301,11 +311,11 @@ connect()
         }
         // auth and supported_features
         coVerify(exactly = 2) { mockConnection.send(any<String>()) }
-        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
     }
 
     @Test
-    fun `Given a valid configuration for 2020 1 1 server When connect is invoked Then it returns true and connection state is ACTIVE`() = runTest {
+    fun `Given a valid configuration for 2020 1 1 server When connect is invoked Then it returns true and connection state is Active`() = runTest {
         setupServer()
         prepareAuthenticationAnswer("2020.1.1")
 
@@ -314,71 +324,79 @@ connect()
         assertTrue(result)
         // auth
         coVerify(exactly = 1) { mockConnection.send(any<String>()) }
-        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
     }
 
     @Test
-    fun `Given an active connection When URL changes to a different URL Then it cancels the connection`() = runTest {
+    fun `Given an Active connection When URL changes to a different URL Then it cancels the connection`() = runTest {
         val urlStateFlow = MutableStateFlow<UrlState>(UrlState.HasUrl("https://io.ha".toHttpUrlOrNull()?.toUrl()))
         setupServer(urlFlow = urlStateFlow, backgroundScope = backgroundScope)
         prepareAuthenticationAnswer()
-
-        // Simulate WebSocket behavior: cancel() triggers onFailure callback
-        every { mockConnection.cancel() } answers {
-            webSocketListener.onFailure(mockConnection, IOException("Canceled"), null)
-        }
+        mockCancelTriggersOnFailure()
 
         assertTrue(webSocketCore.connect())
-        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
 
         urlStateFlow.value = UrlState.HasUrl("https://new.io.ha".toHttpUrlOrNull()?.toUrl())
         advanceUntilIdle()
 
         verify { mockConnection.cancel() }
-        assertEquals(WebSocketState.CLOSED_URL_CHANGE, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.ClosedUrlChange, webSocketCore.getConnectionState())
     }
 
     @Test
-    fun `Given an active connection When state changes to InsecureState Then it cancels the connection`() = runTest {
+    fun `Given an Active connection When state changes to InsecureState Then it cancels without attempt to create a new socket`() = runTest {
         val urlStateFlow = MutableStateFlow<UrlState>(UrlState.HasUrl("https://io.ha".toHttpUrlOrNull()?.toUrl()))
         setupServer(urlFlow = urlStateFlow, backgroundScope = backgroundScope)
         prepareAuthenticationAnswer()
-
-        // Simulate WebSocket behavior: cancel() triggers onFailure callback
-        every { mockConnection.cancel() } answers {
-            webSocketListener.onFailure(mockConnection, IOException("Canceled"), null)
-        }
+        mockCancelTriggersOnFailure()
 
         assertTrue(webSocketCore.connect())
-        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
+
+        var reconnectAttempts = false
+        every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
+            reconnectAttempts = true
+            mockConnection
+        }
 
         urlStateFlow.value = UrlState.InsecureState
         advanceUntilIdle()
 
         verify { mockConnection.cancel() }
-        assertEquals(WebSocketState.CLOSED_URL_CHANGE, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.ClosedUrlChange, webSocketCore.getConnectionState())
+        assertFalse(reconnectAttempts)
     }
 
     @Test
-    fun `Given an active connection When URL emits the same value Then it does not cancel the connection`() = runTest {
+    fun `Given an Active connection When URL emits the same value Then it does not cancel the connection`() = runTest {
         val initialUrl = "https://io.ha".toHttpUrlOrNull()?.toUrl()
         val urlStateFlow = MutableStateFlow<UrlState>(UrlState.HasUrl(initialUrl))
         setupServer(urlFlow = urlStateFlow, backgroundScope = backgroundScope)
         prepareAuthenticationAnswer()
 
         assertTrue(webSocketCore.connect())
-        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
 
         // Emit the same URL again
         urlStateFlow.value = UrlState.HasUrl(initialUrl)
         advanceUntilIdle()
 
         verify(exactly = 0) { mockConnection.cancel() }
-        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
 
         // Clean up by closing the connection to stop the URL observer
         closeConnection()
         advanceUntilIdle()
+    }
+
+    @Test
+    fun `Given URL flow completes without emitting before connection established When connect is invoked Then it returns false`() = runTest {
+        setupServer(urlFlow = emptyFlow())
+
+        val result = webSocketCore.connect()
+
+        assertFalse(result)
     }
 
     /*
@@ -386,7 +404,7 @@ sendMessage()
      */
 
     @Test
-    fun `Given an active connection that responds to a request When sendMessage is invoked Then it returns a socketResponse and removes the active message`() = runTest {
+    fun `Given an Active connection that responds to a request When sendMessage is invoked Then it returns a socketResponse and removes the Active message`() = runTest {
         setupServer()
         prepareAuthenticationAnswer()
         assertTrue(webSocketCore.connect())
@@ -405,7 +423,7 @@ sendMessage()
     }
 
     @Test
-    fun `Given an active connection that does not respond within timeout When sendMessage is invoked Then it returns null`() = runTest {
+    fun `Given an Active connection that does not respond within timeout When sendMessage is invoked Then it returns null`() = runTest {
         setupServer()
         prepareAuthenticationAnswer()
         assertTrue(webSocketCore.connect())
@@ -424,19 +442,19 @@ sendMessage()
         setupServer()
         prepareAuthenticationAnswer()
 
-        assertNull(webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.Initial, webSocketCore.getConnectionState())
 
         webSocketCore.sendMessage(mapOf("type" to "test"))
 
-        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
     }
 
     @Test
-    fun `Given an invalid url  When sendMessage is invoked Then it returns null and connection state remains null`() = runTest {
+    fun `Given an invalid url  When sendMessage is invoked Then it returns null and connection state is ClosedOther`() = runTest {
         setupServer("an invalid url ")
 
         assertNull(webSocketCore.sendMessage(mapOf("type" to "test")))
-        assertNull(webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.ClosedOther, webSocketCore.getConnectionState())
     }
 
     @Test
@@ -454,7 +472,7 @@ sendMessage()
     }
 
     @Test
-    fun `Given an active connection waiting for response When sendMessage coroutine is cancelled Then message is removed from activeMessages`() = runTest {
+    fun `Given an Active connection waiting for response When sendMessage coroutine is cancelled Then message is removed from activeMessages`() = runTest {
         setupServer()
         prepareAuthenticationAnswer()
         assertTrue(webSocketCore.connect())
@@ -495,11 +513,11 @@ sendMessage()
         closeConnection()
         advanceUntilIdle()
 
-        assertEquals(WebSocketState.CLOSED_OTHER, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.ClosedOther, webSocketCore.getConnectionState())
         assertTrue(webSocketCore.activeMessages.isEmpty())
 
         assertTrue(webSocketCore.connect())
-        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
 
         val request = slot<String>()
         every { mockConnection.send(capture(request)) } answers { true }
@@ -517,7 +535,7 @@ sendBytes()
      */
 
     @Test
-    fun `Given an active connection When sendBytes is invoked Then it returns the connection send result`() = runTest {
+    fun `Given an Active connection When sendBytes is invoked Then it returns the connection send result`() = runTest {
         setupServer()
         prepareAuthenticationAnswer()
         assertTrue(webSocketCore.connect())
@@ -537,19 +555,19 @@ sendBytes()
         setupServer()
         prepareAuthenticationAnswer()
 
-        assertNull(webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.Initial, webSocketCore.getConnectionState())
 
         webSocketCore.sendBytes(byteArrayOf(1, 2, 3))
 
-        assertEquals(WebSocketState.ACTIVE, webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
     }
 
     @Test
-    fun `Given an invalid url When sendBytes is invoked Then it returns false`() = runTest {
+    fun `Given an invalid url When sendBytes is invoked Then it returns false and connection state is ClosedOther`() = runTest {
         setupServer("an invalid url ")
 
         assertFalse(webSocketCore.sendBytes(byteArrayOf(1, 2, 3)))
-        assertNull(webSocketCore.getConnectionState())
+        assertEquals(WebSocketState.ClosedOther, webSocketCore.getConnectionState())
     }
 
     /*
@@ -573,7 +591,7 @@ subscribeTo
     }
 
     @Test
-    fun `Given a connection When subscribeTo is invoked and the message is sent properly without any subscriber Then it returns a flow and keeps one active message subscriber`() = runTest {
+    fun `Given a connection When subscribeTo is invoked and the message is sent properly without any subscriber Then it returns a flow and keeps one Active message subscriber`() = runTest {
         setupServer()
         prepareAuthenticationAnswer()
         assertTrue(webSocketCore.connect())
@@ -601,7 +619,7 @@ subscribeTo
     }
 
     @Test
-    fun `Given a connection When subscribeTo is invoked with a subscriber Then it keeps one active subscriber until unsubscribed, sends unsubscribe message, and closes the connection`() = runTest {
+    fun `Given a connection When subscribeTo is invoked with a subscriber Then it keeps one Active subscriber until unsubscribed, sends unsubscribe message, and closes the connection`() = runTest {
         // We need a dedicated scope with unconfined dispatcher that we can control to properly close the shared flow
         val subscriptionScope = TestScope(UnconfinedTestDispatcher())
         setupServer(backgroundScope = subscriptionScope)
@@ -642,7 +660,53 @@ subscribeTo
     }
 
     @Test
-    fun `Given a connection with an active message When subscribeTo is invoked and unsubscribed Then it doesn't close the connection`() = runTest {
+    fun `Given an Active subscription When unsubscribing Then subscription remains in activeMessages until unsubscribe is acknowledged`() = runTest {
+        val subscriptionScope = TestScope(UnconfinedTestDispatcher())
+        setupServer(backgroundScope = subscriptionScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        // Message sent by subscribeTo to request for events
+        mockResultSuccessForId(2)
+
+        // Track whether subscription was in activeMessages when unsubscribe was sent
+        var subscriptionExistedDuringUnsubscribe = false
+
+        // Mock unsubscribe message - verify subscription still exists when sending
+        every {
+            mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""id":3""") })
+        } answers {
+            // At this point, the subscription should still be in activeMessages
+            subscriptionExistedDuringUnsubscribe = webSocketCore.activeMessages.containsKey(2L)
+            webSocketListener.onMessage(
+                mockConnection,
+                """{"id":3,"type":"result","success":true,"result":null}""",
+            )
+            true
+        }
+
+        checkNotNull(
+            webSocketCore.subscribeTo<String>("testType", mapOf("test" to "data")),
+        ).test {
+            // Subscription is Active
+            assertEquals(1, webSocketCore.activeMessages.size)
+            assertTrue(webSocketCore.activeMessages.containsKey(2L))
+
+            cancel()
+            subscriptionScope.advanceUntilIdle()
+        }
+
+        advanceUntilIdle()
+
+        // Verify the subscription was still in activeMessages when unsubscribe message was sent
+        assertTrue(subscriptionExistedDuringUnsubscribe, "Subscription should exist in activeMessages when unsubscribe is sent")
+
+        // After unsubscribe completes, activeMessages should be empty
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+    }
+
+    @Test
+    fun `Given a connection with an Active message When subscribeTo is invoked and unsubscribed Then it doesn't close the connection`() = runTest {
         // We need a dedicated scope with unconfined dispatcher that we can control to properly close the shared flow
         val subscriptionScope = TestScope(UnconfinedTestDispatcher())
         setupServer(backgroundScope = subscriptionScope)
@@ -763,7 +827,7 @@ subscribeTo
     }
 
     @Test
-    fun `Given an active subscription When disconnection occurs Then it re-sends a request to get events`() = runTest {
+    fun `Given an Active subscription When disconnection occurs Then it re-sends a request to get events`() = runTest {
         // The re-subscription happens in the background scope so we need to be able to control it
         val subscriptionScope = TestScope(UnconfinedTestDispatcher())
         setupServer(backgroundScope = subscriptionScope)
@@ -821,14 +885,9 @@ misc
      */
 
     @Test
-    fun `Given an unknown event received When listening for messages Then it unsubscribes from the event or crash in Debug`() = runTest {
+    fun `Given an unknown event received When listening for messages Then it unsubscribes from the event`() = runTest {
         // The unsubscribes message is sent from the background so we need to control it
         val customScope = TestScope(UnconfinedTestDispatcher())
-        var errorMessageCaptured: String? = null
-
-        FailFast.setHandler { error, _ ->
-            errorMessageCaptured = error.message
-        }
 
         setupServer(backgroundScope = customScope)
         prepareAuthenticationAnswer()
@@ -840,8 +899,9 @@ misc
         webSocketListener.onMessage(mockConnection, """{"id":42, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bed_light"}}}""")
         customScope.advanceUntilIdle()
         advanceUntilIdle()
+
+        // Should gracefully unsubscribe rather than crash
         coVerify { mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""id":2""") }) }
-        assertEquals("Event should always be associated to a ActiveMessage.Subscription message", errorMessageCaptured)
     }
 
     /*
@@ -849,16 +909,12 @@ misc
      */
 
     @Test
-    fun `Given an active subscription When URL changes Then it reconnects immediately without delay`() = runTest {
+    fun `Given an Active subscription When URL changes Then it reconnects immediately without delay`() = runTest {
         val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl("https://io.ha".toHttpUrlOrNull()?.toUrl()))
         setupServer(urlFlow = urlFlow, backgroundScope = backgroundScope)
         prepareAuthenticationAnswer()
         assertTrue(webSocketCore.connect())
-
-        // Simulate WebSocket behavior: cancel() triggers onFailure callback
-        every { mockConnection.cancel() } answers {
-            webSocketListener.onFailure(mockConnection, IOException("Canceled"), null)
-        }
+        mockCancelTriggersOnFailure()
 
         // Create a subscription so reconnection is triggered
         mockResultSuccessForId(2)
@@ -894,7 +950,7 @@ misc
     }
 
     @Test
-    fun `Given an active subscription When disconnection occurs Then it waits before reconnecting`() = runTest {
+    fun `Given an Active subscription When disconnection occurs Then it waits before reconnecting`() = runTest {
         setupServer(backgroundScope = backgroundScope)
         prepareAuthenticationAnswer()
         assertTrue(webSocketCore.connect())
@@ -939,7 +995,7 @@ misc
      */
 
     @Test
-    fun `Given an active connection When multiple sendMessage calls are made concurrently Then messages are serialized in order`() = runTest {
+    fun `Given an Active connection When multiple sendMessage calls are made concurrently Then messages are serialized in order`() = runTest {
         setupServer()
         prepareAuthenticationAnswer()
         assertTrue(webSocketCore.connect())
@@ -992,7 +1048,7 @@ misc
     }
 
     @Test
-    fun `Given no connection When multiple connect calls are made concurrently Then only one connection is created`() = runTest {
+    fun `Given no connection When multiple connect calls are made Then only one connection is created`() = runTest {
         setupServer()
         prepareAuthenticationAnswer()
 
@@ -1179,5 +1235,247 @@ misc
 
         // still empty
         assertTrue(webSocketCore.activeMessages.isEmpty())
+    }
+
+    @Test
+    fun `Given URL changes to null while authenticating When connect in progress Then it fails connection`() = runTest {
+        val url1 = "https://first.url".toHttpUrlOrNull()?.toUrl()
+        val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl(url1))
+        setupServer(urlFlow = urlFlow, backgroundScope = backgroundScope)
+
+        // Auth message sent but don't respond - URL changes to null during auth
+        every { mockConnection.send(match<String> { it.contains(""""type":"auth"""") }) } answers {
+            urlFlow.value = UrlState.HasUrl(null)
+            runCurrent()
+            true
+        }
+        mockCancelTriggersOnFailure()
+
+        val result = webSocketCore.connect()
+
+        assertFalse(result, "Should fail when URL becomes null during auth")
+        assertEquals(WebSocketState.ClosedOther, webSocketCore.getConnectionState())
+    }
+
+    @Test
+    fun `Given InsecureState while authenticating When connect in progress Then it fails connection`() = runTest {
+        val url1 = "https://first.url".toHttpUrlOrNull()?.toUrl()
+        val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl(url1))
+        setupServer(urlFlow = urlFlow, backgroundScope = backgroundScope)
+
+        // Auth message sent but don't respond - state changes to InsecureState during auth
+        every { mockConnection.send(match<String> { it.contains(""""type":"auth"""") }) } answers {
+            urlFlow.value = UrlState.InsecureState
+            runCurrent()
+            true
+        }
+        mockCancelTriggersOnFailure()
+
+        val result = webSocketCore.connect()
+
+        assertFalse(result, "Should fail when state becomes InsecureState during auth")
+        assertEquals(WebSocketState.ClosedOther, webSocketCore.getConnectionState())
+    }
+
+    @Test
+    fun `Given network failure after auth sent When onFailure called Then connect fails gracefully`() = runTest {
+        setupServer()
+
+        // Auth message sent successfully
+        every { mockConnection.send(match<String> { it.contains(""""type":"auth"""") }) } returns true
+
+        // Start connecting
+        val connectJob = async { webSocketCore.connect() }
+        advanceUntilIdle()
+
+        // Network fails after auth was sent (async, as in real OkHttp)
+        webSocketListener.onFailure(mockConnection, IOException("Network error"), null)
+        advanceUntilIdle()
+
+        assertFalse(connectJob.await())
+        assertEquals(WebSocketState.ClosedOther, webSocketCore.getConnectionState())
+    }
+
+    @Test
+    fun `Given auth timeout When 30 seconds pass without auth response Then connect fails`() = runTest {
+        setupServer()
+
+        // Auth message sent but never responds
+        every { mockConnection.send(match<String> { it.contains(""""type":"auth"""") }) } returns true
+        mockCancelTriggersOnFailure()
+
+        val result = webSocketCore.connect()
+
+        assertFalse(result, "Should fail after auth timeout")
+        verify { mockConnection.cancel() }
+    }
+
+    @Test
+    fun `Given auth fails When reconnecting with valid auth Then it connects`() = runTest {
+        setupServer()
+        mockCancelTriggersOnFailure()
+
+        // First connect: auth fails
+        prepareAuthenticationAnswer(successfulAuth = false)
+
+        val firstResult = webSocketCore.connect()
+        assertFalse(firstResult)
+        assertEquals(WebSocketState.ClosedAuth, webSocketCore.getConnectionState())
+
+        // Wait for cleanup coroutine to clear the connection state
+        advanceUntilIdle()
+
+        // Second connect should be able to try again
+        prepareAuthenticationAnswer(successfulAuth = true)
+
+        val secondResult = webSocketCore.connect()
+        assertTrue(secondResult)
+        assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
+
+        closeConnection()
+    }
+
+    @Test
+    fun `Given sendMessage called while authenticating When auth not complete Then it waits for auth and sends`() = runTest {
+        setupServer()
+
+        // Auth message sent but delayed response - trigger onOpen to transition to Authenticating
+        every { mockConnection.send(match<String> { it.contains(""""type":"auth"""") }) } answers {
+            // Trigger onOpen to transition state to Authenticating
+            webSocketListener.onOpen(mockConnection, mockk(relaxed = true))
+            // Don't complete auth immediately - will be completed later
+            true
+        }
+
+        // Start connect but don't complete auth
+        val connectJob = async { webSocketCore.connect() }
+        runCurrent()
+
+        assertEquals(WebSocketState.Authenticating, webSocketCore.getConnectionState())
+
+        // Try to send a message while authenticating - this should wait
+        val sendJob = async {
+            webSocketCore.sendMessage(mapOf("type" to "test"))
+        }
+        runCurrent()
+
+        // Neither should be complete yet
+        assertFalse(connectJob.isCompleted, "Connect should still be waiting for auth")
+        assertFalse(sendJob.isCompleted, "Send should wait for connection")
+
+        // Now complete auth
+        mockResultSuccessForId(2)
+        webSocketListener.onMessage(
+            mockConnection,
+            """{"type":"auth_ok","ha_version":"2025.4.1"}""",
+        )
+        advanceUntilIdle()
+
+        // Both should complete now
+        assertTrue(connectJob.await())
+        assertNotNull(sendJob.await())
+    }
+
+    @Test
+    fun `Given Active subscription When connection is lost Then subscription is maintained for reconnection`() = runTest {
+        setupServer(backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        // Create subscription
+        mockResultSuccessForId(2)
+        val subscription = checkNotNull(
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ),
+        )
+
+        subscription.test {
+            // Verify subscription is active and tracked
+            assertEquals(1, webSocketCore.activeMessages.size)
+            assertTrue(
+                webSocketCore.activeMessages.any { it.value is ActiveMessage.Subscription },
+                "Subscription should be tracked in activeMessages",
+            )
+
+            // Receive an event to confirm subscription works
+            webSocketListener.onMessage(
+                mockConnection,
+                """{"id":2, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bed_light"}}}""",
+            )
+            assertEquals("light.bed_light", awaitItem().entityId)
+
+            // Simulate connection loss
+            closeConnection()
+
+            // Verify subscription is still maintained in activeMessages for reconnection
+            // (reconnection itself is tested in `Given an Active subscription When disconnection occurs Then it re-sends a request to get events`)
+            assertTrue(
+                webSocketCore.activeMessages.any { it.value is ActiveMessage.Subscription },
+                "Subscription should still be tracked after connection loss for reconnection",
+            )
+        }
+    }
+
+    @Test
+    fun `Given pending simple messages When connection closes during URL change Then they complete with exception`() = runTest {
+        val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl("https://io.ha".toHttpUrlOrNull()?.toUrl()))
+        setupServer(urlFlow = urlFlow, backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        // Don't respond to messages so they stay pending
+        every { mockConnection.send(match<String> { it.contains(""""type":"test"""") }) } returns true
+        mockCancelTriggersOnFailure()
+
+        // Start a message that won't get a response
+        val sendJob = async {
+            webSocketCore.sendMessage(mapOf("type" to "test"))
+        }
+        runCurrent()
+
+        // Message should be pending
+        assertEquals(1, webSocketCore.activeMessages.size)
+
+        // Change URL to trigger disconnect
+        urlFlow.value = UrlState.HasUrl("https://new.url".toHttpUrlOrNull()?.toUrl())
+        advanceUntilIdle()
+
+        // Message should complete with null (due to exception)
+        val result = sendJob.await()
+        assertNull(result, "Pending message should return null when connection closes")
+        assertTrue(webSocketCore.activeMessages.isEmpty(), "Active messages should be cleared")
+    }
+
+    @Test
+    fun `Given URL observer Active When shutdown called Then URL observer is cancelled`() = runTest {
+        val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl("https://io.ha".toHttpUrlOrNull()?.toUrl()))
+        setupServer(urlFlow = urlFlow, backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        // Make connection.close() trigger onClosed callback
+        every { mockConnection.close(any(), any()) } answers {
+            webSocketListener.onClosed(mockConnection, firstArg(), secondArg())
+            true
+        }
+
+        // Shutdown calls connection.close() which triggers handleClosingSocket and cancels URL observer
+        webSocketCore.shutdown()
+        advanceUntilIdle()
+
+        // URL changes after shutdown should not affect anything
+        var reconnectAttempts = false
+        every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
+            reconnectAttempts = true
+            mockConnection
+        }
+
+        urlFlow.value = UrlState.HasUrl("https://new.url".toHttpUrlOrNull()?.toUrl())
+        advanceUntilIdle()
+
+        // Should not trigger reconnection since observer was cancelled
+        assertFalse(reconnectAttempts, "URL observer should be cancelled after shutdown")
     }
 }

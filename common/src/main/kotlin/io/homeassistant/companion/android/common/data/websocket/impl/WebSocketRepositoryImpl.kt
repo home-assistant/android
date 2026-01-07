@@ -61,7 +61,7 @@ class WebSocketRepositoryImpl internal constructor(
 ) : WebSocketListener(),
     WebSocketRepository {
 
-    override fun getConnectionState(): WebSocketState? {
+    override fun getConnectionState(): WebSocketState {
         return webSocketCore.getConnectionState()
     }
 
