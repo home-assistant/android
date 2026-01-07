@@ -4,7 +4,9 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Co
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -14,6 +16,10 @@ import org.junit.jupiter.params.provider.CsvSource
 class EntityTest {
 
     private val baseDateTime = LocalDateTime.of(2024, 1, 1, 12, 0, 0)
+
+    private val newDateTime = LocalDateTime.of(2025, 1, 1, 12, 0, 0)
+
+    private val newDateTimeEpoch = newDateTime.toEpochSecond(ZoneOffset.UTC).toDouble()
 
     private fun createEntity(
         entityId: String = "light.living_room",
@@ -92,11 +98,14 @@ class EntityTest {
         fun `Given diff with lastChanged when applying then updates both timestamps`() {
             val entity = createEntity()
             val diff = CompressedStateDiff(
-                plus = CompressedEntityState(lastChanged = 1704110400.0),
+                plus = CompressedEntityState(lastChanged = newDateTimeEpoch),
             )
 
             val result = entity.applyCompressedStateDiff(diff)
 
+            // Verify timestamps actually changed from original
+            assertNotEquals(baseDateTime, result.lastChanged)
+            assertEquals(newDateTime, result.lastUpdated)
             assertEquals(result.lastChanged, result.lastUpdated)
         }
 
@@ -104,12 +113,13 @@ class EntityTest {
         fun `Given diff with only lastUpdated when applying then preserves lastChanged`() {
             val entity = createEntity()
             val diff = CompressedStateDiff(
-                plus = CompressedEntityState(lastUpdated = 1704110400.0),
+                plus = CompressedEntityState(lastUpdated = newDateTimeEpoch),
             )
 
             val result = entity.applyCompressedStateDiff(diff)
 
             assertEquals(baseDateTime, result.lastChanged)
+            assertEquals(newDateTime, result.lastUpdated)
         }
     }
 }
