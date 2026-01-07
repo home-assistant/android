@@ -1,19 +1,15 @@
 package io.homeassistant.companion.android.database
 
-import android.content.Context
 import androidx.room.AutoMigration
 import androidx.room.Database
-import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.location.LocationHistoryDao
 import io.homeassistant.companion.android.database.location.LocationHistoryItem
 import io.homeassistant.companion.android.database.migration.Migration27to28
 import io.homeassistant.companion.android.database.migration.Migration36to37
-import io.homeassistant.companion.android.database.migration.migrationPath
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.qs.TileDao
@@ -115,7 +111,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionConvert
     WidgetBackgroundTypeConverter::class,
     WidgetTapActionConverter::class,
 )
-abstract class AppDatabase : RoomDatabase() {
+internal abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
     abstract fun sensorDao(): SensorDao
     abstract fun buttonWidgetDao(): ButtonWidgetDao
@@ -134,29 +130,4 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun entityStateComplicationsDao(): EntityStateComplicationsDao
     abstract fun serverDao(): ServerDao
     abstract fun settingsDao(): SettingsDao
-
-    companion object {
-        private const val DATABASE_NAME = "HomeAssistantDB"
-        internal const val TAG = "AppDatabase"
-        private lateinit var appContext: Context
-        lateinit var integrationRepository: IntegrationRepository
-
-        @Volatile
-        private var instance: AppDatabase? = null
-
-        fun getInstance(context: Context): AppDatabase {
-            appContext = context
-            return instance ?: synchronized(this) {
-                instance ?: buildDatabase(context).also { instance = it }
-            }
-        }
-
-        private fun buildDatabase(context: Context): AppDatabase {
-            appContext = context
-            return Room
-                .databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
-                .addMigrations(*migrationPath(context))
-                .build()
-        }
-    }
 }

@@ -22,8 +22,8 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.CameraTile
+import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.util.UrlUtil
 import java.io.ByteArrayOutputStream
@@ -65,12 +65,13 @@ class CameraTile : TileService() {
     @Inject
     lateinit var okHttpClient: OkHttpClient
 
+    @Inject
+    lateinit var cameraTileDao: CameraTileDao
+
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
             val tileId = requestParams.tileId
-            val tileConfig = AppDatabase.getInstance(this@CameraTile)
-                .cameraTileDao()
-                .get(tileId)
+            val tileConfig = cameraTileDao.get(tileId)
 
             if (requestParams.currentState.lastClickableId == MODIFIER_CLICK_REFRESH) {
                 if (wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
@@ -117,9 +118,7 @@ class CameraTile : TileService() {
             var imageHeight = 0
             val imageData = if (serverManager.isRegistered()) {
                 val tileId = requestParams.tileId
-                val tileConfig = AppDatabase.getInstance(this@CameraTile)
-                    .cameraTileDao()
-                    .get(tileId)
+                val tileConfig = cameraTileDao.get(tileId)
 
                 try {
                     val entity = tileConfig?.entityId?.let {
@@ -216,27 +215,22 @@ class CameraTile : TileService() {
 
     override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) = runBlocking {
         withContext(Dispatchers.IO) {
-            val dao = AppDatabase.getInstance(this@CameraTile).cameraTileDao()
-            if (dao.get(requestParams.tileId) == null) {
-                dao.add(CameraTile(id = requestParams.tileId))
+            if (cameraTileDao.get(requestParams.tileId) == null) {
+                cameraTileDao.add(CameraTile(id = requestParams.tileId))
             } // else already existing, don't overwrite existing tile data
         }
     }
 
     override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) = runBlocking {
         withContext(Dispatchers.IO) {
-            AppDatabase.getInstance(this@CameraTile)
-                .cameraTileDao()
-                .delete(requestParams.tileId)
+            cameraTileDao.delete(requestParams.tileId)
         }
     }
 
     override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
         serviceScope.launch {
             val tileId = requestParams.tileId
-            val tileConfig = AppDatabase.getInstance(this@CameraTile)
-                .cameraTileDao()
-                .get(tileId)
+            val tileConfig = cameraTileDao.get(tileId)
             tileConfig?.refreshInterval?.let {
                 if (it >= 1) {
                     try {

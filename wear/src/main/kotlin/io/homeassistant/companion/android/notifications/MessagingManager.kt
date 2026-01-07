@@ -21,7 +21,7 @@ import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -36,13 +36,13 @@ class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
     private val serverManager: ServerManager,
     private val sensorDao: SensorDao,
+    private val notificationDao: NotificationDao,
     private val textToSpeechClient: TextToSpeechClient,
 ) {
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     fun handleMessage(notificationData: Map<String, String>, source: String) {
         mainScope.launch {
-            val notificationDao = AppDatabase.getInstance(context).notificationDao()
             val now = System.currentTimeMillis()
 
             val jsonData = notificationData as Map<String, String>?
