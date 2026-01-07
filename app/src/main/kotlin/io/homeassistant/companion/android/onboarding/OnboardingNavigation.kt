@@ -87,8 +87,8 @@ data class WearOnboardingRoute(val wearName: String, val urlToOnboard: String? =
  * 3. Connection and authentication
  * 4. Device naming and registration
  * 5. Post-registration flow based on server configuration:
- *    - Local-only servers: Local first screen → full: Location sharing; minimal secure connection (HTTP) or done (HTTPS)
- *    - Public servers with full flavor: Location sharing → Secure connection (HTTP only)
+ *    - Local-only servers: Local first screen → (full flavor only: Location sharing →) Secure connection (HTTP) or done (HTTPS)
+ *    - Public servers with full flavor: Location sharing → Secure connection (HTTP) or done (HTTPS)
  *    - Public servers with minimal flavor: Secure connection (HTTP) or done (HTTPS)
  * 6. Home network configuration (if user opts for secure-only connection)
  *
