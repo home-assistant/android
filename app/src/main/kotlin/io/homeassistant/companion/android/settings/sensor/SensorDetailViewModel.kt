@@ -141,7 +141,7 @@ class SensorDetailViewModel @Inject constructor(
         Timber.d("Get zones from Home Assistant for listing zones in preferences...")
         val cachedZones = mutableListOf<String>()
         coroutineScope {
-            serverManager.defaultServers().map { server ->
+            serverManager.servers().map { server ->
                 async {
                     try {
                         serverManager.integrationRepository(server.id).getZones().map { "${server.id}_${it.entityId}" }
@@ -160,7 +160,7 @@ class SensorDetailViewModel @Inject constructor(
     init {
         val sensorFlow = sensorDao.getFullFlow(sensorId)
         viewModelScope.launch {
-            serverNames = serverManager.defaultServers().associate { it.id to it.friendlyName }
+            serverNames = serverManager.servers().associate { it.id to it.friendlyName }
 
             sensorFlow.collect { map ->
                 sensors = map.toSensorsWithAttributes()
@@ -336,7 +336,7 @@ class SensorDetailViewModel @Inject constructor(
     private suspend fun updateSensorEntity(isEnabled: Boolean, serverId: Int?) {
         val serverIds =
             if (serverId == null) {
-                serverManager.defaultServers().map { it.id }
+                serverManager.servers().map { it.id }
             } else {
                 listOf(serverId)
             }
@@ -506,7 +506,7 @@ class SensorDetailViewModel @Inject constructor(
                 devices.map { it.name }.plus(entriesNotInDevices)
             }
             SensorSettingType.LIST_ZONES -> {
-                val servers = serverManager.defaultServers()
+                val servers = serverManager.servers()
                 val loadedZones = loadZones()
                 val zonesWithNames = loadedZones
                     .filter { entries == null || entries.contains(it) }

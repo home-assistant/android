@@ -142,7 +142,7 @@ class ThreadManagerImpl @Inject constructor(
                         // which credential should be used. To prevent unexpected behavior, HA only
                         // contributes one credential at a time, which is for _this_ server.
                         try {
-                            val localIds = serverManager.defaultServers().flatMap {
+                            val localIds = serverManager.servers().flatMap {
                                 serverManager.integrationRepository(it.id).getThreadBorderAgentIds()
                             }
                             updated = if (coreThreadDataset.source != "Google") { // Credential from HA, update
@@ -159,7 +159,7 @@ class ThreadManagerImpl @Inject constructor(
                                     coreThreadDataset.preferredBorderAgentId,
                                     serverId,
                                 )
-                                serverManager.defaultServers().forEach {
+                                serverManager.servers().forEach {
                                     serverManager.integrationRepository(it.id).setThreadBorderAgentIds(
                                         if (it.id == serverId && coreThreadDataset.preferredBorderAgentId != null) {
                                             listOf(coreThreadDataset.preferredBorderAgentId!!)
@@ -178,7 +178,7 @@ class ThreadManagerImpl @Inject constructor(
                                         Timber.e(e, "Unable to delete credential for border agent ID $baId")
                                     }
                                 }
-                                serverManager.defaultServers().forEach {
+                                serverManager.servers().forEach {
                                     serverManager.integrationRepository(it.id).setThreadBorderAgentIds(emptyList())
                                 }
                                 Timber.d("Thread update device completed: deleted ${localIds.size} datasets")
@@ -311,7 +311,7 @@ class ThreadManagerImpl @Inject constructor(
     }
 
     private suspend fun deleteOrphanedThreadCredentials(context: Context, serverId: Int) {
-        if (serverManager.defaultServers().all { it.version?.isAtLeast(2023, 9) == true }) {
+        if (serverManager.servers().all { it.version?.isAtLeast(2023, 9) == true }) {
             try {
                 deleteThreadCredential(context, BORDER_AGENT_ID)
             } catch (_: Exception) {

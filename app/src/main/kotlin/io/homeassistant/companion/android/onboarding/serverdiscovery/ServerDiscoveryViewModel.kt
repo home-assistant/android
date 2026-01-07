@@ -100,7 +100,7 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
 
     private suspend fun serversToIgnore(): List<URL> {
         return if (discoveryMode == ServerDiscoveryMode.HIDE_EXISTING) {
-            serverManager.defaultServers()
+            serverManager.servers()
                 .flatMap { server ->
                     with(server.connection) {
                         listOf(internalUrl, externalUrl, cloudUrl)
@@ -196,7 +196,7 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
 }
 
 private suspend fun getExistingInstances(serverManager: ServerManager): DiscoveryState {
-    return serverManager.defaultServers()
+    return serverManager.servers()
         .mapNotNull { server ->
             val url =
                 serverManager.connectionStateProvider(server.id).getExternalUrl() ?: return@mapNotNull null

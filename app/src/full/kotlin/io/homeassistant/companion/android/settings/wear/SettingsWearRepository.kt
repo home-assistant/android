@@ -57,10 +57,10 @@ data class WearServer(
 /**
  * Handles Home Assistant server operations specifically for Wear OS device onboarding.
  *
- * This use case communicates directly with the Home Assistant server using [WearServer]
+ * This repository is communicating directly with the Home Assistant server using [WearServer]
  * credentials without requiring a persisted server in the app's database.
  */
-class SettingsWearUseCase @Inject constructor(
+class SettingsWearRepository @Inject constructor(
     private val authenticationService: AuthenticationService,
     private val integrationService: IntegrationService,
 ) {

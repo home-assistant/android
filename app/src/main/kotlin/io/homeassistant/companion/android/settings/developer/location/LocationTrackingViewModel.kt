@@ -78,7 +78,7 @@ class LocationTrackingViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            servers = serverManager.defaultServers()
+            servers = serverManager.servers()
             historyEnabled = prefsRepository.isLocationHistoryEnabled()
         }
     }

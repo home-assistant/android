@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data.servers
 
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.TemporaryServer
@@ -16,12 +17,12 @@ interface ServerManager {
     /**
      * Returns a list of all registered [Server]s.
      */
-    suspend fun defaultServers(): List<Server>
+    suspend fun servers(): List<Server>
 
     /**
      * A [Flow] that emits the list of all registered [Server]s whenever it changes.
      */
-    val defaultServersFlow: Flow<List<Server>>
+    val serversFlow: Flow<List<Server>>
 
     /**
      * @return `true` if the app is registered with any server

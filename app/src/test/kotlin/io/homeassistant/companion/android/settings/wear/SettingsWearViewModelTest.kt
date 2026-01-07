@@ -24,7 +24,7 @@ private const val CAPABILITY_WEAR_APP = "verify_wear_app"
 @ExtendWith(ConsoleLogExtension::class)
 class SettingsWearViewModelTest {
 
-    private val settingsWearUseCase: SettingsWearUseCase = mockk()
+    private val settingsWearRepository: SettingsWearRepository = mockk()
     private lateinit var viewModel: SettingsWearViewModel
 
     private lateinit var nodeClient: FakeNodeClient
@@ -40,7 +40,7 @@ class SettingsWearViewModelTest {
         capabilityClient.capabilities[CAPABILITY_WEAR_APP] = setOf("1234")
         nodeClient = FakeNodeClient(application)
         nodeClient.setNodes(listOf("1234"))
-        viewModel = SettingsWearViewModel(settingsWearUseCase, application)
+        viewModel = SettingsWearViewModel(settingsWearRepository, application)
     }
 
     @Test

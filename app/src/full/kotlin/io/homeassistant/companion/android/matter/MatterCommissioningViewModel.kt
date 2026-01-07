@@ -45,12 +45,6 @@ class MatterCommissioningViewModel @Inject constructor(
     var servers by mutableStateOf<List<Server>>(emptyList())
         private set
 
-    init {
-        viewModelScope.launch {
-            servers = serverManager.defaultServers()
-        }
-    }
-
     fun checkSetup(isNewDevice: Boolean) {
         viewModelScope.launch {
             if (!isNewDevice && step != CommissioningFlowStep.NotStarted) {
@@ -63,8 +57,8 @@ class MatterCommissioningViewModel @Inject constructor(
                 step = CommissioningFlowStep.NotRegistered
                 return@launch
             }
-
-            if (serverManager.defaultServers().size > 1) {
+            servers = serverManager.servers()
+            if (servers.size > 1) {
                 step = CommissioningFlowStep.SelectServer
             } else {
                 serverManager.getServer()?.id?.let {

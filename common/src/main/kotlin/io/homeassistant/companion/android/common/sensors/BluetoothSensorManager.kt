@@ -285,7 +285,7 @@ class BluetoothSensorManager : SensorManager {
 
     private suspend fun isPermittedOnThisNetwork(context: Context): Boolean {
         val serverMgr = serverManager(context)
-        return serverMgr.defaultServers().any { server ->
+        return serverMgr.servers().any { server ->
             serverMgr.connectionStateProvider(server.id).isInternal(requiresUrl = false)
         }
     }

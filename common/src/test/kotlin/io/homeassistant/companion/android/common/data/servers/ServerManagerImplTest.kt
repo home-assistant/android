@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -88,37 +89,37 @@ class ServerManagerImplTest {
     }
 
     @Nested
-    inner class DefaultServersTest {
+    inner class ServersTest {
 
         @Test
-        fun `Given servers exist when defaultServers then returns all servers from DAO`() = runTest {
+        fun `Given servers exist when servers then returns all servers from DAO`() = runTest {
             val servers = listOf(createServer(id = 1), createServer(id = 2))
             coEvery { serverDao.getAll() } returns servers
 
-            val result = serverManager.defaultServers()
+            val result = serverManager.servers()
 
             assertEquals(servers, result)
         }
 
         @Test
-        fun `Given no servers when defaultServers then returns empty list`() = runTest {
+        fun `Given no servers when servers then returns empty list`() = runTest {
             coEvery { serverDao.getAll() } returns emptyList()
 
-            val result = serverManager.defaultServers()
+            val result = serverManager.servers()
 
             assertTrue(result.isEmpty())
         }
     }
 
     @Nested
-    inner class DefaultServersFlowTest {
+    inner class ServersFlowTest {
 
         @Test
-        fun `Given defaultServersFlow then returns flow from DAO`() {
+        fun `Given serversFlow then returns flow from DAO`() {
             val serversFlow = flowOf(listOf(createServer()))
             every { serverDao.getAllFlow() } returns serversFlow
 
-            val result = serverManager.defaultServersFlow
+            val result = serverManager.serversFlow
 
             assertEquals(serversFlow, result)
         }
@@ -249,7 +250,7 @@ class ServerManagerImplTest {
         fun `Given no active server but servers exist when getServer with SERVER_ID_ACTIVE then returns last server`() = runTest {
             val server = createServer(id = 7)
             coEvery { localStorage.getInt("active_server") } returns null
-            coEvery { serverDao.getLast() } returns server
+            coEvery { serverDao.getLastServerId() } returns 7
             coEvery { serverDao.get(7) } returns server
 
             val result = serverManager.getServer(SERVER_ID_ACTIVE)
@@ -260,7 +261,7 @@ class ServerManagerImplTest {
         @Test
         fun `Given no active server and no servers when getServer with SERVER_ID_ACTIVE then returns null`() = runTest {
             coEvery { localStorage.getInt("active_server") } returns null
-            coEvery { serverDao.getLast() } returns null
+            coEvery { serverDao.getLastServerId() } returns null
 
             val result = serverManager.getServer(SERVER_ID_ACTIVE)
 
@@ -329,7 +330,7 @@ class ServerManagerImplTest {
     inner class RemoveServerTest {
 
         @Test
-        fun `Given server when removeServer then cleans up all resources`() = runTest {
+        fun `Given server when removeServer then cleans up all resources in order`() = runTest {
             val serverId = 5
             val authRepo: AuthenticationRepositoryImpl = mockk()
             val integrationRepo: IntegrationRepositoryImpl = mockk()
@@ -348,12 +349,15 @@ class ServerManagerImplTest {
             coEvery { serverDao.delete(serverId) } just Runs
             coEvery { webSocketRepo.shutdown() } just Runs
 
+            // First access the webSocket to cache it so shutdown gets called
+            serverManager.webSocketRepository(serverId)
             serverManager.removeServer(serverId)
 
-            coVerify {
+            coVerifyOrder {
                 authRepo.deletePreferences()
                 integrationRepo.deletePreferences()
                 prefsRepository.removeServer(serverId)
+                webSocketRepo.shutdown()
                 settingsDao.delete(serverId)
                 sensorDao.removeServer(serverId)
                 serverDao.delete(serverId)

@@ -30,11 +30,11 @@ import org.junit.jupiter.api.extension.ExtendWith
 import retrofit2.Response
 
 @ExtendWith(ConsoleLogExtension::class)
-class SettingsWearUseCaseTest {
+class SettingsWearRepositoryTest {
 
     private val authenticationService: AuthenticationService = mockk()
     private val integrationService: IntegrationService = mockk()
-    private val useCase = SettingsWearUseCase(authenticationService, integrationService)
+    private val repository = SettingsWearRepository(authenticationService, integrationService)
 
     @BeforeEach
     fun setUp() {
@@ -157,7 +157,7 @@ class SettingsWearUseCaseTest {
                 authenticationService.refreshToken(capture(urlSlot), any(), any(), any())
             } returns Response.success(Token(newAccessToken, 3600, refreshToken, "Bearer"))
 
-            val result = useCase.registerRefreshToken(server, refreshToken)
+            val result = repository.registerRefreshToken(server, refreshToken)
 
             assertEquals(newAccessToken, result.accessToken)
             assertEquals(server.externalUrl, result.externalUrl)
@@ -181,7 +181,7 @@ class SettingsWearUseCaseTest {
             } returns Response.success(null)
 
             try {
-                useCase.registerRefreshToken(server, "refresh_token")
+                repository.registerRefreshToken(server, "refresh_token")
                 fail("Expected IntegrationException to be thrown")
             } catch (e: IntegrationException) {
                 assertInstanceOf(AuthorizationException::class.java, e.cause)
@@ -197,7 +197,7 @@ class SettingsWearUseCaseTest {
             } returns Response.error(401, mockk(relaxed = true))
 
             try {
-                useCase.registerRefreshToken(server, "refresh_token")
+                repository.registerRefreshToken(server, "refresh_token")
                 fail("Expected IntegrationException to be thrown")
             } catch (_: IntegrationException) {
                 // Continue
@@ -218,7 +218,7 @@ class SettingsWearUseCaseTest {
                 integrationService.getTemplate(any(), any())
             } returns JsonObject(mapOf("template" to JsonPrimitive(expectedResult)))
 
-            val result = useCase.renderTemplate(server, template)
+            val result = repository.renderTemplate(server, template)
 
             assertEquals(expectedResult, result)
         }
@@ -231,7 +231,7 @@ class SettingsWearUseCaseTest {
                 integrationService.getTemplate(any(), any())
             } returns JsonObject(mapOf("template" to JsonPrimitive(null as String?)))
 
-            val result = useCase.renderTemplate(server, "{{ none }}")
+            val result = repository.renderTemplate(server, "{{ none }}")
 
             assertNull(result)
         }
@@ -245,7 +245,7 @@ class SettingsWearUseCaseTest {
                 integrationService.getTemplate(any(), any())
             } returns JsonObject(mapOf("template" to jsonObject))
 
-            val result = useCase.renderTemplate(server, "{{ states | tojson }}")
+            val result = repository.renderTemplate(server, "{{ states | tojson }}")
 
             assertEquals(jsonObject.toString(), result)
         }
@@ -268,7 +268,7 @@ class SettingsWearUseCaseTest {
                 integrationService.getStates(capture(urlSlot), any())
             } returns entityResponses
 
-            val result = useCase.getEntities(server)
+            val result = repository.getEntities(server)
 
             assertEquals(2, result.size)
             assertEquals("light.living_room", result[0].entityId)
@@ -289,7 +289,7 @@ class SettingsWearUseCaseTest {
                 failFastTriggered = true
             }
 
-            val result = useCase.getEntities(server)
+            val result = repository.getEntities(server)
 
             assertTrue(failFastTriggered)
             assertTrue(result.isEmpty())
@@ -304,7 +304,7 @@ class SettingsWearUseCaseTest {
                 integrationService.getStates(any(), any())
             } throws IntegrationException("Network error")
 
-            val result = useCase.getEntities(server)
+            val result = repository.getEntities(server)
 
             assertTrue(result.isEmpty())
         }

@@ -117,7 +117,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
             serverManager.removeServer(serverId)
             view.onRemovedServer(
                 success = true,
-                hasAnyRemaining = serverManager.defaultServers().any { it.id != serverId },
+                hasAnyRemaining = serverManager.servers().any { it.id != serverId },
             )
         } ?: run {
             view.onRemovedServer(success = false, hasAnyRemaining = true)
@@ -134,7 +134,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
         mainScope.cancel()
     }
 
-    override suspend fun hasMultipleServers(): Boolean = serverManager.defaultServers().size > 1
+    override suspend fun hasMultipleServers(): Boolean = serverManager.servers().size > 1
 
     override fun updateServerName() {
         mainScope.launch {

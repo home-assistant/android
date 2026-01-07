@@ -75,7 +75,7 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
     }
 
     private suspend fun webviewDestination(path: String, serverId: Int? = null): LinkDestination {
-        return if (serverId != null || serverManager.defaultServers().size <= 1) {
+        return if (serverId != null || serverManager.servers().size <= 1) {
             LinkDestination.Webview(path, serverId ?: ServerManager.SERVER_ID_ACTIVE)
         } else {
             LinkDestination.ServerPicker(path)
@@ -149,9 +149,8 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
      * Requires a registered server to proceed.
      *
      * @param uri The redirect URI to process.
-     * TODO update the doc
-     * @return [LinkDestination.Webview] with the transformed path, or [LinkDestination.NoDestination] if no server is registered
-     *         or if the mobile flag is already set.
+     * @return [LinkDestination.Webview] with the transformed path, [LinkDestination.ServerPicker] if multiple servers are registered,
+     *         or [LinkDestination.NoDestination] if no server is registered or if the mobile flag is already set.
      */
     private suspend fun handleRedirectLink(uri: Uri): LinkDestination {
         if (!requireServerRegistered()) {
@@ -195,13 +194,13 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
         val serverName = uri.getQueryParameter("server").takeIf { !it.isNullOrBlank() }
         val serverId = when (serverName) {
             "default", null -> serverManager.getServer()?.id
-            else -> serverManager.defaultServers().find {
+            else -> serverManager.servers().find {
                 it.friendlyName.equals(serverName, ignoreCase = true)
             }?.id
         }
 
         val path = uri.toString()
-        return serverId?.let { LinkDestination.Webview(uri.toString(), serverId) } ?: webviewDestination(path)
+        return webviewDestination(path, serverId)
     }
 
     private suspend fun requireServerRegistered(): Boolean {

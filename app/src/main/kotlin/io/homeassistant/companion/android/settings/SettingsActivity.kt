@@ -97,7 +97,7 @@ class SettingsActivity : BaseActivity() {
                     replace(
                         R.id.content,
                         when (settingsNavigation) {
-                            Deeplink.Websocket -> if (serverManager.defaultServers().size == 1) {
+                            Deeplink.Websocket -> if (serverManager.servers().size == 1) {
                                 WebsocketSettingFragment::class.java
                             } else {
                                 SettingsFragment::class.java
@@ -124,7 +124,7 @@ class SettingsActivity : BaseActivity() {
                             }
 
                             Deeplink.Websocket -> {
-                                val servers = serverManager.defaultServers()
+                                val servers = serverManager.servers()
                                 if (servers.size == 1) {
                                     Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, servers[0].id) }
                                 } else {

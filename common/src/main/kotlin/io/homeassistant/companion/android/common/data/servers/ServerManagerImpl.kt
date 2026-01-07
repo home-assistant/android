@@ -84,11 +84,11 @@ internal class ServerManagerImpl @Inject constructor(
     private val connectionStateProviders =
         ServerMap<ServerConnectionStateProvider>(serverConnectionStateProviderFactory::create)
 
-    override suspend fun defaultServers(): List<Server> {
+    override suspend fun servers(): List<Server> {
         return serverDao.getAll()
     }
 
-    override val defaultServersFlow: Flow<List<Server>>
+    override val serversFlow: Flow<List<Server>>
         get() = serverDao.getAllFlow()
 
     override suspend fun isRegistered(): Boolean {
@@ -134,15 +134,16 @@ internal class ServerManagerImpl @Inject constructor(
         authenticationRepository(id).deletePreferences()
         integrationRepository(id).deletePreferences()
         prefsRepository.removeServer(id)
-        if (localStorage.getInt(PREF_ACTIVE_SERVER) == id) localStorage.remove(PREF_ACTIVE_SERVER)
-        settingsDao.delete(id)
-        sensorDao.removeServer(id)
-        serverDao.delete(id)
         authenticationRepos.remove(id)
         integrationRepos.remove(id)
         webSocketRepos[id]?.shutdown()
         webSocketRepos.remove(id)
         connectionStateProviders.remove(id)
+
+        if (localStorage.getInt(PREF_ACTIVE_SERVER) == id) localStorage.remove(PREF_ACTIVE_SERVER)
+        settingsDao.delete(id)
+        sensorDao.removeServer(id)
+        serverDao.delete(id)
     }
 
     override suspend fun authenticationRepository(serverId: Int): AuthenticationRepository {
@@ -168,7 +169,7 @@ internal class ServerManagerImpl @Inject constructor(
     private suspend fun getServerIdSanitize(serverId: Int): Int? {
         return if (serverId == SERVER_ID_ACTIVE) {
             localStorage.getInt(PREF_ACTIVE_SERVER)
-                ?: serverDao.getLast()?.id
+                ?: serverDao.getLastServerId()
         } else {
             serverId
         }

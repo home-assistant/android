@@ -42,7 +42,7 @@ import timber.log.Timber
 
 @HiltViewModel
 class SettingsWearViewModel @Inject constructor(
-    private val settingsWearUseCase: SettingsWearUseCase,
+    private val settingsWearRepository: SettingsWearRepository,
     application: Application,
 ) : AndroidViewModel(application),
     DataClient.OnDataChangedListener {
@@ -166,7 +166,7 @@ class SettingsWearViewModel @Inject constructor(
     }
 
     private suspend fun WearServer.loadEntities() {
-        settingsWearUseCase.getEntities(this).forEach {
+        settingsWearRepository.getEntities(this).forEach {
             entities[it.entityId] = it
         }
     }
@@ -200,7 +200,7 @@ class SettingsWearViewModel @Inject constructor(
         wearServer?.takeIf { template.isNotEmpty() }?.let {
             viewModelScope.launch {
                 templateTilesRenderedTemplates[tileId] = try {
-                    settingsWearUseCase.renderTemplate(it, template).toString()
+                    settingsWearRepository.renderTemplate(it, template).toString()
                 } catch (e: IntegrationException) {
                     Timber.e(e, "Exception while rendering template for tile ID $tileId")
                     // SerializationException suggests that template is not a String (= error)
@@ -393,7 +393,7 @@ class SettingsWearViewModel @Inject constructor(
         val wearRefreshToken = data.getString(WearDataMessages.CONFIG_SERVER_REFRESH_TOKEN, "")
 
         try {
-            val wearServer = settingsWearUseCase.registerRefreshToken(
+            val wearServer = settingsWearRepository.registerRefreshToken(
                 WearServer(
                     serverId = wearServerId,
                     externalUrl = wearExternalUrl,

@@ -62,7 +62,7 @@ class TagReaderActivity : BaseActivity() {
         val nfcTagId = UrlUtil.splitNfcTagId(url)
         Timber.d("Tag ID: $nfcTagId")
         if (nfcTagId != null && serverManager.isRegistered()) {
-            serverManager.defaultServers().map {
+            serverManager.servers().map {
                 lifecycleScope.async {
                     try {
                         serverManager.integrationRepository(it.id).scanTag(hashMapOf("tag_id" to nfcTagId))

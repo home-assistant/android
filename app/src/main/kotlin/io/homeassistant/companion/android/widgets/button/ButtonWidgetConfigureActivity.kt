@@ -310,7 +310,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
         binding.widgetTextConfigService.onFocusChangeListener = dropDownOnFocus
 
         lifecycleScope.launch {
-            serverManager.defaultServers().forEach { server ->
+            serverManager.servers().forEach { server ->
                 launch {
                     try {
                         actions[server.id] = HashMap()

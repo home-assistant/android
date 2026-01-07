@@ -47,7 +47,7 @@ abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<
 
     protected fun setupServerSelect(widgetServerId: Int?) {
         lifecycleScope.launch {
-            val servers = serverManager.defaultServers()
+            val servers = serverManager.servers()
             val activeServerId = serverManager.getServer()?.id
             serverSelectList.adapter =
                 ArrayAdapter(
@@ -92,7 +92,7 @@ abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<
 
     abstract fun onServerSelected(serverId: Int)
 
-    protected suspend fun isValidServerId() = selectedServerId in serverManager.defaultServers().map { it.id }
+    protected suspend fun isValidServerId() = selectedServerId in serverManager.servers().map { it.id }
 
     protected fun showAddWidgetError() {
         Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG).show()

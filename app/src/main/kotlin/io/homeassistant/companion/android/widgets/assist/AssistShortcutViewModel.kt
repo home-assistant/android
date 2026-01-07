@@ -32,7 +32,7 @@ class AssistShortcutViewModel @Inject constructor(val serverManager: ServerManag
 
     init {
         viewModelScope.launch {
-            servers = serverManager.defaultServers()
+            servers = serverManager.servers()
             if (serverManager.isRegistered()) {
                 serverManager.getServer()?.id?.let { serverId = it }
                 getData()

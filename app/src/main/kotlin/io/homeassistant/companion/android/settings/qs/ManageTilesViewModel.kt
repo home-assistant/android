@@ -181,9 +181,9 @@ class ManageTilesViewModel @Inject constructor(
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            val defaultServers = serverManager.defaultServers()
-            servers = defaultServers
-            defaultServers.map {
+            val servers = serverManager.servers()
+            this@ManageTilesViewModel.servers = servers
+            servers.map {
                 async {
                     entities[it.id] = try {
                         serverManager.integrationRepository(it.id).getEntities().orEmpty()

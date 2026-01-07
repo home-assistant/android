@@ -71,16 +71,16 @@ class EntityGridVehicleScreen(
     init {
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                if (serverManager.servers().size > 1 && !shouldSwitchServers) {
+                    shouldSwitchServers = true
+                    invalidate()
+                }
+
                 entitiesFlow.collect {
                     loading = false
                     val hasChanged = entities.size != it.size || entities.toSet() != it.toSet()
                     entities = it
                     if (hasChanged) invalidate()
-                }
-
-                if (serverManager.defaultServers().size > 1 && !shouldSwitchServers) {
-                    shouldSwitchServers = true
-                    invalidate()
                 }
             }
         }

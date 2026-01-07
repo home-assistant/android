@@ -54,14 +54,14 @@ class ManageControlsViewModel @Inject constructor(
     var structureEnabled by mutableStateOf(false)
         private set
 
-    var defaultServers by mutableStateOf<List<Server>>(emptyList())
+    var servers by mutableStateOf<List<Server>>(emptyList())
         private set
 
     var defaultServerId by mutableIntStateOf(0)
 
     init {
         viewModelScope.launch {
-            defaultServers = serverManager.defaultServers()
+            servers = serverManager.servers()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 panelEnabled =
                     application.packageManager.getComponentEnabledSetting(
@@ -84,7 +84,7 @@ class ManageControlsViewModel @Inject constructor(
 
             defaultServerId = serverManager.getServer()?.id ?: 0
 
-            defaultServers.map { server ->
+            servers.map { server ->
                 async {
                     val entities = serverManager.integrationRepository(server.id).getEntities()
                         ?.filter { it.domain in HaControlsProviderService.getSupportedDomains() }

@@ -110,9 +110,9 @@ class ManageShortcutsViewModel @Inject constructor(
             val currentServerId = currentServerId()
             shortcuts.forEach { it.serverId.value = currentServerId }
 
-            val defaultServers = serverManager.defaultServers()
-            servers = defaultServers
-            defaultServers.forEach { server ->
+            val servers = serverManager.servers()
+            this@ManageShortcutsViewModel.servers = servers
+            servers.forEach { server ->
                 launch {
                     entities[server.id] = try {
                         serverManager.integrationRepository(server.id).getEntities().orEmpty()

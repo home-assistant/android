@@ -166,7 +166,7 @@ class MediaPlayerControlsWidgetConfigureActivity :
         binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
 
         lifecycleScope.launch {
-            serverManager.defaultServers().forEach { server ->
+            serverManager.servers().forEach { server ->
                 launch {
                     try {
                         val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()

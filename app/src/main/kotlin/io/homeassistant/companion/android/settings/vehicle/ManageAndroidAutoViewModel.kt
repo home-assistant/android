@@ -38,17 +38,17 @@ class ManageAndroidAutoViewModel @Inject constructor(
         private set
     val entities = mutableMapOf<Int, List<Entity>>()
 
-    var defaultServers by mutableStateOf(emptyList<Server>())
+    var servers by mutableStateOf(emptyList<Server>())
         private set
 
     var defaultServerId by mutableIntStateOf(0)
 
     init {
         viewModelScope.launch {
-            defaultServers = serverManager.defaultServers()
+            servers = serverManager.servers()
             defaultServerId = serverManager.getServer()?.id ?: 0
             favoritesList.addAll(prefsRepository.getAutoFavorites())
-            defaultServers.map {
+            servers.map {
                 async {
                     entities[it.id] = try {
                         serverManager.integrationRepository(it.id).getEntities().orEmpty()

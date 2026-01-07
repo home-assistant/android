@@ -76,7 +76,7 @@ fun getChangeServerGridItem(
                 screenManager.pushForResult(
                     ChangeServerScreen(
                         carContext,
-                        serverManager.defaultServers(),
+                        serverManager.servers(),
                         serverId,
                     ),
                 ) {

@@ -33,7 +33,7 @@ class ServerChooserFragment : BottomSheetDialogFragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 val servers by produceState(initialValue = emptyList()) {
-                    value = serverManager.defaultServers()
+                    value = serverManager.servers()
                 }
                 HomeAssistantAppTheme {
                     ServerChooserView(

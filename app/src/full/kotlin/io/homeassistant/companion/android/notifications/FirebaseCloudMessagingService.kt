@@ -45,7 +45,7 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
                 Timber.d("Not trying to update registration since we aren't authenticated.")
                 return@launch
             }
-            serverManager.defaultServers().forEach {
+            serverManager.servers().forEach {
                 launch {
                     try {
                         serverManager.integrationRepository(it.id).updateRegistration(

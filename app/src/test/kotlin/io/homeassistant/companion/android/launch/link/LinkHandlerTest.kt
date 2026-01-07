@@ -141,7 +141,7 @@ class LinkHandlerTest {
     @Test
     fun `Given redirect URI with single registered server when invoking handleLink then returns Webview with provided path without trailing slash in path`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.defaultServers() } returns listOf(
+        coEvery { serverManager.servers() } returns listOf(
             mockk {
                 coEvery { friendlyName } returns "Home"
                 coEvery { id } returns 1
@@ -228,7 +228,7 @@ class LinkHandlerTest {
     @Test
     fun `Given navigate deep link with registered server and specific server name when invoking handleLink then returns Webview with matching server`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.defaultServers() } returns listOf(
+        coEvery { serverManager.servers() } returns listOf(
             mockk {
                 coEvery { friendlyName } returns "Home"
                 coEvery { id } returns 1
@@ -248,7 +248,7 @@ class LinkHandlerTest {
     @Test
     fun `Given navigate deep link with registered server and case-insensitive server name when invoking handleLink then returns Webview with matching server`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.defaultServers() } returns listOf(
+        coEvery { serverManager.servers() } returns listOf(
             mockk {
                 coEvery { friendlyName } returns "Home"
                 coEvery { id } returns 1
@@ -268,7 +268,7 @@ class LinkHandlerTest {
     @Test
     fun `Given navigate deep link with registered server and non-existing server name when invoking handleLink then returns Webview with SERVER_ID_ACTIVE serverId`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.defaultServers() } returns listOf(
+        coEvery { serverManager.servers() } returns listOf(
             mockk {
                 coEvery { friendlyName } returns "Home"
                 coEvery { id } returns 1
@@ -287,7 +287,7 @@ class LinkHandlerTest {
     @Test
     fun `Given redirect URI with multiple registered servers when invoking handleLink then returns ServerPicker`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.defaultServers() } returns listOf(
+        coEvery { serverManager.servers() } returns listOf(
             mockk {
                 coEvery { friendlyName } returns "Home"
                 coEvery { id } returns 1
@@ -310,7 +310,7 @@ class LinkHandlerTest {
     @Test
     fun `Given navigate deep link with non-existing server name and multiple servers when invoking handleLink then returns ServerPicker`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.defaultServers() } returns listOf(
+        coEvery { serverManager.servers() } returns listOf(
             mockk {
                 coEvery { friendlyName } returns "Home"
                 coEvery { id } returns 1
@@ -331,7 +331,7 @@ class LinkHandlerTest {
     fun `Given navigate deep link with no default server and multiple servers when invoking handleLink then returns ServerPicker`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.getServer() } returns null
-        coEvery { serverManager.defaultServers() } returns listOf(
+        coEvery { serverManager.servers() } returns listOf(
             mockk {
                 coEvery { friendlyName } returns "Home"
                 coEvery { id } returns 1

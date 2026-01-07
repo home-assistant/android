@@ -56,7 +56,7 @@ class ResyncRegistrationWorkerTest {
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
-        coVerify(exactly = 0) { serverManager.defaultServers() }
+        coVerify(exactly = 0) { serverManager.servers() }
     }
 
     @Test
@@ -65,7 +65,7 @@ class ResyncRegistrationWorkerTest {
         val server2 = mockk<Server>(relaxed = true).apply { every { id } returns 2 }
 
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.defaultServers() } returns listOf(server1, server2)
+        coEvery { serverManager.servers() } returns listOf(server1, server2)
 
         val result = worker.doWork()
 
@@ -89,7 +89,7 @@ class ResyncRegistrationWorkerTest {
         val server2 = mockk<Server>(relaxed = true).apply { every { id } returns 2 }
 
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.defaultServers() } returns listOf(server1, server2)
+        coEvery { serverManager.servers() } returns listOf(server1, server2)
 
         coEvery { serverManager.integrationRepository(1) } throws IllegalStateException()
 
@@ -117,7 +117,7 @@ class ResyncRegistrationWorkerTest {
         val server2 = mockk<Server>(relaxed = true).apply { every { id } returns 2 }
 
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.defaultServers() } returns listOf(server1, server2)
+        coEvery { serverManager.servers() } returns listOf(server1, server2)
 
         coEvery { serverManager.webSocketRepository(1) } throws IllegalStateException()
 
@@ -143,7 +143,7 @@ class ResyncRegistrationWorkerTest {
         val server1 = mockk<Server>(relaxed = true).apply { every { id } returns 1 }
 
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.defaultServers() } returns listOf(server1)
+        coEvery { serverManager.servers() } returns listOf(server1)
         mockEntryPoints(pushWebsocketSupport)
 
         val result = worker.doWork()
