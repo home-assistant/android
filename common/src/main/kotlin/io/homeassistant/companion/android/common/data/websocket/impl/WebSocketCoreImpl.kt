@@ -1046,6 +1046,7 @@ internal class WebSocketCoreImpl(
                     }
                 }
         } else {
+            // TODO https://github.com/home-assistant/android/issues/5259 handle re-connection gracefully or terminates the flows
             Timber.w("Unable to reconnect, cannot resubscribe to active subscriptions")
         }
     }
