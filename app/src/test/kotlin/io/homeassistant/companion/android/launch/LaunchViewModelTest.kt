@@ -500,7 +500,7 @@ class LaunchViewModelTest {
             user = ServerUserInfo(id = null, name = null, isOwner = false, isAdmin = false),
         )
 
-        coEvery { serverManager.defaultServers } returns listOf(connectedServer1, connectedServer2)
+        coEvery { serverManager.servers() } returns listOf(connectedServer1, connectedServer2)
         coEvery { serverManager.authenticationRepository(connectedServer1.id).getSessionState() } returns SessionState.CONNECTED
         coEvery { serverManager.authenticationRepository(connectedServer2.id).getSessionState() } returns SessionState.CONNECTED
 
