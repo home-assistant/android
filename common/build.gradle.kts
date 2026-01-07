@@ -65,4 +65,13 @@ dependencies {
 
     implementation(libs.compose.material3)
     lintChecks(libs.compose.lint.checks)
+
+    implementation(libs.media3.exoplayer)
+    // The play-services-cronet dependency is excluded here because each app flavor provides its own Cronet implementation:
+    // - full: uses Google Play Services Cronet (dynamically loaded via GMS)
+    // - minimal: uses embedded Cronet (bundled in the APK)
+    implementation(libs.media3.datasource.cronet) {
+        exclude(group = "com.google.android.gms", module = "play-services-cronet")
+    }
+    implementation(libs.cronet.api)
 }

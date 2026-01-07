@@ -48,6 +48,7 @@ class LaunchViewModelTest {
         initialDeepLink: LaunchActivity.DeepLink? = null,
         hasLocationTrackingSupport: Boolean = false,
         isAutomotive: Boolean = false,
+        isFullFlavor: Boolean = true,
     ) {
         viewModel = LaunchViewModel(
             initialDeepLink,
@@ -56,6 +57,7 @@ class LaunchViewModelTest {
             networkStatusMonitor,
             hasLocationTrackingSupport,
             isAutomotive,
+            isFullFlavor,
         )
     }
 
@@ -399,6 +401,146 @@ class LaunchViewModelTest {
 
         assertEquals(
             LaunchUiState.Ready(AutomotiveRoute),
+            viewModel.uiState.value,
+        )
+    }
+
+    @Test
+    fun `Given isAutomotive is true but isFullFlavor is false, when network is READY, then navigate to frontend route`() = runTest {
+        val server = mockk<Server>(relaxed = true)
+
+        every { workManager.enqueue(any<OneTimeWorkRequest>()) } returns mockk()
+
+        coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns server
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
+        val networkStateFlow = MutableStateFlow(NetworkState.READY_REMOTE)
+        coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
+
+        createViewModel(isAutomotive = true, isFullFlavor = false)
+        advanceUntilIdle()
+
+        assertEquals(
+            LaunchUiState.Ready(FrontendRoute(null, ServerManager.SERVER_ID_ACTIVE)),
+            viewModel.uiState.value,
+        )
+    }
+
+    @Test
+    fun `Given network is UNAVAILABLE then READY, when observing network, then navigate to frontend after recovery`() = runTest {
+        val server = mockk<Server>(relaxed = true)
+
+        every { workManager.enqueue(any<OneTimeWorkRequest>()) } returns mockk()
+
+        coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns server
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
+        val networkStateFlow = MutableStateFlow(NetworkState.UNAVAILABLE)
+        coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
+
+        createViewModel()
+        advanceUntilIdle()
+
+        assertEquals(LaunchUiState.NetworkUnavailable, viewModel.uiState.value)
+        assertEquals(1, networkStateFlow.subscriptionCount.value)
+
+        networkStateFlow.emit(NetworkState.READY_LOCAL)
+        advanceUntilIdle()
+
+        assertEquals(
+            LaunchUiState.Ready(FrontendRoute(null, ServerManager.SERVER_ID_ACTIVE)),
+            viewModel.uiState.value,
+        )
+        assertEquals(0, networkStateFlow.subscriptionCount.value)
+
+        verify(exactly = 1) {
+            workManager.enqueue(any<OneTimeWorkRequest>())
+        }
+    }
+
+    @Test
+    fun `Given initial deep link is OpenOnboarding with null url, when creating viewModel, then navigate to onboarding without url`() = runTest {
+        createViewModel(
+            initialDeepLink = LaunchActivity.DeepLink.OpenOnboarding(
+                urlToOnboard = null,
+                hideExistingServers = false,
+                skipWelcome = false,
+            ),
+            hasLocationTrackingSupport = true,
+        )
+        advanceUntilIdle()
+
+        assertEquals(
+            LaunchUiState.Ready(
+                OnboardingRoute(
+                    hasLocationTracking = true,
+                    urlToOnboard = null,
+                    hideExistingServers = false,
+                    skipWelcome = false,
+                ),
+            ),
+            viewModel.uiState.value,
+        )
+    }
+
+    @Test
+    fun `Given valid connected servers, when cleaning up servers, then do not remove connected servers`() = runTest {
+        val connectedServer1 = Server(
+            id = 1,
+            _name = "Connected Server 1",
+            connection = ServerConnectionInfo(externalUrl = "http://server1.com"),
+            session = ServerSessionInfo(),
+            user = ServerUserInfo(id = null, name = null, isOwner = false, isAdmin = false),
+        )
+        val connectedServer2 = Server(
+            id = 2,
+            _name = "Connected Server 2",
+            connection = ServerConnectionInfo(externalUrl = "http://server2.com"),
+            session = ServerSessionInfo(),
+            user = ServerUserInfo(id = null, name = null, isOwner = false, isAdmin = false),
+        )
+
+        coEvery { serverManager.defaultServers } returns listOf(connectedServer1, connectedServer2)
+        coEvery { serverManager.authenticationRepository(connectedServer1.id).getSessionState() } returns SessionState.CONNECTED
+        coEvery { serverManager.authenticationRepository(connectedServer2.id).getSessionState() } returns SessionState.CONNECTED
+
+        createViewModel()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { serverManager.removeServer(any()) }
+    }
+
+    @Test
+    fun `Given initial deep link is NavigateTo with null path, when server is connected, then navigate to frontend without path`() = runTest {
+        val serverId = 5
+        val server = mockk<Server>(relaxed = true)
+        every { workManager.enqueue(any<OneTimeWorkRequest>()) } returns mockk()
+
+        coEvery { serverManager.getServer(serverId) } returns server
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
+        val networkStateFlow = MutableStateFlow(NetworkState.READY_REMOTE)
+        coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
+
+        createViewModel(LaunchActivity.DeepLink.NavigateTo(path = null, serverId = serverId))
+        advanceUntilIdle()
+
+        assertEquals(
+            LaunchUiState.Ready(FrontendRoute(null, serverId)),
+            viewModel.uiState.value,
+        )
+    }
+
+    @Test
+    fun `Given initial deep link is OpenWearOnboarding with null url, when full flavor, then navigate to wear onboarding without url`() = runTest {
+        createViewModel(
+            initialDeepLink = LaunchActivity.DeepLink.OpenWearOnboarding(wearName = "Pixel Watch", urlToOnboard = null),
+            hasLocationTrackingSupport = true,
+        )
+        advanceUntilIdle()
+
+        assertEquals(
+            LaunchUiState.Ready(WearOnboardingRoute(wearName = "Pixel Watch", urlToOnboard = null)),
             viewModel.uiState.value,
         )
     }

@@ -106,6 +106,8 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
 
                     "coreLibraryDesugaring"(libs.tools.desugar.jdk)
 
+                    "ksp"(libs.kotlin.metadata.jvm)
+
                     "implementation"(libs.timber)
                     "implementation"(libs.kotlinx.serialization.json)
 

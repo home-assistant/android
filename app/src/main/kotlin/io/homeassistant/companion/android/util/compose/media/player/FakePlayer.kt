@@ -412,6 +412,14 @@ internal class FakePlayer(
         return if (muted) 0f else 1.0f
     }
 
+    override fun mute() {
+        TODO("Not yet implemented")
+    }
+
+    override fun unmute() {
+        TODO("Not yet implemented")
+    }
+
     override fun clearVideoSurface() {
         TODO("Not yet implemented")
     }

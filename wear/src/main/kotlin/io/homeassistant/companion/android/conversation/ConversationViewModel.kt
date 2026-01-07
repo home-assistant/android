@@ -242,7 +242,7 @@ class ConversationViewModel @Inject constructor(
         }
 
         if (recording) {
-            if (!recorderProactive) setupRecorderQueue()
+            if (!recorderProactive) setupRecorder()
             inputMode = AssistInputMode.VOICE_ACTIVE
             if (proactive == true) _conversation.add(AssistMessage("…", isInput = true))
             if (proactive != true) runAssistPipeline(null)
