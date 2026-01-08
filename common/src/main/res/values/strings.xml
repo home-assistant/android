@@ -239,8 +239,10 @@
         <item quantity="one">1 entity</item>
         <item quantity="other">%d entities</item>
     </plurals>
+    <string name="entities">Entities</string>
     <string name="entity_attribute_checkbox">Append attribute value</string>
     <string name="entity_id_name">Entity ID: %1$s</string>
+    <string name="entity_picker_add_entity">Add entity</string>
     <string name="entity_widget_desc">View any entity\'s current state and toggle it</string>
     <string name="todo_widget_desc">View any configured to-do list and mark items as completed</string>
     <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
@@ -552,6 +554,7 @@
     <string name="save">Save</string>
     <string name="scenes">Scenes</string>
     <string name="scripts">Scripts</string>
+    <string name="search">Search</string>
     <string name="search_clear_selection">Clear selection</string>
     <string name="search_icons">Search icons</string>
     <string name="search_icons_in_english">Search icons (in English)</string>
@@ -923,7 +926,7 @@
     <string name="tile_add">Add tile</string>
     <string name="tile_added">Tile added</string>
     <string name="tile_data_missing">You need to set up the tile before using it</string>
-    <string name="tile_entity">Select a entity to toggle or call (required)</string>
+    <string name="tile_entity">Select an entity to toggle or call (required)</string>
     <string name="tile_label">Tile label (required)</string>
     <string name="tile_not_setup">Requires setup</string>
     <string name="tile_save">Update tile data</string>
