@@ -27,11 +27,43 @@ import io.homeassistant.companion.android.common.compose.composable.RadioOption
 import io.homeassistant.companion.android.common.compose.composable.rememberSelectedOption
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.util.compose.EntityPicker
+import io.homeassistant.companion.android.util.compose.EntityPickerItem
 
 fun LazyListScope.catalogUserInputSection() {
     input()
+    entityPicker()
     switches()
     radioGroupSection()
+}
+
+private fun LazyListScope.entityPicker() {
+    val entities = buildList {
+        add(
+            EntityPickerItem(
+                "light.bedlong",
+                "Bed Light super super super long believe me it's going to not fit at all",
+                "Bedroom",
+                "Device #1 super long device name and more just to see where it goes",
+            ),
+        )
+        add(EntityPickerItem("light.bed", "Bed Light", "Bedroom", "Device #1"))
+        add(EntityPickerItem("sensor.temperature", "Temperature", "Living Room"))
+        repeat(10) {
+            add(EntityPickerItem("switch.fan$it", "Fan", "Bedroom", "Device #$it"))
+        }
+    }
+
+    catalogSection(title = "Entity Pickers") {
+        var selectedEntity by remember { mutableStateOf<EntityPickerItem?>(null) }
+
+        EntityPicker(
+            entities = entities,
+            selectedEntity = selectedEntity,
+            onEntitySelected = { selectedEntity = it },
+            onEntityCleared = { selectedEntity = null },
+        )
+    }
 }
 
 private fun LazyListScope.input() {
