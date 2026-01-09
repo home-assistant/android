@@ -18,6 +18,8 @@ import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
+import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
+import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
@@ -102,6 +104,7 @@ private const val AUTH_CALLBACK = "$AUTH_CALLBACK_SCHEME://$AUTH_CALLBACK_HOST"
 internal class ConnectionViewModel @VisibleForTesting constructor(
     private val rawUrl: String,
     private val keyChainRepository: KeyChainRepository,
+    private val connectivityCheckRepository: ConnectivityCheckRepository,
 ) : ViewModel() {
 
     @Inject
@@ -109,7 +112,8 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         savedStateHandle: SavedStateHandle,
         @NamedKeyChain
         keyChainRepository: KeyChainRepository,
-    ) : this(savedStateHandle.toRoute<ConnectionRoute>().url, keyChainRepository)
+        connectivityCheckRepository: ConnectivityCheckRepository,
+    ) : this(savedStateHandle.toRoute<ConnectionRoute>().url, keyChainRepository, connectivityCheckRepository)
 
     private val rawUri: Uri by lazy { rawUrl.toUri() }
 
@@ -124,6 +128,21 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
 
     private val _errorFlow = MutableStateFlow<ConnectionError?>(null)
     val errorFlow = _errorFlow.asStateFlow()
+
+    private val _connectivityCheckState = MutableStateFlow(ConnectivityCheckState())
+    val connectivityCheckState = _connectivityCheckState.asStateFlow()
+
+    /**
+     * Runs connectivity checks against the server URL.
+     * Results are emitted to [connectivityCheckState].
+     */
+    fun runConnectivityChecks() {
+        viewModelScope.launch {
+            connectivityCheckRepository.runChecks(rawUrl).collect { state ->
+                _connectivityCheckState.value = state
+            }
+        }
+    }
 
     val webViewClient: TLSWebViewClient = object : TLSWebViewClient(keyChainRepository) {
         override fun onPageFinished(view: WebView?, url: String?) {
@@ -325,5 +344,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
 
     private fun onError(error: ConnectionError) {
         _errorFlow.update { error }
+        // Automatically run connectivity checks when an error occurs
+        runConnectivityChecks()
     }
 }

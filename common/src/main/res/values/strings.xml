@@ -1413,4 +1413,19 @@
     <string name="notification_permission_dialog_content">Enable notifications and get what\'s happening in your home, from detecting leaks to doors left open. You have full control over the notifications you receive and what they tell you.</string>
     <string name="notification_permission_dialog_allow">Allow notifications</string>
     <string name="notification_permission_dialog_deny">Do not allow</string>
+
+    <!-- Connectivity Check -->
+    <string name="connection_check_title">Connectivity Checks</string>
+    <string name="connection_check_dns">DNS Resolution</string>
+    <string name="connection_check_port">Port Reachability</string>
+    <string name="connection_check_tls">TLS Certificate</string>
+    <string name="connection_check_server">Server Connection</string>
+    <string name="connection_check_tls_success">Certificate valid</string>
+    <string name="connection_check_server_success">Connection established</string>
+    <string name="connection_check_error_invalid_url">Invalid URL format</string>
+    <string name="connection_check_error_dns">DNS resolution failed</string>
+    <string name="connection_check_error_port">Port not reachable</string>
+    <string name="connection_check_error_tls">TLS certificate error</string>
+    <string name="connection_check_error_server">Server connection failed</string>
+    <string name="connection_check_skipped">Skipped (previous check failed)</string>
 </resources>

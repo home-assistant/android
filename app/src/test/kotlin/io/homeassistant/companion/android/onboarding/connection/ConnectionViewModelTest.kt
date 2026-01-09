@@ -16,6 +16,7 @@ import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
+import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
@@ -26,6 +27,7 @@ import io.mockk.slot
 import java.net.URL
 import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -44,16 +46,18 @@ import org.junit.jupiter.params.provider.ValueSource
 class ConnectionViewModelTest {
 
     private val keyChainRepository: KeyChainRepository = mockk()
+    private val connectivityCheckRepository: ConnectivityCheckRepository = mockk()
 
     @BeforeEach
     fun setup() {
         mockkStatic(Uri::class)
+        every { connectivityCheckRepository.runChecks(any()) } returns emptyFlow()
     }
 
     @ParameterizedTest
     @ValueSource(strings = ["http://homeassistant.local:8123", "https://cloud.ui.nabu.casa"])
     fun `Given a valid http url when buildAuthUrl then urlFlow emits correct auth url and isLoading is false`(baseUrl: String) = runTest {
-        val viewModel = ConnectionViewModel(baseUrl, keyChainRepository)
+        val viewModel = ConnectionViewModel(baseUrl, keyChainRepository, connectivityCheckRepository)
 
         turbineScope {
             val urlFlow = viewModel.urlFlow.testIn(backgroundScope)
@@ -84,7 +88,7 @@ class ConnectionViewModelTest {
     @ValueSource(strings = ["http://homeassistant.local:8123", "https://cloud.ui.nabu.casa"])
     fun `Given a valid http url with suffix when buildAuthUrl then urlFlow emits correct auth url with path stripped`(baseUrl: String) = runTest {
         val suffix = "/hello?query=param&isHA=true#segment"
-        val viewModel = ConnectionViewModel("$baseUrl$suffix", keyChainRepository)
+        val viewModel = ConnectionViewModel("$baseUrl$suffix", keyChainRepository, connectivityCheckRepository)
 
         turbineScope {
             val urlFlow = viewModel.urlFlow.testIn(backgroundScope)
@@ -101,7 +105,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given a malformed url when buildAuthUrl then errorFlow emits malformed url error`() = runTest {
         val malformedUrl = "not_a_url"
-        val viewModel = ConnectionViewModel(malformedUrl, keyChainRepository)
+        val viewModel = ConnectionViewModel(malformedUrl, keyChainRepository, connectivityCheckRepository)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -126,7 +130,7 @@ class ConnectionViewModelTest {
         val authCode = "test_auth_code"
         val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository, connectivityCheckRepository)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -155,7 +159,7 @@ class ConnectionViewModelTest {
     fun `Given auth callback uri without code when shouldRedirect then no event and returns false`() = runTest {
         val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = null)
 
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository, connectivityCheckRepository)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -176,7 +180,7 @@ class ConnectionViewModelTest {
 
     @Test
     fun `Given unmatching uri and webview not null when shouldRedirect is invoked then open in external browser and return true`() = runTest {
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository, connectivityCheckRepository)
 
         // Used to parse the rawUrl given in the constructor of ConnectionViewModel
         mockUriParse()
@@ -206,7 +210,7 @@ class ConnectionViewModelTest {
 
     @Test
     fun `Given SSL errors when onReceivedSslError is invoked then errorFlow emits AuthenticationError with message`() = runTest {
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository, connectivityCheckRepository)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -244,7 +248,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given HTTP errors when onReceivedHttpError is invoked then errorFlow emits appropriate error`() = runTest {
         val rawUrl = "http://homeassistant.local:8123"
-        val viewModel = ConnectionViewModel(rawUrl, keyChainRepository)
+        val viewModel = ConnectionViewModel(rawUrl, keyChainRepository, connectivityCheckRepository)
         val webView = mockWebView()
 
         turbineScope {
@@ -316,7 +320,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given received error when onReceivedError is invoked then errorFlow emits appropriate error`() = runTest {
         val rawUrl = "http://homeassistant.local:8123"
-        val viewModel = ConnectionViewModel(rawUrl, keyChainRepository)
+        val viewModel = ConnectionViewModel(rawUrl, keyChainRepository, connectivityCheckRepository)
 
         val webView = mockWebView()
 
