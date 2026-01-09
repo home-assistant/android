@@ -63,6 +63,26 @@ class ManualServerViewModelTest {
         }
     }
 
+    @Test
+    fun `Given url with malformed port when onServerUrlChange then isServerUrlValid is false`() = runTest {
+        val malformedUrl = "http://homeassistant.local::8123"
+
+        turbineScope {
+            val serverUrlFlow = viewModel.serverUrlFlow.testIn(backgroundScope)
+            val isServerUrlValidFlow = viewModel.isServerUrlValidFlow.testIn(backgroundScope)
+            assertEquals("", serverUrlFlow.awaitItem())
+            assertFalse(isServerUrlValidFlow.awaitItem())
+
+            // URLUtil may return true but java.net.URL parsing should fail
+            mockUrlUtilIsValidUrl(true)
+
+            viewModel.onServerUrlChange(malformedUrl)
+
+            isServerUrlValidFlow.expectNoEvents()
+            assertEquals(malformedUrl, serverUrlFlow.awaitItem())
+        }
+    }
+
     private fun mockUrlUtilIsValidUrl(isValid: Boolean) {
         mockkStatic(URLUtil::class)
         every { URLUtil.isValidUrl(any()) } returns isValid
