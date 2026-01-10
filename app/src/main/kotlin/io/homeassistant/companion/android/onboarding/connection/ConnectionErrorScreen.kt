@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -50,6 +51,7 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
+import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.util.compose.HAPreviews
 
 private val MaxContentWidth = MaxButtonWidth
@@ -71,10 +73,13 @@ internal fun ConnectionErrorScreen(
 ) {
     val url by viewModel.urlFlow.collectAsState()
     val error by viewModel.errorFlow.collectAsState()
+    val connectivityCheckState by viewModel.connectivityCheckState.collectAsState()
 
     ConnectionErrorScreen(
         url = url,
         error = error,
+        connectivityCheckState = connectivityCheckState,
+        onRetryConnectivityCheck = viewModel::runConnectivityChecks,
         onOpenExternalLink = onOpenExternalLink,
         onCloseClick = onCloseClick,
         modifier = modifier,
@@ -85,6 +90,8 @@ internal fun ConnectionErrorScreen(
 internal fun ConnectionErrorScreen(
     url: String?,
     error: ConnectionError?,
+    connectivityCheckState: ConnectivityCheckState,
+    onRetryConnectivityCheck: () -> Unit,
     onOpenExternalLink: (Uri) -> Unit,
     onCloseClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -103,6 +110,8 @@ internal fun ConnectionErrorScreen(
             title = stringResource(error.title),
             subtitle = stringResource(error.message),
             url = url,
+            connectivityCheckState = connectivityCheckState,
+            onRetryConnectivityCheck = onRetryConnectivityCheck,
             errorDescription = error.errorDetails ?: stringResource(commonR.string.no_description),
             errorType = error.rawErrorType,
             errorDetailsExpanded = errorDetailsExpanded,
@@ -120,6 +129,8 @@ internal fun ConnectionErrorScreen(
     title: String,
     subtitle: String,
     url: String?,
+    connectivityCheckState: ConnectivityCheckState,
+    onRetryConnectivityCheck: () -> Unit,
     errorDescription: String,
     errorType: String,
     errorDetailsExpanded: Boolean,
@@ -137,6 +148,8 @@ internal fun ConnectionErrorScreen(
             errorDescription = errorDescription,
             errorType = errorType,
             url = url,
+            connectivityCheckState = connectivityCheckState,
+            onRetryConnectivityCheck = onRetryConnectivityCheck,
             icon = icon,
             errorDetailsExpanded = errorDetailsExpanded,
             actions = actions,
@@ -153,6 +166,8 @@ private fun ConnectionErrorContent(
     errorDescription: String,
     errorType: String,
     url: String?,
+    connectivityCheckState: ConnectivityCheckState,
+    onRetryConnectivityCheck: () -> Unit,
     icon: ImageVector,
     errorDetailsExpanded: Boolean,
     actions: @Composable () -> Unit,
@@ -174,7 +189,13 @@ private fun ConnectionErrorContent(
 
         UrlInfo(url, onOpenExternalLink = onOpenExternalLink)
 
-        ErrorDetails(errorDescription = errorDescription, errorType = errorType, expanded = errorDetailsExpanded)
+        ErrorDetails(
+            errorDescription = errorDescription,
+            errorType = errorType,
+            connectivityCheckState = connectivityCheckState,
+            onRetryConnectivityCheck = onRetryConnectivityCheck,
+            expanded = errorDetailsExpanded,
+        )
 
         GetMoreHelp(onOpenExternalLink = onOpenExternalLink)
 
@@ -245,35 +266,51 @@ private fun UrlInfo(url: String?, onOpenExternalLink: (Uri) -> Unit) {
 }
 
 @Composable
-private fun ErrorDetails(errorDescription: String, errorType: String, expanded: Boolean) {
+private fun ErrorDetails(
+    errorDescription: String,
+    errorType: String,
+    connectivityCheckState: ConnectivityCheckState,
+    onRetryConnectivityCheck: () -> Unit,
+    expanded: Boolean,
+) {
     HADetails(
         stringResource(commonR.string.connection_error_more_details),
         defaultExpanded = expanded,
         modifier = Modifier.width(MaxContentWidth),
     ) {
-        SelectionContainer {
-            Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3)) {
-                Text(
-                    text = stringResource(commonR.string.connection_error_more_details_description),
-                    style = HATextStyle.Body,
-                )
-                Text(
-                    text = errorDescription,
-                    style = HATextStyle.BodyMedium.copy(
-                        textAlign = TextAlign.Start,
-                    ),
-                )
-                Text(
-                    text = stringResource(commonR.string.connection_error_more_details_error),
-                    style = HATextStyle.Body,
-                )
-                Text(
-                    text = errorType,
-                    style = HATextStyle.BodyMedium.copy(
-                        textAlign = TextAlign.Start,
-                    ),
-                )
+        Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3)) {
+            SelectionContainer {
+                Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3)) {
+                    Text(
+                        text = stringResource(commonR.string.connection_error_more_details_description),
+                        style = HATextStyle.Body,
+                    )
+                    Text(
+                        text = errorDescription,
+                        style = HATextStyle.BodyMedium.copy(
+                            textAlign = TextAlign.Start,
+                        ),
+                    )
+                    Text(
+                        text = stringResource(commonR.string.connection_error_more_details_error),
+                        style = HATextStyle.Body,
+                    )
+                    Text(
+                        text = errorType,
+                        style = HATextStyle.BodyMedium.copy(
+                            textAlign = TextAlign.Start,
+                        ),
+                    )
+                }
             }
+
+            // Connectivity Checks Section
+            Spacer(modifier = Modifier.height(HADimens.SPACE2))
+
+            ConnectivityChecksSection(
+                connectivityCheckState = connectivityCheckState,
+                onRetryConnectivityCheck = onRetryConnectivityCheck,
+            )
         }
     }
 }
@@ -336,6 +373,8 @@ private fun ConnectionErrorScreenPreview() {
             errorType = "",
             errorDescription = "",
             url = "http://ha.org",
+            connectivityCheckState = ConnectivityCheckState(),
+            onRetryConnectivityCheck = {},
             icon = ImageVector.vectorResource(R.drawable.ic_casita_no_connection),
             errorDetailsExpanded = true,
             actions = {

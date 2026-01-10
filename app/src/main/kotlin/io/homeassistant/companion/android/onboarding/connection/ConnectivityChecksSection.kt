@@ -1,0 +1,194 @@
+package io.homeassistant.companion.android.onboarding.connection
+
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Circle
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HAFontSize
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
+import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+
+/**
+ * Reusable connectivity checks section that displays the results of connectivity checks.
+ * Can be embedded in error screens or standalone connectivity check screens.
+ *
+ * @param connectivityCheckState The current connectivity check state
+ * @param onRetryConnectivityCheck Callback when retry is requested
+ * @param modifier Optional modifier
+ */
+@Composable
+fun ConnectivityChecksSection(
+    connectivityCheckState: ConnectivityCheckState,
+    onRetryConnectivityCheck: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
+    ) {
+        Text(
+            text = stringResource(commonR.string.connection_check_title),
+            style = HATextStyle.BodyMedium.copy(textAlign = TextAlign.Start),
+        )
+
+        CheckResultRow(
+            label = stringResource(commonR.string.connection_check_dns),
+            result = connectivityCheckState.dnsResolution,
+        )
+
+        CheckResultRow(
+            label = stringResource(commonR.string.connection_check_port),
+            result = connectivityCheckState.portReachability,
+        )
+
+        CheckResultRow(
+            label = stringResource(commonR.string.connection_check_tls),
+            result = connectivityCheckState.tlsCertificate,
+            successFallback = stringResource(commonR.string.connection_check_tls_success),
+        )
+
+        CheckResultRow(
+            label = stringResource(commonR.string.connection_check_server),
+            result = connectivityCheckState.serverConnection,
+            successFallback = stringResource(commonR.string.connection_check_server_success),
+        )
+
+        Spacer(modifier = Modifier.height(HADimens.SPACE2))
+
+        HAAccentButton(
+            text = stringResource(commonR.string.retry),
+            onClick = onRetryConnectivityCheck,
+            enabled = connectivityCheckState.isComplete,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+private fun CheckResultRow(label: String, result: ConnectivityCheckResult, successFallback: String? = null) {
+    val iconTint by animateColorAsState(
+        targetValue = when (result) {
+            is ConnectivityCheckResult.Success -> LocalHAColorScheme.current.colorFillPrimaryLoudResting
+            is ConnectivityCheckResult.Failure -> LocalHAColorScheme.current.colorOnDangerQuiet
+            is ConnectivityCheckResult.InProgress,
+            is ConnectivityCheckResult.Pending,
+            -> LocalHAColorScheme.current.colorOnNeutralQuiet
+        },
+        label = "iconTint",
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = HADimens.SPACE2),
+        horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AnimatedContent(
+            targetState = result,
+            transitionSpec = {
+                fadeIn() togetherWith fadeOut()
+            },
+            label = "iconAnimation",
+        ) { animatedResult ->
+            Icon(
+                imageVector = when (animatedResult) {
+                    is ConnectivityCheckResult.Success,
+                    is ConnectivityCheckResult.Failure,
+                    -> Icons.Outlined.CheckCircle
+                    is ConnectivityCheckResult.InProgress,
+                    is ConnectivityCheckResult.Pending,
+                    -> Icons.Outlined.Circle
+                },
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = iconTint,
+            )
+        }
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = HATextStyle.BodyMedium,
+            )
+
+            AnimatedContent(
+                targetState = result,
+                transitionSpec = {
+                    fadeIn() togetherWith fadeOut()
+                },
+                label = "resultContent",
+            ) { animatedResult ->
+                when (animatedResult) {
+                    is ConnectivityCheckResult.Success -> {
+                        val details = animatedResult.details ?: successFallback
+                        details?.let {
+                            Text(
+                                text = it,
+                                style = HATextStyle.BodyMedium.copy(fontSize = HAFontSize.S),
+                                color = LocalHAColorScheme.current.colorTextSecondary,
+                            )
+                        }
+                    }
+
+                    is ConnectivityCheckResult.Failure -> {
+                        Text(
+                            text = stringResource(animatedResult.messageResId),
+                            style = HATextStyle.BodyMedium.copy(fontSize = HAFontSize.S),
+                            color = LocalHAColorScheme.current.colorOnDangerQuiet,
+                        )
+                    }
+
+                    is ConnectivityCheckResult.InProgress,
+                    is ConnectivityCheckResult.Pending,
+                    -> {
+                        Text(
+                            text = stringResource(commonR.string.loading),
+                            style = HATextStyle.BodyMedium.copy(fontSize = HAFontSize.S),
+                            color = LocalHAColorScheme.current.colorOnNeutralQuiet,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewConnectivityChecksSection() {
+    HAThemeForPreview {
+        ConnectivityChecksSection(
+            connectivityCheckState = ConnectivityCheckState(),
+            onRetryConnectivityCheck = {},
+        )
+    }
+}
