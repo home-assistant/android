@@ -11,6 +11,8 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
+import io.homeassistant.companion.android.common.util.DefaultFailFastHandler
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
@@ -27,13 +29,21 @@ import io.mockk.unmockkAll
 import io.mockk.verify
 import io.mockk.verifyOrder
 import java.io.IOException
+import kotlin.math.sin
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -45,11 +55,14 @@ import okio.ByteString
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.fail
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
@@ -60,6 +73,18 @@ class WebSocketCoreImplTest {
     private lateinit var mockConnection: WebSocket
     private lateinit var webSocketCore: WebSocketCoreImpl
     private lateinit var webSocketListener: WebSocketListener
+
+    /**
+     * Computes a deterministic delay based on the index using a sine function.
+     * Returns a delay that is always positive but non linear for concurrent test scenarios.
+     * Values are between 5 and 25.
+     */
+    private fun deterministicDelay(index: Long): Long = ((sin(index.toDouble()) + 1.5) * 10).toLong()
+
+    @BeforeEach
+    fun setup() {
+        FailFast.setHandler(DefaultFailFastHandler)
+    }
 
     @AfterEach
     fun tearDown() {
@@ -376,7 +401,7 @@ sendMessage()
         assertNotNull(response)
         assertEquals(2, response.id)
         assertTrue(response is MessageSocketResponse)
-        assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
+        assertTrue(webSocketCore.activeMessages.isEmpty())
     }
 
     @Test
@@ -391,7 +416,7 @@ sendMessage()
 
         coVerify { mockConnection.send(expectedMessageSent) }
         assertNull(response)
-        assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
+        assertTrue(webSocketCore.activeMessages.isEmpty())
     }
 
     @Test
@@ -429,6 +454,33 @@ sendMessage()
     }
 
     @Test
+    fun `Given an active connection waiting for response When sendMessage coroutine is cancelled Then message is removed from activeMessages`() = runTest {
+        setupServer()
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        // Don't mock response so sendMessage hangs waiting for it
+        every { mockConnection.send(match<String> { it.contains(""""id":2""") }) } returns true
+
+        // Start sendMessage in a cancellable coroutine
+        val sendJob = async {
+            webSocketCore.sendMessage(mapOf("type" to "test"))
+        }
+        runCurrent()
+
+        // Message should be in activeMessages while waiting for response
+        assertEquals(1, webSocketCore.activeMessages.size)
+        assertTrue(webSocketCore.activeMessages.containsKey(2L))
+
+        // Cancel the sendMessage coroutine
+        sendJob.cancel(CancellationException("Test cancellation"))
+        runCurrent()
+
+        // Message should be removed from activeMessages after cancellation
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+    }
+
+    @Test
     fun `Given reconnection to a closed connection When sendMessage is invoked Then the unique ID is not reset`() = runTest {
         setupServer()
         prepareAuthenticationAnswer()
@@ -457,7 +509,7 @@ sendMessage()
 
         // We sent 1 supported_features message then 5 messages then 1 supported_features message then 1 message
         assertTrue(request.captured.contains(""""id":8"""))
-        assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
+        assertTrue(webSocketCore.activeMessages.isEmpty())
     }
 
     /*
@@ -493,10 +545,10 @@ sendBytes()
     }
 
     @Test
-    fun `Given an invalid url When sendBytes is invoked Then it returns null`() = runTest {
+    fun `Given an invalid url When sendBytes is invoked Then it returns false`() = runTest {
         setupServer("an invalid url ")
 
-        assertNull(webSocketCore.sendBytes(byteArrayOf(1, 2, 3)))
+        assertFalse(webSocketCore.sendBytes(byteArrayOf(1, 2, 3)))
         assertNull(webSocketCore.getConnectionState())
     }
 
@@ -517,7 +569,7 @@ subscribeTo
         )
 
         coVerify { mockConnection.send(match<String> { it.contains("testSubscription") }) }
-        assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
+        assertTrue(webSocketCore.activeMessages.isEmpty())
     }
 
     @Test
@@ -542,13 +594,9 @@ subscribeTo
         coVerify { mockConnection.send(match<String> { it.contains("testSubscription") }) }
         assertEquals(1, webSocketCore.activeMessages.size)
         webSocketCore.activeMessages.values.first().apply {
-            // asserts the internal of the implementation to check that the active message is an event
-            assertNotNull(eventFlow)
-            assertNotNull(onEvent)
-            assertNotNull(onResponse)
-            assertTrue(onResponse!!.isCompleted)
-            assertNotNull(message)
-            assertEquals(expectedData.plus("type" to expectedType), message)
+            assertTrue(this is ActiveMessage.Subscription)
+            assertTrue(responseDeferred.isCompleted)
+            assertEquals(expectedData.plus("type" to expectedType), (this as ActiveMessage.Subscription).request.message)
         }
     }
 
@@ -583,7 +631,7 @@ subscribeTo
         }
 
         advanceUntilIdle()
-        assertEquals(emptyMap<Long, WebSocketRequest>(), webSocketCore.activeMessages)
+        assertTrue(webSocketCore.activeMessages.isEmpty())
 
         verifyOrder {
             mockConnection.send(match<String> { it.contains("testSubscription") && it.contains(""""id":2""") })
@@ -602,7 +650,12 @@ subscribeTo
         assertTrue(webSocketCore.connect())
 
         // Dummy request to create a fake active message
-        webSocketCore.activeMessages[42] = WebSocketRequest(emptyMap<String, String>())
+        webSocketCore.activeMessages[42] = ActiveMessage.Subscription(
+            eventFlow = mockk(),
+            onEvent = mockk(),
+            responseDeferred = CompletableDeferred(),
+            request = WebSocketRequest(emptyMap<String, String>()),
+        )
 
         // Message sent by subscribeTo to request for events
         mockResultSuccessForId(2)
@@ -768,9 +821,15 @@ misc
      */
 
     @Test
-    fun `Given an unknown event received When listening for messages Then it unsubscribes from the event`() = runTest {
+    fun `Given an unknown event received When listening for messages Then it unsubscribes from the event or crash in Debug`() = runTest {
         // The unsubscribes message is sent from the background so we need to control it
         val customScope = TestScope(UnconfinedTestDispatcher())
+        var errorMessageCaptured: String? = null
+
+        FailFast.setHandler { error, _ ->
+            errorMessageCaptured = error.message
+        }
+
         setupServer(backgroundScope = customScope)
         prepareAuthenticationAnswer()
         assertTrue(webSocketCore.connect())
@@ -782,6 +841,7 @@ misc
         customScope.advanceUntilIdle()
         advanceUntilIdle()
         coVerify { mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""id":2""") }) }
+        assertEquals("Event should always be associated to a ActiveMessage.Subscription message", errorMessageCaptured)
     }
 
     /*
@@ -872,5 +932,252 @@ misc
             closeConnection()
             advanceUntilIdle()
         }
+    }
+
+    /*
+    Concurrency tests
+     */
+
+    @Test
+    fun `Given an active connection When multiple sendMessage calls are made concurrently Then messages are serialized in order`() = runTest {
+        setupServer()
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        val sentMessages = mutableListOf<String>()
+        every { mockConnection.send(match<String> { it.contains(""""type":"test"""") }) } answers {
+            sentMessages.add(firstArg())
+            // Simulate response for each message
+            val id = Regex(""""id":(\d+)""").find(firstArg<String>())?.groupValues?.get(1)?.toLong()
+            if (id != null) {
+                webSocketListener.onMessage(
+                    mockConnection,
+                    """{"id":$id,"type":"result","success":true,"result":{}}""",
+                )
+            } else {
+                fail { "Missing id" }
+            }
+            true
+        }
+
+        // Launch multiple sendMessage calls concurrently
+        val nbMessages = 50
+        val jobs = (1..nbMessages).map { i ->
+            async {
+                delay(deterministicDelay(i.toLong()))
+                webSocketCore.sendMessage(mapOf("type" to "test", "value" to i))
+            }
+        }
+
+        // Wait for all to complete
+        jobs.awaitAll()
+        advanceUntilIdle()
+
+        // Verify all messages were sent
+        assertEquals(nbMessages, sentMessages.size)
+
+        // Verify IDs are sequential (starting from 2, after supported_features which is 1)
+        val ids = sentMessages.map { msg ->
+            Regex(""""id":(\d+)""").find(msg)?.groupValues?.get(1)?.toLong()
+        }
+        assertEquals((2L..51L).toList(), ids)
+
+        // Verify the "value" field is NOT in sequential order (proving async execution)
+        val values = sentMessages.map { msg ->
+            Regex(""""value":(\d+)""").find(msg)?.groupValues?.get(1)?.toInt()
+        }
+        // Values should contain all 1..50 but NOT in order (due to random delays)
+        assertEquals((1..50).toSet(), values.toSet())
+        assertNotEquals((1..50).toList(), values, "Values should not be in sequential order - async execution should shuffle them")
+    }
+
+    @Test
+    fun `Given no connection When multiple connect calls are made concurrently Then only one connection is created`() = runTest {
+        setupServer()
+        prepareAuthenticationAnswer()
+
+        // Launch multiple connect calls concurrently
+        val jobs = (1..50).map { i ->
+            async {
+                delay(deterministicDelay(i.toLong()))
+                webSocketCore.connect()
+            }
+        }
+
+        // Wait for all to complete
+        val results = jobs.awaitAll()
+
+        // All should succeed
+        assertTrue(results.all { it })
+
+        // Only one WebSocket should be created
+        verify(exactly = 1) { mockOkHttpClient.newWebSocket(any(), any()) }
+    }
+
+    @Test
+    fun `Given subscription setup in progress When coroutine is cancelled Then activeMessages is cleaned up`() = runTest {
+        setupServer()
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        // Don't mock response so subscribeTo hangs waiting for confirmation
+        every { mockConnection.send(match<String> { it.contains("test_subscription") }) } returns true
+
+        val subscribeJob = async {
+            webSocketCore.subscribeTo<String>(
+                "test_subscription",
+                emptyMap(),
+            )
+        }
+        runCurrent()
+
+        // auth - supported_features - test_subscription
+        verify(exactly = 3) { mockConnection.send(any<String>()) }
+
+        // Message should be in activeMessages while waiting for confirmation
+        assertEquals(1, webSocketCore.activeMessages.size)
+
+        // Cancel the subscription coroutine
+        subscribeJob.cancel()
+        runCurrent()
+
+        // activeMessages should be cleaned up
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+
+        verify(exactly = 3) { mockConnection.send(any<String>()) }
+    }
+
+    @Test
+    fun `Given a message waiting for response When response arrives after timeout Then it is handled gracefully`() = runTest {
+        setupServer()
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        every { mockConnection.send(match<String> { it.contains(""""id":2""") }) } returns true
+
+        // Use a short timeout for the test
+        val timeout = 5.seconds
+        val sendJob = async {
+            webSocketCore.sendMessage(WebSocketRequest(mapOf("type" to "test"), timeout))
+        }
+        runCurrent()
+
+        // Message should be in activeMessages while waiting
+        assertEquals(1, webSocketCore.activeMessages.size)
+
+        // Advance time but not past timeout - should still be waiting
+        advanceTimeBy(timeout.minus(1.seconds))
+        assertFalse(sendJob.isCompleted, "Should still be waiting before timeout")
+        assertEquals(1, webSocketCore.activeMessages.size)
+
+        // Advance past timeout
+        advanceTimeBy(2.seconds)
+        assertTrue(sendJob.isCompleted, "Should complete after timeout")
+
+        val response = sendJob.await()
+        assertNull(response)
+        // activeMessages should be cleaned up after timeout
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+
+        // Now send a late response - should not cause any issues
+        webSocketListener.onMessage(
+            mockConnection,
+            """{"id":2,"type":"result","success":true,"result":{}}""",
+        )
+        advanceUntilIdle()
+
+        // Should still be empty
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+    }
+
+    @Test
+    fun `Given a message waiting for response When response arrives after cancel Then it is handled gracefully`() = runTest {
+        setupServer()
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        every { mockConnection.send(match<String> { it.contains(""""id":2""") }) } returns true
+
+        // Use a short timeout for the test
+        val timeout = 5.seconds
+        val sendJob = async {
+            webSocketCore.sendMessage(WebSocketRequest(mapOf("type" to "test"), timeout))
+        }
+        runCurrent()
+
+        // Message should be in activeMessages while waiting
+        assertEquals(1, webSocketCore.activeMessages.size)
+
+        // Advance time but not past timeout - should still be waiting
+        advanceTimeBy(timeout.minus(1.seconds))
+        assertFalse(sendJob.isCompleted, "Should still be waiting before timeout")
+        assertEquals(1, webSocketCore.activeMessages.size)
+
+        sendJob.cancel()
+        runCurrent()
+
+        // activeMessages should be cleaned up after canceling
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+
+        // Now send a late response - should not cause any issues
+        webSocketListener.onMessage(
+            mockConnection,
+            """{"id":2,"type":"result","success":true,"result":{}}""",
+        )
+        advanceUntilIdle()
+
+        // Should still be empty
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+    }
+
+    @Test
+    fun `Given connection becomes null during send When sendMessage is invoked Then it returns null`() = runTest {
+        setupServer()
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        // Close connection when trying to send
+        every { mockConnection.send(match<String> { it.contains(""""type":"test"""") }) } answers {
+            closeConnection()
+            true
+        }
+
+        val response = webSocketCore.sendMessage(mapOf("type" to "test"))
+
+        assertNull(response)
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+    }
+
+    @Test
+    fun `Given a message received response When duplicate response arrives Then warning is logged and no crash occurs`() = runTest {
+        setupServer()
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        // First response
+        every { mockConnection.send(match<String> { it.contains(""""id":2""") }) } answers {
+            webSocketListener.onMessage(
+                mockConnection,
+                """{"id":2,"type":"result","success":true,"result":{}}""",
+            )
+            true
+        }
+
+        val response = webSocketCore.sendMessage(mapOf("type" to "test"))
+        assertNotNull(response)
+        advanceUntilIdle()
+
+        // activeMessages should be cleaned up
+        assertTrue(webSocketCore.activeMessages.isEmpty())
+
+        // Send duplicate response - should be handled gracefully
+        webSocketListener.onMessage(
+            mockConnection,
+            """{"id":2,"type":"result","success":true,"result":{"duplicate":true}}""",
+        )
+        advanceUntilIdle()
+
+        // still empty
+        assertTrue(webSocketCore.activeMessages.isEmpty())
     }
 }
