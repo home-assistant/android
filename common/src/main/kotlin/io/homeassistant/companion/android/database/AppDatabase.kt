@@ -182,7 +182,6 @@ abstract class AppDatabase : RoomDatabase() {
             appContext = context
             return Room
                 .databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
-                .allowMainThreadQueries()
                 .addMigrations(
                     MIGRATION_1_2,
                     MIGRATION_2_3,
