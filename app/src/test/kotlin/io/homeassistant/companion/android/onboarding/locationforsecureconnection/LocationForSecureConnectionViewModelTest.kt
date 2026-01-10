@@ -5,7 +5,6 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
-import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
@@ -35,7 +34,6 @@ class LocationForSecureConnectionViewModelTest {
     private fun createServer(allowInsecureConnection: Boolean? = null) = Server(
         id = serverId,
         _name = "Test Server",
-        type = ServerType.DEFAULT,
         connection = ServerConnectionInfo(
             externalUrl = "https://example.com",
             allowInsecureConnection = allowInsecureConnection,

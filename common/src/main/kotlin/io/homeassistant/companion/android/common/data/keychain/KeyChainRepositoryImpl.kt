@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.common.data.keychain
 import android.content.Context
 import android.security.KeyChain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
-import java.lang.UnsupportedOperationException
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
@@ -11,7 +10,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-class KeyChainRepositoryImpl @Inject constructor(private val prefsRepository: PrefsRepository) : KeyChainRepository {
+internal class KeyChainRepositoryImpl @Inject constructor(private val prefsRepository: PrefsRepository) :
+    KeyChainRepository {
 
     private var alias: String? = null
     private var key: PrivateKey? = null

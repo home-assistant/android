@@ -9,7 +9,7 @@ interface DeveloperSettingsPresenter {
     fun getPreferenceDataStore(): PreferenceDataStore
     fun onFinish()
 
-    fun hasMultipleServers(): Boolean
+    suspend fun hasMultipleServers(): Boolean
 
     fun appSupportsThread(): Boolean
     fun runThreadDebug(context: Context, serverId: Int)

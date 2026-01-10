@@ -37,7 +37,7 @@ abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerPar
         val enabledSensorCount = sensorDao.getEnabledCount() ?: 0
         if (
             enabledSensorCount > 0 ||
-            serverManager.defaultServers.any {
+            serverManager.servers().any {
                 serverManager.integrationRepository(it.id).isHomeAssistantVersionAtLeast(2022, 6, 0)
             }
         ) {
@@ -76,7 +76,7 @@ abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerPar
 
         // Cleanup orphaned sensors that may have been created by a slow or long running update
         // writing data when deleting the server.
-        val currentServerIds = serverManager.defaultServers.map { it.id }
+        val currentServerIds = serverManager.servers().map { it.id }
         val orphanedSensors = sensorDao.getAllExceptServer(currentServerIds)
         if (orphanedSensors.any()) {
             Timber.i("Cleaning up ${orphanedSensors.size} orphaned sensor entries")

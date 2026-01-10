@@ -99,7 +99,7 @@ private class LocalStorageWithMigration(
     }
 }
 
-class PrefsRepositoryImpl @Inject constructor(
+internal class PrefsRepositoryImpl @Inject constructor(
     @NamedThemesStorage localStorage: LocalStorage,
     @NamedIntegrationStorage integrationStorage: LocalStorage,
 ) : PrefsRepository {

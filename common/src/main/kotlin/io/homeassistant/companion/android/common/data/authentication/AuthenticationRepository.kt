@@ -5,7 +5,6 @@ import io.homeassistant.companion.android.common.data.authentication.impl.Authen
 
 interface AuthenticationRepository {
 
-    suspend fun registerAuthorizationCode(authorizationCode: String)
     suspend fun registerRefreshToken(refreshToken: String)
 
     suspend fun retrieveExternalAuthentication(forceRefresh: Boolean): String
@@ -18,8 +17,6 @@ interface AuthenticationRepository {
 
     suspend fun getSessionState(): SessionState
 
-    suspend fun buildAuthenticationUrl(baseUrl: String): String
-
     suspend fun buildBearerToken(): String
 
     suspend fun setLockEnabled(enabled: Boolean)
@@ -30,6 +27,6 @@ interface AuthenticationRepository {
 }
 
 @AssistedFactory
-interface AuthenticationRepositoryFactory {
+internal interface AuthenticationRepositoryFactory {
     fun create(serverId: Int): AuthenticationRepositoryImpl
 }

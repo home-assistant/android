@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.authentication.ServerRegistrationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -14,8 +15,8 @@ import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
-import io.homeassistant.companion.android.database.server.ServerType
 import io.homeassistant.companion.android.database.server.ServerUserInfo
+import io.homeassistant.companion.android.database.server.TemporaryServer
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.NameYourDeviceRoute
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
@@ -47,13 +48,15 @@ class NameYourDeviceViewModelTest {
 
     private val route: NameYourDeviceRoute = NameYourDeviceRoute("http://ha.local", "test_auth_code")
     private val serverManager: ServerManager = mockk()
+
+    private val serverRegistrationRepository: ServerRegistrationRepository = mockk()
+    private val authenticationRepository: AuthenticationRepository = mockk()
     private val appVersionProvider: AppVersionProvider = AppVersionProvider {
         AppVersion.from("test", 42)
     }
     private val messagingTokenProvider: MessagingTokenProvider = MessagingTokenProvider {
         return@MessagingTokenProvider MessagingToken("test_messaging_token")
     }
-    private val authRepository: AuthenticationRepository = mockk()
     private val integrationRepository: IntegrationRepository = mockk()
 
     private lateinit var viewModel: NameYourDeviceViewModel
@@ -61,16 +64,24 @@ class NameYourDeviceViewModelTest {
     private fun createServer(serverId: Int, externalUrl: String = route.url) = Server(
         id = serverId,
         _name = "Test Server",
-        type = ServerType.DEFAULT,
         connection = ServerConnectionInfo(externalUrl = externalUrl),
         session = ServerSessionInfo(),
         user = ServerUserInfo(),
     )
 
+    private fun createTemporaryServer(
+        externalUrl: String = route.url,
+        allowInsecureConnection: Boolean? = null,
+    ) = TemporaryServer(
+        externalUrl = externalUrl,
+        allowInsecureConnection = allowInsecureConnection,
+        session = ServerSessionInfo(),
+    )
+
     @BeforeEach
     fun setup() {
-        coEvery { serverManager.authenticationRepository(any()) } returns authRepository
         coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
+        coEvery { serverManager.authenticationRepository(any()) } returns authenticationRepository
         coEvery { serverManager.activateServer(any()) } just Runs
         coEvery { serverManager.getServer(any<Int>()) } answers { createServer(firstArg<Int>()) }
         coEvery { serverManager.updateServer(any()) } just Runs
@@ -78,6 +89,7 @@ class NameYourDeviceViewModelTest {
         viewModel = NameYourDeviceViewModel(
             route,
             serverManager,
+            serverRegistrationRepository,
             appVersionProvider,
             messagingTokenProvider,
             defaultName = DEFAULT_DEVICE_NAME,
@@ -132,10 +144,15 @@ class NameYourDeviceViewModelTest {
     @Test
     fun `Given successful add server when onSaveClick then emits DeviceNameSaved event`() = runTest {
         val testServerId = 1
-        val tempServerId = 0
-        val serverSlot = slot<Server>()
-        coEvery { serverManager.addServer(capture(serverSlot)) } returns tempServerId
-        coEvery { authRepository.registerAuthorizationCode(route.authCode) } just Runs
+        val tempServerSlot = slot<TemporaryServer>()
+        coEvery {
+            serverRegistrationRepository.registerAuthorizationCode(
+                url = route.url,
+                authorizationCode = route.authCode,
+                allowInsecureConnection = null,
+            )
+        } returns createTemporaryServer()
+        coEvery { serverManager.addServer(capture(tempServerSlot)) } returns testServerId
         coEvery {
             integrationRepository.registerDevice(
                 DeviceRegistration(
@@ -145,7 +162,6 @@ class NameYourDeviceViewModelTest {
                 ),
             )
         } just Runs
-        coEvery { serverManager.convertTemporaryServer(tempServerId) } returns testServerId
 
         turbineScope {
             val navEvents = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -158,14 +174,13 @@ class NameYourDeviceViewModelTest {
             assertEquals(testServerId, (event as NameYourDeviceNavigationEvent.DeviceNameSaved).serverId)
 
             coVerify(exactly = 1) {
+                serverRegistrationRepository.registerAuthorizationCode(route.url, route.authCode, null)
                 serverManager.addServer(any())
-                authRepository.registerAuthorizationCode(route.authCode)
                 integrationRepository.registerDevice(any())
-                serverManager.convertTemporaryServer(tempServerId)
                 serverManager.activateServer(testServerId)
             }
             // HTTP URL means allowInsecureConnection is null (not enforced)
-            assertEquals(null, serverSlot.captured.connection.allowInsecureConnection)
+            assertEquals(null, tempServerSlot.captured.allowInsecureConnection)
         }
     }
 
@@ -176,9 +191,14 @@ class NameYourDeviceViewModelTest {
         advanceUntilIdle()
 
         val testServerId = 1
-        val tempServerId = 0
-        coEvery { serverManager.addServer(any()) } returns tempServerId
-        coEvery { authRepository.registerAuthorizationCode(route.authCode) } just Runs
+        coEvery {
+            serverRegistrationRepository.registerAuthorizationCode(
+                url = route.url,
+                authorizationCode = route.authCode,
+                allowInsecureConnection = null,
+            )
+        } returns createTemporaryServer()
+        coEvery { serverManager.addServer(any()) } returns testServerId
         coEvery {
             integrationRepository.registerDevice(
                 DeviceRegistration(
@@ -188,7 +208,6 @@ class NameYourDeviceViewModelTest {
                 ),
             )
         } just Runs
-        coEvery { serverManager.convertTemporaryServer(tempServerId) } returns testServerId
 
         turbineScope {
             val navEvents = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -218,19 +237,26 @@ class NameYourDeviceViewModelTest {
 
     @Test
     fun `Given public secure url when onSaveClick then emits DeviceNameSaved with hasPlainTextAccess to false and isPubliclyAccessible true and enforces secure connection`() = runTest {
+        val secureRoute = NameYourDeviceRoute("https://www.home-assistant.io", "auth_code")
         viewModel = NameYourDeviceViewModel(
-            NameYourDeviceRoute("https://www.home-assistant.io", "auth_code"),
+            secureRoute,
             serverManager,
+            serverRegistrationRepository,
             appVersionProvider,
             messagingTokenProvider,
             defaultName = DEFAULT_DEVICE_NAME,
         )
 
         val testServerId = 1
-        val tempServerId = 0
-        val serverSlot = slot<Server>()
-        coEvery { serverManager.addServer(capture(serverSlot)) } returns tempServerId
-        coEvery { authRepository.registerAuthorizationCode("auth_code") } just Runs
+        val tempServerSlot = slot<TemporaryServer>()
+        coEvery {
+            serverRegistrationRepository.registerAuthorizationCode(
+                url = secureRoute.url,
+                authorizationCode = secureRoute.authCode,
+                allowInsecureConnection = false,
+            )
+        } returns createTemporaryServer(externalUrl = secureRoute.url, allowInsecureConnection = false)
+        coEvery { serverManager.addServer(capture(tempServerSlot)) } returns testServerId
         coEvery {
             integrationRepository.registerDevice(
                 DeviceRegistration(
@@ -240,7 +266,6 @@ class NameYourDeviceViewModelTest {
                 ),
             )
         } just Runs
-        coEvery { serverManager.convertTemporaryServer(tempServerId) } returns testServerId
 
         turbineScope {
             val navEvents = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -257,14 +282,20 @@ class NameYourDeviceViewModelTest {
             coVerify(exactly = 1) {
                 serverManager.activateServer(testServerId)
             }
-            // Secure connection is enforced during server creation, not via updateServer
-            assertEquals(false, serverSlot.captured.connection.allowInsecureConnection)
+            // Secure connection is enforced during server creation
+            assertEquals(false, tempServerSlot.captured.allowInsecureConnection)
         }
     }
 
     @Test
-    fun `Given serverManager addServer throws when onSaveClick then emits Error event and attempts no cleanup`() = runTest {
-        coEvery { serverManager.addServer(any()) } throws RuntimeException("Failed to add server")
+    fun `Given serverRegistrationRepository registerAuthorizationCode returns null when onSaveClick then emits Error event and attempts no cleanup`() = runTest {
+        coEvery {
+            serverRegistrationRepository.registerAuthorizationCode(
+                url = route.url,
+                authorizationCode = route.authCode,
+                allowInsecureConnection = null,
+            )
+        } returns null
 
         turbineScope {
             val navEvents = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -275,23 +306,24 @@ class NameYourDeviceViewModelTest {
             assertError(navEvents.awaitItem(), commonR.string.webview_error)
 
             coVerify(exactly = 0) {
-                authRepository.registerAuthorizationCode(any())
+                serverManager.addServer(any<TemporaryServer>())
                 integrationRepository.registerDevice(any())
-                serverManager.convertTemporaryServer(any())
                 serverManager.activateServer(any())
-                authRepository.revokeSession()
+                authenticationRepository.revokeSession()
                 serverManager.removeServer(any())
             }
         }
     }
 
     @Test
-    fun `Given authRepository Throws when onSaveClick then emits Error event and attempts cleanup`() = runTest {
-        val tempServerId = 0
-        coEvery { serverManager.addServer(any()) } returns tempServerId
-        coEvery { authRepository.registerAuthorizationCode(route.authCode) } throws RuntimeException("Auth code registration failed")
-        coEvery { authRepository.revokeSession() } just Runs
-        coEvery { serverManager.removeServer(tempServerId) } just Runs
+    fun `Given serverRegistrationRepository Throws when onSaveClick then emits Error event and attempts no cleanup`() = runTest {
+        coEvery {
+            serverRegistrationRepository.registerAuthorizationCode(
+                url = route.url,
+                authorizationCode = route.authCode,
+                allowInsecureConnection = null,
+            )
+        } throws RuntimeException("Auth code registration failed")
 
         turbineScope {
             val navEvents = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -302,14 +334,11 @@ class NameYourDeviceViewModelTest {
             assertError(navEvents.awaitItem(), commonR.string.webview_error)
 
             coVerify(exactly = 1) {
-                serverManager.addServer(any())
-                authRepository.registerAuthorizationCode(route.authCode)
-                authRepository.revokeSession()
-                serverManager.removeServer(tempServerId)
+                serverRegistrationRepository.registerAuthorizationCode(route.url, route.authCode, null)
             }
             coVerify(exactly = 0) {
+                serverManager.addServer(any<TemporaryServer>())
                 integrationRepository.registerDevice(any())
-                serverManager.convertTemporaryServer(any())
                 serverManager.activateServer(any())
             }
         }
@@ -317,12 +346,18 @@ class NameYourDeviceViewModelTest {
 
     @Test
     fun `Given integrationRepository registerDevice throws when onSaveClick then emits error event and attempts cleanup`() = runTest {
-        val tempServerId = 0
-        coEvery { serverManager.addServer(any()) } returns tempServerId
-        coEvery { authRepository.registerAuthorizationCode(route.authCode) } just Runs
+        val testServerId = 1
+        coEvery {
+            serverRegistrationRepository.registerAuthorizationCode(
+                url = route.url,
+                authorizationCode = route.authCode,
+                allowInsecureConnection = null,
+            )
+        } returns createTemporaryServer()
+        coEvery { serverManager.addServer(any()) } returns testServerId
         coEvery { integrationRepository.registerDevice(any()) } throws RuntimeException("Device registration failed")
-        coEvery { authRepository.revokeSession() } just Runs
-        coEvery { serverManager.removeServer(tempServerId) } just Runs
+        coEvery { authenticationRepository.revokeSession() } just Runs
+        coEvery { serverManager.removeServer(testServerId) } just Runs
 
         turbineScope {
             val navEvents = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -332,55 +367,27 @@ class NameYourDeviceViewModelTest {
 
             assertError(navEvents.awaitItem(), commonR.string.webview_error)
             coVerify(exactly = 1) {
-                serverManager.addServer(any())
-                authRepository.registerAuthorizationCode(route.authCode)
+                serverRegistrationRepository.registerAuthorizationCode(route.url, route.authCode, null)
+                serverManager.addServer(any<TemporaryServer>())
                 integrationRepository.registerDevice(any())
-                authRepository.revokeSession()
-                serverManager.removeServer(tempServerId)
+                authenticationRepository.revokeSession()
+                serverManager.removeServer(testServerId)
             }
             coVerify(exactly = 0) {
-                serverManager.convertTemporaryServer(any())
                 serverManager.activateServer(any())
             }
         }
     }
 
     @Test
-    fun `Given serverManager convertTemporaryServer throws when onSaveClick then emits error event and attempts cleanup`() = runTest {
-        val tempServerId = 0
-        coEvery { serverManager.addServer(any()) } returns tempServerId
-        coEvery { authRepository.registerAuthorizationCode(route.authCode) } just Runs
-        coEvery { integrationRepository.registerDevice(any()) } just Runs
-        coEvery { serverManager.convertTemporaryServer(tempServerId) } throws IllegalStateException("Server still temporary")
-        coEvery { authRepository.revokeSession() } just Runs
-        coEvery { serverManager.removeServer(tempServerId) } just Runs
-
-        turbineScope {
-            val navEvents = viewModel.navigationEventsFlow.testIn(backgroundScope)
-
-            viewModel.onSaveClick()
-            advanceUntilIdle()
-
-            assertError(navEvents.awaitItem(), commonR.string.webview_error)
-            coVerify(exactly = 1) {
-                serverManager.addServer(any())
-                authRepository.registerAuthorizationCode(route.authCode)
-                integrationRepository.registerDevice(any())
-                serverManager.convertTemporaryServer(tempServerId)
-                authRepository.revokeSession()
-                serverManager.removeServer(tempServerId)
-            }
-            coVerify(exactly = 0) { serverManager.activateServer(any()) }
-        }
-    }
-
-    @Test
-    fun `Given registerAuthCode throws HttpException 404 when onSaveClick then emits error with error_with_registration message`() = runTest {
-        val tempServerId = 0
-        coEvery { serverManager.addServer(any()) } returns tempServerId
-        coEvery { authRepository.registerAuthorizationCode(route.authCode) } throws HttpException(Response.error<Any>(404, mockk(relaxed = true)))
-        coEvery { authRepository.revokeSession() } just Runs
-        coEvery { serverManager.removeServer(tempServerId) } just Runs
+    fun `Given registerAuthorizationCode throws HttpException 404 when onSaveClick then emits error with error_with_registration message`() = runTest {
+        coEvery {
+            serverRegistrationRepository.registerAuthorizationCode(
+                url = route.url,
+                authorizationCode = route.authCode,
+                allowInsecureConnection = null,
+            )
+        } throws HttpException(Response.error<Any>(404, mockk(relaxed = true)))
 
         turbineScope {
             val navEvents = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -391,13 +398,15 @@ class NameYourDeviceViewModelTest {
     }
 
     @Test
-    fun `Given registerAuthCode throws SSLHandshakeException when onSaveClick then emits error with webview_error_FAILED_SSL_HANDSHAKE message`() = runTest {
-        val tempServerId = 0
+    fun `Given registerAuthorizationCode throws SSLHandshakeException when onSaveClick then emits error with webview_error_FAILED_SSL_HANDSHAKE message`() = runTest {
         val exception = SSLHandshakeException("SSL handshake failed")
-        coEvery { serverManager.addServer(any()) } returns tempServerId
-        coEvery { authRepository.registerAuthorizationCode(route.authCode) } throws exception
-        coEvery { authRepository.revokeSession() } just Runs
-        coEvery { serverManager.removeServer(tempServerId) } just Runs
+        coEvery {
+            serverRegistrationRepository.registerAuthorizationCode(
+                url = route.url,
+                authorizationCode = route.authCode,
+                allowInsecureConnection = null,
+            )
+        } throws exception
 
         turbineScope {
             val navEvents = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -408,12 +417,14 @@ class NameYourDeviceViewModelTest {
     }
 
     @Test
-    fun `Given registerAuthCode throws SSLException when onSaveClick then emits error with webview_error_SSL_INVALID message`() = runTest {
-        val tempServerId = 0
-        coEvery { serverManager.addServer(any()) } returns tempServerId
-        coEvery { authRepository.registerAuthorizationCode(route.authCode) } throws SSLException("SSL invalid")
-        coEvery { authRepository.revokeSession() } just Runs
-        coEvery { serverManager.removeServer(tempServerId) } just Runs
+    fun `Given registerAuthorizationCode throws SSLException when onSaveClick then emits error with webview_error_SSL_INVALID message`() = runTest {
+        coEvery {
+            serverRegistrationRepository.registerAuthorizationCode(
+                url = route.url,
+                authorizationCode = route.authCode,
+                allowInsecureConnection = null,
+            )
+        } throws SSLException("SSL invalid")
 
         turbineScope {
             val navEvents = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -424,12 +435,18 @@ class NameYourDeviceViewModelTest {
     }
 
     @Test
-    fun `Given adding server when onSaveClick then isSavingFlow is properly updated`() = runTest {
+    fun `Given registering server when onSaveClick then isSavingFlow is properly updated`() = runTest {
         viewModel.isSavingFlow.test {
             assertFalse(awaitItem())
-            coEvery { serverManager.addServer(any()) } coAnswers {
+            coEvery {
+                serverRegistrationRepository.registerAuthorizationCode(
+                    url = route.url,
+                    authorizationCode = route.authCode,
+                    allowInsecureConnection = null,
+                )
+            } coAnswers {
                 assertTrue(awaitItem())
-                throw RuntimeException("Failed to add server")
+                throw RuntimeException("Failed to register")
             }
             viewModel.onSaveClick()
             advanceUntilIdle()
@@ -441,14 +458,20 @@ class NameYourDeviceViewModelTest {
     fun `Given currently saving when isSaveClickableFlow collecting then isSaveClickable is updating accordingly`() = runTest {
         viewModel.isSaveClickableFlow.test {
             assertTrue(awaitItem())
-            coEvery { serverManager.addServer(any()) } coAnswers {
+            coEvery {
+                serverRegistrationRepository.registerAuthorizationCode(
+                    url = route.url,
+                    authorizationCode = route.authCode,
+                    allowInsecureConnection = null,
+                )
+            } coAnswers {
                 assertFalse(awaitItem())
-                throw RuntimeException("Failed to add server")
+                throw RuntimeException("Failed to register")
             }
             viewModel.onSaveClick()
             advanceUntilIdle()
             assertTrue(awaitItem())
-            coVerify { serverManager.addServer(any()) }
+            coVerify { serverRegistrationRepository.registerAuthorizationCode(route.url, route.authCode, null) }
         }
     }
 

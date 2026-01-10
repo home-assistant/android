@@ -57,7 +57,7 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun hasMultipleServers(): Boolean = serverManager.defaultServers.size > 1
+    override suspend fun hasMultipleServers(): Boolean = serverManager.servers().size > 1
 
     override fun appSupportsThread(): Boolean = threadManager.appSupportsThread()
 

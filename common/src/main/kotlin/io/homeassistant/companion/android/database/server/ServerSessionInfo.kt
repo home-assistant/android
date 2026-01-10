@@ -1,7 +1,10 @@
 package io.homeassistant.companion.android.database.server
 
+import android.os.Parcelable
 import androidx.room.ColumnInfo
+import kotlinx.parcelize.Parcelize
 
+@Parcelize
 data class ServerSessionInfo(
     @ColumnInfo(name = "access_token")
     val accessToken: String? = null,
@@ -13,7 +16,7 @@ data class ServerSessionInfo(
     val tokenType: String? = null,
     @ColumnInfo(name = "install_id")
     val installId: String? = null,
-) {
+) : Parcelable {
     fun isComplete() = accessToken != null &&
         refreshToken != null &&
         tokenExpiration != null &&

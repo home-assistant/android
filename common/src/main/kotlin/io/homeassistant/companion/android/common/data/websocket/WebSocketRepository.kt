@@ -135,7 +135,7 @@ interface WebSocketRepository {
     suspend fun sendVoiceData(binaryHandlerId: Int, data: ByteArray): Boolean?
 }
 
-class WebSocketRepositoryFactory @Inject internal constructor(
+internal class WebSocketRepositoryFactory @Inject internal constructor(
     private val coreFactory: WebSocketCoreFactory,
     // Use a Provider to avoid a dependency circle since serverManager needs WebSocketCoreFactory
     private val serverManagerProvider: Provider<ServerManager>,

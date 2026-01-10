@@ -70,19 +70,24 @@ class DeveloperSettingsFragment :
         findPreference<Preference>("thread_debug")?.let {
             it.isVisible = presenter.appSupportsThread()
             it.setOnPreferenceClickListener {
-                if (presenter.hasMultipleServers()) {
-                    parentFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) {
-                            _,
-                            bundle,
-                        ->
-                        if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
-                            startThreadDebug(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
+                lifecycleScope.launch {
+                    if (presenter.hasMultipleServers()) {
+                        parentFragmentManager.setFragmentResultListener(
+                            ServerChooserFragment.RESULT_KEY,
+                            this@DeveloperSettingsFragment,
+                        ) {
+                                _,
+                                bundle,
+                            ->
+                            if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
+                                startThreadDebug(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
+                            }
+                            parentFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
                         }
-                        parentFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
+                        ServerChooserFragment().show(parentFragmentManager, ServerChooserFragment.TAG)
+                    } else {
+                        startThreadDebug(ServerManager.SERVER_ID_ACTIVE)
                     }
-                    ServerChooserFragment().show(parentFragmentManager, ServerChooserFragment.TAG)
-                } else {
-                    startThreadDebug(ServerManager.SERVER_ID_ACTIVE)
                 }
                 return@setOnPreferenceClickListener true
             }
@@ -127,13 +132,15 @@ class DeveloperSettingsFragment :
         AlertDialog.Builder(requireContext())
             .setTitle(commonR.string.thread_debug)
             .setMessage(
-                "${if (success == true) {
-                    "✅"
-                } else if (success == null) {
-                    "⚠️"
-                } else {
-                    "⛔"
-                }}\n\n$result",
+                "${
+                    if (success == true) {
+                        "✅"
+                    } else if (success == null) {
+                        "⚠️"
+                    } else {
+                        "⛔"
+                    }
+                }\n\n$result",
             )
             .setPositiveButton(commonR.string.ok, null)
             .show()

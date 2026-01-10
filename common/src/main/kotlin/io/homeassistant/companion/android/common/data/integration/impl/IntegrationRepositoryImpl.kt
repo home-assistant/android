@@ -11,7 +11,6 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.NoUrlAvailableException
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ActionRequest
@@ -37,6 +36,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateSensorStatesIntegrationRequest
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
+import io.homeassistant.companion.android.common.data.servers.tryOnUrls
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
@@ -664,36 +664,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         onSuccess(response)
     }
 
-    /**
-     * Tries to execute an action on each available URL until one succeeds.
-     *
-     * @param requestName name of the request for error messages
-     * @param action the action to execute on each URL
-     * @return the result from the first successful URL
-     * @throws NoUrlAvailableException if no URLs are available
-     * @throws IntegrationException if all URLs fail
-     */
-    private suspend fun <T> tryOnUrls(requestName: String, action: suspend (HttpUrl) -> T): T {
-        val urls = connectionStateProvider().getApiUrls()
-        if (urls.isEmpty()) {
-            throw NoUrlAvailableException()
-        }
-
-        var firstException: Exception? = null
-        for (url in urls) {
-            try {
-                return action(url)
-            } catch (e: Exception) {
-                Timber.w(e, "Failed $requestName ${if (BuildConfig.DEBUG) "on $url" else ""}")
-                if (firstException == null) firstException = e
-            }
-        }
-
-        throw IntegrationException(
-            "All URLs failed for $requestName",
-            firstException ?: Exception("Error calling integration request $requestName"),
-        )
-    }
+    private suspend fun <T> tryOnUrls(requestName: String, action: suspend (HttpUrl) -> T): T =
+        tryOnUrls(urls = connectionStateProvider().getApiUrls(), requestName = requestName, action = action)
 
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
         val oldDeviceRegistration = getRegistration()

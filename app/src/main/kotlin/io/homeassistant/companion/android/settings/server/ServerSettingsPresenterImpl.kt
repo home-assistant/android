@@ -117,7 +117,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
             serverManager.removeServer(serverId)
             view.onRemovedServer(
                 success = true,
-                hasAnyRemaining = serverManager.defaultServers.any { it.id != serverId },
+                hasAnyRemaining = serverManager.servers().any { it.id != serverId },
             )
         } ?: run {
             view.onRemovedServer(success = false, hasAnyRemaining = true)
@@ -126,14 +126,15 @@ class ServerSettingsPresenterImpl @Inject constructor(
 
     override fun onFinish() {
         runBlocking {
-            if (serverManager.getServer()?.id != serverId) {
+            val currentServer = serverManager.getServer()
+            if (currentServer != null && currentServer.id != serverId) {
                 setAppActive(false)
             }
         }
         mainScope.cancel()
     }
 
-    override fun hasMultipleServers(): Boolean = serverManager.defaultServers.size > 1
+    override suspend fun hasMultipleServers(): Boolean = serverManager.servers().size > 1
 
     override fun updateServerName() {
         mainScope.launch {
@@ -181,8 +182,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
         try {
             serverManager.integrationRepository(serverId).setAppActive(active)
         } catch (e: IllegalArgumentException) {
-            Timber.w("Cannot set app active $active for server $serverId")
-            Unit
+            Timber.w(e, "Cannot set app active $active for server $serverId")
         }
     }
 

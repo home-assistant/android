@@ -21,6 +21,7 @@ import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.database.server.TemporaryServer
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import io.homeassistant.companion.android.onboarding.phoneinstall.PhoneInstallActivity
 import io.homeassistant.companion.android.util.LoadingView
@@ -143,8 +144,8 @@ class OnboardingActivity :
         }
     }
 
-    override fun startIntegration(serverId: Int) {
-        startActivity(MobileAppIntegrationActivity.newInstance(this, serverId))
+    override fun startIntegration(temporaryServer: TemporaryServer) {
+        startActivity(MobileAppIntegrationActivity.newInstance(this, temporaryServer))
     }
 
     override fun showLoading() {

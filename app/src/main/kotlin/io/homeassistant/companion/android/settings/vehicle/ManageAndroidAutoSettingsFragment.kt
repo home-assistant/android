@@ -28,7 +28,7 @@ class ManageAndroidAutoSettingsFragment : Fragment() {
                 HomeAssistantAppTheme {
                     AndroidAutoFavoritesSettings(
                         androidAutoViewModel = viewModel,
-                        serversList = viewModel.defaultServers,
+                        serversList = viewModel.servers,
                         defaultServer = viewModel.defaultServerId,
                     )
                 }

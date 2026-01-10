@@ -15,7 +15,7 @@ import androidx.compose.runtime.ExperimentalComposeRuntimeApi
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositoryImpl
+import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepository
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.util.HAStrictMode
@@ -55,7 +55,7 @@ open class HomeAssistantApplication : Application() {
         Composer.setDiagnosticStackTraceEnabled(BuildConfig.DEBUG)
 
         ioScope.launch {
-            keyStore.load(applicationContext, KeyStoreRepositoryImpl.ALIAS)
+            keyStore.load(applicationContext, KeyStoreRepository.ALIAS)
         }
 
         val sensorReceiver = SensorReceiver()

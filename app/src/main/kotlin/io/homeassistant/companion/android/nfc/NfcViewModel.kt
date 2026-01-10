@@ -105,7 +105,7 @@ class NfcViewModel @Inject constructor(private val serverManager: ServerManager,
     fun fireNfcTagEvent() {
         viewModelScope.launch {
             nfcTagIdentifier?.let {
-                val results = serverManager.defaultServers.map { server ->
+                val results = serverManager.servers().map { server ->
                     async {
                         try {
                             serverManager.integrationRepository(server.id).scanTag(hashMapOf("tag_id" to it))

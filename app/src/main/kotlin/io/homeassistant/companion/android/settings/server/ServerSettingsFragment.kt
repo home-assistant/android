@@ -89,21 +89,23 @@ class ServerSettingsFragment :
             isValid
         }
 
-        if (presenter.hasMultipleServers()) {
-            val activateClickListener = OnPreferenceClickListener {
-                val intent = WebViewActivity.newInstance(requireContext(), null, serverId).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        lifecycleScope.launch {
+            if (presenter.hasMultipleServers()) {
+                val activateClickListener = OnPreferenceClickListener {
+                    val intent = WebViewActivity.newInstance(requireContext(), null, serverId).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    }
+                    requireContext().startActivity(intent)
+                    return@OnPreferenceClickListener true
                 }
-                requireContext().startActivity(intent)
-                return@OnPreferenceClickListener true
-            }
-            findPreference<Preference>("activate_server")?.let {
-                it.isVisible = true
-                it.onPreferenceClickListener = activateClickListener
-            }
-            findPreference<Preference>("activate_server_hint")?.let {
-                it.isVisible = true
-                it.onPreferenceClickListener = activateClickListener
+                findPreference<Preference>("activate_server")?.let {
+                    it.isVisible = true
+                    it.onPreferenceClickListener = activateClickListener
+                }
+                findPreference<Preference>("activate_server_hint")?.let {
+                    it.isVisible = true
+                    it.onPreferenceClickListener = activateClickListener
+                }
             }
         }
 
@@ -261,10 +263,12 @@ class ServerSettingsFragment :
                                 putExtra(Intent.EXTRA_SUBJECT, getString(commonR.string.join_our_server))
                                 putExtra(
                                     Intent.EXTRA_TEXT,
-                                    "$BASE_INVITE_URL${URLEncoder.encode(
-                                        presenter.serverURL(),
-                                        Charsets.UTF_8.toString(),
-                                    )}",
+                                    "$BASE_INVITE_URL${
+                                        URLEncoder.encode(
+                                            presenter.serverURL(),
+                                            Charsets.UTF_8.toString(),
+                                        )
+                                    }",
                                 )
                                 type = "text/plain"
                             }
@@ -272,6 +276,7 @@ class ServerSettingsFragment :
                         }
                         true
                     }
+
                     else -> false
                 }
             },

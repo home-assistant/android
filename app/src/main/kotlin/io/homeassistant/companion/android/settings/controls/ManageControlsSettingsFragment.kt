@@ -33,7 +33,7 @@ class ManageControlsSettingsFragment : Fragment() {
                         entitiesLoaded = viewModel.entitiesLoaded,
                         entitiesList = viewModel.entitiesList,
                         panelSetting = viewModel.panelSetting,
-                        serversList = viewModel.defaultServers,
+                        serversList = viewModel.servers,
                         defaultServer = viewModel.defaultServerId,
                         structureEnabled = viewModel.structureEnabled,
                         onSetPanelEnabled = viewModel::enablePanelForControls,

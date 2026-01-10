@@ -14,7 +14,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
-class WearPrefsRepositoryImpl @Inject constructor(
+internal class WearPrefsRepositoryImpl @Inject constructor(
     @NamedWearStorage private val localStorage: LocalStorage,
     @NamedIntegrationStorage private val integrationStorage: LocalStorage,
 ) : WearPrefsRepository {

@@ -7,18 +7,18 @@ import androidx.car.app.model.ListTemplate
 import androidx.car.app.model.Row
 import androidx.car.app.model.Template
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 import kotlinx.coroutines.flow.StateFlow
 
 class ChangeServerScreen(
     carContext: CarContext,
-    private val serverManager: ServerManager,
+    private val servers: List<Server>,
     private val serverId: StateFlow<Int>,
 ) : Screen(carContext) {
     override fun onGetTemplate(): Template {
         val listBuilder = ItemList.Builder()
-        serverManager.defaultServers.forEach { server ->
+        servers.forEach { server ->
             listBuilder.addItem(
                 Row.Builder()
                     .setTitle(server.friendlyName)

@@ -50,6 +50,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -307,15 +308,22 @@ fun SensorDetailView(
                                 -> {
                                     val summaryValues = setting.value.split(", ")
                                         .mapNotNull { it.ifBlank { null } }
-                                    SensorDetailRow(
-                                        title = viewModel.getSettingTranslatedTitle(setting.name),
-                                        summary =
-                                        if (summaryValues.any()) {
+                                    val noneSelected = stringResource(commonR.string.none_selected)
+                                    val summary by produceState(
+                                        initialValue = "",
+                                        key1 = setting,
+                                        key2 = summaryValues,
+                                    ) {
+                                        value = if (summaryValues.any()) {
                                             viewModel.getSettingEntries(setting, summaryValues)
                                                 .joinToString(", ")
                                         } else {
-                                            stringResource(commonR.string.none_selected)
-                                        },
+                                            noneSelected
+                                        }
+                                    }
+                                    SensorDetailRow(
+                                        title = viewModel.getSettingTranslatedTitle(setting.name),
+                                        summary = summary,
                                         enabled = setting.enabled,
                                         clickable = setting.enabled,
                                         onClick = { onDialogSettingClicked(setting) },

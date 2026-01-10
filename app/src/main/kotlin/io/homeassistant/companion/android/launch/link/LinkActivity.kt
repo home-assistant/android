@@ -76,24 +76,15 @@ class LinkActivity : BaseActivity() {
                     }
 
                     is LinkDestination.Webview -> {
-                        navigateTo(destination.path, destination.serverId)
+                        startLaunchWithNavigateTo(destination.path, destination.serverId)
+                        finish()
+                    }
+                    is LinkDestination.ServerPicker -> {
+                        openServerChooser(destination.path)
                     }
                 }
             }
         }
-    }
-
-    private fun navigateTo(path: String, serverId: Int?) {
-        val effectiveServerId = serverId ?: run {
-            if (serverManager.defaultServers.size > 1) {
-                openServerChooser(path)
-                return
-            }
-            ServerManager.SERVER_ID_ACTIVE
-        }
-
-        startLaunchWithNavigateTo(path, effectiveServerId)
-        finish()
     }
 
     private fun openServerChooser(path: String) {

@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.authentication.SessionState
+import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService.Companion.SEGMENT_AUTH_TOKEN
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.MapAnySerializer
@@ -37,33 +38,6 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     }
 
     private suspend fun connectionStateProvider() = serverManager.connectionStateProvider(serverId)
-
-    override suspend fun registerAuthorizationCode(authorizationCode: String) {
-        val server = server()
-        val url = connectionStateProvider().urlFlow().firstUrlOrNull()?.toHttpUrlOrNull()
-        if (url == null) {
-            Timber.e("No URL available to register auth code")
-            return
-        }
-        authenticationService.getToken(
-            url.newBuilder().addPathSegments("auth/token").build(),
-            AuthenticationService.GRANT_TYPE_CODE,
-            authorizationCode,
-            AuthenticationService.CLIENT_ID,
-        ).let {
-            serverManager.updateServer(
-                server.copy(
-                    session = ServerSessionInfo(
-                        accessToken = it.accessToken,
-                        refreshToken = it.refreshToken!!,
-                        tokenExpiration = System.currentTimeMillis() / 1000 + it.expiresIn,
-                        tokenType = it.tokenType,
-                        installId = installId(),
-                    ),
-                ),
-            )
-        }
-    }
 
     override suspend fun registerRefreshToken(refreshToken: String) {
         val url = connectionStateProvider().urlFlow().firstUrlOrNull()?.toHttpUrlOrNull()
@@ -107,7 +81,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
             )
         } else {
             authenticationService.revokeTokenLegacy(
-                url.newBuilder().addPathSegments("auth/token").build(),
+                url.newBuilder().addPathSegments(SEGMENT_AUTH_TOKEN).build(),
                 server.session.refreshToken!!,
                 AuthenticationService.REVOKE_ACTION,
             )
@@ -138,16 +112,6 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun buildAuthenticationUrl(baseUrl: String): String {
-        return baseUrl.toHttpUrlOrNull()!!
-            .newBuilder()
-            .addPathSegments("auth/authorize")
-            .addEncodedQueryParameter("response_type", "code")
-            .addEncodedQueryParameter("client_id", AuthenticationService.CLIENT_ID)
-            .build()
-            .toString()
-    }
-
     override suspend fun buildBearerToken(): String {
         ensureValidSession()
         return "Bearer " + server().session.accessToken
@@ -169,7 +133,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     private suspend fun refreshSessionWithToken(baseUrl: HttpUrl, refreshToken: String) {
         val server = server()
         return authenticationService.refreshToken(
-            baseUrl.newBuilder().addPathSegments("auth/token").build(),
+            baseUrl.newBuilder().addPathSegments(SEGMENT_AUTH_TOKEN).build(),
             AuthenticationService.GRANT_TYPE_REFRESH,
             refreshToken,
             AuthenticationService.CLIENT_ID,

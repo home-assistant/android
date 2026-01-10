@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
+import io.homeassistant.companion.android.database.server.TemporaryServer
 import io.homeassistant.companion.android.tiles.CameraTile
 import io.homeassistant.companion.android.tiles.ConversationTile
 import io.homeassistant.companion.android.tiles.ShortcutsTile
@@ -37,15 +38,20 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
         )
     }
 
-    override fun onRegistrationAttempt(serverId: Int, deviceName: String) {
+    override fun onRegistrationAttempt(temporaryServer: TemporaryServer, deviceName: String) {
         view.showLoading()
         mainScope.launch {
             val deviceRegistration = createRegistration(deviceName)
+            var serverId: Int? = null
             try {
+                serverId = serverManager.addServer(temporaryServer)
                 serverManager.integrationRepository(serverId).registerDevice(deviceRegistration)
-                serverManager.convertTemporaryServer(serverId)
             } catch (e: Exception) {
                 Timber.e(e, "Unable to register with Home Assistant")
+                if (serverId != null) {
+                    serverManager.authenticationRepository(serverId).revokeSession()
+                    serverManager.removeServer(serverId)
+                }
                 view.showError()
                 return@launch
             }

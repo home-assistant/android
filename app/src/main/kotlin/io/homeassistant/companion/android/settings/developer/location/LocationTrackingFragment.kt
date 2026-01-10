@@ -42,7 +42,7 @@ class LocationTrackingFragment : Fragment() {
                         useHistory = viewModel.historyEnabled,
                         onSetHistory = viewModel::enableHistory,
                         history = viewModel.historyPagerFlow,
-                        serversList = serverManager.defaultServers,
+                        serversList = viewModel.servers,
                     )
                 }
             }
