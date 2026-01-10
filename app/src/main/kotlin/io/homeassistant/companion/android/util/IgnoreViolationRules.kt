@@ -202,7 +202,6 @@ private data object IgnoreAndroidAutoRendererServiceDiskRead : IgnoreViolationRu
  * and is beyond application control.
  */
 private data object IgnoreMiuiFontSettingsDiskRead : IgnoreViolationRule {
-    @RequiresApi(Build.VERSION_CODES.P)
     override fun shouldIgnore(violation: Violation): Boolean {
         if (violation !is DiskReadViolation) return false
 
@@ -218,7 +217,6 @@ private data object IgnoreMiuiFontSettingsDiskRead : IgnoreViolationRule {
  * Choreographer frame rendering and is beyond application control.
  */
 private data object IgnoreMiuiTurboSchedMonitorDiskRead : IgnoreViolationRule {
-    @RequiresApi(Build.VERSION_CODES.P)
     override fun shouldIgnore(violation: Violation): Boolean {
         if (violation !is DiskReadViolation) return false
 
