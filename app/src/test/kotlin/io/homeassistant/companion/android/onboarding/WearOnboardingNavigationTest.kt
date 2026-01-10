@@ -34,6 +34,7 @@ import dagger.hilt.android.testing.UninstallModules
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
+import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.onboarding.connection.CONNECTION_SCREEN_TAG
 import io.homeassistant.companion.android.onboarding.connection.ConnectionNavigationEvent
 import io.homeassistant.companion.android.onboarding.connection.ConnectionViewModel
@@ -113,6 +114,7 @@ internal class WearOnboardingNavigationTest {
         every { isLoadingFlow } returns MutableStateFlow(false)
         every { navigationEventsFlow } returns connectionNavigationEventFlow
         every { errorFlow } returns MutableStateFlow(null)
+        every { connectivityCheckState } returns MutableStateFlow(ConnectivityCheckState())
     }
 
     private val selectedUri = mockk<Uri>()
