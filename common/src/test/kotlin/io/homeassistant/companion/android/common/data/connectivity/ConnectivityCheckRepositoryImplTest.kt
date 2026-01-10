@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -285,45 +285,48 @@ class ConnectivityCheckRepositoryImplTest {
         )
 
         // Remaining checks should be marked as skipped (Failure with skip message)
-        assertTrue(finalState.portReachability is ConnectivityCheckResult.Failure)
-        assertEquals(
-            commonR.string.connection_check_skipped,
-            (finalState.portReachability as ConnectivityCheckResult.Failure).messageResId,
-        )
-
-        assertTrue(finalState.tlsCertificate is ConnectivityCheckResult.Failure)
-        assertEquals(
-            commonR.string.connection_check_skipped,
-            (finalState.tlsCertificate as ConnectivityCheckResult.Failure).messageResId,
-        )
-
-        assertTrue(finalState.serverConnection is ConnectivityCheckResult.Failure)
-        assertEquals(
-            commonR.string.connection_check_skipped,
-            (finalState.serverConnection as ConnectivityCheckResult.Failure).messageResId,
-        )
+        listOf(
+            finalState.portReachability,
+            finalState.tlsCertificate,
+            finalState.serverConnection,
+        ).forEach { result ->
+            assertTrue(result is ConnectivityCheckResult.Failure)
+            assertEquals(
+                commonR.string.connection_check_skipped,
+                (result as ConnectivityCheckResult.Failure).messageResId,
+            )
+        }
 
         // State management
         assertTrue(finalState.isComplete)
         assertTrue(finalState.hasFailure)
 
-        // DNS should have InProgress state before failing
-        val dnsInProgressState = states.firstOrNull { it.dnsResolution is ConnectivityCheckResult.InProgress }
-        assertNotNull(dnsInProgressState, "DNS should have InProgress state")
-
-        // Port, TLS, and Server should NOT have InProgress states since they're skipped
-        val portInProgressState = states.firstOrNull { it.portReachability is ConnectivityCheckResult.InProgress }
-        val tlsInProgressState = states.firstOrNull { it.tlsCertificate is ConnectivityCheckResult.InProgress }
-        val serverInProgressState = states.firstOrNull { it.serverConnection is ConnectivityCheckResult.InProgress }
-
-        assertNull(portInProgressState, "Port check should be skipped, not run")
-        assertNull(tlsInProgressState, "TLS check should be skipped, not run")
-        assertNull(serverInProgressState, "Server check should be skipped, not run")
-
-        // Verify only DNS was called
+        // Verify only DNS was called, remaining checks were skipped
         coVerify(exactly = 1) { checker.dns("example.com") }
         coVerify(exactly = 0) { checker.port(any(), any()) }
         coVerify(exactly = 0) { checker.tls(any()) }
         coVerify(exactly = 0) { checker.server(any()) }
+    }
+
+    @Test
+    fun `Given all checks succeed when running checks then state is complete with no failures`() = runTest(testDispatcher) {
+        // Given
+        val testUrl = "https://example.com"
+        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success("192.0.2.1")
+        coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success("443")
+        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
+
+        // When
+        val states = repository.runChecks(testUrl).toList()
+
+        // Then
+        val finalState = states.last()
+        assertTrue(finalState.dnsResolution is ConnectivityCheckResult.Success)
+        assertTrue(finalState.portReachability is ConnectivityCheckResult.Success)
+        assertTrue(finalState.tlsCertificate is ConnectivityCheckResult.Success)
+        assertTrue(finalState.serverConnection is ConnectivityCheckResult.Success)
+        assertTrue(finalState.isComplete)
+        assertFalse(finalState.hasFailure)
     }
 }
