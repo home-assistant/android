@@ -211,11 +211,11 @@ class WebSocketRepositoryImpl internal constructor(
     }
 
     override suspend fun getAssistPipeline(pipelineId: String?): AssistPipelineResponse? {
-        val data = mapOf(
-            "type" to "assist_pipeline/pipeline/get",
-        )
         val socketResponse = webSocketCore.sendMessage(
-            if (pipelineId != null) data.plus("pipeline_id" to pipelineId) else data,
+            buildMap {
+                put("type", "assist_pipeline/pipeline/get")
+                pipelineId?.let { put("pipeline_id", pipelineId) }
+            },
         )
 
         return mapResponse(socketResponse)
@@ -237,19 +237,13 @@ class WebSocketRepositoryImpl internal constructor(
         pipelineId: String?,
         conversationId: String?,
     ): Flow<AssistPipelineEvent>? {
-        var data = mapOf(
-            "start_stage" to "intent",
-            "end_stage" to "intent",
-            "input" to mapOf(
-                "text" to text,
-            ),
-            "conversation_id" to conversationId,
-        )
-        pipelineId?.let {
-            data = data.plus("pipeline" to it)
-        }
-        webSocketCore.server()?.deviceRegistryId?.let {
-            data = data.plus("device_id" to it)
+        val data = buildMap {
+            put("start_stage", "intent")
+            put("end_stage", "intent")
+            put("input", mapOf("text" to text))
+            put("conversation_id", conversationId)
+            pipelineId?.let { put("pipeline", it) }
+            webSocketCore.server()?.deviceRegistryId?.let { put("device_id", it) }
         }
         return webSocketCore.subscribeTo(
             SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
@@ -264,19 +258,13 @@ class WebSocketRepositoryImpl internal constructor(
         pipelineId: String?,
         conversationId: String?,
     ): Flow<AssistPipelineEvent>? {
-        var data = mapOf(
-            "start_stage" to "stt",
-            "end_stage" to (if (outputTts) "tts" else "intent"),
-            "input" to mapOf(
-                "sample_rate" to sampleRate,
-            ),
-            "conversation_id" to conversationId,
-        )
-        pipelineId?.let {
-            data = data.plus("pipeline" to it)
-        }
-        webSocketCore.server()?.deviceRegistryId?.let {
-            data = data.plus("device_id" to it)
+        val data = buildMap {
+            put("start_stage", "stt")
+            put("end_stage", if (outputTts) "tts" else "intent")
+            put("input", mapOf("sample_rate" to sampleRate))
+            put("conversation_id", conversationId)
+            pipelineId?.let { put("pipeline", it) }
+            webSocketCore.server()?.deviceRegistryId?.let { put("device_id", it) }
         }
         return webSocketCore.subscribeTo(
             SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
@@ -314,9 +302,10 @@ class WebSocketRepositoryImpl internal constructor(
         webSocketCore.subscribeTo(SUBSCRIBE_TYPE_RENDER_TEMPLATE, mapOf("template" to template))
 
     private suspend fun subscribeToTrigger(platform: String, data: Map<Any, Any>): Flow<TriggerEvent>? {
-        val triggerData = mapOf(
-            "platform" to platform,
-        ).plus(data)
+        val triggerData = buildMap {
+            put("platform", platform)
+            putAll(data)
+        }
         return webSocketCore.subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER, mapOf("trigger" to triggerData))
     }
 
@@ -365,18 +354,14 @@ class WebSocketRepositoryImpl internal constructor(
     }
 
     override suspend fun commissionMatterDeviceOnNetwork(pin: Long, ip: String): MatterCommissionResponse? {
-        val data = mapOf(
-            "type" to "matter/commission_on_network",
-            "pin" to pin,
-        )
         val response = webSocketCore.sendMessage(
             WebSocketRequest(
-                message = if (webSocketCore.server()?.version?.isAtLeast(2024, 1) ==
-                    true
-                ) {
-                    data.plus("ip_addr" to ip)
-                } else {
-                    data
+                message = buildMap {
+                    put("type", "matter/commission_on_network")
+                    put("pin", pin)
+                    if (webSocketCore.server()?.version?.isAtLeast(2024, 1) == true) {
+                        put("ip_addr", ip)
+                    }
                 },
                 // Matter commissioning takes at least 60 seconds + interview
                 timeout = matterTimeout,

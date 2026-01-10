@@ -364,9 +364,10 @@ internal class WebSocketCoreImpl(
         data: Map<String, Any?>,
         timeout: kotlin.time.Duration,
     ): Flow<T>? {
-        val subscribeMessage = mapOf(
-            "type" to type,
-        ).plus(data)
+        val subscribeMessage = buildMap {
+            put("type", type)
+            putAll(data)
+        }
 
         return eventSubscriptionMutex.withLock<Flow<T>?> {
             ( // Check for existing subscription before creating a new one
