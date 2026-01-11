@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.widgets.grid
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -102,7 +103,8 @@ private fun GlanceModifier.gridWidgetBackground(): GlanceModifier = this
     .background(GlanceTheme.colors.widgetBackground)
 
 @Composable
-private fun GridWidgetContent(state: GridWidgetState) {
+@VisibleForTesting
+internal fun GridWidgetContent(state: GridWidgetState) {
     when (state) {
         is LoadingGridState -> LoadingScreen()
         is GridStateWithData -> GridContentWithData(state)
