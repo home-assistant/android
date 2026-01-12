@@ -56,7 +56,7 @@ fun ConnectivityChecksSection(
     ) {
         Text(
             text = stringResource(commonR.string.connection_check_title),
-            style = HATextStyle.BodyMedium.copy(textAlign = TextAlign.Start),
+            style = HATextStyle.Body.copy(textAlign = TextAlign.Start),
         )
 
         CheckResultRow(
