@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -132,12 +133,15 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     private val _connectivityCheckState = MutableStateFlow(ConnectivityCheckState())
     val connectivityCheckState = _connectivityCheckState.asStateFlow()
 
+    private var connectivityCheckJob: Job? = null
+
     /**
      * Runs connectivity checks against the server URL.
      * Results are emitted to [connectivityCheckState].
      */
     fun runConnectivityChecks() {
-        viewModelScope.launch {
+        connectivityCheckJob?.cancel()
+        connectivityCheckJob = viewModelScope.launch {
             connectivityCheckRepository.runChecks(rawUrl).collect { state ->
                 _connectivityCheckState.value = state
             }
