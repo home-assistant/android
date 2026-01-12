@@ -192,3 +192,20 @@ private fun PreviewConnectivityChecksSection() {
         )
     }
 }
+
+@Preview
+@Composable
+private fun PreviewConnectivityChecksSectionMixed() {
+    HAThemeForPreview {
+        ConnectivityChecksSection(
+            connectivityCheckState = ConnectivityCheckState(
+                dnsResolution = ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.168.1.10"),
+                portReachability = ConnectivityCheckResult.Success(commonR.string.connection_check_port, "8123"),
+                tlsCertificate = ConnectivityCheckResult.Failure(commonR.string.connection_check_error_tls),
+                serverConnection = ConnectivityCheckResult.Pending,
+                homeAssistantVerification = ConnectivityCheckResult.Pending,
+            ),
+            onRetryConnectivityCheck = {},
+        )
+    }
+}
