@@ -5,6 +5,7 @@ import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.util.compose.HAPreviews
 
@@ -40,7 +41,13 @@ class ConnectionErrorScreenshotTest {
                 ),
                 onOpenExternalLink = {},
                 onCloseClick = {},
-                connectivityCheckState = ConnectivityCheckState(),
+                connectivityCheckState = ConnectivityCheckState(
+                    dnsResolution = ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.168.0.1"),
+                    portReachability = ConnectivityCheckResult.Success(commonR.string.connection_check_port, "8123"),
+                    tlsCertificate = ConnectivityCheckResult.Failure(commonR.string.connection_check_error_tls),
+                    serverConnection = ConnectivityCheckResult.Pending,
+                    homeAssistantVerification = ConnectivityCheckResult.Pending
+                ),
                 onRetryConnectivityCheck = {},
                 errorDetailsExpanded = true,
             )
