@@ -8,7 +8,7 @@ import androidx.annotation.StringRes
 sealed interface ConnectivityCheckResult {
     data object Pending : ConnectivityCheckResult
     data object InProgress : ConnectivityCheckResult
-    data class Success(val details: String? = null) : ConnectivityCheckResult
+    data class Success(@StringRes val messageResId: Int, val details: String? = null) : ConnectivityCheckResult
     data class Failure(@StringRes val messageResId: Int) : ConnectivityCheckResult
 }
 

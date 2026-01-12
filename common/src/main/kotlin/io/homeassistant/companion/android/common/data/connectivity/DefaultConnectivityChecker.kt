@@ -35,7 +35,7 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
             withTimeout(timeoutMs) {
                 val addresses = InetAddress.getAllByName(hostname)
                 val addressList = addresses.joinToString(", ") { it.hostAddress ?: "" }
-                ConnectivityCheckResult.Success(addressList)
+                ConnectivityCheckResult.Success(commonR.string.connection_check_dns, addressList)
             }
         } catch (e: Exception) {
             Timber.d(e, "DNS resolution failed for $hostname")
@@ -49,7 +49,7 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
                 Socket().use { socket ->
                     socket.connect(InetSocketAddress(hostname, port), timeoutMs.toInt())
                 }
-                ConnectivityCheckResult.Success(port.toString())
+                ConnectivityCheckResult.Success(commonR.string.connection_check_port, port.toString())
             }
         } catch (e: Exception) {
             Timber.d(e, "Port $port not reachable on $hostname")
@@ -64,7 +64,7 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
                 connection.connectTimeout = timeoutMs.toInt()
                 connection.connect()
                 connection.disconnect()
-                ConnectivityCheckResult.Success()
+                ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
             }
         } catch (e: Exception) {
             Timber.d(e, "TLS check failed for $url")
@@ -78,7 +78,7 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
                 val connection = URL(url).openConnection()
                 connection.connectTimeout = timeoutMs.toInt()
                 connection.connect()
-                ConnectivityCheckResult.Success()
+                ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
             }
         } catch (e: Exception) {
             Timber.d(e, "Server connection failed for $url")
@@ -98,7 +98,7 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
                 val manifest = kotlinJsonMapper.decodeFromString<ManifestResponse>(responseText)
 
                 if (manifest.isHomeAssistant()) {
-                    ConnectivityCheckResult.Success()
+                    ConnectivityCheckResult.Success(commonR.string.connection_check_home_assistant_success)
                 } else {
                     Timber.d("Manifest name mismatch: ${manifest.name}")
                     ConnectivityCheckResult.Failure(commonR.string.connection_check_error_not_home_assistant)

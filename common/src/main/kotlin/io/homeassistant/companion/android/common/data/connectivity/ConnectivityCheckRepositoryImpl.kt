@@ -68,7 +68,13 @@ class ConnectivityCheckRepositoryImpl @Inject constructor(private val checker: C
         // TLS Check (bypass for HTTP)
         state = state.copy(tlsCertificate = ConnectivityCheckResult.InProgress)
         emit(state)
-        val tlsResult = if (isHttps) checker.tls(url) else ConnectivityCheckResult.Success()
+        val tlsResult = if (isHttps) {
+            checker.tls(
+                url,
+            )
+        } else {
+            ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
+        }
         state = state.copy(tlsCertificate = tlsResult)
         emit(state)
 

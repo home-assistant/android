@@ -53,7 +53,7 @@ class ConnectivityCheckRepositoryImplTest {
     fun `Given HTTP URL when running checks then default port 80 is used and TLS check is bypassed`() = runTest(testDispatcher) {
         // Given
         val testUrl = "http://example.com"
-        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success("192.0.2.1")
+        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
         coEvery { checker.port("example.com", 80) } returns ConnectivityCheckResult.Failure(
             commonR.string.connection_check_error_port,
         )
@@ -92,11 +92,11 @@ class ConnectivityCheckRepositoryImplTest {
     fun `Given flow emits states when running checks then initial state is emitted first`() = runTest(testDispatcher) {
         // Given
         val testUrl = "https://example.com"
-        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success("192.0.2.1")
-        coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success("443")
-        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
-        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
-        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
+        coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_port, "443")
+        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
+        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
+        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_home_assistant_success)
 
         // When
         val states = repository.runChecks(testUrl).toList()
@@ -118,11 +118,11 @@ class ConnectivityCheckRepositoryImplTest {
     fun `Given flow emits states when running checks then InProgress states are emitted`() = runTest(testDispatcher) {
         // Given
         val testUrl = "https://example.com"
-        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success("192.0.2.1")
-        coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success("443")
-        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
-        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
-        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
+        coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_port, "443")
+        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
+        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
+        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_home_assistant_success)
 
         // When
         val states = repository.runChecks(testUrl).toList()
@@ -153,11 +153,11 @@ class ConnectivityCheckRepositoryImplTest {
     fun `Given URL with custom port when parsed then custom port is extracted`() = runTest(testDispatcher) {
         // Given
         val testUrl = "https://example.com:8123"
-        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success("192.0.2.1")
-        coEvery { checker.port("example.com", 8123) } returns ConnectivityCheckResult.Success("8123")
-        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
-        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
-        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
+        coEvery { checker.port("example.com", 8123) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_port, "8123")
+        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
+        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
+        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_home_assistant_success)
 
         // When
         val states = repository.runChecks(testUrl).toList()
@@ -175,11 +175,11 @@ class ConnectivityCheckRepositoryImplTest {
     fun `Given HTTPS URL without port when running checks then default port 443 is used`() = runTest(testDispatcher) {
         // Given
         val testUrl = "https://example.com"
-        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success("192.0.2.1")
-        coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success("443")
-        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
-        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
-        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
+        coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_port, "443")
+        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
+        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
+        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_home_assistant_success)
 
         // When
         val states = repository.runChecks(testUrl).toList()
@@ -197,11 +197,11 @@ class ConnectivityCheckRepositoryImplTest {
         // Given
         val testUrl = "https://example.com"
         val ipAddresses = "192.0.2.1, 192.0.2.2"
-        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(ipAddresses)
-        coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success("443")
-        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
-        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
-        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, ipAddresses)
+        coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_port, "443")
+        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
+        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
+        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_home_assistant_success)
 
         // When
         val states = repository.runChecks(testUrl).toList()
@@ -223,7 +223,7 @@ class ConnectivityCheckRepositoryImplTest {
     fun `Given any check fails when checking state then hasFailure returns true`() = runTest(testDispatcher) {
         // Given
         val testUrl = "https://example.com"
-        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success("192.0.2.1")
+        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
         coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Failure(
             commonR.string.connection_check_error_port,
         )
@@ -248,11 +248,11 @@ class ConnectivityCheckRepositoryImplTest {
     fun `Given URL with path and query params when running checks then checks execute correctly`() = runTest(testDispatcher) {
         // Given
         val testUrl = "https://example.com:8123/api/websocket?token=abc123"
-        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success("192.0.2.1")
-        coEvery { checker.port("example.com", 8123) } returns ConnectivityCheckResult.Success("8123")
-        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
-        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
-        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
+        coEvery { checker.port("example.com", 8123) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_port, "8123")
+        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
+        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
+        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_home_assistant_success)
 
         // When
         val states = repository.runChecks(testUrl).toList()
@@ -326,11 +326,11 @@ class ConnectivityCheckRepositoryImplTest {
     fun `Given all checks succeed when running checks then state is complete with no failures`() = runTest(testDispatcher) {
         // Given
         val testUrl = "https://example.com"
-        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success("192.0.2.1")
-        coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success("443")
-        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
-        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
-        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
+        coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_port, "443")
+        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
+        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
+        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_home_assistant_success)
 
         // When
         val states = repository.runChecks(testUrl).toList()
@@ -350,10 +350,10 @@ class ConnectivityCheckRepositoryImplTest {
     fun `Given server is not Home Assistant when running checks then HA verification fails`() = runTest(testDispatcher) {
         // Given
         val testUrl = "https://example.com"
-        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success("192.0.2.1")
-        coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success("443")
-        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
-        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
+        coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_port, "443")
+        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
+        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
         coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Failure(
             commonR.string.connection_check_error_not_home_assistant,
         )

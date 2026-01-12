@@ -72,19 +72,16 @@ fun ConnectivityChecksSection(
         CheckResultRow(
             label = stringResource(commonR.string.connection_check_tls),
             result = connectivityCheckState.tlsCertificate,
-            successFallback = stringResource(commonR.string.connection_check_tls_success),
         )
 
         CheckResultRow(
             label = stringResource(commonR.string.connection_check_server),
             result = connectivityCheckState.serverConnection,
-            successFallback = stringResource(commonR.string.connection_check_server_success),
         )
 
         CheckResultRow(
             label = stringResource(commonR.string.connection_check_home_assistant),
             result = connectivityCheckState.homeAssistantVerification,
-            successFallback = stringResource(commonR.string.connection_check_home_assistant_success),
         )
 
         Spacer(modifier = Modifier.height(HADimens.SPACE2))
@@ -99,7 +96,7 @@ fun ConnectivityChecksSection(
 }
 
 @Composable
-private fun CheckResultRow(label: String, result: ConnectivityCheckResult, successFallback: String? = null) {
+private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
     val iconTint by animateColorAsState(
         targetValue = when (result) {
             is ConnectivityCheckResult.Success -> LocalHAColorScheme.current.colorFillPrimaryLoudResting
@@ -155,14 +152,11 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult, succe
             ) { animatedResult ->
                 when (animatedResult) {
                     is ConnectivityCheckResult.Success -> {
-                        val details = animatedResult.details ?: successFallback
-                        details?.let {
-                            Text(
-                                text = it,
-                                style = HATextStyle.BodyMedium.copy(fontSize = HAFontSize.S),
-                                color = LocalHAColorScheme.current.colorTextSecondary,
-                            )
-                        }
+                        Text(
+                            text = animatedResult.details ?: stringResource(animatedResult.messageResId),
+                            style = HATextStyle.BodyMedium.copy(fontSize = HAFontSize.S),
+                            color = LocalHAColorScheme.current.colorTextSecondary,
+                        )
                     }
 
                     is ConnectivityCheckResult.Failure -> {
