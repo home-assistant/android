@@ -38,4 +38,12 @@ interface ConnectivityChecker {
      * @return [ConnectivityCheckResult.Success] if server is reachable, or [ConnectivityCheckResult.Failure]
      */
     suspend fun server(url: String): ConnectivityCheckResult
+
+    /**
+     * Verifies if the server is a Home Assistant instance by checking its manifest.json.
+     *
+     * @param url The server URL to verify
+     * @return [ConnectivityCheckResult.Success] if it's Home Assistant, or [ConnectivityCheckResult.Failure]
+     */
+    suspend fun homeAssistant(url: String): ConnectivityCheckResult
 }

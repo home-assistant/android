@@ -1428,4 +1428,7 @@
     <string name="connection_check_error_tls">TLS certificate error</string>
     <string name="connection_check_error_server">Server connection failed</string>
     <string name="connection_check_skipped">Skipped (previous check failed)</string>
+    <string name="connection_check_home_assistant">Home Assistant Verification</string>
+    <string name="connection_check_home_assistant_success">Verified as Home Assistant</string>
+    <string name="connection_check_error_not_home_assistant">Server is not Home Assistant</string>
 </resources>

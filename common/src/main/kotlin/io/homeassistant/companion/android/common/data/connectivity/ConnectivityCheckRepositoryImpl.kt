@@ -52,6 +52,7 @@ class ConnectivityCheckRepositoryImpl @Inject constructor(private val checker: C
                 portReachability = skipped,
                 tlsCertificate = skipped,
                 serverConnection = skipped,
+                homeAssistantVerification = skipped,
             )
             emit(state)
             return@flow
@@ -76,6 +77,21 @@ class ConnectivityCheckRepositoryImpl @Inject constructor(private val checker: C
         emit(state)
         val serverResult = checker.server(url)
         state = state.copy(serverConnection = serverResult)
+        emit(state)
+
+        // Home Assistant Verification Check
+        if (serverResult is ConnectivityCheckResult.Failure) {
+            // Skip HA verification if server connection failed
+            val skipped = ConnectivityCheckResult.Failure(commonR.string.connection_check_skipped)
+            state = state.copy(homeAssistantVerification = skipped)
+            emit(state)
+            return@flow
+        }
+
+        state = state.copy(homeAssistantVerification = ConnectivityCheckResult.InProgress)
+        emit(state)
+        val haResult = checker.homeAssistant(url)
+        state = state.copy(homeAssistantVerification = haResult)
         emit(state)
     }.flowOn(Dispatchers.IO)
 

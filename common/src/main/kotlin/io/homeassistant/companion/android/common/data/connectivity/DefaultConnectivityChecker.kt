@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.common.data.connectivity
 
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import java.io.BufferedReader
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -8,7 +10,17 @@ import java.net.URL
 import javax.inject.Inject
 import javax.net.ssl.HttpsURLConnection
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.Serializable
 import timber.log.Timber
+
+@Serializable
+private data class ManifestResponse(val name: String? = null) {
+    fun isHomeAssistant(): Boolean = name == HOME_ASSISTANT_NAME
+
+    companion object {
+        private const val HOME_ASSISTANT_NAME = "Home Assistant"
+    }
+}
 
 /**
  * Default implementation of [ConnectivityChecker] that performs real network operations.
@@ -71,6 +83,30 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
         } catch (e: Exception) {
             Timber.d(e, "Server connection failed for $url")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_server)
+        }
+    }
+
+    override suspend fun homeAssistant(url: String): ConnectivityCheckResult {
+        return try {
+            withTimeout(timeoutMs) {
+                val manifestUrl = URL("$url/manifest.json")
+                val connection = manifestUrl.openConnection()
+                connection.connectTimeout = timeoutMs.toInt()
+                connection.readTimeout = timeoutMs.toInt()
+
+                val responseText = connection.getInputStream().bufferedReader().use(BufferedReader::readText)
+                val manifest = kotlinJsonMapper.decodeFromString<ManifestResponse>(responseText)
+
+                if (manifest.isHomeAssistant()) {
+                    ConnectivityCheckResult.Success()
+                } else {
+                    Timber.d("Manifest name mismatch: ${manifest.name}")
+                    ConnectivityCheckResult.Failure(commonR.string.connection_check_error_not_home_assistant)
+                }
+            }
+        } catch (e: Exception) {
+            Timber.d(e, "Home Assistant verification failed for $url")
+            ConnectivityCheckResult.Failure(commonR.string.connection_check_error_not_home_assistant)
         }
     }
 }

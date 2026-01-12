@@ -96,6 +96,7 @@ class ConnectivityCheckRepositoryImplTest {
         coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success("443")
         coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
         coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success()
 
         // When
         val states = repository.runChecks(testUrl).toList()
@@ -110,6 +111,7 @@ class ConnectivityCheckRepositoryImplTest {
         assertEquals(ConnectivityCheckResult.Pending, initialState.portReachability)
         assertEquals(ConnectivityCheckResult.Pending, initialState.tlsCertificate)
         assertEquals(ConnectivityCheckResult.Pending, initialState.serverConnection)
+        assertEquals(ConnectivityCheckResult.Pending, initialState.homeAssistantVerification)
     }
 
     @Test
@@ -120,6 +122,7 @@ class ConnectivityCheckRepositoryImplTest {
         coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success("443")
         coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
         coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success()
 
         // When
         val states = repository.runChecks(testUrl).toList()
@@ -140,6 +143,10 @@ class ConnectivityCheckRepositoryImplTest {
         // Verify server connection check goes to InProgress
         val serverInProgressState = states.firstOrNull { it.serverConnection is ConnectivityCheckResult.InProgress }
         assertNotNull(serverInProgressState)
+
+        // Verify Home Assistant verification check goes to InProgress
+        val haInProgressState = states.firstOrNull { it.homeAssistantVerification is ConnectivityCheckResult.InProgress }
+        assertNotNull(haInProgressState)
     }
 
     @Test
@@ -150,6 +157,7 @@ class ConnectivityCheckRepositoryImplTest {
         coEvery { checker.port("example.com", 8123) } returns ConnectivityCheckResult.Success("8123")
         coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
         coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success()
 
         // When
         val states = repository.runChecks(testUrl).toList()
@@ -171,6 +179,7 @@ class ConnectivityCheckRepositoryImplTest {
         coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success("443")
         coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
         coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success()
 
         // When
         val states = repository.runChecks(testUrl).toList()
@@ -192,6 +201,7 @@ class ConnectivityCheckRepositoryImplTest {
         coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success("443")
         coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
         coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success()
 
         // When
         val states = repository.runChecks(testUrl).toList()
@@ -242,6 +252,7 @@ class ConnectivityCheckRepositoryImplTest {
         coEvery { checker.port("example.com", 8123) } returns ConnectivityCheckResult.Success("8123")
         coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
         coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success()
 
         // When
         val states = repository.runChecks(testUrl).toList()
@@ -258,9 +269,10 @@ class ConnectivityCheckRepositoryImplTest {
         // Should complete all checks
         assertTrue(finalState.isComplete)
 
-        // Verify the full URL was passed to TLS and server checks
+        // Verify the full URL was passed to TLS, server and HA checks
         coVerify { checker.tls(testUrl) }
         coVerify { checker.server(testUrl) }
+        coVerify { checker.homeAssistant(testUrl) }
     }
 
     @Test
@@ -289,6 +301,7 @@ class ConnectivityCheckRepositoryImplTest {
             finalState.portReachability,
             finalState.tlsCertificate,
             finalState.serverConnection,
+            finalState.homeAssistantVerification,
         ).forEach { result ->
             assertTrue(result is ConnectivityCheckResult.Failure)
             assertEquals(
@@ -306,6 +319,7 @@ class ConnectivityCheckRepositoryImplTest {
         coVerify(exactly = 0) { checker.port(any(), any()) }
         coVerify(exactly = 0) { checker.tls(any()) }
         coVerify(exactly = 0) { checker.server(any()) }
+        coVerify(exactly = 0) { checker.homeAssistant(any()) }
     }
 
     @Test
@@ -316,6 +330,7 @@ class ConnectivityCheckRepositoryImplTest {
         coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success("443")
         coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
         coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success()
 
         // When
         val states = repository.runChecks(testUrl).toList()
@@ -326,7 +341,44 @@ class ConnectivityCheckRepositoryImplTest {
         assertTrue(finalState.portReachability is ConnectivityCheckResult.Success)
         assertTrue(finalState.tlsCertificate is ConnectivityCheckResult.Success)
         assertTrue(finalState.serverConnection is ConnectivityCheckResult.Success)
+        assertTrue(finalState.homeAssistantVerification is ConnectivityCheckResult.Success)
         assertTrue(finalState.isComplete)
         assertFalse(finalState.hasFailure)
+    }
+
+    @Test
+    fun `Given server is not Home Assistant when running checks then HA verification fails`() = runTest(testDispatcher) {
+        // Given
+        val testUrl = "https://example.com"
+        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success("192.0.2.1")
+        coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success("443")
+        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success()
+        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Failure(
+            commonR.string.connection_check_error_not_home_assistant,
+        )
+
+        // When
+        val states = repository.runChecks(testUrl).toList()
+
+        // Then
+        val finalState = states.last()
+
+        // All checks up to HA should succeed
+        assertTrue(finalState.dnsResolution is ConnectivityCheckResult.Success)
+        assertTrue(finalState.portReachability is ConnectivityCheckResult.Success)
+        assertTrue(finalState.tlsCertificate is ConnectivityCheckResult.Success)
+        assertTrue(finalState.serverConnection is ConnectivityCheckResult.Success)
+
+        // HA verification should fail
+        assertTrue(finalState.homeAssistantVerification is ConnectivityCheckResult.Failure)
+        assertEquals(
+            commonR.string.connection_check_error_not_home_assistant,
+            (finalState.homeAssistantVerification as ConnectivityCheckResult.Failure).messageResId,
+        )
+
+        // State management
+        assertTrue(finalState.isComplete)
+        assertTrue(finalState.hasFailure)
     }
 }

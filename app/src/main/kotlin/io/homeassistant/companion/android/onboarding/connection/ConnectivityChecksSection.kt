@@ -81,6 +81,12 @@ fun ConnectivityChecksSection(
             successFallback = stringResource(commonR.string.connection_check_server_success),
         )
 
+        CheckResultRow(
+            label = stringResource(commonR.string.connection_check_home_assistant),
+            result = connectivityCheckState.homeAssistantVerification,
+            successFallback = stringResource(commonR.string.connection_check_home_assistant_success),
+        )
+
         Spacer(modifier = Modifier.height(HADimens.SPACE2))
 
         HAAccentButton(
