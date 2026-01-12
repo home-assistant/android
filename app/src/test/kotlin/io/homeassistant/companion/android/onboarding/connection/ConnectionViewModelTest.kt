@@ -17,6 +17,7 @@ import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
+import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
@@ -24,9 +25,11 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
+import io.mockk.verify
 import java.net.URL
 import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -444,6 +447,94 @@ class ConnectionViewModelTest {
                 }
                 every { getString(commonR.string.no_description) } returns "No description"
             }
+        }
+    }
+
+    @Test
+    fun `Given an error occurs when onReceivedError is invoked then runChecks is triggered`() = runTest {
+        val rawUrl = "http://homeassistant.local:8123"
+        val connectivityState = ConnectivityCheckState(serverUrl = rawUrl)
+        val connectivityFlow = MutableSharedFlow<ConnectivityCheckState>(replay = 1)
+        every { connectivityCheckRepository.runChecks(rawUrl) } returns connectivityFlow
+
+        val viewModel = ConnectionViewModel(rawUrl, keyChainRepository, connectivityCheckRepository)
+        val webView = mockWebView()
+
+        turbineScope {
+            val urlTurbine = viewModel.urlFlow.testIn(backgroundScope)
+            val connectivityTurbine = viewModel.connectivityCheckState.testIn(backgroundScope)
+            val connectivityFlowSubscriptions = connectivityFlow.subscriptionCount.testIn(backgroundScope)
+
+            // Initial state - no subscribers to connectivity flow yet
+            assertEquals(0, connectivityFlowSubscriptions.awaitItem())
+            assertEquals(ConnectivityCheckState(), connectivityTurbine.awaitItem())
+
+            // Wait for auth URL to be built
+            assertNull(urlTurbine.awaitItem())
+            val authUrl = urlTurbine.awaitItem()
+            assertNotNull(authUrl)
+
+            val request = mockk<WebResourceRequest> {
+                every { url } returns mockk<Uri> {
+                    every { this@mockk.toString() } returns authUrl
+                }
+            }
+
+            viewModel.webViewClient.onReceivedError(
+                webView,
+                request,
+                mockk<WebResourceError> {
+                    every { errorCode } returns ERROR_HOST_LOOKUP
+                    every { description } returns "Host lookup error"
+                },
+            )
+
+            // Verify connectivity flow is being collected (runChecks was called and collected)
+            assertEquals(1, connectivityFlowSubscriptions.awaitItem())
+
+            // Emit a state from the connectivity flow
+            connectivityFlow.emit(connectivityState)
+
+            // Verify connectivity checks state is updated by observing the emitted state
+            assertEquals(connectivityState, connectivityTurbine.awaitItem())
+
+            verify(exactly = 1) { connectivityCheckRepository.runChecks(rawUrl) }
+        }
+    }
+
+    @Test
+    fun `Given runConnectivityChecks called many times then only last collection stays active`() = runTest {
+        val rawUrl = "http://homeassistant.local:8123"
+
+        val flows = List(5) { MutableSharedFlow<ConnectivityCheckState>() }
+        var i = 0
+        every { connectivityCheckRepository.runChecks(rawUrl) } answers { flows[i++] }
+
+        val viewModel = ConnectionViewModel(rawUrl, keyChainRepository, connectivityCheckRepository)
+
+        turbineScope {
+            val subs = flows.map { it.subscriptionCount.testIn(backgroundScope) }
+
+            // initial 0
+            subs.forEach { assertEquals(0, it.awaitItem()) }
+
+            repeat(5) { idx ->
+                viewModel.runConnectivityChecks()
+
+                // last one should become active
+                assertEquals(1, subs[idx].awaitItem())
+
+                // previous one should be cancelled (except for first run)
+                if (idx > 0) {
+                    assertEquals(0, subs[idx - 1].awaitItem())
+                }
+            }
+
+            // sanity: only last has an active subscriber
+            flows.dropLast(1).forEach { assertEquals(0, it.subscriptionCount.value) }
+            assertEquals(1, flows.last().subscriptionCount.value)
+
+            verify(exactly = 5) { connectivityCheckRepository.runChecks(rawUrl) }
         }
     }
 }

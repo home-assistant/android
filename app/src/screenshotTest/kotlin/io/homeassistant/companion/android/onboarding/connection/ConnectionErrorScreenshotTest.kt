@@ -46,7 +46,7 @@ class ConnectionErrorScreenshotTest {
                     portReachability = ConnectivityCheckResult.Success(commonR.string.connection_check_port, "8123"),
                     tlsCertificate = ConnectivityCheckResult.Failure(commonR.string.connection_check_error_tls),
                     serverConnection = ConnectivityCheckResult.Pending,
-                    homeAssistantVerification = ConnectivityCheckResult.Pending
+                    homeAssistantVerification = ConnectivityCheckResult.Pending,
                 ),
                 onRetryConnectivityCheck = {},
                 errorDetailsExpanded = true,
