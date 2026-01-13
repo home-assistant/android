@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Circle
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -130,20 +131,29 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
             },
             label = "iconAnimation",
         ) { animatedResult ->
-            Icon(
-                imageVector = when (animatedResult) {
-                    is ConnectivityCheckResult.Success,
-                    is ConnectivityCheckResult.Failure,
-                    -> Icons.Outlined.CheckCircle
-                    is ConnectivityCheckResult.NotApplicable,
-                    is ConnectivityCheckResult.InProgress,
-                    is ConnectivityCheckResult.Pending,
-                    -> Icons.Outlined.Circle
-                },
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = iconTint,
-            )
+            when (animatedResult) {
+                is ConnectivityCheckResult.Success,
+                is ConnectivityCheckResult.Failure,
+                -> Icon(
+                    imageVector = Icons.Outlined.CheckCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = iconTint,
+                )
+                is ConnectivityCheckResult.NotApplicable -> Icon(
+                    imageVector = Icons.Outlined.Circle,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = iconTint,
+                )
+                is ConnectivityCheckResult.InProgress,
+                is ConnectivityCheckResult.Pending,
+                -> CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = iconTint,
+                    strokeWidth = 2.dp,
+                )
+            }
         }
 
         Column(modifier = Modifier.weight(1f)) {
