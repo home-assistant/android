@@ -1,12 +1,15 @@
 package io.homeassistant.companion.android.common.data.connectivity
 
+import androidx.annotation.StringRes
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import java.io.BufferedReader
+import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.URL
+import java.net.URLConnection
 import javax.inject.Inject
 import javax.net.ssl.HttpsURLConnection
 import kotlinx.coroutines.withTimeout
@@ -62,12 +65,7 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
             withTimeout(timeoutMs) {
                 val connection = URL(url).openConnection() as HttpsURLConnection
                 connection.connectTimeout = timeoutMs.toInt()
-                try {
-                    connection.connect()
-                    ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
-                } finally {
-                    connection.disconnect()
-                }
+                connection.tryConnect(commonR.string.connection_check_tls_success)
             }
         } catch (e: Exception) {
             Timber.d(e, "TLS check failed for $url")
@@ -80,12 +78,7 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
             withTimeout(timeoutMs) {
                 val connection = URL(url).openConnection()
                 connection.connectTimeout = timeoutMs.toInt()
-                try {
-                    connection.connect()
-                    ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
-                } finally {
-                    connection.disconnect()
-                }
+                connection.tryConnect(commonR.string.connection_check_server_success)
             }
         } catch (e: Exception) {
             Timber.d(e, "Server connection failed for $url")
@@ -114,6 +107,17 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
         } catch (e: Exception) {
             Timber.d(e, "Home Assistant verification failed for $url")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_not_home_assistant)
+        }
+    }
+
+    private fun URLConnection.tryConnect(@StringRes successMessage: Int): ConnectivityCheckResult {
+        return try {
+            connect()
+            ConnectivityCheckResult.Success(successMessage)
+        } finally {
+            if (this is HttpURLConnection) {
+                disconnect()
+            }
         }
     }
 }
