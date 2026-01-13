@@ -7,7 +7,7 @@ import dagger.hilt.components.SingletonComponent
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class ConnectivityCheckModule {
+internal abstract class ConnectivityCheckModule {
 
     @Binds
     abstract fun bindConnectivityCheckRepository(impl: ConnectivityCheckRepositoryImpl): ConnectivityCheckRepository

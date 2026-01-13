@@ -22,7 +22,7 @@ private enum class SkipReason {
 /**
  * Default implementation of [ConnectivityCheckRepository] that runs checks in sequence.
  */
-class ConnectivityCheckRepositoryImpl @Inject constructor(private val checker: ConnectivityChecker) :
+internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val checker: ConnectivityChecker) :
     ConnectivityCheckRepository {
 
     override fun runChecks(url: String): Flow<ConnectivityCheckState> = flow {
