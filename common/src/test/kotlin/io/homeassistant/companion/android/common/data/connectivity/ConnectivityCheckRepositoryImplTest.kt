@@ -3,7 +3,9 @@ package io.homeassistant.companion.android.common.data.connectivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.mockk
+import java.net.URL
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -315,28 +317,68 @@ class ConnectivityCheckRepositoryImplTest {
     }
 
     @Test
-    fun `Given all checks succeed when running checks then state is complete with no failures`() = runTest {
+    fun `Given all checks succeed when running checks then states are emitted in order`() = runTest {
         // Given
         val testUrl = "https://example.com"
-        coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
-        coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_port, "443")
-        coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
-        coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
-        coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_home_assistant_success)
+        val hostname = URL(testUrl).host
+        val dnsSuccess = ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
+        val portSuccess = ConnectivityCheckResult.Success(commonR.string.connection_check_port, "443")
+        val tlsSuccess = ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
+        val serverSuccess = ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
+        val haSuccess = ConnectivityCheckResult.Success(commonR.string.connection_check_home_assistant_success)
+        coEvery { checker.dns(hostname) } returns dnsSuccess
+        coEvery { checker.port(hostname, 443) } returns portSuccess
+        coEvery { checker.tls(testUrl) } returns tlsSuccess
+        coEvery { checker.server(testUrl) } returns serverSuccess
+        coEvery { checker.homeAssistant(testUrl) } returns haSuccess
 
         // When
         val states = repository.runChecks(testUrl).toList()
 
         // Then
-        val finalState = states.last()
-        assertTrue(finalState.dnsResolution is ConnectivityCheckResult.Success)
-        assertTrue(finalState.portReachability is ConnectivityCheckResult.Success)
-        assertTrue(finalState.tlsCertificate is ConnectivityCheckResult.Success)
-        assertTrue(finalState.serverConnection is ConnectivityCheckResult.Success)
-        assertTrue(finalState.homeAssistantVerification is ConnectivityCheckResult.Success)
-        assertTrue(finalState.isComplete)
-        assertFalse(finalState.hasFailure)
+        val pending = ConnectivityCheckState()
+        val inProgress = ConnectivityCheckResult.InProgress
+        val p = pending
+        val expectedStates = listOf(
+            p,
+            p.with(dns = inProgress),
+            p.with(dns = dnsSuccess),
+            p.with(dns = dnsSuccess, port = inProgress),
+            p.with(dns = dnsSuccess, port = portSuccess),
+            p.with(dns = dnsSuccess, port = portSuccess, tls = inProgress),
+            p.with(dns = dnsSuccess, port = portSuccess, tls = tlsSuccess),
+            p.with(dns = dnsSuccess, port = portSuccess, tls = tlsSuccess, server = inProgress),
+            p.with(dns = dnsSuccess, port = portSuccess, tls = tlsSuccess, server = serverSuccess),
+            p.with(dns = dnsSuccess, port = portSuccess, tls = tlsSuccess, server = serverSuccess, ha = inProgress),
+            p.with(dns = dnsSuccess, port = portSuccess, tls = tlsSuccess, server = serverSuccess, ha = haSuccess),
+        )
+
+        assertEquals(expectedStates, states)
+        assertTrue(states.last().isComplete)
+        assertFalse(states.last().hasFailure)
+
+        coVerifyOrder {
+            checker.dns(hostname)
+            checker.port(hostname, 443)
+            checker.tls(testUrl)
+            checker.server(testUrl)
+            checker.homeAssistant(testUrl)
+        }
     }
+
+    private fun ConnectivityCheckState.with(
+        dns: ConnectivityCheckResult = dnsResolution,
+        port: ConnectivityCheckResult = portReachability,
+        tls: ConnectivityCheckResult = tlsCertificate,
+        server: ConnectivityCheckResult = serverConnection,
+        ha: ConnectivityCheckResult = homeAssistantVerification,
+    ) = copy(
+        dnsResolution = dns,
+        portReachability = port,
+        tlsCertificate = tls,
+        serverConnection = server,
+        homeAssistantVerification = ha,
+    )
 
     @Test
     fun `Given server is not Home Assistant when running checks then HA verification fails`() = runTest {
