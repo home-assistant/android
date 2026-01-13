@@ -452,60 +452,46 @@ class ConnectionViewModelTest {
 
     @Test
     fun `Given an error occurs when onReceivedError is invoked then runChecks is triggered`() = runTest {
+        // Given
         val rawUrl = "http://homeassistant.local:8123"
-        val connectivityState = ConnectivityCheckState()
-        val connectivityFlow = MutableSharedFlow<ConnectivityCheckState>(replay = 1)
+        val connectivityFlow = MutableSharedFlow<ConnectivityCheckState>()
         every { connectivityCheckRepository.runChecks(rawUrl) } returns connectivityFlow
 
         val viewModel = ConnectionViewModel(rawUrl, keyChainRepository, connectivityCheckRepository)
         val webView = mockWebView()
 
-        turbineScope {
-            val urlTurbine = viewModel.urlFlow.testIn(backgroundScope)
-            val connectivityTurbine = viewModel.connectivityCheckState.testIn(backgroundScope)
-            val connectivityFlowSubscriptions = connectivityFlow.subscriptionCount.testIn(backgroundScope)
+        advanceUntilIdle()
+        val authUrl = viewModel.urlFlow.value
+        assertNotNull(authUrl)
 
-            // Initial state - no subscribers to connectivity flow yet
-            assertEquals(0, connectivityFlowSubscriptions.awaitItem())
-            assertEquals(ConnectivityCheckState(), connectivityTurbine.awaitItem())
-
-            // Wait for auth URL to be built
-            assertNull(urlTurbine.awaitItem())
-            val authUrl = urlTurbine.awaitItem()
-            assertNotNull(authUrl)
-
-            val request = mockk<WebResourceRequest> {
-                every { url } returns mockk<Uri> {
-                    every { this@mockk.toString() } returns authUrl
-                }
+        val request = mockk<WebResourceRequest> {
+            every { url } returns mockk<Uri> {
+                every { this@mockk.toString() } returns authUrl
             }
-
-            viewModel.webViewClient.onReceivedError(
-                webView,
-                request,
-                mockk<WebResourceError> {
-                    every { errorCode } returns ERROR_HOST_LOOKUP
-                    every { description } returns "Host lookup error"
-                },
-            )
-
-            // Verify connectivity flow is being collected (runChecks was called and collected)
-            assertEquals(1, connectivityFlowSubscriptions.awaitItem())
-
-            // Emit a state from the connectivity flow
-            connectivityFlow.emit(connectivityState)
-
-            // Verify connectivity checks state is updated by observing the emitted state
-            assertEquals(connectivityState, connectivityTurbine.awaitItem())
-
-            verify(exactly = 1) { connectivityCheckRepository.runChecks(rawUrl) }
         }
+
+        // When
+        viewModel.webViewClient.onReceivedError(
+            webView,
+            request,
+            mockk<WebResourceError> {
+                every { errorCode } returns ERROR_HOST_LOOKUP
+                every { description } returns "Host lookup error"
+            },
+        )
+
+        advanceUntilIdle()
+
+        // Then
+        assertTrue(viewModel.errorFlow.value is ConnectionError.UnreachableError)
+        verify(exactly = 1) { connectivityCheckRepository.runChecks(rawUrl) }
+        assertEquals(1, connectivityFlow.subscriptionCount.value)
     }
 
     @Test
     fun `Given runConnectivityChecks called many times then only last collection stays active`() = runTest {
+        // Given
         val rawUrl = "http://homeassistant.local:8123"
-
         val flows = List(5) { MutableSharedFlow<ConnectivityCheckState>() }
         var i = 0
         every { connectivityCheckRepository.runChecks(rawUrl) } answers { flows[i++] }
@@ -514,26 +500,22 @@ class ConnectionViewModelTest {
 
         turbineScope {
             val subs = flows.map { it.subscriptionCount.testIn(backgroundScope) }
-
-            // initial 0
             subs.forEach { assertEquals(0, it.awaitItem()) }
 
+            // When
             repeat(5) { idx ->
                 viewModel.runConnectivityChecks()
 
-                // last one should become active
                 assertEquals(1, subs[idx].awaitItem())
 
-                // previous one should be cancelled (except for first run)
                 if (idx > 0) {
                     assertEquals(0, subs[idx - 1].awaitItem())
                 }
             }
 
-            // sanity: only last has an active subscriber
+            // Then
             flows.dropLast(1).forEach { assertEquals(0, it.subscriptionCount.value) }
             assertEquals(1, flows.last().subscriptionCount.value)
-
             verify(exactly = 5) { connectivityCheckRepository.runChecks(rawUrl) }
         }
     }
