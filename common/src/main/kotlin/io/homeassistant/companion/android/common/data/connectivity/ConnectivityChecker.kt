@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.common.data.connectivity
 
 /**
  * Interface for performing individual connectivity checks.
- * Implementations can provide real network operations or test doubles.
  */
 internal interface ConnectivityChecker {
 
