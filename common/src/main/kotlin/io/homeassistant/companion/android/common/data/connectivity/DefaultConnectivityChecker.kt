@@ -62,9 +62,12 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
             withTimeout(timeoutMs) {
                 val connection = URL(url).openConnection() as HttpsURLConnection
                 connection.connectTimeout = timeoutMs.toInt()
-                connection.connect()
-                connection.disconnect()
-                ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
+                try {
+                    connection.connect()
+                    ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
+                } finally {
+                    connection.disconnect()
+                }
             }
         } catch (e: Exception) {
             Timber.d(e, "TLS check failed for $url")
@@ -77,8 +80,12 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
             withTimeout(timeoutMs) {
                 val connection = URL(url).openConnection()
                 connection.connectTimeout = timeoutMs.toInt()
-                connection.connect()
-                ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
+                try {
+                    connection.connect()
+                    ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
+                } finally {
+                    connection.disconnect()
+                }
             }
         } catch (e: Exception) {
             Timber.d(e, "Server connection failed for $url")
