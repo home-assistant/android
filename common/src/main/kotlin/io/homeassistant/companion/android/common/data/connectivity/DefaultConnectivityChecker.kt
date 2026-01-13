@@ -49,12 +49,10 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
 
     override suspend fun port(hostname: String, port: Int): ConnectivityCheckResult {
         return try {
-            withTimeout(CONNECTIVITY_TIMEOUT) {
-                Socket().use { socket ->
-                    socket.connect(InetSocketAddress(hostname, port), CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt())
-                }
-                ConnectivityCheckResult.Success(commonR.string.connection_check_port, port.toString())
+            Socket().use { socket ->
+                socket.connect(InetSocketAddress(hostname, port), CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt())
             }
+            ConnectivityCheckResult.Success(commonR.string.connection_check_port, port.toString())
         } catch (e: Exception) {
             Timber.d(e, "Port $port not reachable on $hostname")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_port)
@@ -63,11 +61,10 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
 
     override suspend fun tls(url: String): ConnectivityCheckResult {
         return try {
-            withTimeout(CONNECTIVITY_TIMEOUT) {
-                val connection = URL(url).openConnection() as HttpsURLConnection
-                connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
-                connection.tryConnect(commonR.string.connection_check_tls_success)
-            }
+            val connection = URL(url).openConnection() as HttpsURLConnection
+            connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
+            connection.readTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
+            connection.tryConnect(commonR.string.connection_check_tls_success)
         } catch (e: Exception) {
             Timber.d(e, "TLS check failed for $url")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_tls)
@@ -76,11 +73,10 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
 
     override suspend fun server(url: String): ConnectivityCheckResult {
         return try {
-            withTimeout(CONNECTIVITY_TIMEOUT) {
-                val connection = URL(url).openConnection()
-                connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
-                connection.tryConnect(commonR.string.connection_check_server_success)
-            }
+            val connection = URL(url).openConnection()
+            connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
+            connection.readTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
+            connection.tryConnect(commonR.string.connection_check_server_success)
         } catch (e: Exception) {
             Timber.d(e, "Server connection failed for $url")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_server)
@@ -89,21 +85,19 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
 
     override suspend fun homeAssistant(url: String): ConnectivityCheckResult {
         return try {
-            withTimeout(CONNECTIVITY_TIMEOUT) {
-                val manifestUrl = URL("$url/manifest.json")
-                val connection = manifestUrl.openConnection()
-                connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
-                connection.readTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
+            val manifestUrl = URL("$url/manifest.json")
+            val connection = manifestUrl.openConnection()
+            connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
+            connection.readTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
 
-                val responseText = connection.getInputStream().bufferedReader().use(BufferedReader::readText)
-                val manifest = kotlinJsonMapper.decodeFromString<ManifestResponse>(responseText)
+            val responseText = connection.getInputStream().bufferedReader().use(BufferedReader::readText)
+            val manifest = kotlinJsonMapper.decodeFromString<ManifestResponse>(responseText)
 
-                if (manifest.isHomeAssistant()) {
-                    ConnectivityCheckResult.Success(commonR.string.connection_check_home_assistant_success)
-                } else {
-                    Timber.d("Manifest name mismatch: ${manifest.name}")
-                    ConnectivityCheckResult.Failure(commonR.string.connection_check_error_not_home_assistant)
-                }
+            if (manifest.isHomeAssistant()) {
+                ConnectivityCheckResult.Success(commonR.string.connection_check_home_assistant_success)
+            } else {
+                Timber.d("Manifest name mismatch: ${manifest.name}")
+                ConnectivityCheckResult.Failure(commonR.string.connection_check_error_not_home_assistant)
             }
         } catch (e: Exception) {
             Timber.d(e, "Home Assistant verification failed for $url")
