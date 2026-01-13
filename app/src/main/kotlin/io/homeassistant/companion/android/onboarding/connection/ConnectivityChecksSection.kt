@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.connection
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
@@ -22,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -35,6 +37,9 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+
+@VisibleForTesting
+internal const val CONNECTIVITY_RETRY_BUTTON_TAG = "connectivity_retry_button"
 
 /**
  * Reusable connectivity checks section that displays the results of connectivity checks.
@@ -90,7 +95,9 @@ fun ConnectivityChecksSection(
             text = stringResource(commonR.string.retry),
             onClick = onRetryConnectivityCheck,
             enabled = connectivityCheckState.isComplete,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(CONNECTIVITY_RETRY_BUTTON_TAG),
         )
     }
 }
