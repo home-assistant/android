@@ -66,19 +66,22 @@ class ConnectivityCheckRepositoryImpl @Inject constructor(private val checker: C
             check = { checker.port(hostname, port) },
         )
 
-        // TLS Check (bypass for HTTP)
-        state = runCheck(
-            currentState = state,
-            setInProgress = { it.copy(tlsCertificate = ConnectivityCheckResult.InProgress) },
-            setResult = { s, r -> s.copy(tlsCertificate = r) },
-            check = {
-                if (isHttps) {
-                    checker.tls(url)
-                } else {
-                    ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
-                }
-            },
-        )
+        // TLS Check (not applicable for HTTP)
+        if (isHttps) {
+            state = runCheck(
+                currentState = state,
+                setInProgress = { it.copy(tlsCertificate = ConnectivityCheckResult.InProgress) },
+                setResult = { s, r -> s.copy(tlsCertificate = r) },
+                check = { checker.tls(url) },
+            )
+        } else {
+            state = state.copy(
+                tlsCertificate = ConnectivityCheckResult.NotApplicable(
+                    commonR.string.connection_check_tls_not_applicable,
+                ),
+            )
+            emit(state)
+        }
 
         // Server Connection Check
         state = runCheck(

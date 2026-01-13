@@ -75,8 +75,8 @@ class ConnectivityCheckRepositoryImplTest {
         val portError = finalState.portReachability as ConnectivityCheckResult.Failure
         assertEquals(commonR.string.connection_check_error_port, portError.messageResId)
 
-        // TLS should succeed without validation for HTTP (bypassed)
-        assertTrue(finalState.tlsCertificate is ConnectivityCheckResult.Success)
+        // TLS should be not applicable for HTTP
+        assertTrue(finalState.tlsCertificate is ConnectivityCheckResult.NotApplicable)
 
         // State management
         assertTrue(finalState.isComplete)

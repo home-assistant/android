@@ -101,6 +101,7 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
         targetValue = when (result) {
             is ConnectivityCheckResult.Success -> LocalHAColorScheme.current.colorFillPrimaryLoudResting
             is ConnectivityCheckResult.Failure -> LocalHAColorScheme.current.colorOnDangerQuiet
+            is ConnectivityCheckResult.NotApplicable,
             is ConnectivityCheckResult.InProgress,
             is ConnectivityCheckResult.Pending,
             -> LocalHAColorScheme.current.colorOnNeutralQuiet
@@ -127,6 +128,7 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
                     is ConnectivityCheckResult.Success,
                     is ConnectivityCheckResult.Failure,
                     -> Icons.Outlined.CheckCircle
+                    is ConnectivityCheckResult.NotApplicable,
                     is ConnectivityCheckResult.InProgress,
                     is ConnectivityCheckResult.Pending,
                     -> Icons.Outlined.Circle
@@ -167,6 +169,14 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
                         )
                     }
 
+                    is ConnectivityCheckResult.NotApplicable -> {
+                        Text(
+                            text = stringResource(animatedResult.messageResId),
+                            style = HATextStyle.BodyMedium.copy(fontSize = HAFontSize.S),
+                            color = LocalHAColorScheme.current.colorTextSecondary,
+                        )
+                    }
+
                     is ConnectivityCheckResult.InProgress,
                     is ConnectivityCheckResult.Pending,
                     -> {
@@ -200,9 +210,11 @@ private fun PreviewConnectivityChecksSectionMixed() {
         ConnectivityChecksSection(
             connectivityCheckState = ConnectivityCheckState(
                 dnsResolution = ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.168.1.10"),
-                portReachability = ConnectivityCheckResult.Success(commonR.string.connection_check_port, "8123"),
-                tlsCertificate = ConnectivityCheckResult.Failure(commonR.string.connection_check_error_tls),
-                serverConnection = ConnectivityCheckResult.Pending,
+                portReachability = ConnectivityCheckResult.Success(commonR.string.connection_check_port, "80"),
+                tlsCertificate = ConnectivityCheckResult.NotApplicable(
+                    commonR.string.connection_check_tls_not_applicable,
+                ),
+                serverConnection = ConnectivityCheckResult.Failure(commonR.string.connection_check_error_server),
                 homeAssistantVerification = ConnectivityCheckResult.Pending,
             ),
             onRetryConnectivityCheck = {},

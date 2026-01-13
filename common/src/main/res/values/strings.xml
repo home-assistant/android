@@ -1421,6 +1421,7 @@
     <string name="connection_check_tls">TLS Certificate</string>
     <string name="connection_check_server">Server Connection</string>
     <string name="connection_check_tls_success">Certificate valid</string>
+    <string name="connection_check_tls_not_applicable">Not required for HTTP</string>
     <string name="connection_check_server_success">Connection established</string>
     <string name="connection_check_error_invalid_url">Invalid URL format</string>
     <string name="connection_check_error_dns">DNS resolution failed</string>

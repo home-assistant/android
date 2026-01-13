@@ -10,6 +10,7 @@ sealed interface ConnectivityCheckResult {
     data object InProgress : ConnectivityCheckResult
     data class Success(@StringRes val messageResId: Int, val details: String? = null) : ConnectivityCheckResult
     data class Failure(@StringRes val messageResId: Int) : ConnectivityCheckResult
+    data class NotApplicable(@StringRes val messageResId: Int) : ConnectivityCheckResult
 }
 
 /**
