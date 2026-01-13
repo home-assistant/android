@@ -5,7 +5,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -19,7 +18,6 @@ import org.junit.jupiter.params.provider.ValueSource
 class ConnectivityCheckRepositoryImplTest {
     private lateinit var checker: ConnectivityChecker
     private lateinit var repository: ConnectivityCheckRepositoryImpl
-    private val testDispatcher = StandardTestDispatcher()
 
     @BeforeEach
     fun setup() {
@@ -29,7 +27,7 @@ class ConnectivityCheckRepositoryImplTest {
 
     @ParameterizedTest
     @ValueSource(strings = ["not a valid url", "://invalid", "ht!tp://bad.url", ""])
-    fun `Given invalid URL when running checks then DNS check fails with invalid URL error`(invalidUrl: String) = runTest(testDispatcher) {
+    fun `Given invalid URL when running checks then DNS check fails with invalid URL error`(invalidUrl: String) = runTest {
         // When
         val states = repository.runChecks(invalidUrl).toList()
 
@@ -49,7 +47,7 @@ class ConnectivityCheckRepositoryImplTest {
     }
 
     @Test
-    fun `Given HTTP URL when running checks then default port 80 is used and TLS check is bypassed`() = runTest(testDispatcher) {
+    fun `Given HTTP URL when running checks then default port 80 is used and TLS check is bypassed`() = runTest {
         // Given
         val testUrl = "http://example.com"
         coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
@@ -88,7 +86,7 @@ class ConnectivityCheckRepositoryImplTest {
     }
 
     @Test
-    fun `Given flow emits states when running checks then initial state is emitted first`() = runTest(testDispatcher) {
+    fun `Given flow emits states when running checks then initial state is emitted first`() = runTest {
         // Given
         val testUrl = "https://example.com"
         coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
@@ -113,7 +111,7 @@ class ConnectivityCheckRepositoryImplTest {
     }
 
     @Test
-    fun `Given flow emits states when running checks then InProgress states are emitted`() = runTest(testDispatcher) {
+    fun `Given flow emits states when running checks then InProgress states are emitted`() = runTest {
         // Given
         val testUrl = "https://example.com"
         coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
@@ -148,7 +146,7 @@ class ConnectivityCheckRepositoryImplTest {
     }
 
     @Test
-    fun `Given URL with custom port when parsed then custom port is extracted`() = runTest(testDispatcher) {
+    fun `Given URL with custom port when parsed then custom port is extracted`() = runTest {
         // Given
         val testUrl = "https://example.com:8123"
         coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
@@ -169,7 +167,7 @@ class ConnectivityCheckRepositoryImplTest {
     }
 
     @Test
-    fun `Given HTTPS URL without port when running checks then default port 443 is used`() = runTest(testDispatcher) {
+    fun `Given HTTPS URL without port when running checks then default port 443 is used`() = runTest {
         // Given
         val testUrl = "https://example.com"
         coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
@@ -190,7 +188,7 @@ class ConnectivityCheckRepositoryImplTest {
     }
 
     @Test
-    fun `Given successful DNS resolution when running checks then IP addresses are included in success details`() = runTest(testDispatcher) {
+    fun `Given successful DNS resolution when running checks then IP addresses are included in success details`() = runTest {
         // Given
         val testUrl = "https://example.com"
         val ipAddresses = "192.0.2.1, 192.0.2.2"
@@ -217,7 +215,7 @@ class ConnectivityCheckRepositoryImplTest {
     }
 
     @Test
-    fun `Given any check fails when checking state then hasFailure returns true`() = runTest(testDispatcher) {
+    fun `Given any check fails when checking state then hasFailure returns true`() = runTest {
         // Given
         val testUrl = "https://example.com"
         coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
@@ -242,7 +240,7 @@ class ConnectivityCheckRepositoryImplTest {
     }
 
     @Test
-    fun `Given URL with path and query params when running checks then checks execute correctly`() = runTest(testDispatcher) {
+    fun `Given URL with path and query params when running checks then checks execute correctly`() = runTest {
         // Given
         val testUrl = "https://example.com:8123/api/websocket?token=abc123"
         coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
@@ -270,7 +268,7 @@ class ConnectivityCheckRepositoryImplTest {
     }
 
     @Test
-    fun `Given DNS resolution fails when running checks then remaining checks are skipped`() = runTest(testDispatcher) {
+    fun `Given DNS resolution fails when running checks then remaining checks are skipped`() = runTest {
         // Given
         val testUrl = "https://example.com"
         coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Failure(
@@ -317,7 +315,7 @@ class ConnectivityCheckRepositoryImplTest {
     }
 
     @Test
-    fun `Given all checks succeed when running checks then state is complete with no failures`() = runTest(testDispatcher) {
+    fun `Given all checks succeed when running checks then state is complete with no failures`() = runTest {
         // Given
         val testUrl = "https://example.com"
         coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
@@ -341,7 +339,7 @@ class ConnectivityCheckRepositoryImplTest {
     }
 
     @Test
-    fun `Given server is not Home Assistant when running checks then HA verification fails`() = runTest(testDispatcher) {
+    fun `Given server is not Home Assistant when running checks then HA verification fails`() = runTest {
         // Given
         val testUrl = "https://example.com"
         coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")
