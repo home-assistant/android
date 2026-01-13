@@ -453,7 +453,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given an error occurs when onReceivedError is invoked then runChecks is triggered`() = runTest {
         val rawUrl = "http://homeassistant.local:8123"
-        val connectivityState = ConnectivityCheckState(serverUrl = rawUrl)
+        val connectivityState = ConnectivityCheckState()
         val connectivityFlow = MutableSharedFlow<ConnectivityCheckState>(replay = 1)
         every { connectivityCheckRepository.runChecks(rawUrl) } returns connectivityFlow
 

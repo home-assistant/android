@@ -35,7 +35,6 @@ class ConnectivityCheckRepositoryImplTest {
 
         // Then
         assertEquals(2, states.size)
-        assertEquals(invalidUrl, states[0].serverUrl)
         assertEquals(ConnectivityCheckResult.Pending, states[0].dnsResolution)
 
         val finalState = states[1]
@@ -106,7 +105,6 @@ class ConnectivityCheckRepositoryImplTest {
 
         // First state should have all pending
         val initialState = states.first()
-        assertEquals(testUrl, initialState.serverUrl)
         assertEquals(ConnectivityCheckResult.Pending, initialState.dnsResolution)
         assertEquals(ConnectivityCheckResult.Pending, initialState.portReachability)
         assertEquals(ConnectivityCheckResult.Pending, initialState.tlsCertificate)
@@ -164,7 +162,6 @@ class ConnectivityCheckRepositoryImplTest {
 
         // Then
         val finalState = states.last()
-        assertEquals(testUrl, finalState.serverUrl)
         assertTrue(finalState.isComplete)
 
         // Verify custom port 8123 was used
@@ -259,9 +256,6 @@ class ConnectivityCheckRepositoryImplTest {
 
         // Then
         val finalState = states.last()
-
-        // Should preserve the full URL
-        assertEquals(testUrl, finalState.serverUrl)
 
         // DNS should succeed
         assertTrue(finalState.dnsResolution is ConnectivityCheckResult.Success)

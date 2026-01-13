@@ -26,7 +26,7 @@ class ConnectivityCheckRepositoryImpl @Inject constructor(private val checker: C
     ConnectivityCheckRepository {
 
     override fun runChecks(url: String): Flow<ConnectivityCheckState> = flow {
-        var state = ConnectivityCheckState(serverUrl = url)
+        var state = ConnectivityCheckState()
         emit(state)
 
         val parsedUrl = try {

@@ -17,7 +17,6 @@ sealed interface ConnectivityCheckResult {
  * State holding all connectivity check results for a URL.
  */
 data class ConnectivityCheckState(
-    val serverUrl: String = "",
     val dnsResolution: ConnectivityCheckResult = ConnectivityCheckResult.Pending,
     val portReachability: ConnectivityCheckResult = ConnectivityCheckResult.Pending,
     val tlsCertificate: ConnectivityCheckResult = ConnectivityCheckResult.Pending,
