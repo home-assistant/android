@@ -5,6 +5,7 @@ import java.net.URL
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import timber.log.Timber
@@ -12,6 +13,11 @@ import timber.log.Timber
 private const val DEFAULT_HTTP_PORT = 80
 private const val DEFAULT_HTTPS_PORT = 443
 private const val HTTPS_PROTOCOL = "https"
+
+private enum class SkipReason {
+    AFTER_DNS_FAILURE,
+    AFTER_SERVER_FAILURE,
+}
 
 /**
  * Default implementation of [ConnectivityCheckRepository] that runs checks in sequence.
@@ -39,67 +45,108 @@ class ConnectivityCheckRepositoryImpl @Inject constructor(private val checker: C
         val isHttps = parsedUrl.protocol.equals(HTTPS_PROTOCOL, ignoreCase = true)
 
         // DNS Check
-        state = state.copy(dnsResolution = ConnectivityCheckResult.InProgress)
-        emit(state)
-        val dnsResult = checker.dns(hostname)
-        state = state.copy(dnsResolution = dnsResult)
-        emit(state)
+        state = runCheck(
+            currentState = state,
+            setInProgress = { it.copy(dnsResolution = ConnectivityCheckResult.InProgress) },
+            setResult = { s, r -> s.copy(dnsResolution = r) },
+            check = { checker.dns(hostname) },
+        )
 
-        if (dnsResult is ConnectivityCheckResult.Failure) {
-            // Skip remaining checks if DNS fails
-            val skipped = ConnectivityCheckResult.Failure(commonR.string.connection_check_skipped)
-            state = state.copy(
-                portReachability = skipped,
-                tlsCertificate = skipped,
-                serverConnection = skipped,
-                homeAssistantVerification = skipped,
-            )
+        if (state.dnsResolution is ConnectivityCheckResult.Failure) {
+            state = state.skip(SkipReason.AFTER_DNS_FAILURE)
             emit(state)
             return@flow
         }
 
         // Port Check
-        state = state.copy(portReachability = ConnectivityCheckResult.InProgress)
-        emit(state)
-        val portResult = checker.port(hostname, port)
-        state = state.copy(portReachability = portResult)
-        emit(state)
+        state = runCheck(
+            currentState = state,
+            setInProgress = { it.copy(portReachability = ConnectivityCheckResult.InProgress) },
+            setResult = { s, r -> s.copy(portReachability = r) },
+            check = { checker.port(hostname, port) },
+        )
 
         // TLS Check (bypass for HTTP)
-        state = state.copy(tlsCertificate = ConnectivityCheckResult.InProgress)
-        emit(state)
-        val tlsResult = if (isHttps) {
-            checker.tls(
-                url,
-            )
-        } else {
-            ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
-        }
-        state = state.copy(tlsCertificate = tlsResult)
-        emit(state)
+        state = runCheck(
+            currentState = state,
+            setInProgress = { it.copy(tlsCertificate = ConnectivityCheckResult.InProgress) },
+            setResult = { s, r -> s.copy(tlsCertificate = r) },
+            check = {
+                if (isHttps) {
+                    checker.tls(url)
+                } else {
+                    ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
+                }
+            },
+        )
 
         // Server Connection Check
-        state = state.copy(serverConnection = ConnectivityCheckResult.InProgress)
-        emit(state)
-        val serverResult = checker.server(url)
-        state = state.copy(serverConnection = serverResult)
-        emit(state)
+        state = runCheck(
+            currentState = state,
+            setInProgress = { it.copy(serverConnection = ConnectivityCheckResult.InProgress) },
+            setResult = { s, r -> s.copy(serverConnection = r) },
+            check = { checker.server(url) },
+        )
 
-        // Home Assistant Verification Check
-        if (serverResult is ConnectivityCheckResult.Failure) {
-            // Skip HA verification if server connection failed
-            val skipped = ConnectivityCheckResult.Failure(commonR.string.connection_check_skipped)
-            state = state.copy(homeAssistantVerification = skipped)
+        if (state.serverConnection is ConnectivityCheckResult.Failure) {
+            state = state.skip(SkipReason.AFTER_SERVER_FAILURE)
             emit(state)
             return@flow
         }
 
-        state = state.copy(homeAssistantVerification = ConnectivityCheckResult.InProgress)
-        emit(state)
-        val haResult = checker.homeAssistant(url)
-        state = state.copy(homeAssistantVerification = haResult)
-        emit(state)
+        // Home Assistant Verification Check
+        runCheck(
+            currentState = state,
+            setInProgress = { it.copy(homeAssistantVerification = ConnectivityCheckResult.InProgress) },
+            setResult = { s, r -> s.copy(homeAssistantVerification = r) },
+            check = { checker.homeAssistant(url) },
+        )
     }.flowOn(Dispatchers.IO)
+
+    /**
+     * Executes a single connectivity check with proper state transitions.
+     * Emits InProgress state, runs the check, then emits the result state.
+     *
+     * @param currentState The current state before this check
+     * @param setInProgress Function to update the state to InProgress for this check
+     * @param setResult Function to update the state with the check result
+     * @param check The suspend function that performs the actual connectivity check
+     * @return The updated state after the check completes
+     */
+    private suspend fun FlowCollector<ConnectivityCheckState>.runCheck(
+        currentState: ConnectivityCheckState,
+        setInProgress: (ConnectivityCheckState) -> ConnectivityCheckState,
+        setResult: (ConnectivityCheckState, ConnectivityCheckResult) -> ConnectivityCheckState,
+        check: suspend () -> ConnectivityCheckResult,
+    ): ConnectivityCheckState {
+        val inProgressState = setInProgress(currentState)
+        emit(inProgressState)
+        val result = check()
+        val resultState = setResult(inProgressState, result)
+        emit(resultState)
+        return resultState
+    }
+
+    /**
+     * Marks remaining connectivity checks as skipped based on which check failed.
+     *
+     * - [SkipReason.AFTER_DNS_FAILURE]: Skips port, TLS, server, and Home Assistant checks.
+     * - [SkipReason.AFTER_SERVER_FAILURE]: Skips only the Home Assistant verification check.
+     */
+    private fun ConnectivityCheckState.skip(reason: SkipReason): ConnectivityCheckState {
+        val skipped = ConnectivityCheckResult.Failure(commonR.string.connection_check_skipped)
+        return when (reason) {
+            SkipReason.AFTER_DNS_FAILURE -> copy(
+                portReachability = skipped,
+                tlsCertificate = skipped,
+                serverConnection = skipped,
+                homeAssistantVerification = skipped,
+            )
+            SkipReason.AFTER_SERVER_FAILURE -> copy(
+                homeAssistantVerification = skipped,
+            )
+        }
+    }
 
     /**
      * Determines the port to use for connectivity checks.
