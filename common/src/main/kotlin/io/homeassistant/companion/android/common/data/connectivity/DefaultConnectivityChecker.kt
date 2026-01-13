@@ -12,6 +12,7 @@ import java.net.URL
 import java.net.URLConnection
 import javax.inject.Inject
 import javax.net.ssl.HttpsURLConnection
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
 import timber.log.Timber
@@ -25,17 +26,17 @@ private data class ManifestResponse(val name: String? = null) {
     }
 }
 
+private val CONNECTIVITY_TIMEOUT = 5.seconds
+
 /**
  * Default implementation of [ConnectivityChecker] that performs real network operations.
  *
  */
 class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
 
-    private val timeoutMs: Long = 5000L
-
     override suspend fun dns(hostname: String): ConnectivityCheckResult {
         return try {
-            withTimeout(timeoutMs) {
+            withTimeout(CONNECTIVITY_TIMEOUT) {
                 val addresses = InetAddress.getAllByName(hostname)
                 val addressList = addresses.joinToString(", ") { it.hostAddress ?: "" }
                 ConnectivityCheckResult.Success(commonR.string.connection_check_dns, addressList)
@@ -48,9 +49,9 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
 
     override suspend fun port(hostname: String, port: Int): ConnectivityCheckResult {
         return try {
-            withTimeout(timeoutMs) {
+            withTimeout(CONNECTIVITY_TIMEOUT) {
                 Socket().use { socket ->
-                    socket.connect(InetSocketAddress(hostname, port), timeoutMs.toInt())
+                    socket.connect(InetSocketAddress(hostname, port), CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt())
                 }
                 ConnectivityCheckResult.Success(commonR.string.connection_check_port, port.toString())
             }
@@ -62,9 +63,9 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
 
     override suspend fun tls(url: String): ConnectivityCheckResult {
         return try {
-            withTimeout(timeoutMs) {
+            withTimeout(CONNECTIVITY_TIMEOUT) {
                 val connection = URL(url).openConnection() as HttpsURLConnection
-                connection.connectTimeout = timeoutMs.toInt()
+                connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
                 connection.tryConnect(commonR.string.connection_check_tls_success)
             }
         } catch (e: Exception) {
@@ -75,9 +76,9 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
 
     override suspend fun server(url: String): ConnectivityCheckResult {
         return try {
-            withTimeout(timeoutMs) {
+            withTimeout(CONNECTIVITY_TIMEOUT) {
                 val connection = URL(url).openConnection()
-                connection.connectTimeout = timeoutMs.toInt()
+                connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
                 connection.tryConnect(commonR.string.connection_check_server_success)
             }
         } catch (e: Exception) {
@@ -88,11 +89,11 @@ class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
 
     override suspend fun homeAssistant(url: String): ConnectivityCheckResult {
         return try {
-            withTimeout(timeoutMs) {
+            withTimeout(CONNECTIVITY_TIMEOUT) {
                 val manifestUrl = URL("$url/manifest.json")
                 val connection = manifestUrl.openConnection()
-                connection.connectTimeout = timeoutMs.toInt()
-                connection.readTimeout = timeoutMs.toInt()
+                connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
+                connection.readTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
 
                 val responseText = connection.getInputStream().bufferedReader().use(BufferedReader::readText)
                 val manifest = kotlinJsonMapper.decodeFromString<ManifestResponse>(responseText)
