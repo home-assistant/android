@@ -37,7 +37,13 @@ data class Entity(
     val lastChanged: LocalDateTime,
     @Serializable(with = LocalDateTimeSerializer::class)
     val lastUpdated: LocalDateTime,
-)
+) {
+    /**
+     * The domain part of the [entityId] (e.g., "light" from "light.living_room").
+     * Lazy to avoid repeated string allocations on each access.
+     */
+    val domain: String by lazy { entityId.substringBefore('.') }
+}
 
 data class EntityPosition(val value: Float, val min: Float, val max: Float)
 
@@ -96,37 +102,43 @@ object EntityExt {
     )
 }
 
-val Entity.domain: String
-    get() = this.entityId.split(".")[0]
-
 /**
  * Apply a [CompressedStateDiff] to this Entity, and return the [Entity] with updated properties.
  * Based on home-assistant-js-websocket entities `processEvent` function:
  * https://github.com/home-assistant/home-assistant-js-websocket/blob/449fa43668f5316eb31609cd36088c5e82c818e2/lib/entities.ts#L47
  */
 fun Entity.applyCompressedStateDiff(diff: CompressedStateDiff): Entity {
-    var (_, newState, newAttributes, newLastChanged, newLastUpdated) = this
-    diff.plus?.let { plus ->
-        plus.state?.let {
-            newState = it
-        }
-        plus.lastChanged?.let {
-            val dateTime = LocalDateTime.ofEpochSecond(round(it).toLong(), 0, ZoneOffset.UTC)
-            newLastChanged = dateTime
-            newLastUpdated = dateTime
-        } ?: plus.lastUpdated?.let {
-            newLastUpdated = LocalDateTime.ofEpochSecond(round(it).toLong(), 0, ZoneOffset.UTC)
-        }
-        plus.attributes.let {
-            newAttributes = newAttributes.plus(it)
-        }
+    val plus = diff.plus
+    val minus = diff.minus
+
+    // Compute new timestamps
+    val newLastChanged = plus?.lastChanged
+        ?.let { LocalDateTime.ofEpochSecond(round(it).toLong(), 0, ZoneOffset.UTC) }
+        ?: lastChanged
+
+    val newLastUpdated = when {
+        plus?.lastChanged != null -> newLastChanged
+        plus?.lastUpdated != null ->
+            LocalDateTime.ofEpochSecond(round(plus.lastUpdated).toLong(), 0, ZoneOffset.UTC)
+        else -> lastUpdated
     }
-    diff.minus?.attributes?.let {
-        newAttributes = newAttributes.minus(it.toSet())
+
+    // Compute new attributes - only create new map if modifications needed
+    val hasAttributeChanges = plus?.attributes?.isNotEmpty() == true ||
+        minus?.attributes?.isNotEmpty() == true
+    val newAttributes = if (hasAttributeChanges) {
+        buildMap {
+            putAll(attributes)
+            plus?.attributes?.let { putAll(it) }
+            minus?.attributes?.forEach { remove(it) }
+        }
+    } else {
+        attributes
     }
+
     return Entity(
         entityId = entityId,
-        state = newState,
+        state = plus?.state ?: state,
         attributes = newAttributes,
         lastChanged = newLastChanged,
         lastUpdated = newLastUpdated,
@@ -826,7 +838,7 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
  * @throws IntegrationException on network errors
  */
 suspend fun onEntityPressedWithoutState(entityId: String, integrationRepository: IntegrationRepository) {
-    val domain = entityId.split(".")[0]
+    val domain = entityId.substringBefore('.')
     val action = when (domain) {
         "lock" -> {
             val lockEntity = try {
