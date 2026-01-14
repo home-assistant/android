@@ -24,8 +24,8 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.ThermostatTile
+import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.home.HomeActivity
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -57,10 +57,12 @@ class ThermostatTile : TileService() {
     @Inject
     lateinit var wearPrefsRepository: WearPrefsRepository
 
+    @Inject
+    lateinit var thermostatTileDao: ThermostatTileDao
+
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
             val tileId = requestParams.tileId
-            val thermostatTileDao = AppDatabase.getInstance(this@ThermostatTile).thermostatTileDao()
             val tileConfig = thermostatTileDao.get(tileId)
 
             if (requestParams.currentState.lastClickableId.isNotEmpty()) {
@@ -175,18 +177,15 @@ class ThermostatTile : TileService() {
 
     override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) = runBlocking {
         withContext(Dispatchers.IO) {
-            val dao = AppDatabase.getInstance(this@ThermostatTile).thermostatTileDao()
-            if (dao.get(requestParams.tileId) == null) {
-                dao.add(ThermostatTile(id = requestParams.tileId))
+            if (thermostatTileDao.get(requestParams.tileId) == null) {
+                thermostatTileDao.add(ThermostatTile(id = requestParams.tileId))
             } // else already existing, don't overwrite existing tile data
         }
     }
 
     override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) = runBlocking {
         withContext(Dispatchers.IO) {
-            AppDatabase.getInstance(this@ThermostatTile)
-                .thermostatTileDao()
-                .delete(requestParams.tileId)
+            thermostatTileDao.delete(requestParams.tileId)
         }
     }
 

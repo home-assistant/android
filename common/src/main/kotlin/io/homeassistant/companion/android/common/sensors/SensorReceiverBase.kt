@@ -19,7 +19,7 @@ import io.homeassistant.companion.android.common.data.integration.SensorRegistra
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_SYNC
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.DatabaseEntryPoint
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
@@ -49,8 +49,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         const val EXTRA_SENSOR_ID = "sensorId"
 
         suspend fun shouldDoFastUpdates(context: Context): Boolean {
-            val settingDao = AppDatabase.getInstance(context).settingsDao().get(0)
-            return when (settingDao?.sensorUpdateFrequency) {
+            val setting = DatabaseEntryPoint.resolve(context).settingsDao().get(0)
+            return when (setting?.sensorUpdateFrequency) {
                 SensorUpdateFrequencySetting.FAST_ALWAYS -> true
                 SensorUpdateFrequencySetting.FAST_WHILE_CHARGING -> {
                     val batteryStatusIntent =

@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import dagger.hilt.android.EntryPointAccessors
 import io.homeassistant.companion.android.common.sensors.SensorManager
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -10,7 +10,7 @@ import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkObject
+import io.mockk.mockkStatic
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -22,13 +22,18 @@ class SensorManagerTest {
     fun `Given attributes when invoking onSensorUpdated then attributes are replaced in DAO properly formatted in json`() = runTest {
         val context: Context = mockk()
         val sensorManager = FakeSensorManager()
-        val appDatabase: AppDatabase = mockk()
         val sensorDao = mockk<SensorDao>()
+        val entryPoint = mockk<SensorManager.SensorManagerEntryPoint>()
 
-        mockkObject(AppDatabase.Companion)
-
-        every { AppDatabase.getInstance(context) } returns appDatabase
-        every { appDatabase.sensorDao() } returns sensorDao
+        mockkStatic(EntryPointAccessors::class)
+        every { context.applicationContext } returns context
+        every {
+            EntryPointAccessors.fromApplication(
+                context,
+                SensorManager.SensorManagerEntryPoint::class.java,
+            )
+        } returns entryPoint
+        every { entryPoint.sensorDao() } returns sensorDao
         coEvery { sensorDao.get("test") } returns listOf(
             Sensor(
                 id = "test",
