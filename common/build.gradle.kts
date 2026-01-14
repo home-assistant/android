@@ -19,6 +19,11 @@ android {
         buildConfigField("String", "RATE_LIMIT_URL", "\"$homeAssistantAndroidRateLimitUrl\"")
         buildConfigField("String", "VERSION_NAME", "\"$versionName-$versionCode\"")
     }
+
+    sourceSets {
+        // Adds exported schema location as test app assets.
+        getByName("androidTest").assets.srcDirs("$projectDir/schemas")
+    }
 }
 
 ksp {
@@ -59,10 +64,20 @@ dependencies {
     }
 
     androidTestImplementation(libs.bundles.androidx.test)
+    androidTestImplementation(libs.androidx.room.testing)
 
     // This fix an issue: provided Metadata instance has version 2.1.0, while maximum supported version is 2.0.0. To support newer versions, update the kotlinx-metadata-jvm library
     lintChecks(libs.androidx.runtime.lint)
 
     implementation(libs.compose.material3)
     lintChecks(libs.compose.lint.checks)
+
+    implementation(libs.media3.exoplayer)
+    // The play-services-cronet dependency is excluded here because each app flavor provides its own Cronet implementation:
+    // - full: uses Google Play Services Cronet (dynamically loaded via GMS)
+    // - minimal: uses embedded Cronet (bundled in the APK)
+    implementation(libs.media3.datasource.cronet) {
+        exclude(group = "com.google.android.gms", module = "play-services-cronet")
+    }
+    implementation(libs.cronet.api)
 }

@@ -18,9 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
-      - uses: ruby/setup-ruby@ac793fdd38cc468a4dd57246fa9d0e868aba9085 # v1.270.0
+      - uses: ruby/setup-ruby@675dd7ba1b06c8786a1480d89c384f5620a42647 # v1.281.0
         with:
-          ruby-version: "3.4.7"
+          ruby-version: "4.0.0"
           bundler-cache: true
 
       - uses: ./.github/actions/inflate-secrets

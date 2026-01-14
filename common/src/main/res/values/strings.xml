@@ -923,7 +923,7 @@
     <string name="tile_add">Add tile</string>
     <string name="tile_added">Tile added</string>
     <string name="tile_data_missing">You need to set up the tile before using it</string>
-    <string name="tile_entity">Select a entity to toggle or call (required)</string>
+    <string name="tile_entity">Select an entity to toggle or call (required)</string>
     <string name="tile_label">Tile label (required)</string>
     <string name="tile_not_setup">Requires setup</string>
     <string name="tile_save">Update tile data</string>

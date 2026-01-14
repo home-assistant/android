@@ -9,7 +9,6 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.BaseOnboardingNavigationTest
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.LocationForSecureConnectionRoute
-import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.SetHomeNetworkRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.stringResource
 import junit.framework.TestCase.assertTrue
@@ -28,7 +27,7 @@ import org.robolectric.annotation.Config
 internal class LocationSharingNavigationTest : BaseOnboardingNavigationTest() {
 
     @Test
-    fun `Given LocationSharing when agreeing with plain text access to share then show SetHomeNetwork`() {
+    fun `Given LocationSharing when agreeing with plain text access to share then show LocationForSecureConnection then goes back stop the app`() {
         testNavigation {
             navController.navigateToLocationSharing(42, true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
@@ -38,7 +37,12 @@ internal class LocationSharingNavigationTest : BaseOnboardingNavigationTest() {
                 .performScrollTo()
                 .performClick()
 
-            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
+
+            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+
+            // In the test scenario since we never opened NameYourDevice the stack still contains Welcome
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
         }
     }
 

@@ -3,7 +3,7 @@
 # you can do that with `./gradlew alldependencies --write-locks`
 [versions]
 accompanist = "0.37.3"
-activity-compose = "1.12.1"
+activity-compose = "1.12.2"
 androidBeaconLibrary = "2.21.1"
 androidGradlePlugin = "8.13.2"
 androidSdk-compile = "36"
@@ -32,7 +32,7 @@ constraintlayout = "2.2.1"
 coreKtx = "1.17.0"
 core-splashscreen = "1.2.0"
 core-remoteviews = "1.1.0"
-cronet-embedded = "141.7340.3"
+cronet = "143.7445.0"
 emojiJava = "5.1.1"
 firebase-bom = "34.7.0"
 firebaseAppdistributionGradle = "5.2.0"
@@ -46,8 +46,8 @@ hilt = "2.57.2"
 iconics = "5.5.0-compose01"
 improv = "0.1.1"
 javaVersion = "11" # https://developer.android.com/studio/write/java11-minimal-support-table
-junit = "6.0.1"
-kotlin = "2.2.21"
+junit = "6.0.2"
+kotlin = "2.3.0"
 kotlinx-coroutines = "1.10.2"
 kotlinx-serialization = "1.9.0"
 ksp = "2.3.4"
@@ -56,7 +56,7 @@ leakcanaryAndroid = "2.14"
 lifecycle = "2.10.0"
 material = "1.13.0"
 media = "1.7.1"
-media3 = "1.8.0"
+media3 = "1.9.0"
 mockk = "1.14.7"
 navigation-compose = "2.9.6"
 okhttp = "5.3.2"
@@ -87,7 +87,7 @@ wear-tiles = "1.5.0"
 wear-tooling = "1.0.0"
 wearPhoneInteractions = "1.1.0"
 wearInput = "1.2.0"
-webkit = "1.14.0"
+webkit = "1.15.0"
 wear-remote-interactions = "1.1.0"
 workRuntime = "2.11.0"
 zxing = "4.3.0"
@@ -137,6 +137,7 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "room" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
@@ -174,7 +175,8 @@ compose-ui-testManifest = { group = "androidx.compose.ui", name = "ui-test-manif
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "core-splashscreen" }
 core-remoteviews = { module = "androidx.core:core-remoteviews", version.ref = "core-remoteviews" }
-cronet-embedded = { module = "org.chromium.net:cronet-embedded", version.ref = "cronet-embedded" }
+cronet-api = { module = "org.chromium.net:cronet-api", version.ref = "cronet" }
+cronet-embedded = { module = "org.chromium.net:cronet-embedded", version.ref = "cronet" }
 emojiJava = { module = "com.vdurmont:emoji-java", version.ref = "emojiJava" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
@@ -203,6 +205,7 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlin-metadata-jvm = { group = "org.jetbrains.kotlin", name = "kotlin-metadata-jvm", version.ref = "kotlin" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
 leakcanary-android-instrumentation = { module = "com.squareup.leakcanary:leakcanary-android-instrumentation", version.ref = "leakcanaryAndroid" }
 lint-api = { group = "com.android.tools.lint", name = "lint-api", version.ref = "androidTools" }
