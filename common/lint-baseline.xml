@@ -4,28 +4,6 @@
     <issue
         id="MissingPermission"
         message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                notify(NOTIFICATION_ID, notification)"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/AppDatabase.kt"
-            line="1035"
-            column="17"/>
-    </issue>
-
-    <issue
-        id="MissingPermission"
-        message="Missing permissions required by NotificationManagerCompat.notify: android.permission.POST_NOTIFICATIONS"
-        errorLine1="                notify(NOTIFICATION_ID, notification)"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/AppDatabase.kt"
-            line="1035"
-            column="17"/>
-    </issue>
-
-    <issue
-        id="MissingPermission"
-        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
         errorLine1="                NotificationManagerCompat.from("
         errorLine2="                ^">
         <location
@@ -98,6 +76,28 @@
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
             line="326"
             column="46"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="        notify(NOTIFICATION_ID, notification)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/database/migration/Utils.kt"
+            line="59"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Missing permissions required by NotificationManagerCompat.notify: android.permission.POST_NOTIFICATIONS"
+        errorLine1="        notify(NOTIFICATION_ID, notification)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/database/migration/Utils.kt"
+            line="59"
+            column="9"/>
     </issue>
 
     <issue
