@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -69,44 +70,49 @@ internal data class EntityWithSearchFields(
  * @return A state holding the filtered and sorted list of entities
  */
 @Composable
-internal fun rememberFilteredEntities(entities: List<EntityPickerItem>, searchQuery: String): List<EntityPickerItem> {
+internal fun rememberFilteredEntities(
+    entities: List<EntityPickerItem>,
+    searchQuery: String,
+    dispatcher: CoroutineContext = Dispatchers.Default,
+): List<EntityPickerItem> {
     // Cache the entities with pre-computed searchable fields
-    // Computed on background thread to avoid blocking UI
+    // Computed on background to avoid blocking UI
     var entitiesWithFields by remember { mutableStateOf<List<EntityWithSearchFields>>(emptyList()) }
 
-    // Build searchable fields on background thread when entities change
     LaunchedEffect(entities) {
-        entitiesWithFields = withContext(Dispatchers.Default) {
-            entities.map { entity ->
-                val sortingKey = entity.friendlyName.lowercase()
-
-                EntityWithSearchFields(
-                    entity = entity,
-                    sortingKey = sortingKey,
-                    searchableFields = buildList {
-                        // Store fields in lowercase to avoid repeated conversions during search
-                        add(SearchField(sortingKey, FuzzySearchConfig.Weights.FRIENDLY_NAME))
-                        entity.deviceName?.let {
-                            add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.DEVICE_NAME))
-                        }
-                        entity.areaName?.let { add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.AREA_NAME)) }
-                        add(SearchField(entity.domain.lowercase(), FuzzySearchConfig.Weights.DOMAIN_NAME))
-                        add(SearchField(entity.entityId.lowercase(), FuzzySearchConfig.Weights.ENTITY_ID))
-                    },
-                )
-            }
-        }
+        entitiesWithFields = entities.mapToEntitiesWithFields(dispatcher)
     }
 
-    // State for filtered results
     var filteredEntities by remember { mutableStateOf(entities) }
 
-    // Filter and sort when query changes
     LaunchedEffect(entitiesWithFields, searchQuery) {
-        filteredEntities = filterAndSortEntitiesOptimized(entitiesWithFields, searchQuery)
+        filteredEntities = filterAndSortEntitiesOptimized(entitiesWithFields, searchQuery, dispatcher)
     }
 
     return filteredEntities
+}
+
+private suspend fun List<EntityPickerItem>.mapToEntitiesWithFields(
+    dispatcher: CoroutineContext,
+): List<EntityWithSearchFields> = withContext(dispatcher) {
+    return@withContext map { entity ->
+        val sortingKey = entity.friendlyName.lowercase()
+
+        EntityWithSearchFields(
+            entity = entity,
+            sortingKey = sortingKey,
+            searchableFields = buildList {
+                // Store fields in lowercase to avoid repeated conversions during search
+                add(SearchField(sortingKey, FuzzySearchConfig.Weights.FRIENDLY_NAME))
+                entity.deviceName?.let {
+                    add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.DEVICE_NAME))
+                }
+                entity.areaName?.let { add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.AREA_NAME)) }
+                add(SearchField(entity.domain.lowercase(), FuzzySearchConfig.Weights.DOMAIN_NAME))
+                add(SearchField(entity.entityId.lowercase(), FuzzySearchConfig.Weights.ENTITY_ID))
+            },
+        )
+    }
 }
 
 /**
@@ -122,7 +128,8 @@ internal fun rememberFilteredEntities(entities: List<EntityPickerItem>, searchQu
 internal suspend fun filterAndSortEntitiesOptimized(
     entitiesWithFields: List<EntityWithSearchFields>,
     query: String,
-): List<EntityPickerItem> = withContext(Dispatchers.Default) {
+    dispatcher: CoroutineContext = Dispatchers.Default,
+): List<EntityPickerItem> = withContext(dispatcher) {
     val trimmedQuery = query.trim()
 
     if (trimmedQuery.isBlank()) {
