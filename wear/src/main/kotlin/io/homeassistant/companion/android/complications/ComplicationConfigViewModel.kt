@@ -96,11 +96,11 @@ class ComplicationConfigViewModel @Inject constructor(
 
                 // Finished initial load, update state
                 val webSocketState = serverManager.webSocketRepository().getConnectionState()
-                if (webSocketState == WebSocketState.CLOSED_AUTH) {
+                if (webSocketState == WebSocketState.ClosedAuth) {
                     loadingState = LoadingState.ERROR
                     return@launch
                 }
-                loadingState = if (webSocketState == WebSocketState.ACTIVE) {
+                loadingState = if (webSocketState == WebSocketState.Active) {
                     LoadingState.READY
                 } else {
                     LoadingState.ERROR

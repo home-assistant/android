@@ -29,19 +29,9 @@ import okhttp3.OkHttpClient
  */
 internal interface WebSocketCore {
     /**
-     * Establishes a WebSocket connection and authenticates with the server.
-     *
-     * @return `true` if the connection is successful and authenticated, `false` otherwise.
-     */
-    suspend fun connect(): Boolean
-
-    /**
      * Returns the current state of the WebSocket connection.
-     *
-     * @return If the WebSocket connection is established, this method returns the current [WebSocketState], but if the connection is
-     * not established, it returns `null`.
      */
-    fun getConnectionState(): WebSocketState?
+    fun getConnectionState(): WebSocketState
 
     /**
      * Sends a message over the WebSocket connection and waits for a response.
@@ -58,7 +48,7 @@ internal interface WebSocketCore {
      * @param data The binary data to send. Maximum size of 16MiB
      * @return `true` if the data was sent successfully, `false` otherwise.
      */
-    suspend fun sendBytes(data: ByteArray): Boolean?
+    suspend fun sendBytes(data: ByteArray): Boolean
 
     /**
      * Start a subscription for events on the websocket connection and get a Flow for listening to
@@ -93,3 +83,12 @@ internal class WebSocketCoreFactory @Inject constructor(
         return WebSocketCoreImpl(okHttpClient, serverManagerProvider.get(), serverId)
     }
 }
+
+/**
+ * Exception thrown when a WebSocket operation fails.
+ *
+ * This exception is used to signal failures in the WebSocket communication layer,
+ * such as when attempting to send a message without an active connection or when
+ * the underlying send operation fails.
+ */
+class HAWebSocketException(override val message: String?) : Exception()

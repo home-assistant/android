@@ -61,7 +61,7 @@ class WebSocketRepositoryImpl internal constructor(
 ) : WebSocketListener(),
     WebSocketRepository {
 
-    override fun getConnectionState(): WebSocketState? {
+    override fun getConnectionState(): WebSocketState {
         return webSocketCore.getConnectionState()
     }
 
@@ -272,7 +272,7 @@ class WebSocketRepositoryImpl internal constructor(
         )
     }
 
-    override suspend fun sendVoiceData(binaryHandlerId: Int, data: ByteArray): Boolean? =
+    override suspend fun sendVoiceData(binaryHandlerId: Int, data: ByteArray): Boolean =
         webSocketCore.sendBytes(byteArrayOf(binaryHandlerId.toByte()) + data)
 
     override suspend fun getStateChanges(): Flow<StateChangedEvent>? = subscribeToEventsForType(EVENT_STATE_CHANGED)
