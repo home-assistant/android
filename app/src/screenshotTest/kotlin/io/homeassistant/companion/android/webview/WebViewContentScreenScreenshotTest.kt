@@ -34,27 +34,6 @@ class WebViewContentScreenScreenshotTest {
     @PreviewTest
     @Preview
     @Composable
-    fun `WebView with app unlocked server handle insets`() {
-        WebViewContentScreen(
-            webView = null,
-            player = null,
-            snackbarHostState = SnackbarHostState(),
-            playerSize = null,
-            playerTop = 0.dp,
-            playerLeft = 0.dp,
-            currentAppLocked = false,
-            shouldAskNotificationPermission = false,
-            webViewInitialized = true,
-            customViewFromWebView = null,
-            onFullscreenClicked = {},
-            onNotificationPermissionResult = {},
-            serverHandleInsets = true,
-        )
-    }
-
-    @PreviewTest
-    @Preview
-    @Composable
     fun `WebView with app locked`() {
         WebViewContentScreen(
             webView = null,
