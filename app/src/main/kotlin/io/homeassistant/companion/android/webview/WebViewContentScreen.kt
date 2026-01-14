@@ -147,6 +147,13 @@ internal fun WebViewContentScreen(
     }
 }
 
+/**
+ * WebView which blurs the contents when the app is locked.
+ *
+ * If the Home Assistant frontend does not handle edge-to-edge insets
+ * (version <2025.12), it also the WebView with colored overlays matching
+ * the safe area insets.
+ */
 @OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 private fun SafeHAWebView(
@@ -158,61 +165,29 @@ private fun SafeHAWebView(
     serverHandleInsets: Boolean,
 ) {
     val hazeModifier = if (currentAppLocked) Modifier.hazeEffect(style = HazeMaterials.thin()) else Modifier
-
-    if (serverHandleInsets) {
-        Box(modifier = hazeModifier) {
-            HAWebView(
-                nightModeTheme = nightModeTheme,
-                factory = { webView },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Transparent),
-            )
-        }
-    } else {
-        HAWebViewWithInsets(
-            webView = webView,
-            nightModeTheme = nightModeTheme,
-            statusBarColor = statusBarColor,
-            backgroundColor = backgroundColor,
-            modifier = hazeModifier,
-        )
-    }
-}
-
-/**
- * Wraps the WebView with colored overlays matching the safe area insets.
- *
- * Used when the Home Assistant frontend does not handle edge-to-edge insets
- * version prior 2025.12.x
- */
-@Composable
-private fun HAWebViewWithInsets(
-    webView: WebView?,
-    nightModeTheme: NightModeTheme?,
-    statusBarColor: Color?,
-    backgroundColor: Color?,
-    modifier: Modifier = Modifier,
-) {
     val insets = WindowInsets.safeDrawing
     val insetsPaddingValues = insets.asPaddingValues()
 
-    Column(modifier = modifier) {
-        statusBarColor?.Overlay(
-            modifier = Modifier
-                .height(insetsPaddingValues.calculateTopPadding())
-                .fillMaxWidth()
-                // We don't want the status bar to color the left and right areas
-                .padding(insets.only(WindowInsetsSides.Horizontal).asPaddingValues()),
-        )
+    Column(modifier = hazeModifier) {
+        if (!serverHandleInsets) {
+            statusBarColor?.Overlay(
+                modifier = Modifier
+                    .height(insetsPaddingValues.calculateTopPadding())
+                    .fillMaxWidth()
+                    // We don't want the status bar to color the left and right areas
+                    .padding(insets.only(WindowInsetsSides.Horizontal).asPaddingValues()),
+            )
+        }
         // The height is based on whatever is left between the statusBar and navigationBar
         Row(modifier = Modifier.weight(1f)) {
-            // Left safe area
-            backgroundColor?.Overlay(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(insetsPaddingValues.calculateLeftPadding(LayoutDirection.Ltr)),
-            )
+            if (!serverHandleInsets) {
+                // Left safe area
+                backgroundColor?.Overlay(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(insetsPaddingValues.calculateLeftPadding(LayoutDirection.Ltr)),
+                )
+            }
             HAWebView(
                 nightModeTheme = nightModeTheme,
                 factory = { webView },
@@ -220,18 +195,22 @@ private fun HAWebViewWithInsets(
                     .weight(1f)
                     .background(Color.Transparent),
             )
-            // Right safe area
+            if (!serverHandleInsets) {
+                // Right safe area
+                backgroundColor?.Overlay(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(insetsPaddingValues.calculateRightPadding(LayoutDirection.Ltr)),
+                )
+            }
+        }
+        if (!serverHandleInsets) {
             backgroundColor?.Overlay(
                 modifier = Modifier
-                    .fillMaxHeight()
-                    .width(insetsPaddingValues.calculateRightPadding(LayoutDirection.Ltr)),
+                    .fillMaxWidth()
+                    .height(insetsPaddingValues.calculateBottomPadding()),
             )
         }
-        backgroundColor?.Overlay(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(insetsPaddingValues.calculateBottomPadding()),
-        )
     }
 }
 
