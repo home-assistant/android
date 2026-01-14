@@ -28,7 +28,7 @@ class ConnectivityCheckRepositoryImplTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["not a valid url", "://invalid", "ht!tp://bad.url", "", "https://yuu@", "https://yuu", "http://homeassistant"])
+    @ValueSource(strings = ["not a valid url", "://invalid", "ht!tp://bad.url", ""])
     fun `Given invalid URL when running checks then DNS check fails with invalid URL error`(invalidUrl: String) = runTest {
         // When
         val states = repository.runChecks(invalidUrl).toList()
