@@ -148,10 +148,10 @@ internal fun WebViewContentScreen(
 }
 
 /**
- * WebView which blurs the contents when the app is locked.
+ * Wrapper for WebView, blurring the contents when the app is locked.
  *
  * If the Home Assistant frontend does not handle edge-to-edge insets
- * (version <2025.12), it also the WebView with colored overlays matching
+ * (core <2025.12), it also wraps the WebView with colored overlays matching
  * the safe area insets.
  */
 @OptIn(ExperimentalHazeMaterialsApi::class)
