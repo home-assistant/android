@@ -364,6 +364,68 @@ internal class WebSocketCoreImpl(
     }
 
     /**
+     * Handles a new connection attempt when not yet connected.
+     * This is called when the URL flow emits before [connectDeferred] is completed.
+     */
+    private suspend fun handleNewConnectionAttempt(
+        url: URL?,
+        pendingWebSocket: WebSocket?,
+        connectDeferred: CompletableDeferred<Boolean>,
+        urlObserverJob: Job,
+        setPendingWebSocket: (WebSocket?) -> Unit,
+    ) {
+        // Clean up any partial connection before using this URL.
+        connectionHolder.set(null)
+        pendingWebSocket?.cancel()
+        setPendingWebSocket(null)
+        authCompleted = CompletableDeferred()
+
+        if (url == null) {
+            Timber.w("No URL available to open WebSocket connection")
+            connectionState = WebSocketState.ClosedOther
+            connectDeferred.complete(false)
+            urlObserverJob.cancel()
+            return
+        }
+
+        when (val attemptResult = attemptWebSocketConnection(url)) {
+            is ConnectionAttemptResult.Failed -> {
+                connectDeferred.complete(false)
+                urlObserverJob.cancel()
+            }
+
+            is ConnectionAttemptResult.Success -> {
+                val webSocket = attemptResult.webSocket
+                setPendingWebSocket(webSocket)
+
+                val authSuccess = awaitAuthAndSetupConnectionHolder(
+                    webSocket = webSocket,
+                    url = url,
+                    urlObserverJob = urlObserverJob,
+                )
+                connectDeferred.complete(authSuccess)
+            }
+        }
+    }
+
+    private fun handleUrlChangeWhileConnected(urlState: UrlState) {
+        val currentHolder = connectionHolder.get()
+        if (urlState is UrlState.InsecureState) {
+            Timber.w("Insecure state, disconnecting immediately.")
+        } else {
+            Timber.w("URL changed, disconnecting immediately.")
+        }
+
+        if (currentHolder == null) {
+            connectionState = WebSocketState.ClosedUrlChange
+        } else {
+            // Set pending reason before cancel() so handleClosingSocket knows to reconnect immediately
+            pendingCloseReason = WebSocketState.Closed.Reason.CHANGED_URL
+            currentHolder.webSocket.cancel()
+        }
+    }
+
+    /**
      * Attempts to create a WebSocket connection and send the authentication message.
      *
      * @return The result of the connection attempt
@@ -475,68 +537,6 @@ internal class WebSocketCoreImpl(
         )
         if (!result) {
             Timber.w("Unable to send supported features message")
-        }
-    }
-
-    /**
-     * Handles a new connection attempt when not yet connected.
-     * This is called when the URL flow emits before [connectDeferred] is completed.
-     */
-    private suspend fun handleNewConnectionAttempt(
-        url: URL?,
-        pendingWebSocket: WebSocket?,
-        connectDeferred: CompletableDeferred<Boolean>,
-        urlObserverJob: Job,
-        setPendingWebSocket: (WebSocket?) -> Unit,
-    ) {
-        // Clean up any partial connection before using this URL.
-        connectionHolder.set(null)
-        pendingWebSocket?.cancel()
-        setPendingWebSocket(null)
-        authCompleted = CompletableDeferred()
-
-        if (url == null) {
-            Timber.w("No URL available to open WebSocket connection")
-            connectionState = WebSocketState.ClosedOther
-            connectDeferred.complete(false)
-            urlObserverJob.cancel()
-            return
-        }
-
-        when (val attemptResult = attemptWebSocketConnection(url)) {
-            is ConnectionAttemptResult.Failed -> {
-                connectDeferred.complete(false)
-                urlObserverJob.cancel()
-            }
-
-            is ConnectionAttemptResult.Success -> {
-                val webSocket = attemptResult.webSocket
-                setPendingWebSocket(webSocket)
-
-                val authSuccess = awaitAuthAndSetupConnectionHolder(
-                    webSocket = webSocket,
-                    url = url,
-                    urlObserverJob = urlObserverJob,
-                )
-                connectDeferred.complete(authSuccess)
-            }
-        }
-    }
-
-    private fun handleUrlChangeWhileConnected(urlState: UrlState) {
-        val currentHolder = connectionHolder.get()
-        if (urlState is UrlState.InsecureState) {
-            Timber.w("Insecure state, disconnecting immediately.")
-        } else {
-            Timber.w("URL changed, disconnecting immediately.")
-        }
-
-        if (currentHolder == null) {
-            connectionState = WebSocketState.ClosedUrlChange
-        } else {
-            // Set pending reason before cancel() so handleClosingSocket knows to reconnect immediately
-            pendingCloseReason = WebSocketState.Closed.Reason.CHANGED_URL
-            currentHolder.webSocket.cancel()
         }
     }
 
@@ -711,10 +711,6 @@ internal class WebSocketCoreImpl(
 
     override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
         Timber.d("Websocket: onMessage (bytes)")
-        if (isStaleConnection(webSocket)) {
-            Timber.w("Ignoring onMessage (bytes) from stale connection")
-            return
-        }
     }
 
     override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
