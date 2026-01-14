@@ -69,7 +69,6 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
@@ -169,24 +168,24 @@ internal data class EntityPickerItem(
  * (area and device names) from the registries if provided.
  *
  * @param entities The list of available entities to choose from
- * @param entityRegistry Optional list of entity registry entries for displaying metadata (area, device)
- * @param deviceRegistry Optional list of device registry entries for displaying device names
- * @param areaRegistry Optional list of area registry entries for displaying area names
  * @param selectedEntityId The currently selected entity id, or null if none selected
  * @param onEntitySelectedId Callback invoked when an entity is selected
  * @param onEntityCleared Callback invoked when the selection is cleared
  * @param modifier The modifier to apply to this composable
+ * @param entityRegistry Optional list of entity registry entries for displaying metadata (area, device)
+ * @param deviceRegistry Optional list of device registry entries for displaying device names
+ * @param areaRegistry Optional list of area registry entries for displaying area names
  */
 @Composable
 fun EntityPicker(
     entities: List<Entity>,
-    entityRegistry: List<EntityRegistryResponse>? = null,
-    deviceRegistry: List<DeviceRegistryResponse>? = null,
-    areaRegistry: List<AreaRegistryResponse>? = null,
     selectedEntityId: String?,
     onEntitySelectedId: (String) -> Unit,
     onEntityCleared: () -> Unit,
     modifier: Modifier = Modifier,
+    entityRegistry: List<EntityRegistryResponse>? = null,
+    deviceRegistry: List<DeviceRegistryResponse>? = null,
+    areaRegistry: List<AreaRegistryResponse>? = null,
 ) {
     val context = LocalContext.current
 
