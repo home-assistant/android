@@ -8,7 +8,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/database/AppDatabase.kt"
-            line="1035"
+            line="1040"
             column="17"/>
     </issue>
 
@@ -19,7 +19,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/database/AppDatabase.kt"
-            line="1035"
+            line="1040"
             column="17"/>
     </issue>
 

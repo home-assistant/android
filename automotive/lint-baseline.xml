@@ -833,7 +833,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="229"
+            line="230"
             column="13"/>
     </issue>
 
@@ -844,7 +844,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="239"
+            line="240"
             column="13"/>
     </issue>
 
@@ -855,7 +855,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="295"
+            line="296"
             column="13"/>
     </issue>
 
@@ -2259,6 +2259,13 @@
     </issue>
 
     <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v28`) is unnecessary; `minSdkVersion` is 29. Merge all the resources in this folder into `xml`.">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/xml-v28"/>
+    </issue>
+
+    <issue
         id="StaticFieldLeak"
         message="Do not place Android context classes in static fields (static reference to `Builder` which has field `mContext` pointing to `Context`); this is a memory leak"
         errorLine1="        private lateinit var notificationBuilder: NotificationCompat.Builder"
@@ -2590,6 +2597,17 @@
 
     <issue
         id="UnusedResources"
+        message="The resource `R.xml.grid_widget_info` appears to be unused"
+        errorLine1="&lt;appwidget-provider xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/xml/grid_widget_info.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
         message="The resource `R.drawable.ic_baseline_info_24` appears to be unused"
         errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
         errorLine2="^">
@@ -2674,6 +2692,13 @@
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/values/styles.xml"
             line="67"
             column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.widget_example_grid` appears to be unused">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/drawable-nodpi/widget_example_grid.png"/>
     </issue>
 
     <issue
@@ -4044,6 +4069,61 @@
 
     <issue
         id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `servers: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    servers: List&lt;Server>,"
+        errorLine2="             ~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/grid/config/GridConfigurationScreen.kt"
+            line="72"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Entity> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;Entity>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;Entity>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entities: List&lt;Entity>,"
+        errorLine2="              ~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/grid/config/GridConfigurationScreen.kt"
+            line="75"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Entity> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;Entity>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;Entity>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entities: List&lt;Entity>,"
+        errorLine2="              ~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/grid/config/GridConfigurationScreen.kt"
+            line="173"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;GridButtonData> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `items: ImmutableList&lt;GridButtonData>` or create an `@Immutable` wrapper for this class: `@Immutable data class ItemsList(val items: List&lt;GridButtonData>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    items: List&lt;GridButtonData>,"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/grid/GridGlanceAppWidget.kt"
+            line="228"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;GridButtonData> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `items: ImmutableList&lt;GridButtonData>` or create an `@Immutable` wrapper for this class: `@Immutable data class ItemsList(val items: List&lt;GridButtonData>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    items: List&lt;GridButtonData>,"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/grid/GridGlanceAppWidget.kt"
+            line="251"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
         message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;IIcon> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `icons: ImmutableList&lt;IIcon>` or create an `@Immutable` wrapper for this class: `@Immutable data class IconsList(val items: List&lt;IIcon>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
         errorLine1="fun IconDialogGrid(icons: List&lt;IIcon>, tint: Color = MaterialTheme.colors.onSurface, onClick: (IIcon) -> Unit) {"
         errorLine2="                          ~~~~~~~~~~~">
@@ -4216,6 +4296,28 @@
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/todo/TodoWidgetConfigureActivity.kt"
             line="189"
             column="15"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableReceiver"
+        message="Instance composable functions on non-stable classes will always be recomposed. If possible, make the receiver type stable or refactor this function if that isn&apos;t possible. See https://slackhq.github.io/compose-lints/rules/#unstable-receivers for more information."
+        errorLine1="        fun GridWidgetState.getColors(): ColorProviders {"
+        errorLine2="            ~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/grid/GridWidgetState.kt"
+            line="34"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableReceiver"
+        message="Instance composable functions on non-stable classes will always be recomposed. If possible, make the receiver type stable or refactor this function if that isn&apos;t possible. See https://slackhq.github.io/compose-lints/rules/#unstable-receivers for more information."
+        errorLine1="        fun GridWidgetState.getButtonColors(): GridButtonColors {"
+        errorLine2="            ~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/grid/GridWidgetState.kt"
+            line="52"
+            column="13"/>
     </issue>
 
     <issue
