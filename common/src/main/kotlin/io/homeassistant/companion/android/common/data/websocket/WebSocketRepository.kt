@@ -132,7 +132,7 @@ interface WebSocketRepository {
      * Send voice data for an active Assist pipeline
      * @return `true`/`false` indicating if it was enqueued, or `null` on unexpected failures
      */
-    suspend fun sendVoiceData(binaryHandlerId: Int, data: ByteArray): Boolean?
+    suspend fun sendVoiceData(binaryHandlerId: Int, data: ByteArray): Boolean
 }
 
 class WebSocketRepositoryFactory @Inject internal constructor(

@@ -58,7 +58,7 @@ internal interface WebSocketCore {
      * @param data The binary data to send. Maximum size of 16MiB
      * @return `true` if the data was sent successfully, `false` otherwise.
      */
-    suspend fun sendBytes(data: ByteArray): Boolean?
+    suspend fun sendBytes(data: ByteArray): Boolean
 
     /**
      * Start a subscription for events on the websocket connection and get a Flow for listening to
@@ -93,3 +93,12 @@ internal class WebSocketCoreFactory @Inject constructor(
         return WebSocketCoreImpl(okHttpClient, serverManagerProvider.get(), serverId)
     }
 }
+
+/**
+ * Exception thrown when a WebSocket operation fails.
+ *
+ * This exception is used to signal failures in the WebSocket communication layer,
+ * such as when attempting to send a message without an active connection or when
+ * the underlying send operation fails.
+ */
+class HAWebSocketException(override val message: String?) : Exception()
