@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.connection
 
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -169,23 +170,26 @@ class ConnectionErrorScreenTest {
         )
         every { viewModel.runConnectivityChecks() } just Runs
 
-        composeTestRule.setContent {
-            ConnectionErrorScreen(
-                viewModel = viewModel,
-                onOpenExternalLink = {},
-                onCloseClick = {},
-            )
-        }
+        composeTestRule.apply {
+            setContent {
+                ConnectionErrorScreen(
+                    viewModel = viewModel,
+                    onOpenExternalLink = {},
+                    onCloseClick = {},
+                )
+            }
 
-        composeTestRule.onNodeWithTag(ERROR_DETAILS_TAG)
-            .performScrollTo()
-            .performClick()
-        composeTestRule.onNodeWithTag(CONNECTIVITY_RETRY_BUTTON_TAG)
-            .performScrollTo()
-            .performClick()
+            onNodeWithText(stringResource(commonR.string.connection_error_more_details))
+                .performScrollTo()
+                .performClick()
 
-        composeTestRule.runOnIdle {
-            verify(exactly = 1) { viewModel.runConnectivityChecks() }
+            onNodeWithText(stringResource(commonR.string.retry))
+                .performScrollTo()
+                .performClick()
+
+            runOnIdle {
+                verify(exactly = 1) { viewModel.runConnectivityChecks() }
+            }
         }
     }
 }

@@ -17,6 +17,7 @@ private const val HTTPS_PROTOCOL = "https"
 private enum class SkipReason {
     AFTER_DNS_FAILURE,
     AFTER_SERVER_FAILURE,
+    INVALID_URL,
 }
 
 /**
@@ -35,7 +36,7 @@ internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val c
             Timber.w(e, "Invalid URL format: $url")
             state = state.copy(
                 dnsResolution = ConnectivityCheckResult.Failure(commonR.string.connection_check_error_invalid_url),
-            )
+            ).skip(SkipReason.INVALID_URL)
             emit(state)
             return@flow
         }
@@ -139,7 +140,9 @@ internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val c
     private fun ConnectivityCheckState.skip(reason: SkipReason): ConnectivityCheckState {
         val skipped = ConnectivityCheckResult.Failure(commonR.string.connection_check_skipped)
         return when (reason) {
-            SkipReason.AFTER_DNS_FAILURE -> copy(
+            SkipReason.INVALID_URL,
+            SkipReason.AFTER_DNS_FAILURE,
+            -> copy(
                 portReachability = skipped,
                 tlsCertificate = skipped,
                 serverConnection = skipped,

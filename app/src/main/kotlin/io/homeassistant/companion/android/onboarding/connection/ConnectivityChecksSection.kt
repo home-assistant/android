@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.onboarding.connection
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
@@ -9,10 +8,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -24,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,9 +33,6 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
-
-@VisibleForTesting
-internal const val CONNECTIVITY_RETRY_BUTTON_TAG = "connectivity_retry_button"
 
 /**
  * Reusable connectivity checks section that displays the results of connectivity checks.
@@ -90,15 +82,12 @@ fun ConnectivityChecksSection(
             result = connectivityCheckState.homeAssistantVerification,
         )
 
-        Spacer(modifier = Modifier.height(HADimens.SPACE2))
-
         HAAccentButton(
             text = stringResource(commonR.string.retry),
             onClick = onRetryConnectivityCheck,
             enabled = connectivityCheckState.isComplete,
             modifier = Modifier
-                .fillMaxWidth()
-                .testTag(CONNECTIVITY_RETRY_BUTTON_TAG),
+                .fillMaxWidth(),
         )
     }
 }
@@ -119,8 +108,7 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
 
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = HADimens.SPACE2),
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
         verticalAlignment = Alignment.CenterVertically,
     ) {

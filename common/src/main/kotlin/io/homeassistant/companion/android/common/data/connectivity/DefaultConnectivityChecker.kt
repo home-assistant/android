@@ -32,7 +32,7 @@ private val CONNECTIVITY_TIMEOUT = 5.seconds
  * Default implementation of [ConnectivityChecker] that performs real network operations.
  *
  */
-class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
+internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
 
     override suspend fun dns(hostname: String): ConnectivityCheckResult {
         return try {

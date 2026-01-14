@@ -59,9 +59,6 @@ private val MaxContentWidth = MaxButtonWidth
 @VisibleForTesting
 internal const val URL_INFO_TAG = "url_info"
 
-@VisibleForTesting
-internal const val ERROR_DETAILS_TAG = "error_details"
-
 private const val URL_DOCUMENTATION = "https://companion.home-assistant.io/docs/troubleshooting/faqs/"
 private const val URL_COMMUNITY_FORUM = "https://community.home-assistant.io/c/mobile-apps/android-companion/42"
 private const val URL_GITHUB_ISSUES = "https://github.com/home-assistant/android/issues"
@@ -280,8 +277,8 @@ private fun ErrorDetails(
         stringResource(commonR.string.connection_error_more_details),
         defaultExpanded = expanded,
         modifier = Modifier
-            .width(MaxContentWidth)
-            .testTag(ERROR_DETAILS_TAG),
+            .width(MaxContentWidth),
+
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3)) {
             SelectionContainer {

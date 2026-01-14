@@ -32,6 +32,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -489,34 +490,34 @@ class ConnectionViewModelTest {
     }
 
     @Test
-    fun `Given runConnectivityChecks called many times then only last collection stays active`() = runTest {
+    fun `runConnectivityChecks cancels previous collection before starting a new one`() = runTest {
         // Given
         val rawUrl = "http://homeassistant.local:8123"
-        val flows = List(5) { MutableSharedFlow<ConnectivityCheckState>() }
-        var i = 0
-        every { connectivityCheckRepository.runChecks(rawUrl) } answers { flows[i++] }
+
+        val first = MutableSharedFlow<ConnectivityCheckState>()
+        val second = MutableSharedFlow<ConnectivityCheckState>()
+
+        every { connectivityCheckRepository.runChecks(rawUrl) } returnsMany listOf(first, second)
 
         val viewModel = ConnectionViewModel(rawUrl, keyChainRepository, connectivityCheckRepository)
 
-        turbineScope {
-            val subs = flows.map { it.subscriptionCount.testIn(backgroundScope) }
-            subs.forEach { assertEquals(0, it.awaitItem()) }
+        // When: first click on "Run checks"
+        viewModel.runConnectivityChecks()
+        runCurrent()
 
-            // When
-            repeat(5) { idx ->
-                viewModel.runConnectivityChecks()
+        // Then: first flow is being collected
+        assertEquals(1, first.subscriptionCount.value)
+        assertEquals(0, second.subscriptionCount.value)
 
-                assertEquals(1, subs[idx].awaitItem())
+        // When: second click on "Run checks"
+        viewModel.runConnectivityChecks()
+        runCurrent()
 
-                if (idx > 0) {
-                    assertEquals(0, subs[idx - 1].awaitItem())
-                }
-            }
+        // Then: previous collection is cancelled and only the latest one remains active
+        assertEquals(0, first.subscriptionCount.value)
+        assertEquals(1, second.subscriptionCount.value)
 
-            // Then
-            flows.dropLast(1).forEach { assertEquals(0, it.subscriptionCount.value) }
-            assertEquals(1, flows.last().subscriptionCount.value)
-            verify(exactly = 5) { connectivityCheckRepository.runChecks(rawUrl) }
-        }
+        // Then: repository method was called for each click
+        verify(exactly = 2) { connectivityCheckRepository.runChecks(rawUrl) }
     }
 }

@@ -28,7 +28,7 @@ class ConnectivityCheckRepositoryImplTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["not a valid url", "://invalid", "ht!tp://bad.url", ""])
+    @ValueSource(strings = ["not a valid url", "://invalid", "ht!tp://bad.url", "", "https://yuu@", "https://yuu", "http://homeassistant"])
     fun `Given invalid URL when running checks then DNS check fails with invalid URL error`(invalidUrl: String) = runTest {
         // When
         val states = repository.runChecks(invalidUrl).toList()
@@ -46,6 +46,20 @@ class ConnectivityCheckRepositoryImplTest {
 
         // Checker should not be called for invalid URLs
         coVerify(exactly = 0) { checker.dns(any()) }
+
+        // Remaining checks should be marked as skipped
+        listOf(
+            finalState.portReachability,
+            finalState.tlsCertificate,
+            finalState.serverConnection,
+            finalState.homeAssistantVerification,
+        ).forEach { result ->
+            assertTrue(result is ConnectivityCheckResult.Failure)
+            assertEquals(
+                commonR.string.connection_check_skipped,
+                (result as ConnectivityCheckResult.Failure).messageResId,
+            )
+        }
     }
 
     @Test
