@@ -153,6 +153,10 @@ internal fun WebViewContentScreen(
  * If the Home Assistant frontend does not handle edge-to-edge insets
  * (core <2025.12), it also wraps the WebView with colored overlays matching
  * the safe area insets.
+ *
+ * This wrapper ensures the [HAWebView] is not removed from composition when
+ * the app lock, theme or server inset support changes, to avoid losing loading
+ * progress or frontend state when it isn't necessary.
  */
 @OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
