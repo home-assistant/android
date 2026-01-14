@@ -205,11 +205,11 @@ class MainViewModel @Inject constructor(
 
                 // Finished initial load, update state
                 val webSocketState = homePresenter.getWebSocketState()
-                if (webSocketState == WebSocketState.CLOSED_AUTH) {
+                if (webSocketState == WebSocketState.ClosedAuth) {
                     homePresenter.onInvalidAuthorization()
                     return@launch
                 }
-                loadingState.value = if (webSocketState == WebSocketState.ACTIVE) {
+                loadingState.value = if (webSocketState == WebSocketState.Active) {
                     LoadingState.READY
                 } else {
                     LoadingState.ERROR

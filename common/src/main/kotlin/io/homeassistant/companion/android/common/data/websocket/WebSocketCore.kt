@@ -29,19 +29,9 @@ import okhttp3.OkHttpClient
  */
 internal interface WebSocketCore {
     /**
-     * Establishes a WebSocket connection and authenticates with the server.
-     *
-     * @return `true` if the connection is successful and authenticated, `false` otherwise.
-     */
-    suspend fun connect(): Boolean
-
-    /**
      * Returns the current state of the WebSocket connection.
-     *
-     * @return If the WebSocket connection is established, this method returns the current [WebSocketState], but if the connection is
-     * not established, it returns `null`.
      */
-    fun getConnectionState(): WebSocketState?
+    fun getConnectionState(): WebSocketState
 
     /**
      * Sends a message over the WebSocket connection and waits for a response.

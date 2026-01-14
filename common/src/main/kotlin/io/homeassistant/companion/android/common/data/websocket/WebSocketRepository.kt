@@ -29,7 +29,7 @@ import javax.inject.Provider
 import kotlinx.coroutines.flow.Flow
 
 interface WebSocketRepository {
-    fun getConnectionState(): WebSocketState?
+    fun getConnectionState(): WebSocketState
     fun shutdown()
     suspend fun sendPing(): Boolean
     suspend fun getCurrentUser(): CurrentUserResponse?
