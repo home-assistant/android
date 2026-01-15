@@ -43,7 +43,7 @@ internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val c
         if (state.dnsResolution is ConnectivityCheckResult.Failure) return@flow
 
         // Port Check
-        state = portCheck(state, hostname, port)
+        state = portCheckAndEmit(state, hostname, port)
 
         // TLS Check
         state = tlsCheckOrEmitNotApplicable(state, isHttps, url)
@@ -53,7 +53,7 @@ internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val c
         if (state.serverConnection is ConnectivityCheckResult.Failure) return@flow
 
         // Home Assistant Verification Check
-        homeAssistantCheck(state, url)
+        state = homeAssistantCheckAndEmit(state, url)
     }.flowOn(Dispatchers.IO)
 
     /**
@@ -115,7 +115,7 @@ internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val c
             ?: updated.skip(SkipReason.AFTER_DNS_FAILURE).also { emit(it) }
     }
 
-    private suspend fun FlowCollector<ConnectivityCheckState>.portCheck(
+    private suspend fun FlowCollector<ConnectivityCheckState>.portCheckAndEmit(
         state: ConnectivityCheckState,
         hostname: String,
         port: Int,
@@ -156,7 +156,7 @@ internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val c
             ?: updated.skip(SkipReason.AFTER_SERVER_FAILURE).also { emit(it) }
     }
 
-    private suspend fun FlowCollector<ConnectivityCheckState>.homeAssistantCheck(
+    private suspend fun FlowCollector<ConnectivityCheckState>.homeAssistantCheckAndEmit(
         state: ConnectivityCheckState,
         url: String,
     ): ConnectivityCheckState = runCheck(
