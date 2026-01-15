@@ -457,8 +457,7 @@ private fun EntityPickerContent(
                     )
                     HorizontalDivider(
                         modifier = Modifier.padding(
-                            start =
-                            HADimens.SPACE12,
+                            start = HADimens.SPACE12,
                         ),
                     )
                 }

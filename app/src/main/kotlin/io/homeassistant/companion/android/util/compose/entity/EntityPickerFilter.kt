@@ -118,8 +118,6 @@ private suspend fun List<EntityPickerItem>.mapToEntitiesWithFields(
 /**
  * Optimized version that uses pre-computed searchable fields.
  *
- * Exposed as internal for testing purposes.
- *
  * @param entitiesWithFields List of entities with pre-computed searchable fields
  * @param query The search query string
  * @return A filtered and sorted list of entities
