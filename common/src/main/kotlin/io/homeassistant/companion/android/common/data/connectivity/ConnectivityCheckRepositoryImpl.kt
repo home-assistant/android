@@ -20,7 +20,7 @@ private enum class SkipReason {
     INVALID_URL,
 }
 
-private data class ConnectionTarget(val hostname: String, val port: Int, val isHttps: Boolean)
+private data class ConnectionUrl(val hostname: String, val port: Int, val isHttps: Boolean)
 
 /**
  * Default implementation of [ConnectivityCheckRepository] that runs checks in sequence.
@@ -33,7 +33,7 @@ internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val c
         emit(state)
 
         // Parse url
-        val connection = parseTargetOrEmitInvalid(url, state).getOrElse { return@flow }
+        val connection = parseUrlOrEmitInvalid(url, state).getOrElse { return@flow }
         val hostname = connection.hostname
         val port = connection.port
         val isHttps = connection.isHttps
@@ -80,12 +80,12 @@ internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val c
         return resultState
     }
 
-    private suspend fun FlowCollector<ConnectivityCheckState>.parseTargetOrEmitInvalid(
+    private suspend fun FlowCollector<ConnectivityCheckState>.parseUrlOrEmitInvalid(
         url: String,
         state: ConnectivityCheckState,
-    ): Result<ConnectionTarget> = runCatching { URL(url) }
+    ): Result<ConnectionUrl> = runCatching { URL(url) }
         .map { parsedUrl ->
-            ConnectionTarget(
+            ConnectionUrl(
                 hostname = parsedUrl.host,
                 port = determinePort(parsedUrl),
                 isHttps = parsedUrl.protocol.equals(HTTPS_PROTOCOL, ignoreCase = true),
