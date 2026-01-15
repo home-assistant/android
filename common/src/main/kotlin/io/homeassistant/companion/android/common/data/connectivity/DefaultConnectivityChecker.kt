@@ -33,7 +33,6 @@ private val CONNECTIVITY_TIMEOUT = 5.seconds
 
 /**
  * Default implementation of [ConnectivityChecker] that performs real network operations.
- *
  */
 internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
 
