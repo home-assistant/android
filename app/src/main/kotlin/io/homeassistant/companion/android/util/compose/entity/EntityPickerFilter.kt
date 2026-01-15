@@ -182,6 +182,7 @@ internal suspend fun filterAndSortEntitiesOptimized(
  * @param terms The list of search terms (already normalized to lowercase)
  * @return The total match score (0.0 if any term doesn't match)
  */
+@VisibleForTesting
 internal fun calculateFuzzyMatchScoreOptimized(searchableFields: List<SearchField>, terms: List<String>): Double {
     var totalScore = 0.0
 

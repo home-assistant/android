@@ -46,7 +46,9 @@ class EntityPickerFilterTest {
         )
     }
 
-    // ========== Fuzzy Match Tests ==========
+    /*
+    fuzzyMatch
+     */
 
     @Test
     fun `Given exact match when fuzzy matching then returns 1_0`() {
@@ -109,7 +111,9 @@ class EntityPickerFilterTest {
         assertTrue(result <= 0.5)
     }
 
-    // ========== calculateFuzzyMatchScoreOptimized Tests ==========
+    /*
+    calculateFuzzyMatchScoreOptimized
+     */
 
     @Test
     fun `Given exact entity ID match when calculating score then returns high score`() {
@@ -182,7 +186,9 @@ class EntityPickerFilterTest {
         assertTrue(highScore > lowScore)
     }
 
-    // ========== filterAndSortEntitiesOptimized Tests ==========
+    /*
+    filterAndSortEntitiesOptimized
+     */
 
     @Test
     fun `Given empty query when filtering then returns all entities sorted`() = runTest {

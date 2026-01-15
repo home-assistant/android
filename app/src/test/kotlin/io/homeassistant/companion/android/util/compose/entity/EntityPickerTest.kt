@@ -264,7 +264,7 @@ class EntityPickerTest {
     }
 
     @Test
-    fun `When clear button clicked then callback invoked`() {
+    fun `Given selected entity when clear button clicked then callback invoked`() {
         val onEntityCleared: () -> Unit = mockk(relaxed = true)
 
         composeTestRule.setContent {
@@ -285,7 +285,7 @@ class EntityPickerTest {
     }
 
     @Test
-    fun `When entity selected then callback invoked with entity id`() {
+    fun `Given expanded picker when entity selected then callback invoked with entity id`() {
         val onEntitySelectedId: (String) -> Unit = mockk(relaxed = true)
 
         setExpandedEntityPickerContent(onEntitySelectedId = onEntitySelectedId)
@@ -306,7 +306,7 @@ class EntityPickerTest {
     }
 
     @Test
-    fun `When search text entered then filters entities`() {
+    fun `Given expanded picker with entities when search text entered then filters entities`() {
         setExpandedEntityPickerContent()
 
         composeTestRule.waitForIdle()
@@ -336,7 +336,7 @@ class EntityPickerTest {
     }
 
     @Test
-    fun `When search text cleared then shows all entities`() {
+    fun `Given filtered entities when search text cleared then shows all entities`() {
         setExpandedEntityPickerContent()
 
         composeTestRule.waitForIdle()
@@ -375,7 +375,7 @@ class EntityPickerTest {
     }
 
     @Test
-    fun `When searching with no matches then shows no results message`() {
+    fun `Given expanded picker when searching with no matches then shows no results message`() {
         setExpandedEntityPickerContent()
 
         composeTestRule.waitForIdle()
@@ -400,7 +400,7 @@ class EntityPickerTest {
     }
 
     @Test
-    fun `When searching by domain then filters entities by domain`() {
+    fun `Given expanded picker with entities when searching by domain then filters by domain`() {
         setExpandedEntityPickerContent()
 
         composeTestRule.waitForIdle()
@@ -429,7 +429,7 @@ class EntityPickerTest {
     }
 
     @Test
-    fun `When searching with multi-term then filters by all terms`() {
+    fun `Given expanded picker with entities when searching with multiple terms then filters by all terms`() {
         setExpandedEntityPickerContent()
 
         composeTestRule.waitForIdle()
@@ -453,7 +453,7 @@ class EntityPickerTest {
     }
 
     @Test
-    fun `When clear search button clicked then clears search text`() {
+    fun `Given expanded picker with search text when clear button clicked then clears search text`() {
         setExpandedEntityPickerContent()
 
         composeTestRule.waitForIdle()
@@ -489,7 +489,7 @@ class EntityPickerTest {
     }
 
     @Test
-    fun `When search is case insensitive then matches regardless of case`() {
+    fun `Given expanded picker with entities when searching with different case then matches case insensitively`() {
         setExpandedEntityPickerContent()
 
         composeTestRule.waitForIdle()

@@ -428,6 +428,7 @@ private fun EntityPickerContent(
     modifier: Modifier = Modifier,
 ) {
     // TODO if we make a multi entity picker we should share part of the remember that prepare the entitiesWithFields
+    //  https://github.com/home-assistant/android/issues/6260
     val filteredEntities = rememberFilteredEntities(
         entities = entities,
         searchQuery = searchQuery,
@@ -536,7 +537,10 @@ private fun LazyListScope.entityHeader() {
 
 @Composable
 private fun EmptyResultPlaceholder(searchQuery: String) {
-    Row(modifier = Modifier.padding(start = HADimens.SPACE3, bottom = HADimens.SPACE3)) {
+    Row(
+        modifier = Modifier.padding(start = HADimens.SPACE3, bottom = HADimens.SPACE3),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Icon(
             imageVector = Icons.Default.Search,
             contentDescription = null,

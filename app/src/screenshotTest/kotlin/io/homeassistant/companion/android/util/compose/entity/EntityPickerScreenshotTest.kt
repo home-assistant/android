@@ -13,7 +13,8 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 
-@Preview(name = "phone", device = "spec:width=411.4dp,height=923.4dp", group = "phone") // Pixel 9
+@Preview(name = "phoneLTR", device = "spec:width=411.4dp,height=923.4dp", group = "phone") // Pixel 9 LTR
+@Preview(name = "phoneRLT", device = "spec:width=411.4dp,height=923.4dp", group = "phone", locale = "ar") // Pixel 9 RTL
 @Preview(
     name = "tablet",
     device = "spec:width=1280dp,height=800dp,dpi=320,orientation=portrait",

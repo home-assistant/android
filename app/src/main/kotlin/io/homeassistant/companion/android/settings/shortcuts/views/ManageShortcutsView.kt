@@ -250,7 +250,7 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
         )
     } else {
-        // TODO use new theme for Material3 components
+        // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6258
         HATheme {
             EntityPicker(
                 entities = viewModel.entities[shortcut.serverId.value].orEmpty(),
