@@ -3,11 +3,9 @@ package io.homeassistant.companion.android.common.data.connectivity
 import io.homeassistant.companion.android.common.R as commonR
 import java.net.URL
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import timber.log.Timber
 
 private const val DEFAULT_HTTP_PORT = 80
@@ -54,7 +52,7 @@ internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val c
 
         // Home Assistant Verification Check
         state = homeAssistantCheckAndEmit(state, url)
-    }.flowOn(Dispatchers.IO)
+    }
 
     /**
      * Executes a single connectivity check with proper state transitions.
