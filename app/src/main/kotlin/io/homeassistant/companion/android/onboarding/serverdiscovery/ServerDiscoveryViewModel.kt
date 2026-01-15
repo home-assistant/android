@@ -79,23 +79,6 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
         serverManager: ServerManager,
     ) : this(savedStateHandle.toRoute<ServerDiscoveryRoute>().discoveryMode, searcher, serverManager)
 
-    private val serversToIgnore = if (discoveryMode == ServerDiscoveryMode.HIDE_EXISTING) {
-        serverManager.defaultServers
-            .flatMap { server ->
-                with(server.connection) {
-                    listOf(internalUrl, externalUrl, cloudUrl)
-                }
-            }
-            .filterNotNull()
-            .mapNotNull { url ->
-                runCatching { URL(url) }
-                    .onFailure { Timber.d(it, "Invalid URL for: $url") }
-                    .getOrNull()
-            }
-    } else {
-        emptyList()
-    }
-
     private val _discoveryFlow = MutableStateFlow<DiscoveryState>(Started)
 
     /**
@@ -115,12 +98,32 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
         watchForNoServerFound()
     }
 
+    private suspend fun serversToIgnore(): List<URL> {
+        return if (discoveryMode == ServerDiscoveryMode.HIDE_EXISTING) {
+            serverManager.servers()
+                .flatMap { server ->
+                    with(server.connection) {
+                        listOf(internalUrl, externalUrl, cloudUrl)
+                    }
+                }
+                .filterNotNull()
+                .mapNotNull { url ->
+                    runCatching { URL(url) }
+                        .onFailure { Timber.d(it, "Invalid URL for: $url") }
+                        .getOrNull()
+                }
+        } else {
+            emptyList()
+        }
+    }
+
     private fun discoverInstances() {
         viewModelScope.launch {
             if (discoveryMode == ServerDiscoveryMode.ADD_EXISTING) {
                 _discoveryFlow.value = getExistingInstances(serverManager)
             }
             try {
+                val serversToIgnore = serversToIgnore()
                 searcher.discoveredInstanceFlow()
                     .filter { instanceFound ->
                         serversToIgnore.none { it.isSameServer(instanceFound.url) }
@@ -193,7 +196,7 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
 }
 
 private suspend fun getExistingInstances(serverManager: ServerManager): DiscoveryState {
-    return serverManager.defaultServers
+    return serverManager.servers()
         .mapNotNull { server ->
             val url =
                 serverManager.connectionStateProvider(server.id).getExternalUrl() ?: return@mapNotNull null

@@ -46,7 +46,7 @@ import okhttp3.OkHttpClient
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class DataModule {
+internal abstract class DataModule {
 
     companion object {
         @Provides
@@ -139,25 +139,25 @@ abstract class DataModule {
 
     @Binds
     @Singleton
-    abstract fun bindPrefsRepository(prefsRepository: PrefsRepositoryImpl): PrefsRepository
+    internal abstract fun bindPrefsRepository(prefsRepository: PrefsRepositoryImpl): PrefsRepository
 
     @Binds
     @Singleton
-    abstract fun bindWearPrefsRepository(wearPrefsRepository: WearPrefsRepositoryImpl): WearPrefsRepository
+    internal abstract fun bindWearPrefsRepository(wearPrefsRepository: WearPrefsRepositoryImpl): WearPrefsRepository
 
     @Binds
     @Singleton
     @NamedKeyChain
-    abstract fun bindKeyChainRepository(keyChainRepository: KeyChainRepositoryImpl): KeyChainRepository
+    internal abstract fun bindKeyChainRepository(keyChainRepository: KeyChainRepositoryImpl): KeyChainRepository
 
     @Binds
     @Singleton
     @NamedKeyStore
-    abstract fun bindKeyStore(keyStore: KeyStoreRepositoryImpl): KeyChainRepository
+    internal abstract fun bindKeyStore(keyStore: KeyStoreRepositoryImpl): KeyChainRepository
 
     @Binds
     @Singleton
-    abstract fun bindServerManager(serverManager: ServerManagerImpl): ServerManager
+    internal abstract fun bindServerManager(serverManager: ServerManagerImpl): ServerManager
 
     @Multibinds
     abstract fun bindOkHttpClientConfigurator(): Set<@JvmSuppressWildcards OkHttpConfigurator>

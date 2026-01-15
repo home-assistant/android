@@ -23,21 +23,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
-import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.WearDataMessages
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
-import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
-import io.homeassistant.companion.android.database.server.ServerType
-import io.homeassistant.companion.android.database.server.ServerUserInfo
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -49,8 +41,10 @@ import kotlinx.serialization.SerializationException
 import timber.log.Timber
 
 @HiltViewModel
-class SettingsWearViewModel @Inject constructor(private val serverManager: ServerManager, application: Application) :
-    AndroidViewModel(application),
+class SettingsWearViewModel @Inject constructor(
+    private val settingsWearRepository: SettingsWearRepository,
+    application: Application,
+) : AndroidViewModel(application),
     DataClient.OnDataChangedListener {
 
     data class SettingsWearOnboardingViewUiState(
@@ -114,8 +108,7 @@ class SettingsWearViewModel @Inject constructor(private val serverManager: Serve
         }
 
     private var authenticateId: String? = null
-    private var serverId = 0
-    private var remoteServerId = 0
+    private var wearServer: WearServer? = null
 
     var entities = mutableStateMapOf<String, Entity>()
         private set
@@ -170,24 +163,11 @@ class SettingsWearViewModel @Inject constructor(private val serverManager: Serve
         } catch (e: Exception) {
             Timber.e(e, "Unable to remove listener from wearable data client")
         }
-
-        if (serverId != 0) {
-            CoroutineScope(Dispatchers.Main + Job()).launch {
-                serverManager.removeServer(serverId)
-            }
-        }
     }
 
-    private suspend fun loadEntities() {
-        if (serverId != 0) {
-            try {
-                serverManager.integrationRepository(serverId).getEntities()?.forEach {
-                    entities[it.entityId] = it
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to load entities for Wear server")
-                entities.clear()
-            }
+    private suspend fun WearServer.loadEntities() {
+        settingsWearRepository.getEntities(this).forEach {
+            entities[it.entityId] = it
         }
     }
 
@@ -217,16 +197,14 @@ class SettingsWearViewModel @Inject constructor(private val serverManager: Serve
     }
 
     private fun renderTemplate(tileId: Int, template: String) {
-        if (template.isNotEmpty() && serverId != 0) {
+        wearServer?.takeIf { template.isNotEmpty() }?.let {
             viewModelScope.launch {
-                try {
-                    templateTilesRenderedTemplates[tileId] = serverManager
-                        .integrationRepository(serverId)
-                        .renderTemplate(template, mapOf()).toString()
-                } catch (e: Exception) {
+                templateTilesRenderedTemplates[tileId] = try {
+                    settingsWearRepository.renderTemplate(it, template).toString()
+                } catch (e: IntegrationException) {
                     Timber.e(e, "Exception while rendering template for tile ID $tileId")
                     // SerializationException suggests that template is not a String (= error)
-                    templateTilesRenderedTemplates[tileId] = getApplication<Application>().getString(
+                    getApplication<Application>().getString(
                         if (e.cause is SerializationException) {
                             commonR.string.template_error
                         } else {
@@ -235,7 +213,7 @@ class SettingsWearViewModel @Inject constructor(private val serverManager: Serve
                     )
                 }
             }
-        } else {
+        } ?: run {
             templateTilesRenderedTemplates[tileId] = ""
         }
     }
@@ -402,48 +380,38 @@ class SettingsWearViewModel @Inject constructor(private val serverManager: Serve
 
     private suspend fun updateServer(data: DataMap) {
         val wearServerId = data.getInt(WearDataMessages.CONFIG_SERVER_ID, 0)
-        if (wearServerId == 0 || wearServerId == remoteServerId) return
 
-        if (remoteServerId != 0) { // First, remove the old server
-            serverManager.removeServer(serverId)
-            serverId = 0
-            remoteServerId = 0
+        if (wearServerId == this.wearServer?.serverId) {
+            Timber.i("Server already updated")
+            return
         }
 
         val wearExternalUrl = data.getString(WearDataMessages.CONFIG_SERVER_EXTERNAL_URL) ?: return
-        val wearWebhookId = data.getString(WearDataMessages.CONFIG_SERVER_WEBHOOK_ID) ?: return
+        val wearWebhookId = data.getString(WearDataMessages.CONFIG_SERVER_WEBHOOK_ID)?.ifBlank { null } ?: return
         val wearCloudUrl = data.getString(WearDataMessages.CONFIG_SERVER_CLOUD_URL, "").ifBlank { null }
         val wearCloudhookUrl = data.getString(WearDataMessages.CONFIG_SERVER_CLOUDHOOK_URL, "").ifBlank { null }
-        val wearUseCloud = data.getBoolean(WearDataMessages.CONFIG_SERVER_USE_CLOUD, false)
         val wearRefreshToken = data.getString(WearDataMessages.CONFIG_SERVER_REFRESH_TOKEN, "")
 
         try {
-            serverId = serverManager.addServer(
-                Server(
-                    _name = "",
-                    type = ServerType.TEMPORARY,
-                    connection = ServerConnectionInfo(
-                        externalUrl = wearExternalUrl,
-                        cloudUrl = wearCloudUrl,
-                        webhookId = wearWebhookId,
-                        cloudhookUrl = wearCloudhookUrl,
-                        useCloud = wearUseCloud,
-                    ),
-                    session = ServerSessionInfo(),
-                    user = ServerUserInfo(),
+            val wearServer = settingsWearRepository.registerRefreshToken(
+                WearServer(
+                    serverId = wearServerId,
+                    externalUrl = wearExternalUrl,
+                    cloudUrl = wearCloudUrl,
+                    webhookId = wearWebhookId,
+                    cloudhookUrl = wearCloudhookUrl,
+                    accessToken = null,
                 ),
+                wearRefreshToken,
             )
-            serverManager.authenticationRepository(serverId).registerRefreshToken(wearRefreshToken)
-            remoteServerId = wearServerId
+            this.wearServer = wearServer
 
-            viewModelScope.launch { loadEntities() }
+            viewModelScope.launch { wearServer.loadEntities() }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Unable to add Wear server from data")
-            if (serverId != 0) {
-                serverManager.removeServer(serverId)
-                serverId = 0
-                remoteServerId = 0
-            }
+            wearServer = null
         }
     }
 

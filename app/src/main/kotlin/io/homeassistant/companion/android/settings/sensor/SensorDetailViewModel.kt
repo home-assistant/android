@@ -36,6 +36,7 @@ import io.homeassistant.companion.android.sensors.SensorReceiver
 import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -67,11 +68,13 @@ class SensorDetailViewModel @Inject constructor(
             val sensors: Array<String>,
             val permissions: Array<String>? = null,
         )
+
         data class PermissionSnackbar(
             @StringRes val message: Int,
             val actionOpensSettings: Boolean,
             val serverId: Int? = null,
         )
+
         data class SettingDialogState(
             val setting: SensorSetting,
             /** Indicates if this is still loading entries in the background */
@@ -118,8 +121,8 @@ class SensorDetailViewModel @Inject constructor(
     var settingUpdateFrequency by mutableStateOf<SensorUpdateFrequencySetting>(SensorUpdateFrequencySetting.NORMAL)
         private set
 
-    val serverNames: Map<Int, String>
-        get() = serverManager.defaultServers.associate { it.id to it.friendlyName }
+    var serverNames by mutableStateOf<Map<Int, String>>(emptyMap())
+        private set
 
     private val _serversShowExpand = MutableStateFlow(false)
     val serversShowExpand = _serversShowExpand.asStateFlow()
@@ -131,11 +134,14 @@ class SensorDetailViewModel @Inject constructor(
 
     val showPrivacyHint = _showPrivacyHint.asStateFlow()
 
-    private val zones by lazy {
+    private var zones: List<String> = emptyList()
+
+    private suspend fun loadZones(): List<String> {
+        if (zones.isNotEmpty()) return zones
         Timber.d("Get zones from Home Assistant for listing zones in preferences...")
-        runBlocking {
-            val cachedZones = mutableListOf<String>()
-            serverManager.defaultServers.map { server ->
+        val cachedZones = mutableListOf<String>()
+        coroutineScope {
+            serverManager.servers().map { server ->
                 async {
                     try {
                         serverManager.integrationRepository(server.id).getZones().map { "${server.id}_${it.entityId}" }
@@ -145,14 +151,17 @@ class SensorDetailViewModel @Inject constructor(
                     }
                 }
             }.awaitAll().forEach { cachedZones.addAll(it) }
-            Timber.d("Successfully received " + cachedZones.size + " zones (" + cachedZones + ") from Home Assistant")
-            cachedZones
         }
+        Timber.d("Successfully received " + cachedZones.size + " zones (" + cachedZones + ") from Home Assistant")
+        zones = cachedZones
+        return cachedZones
     }
 
     init {
         val sensorFlow = sensorDao.getFullFlow(sensorId)
         viewModelScope.launch {
+            serverNames = serverManager.servers().associate { it.id to it.friendlyName }
+
             sensorFlow.collect { map ->
                 sensors = map.toSensorsWithAttributes()
                 sensor = map.toSensorsWithAttributes().maxByOrNull { it.sensor.enabled }
@@ -268,8 +277,10 @@ class SensorDetailViewModel @Inject constructor(
                     setting.valueType == SensorSettingType.LIST_BLUETOOTH ||
                     setting.valueType == SensorSettingType.LIST_ZONES ->
                     listKeys.zip(listEntries)
+
                 setting.valueType.listType ->
                     listEntries.map { it to it }
+
                 else ->
                     emptyList()
             },
@@ -279,8 +290,10 @@ class SensorDetailViewModel @Inject constructor(
                     setting.valueType == SensorSettingType.LIST_BLUETOOTH ||
                     setting.valueType == SensorSettingType.LIST_ZONES ->
                     setting.value.split(", ").filter { listKeys.contains(it) }
+
                 setting.valueType.listType ->
                     setting.value.split(", ").filter { listEntries.contains(it) }
+
                 else ->
                     emptyList()
             },
@@ -323,7 +336,7 @@ class SensorDetailViewModel @Inject constructor(
     private suspend fun updateSensorEntity(isEnabled: Boolean, serverId: Int?) {
         val serverIds =
             if (serverId == null) {
-                serverManager.defaultServers.map { it.id }
+                serverManager.servers().map { it.id }
             } else {
                 listOf(serverId)
             }
@@ -427,7 +440,7 @@ class SensorDetailViewModel @Inject constructor(
         }
     }
 
-    private fun getSettingKeys(setting: SensorSetting): List<String> {
+    private suspend fun getSettingKeys(setting: SensorSetting): List<String> {
         return when (setting.valueType) {
             SensorSettingType.LIST ->
                 setting.entries
@@ -449,7 +462,7 @@ class SensorDetailViewModel @Inject constructor(
             SensorSettingType.LIST_BLUETOOTH ->
                 BluetoothUtils.getBluetoothDevices(getApplication()).map { it.address }
             SensorSettingType.LIST_ZONES ->
-                zones
+                loadZones()
             else ->
                 emptyList()
         }
@@ -462,7 +475,7 @@ class SensorDetailViewModel @Inject constructor(
      * @param entries The entries for which strings have to be returned. If set to null, strings
      * for all entries are returned.
      */
-    fun getSettingEntries(setting: SensorSetting, entries: List<String>?): List<String> {
+    suspend fun getSettingEntries(setting: SensorSetting, entries: List<String>?): List<String> {
         return when (setting.valueType) {
             SensorSettingType.LIST ->
                 getSettingTranslatedEntries(setting.name, entries ?: setting.entries)
@@ -493,8 +506,9 @@ class SensorDetailViewModel @Inject constructor(
                 devices.map { it.name }.plus(entriesNotInDevices)
             }
             SensorSettingType.LIST_ZONES -> {
-                val servers = serverManager.defaultServers
-                val zonesWithNames = zones
+                val servers = serverManager.servers()
+                val loadedZones = loadZones()
+                val zonesWithNames = loadedZones
                     .filter { entries == null || entries.contains(it) }
                     .map {
                         val server = servers.first { s -> s.id == it.split("_")[0].toInt() }
@@ -502,7 +516,7 @@ class SensorDetailViewModel @Inject constructor(
                         if (servers.size > 1) "${server.friendlyName}: $zone" else zone
                     }
                 val entriesNotInZones = entries
-                    ?.filter { entry -> !zones.contains(entry) }
+                    ?.filter { entry -> !loadedZones.contains(entry) }
                     .orEmpty()
                 zonesWithNames.plus(entriesNotInZones)
             }
@@ -587,5 +601,6 @@ class SensorDetailViewModel @Inject constructor(
         }
         return state
     }
+
     private fun <T> Flow<List<T>>.collectAsState(): State<List<T>> = collectAsState(initial = emptyList())
 }
