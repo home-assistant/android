@@ -8,7 +8,6 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
-import androidx.annotation.StringRes
 import androidx.annotation.VisibleForTesting
 import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
@@ -22,6 +21,7 @@ import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositor
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.util.TLSWebViewClient
+import io.homeassistant.companion.android.webview.error.ConnectionError
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,40 +32,6 @@ import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import timber.log.Timber
-
-internal sealed interface ConnectionError {
-    @get:StringRes
-    val title: Int
-
-    @get:StringRes
-    val message: Int
-    val errorDetails: String?
-    val rawErrorType: String
-
-    data class AuthenticationError(
-        @StringRes override val message: Int,
-        override val errorDetails: String,
-        override val rawErrorType: String,
-    ) : ConnectionError {
-        override val title: Int = commonR.string.error_connection_failed
-    }
-
-    data class UnreachableError(
-        @StringRes override val message: Int,
-        override val errorDetails: String?,
-        override val rawErrorType: String,
-    ) : ConnectionError {
-        override val title: Int = commonR.string.error_connection_failed
-    }
-
-    data class UnknownError(
-        @StringRes override val message: Int,
-        override val errorDetails: String,
-        override val rawErrorType: String,
-    ) : ConnectionError {
-        override val title: Int = commonR.string.error_connection_failed
-    }
-}
 
 /**
  * Represents the navigation events that can occur during the connection process.

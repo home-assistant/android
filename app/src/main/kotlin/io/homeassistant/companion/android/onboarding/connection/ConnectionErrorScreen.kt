@@ -51,6 +51,7 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.util.compose.HAPreviews
+import io.homeassistant.companion.android.webview.error.ConnectionError
 
 private val MaxContentWidth = MaxButtonWidth
 
