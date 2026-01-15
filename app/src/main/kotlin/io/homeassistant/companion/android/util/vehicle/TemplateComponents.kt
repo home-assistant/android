@@ -49,6 +49,7 @@ fun getHeaderBuilder(title: String, action: Action = Action.BACK): Header.Builde
 
 fun getChangeServerGridItem(
     carContext: CarContext,
+    lifecycleScope: LifecycleCoroutineScope,
     screenManager: ScreenManager,
     serverManager: ServerManager,
     serverId: StateFlow<Int>,
@@ -69,16 +70,18 @@ fun getChangeServerGridItem(
                 .build(),
         )
         setOnClickListener {
-            Timber.i("Change server clicked")
-            screenManager.pushForResult(
-                ChangeServerScreen(
-                    carContext,
-                    serverManager,
-                    serverId,
-                ),
-            ) {
-                it?.toString()?.toIntOrNull()?.let { serverId ->
-                    onChangeServer(serverId)
+            lifecycleScope.launch {
+                Timber.i("Change server clicked")
+                screenManager.pushForResult(
+                    ChangeServerScreen(
+                        carContext,
+                        serverManager.servers(),
+                        serverId,
+                    ),
+                ) {
+                    it?.toString()?.toIntOrNull()?.let { serverId ->
+                        onChangeServer(serverId)
+                    }
                 }
             }
         }

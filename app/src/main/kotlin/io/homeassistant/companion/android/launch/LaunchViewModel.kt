@@ -189,7 +189,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
 
     private suspend fun cleanupServers() {
         // Remove any invalid servers (incomplete, partly migrated from another device)
-        serverManager.defaultServers
+        serverManager.servers()
             .filter {
                 serverManager.authenticationRepository(it.id)
                     .getSessionState() == SessionState.ANONYMOUS

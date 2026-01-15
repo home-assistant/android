@@ -160,7 +160,7 @@ class TodoWidgetConfigureActivity : BaseActivity() {
 
 @Composable
 private fun TodoWidgetConfigureScreen(viewModel: TodoWidgetConfigureViewModel, onActionClick: () -> Unit) {
-    val servers by viewModel.servers.collectAsStateWithLifecycle()
+    val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
     val entities by viewModel.entities.collectAsStateWithLifecycle()
 
     TodoWidgetConfigureView(

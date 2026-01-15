@@ -1637,7 +1637,7 @@ class WebViewActivity :
         isShowingError = true
 
         lifecycleScope.launch {
-            val serverName = if (serverManager.defaultServers.size > 1) presenter.getActiveServerName() else null
+            val serverName = if (serverManager.servers().size > 1) presenter.getActiveServerName() else null
             val alert = AlertDialog.Builder(this@WebViewActivity)
                 .setTitle(
                     getString(

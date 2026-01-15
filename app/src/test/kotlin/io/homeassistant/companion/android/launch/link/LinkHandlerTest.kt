@@ -71,7 +71,7 @@ class LinkHandlerTest {
     }
 
     @Test
-    fun `Given unknown deep link host when invoking handleLink then returns NosDestination`() = runTest {
+    fun `Given unknown deep link host when invoking handleLink then returns NoDestination`() = runTest {
         var caughtException: Throwable? = null
         FailFast.setHandler { exception, additionalMessage ->
             caughtException = exception
@@ -139,16 +139,22 @@ class LinkHandlerTest {
     redirect section
      */
     @Test
-    fun `Given redict URI with registered server when invoking handleLink then returns Webview with provided path without trailing slash in path`() = runTest {
+    fun `Given redirect URI with single registered server when invoking handleLink then returns Webview with provided path without trailing slash in path`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.servers() } returns listOf(
+            mockk {
+                coEvery { friendlyName } returns "Home"
+                coEvery { id } returns 1
+            },
+        )
         val uri = "https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fhome-assistant%2Fandroid%2F".toUri()
 
         val result = handler.handleLink(uri)
-        assertEquals(LinkDestination.Webview("_my_redirect/supervisor_add_addon_repository?repository_url=https%3A%2F%2Fgithub.com%2Fhome-assistant%2Fandroid%2F&mobile=1"), result)
+        assertEquals(LinkDestination.Webview("_my_redirect/supervisor_add_addon_repository?repository_url=https%3A%2F%2Fgithub.com%2Fhome-assistant%2Fandroid%2F&mobile=1", ServerManager.SERVER_ID_ACTIVE), result)
     }
 
     @Test
-    fun `Given redict URI with no registered server when invoking handleLink then returns NoDestination`() = runTest {
+    fun `Given redirect URI with no registered server when invoking handleLink then returns NoDestination`() = runTest {
         coEvery { serverManager.isRegistered() } returns false
         val uri = "https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fhome-assistant%2Fandroid%2F".toUri()
 
@@ -222,7 +228,7 @@ class LinkHandlerTest {
     @Test
     fun `Given navigate deep link with registered server and specific server name when invoking handleLink then returns Webview with matching server`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.defaultServers } returns listOf(
+        coEvery { serverManager.servers() } returns listOf(
             mockk {
                 coEvery { friendlyName } returns "Home"
                 coEvery { id } returns 1
@@ -242,7 +248,7 @@ class LinkHandlerTest {
     @Test
     fun `Given navigate deep link with registered server and case-insensitive server name when invoking handleLink then returns Webview with matching server`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.defaultServers } returns listOf(
+        coEvery { serverManager.servers() } returns listOf(
             mockk {
                 coEvery { friendlyName } returns "Home"
                 coEvery { id } returns 1
@@ -260,9 +266,9 @@ class LinkHandlerTest {
     }
 
     @Test
-    fun `Given navigate deep link with registered server and non-existing server name when invoking handleLink then returns Webview with null serverId`() = runTest {
+    fun `Given navigate deep link with registered server and non-existing server name when invoking handleLink then returns Webview with SERVER_ID_ACTIVE serverId`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.defaultServers } returns listOf(
+        coEvery { serverManager.servers() } returns listOf(
             mockk {
                 coEvery { friendlyName } returns "Home"
                 coEvery { id } returns 1
@@ -272,6 +278,73 @@ class LinkHandlerTest {
         val uri = "homeassistant://navigate/lovelace/dashboard?server=NonExisting".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.Webview("homeassistant://navigate/lovelace/dashboard?server=NonExisting", null), result)
+        assertEquals(LinkDestination.Webview("homeassistant://navigate/lovelace/dashboard?server=NonExisting", ServerManager.SERVER_ID_ACTIVE), result)
+    }
+
+    /*
+        ServerPicker section
+     */
+    @Test
+    fun `Given redirect URI with multiple registered servers when invoking handleLink then returns ServerPicker`() = runTest {
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.servers() } returns listOf(
+            mockk {
+                coEvery { friendlyName } returns "Home"
+                coEvery { id } returns 1
+            },
+            mockk {
+                coEvery { friendlyName } returns "Office"
+                coEvery { id } returns 2
+            },
+        )
+        val uri = "https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fhome-assistant%2Fandroid%2F".toUri()
+
+        val result = handler.handleLink(uri)
+
+        assertEquals(
+            LinkDestination.ServerPicker("_my_redirect/supervisor_add_addon_repository?repository_url=https%3A%2F%2Fgithub.com%2Fhome-assistant%2Fandroid%2F&mobile=1"),
+            result,
+        )
+    }
+
+    @Test
+    fun `Given navigate deep link with non-existing server name and multiple servers when invoking handleLink then returns ServerPicker`() = runTest {
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.servers() } returns listOf(
+            mockk {
+                coEvery { friendlyName } returns "Home"
+                coEvery { id } returns 1
+            },
+            mockk {
+                coEvery { friendlyName } returns "Office"
+                coEvery { id } returns 2
+            },
+        )
+
+        val uri = "homeassistant://navigate/lovelace/dashboard?server=NonExisting".toUri()
+        val result = handler.handleLink(uri)
+
+        assertEquals(LinkDestination.ServerPicker("homeassistant://navigate/lovelace/dashboard?server=NonExisting"), result)
+    }
+
+    @Test
+    fun `Given navigate deep link with no default server and multiple servers when invoking handleLink then returns ServerPicker`() = runTest {
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer() } returns null
+        coEvery { serverManager.servers() } returns listOf(
+            mockk {
+                coEvery { friendlyName } returns "Home"
+                coEvery { id } returns 1
+            },
+            mockk {
+                coEvery { friendlyName } returns "Office"
+                coEvery { id } returns 2
+            },
+        )
+
+        val uri = "homeassistant://navigate/lovelace/dashboard".toUri()
+        val result = handler.handleLink(uri)
+
+        assertEquals(LinkDestination.ServerPicker("homeassistant://navigate/lovelace/dashboard"), result)
     }
 }
