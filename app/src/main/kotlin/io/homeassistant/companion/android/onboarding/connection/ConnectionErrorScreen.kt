@@ -306,8 +306,6 @@ private fun ErrorDetails(
                 }
             }
 
-            Spacer(modifier = Modifier.height(HADimens.SPACE2))
-
             ConnectivityChecksSection(
                 connectivityCheckState = connectivityCheckState,
                 onRetryConnectivityCheck = onRetryConnectivityCheck,
