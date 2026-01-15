@@ -14,6 +14,8 @@ import javax.inject.Inject
 import javax.net.ssl.HttpsURLConnection
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
 import timber.log.Timber
@@ -35,8 +37,8 @@ private val CONNECTIVITY_TIMEOUT = 5.seconds
  */
 internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
 
-    override suspend fun dns(hostname: String): ConnectivityCheckResult {
-        return try {
+    override suspend fun dns(hostname: String): ConnectivityCheckResult = withContext(Dispatchers.IO) {
+        try {
             withTimeout(CONNECTIVITY_TIMEOUT) {
                 val addresses = InetAddress.getAllByName(hostname)
                 val addressList = addresses.joinToString(", ") { it.hostAddress ?: "" }
@@ -50,8 +52,8 @@ internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityCh
         }
     }
 
-    override suspend fun port(hostname: String, port: Int): ConnectivityCheckResult {
-        return try {
+    override suspend fun port(hostname: String, port: Int): ConnectivityCheckResult = withContext(Dispatchers.IO) {
+        try {
             Socket().use { socket ->
                 socket.connect(InetSocketAddress(hostname, port), CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt())
             }
@@ -64,8 +66,8 @@ internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityCh
         }
     }
 
-    override suspend fun tls(url: String): ConnectivityCheckResult {
-        return try {
+    override suspend fun tls(url: String): ConnectivityCheckResult = withContext(Dispatchers.IO) {
+        try {
             val connection = URL(url).openConnection() as HttpsURLConnection
             connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
             connection.readTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
@@ -78,8 +80,8 @@ internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityCh
         }
     }
 
-    override suspend fun server(url: String): ConnectivityCheckResult {
-        return try {
+    override suspend fun server(url: String): ConnectivityCheckResult = withContext(Dispatchers.IO) {
+        try {
             val connection = URL(url).openConnection()
             connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
             connection.readTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
@@ -92,8 +94,8 @@ internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityCh
         }
     }
 
-    override suspend fun homeAssistant(url: String): ConnectivityCheckResult {
-        return try {
+    override suspend fun homeAssistant(url: String): ConnectivityCheckResult = withContext(Dispatchers.IO) {
+        try {
             val manifestUrl = URL("$url/manifest.json")
             val connection = manifestUrl.openConnection()
             connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
