@@ -23,12 +23,12 @@ data class ConnectivityCheckState(
     val serverConnection: ConnectivityCheckResult = ConnectivityCheckResult.Pending,
     val homeAssistantVerification: ConnectivityCheckResult = ConnectivityCheckResult.Pending,
 ) {
-    private val allChecks: List<ConnectivityCheckResult>
-        get() = listOf(dnsResolution, portReachability, tlsCertificate, serverConnection, homeAssistantVerification)
+    private val allChecks: List<ConnectivityCheckResult> =
+        listOf(dnsResolution, portReachability, tlsCertificate, serverConnection, homeAssistantVerification)
 
-    val isComplete: Boolean
-        get() = allChecks.none { it is ConnectivityCheckResult.Pending || it is ConnectivityCheckResult.InProgress }
+    val isComplete: Boolean =
+        allChecks.none { it is ConnectivityCheckResult.Pending || it is ConnectivityCheckResult.InProgress }
 
-    val hasFailure: Boolean
-        get() = allChecks.any { it is ConnectivityCheckResult.Failure }
+    val hasFailure: Boolean =
+        allChecks.any { it is ConnectivityCheckResult.Failure }
 }
