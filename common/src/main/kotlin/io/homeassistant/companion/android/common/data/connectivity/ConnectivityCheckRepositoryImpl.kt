@@ -20,6 +20,8 @@ private enum class SkipReason {
     INVALID_URL,
 }
 
+private data class ConnectionTarget(val hostname: String, val port: Int, val isHttps: Boolean)
+
 /**
  * Default implementation of [ConnectivityCheckRepository] that runs checks in sequence.
  */
@@ -30,81 +32,28 @@ internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val c
         var state = ConnectivityCheckState()
         emit(state)
 
-        val parsedUrl = try {
-            URL(url)
-        } catch (e: Exception) {
-            Timber.w(e, "Invalid URL format: $url")
-            state = state.copy(
-                dnsResolution = ConnectivityCheckResult.Failure(commonR.string.connection_check_error_invalid_url),
-            ).skip(SkipReason.INVALID_URL)
-            emit(state)
-            return@flow
-        }
-
-        val hostname = parsedUrl.host
-        val port = determinePort(parsedUrl)
-        val isHttps = parsedUrl.protocol.equals(HTTPS_PROTOCOL, ignoreCase = true)
+        // Parse url
+        val connection = parseTargetOrEmitInvalid(url, state).getOrElse { return@flow }
+        val hostname = connection.hostname
+        val port = connection.port
+        val isHttps = connection.isHttps
 
         // DNS Check
-        state = runCheck(
-            currentState = state,
-            setInProgress = { it.copy(dnsResolution = ConnectivityCheckResult.InProgress) },
-            setResult = { s, r -> s.copy(dnsResolution = r) },
-            check = { checker.dns(hostname) },
-        )
-
-        if (state.dnsResolution is ConnectivityCheckResult.Failure) {
-            state = state.skip(SkipReason.AFTER_DNS_FAILURE)
-            emit(state)
-            return@flow
-        }
+        state = dnsCheckEmitSkipIfFailed(state, hostname)
+        if (state.dnsResolution is ConnectivityCheckResult.Failure) return@flow
 
         // Port Check
-        state = runCheck(
-            currentState = state,
-            setInProgress = { it.copy(portReachability = ConnectivityCheckResult.InProgress) },
-            setResult = { s, r -> s.copy(portReachability = r) },
-            check = { checker.port(hostname, port) },
-        )
+        state = portCheck(state, hostname, port)
 
-        // TLS Check (not applicable for HTTP)
-        if (isHttps) {
-            state = runCheck(
-                currentState = state,
-                setInProgress = { it.copy(tlsCertificate = ConnectivityCheckResult.InProgress) },
-                setResult = { s, r -> s.copy(tlsCertificate = r) },
-                check = { checker.tls(url) },
-            )
-        } else {
-            state = state.copy(
-                tlsCertificate = ConnectivityCheckResult.NotApplicable(
-                    commonR.string.connection_check_tls_not_applicable,
-                ),
-            )
-            emit(state)
-        }
+        // TLS Check
+        state = tlsCheckOrEmitNotApplicable(state, isHttps, url)
 
         // Server Connection Check
-        state = runCheck(
-            currentState = state,
-            setInProgress = { it.copy(serverConnection = ConnectivityCheckResult.InProgress) },
-            setResult = { s, r -> s.copy(serverConnection = r) },
-            check = { checker.server(url) },
-        )
-
-        if (state.serverConnection is ConnectivityCheckResult.Failure) {
-            state = state.skip(SkipReason.AFTER_SERVER_FAILURE)
-            emit(state)
-            return@flow
-        }
+        state = serverCheckEmitSkipIfFailed(state, url)
+        if (state.serverConnection is ConnectivityCheckResult.Failure) return@flow
 
         // Home Assistant Verification Check
-        runCheck(
-            currentState = state,
-            setInProgress = { it.copy(homeAssistantVerification = ConnectivityCheckResult.InProgress) },
-            setResult = { s, r -> s.copy(homeAssistantVerification = r) },
-            check = { checker.homeAssistant(url) },
-        )
+        homeAssistantCheck(state, url)
     }.flowOn(Dispatchers.IO)
 
     /**
@@ -130,6 +79,92 @@ internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val c
         emit(resultState)
         return resultState
     }
+
+    private suspend fun FlowCollector<ConnectivityCheckState>.parseTargetOrEmitInvalid(
+        url: String,
+        state: ConnectivityCheckState,
+    ): Result<ConnectionTarget> = runCatching { URL(url) }
+        .map { parsedUrl ->
+            ConnectionTarget(
+                hostname = parsedUrl.host,
+                port = determinePort(parsedUrl),
+                isHttps = parsedUrl.protocol.equals(HTTPS_PROTOCOL, ignoreCase = true),
+            )
+        }
+        .onFailure { e ->
+            Timber.w(e, "Invalid URL format: $url")
+            emit(
+                state.copy(
+                    dnsResolution = ConnectivityCheckResult.Failure(
+                        commonR.string.connection_check_error_invalid_url,
+                    ),
+                ).skip(SkipReason.INVALID_URL),
+            )
+        }
+
+    private suspend fun FlowCollector<ConnectivityCheckState>.dnsCheckEmitSkipIfFailed(
+        state: ConnectivityCheckState,
+        hostname: String,
+    ): ConnectivityCheckState = runCheck(
+        currentState = state,
+        setInProgress = { it.copy(dnsResolution = ConnectivityCheckResult.InProgress) },
+        setResult = { s, r -> s.copy(dnsResolution = r) },
+        check = { checker.dns(hostname) },
+    ).let { updated ->
+        updated.takeUnless { it.dnsResolution is ConnectivityCheckResult.Failure }
+            ?: updated.skip(SkipReason.AFTER_DNS_FAILURE).also { emit(it) }
+    }
+
+    private suspend fun FlowCollector<ConnectivityCheckState>.portCheck(
+        state: ConnectivityCheckState,
+        hostname: String,
+        port: Int,
+    ): ConnectivityCheckState = runCheck(
+        currentState = state,
+        setInProgress = { it.copy(portReachability = ConnectivityCheckResult.InProgress) },
+        setResult = { s, r -> s.copy(portReachability = r) },
+        check = { checker.port(hostname, port) },
+    )
+
+    private suspend fun FlowCollector<ConnectivityCheckState>.tlsCheckOrEmitNotApplicable(
+        state: ConnectivityCheckState,
+        isHttps: Boolean,
+        url: String,
+    ): ConnectivityCheckState = state.takeIf { isHttps }?.let {
+        runCheck(
+            currentState = it,
+            setInProgress = { s -> s.copy(tlsCertificate = ConnectivityCheckResult.InProgress) },
+            setResult = { s, r -> s.copy(tlsCertificate = r) },
+            check = { checker.tls(url) },
+        )
+    } ?: state.copy(
+        tlsCertificate = ConnectivityCheckResult.NotApplicable(
+            commonR.string.connection_check_tls_not_applicable,
+        ),
+    ).also { emit(it) }
+
+    private suspend fun FlowCollector<ConnectivityCheckState>.serverCheckEmitSkipIfFailed(
+        state: ConnectivityCheckState,
+        url: String,
+    ): ConnectivityCheckState = runCheck(
+        currentState = state,
+        setInProgress = { it.copy(serverConnection = ConnectivityCheckResult.InProgress) },
+        setResult = { s, r -> s.copy(serverConnection = r) },
+        check = { checker.server(url) },
+    ).let { updated ->
+        updated.takeUnless { it.serverConnection is ConnectivityCheckResult.Failure }
+            ?: updated.skip(SkipReason.AFTER_SERVER_FAILURE).also { emit(it) }
+    }
+
+    private suspend fun FlowCollector<ConnectivityCheckState>.homeAssistantCheck(
+        state: ConnectivityCheckState,
+        url: String,
+    ): ConnectivityCheckState = runCheck(
+        currentState = state,
+        setInProgress = { it.copy(homeAssistantVerification = ConnectivityCheckResult.InProgress) },
+        setResult = { s, r -> s.copy(homeAssistantVerification = r) },
+        check = { checker.homeAssistant(url) },
+    )
 
     /**
      * Marks remaining connectivity checks as skipped based on which check failed.

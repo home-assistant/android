@@ -13,6 +13,7 @@ import java.net.URLConnection
 import javax.inject.Inject
 import javax.net.ssl.HttpsURLConnection
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
 import timber.log.Timber
@@ -41,6 +42,8 @@ internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityCh
                 val addressList = addresses.joinToString(", ") { it.hostAddress ?: "" }
                 ConnectivityCheckResult.Success(commonR.string.connection_check_dns, addressList)
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.d(e, "DNS resolution failed for $hostname")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_dns)
@@ -53,6 +56,8 @@ internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityCh
                 socket.connect(InetSocketAddress(hostname, port), CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt())
             }
             ConnectivityCheckResult.Success(commonR.string.connection_check_port, port.toString())
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.d(e, "Port $port not reachable on $hostname")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_port)
@@ -65,6 +70,8 @@ internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityCh
             connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
             connection.readTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
             connection.tryConnect(commonR.string.connection_check_tls_success)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.d(e, "TLS check failed for $url")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_tls)
@@ -77,6 +84,8 @@ internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityCh
             connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
             connection.readTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
             connection.tryConnect(commonR.string.connection_check_server_success)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.d(e, "Server connection failed for $url")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_server)
@@ -99,6 +108,8 @@ internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityCh
                 Timber.d("Manifest name mismatch: ${manifest.name}")
                 ConnectivityCheckResult.Failure(commonR.string.connection_check_error_not_home_assistant)
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.d(e, "Home Assistant verification failed for $url")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_not_home_assistant)
