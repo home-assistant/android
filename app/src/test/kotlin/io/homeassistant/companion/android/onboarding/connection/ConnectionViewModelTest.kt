@@ -490,7 +490,7 @@ class ConnectionViewModelTest {
     }
 
     @Test
-    fun `runConnectivityChecks cancels previous collection before starting a new one`() = runTest {
+    fun `Given previous checks running when runConnectivityChecks is called then previous collection is cancelled`() = runTest {
         // Given
         val rawUrl = "http://homeassistant.local:8123"
 
