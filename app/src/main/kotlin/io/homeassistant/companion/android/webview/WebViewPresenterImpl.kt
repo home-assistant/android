@@ -226,6 +226,7 @@ class WebViewPresenterImpl @Inject constructor(
                         url = urlWithAuth,
                         keepHistory = !isNewServer,
                         openInApp = it.baseIsEqual(baseUrl),
+                        serverHandleInsets = serverManager.getServer(serverId)?.version?.isAtLeast(2025, 12) == true,
                     )
                 }
             }
@@ -271,7 +272,7 @@ class WebViewPresenterImpl @Inject constructor(
     override suspend fun previousServer(lifecycle: Lifecycle) = moveToServer(lifecycle, next = false)
 
     private suspend fun moveToServer(lifecycle: Lifecycle, next: Boolean) {
-        val servers = serverManager.defaultServers
+        val servers = serverManager.servers()
         if (servers.size < 2) return
         val currentServerIndex = servers.indexOfFirst { it.id == serverId }
         if (currentServerIndex > -1) {

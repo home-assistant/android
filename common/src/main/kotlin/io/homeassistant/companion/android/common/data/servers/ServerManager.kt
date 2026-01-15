@@ -2,10 +2,11 @@ package io.homeassistant.companion.android.common.data.servers
 
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.database.server.ServerType
-import kotlinx.coroutines.flow.StateFlow
+import io.homeassistant.companion.android.database.server.TemporaryServer
+import kotlinx.coroutines.flow.Flow
 
 interface ServerManager {
 
@@ -14,15 +15,14 @@ interface ServerManager {
     }
 
     /**
-     * A list of all [Server]s managed by the app of the type [ServerType.DEFAULT].
+     * Returns a list of all registered [Server]s.
      */
-    val defaultServers: List<Server>
+    suspend fun servers(): List<Server>
 
     /**
-     * A [StateFlow] that holds the current list of all [Server]s managed by the app of the type
-     * [ServerType.DEFAULT].
+     * A [Flow] that emits the list of all registered [Server]s whenever it changes.
      */
-    val defaultServersFlow: StateFlow<List<Server>>
+    val serversFlow: Flow<List<Server>>
 
     /**
      * @return `true` if the app is registered with any server
@@ -30,68 +30,85 @@ interface ServerManager {
     suspend fun isRegistered(): Boolean
 
     /**
-     * Add a new server to the manager, and if the [ServerType] is not temporary also to the database.
-     * @return ID for the added server
+     * Persists a [TemporaryServer] as a registered [Server].
+     *
+     * @param server the temporary server configuration to persist
+     * @return unique ID for the added server
      */
-    suspend fun addServer(server: Server): Int
+    suspend fun addServer(server: TemporaryServer): Int
 
     /**
-     * Get the server for the provided ID.
+     * Gets the server for the provided ID, or the currently active server if [SERVER_ID_ACTIVE].
+     *
+     * @param id the server ID, or [SERVER_ID_ACTIVE] to get the currently active server
      * @return [Server] or `null` if there is no server for the ID
      */
     suspend fun getServer(id: Int = SERVER_ID_ACTIVE): Server?
 
     /**
-     * Get the server for the provided webhook ID.
+     * Gets the server for the provided webhook ID.
+     *
+     * @param webhookId the webhook ID to look up
      * @return [Server] or `null` if there is no server for the webhook ID
      */
     suspend fun getServer(webhookId: String): Server?
 
     /**
-     * Mark the server for the provided ID as 'active', the default to use when no specific ID is
-     * provided. Only IDs for servers with the type [ServerType.DEFAULT] are accepted, other IDs are
-     * ignored.
+     * Marks the server for the provided ID as 'active'. The active server is used as the default
+     * when [SERVER_ID_ACTIVE] is passed to other methods. This setting persists across app restarts.
+     *
+     * @param id the server ID to activate
      */
-    fun activateServer(id: Int)
+    suspend fun activateServer(id: Int)
 
     /**
-     * Update a server based on the provided object.
+     * Updates a server's configuration in the database.
+     *
+     * @param server the server with updated values; matched by [Server.id]
      */
-    fun updateServer(server: Server)
+    suspend fun updateServer(server: Server)
 
     /**
-     * Convert a temporary server in the manager to a default server.
-     * @return ID for the added server, or null if the server wasn't converted
-     */
-    suspend fun convertTemporaryServer(id: Int): Int?
-
-    /**
-     * Remove the server for the provided ID from the manager and if required the database, and
-     * clean up all related resources for it.
+     * Removes the server for the provided ID from the database and cleans up all related resources
+     * such as authentication tokens and cached data.
+     *
+     * @param id the server ID to remove
      */
     suspend fun removeServer(id: Int)
 
     /**
-     * @return [AuthenticationRepository] for the server with the provided ID
-     * @throws [IllegalArgumentException] if there is no server with the provided ID
+     * Gets the [AuthenticationRepository] for the specified server.
+     *
+     * @param serverId the server ID, or [SERVER_ID_ACTIVE] for the currently active server
+     * @return [AuthenticationRepository] for the server
+     * @throws IllegalArgumentException if there is no server with the provided ID
      */
     suspend fun authenticationRepository(serverId: Int = SERVER_ID_ACTIVE): AuthenticationRepository
 
     /**
-     * @return [IntegrationRepository] for the server with the provided ID
-     * @throws [IllegalArgumentException] if there is no server with the provided ID
+     * Gets the [IntegrationRepository] for the specified server.
+     *
+     * @param serverId the server ID, or [SERVER_ID_ACTIVE] for the currently active server
+     * @return [IntegrationRepository] for the server
+     * @throws IllegalArgumentException if there is no server with the provided ID
      */
     suspend fun integrationRepository(serverId: Int = SERVER_ID_ACTIVE): IntegrationRepository
 
     /**
-     * @return [WebSocketRepository] for the server with the provided ID
-     * @throws [IllegalArgumentException] if there is no server with the provided ID
+     * Gets the [WebSocketRepository] for the specified server.
+     *
+     * @param serverId the server ID, or [SERVER_ID_ACTIVE] for the currently active server
+     * @return [WebSocketRepository] for the server
+     * @throws IllegalArgumentException if there is no server with the provided ID
      */
     suspend fun webSocketRepository(serverId: Int = SERVER_ID_ACTIVE): WebSocketRepository
 
     /**
-     * @return [ServerConnectionStateProvider] for the server with the provided ID
-     * @throws [IllegalArgumentException] if there is no server with the provided ID
+     * Gets the [ServerConnectionStateProvider] for the specified server.
+     *
+     * @param serverId the server ID, or [SERVER_ID_ACTIVE] for the currently active server
+     * @return [ServerConnectionStateProvider] for the server
+     * @throws IllegalArgumentException if there is no server with the provided ID
      */
     suspend fun connectionStateProvider(serverId: Int = SERVER_ID_ACTIVE): ServerConnectionStateProvider
 }

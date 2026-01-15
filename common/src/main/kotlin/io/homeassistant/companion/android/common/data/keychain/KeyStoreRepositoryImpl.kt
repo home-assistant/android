@@ -11,10 +11,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-class KeyStoreRepositoryImpl @Inject constructor() : KeyChainRepository {
-    companion object {
-        const val ALIAS = "TLSClientCertificate"
-    }
+object KeyStoreRepository {
+    const val ALIAS = "TLSClientCertificate"
+}
+
+internal class KeyStoreRepositoryImpl @Inject constructor() : KeyChainRepository {
 
     private var alias: String? = null
     private var key: PrivateKey? = null

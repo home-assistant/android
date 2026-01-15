@@ -30,6 +30,9 @@ interface IntegrationService {
     @GET
     suspend fun getState(@Url url: HttpUrl, @Header("Authorization") auth: String): EntityResponse
 
+    @GET
+    suspend fun getStates(@Url url: HttpUrl, @Header("Authorization") auth: String): List<EntityResponse>
+
     @POST
     suspend fun callWebhook(@Url url: HttpUrl, @Body request: IntegrationRequest): Response<ResponseBody>
 
