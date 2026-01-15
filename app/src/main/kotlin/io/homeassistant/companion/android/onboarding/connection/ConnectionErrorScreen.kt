@@ -306,7 +306,6 @@ private fun ErrorDetails(
                 }
             }
 
-            // Connectivity Checks Section
             Spacer(modifier = Modifier.height(HADimens.SPACE2))
 
             ConnectivityChecksSection(
