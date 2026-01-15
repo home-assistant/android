@@ -99,14 +99,16 @@ internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityCh
             connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
             connection.readTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
 
-            val responseText = connection.getInputStream().bufferedReader().use(BufferedReader::readText)
-            val manifest = kotlinJsonMapper.decodeFromString<ManifestResponse>(responseText)
+            connection.withConnection {
+                val responseText = connection.getInputStream().bufferedReader().use(BufferedReader::readText)
+                val manifest = kotlinJsonMapper.decodeFromString<ManifestResponse>(responseText)
 
-            if (manifest.isHomeAssistant()) {
-                ConnectivityCheckResult.Success(commonR.string.connection_check_home_assistant_success)
-            } else {
-                Timber.d("Manifest name mismatch: ${manifest.name}")
-                ConnectivityCheckResult.Failure(commonR.string.connection_check_error_not_home_assistant)
+                if (manifest.isHomeAssistant()) {
+                    ConnectivityCheckResult.Success(commonR.string.connection_check_home_assistant_success)
+                } else {
+                    Timber.d("Manifest name mismatch: ${manifest.name}")
+                    ConnectivityCheckResult.Failure(commonR.string.connection_check_error_not_home_assistant)
+                }
             }
         } catch (e: CancellationException) {
             throw e
@@ -117,9 +119,15 @@ internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityCh
     }
 
     private fun URLConnection.tryConnect(@StringRes successMessage: Int): ConnectivityCheckResult {
+        return withConnection {
+            ConnectivityCheckResult.Success(successMessage)
+        }
+    }
+
+    private inline fun <T> URLConnection.withConnection(block: () -> T): T {
         return try {
             connect()
-            ConnectivityCheckResult.Success(successMessage)
+            block()
         } finally {
             if (this is HttpURLConnection) {
                 disconnect()
