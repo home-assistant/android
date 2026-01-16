@@ -135,7 +135,9 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
                 )
                 is ConnectivityCheckResult.NotApplicable -> Icon(
                     imageVector = Icons.Outlined.Circle,
-                    contentDescription = stringResource(commonR.string.connection_check_tls_not_applicable),
+                    contentDescription = stringResource(
+                        commonR.string.not_applicable_content_description,
+                    ),
                     modifier = Modifier.size(24.dp),
                     tint = iconTint,
                 )
