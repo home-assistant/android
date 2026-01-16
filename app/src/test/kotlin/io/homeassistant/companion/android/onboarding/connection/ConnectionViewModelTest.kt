@@ -17,6 +17,7 @@ import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.frontend.error.FrontendError
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.every
@@ -113,7 +114,7 @@ class ConnectionViewModelTest {
             advanceUntilIdle()
             assertNull(urlFlow.awaitItem())
 
-            errorFlow.awaitConnectionError<ConnectionError.UnreachableError>(commonR.string.connection_screen_malformed_url, "Expected URL scheme 'http' or 'https' but no scheme was found for not_a_...", IllegalArgumentException::class)
+            errorFlow.awaitFrontendError<FrontendError.UnreachableError>(commonR.string.connection_screen_malformed_url, "Expected URL scheme 'http' or 'https' but no scheme was found for not_a_...", IllegalArgumentException::class)
 
             urlFlow.expectNoEvents()
             navigationEventsFlow.expectNoEvents()
@@ -226,7 +227,7 @@ class ConnectionViewModelTest {
                         }
                     },
                 )
-                errorFlow.awaitConnectionError<ConnectionError.AuthenticationError>(messageRes, details, SslError::class)
+                errorFlow.awaitFrontendError<FrontendError.AuthenticationError>(messageRes, details, SslError::class)
             }
 
             testError(SslError.SSL_DATE_INVALID, commonR.string.webview_error_SSL_DATE_INVALID)
@@ -269,7 +270,7 @@ class ConnectionViewModelTest {
             webViewClient.isTLSClientAuthNeeded = true
             webViewClient.isCertificateChainValid = false
             webViewClient.onReceivedHttpError(webView, request, null)
-            errorFlow.awaitConnectionError<ConnectionError.AuthenticationError>(commonR.string.tls_cert_expired_message, errorDetails(null, "No description"), WebResourceResponse::class)
+            errorFlow.awaitFrontendError<FrontendError.AuthenticationError>(commonR.string.tls_cert_expired_message, errorDetails(null, "No description"), WebResourceResponse::class)
 
             // Cert not found
             webViewClient.isTLSClientAuthNeeded = true
@@ -282,7 +283,7 @@ class ConnectionViewModelTest {
                     every { reasonPhrase } returns "reason"
                 },
             )
-            errorFlow.awaitConnectionError<ConnectionError.AuthenticationError>(commonR.string.tls_cert_not_found_message, errorDetails(400, "reason"), WebResourceResponse::class)
+            errorFlow.awaitFrontendError<FrontendError.AuthenticationError>(commonR.string.tls_cert_not_found_message, errorDetails(400, "reason"), WebResourceResponse::class)
 
             // Generic error
             webViewClient.isTLSClientAuthNeeded = false
@@ -295,7 +296,7 @@ class ConnectionViewModelTest {
                     every { reasonPhrase } returns "I'm a teapot"
                 },
             )
-            errorFlow.awaitConnectionError<ConnectionError.UnknownError>(commonR.string.connection_error_unknown_error, errorDetails(418, "I'm a teapot"), WebResourceResponse::class)
+            errorFlow.awaitFrontendError<FrontendError.UnknownError>(commonR.string.connection_error_unknown_error, errorDetails(418, "I'm a teapot"), WebResourceResponse::class)
 
             // Generic error without reason
             webViewClient.isTLSClientAuthNeeded = false
@@ -308,7 +309,7 @@ class ConnectionViewModelTest {
                     every { reasonPhrase } returns ""
                 },
             )
-            errorFlow.awaitConnectionError<ConnectionError.UnknownError>(commonR.string.connection_error_unknown_error, errorDetails(418, "No description"), WebResourceResponse::class)
+            errorFlow.awaitFrontendError<FrontendError.UnknownError>(commonR.string.connection_error_unknown_error, errorDetails(418, "No description"), WebResourceResponse::class)
             navigationEventsFlow.expectNoEvents()
         }
     }
@@ -345,7 +346,7 @@ class ConnectionViewModelTest {
                         every { this@mockk.description } returns description
                     },
                 )
-                errorFlow.awaitConnectionError<ConnectionError.AuthenticationError>(messageRes, errorDetails(errorCode, description), WebResourceError::class)
+                errorFlow.awaitFrontendError<FrontendError.AuthenticationError>(messageRes, errorDetails(errorCode, description), WebResourceError::class)
             }
 
             suspend fun testUnreachableError(errorCode: Int, @StringRes messageRes: Int) {
@@ -358,7 +359,7 @@ class ConnectionViewModelTest {
                         every { this@mockk.description } returns description
                     },
                 )
-                errorFlow.awaitConnectionError<ConnectionError.UnreachableError>(messageRes, errorDetails(errorCode, description), WebResourceError::class)
+                errorFlow.awaitFrontendError<FrontendError.UnreachableError>(messageRes, errorDetails(errorCode, description), WebResourceError::class)
             }
 
             testAuthError(ERROR_FAILED_SSL_HANDSHAKE, commonR.string.webview_error_FAILED_SSL_HANDSHAKE)
@@ -376,7 +377,7 @@ class ConnectionViewModelTest {
                     every { this@mockk.description } returns "description"
                 },
             )
-            errorFlow.awaitConnectionError<ConnectionError.UnknownError>(commonR.string.connection_error_unknown_error, errorDetails(-1, "description"), WebResourceError::class)
+            errorFlow.awaitFrontendError<FrontendError.UnknownError>(commonR.string.connection_error_unknown_error, errorDetails(-1, "description"), WebResourceError::class)
 
             // Generic error without description
             viewModel.webViewClient.onReceivedError(
@@ -387,7 +388,7 @@ class ConnectionViewModelTest {
                     every { this@mockk.description } returns ""
                 },
             )
-            errorFlow.awaitConnectionError<ConnectionError.UnknownError>(commonR.string.connection_error_unknown_error, errorDetails(-1, "No description"), WebResourceError::class)
+            errorFlow.awaitFrontendError<FrontendError.UnknownError>(commonR.string.connection_error_unknown_error, errorDetails(-1, "No description"), WebResourceError::class)
             navigationEventsFlow.expectNoEvents()
         }
     }
@@ -396,7 +397,7 @@ class ConnectionViewModelTest {
         return "Status Code: ${code}\nDescription: $description"
     }
 
-    private suspend inline fun <reified T : ConnectionError> ReceiveTurbine<ConnectionError?>.awaitConnectionError(messageId: Int, errorDetails: String?, errorClass: KClass<*>) {
+    private suspend inline fun <reified T : FrontendError> ReceiveTurbine<FrontendError?>.awaitFrontendError(messageId: Int, errorDetails: String?, errorClass: KClass<*>) {
         val error = awaitItem()
         assertNotNull(error)
         assertTrue(error is T)

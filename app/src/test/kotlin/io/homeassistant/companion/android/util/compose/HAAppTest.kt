@@ -27,7 +27,6 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.frontend.navigation.FrontendActivityRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
@@ -137,21 +136,12 @@ class HAAppTest {
     }
 
     @Test
-    fun `Given FrontendRoute as start when starts then navigate to Frontend and finish current activity`() {
+    fun `Given FrontendRoute as start when starts then show FrontendScreen`() {
         testApp(FrontendRoute()) {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
-            verify(exactly = 1) {
-                activityNavigator.navigate(
-                    match {
-                        it.route == FrontendActivityRoute.serializer().descriptor.serialName + "?server={server}&path={path}"
-                    },
-                    any<SavedState>(),
-                    any(),
-                    any(),
-                )
-            }
-            // TODO remove this once we are using WebViewActivity anymore
-            assertTrue(activity.isFinishing)
+            // With USE_FRONTEND_V2 enabled, FrontendScreen composable is shown
+            // instead of navigating to WebViewActivity. The WebView is always rendered.
+            onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
         }
     }
 

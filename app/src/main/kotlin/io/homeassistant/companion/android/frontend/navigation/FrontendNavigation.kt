@@ -1,12 +1,17 @@
 package io.homeassistant.companion.android.frontend.navigation
 
+import android.net.Uri
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.activity
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
+import io.homeassistant.companion.android.frontend.FrontendScreen
+import io.homeassistant.companion.android.frontend.FrontendViewModel
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
 import io.homeassistant.companion.android.util.getActivity
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -35,26 +40,40 @@ internal fun NavController.navigateToFrontend(
 /**
  * Registers the frontend/webview destination for the Home Assistant app.
  *
- * The actual navigation to the frontend is done by navigating to [FrontendActivityRoute] with the
- * `path` and `serverId` parameters. This will launch the `WebViewActivity` (which is in `:app`).
+ * When [WIPFeature.USE_FRONTEND_V2] is enabled, uses the new Compose-based [FrontendScreen].
+ * Otherwise, falls back to the legacy [WebViewActivity].
  *
- * To ensure that the activity that starts the `WebViewActivity` is finished, users should navigate
- * to [FrontendRoute]. This route will then navigate to [FrontendActivityRoute] and finish the
- * current activity. This behavior is necessary until `WebViewActivity` is replaced with a
- * composable NavGraph entry, allowing for more direct navigation.
- *
- * Note: Security level verification is handled by [WebViewActivity] before loading any URL.
- * If the security level is not set, [WebViewActivity] will show the
- * [io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment].
+ * @param navController The navigation controller
+ * @param onOpenExternalLink Callback to open external links (required for V2)
+ * @param onNavigateToSecurityLevel Callback to navigate to security level configuration screen (required for V2)
+ * @param onNavigateToInsecure Callback to navigate to insecure connection screen (required for V2)
  */
-internal fun NavGraphBuilder.frontendScreen(navController: NavController) {
-    composable<FrontendRoute> {
-        val route = it.toRoute<FrontendRoute>()
-        navController.navigate(FrontendActivityRoute(route.serverId, route.path))
-        navController.context.getActivity()?.finish()
-    }
+internal fun NavGraphBuilder.frontendScreen(
+    navController: NavController,
+    onOpenExternalLink: (Uri) -> Unit = {},
+    onNavigateToSecurityLevel: (serverId: Int) -> Unit = {},
+    onNavigateToInsecure: (serverId: Int) -> Unit = {},
+) {
+    if (WIPFeature.USE_FRONTEND_V2) {
+        composable<FrontendRoute> { backStackEntry ->
+            val viewModel: FrontendViewModel = hiltViewModel()
 
-    activity<FrontendActivityRoute> {
-        activityClass = WebViewActivity::class
+            FrontendScreen(
+                onOpenExternalLink = onOpenExternalLink,
+                onNavigateToSecurityLevel = onNavigateToSecurityLevel,
+                onNavigateToInsecure = onNavigateToInsecure,
+                viewModel = viewModel,
+            )
+        }
+    } else {
+        composable<FrontendRoute> {
+            val route = it.toRoute<FrontendRoute>()
+            navController.navigate(FrontendActivityRoute(route.serverId, route.path))
+            navController.context.getActivity()?.finish()
+        }
+
+        activity<FrontendActivityRoute> {
+            activityClass = WebViewActivity::class
+        }
     }
 }

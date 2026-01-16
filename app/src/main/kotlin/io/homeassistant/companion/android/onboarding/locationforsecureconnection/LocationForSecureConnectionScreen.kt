@@ -201,7 +201,9 @@ private fun LocationForSecureConnectionContent(
                     onAllowInsecureConnection(true)
                 }
             },
-            modifier = Modifier.fillMaxWidth().padding(bottom = HADimens.SPACE6),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = HADimens.SPACE6),
         )
     }
 }

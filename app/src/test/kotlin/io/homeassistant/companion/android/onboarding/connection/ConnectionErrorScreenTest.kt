@@ -14,10 +14,12 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.frontend.error.FrontendError
+import io.homeassistant.companion.android.frontend.error.FrontendErrorScreen
+import io.homeassistant.companion.android.frontend.error.URL_INFO_TAG
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,13 +40,12 @@ class ConnectionErrorScreenTest {
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Test
-    fun `Given ConnectionErrorScreen when error is null then nothing is displayed`() {
+    fun `Given FrontendErrorScreen when error is null then nothing is displayed`() {
         composeTestRule.apply {
             setContent {
-                ConnectionErrorScreen(
+                FrontendErrorScreen(
                     error = null,
                     url = null,
-                    onCloseClick = {},
                     onOpenExternalLink = {},
                 )
             }
@@ -53,17 +54,13 @@ class ConnectionErrorScreenTest {
     }
 
     @Test
-    fun `Given ConnectionErrorScreen when error is not null and url is null then url info is not displayed but the error is`() {
+    fun `Given FrontendErrorScreen when error is not null and url is null then url info is not displayed but the error is`() {
         composeTestRule.apply {
             var urlClicked: String? = null
-            var onCloseClicked: Boolean = false
             setContent {
-                ConnectionErrorScreen(
-                    error = ConnectionError.UnknownError(commonR.string.tls_cert_expired_message, "details", "errorType"),
+                FrontendErrorScreen(
+                    error = FrontendError.UnknownError(commonR.string.tls_cert_expired_message, "details", "errorType"),
                     url = null,
-                    onCloseClick = {
-                        onCloseClicked = true
-                    },
                     onOpenExternalLink = {
                         urlClicked = it.toString()
                     },
@@ -100,21 +97,17 @@ class ConnectionErrorScreenTest {
             onNodeWithContentDescription(stringResource(commonR.string.connection_error_discord_content_description))
                 .performScrollTo().assertIsDisplayed().performClick()
             assertEquals("https://discord.com/channels/330944238910963714/1284965926336335993", urlClicked)
-
-            onNodeWithText(stringResource(commonR.string.back)).performScrollTo().assertIsDisplayed().performClick()
-            assertTrue(onCloseClicked)
         }
     }
 
     @Test
-    fun `Given ConnectionErrorScreen when error and url are not null then error and url info are displayed`() {
+    fun `Given FrontendErrorScreen when error and url are not null then error and url info are displayed`() {
         composeTestRule.apply {
             val url = "http://ha.org"
             setContent {
-                ConnectionErrorScreen(
-                    error = ConnectionError.AuthenticationError(commonR.string.tls_cert_expired_message, "details", "errorType"),
+                FrontendErrorScreen(
+                    error = FrontendError.AuthenticationError(commonR.string.tls_cert_expired_message, "details", "errorType"),
                     url = url,
-                    onCloseClick = {},
                     onOpenExternalLink = {},
                 )
             }
