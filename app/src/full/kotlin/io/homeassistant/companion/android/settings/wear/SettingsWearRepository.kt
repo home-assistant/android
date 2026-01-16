@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.servers.tryOnUrls
 import io.homeassistant.companion.android.common.util.FailFast
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import okhttp3.HttpUrl
@@ -148,6 +149,8 @@ class SettingsWearRepository @Inject constructor(
                     it.lastUpdated,
                 )
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: IntegrationException) {
             Timber.e(e, "Fail to get entities")
             emptyList()

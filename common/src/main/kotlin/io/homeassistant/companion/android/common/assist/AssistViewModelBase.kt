@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.PlaybackState
 import io.homeassistant.companion.android.util.UrlUtil
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -94,7 +95,8 @@ abstract class AssistViewModelBase(
     protected val hasMicrophone = app.packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)
     protected var hasPermission = false
 
-    @VisibleForTesting var binaryHandlerId: Int? = null
+    @VisibleForTesting
+    var binaryHandlerId: Int? = null
     private var conversationId: String? = null
     private var continueConversation = AtomicBoolean(false)
 
@@ -126,19 +128,26 @@ abstract class AssistViewModelBase(
         val isVoice = text == null
         var job: Job? = null
         job = viewModelScope.launch {
-            val flow = if (isVoice) {
-                serverManager.webSocketRepository(selectedServerId).runAssistPipelineForVoice(
-                    sampleRate = AudioRecorder.SAMPLE_RATE,
-                    outputTts = pipeline?.ttsEngine?.isNotBlank() == true,
-                    pipelineId = pipeline?.id,
-                    conversationId = conversationId,
-                )
-            } else {
-                serverManager.integrationRepository(selectedServerId).getAssistResponse(
-                    text = text,
-                    pipelineId = pipeline?.id,
-                    conversationId = conversationId,
-                )
+            val flow = try {
+                if (isVoice) {
+                    serverManager.webSocketRepository(selectedServerId).runAssistPipelineForVoice(
+                        sampleRate = AudioRecorder.SAMPLE_RATE,
+                        outputTts = pipeline?.ttsEngine?.isNotBlank() == true,
+                        pipelineId = pipeline?.id,
+                        conversationId = conversationId,
+                    )
+                } else {
+                    serverManager.integrationRepository(selectedServerId).getAssistResponse(
+                        text = text,
+                        pipelineId = pipeline?.id,
+                        conversationId = conversationId,
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Fail to start assist pipeline")
+                null
             }
 
             flow?.collect { event ->
@@ -339,10 +348,16 @@ abstract class AssistViewModelBase(
         viewModelScope.launch {
             if (sendRecorded) {
                 recorderJob?.join()
-                serverManager.webSocketRepository(selectedServerId).sendVoiceData(
-                    handlerId,
-                    byteArrayOf(),
-                )
+                try {
+                    serverManager.webSocketRepository(selectedServerId).sendVoiceData(
+                        handlerId,
+                        byteArrayOf(),
+                    )
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Fail to finalize recording")
+                }
             }
             clearRecorderState()
         }

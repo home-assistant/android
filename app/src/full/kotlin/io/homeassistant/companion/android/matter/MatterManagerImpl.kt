@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import io.homeassistant.companion.android.common.util.isAutomotive
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import timber.log.Timber
 
 class MatterManagerImpl @Inject constructor(
@@ -23,7 +24,14 @@ class MatterManagerImpl @Inject constructor(
 
     override suspend fun coreSupportsCommissioning(serverId: Int): Boolean {
         if (!serverManager.isRegistered() || serverManager.getServer(serverId)?.user?.isAdmin != true) return false
-        val config = serverManager.webSocketRepository(serverId).getConfig()
+        val config = try {
+            serverManager.webSocketRepository(serverId).getConfig()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Fail to get config")
+            null
+        }
         return config != null && config.components.contains("matter")
     }
 
@@ -54,6 +62,8 @@ class MatterManagerImpl @Inject constructor(
     override suspend fun commissionDevice(code: String, serverId: Int): MatterCommissionResponse? {
         return try {
             serverManager.webSocketRepository(serverId).commissionMatterDevice(code)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Error while executing server commissioning request")
             null
@@ -63,6 +73,8 @@ class MatterManagerImpl @Inject constructor(
     override suspend fun commissionOnNetworkDevice(pin: Long, ip: String, serverId: Int): MatterCommissionResponse? {
         return try {
             serverManager.webSocketRepository(serverId).commissionMatterDeviceOnNetwork(pin, ip)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Error while executing server commissioning request")
             null

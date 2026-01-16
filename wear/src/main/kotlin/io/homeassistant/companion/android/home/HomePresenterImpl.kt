@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.util.ResyncRegistrationWorker.Companion.enqueueResyncRegistration
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -94,6 +95,7 @@ class HomePresenterImpl @Inject constructor(
                     "lock"
                 }
             }
+
             in EntityExt.DOMAINS_TOGGLE -> "toggle"
             else -> "turn_on"
         }
@@ -183,31 +185,80 @@ class HomePresenterImpl @Inject constructor(
     override suspend fun getServerId(): Int? = serverManager.getServer()?.id
 
     override suspend fun getWebSocketState(): WebSocketState? {
-        return serverManager.webSocketRepository().getConnectionState()
+        return try {
+            serverManager.webSocketRepository().getConnectionState()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Fail to get WebSocketState")
+            null
+        }
     }
 
     override suspend fun getAreaRegistry(): List<AreaRegistryResponse>? {
-        return serverManager.webSocketRepository().getAreaRegistry()
+        return try {
+            serverManager.webSocketRepository().getAreaRegistry()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Fail to get area registry")
+            null
+        }
     }
 
     override suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>? {
-        return serverManager.webSocketRepository().getDeviceRegistry()
+        return try {
+            serverManager.webSocketRepository().getDeviceRegistry()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Fail to get device registry")
+            null
+        }
     }
 
     override suspend fun getEntityRegistry(): List<EntityRegistryResponse>? {
-        return serverManager.webSocketRepository().getEntityRegistry()
+        return try {
+            serverManager.webSocketRepository().getEntityRegistry()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Fail to get entity registry")
+            null
+        }
     }
 
     override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>? {
-        return serverManager.webSocketRepository().getAreaRegistryUpdates()
+        return try {
+            serverManager.webSocketRepository().getAreaRegistryUpdates()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Fail to get area registry updates")
+            null
+        }
     }
 
     override suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>? {
-        return serverManager.webSocketRepository().getDeviceRegistryUpdates()
+        return try {
+            serverManager.webSocketRepository().getDeviceRegistryUpdates()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Fail to get device registry updates")
+            null
+        }
     }
 
     override suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>? {
-        return serverManager.webSocketRepository().getEntityRegistryUpdates()
+        return try {
+            serverManager.webSocketRepository().getEntityRegistryUpdates()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Fail to get entity registry updates")
+            null
+        }
     }
 
     override suspend fun getAllTileShortcuts(): Map<Int?, List<SimplifiedEntity>> {
