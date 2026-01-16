@@ -51,7 +51,8 @@ class GridWidgetPressActionTest {
     fun `Given a widgetID when present in DAO and invoking onAction then call integration repository`() {
         val action = spyk<PressEntityAction>()
         val glanceManager = mockk<GlanceAppWidgetManager>()
-        val parameters = actionParametersOf(ENTITY_ID_KEY to "switch.test")
+        val entityId = "switch.test"
+        val parameters = actionParametersOf(ENTITY_ID_KEY to entityId)
         val widgetId = 1
         val serverId = 123
         val entity = GridWidgetEntity(widgetId, serverId, "Label", emptyList())
@@ -72,6 +73,6 @@ class GridWidgetPressActionTest {
         }
         assertEquals("Invalid Glance ID", exception.message)
 
-        coVerify { integrationRepository.callAction(any(), any(), any()) }
+        coVerify { integrationRepository.callAction("switch", "toggle", mapOf("entity_id" to entityId)) }
     }
 }

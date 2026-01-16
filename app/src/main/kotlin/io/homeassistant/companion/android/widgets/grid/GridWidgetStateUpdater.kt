@@ -12,6 +12,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onStart
@@ -23,7 +24,9 @@ internal class GridWidgetStateUpdater @Inject constructor(
     private val serverManager: ServerManager,
     @param:ApplicationContext private val context: Context,
 ) {
-    fun stateFlow(widgetId: Int): Flow<GridWidgetState> = gridWidgetDao.observe(widgetId).withEntityState()
+    fun stateFlow(widgetId: Int): Flow<GridWidgetState> = gridWidgetDao.getFlow(widgetId)
+        .withEntityState()
+        .distinctUntilChanged()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun Flow<GridWidgetEntity>.withEntityState(): Flow<GridStateWithData> = transformLatest { widgetEntity ->
@@ -35,19 +38,17 @@ internal class GridWidgetStateUpdater @Inject constructor(
         val entityUpdates = getAndObserveEntities(widgetEntity.serverId, entityIds)
 
         entityUpdates?.collect { updatedEntity ->
-            currentUiState = widgetEntity.toUiState().copy(
-                items = currentUiState.items.map { item ->
-                    if (updatedEntity.entityId == item.id) {
-                        item.copy(
-                            state = updatedEntity.friendlyState(context, appendUnitOfMeasurement = true),
-                            isActive = updatedEntity.isActive(),
-                        )
-                    } else {
-                        item
-                    }
-                },
-            )
-            emit(currentUiState)
+            val items = currentUiState.items.toMutableList()
+            val itemIndex = items.indexOfFirst { it.id == updatedEntity.entityId }
+
+            if (itemIndex != -1) {
+                items[itemIndex] = items[itemIndex].copy(
+                    state = updatedEntity.friendlyState(context, appendUnitOfMeasurement = true),
+                    isActive = updatedEntity.isActive(),
+                )
+                currentUiState = currentUiState.copy(items = items)
+                emit(currentUiState)
+            }
         }
     }
 

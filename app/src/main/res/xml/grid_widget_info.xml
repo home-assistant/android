@@ -13,5 +13,4 @@
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
     android:widgetFeatures="reconfigurable"
-    tools:ignore="UnusedAttribute">
-</appwidget-provider>
+    tools:ignore="UnusedAttribute,UnusedResources" />

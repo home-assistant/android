@@ -57,6 +57,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTheme
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTypography
 import io.homeassistant.companion.android.util.compose.glanceStringResource
@@ -65,8 +67,23 @@ import io.homeassistant.companion.android.widgets.grid.GridWidgetLayoutSize.Comp
 import io.homeassistant.companion.android.widgets.grid.GridWidgetLayoutSize.Companion.showTitleBar
 import io.homeassistant.companion.android.widgets.grid.GridWidgetState.Companion.getButtonColors
 import io.homeassistant.companion.android.widgets.grid.GridWidgetState.Companion.getColors
+import io.homeassistant.companion.android.widgets.grid.config.GridWidgetConfigureActivity
 import kotlin.math.ceil
 
+/**
+ * Glance widget for displaying a grid of actions.
+ *
+ * This widget tries to follow guidelines from https://developer.android.com/design/ui/mobile/guides/widgets/widget_quality_guide
+ *
+ * This widget displays a list of entities and their states and updates automatically.
+ * It provides functionality to add new items, refresh the states, and press or toggle the actions.
+ * The widget's entities can be configured via the [GridWidgetConfigureActivity].
+ *
+ * ### Limitations:
+ * - No error messages are displayed except for the out-of-sync indicator.
+ * - No loading information is shown for toggle actions.
+ * - No information when the widget is not up to date because out of composition.
+ */
 class GridGlanceAppWidget : GlanceAppWidget() {
 
     override val sizeMode: SizeMode = SizeMode.Exact
@@ -144,6 +161,25 @@ private fun GridContentWithData(state: GridStateWithData, modifier: GlanceModifi
         }
     }
 
+    val showTitleBar = showTitleBar()
+    val gridCells = gridCells()
+    val scaffoldTopPadding = if (showTitleBar) HADimens.SPACE0 else HADimens.SPACE3
+
+    Scaffold(
+        modifier = modifier
+            .gridWidgetBackground()
+            .padding(top = scaffoldTopPadding),
+        titleBar = if (showTitleBar && state.label != null) titleBar() else null,
+    ) {
+        GridContentWithData(
+            state = state,
+            gridCells = gridCells,
+        )
+    }
+}
+
+@Composable
+private fun GridContentWithData(state: GridStateWithData, gridCells: Int, modifier: GlanceModifier = GlanceModifier) {
     fun buttonProvider(): @Composable (GridButtonData) -> Unit = {
         GridButton(
             modifier = GlanceModifier.fillMaxSize(),
@@ -156,29 +192,19 @@ private fun GridContentWithData(state: GridStateWithData, modifier: GlanceModifi
         )
     }
 
-    val scaffoldTopPadding = if (showTitleBar()) 0.dp else 12.dp
-
-    Scaffold(
-        modifier = modifier
-            .gridWidgetBackground()
-            .padding(top = scaffoldTopPadding),
-        titleBar = if (showTitleBar() && state.label != null) titleBar() else null,
-    ) {
-        val gridCells = gridCells()
-        if (gridCells == 1) {
-            LazyButtonColumn(
-                modifier = GlanceModifier.fillMaxSize(),
-                items = state.items,
-                itemContentProvider = buttonProvider(),
-            )
-        } else {
-            LazyButtonGrid(
-                modifier = GlanceModifier.fillMaxSize(),
-                gridCells = gridCells(),
-                items = state.items,
-                itemContentProvider = buttonProvider(),
-            )
-        }
+    if (gridCells == 1) {
+        LazyButtonColumn(
+            modifier = modifier.fillMaxSize(),
+            items = state.items,
+            itemContentProvider = buttonProvider(),
+        )
+    } else {
+        LazyButtonGrid(
+            modifier = modifier.fillMaxSize(),
+            gridCells = gridCells,
+            items = state.items,
+            itemContentProvider = buttonProvider(),
+        )
     }
 }
 
@@ -209,13 +235,12 @@ private enum class GridWidgetLayoutSize(val maxWidth: Dp) {
 
         @Composable
         fun showTitleBar(): Boolean {
-            return fromLocalSize() == Normal && LocalSize.current.height >= 180.dp
+            return fromLocalSize() == Normal && LocalSize.current.height >= Small.maxWidth
         }
 
         @Composable
         fun gridCells(): Int {
-            val width = LocalSize.current.width
-            return when (width) {
+            return when (val width = LocalSize.current.width) {
                 in 0.dp..Small.maxWidth -> ceil(width / 96.dp).toInt()
                 else -> ceil(width / 260.dp).toInt()
             }
@@ -237,7 +262,7 @@ private fun LazyButtonColumn(
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
-                    .padding(bottom = 8.dp),
+                    .padding(bottom = HADimens.SPACE2),
             ) {
                 itemContentProvider(it)
             }
@@ -266,7 +291,7 @@ private fun LazyButtonGrid(
         gridCells = GridCells.Fixed(gridCells),
         horizontalAlignment = horizontalAlignment,
     ) {
-        itemsIndexed(items) { index, item ->
+        itemsIndexed(items, itemId = { index, item -> index.toLong() }) { index, item ->
             val row = index / gridCells
             val column = index % gridCells
 
@@ -313,9 +338,9 @@ private fun LazyButtonGrid(
 @Composable
 private fun GridButton(
     label: String,
+    icon: String,
     onClick: Action,
     modifier: GlanceModifier = GlanceModifier,
-    icon: String? = null,
     state: String? = null,
     isActive: Boolean = false,
     buttonColors: GridButtonColors = GridButtonColors.Default,
@@ -324,26 +349,24 @@ private fun GridButton(
 
     val isCompact = size == GridWidgetLayoutSize.Small
     val horizontalAlignment = if (isCompact) Alignment.CenterHorizontally else Alignment.Start
-    val baseModifier = if (!isCompact) modifier.height(64.dp) else modifier
-    val innerPadding = if (isCompact) 8.dp else 12.dp
+    val baseModifier = if (!isCompact) modifier.height(HADimens.SPACE16) else modifier
+    val innerPadding = if (isCompact) HADimens.SPACE2 else HADimens.SPACE3
     val backgroundColor = if (isActive) buttonColors.activeBackgroundColor else buttonColors.backgroundColor
     val contentColor = if (isActive) buttonColors.activeContentColor else buttonColors.contentColor
 
     Row(
         modifier = baseModifier
             .clickable(onClick)
-            .cornerRadius(16.dp)
+            .cornerRadius(HARadius.XL)
             .padding(innerPadding)
             .background(backgroundColor),
         verticalAlignment = Alignment.CenterVertically,
         horizontalAlignment = horizontalAlignment,
     ) {
-        icon?.let {
-            GridButtonIcon(icon, colorFilter = ColorFilter.tint(contentColor))
-        } ?: GridButtonIconFallback(label)
+        GridButtonIcon(icon, colorFilter = ColorFilter.tint(contentColor))
 
         if (!isCompact) {
-            Spacer(GlanceModifier.width(8.dp))
+            Spacer(GlanceModifier.width(HADimens.SPACE2))
             Column {
                 Text(
                     text = label,
@@ -361,7 +384,7 @@ private fun GridButton(
 }
 
 @Composable
-private fun GridButtonIcon(icon: String, modifier: GlanceModifier = GlanceModifier, colorFilter: ColorFilter? = null) {
+private fun GridButtonIcon(icon: String, colorFilter: ColorFilter, modifier: GlanceModifier = GlanceModifier) {
     val iconProvider = rememberMdiIconProvider(icon)
     Image(
         modifier = modifier.size(24.dp),
@@ -372,20 +395,13 @@ private fun GridButtonIcon(icon: String, modifier: GlanceModifier = GlanceModifi
 }
 
 @Composable
-private fun GridButtonIconFallback(name: String, modifier: GlanceModifier = GlanceModifier) {
-    Box(modifier, contentAlignment = Alignment.Center) {
-        Text(name.first().toString(), style = HomeAssistantGlanceTypography.titleLarge)
-    }
-}
-
-@Composable
 private fun rememberMdiIconProvider(name: String): ImageProvider {
     val context = LocalContext.current
     return remember(name) {
         val bitmap = CommunityMaterial.getIconByMdiName(name)?.let {
             IconicsDrawable(context, it).toBitmap()
         }
-        bitmap?.let { ImageProvider(bitmap) } ?: ImageProvider(commonR.drawable.ic_priority)
+        bitmap?.let(::ImageProvider) ?: ImageProvider(commonR.drawable.ic_priority)
     }
 }
 
@@ -415,5 +431,14 @@ private fun DynamicGridWidgetPreview() {
                 ),
             ),
         )
+    }
+}
+
+@OptIn(ExperimentalGlancePreviewApi::class)
+@Composable
+@GridWidgetBreakpointPreviews
+private fun LoadingPreview() {
+    HomeAssistantGlanceTheme(GlanceTheme.colors) {
+        LoadingScreen()
     }
 }

@@ -18,7 +18,12 @@ data class GridWidgetEntity(
     val label: String?,
     @ColumnInfo(name = "items")
     val items: List<Item>,
-) : WidgetEntity<GridWidgetEntity> {
+    @ColumnInfo(name = "background_type", defaultValue = "DAYNIGHT")
+    override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
+    @ColumnInfo(name = "text_color")
+    override val textColor: String? = null,
+) : WidgetEntity<GridWidgetEntity>,
+    ThemeableWidgetEntity {
 
     @Serializable
     data class Item(val gridId: Int, val entityId: String, val label: String, val iconName: String) :

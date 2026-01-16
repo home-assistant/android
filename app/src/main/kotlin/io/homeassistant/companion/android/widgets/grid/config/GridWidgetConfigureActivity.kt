@@ -6,7 +6,6 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.lifecycleScope
@@ -22,7 +21,6 @@ class GridWidgetConfigureActivity : BaseActivity() {
     private val viewModel: GridConfigurationViewModel by viewModels()
 
     public override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         // Set the result to CANCELED.  This will cause the widget host to cancel
@@ -39,14 +37,14 @@ class GridWidgetConfigureActivity : BaseActivity() {
             HomeAssistantAppTheme {
                 GridWidgetConfigurationScreen(
                     viewModel = viewModel,
-                    onAddWidget = { onSetupWidget(it) },
+                    onSubmit = ::onSubmit,
                 )
             }
         }
     }
 
     @SuppressLint("ObsoleteSdkInt")
-    private fun onSetupWidget(config: GridConfiguration) {
+    private fun onSubmit(config: GridConfiguration) {
         lifecycleScope.launch {
             if (intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) == true) {
                 if (
@@ -74,12 +72,12 @@ class GridWidgetConfigureActivity : BaseActivity() {
     }
 
     private suspend fun onUpdateWidget(config: GridConfiguration) {
-        try {
-            viewModel.updateWidgetConfiguration(config)
+        val success = viewModel.updateWidgetConfiguration(config)
+        if (success) {
             setResult(RESULT_OK)
             viewModel.updateWidget(this@GridWidgetConfigureActivity)
             finish()
-        } catch (_: IllegalStateException) {
+        } else {
             showUpdateWidgetError()
         }
     }

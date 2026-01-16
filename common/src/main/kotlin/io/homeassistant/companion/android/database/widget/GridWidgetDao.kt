@@ -16,7 +16,7 @@ interface GridWidgetDao : WidgetDao<GridWidgetEntity> {
     suspend fun get(id: Int): GridWidgetEntity?
 
     @Query("SELECT * FROM grid_widgets WHERE id = :id")
-    fun observe(id: Int): Flow<GridWidgetEntity>
+    fun getFlow(id: Int): Flow<GridWidgetEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     override suspend fun add(entity: GridWidgetEntity)
@@ -29,9 +29,6 @@ interface GridWidgetDao : WidgetDao<GridWidgetEntity> {
 
     @Query("SELECT * FROM grid_widgets")
     suspend fun getAll(): List<GridWidgetEntity>
-
-    @Query("SELECT * FROM grid_widgets")
-    fun observeAll(): Flow<List<GridWidgetEntity>>
 
     @Query("SELECT COUNT(*) FROM grid_widgets")
     override fun getWidgetCountFlow(): Flow<Int>

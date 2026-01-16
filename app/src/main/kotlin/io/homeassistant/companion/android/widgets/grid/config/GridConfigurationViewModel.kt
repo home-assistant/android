@@ -97,28 +97,43 @@ class GridConfigurationViewModel @Inject constructor(
 
     fun addItem(entity: Entity) = _gridConfig.update { it.copy(items = it.items + entity.asGridItem()) }
 
-    fun editItem(i: Int, entity: Entity) = _gridConfig.update {
-        it.copy(items = it.items.mapIndexed { index, it -> if (index == i) entity.asGridItem() else it })
+    fun editItem(selectedIndex: Int, entity: Entity) = _gridConfig.update {
+        it.copy(items = it.items.mapIndexed { index, it -> if (index == selectedIndex) entity.asGridItem() else it })
     }
 
-    fun deleteItem(i: Int) = _gridConfig.update {
-        it.copy(items = it.items.filterIndexed { index, _ -> index != i })
+    fun moveItem(from: GridItem, to: GridItem) = _gridConfig.update {
+        it.copy(
+            items = it.items.map { gridItem ->
+                if (gridItem == from) {
+                    to
+                } else if (gridItem == to) {
+                    from
+                } else {
+                    gridItem
+                }
+            },
+        )
     }
 
-    suspend fun updateWidgetConfiguration(config: GridConfiguration) {
+    fun deleteItem(selectedIndex: Int) = _gridConfig.update {
+        it.copy(items = it.items.filterIndexed { index, _ -> index != selectedIndex })
+    }
+
+    suspend fun updateWidgetConfiguration(config: GridConfiguration): Boolean {
         if (!isValidConfig(config)) {
             Timber.d("Widget data is invalid")
-            error("Widget data is invalid")
+            return false
         }
 
         if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
             Timber.w("Widget ID is invalid")
-            error("Widget ID is invalid")
+            return false
         }
 
         Timber.d("Updating widget $widgetId with $config")
         val entity = config.asDbEntity(widgetId)
         gridWidgetDao.add(entity)
+        return true
     }
 
     /**

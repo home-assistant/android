@@ -54,11 +54,11 @@ class RefreshAction : ActionCallback {
 internal val ENTITY_ID_KEY = ActionParameters.Key<String>("ENTITY_ID_KEY")
 
 /**
- * Action that will toggle the given Entity through a given parameters with the key [ENTITY_ID_KEY]. Use [actionPressEntity] to get the
+ * Action that will press the given Entity through a given parameters with the key [ENTITY_ID_KEY]. Use [actionPressEntity] to get the
  * Action for Glance.
  *
- * The action call the server to toggle the item. On Success the widget is updated and the state will be updated
- * through the [GridWidgetStateUpdater]. On Failure it will show a toast with the failure message.
+ * The action calls the server to toggle the item. On Success the widget is updated and the state will be updated
+ * through the [GridWidgetStateUpdater].
  *
  * Note: This needs to be public since it is instantiated by the Glance framework.
  */

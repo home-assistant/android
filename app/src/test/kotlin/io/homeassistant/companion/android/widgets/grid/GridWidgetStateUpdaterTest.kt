@@ -32,7 +32,7 @@ class GridWidgetStateUpdaterTest {
         val item1 = GridWidgetEntity.Item(1, "switch.test", "Switch", "mdi:switch")
         val entity = GridWidgetEntity(widgetId, serverId, "Label", listOf(item1))
 
-        coEvery { dao.observe(widgetId) } returns flowOf(entity)
+        coEvery { dao.getFlow(widgetId) } returns flowOf(entity)
         coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
         coEvery { integrationRepository.getEntity("switch.test") } returns null
         coEvery { integrationRepository.getEntityUpdates(listOf("switch.test")) } returns emptyFlow()
@@ -54,7 +54,7 @@ class GridWidgetStateUpdaterTest {
         val item1 = GridWidgetEntity.Item(1, "switch.test", "Switch", "mdi:switch")
         val entity = GridWidgetEntity(widgetId, serverId, "Label", listOf(item1))
 
-        coEvery { dao.observe(widgetId) } returns flowOf(entity)
+        coEvery { dao.getFlow(widgetId) } returns flowOf(entity)
         coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
         coEvery { integrationRepository.getEntity("switch.test") } returns null
 

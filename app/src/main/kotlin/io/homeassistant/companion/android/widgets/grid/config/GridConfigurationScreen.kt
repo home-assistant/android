@@ -7,8 +7,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Button
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
@@ -34,7 +35,9 @@ import com.mikepenz.iconics.compose.IconicsPainter
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
@@ -46,23 +49,25 @@ import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import io.homeassistant.companion.android.util.safeTopWindowInsets
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @Composable
-fun GridWidgetConfigurationScreen(viewModel: GridConfigurationViewModel, onAddWidget: (GridConfiguration) -> Unit) {
+fun GridWidgetConfigurationScreen(viewModel: GridConfigurationViewModel, onSubmit: (GridConfiguration) -> Unit) {
     val servers by viewModel.servers.collectAsStateWithLifecycle()
     val entities by viewModel.entities.collectAsStateWithLifecycle()
     val config by viewModel.gridConfig.collectAsStateWithLifecycle()
 
     GridWidgetConfigurationContent(
         servers = servers,
-        selectedServerId = config.serverId,
         onServerSelected = viewModel::setServer,
         entities = entities,
-        onConfigure = onAddWidget,
+        onSubmit = onSubmit,
         config = config,
         onNameChange = viewModel::setLabel,
         onItemAdd = viewModel::addItem,
         onItemEdit = viewModel::editItem,
+        onItemMove = viewModel::moveItem,
         onItemDelete = viewModel::deleteItem,
     )
 }
@@ -70,15 +75,15 @@ fun GridWidgetConfigurationScreen(viewModel: GridConfigurationViewModel, onAddWi
 @Composable
 private fun GridWidgetConfigurationContent(
     servers: List<Server>,
-    selectedServerId: Int,
     onServerSelected: (Int) -> Unit,
     entities: List<Entity>,
     config: GridConfiguration,
     onNameChange: (String) -> Unit,
     onItemAdd: (Entity) -> Unit,
     onItemEdit: (Int, Entity) -> Unit,
+    onItemMove: (GridItem, GridItem) -> Unit,
     onItemDelete: (Int) -> Unit,
-    onConfigure: (config: GridConfiguration) -> Unit,
+    onSubmit: (config: GridConfiguration) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -90,80 +95,151 @@ private fun GridWidgetConfigurationContent(
             )
         },
     ) { padding ->
-        Column(
+        GridWidgetConfigurationContent(
             modifier = Modifier
                 .windowInsetsPadding(safeBottomWindowInsets())
                 .padding(padding),
-        ) {
-            PreferenceSection {
-                var name by remember(config.label) { mutableStateOf(config.label.orEmpty()) }
-                TextField(
-                    modifier = Modifier.fillMaxWidth(),
-                    value = name,
-                    label = { Text(stringResource(commonR.string.widget_grid_name)) },
-                    singleLine = true,
-                    onValueChange = {
-                        onNameChange(it)
-                        name = it
-                    },
+            config = config,
+            onNameChange = onNameChange,
+            servers = servers,
+            onServerSelected = onServerSelected,
+            onItemMove = onItemMove,
+            entities = entities,
+            onItemEdit = onItemEdit,
+            onItemDelete = onItemDelete,
+            onItemAdd = onItemAdd,
+            onSubmit = onSubmit,
+        )
+    }
+}
+
+@Composable
+private fun GridWidgetConfigurationContent(
+    config: GridConfiguration,
+    onNameChange: (String) -> Unit,
+    servers: List<Server>,
+    onServerSelected: (Int) -> Unit,
+    onItemMove: (GridItem, GridItem) -> Unit,
+    entities: List<Entity>,
+    onItemEdit: (Int, Entity) -> Unit,
+    onItemDelete: (Int) -> Unit,
+    onItemAdd: (Entity) -> Unit,
+    onSubmit: (GridConfiguration) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier) {
+        PreferenceSection {
+            var name by remember(config.label) { mutableStateOf(config.label.orEmpty()) }
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = name,
+                label = { Text(stringResource(commonR.string.widget_grid_name)) },
+                singleLine = true,
+                onValueChange = {
+                    onNameChange(it)
+                    name = it
+                },
+            )
+
+            if (servers.size > 1) {
+                ServerExposedDropdownMenu(
+                    servers = servers,
+                    current = config.serverId,
+                    onSelected = { onServerSelected(it) },
                 )
-
-                if (servers.size > 1) {
-                    ServerExposedDropdownMenu(
-                        servers = servers,
-                        current = selectedServerId,
-                        onSelected = { onServerSelected(it) },
-                    )
-                }
             }
+        }
 
-            PreferenceSection(
-                modifier = Modifier
-                    .verticalScroll(rememberScrollState())
-                    .weight(1f),
-                title = stringResource(commonR.string.widget_grid_add_entities),
+        PreferenceSection(
+            modifier = Modifier.weight(1f),
+            title = stringResource(commonR.string.widget_grid_add_entities),
+        ) {
+            EntityList(
+                onItemMove = onItemMove,
+                config = config,
+                entities = entities,
+                onItemEdit = onItemEdit,
+                onItemDelete = onItemDelete,
+                onItemAdd = onItemAdd,
+            )
+        }
+
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(HADimens.SPACE4),
+            onClick = { onSubmit(config) },
+        ) {
+            Text(stringResource(commonR.string.update_widget))
+        }
+    }
+}
+
+@Composable
+private fun EntityList(
+    onItemMove: (GridItem, GridItem) -> Unit,
+    config: GridConfiguration,
+    entities: List<Entity>,
+    onItemEdit: (Int, Entity) -> Unit,
+    onItemDelete: (Int) -> Unit,
+    onItemAdd: (Entity) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val lazyListState = rememberLazyListState()
+    val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
+        onItemMove(from.key as GridItem, to.key as GridItem)
+    }
+    LazyColumn(
+        modifier = modifier,
+        state = lazyListState,
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
+    ) {
+        itemsIndexed(config.items) { index, item ->
+            ReorderableItem(
+                state = reorderState,
+                key = item,
             ) {
-                config.items.forEachIndexed { i, item ->
-                    val iconPainter = remember(item.icon) {
-                        CommunityMaterial.getIconByMdiName(item.icon)?.let {
-                            IconicsPainter(it)
-                        }
+                val iconPainter = remember(item.icon) {
+                    CommunityMaterial.getIconByMdiName(item.icon)?.let {
+                        IconicsPainter(it)
                     }
-                    EntityEditorRow(
-                        entityId = item.entityId,
-                        entities = entities,
-                        icon = iconPainter?.let { { Icon(it, null) } },
-                        onSelect = { selected ->
-                            val entity = entities.first { it.entityId == selected }
-                            onItemEdit(i, entity)
-                            true
-                        },
-                        onDelete = { onItemDelete(i) },
-                    )
                 }
-
                 EntityEditorRow(
+                    entityId = item.entityId,
                     entities = entities,
-                    icon = {
-                        Icon(painterResource(R.drawable.ic_plus), null)
-                    },
+                    icon = iconPainter?.let { { Icon(it, null) } },
                     onSelect = { selected ->
+                        FailFast.failOnCatch(
+                            { "Selected entity not found: $selected" },
+                            Unit,
+                        ) {
+                            val entity = entities.first { it.entityId == selected }
+                            onItemEdit(index, entity)
+                        }
+                        true
+                    },
+                    onDelete = { onItemDelete(index) },
+                )
+            }
+        }
+        item {
+            EntityEditorRow(
+                entities = entities,
+                icon = {
+                    Icon(painterResource(R.drawable.ic_plus), null)
+                },
+                onSelect = { selected ->
+                    FailFast.failOnCatch(
+                        { "Selected entity not found: $selected" },
+                        Unit,
+                    ) {
                         val entity = entities.first { it.entityId == selected }
                         onItemAdd(entity)
-                        false
-                    },
-                    onDelete = {},
-                )
-            }
-
-            Button(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                onClick = { onConfigure(config) },
-            ) {
-                Text(stringResource(commonR.string.update_widget))
-            }
+                    }
+                    false
+                },
+                onDelete = {},
+            )
         }
     }
 }
@@ -202,8 +278,8 @@ private fun PreferenceSection(
 ) {
     Column(modifier) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(HADimens.SPACE4),
+            verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
         ) {
             title?.let { SectionHeader(title) }
             content()
@@ -216,7 +292,7 @@ private fun PreferenceSection(
 @Composable
 private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
     Text(
-        modifier = modifier.padding(start = 48.dp),
+        modifier = modifier.padding(start = HADimens.SPACE12),
         text = title,
         style = MaterialTheme.typography.subtitle2,
         color = MaterialTheme.colors.primary,
@@ -229,6 +305,7 @@ private fun GridConfigurationPreview() {
     HomeAssistantAppTheme {
         GridWidgetConfigurationContent(
             config = GridConfiguration(
+                serverId = 0,
                 label = "Home lights",
                 items = listOf(
                     GridItem("Bedroom", "mdi:lightbulb"),
@@ -240,7 +317,6 @@ private fun GridConfigurationPreview() {
                 previewServer1,
                 previewServer2,
             ),
-            selectedServerId = 0,
             onServerSelected = {},
             entities = listOf(
                 previewEntity1,
@@ -249,8 +325,9 @@ private fun GridConfigurationPreview() {
             onNameChange = {},
             onItemAdd = {},
             onItemEdit = { _, _ -> },
+            onItemMove = { _, _ -> },
             onItemDelete = {},
-            onConfigure = {},
+            onSubmit = {},
         )
     }
 }

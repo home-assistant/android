@@ -65,8 +65,7 @@ internal sealed interface GridWidgetState {
 
 internal object LoadingGridState : GridWidgetState
 
-internal data class GridStateWithData(val label: String? = null, val items: List<GridButtonData> = emptyList()) :
-    GridWidgetState
+internal data class GridStateWithData(val label: String?, val items: List<GridButtonData>) : GridWidgetState
 
 internal data class GridButtonData(
     val id: String,

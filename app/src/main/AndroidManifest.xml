@@ -258,9 +258,6 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.GridWidget.CALL_SERVICE" />
-                <action android:name="io.homeassistant.companion.android.widgets.GridWidget.CALL_SERVICE_AUTH" />
-                <action android:name="io.homeassistant.companion.android.widgets.GridWidget.RECEIVE_DATA" />
             </intent-filter>
 
             <meta-data
