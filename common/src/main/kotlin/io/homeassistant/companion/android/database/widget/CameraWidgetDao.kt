@@ -29,4 +29,7 @@ interface CameraWidgetDao : WidgetDao<CameraWidgetEntity> {
 
     @Query("SELECT COUNT(*) FROM camera_widgets")
     override fun getWidgetCountFlow(): Flow<Int>
+
+    @Query("DELETE FROM camera_widgets WHERE server_id = :serverId")
+    override suspend fun deleteByServerId(serverId: Int)
 }

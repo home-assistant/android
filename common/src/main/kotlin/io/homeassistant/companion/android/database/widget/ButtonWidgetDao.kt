@@ -28,4 +28,7 @@ interface ButtonWidgetDao : WidgetDao<ButtonWidgetEntity> {
 
     @Query("SELECT COUNT(*) FROM button_widgets")
     override fun getWidgetCountFlow(): Flow<Int>
+
+    @Query("DELETE FROM button_widgets WHERE server_id = :serverId")
+    override suspend fun deleteByServerId(serverId: Int)
 }

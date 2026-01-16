@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerDao
 import io.homeassistant.companion.android.database.server.TemporaryServer
 import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.database.widget.WidgetDao
 import io.homeassistant.companion.android.di.qualifiers.NamedSessionStorage
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -75,6 +76,7 @@ internal class ServerManagerImpl @Inject constructor(
     private val serverDao: ServerDao,
     private val sensorDao: SensorDao,
     private val settingsDao: SettingsDao,
+    private val widgetDaos: Set<@JvmSuppressWildcards WidgetDao<*>>,
     @NamedSessionStorage private val localStorage: LocalStorage,
 ) : ServerManager {
 
@@ -143,6 +145,7 @@ internal class ServerManagerImpl @Inject constructor(
         if (localStorage.getInt(PREF_ACTIVE_SERVER) == id) localStorage.remove(PREF_ACTIVE_SERVER)
         settingsDao.delete(id)
         sensorDao.removeServer(id)
+        widgetDaos.forEach { it.deleteByServerId(id) }
         serverDao.delete(id)
     }
 

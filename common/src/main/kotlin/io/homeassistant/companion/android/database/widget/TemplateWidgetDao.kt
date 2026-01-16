@@ -32,4 +32,7 @@ interface TemplateWidgetDao : WidgetDao<TemplateWidgetEntity> {
 
     @Query("SELECT COUNT(*) FROM template_widgets")
     override fun getWidgetCountFlow(): Flow<Int>
+
+    @Query("DELETE FROM template_widgets WHERE server_id = :serverId")
+    override suspend fun deleteByServerId(serverId: Int)
 }
