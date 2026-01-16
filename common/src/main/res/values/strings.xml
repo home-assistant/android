@@ -1413,11 +1413,11 @@
     <string name="notification_permission_dialog_content">Enable notifications and get what\'s happening in your home, from detecting leaks to doors left open. You have full control over the notifications you receive and what they tell you.</string>
     <string name="notification_permission_dialog_allow">Allow notifications</string>
     <string name="notification_permission_dialog_deny">Do not allow</string>
-    <string name="connection_check_title">Connectivity Checks</string>
-    <string name="connection_check_dns">DNS Resolution</string>
-    <string name="connection_check_port">Port Reachability</string>
-    <string name="connection_check_tls">TLS Certificate</string>
-    <string name="connection_check_server">Server Connection</string>
+    <string name="connection_check_title">Connectivity checks</string>
+    <string name="connection_check_dns">DNS resolution</string>
+    <string name="connection_check_port">Port reachability</string>
+    <string name="connection_check_tls">TLS certificate</string>
+    <string name="connection_check_server">Server connection</string>
     <string name="connection_check_tls_success">Certificate valid</string>
     <string name="connection_check_tls_not_applicable">Not required for HTTP</string>
     <string name="connection_check_server_success">Connection established</string>
@@ -1427,7 +1427,7 @@
     <string name="connection_check_error_tls">TLS certificate error</string>
     <string name="connection_check_error_server">Server connection failed</string>
     <string name="connection_check_skipped">Skipped (previous check failed)</string>
-    <string name="connection_check_home_assistant">Home Assistant Verification</string>
+    <string name="connection_check_home_assistant">Home Assistant verification</string>
     <string name="connection_check_home_assistant_success">Verified as Home Assistant</string>
     <string name="connection_check_error_not_home_assistant">Server is not Home Assistant</string>
 </resources>

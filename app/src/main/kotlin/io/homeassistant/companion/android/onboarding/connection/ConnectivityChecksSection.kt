@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Circle
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -120,17 +121,21 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
             label = "iconAnimation",
         ) { animatedResult ->
             when (animatedResult) {
-                is ConnectivityCheckResult.Success,
-                is ConnectivityCheckResult.Failure,
-                -> Icon(
+                is ConnectivityCheckResult.Success -> Icon(
                     imageVector = Icons.Outlined.CheckCircle,
-                    contentDescription = null,
+                    contentDescription = stringResource(commonR.string.successful),
+                    modifier = Modifier.size(24.dp),
+                    tint = iconTint,
+                )
+                is ConnectivityCheckResult.Failure -> Icon(
+                    imageVector = Icons.Outlined.ErrorOutline,
+                    contentDescription = stringResource(commonR.string.state_error),
                     modifier = Modifier.size(24.dp),
                     tint = iconTint,
                 )
                 is ConnectivityCheckResult.NotApplicable -> Icon(
                     imageVector = Icons.Outlined.Circle,
-                    contentDescription = null,
+                    contentDescription = stringResource(commonR.string.connection_check_tls_not_applicable),
                     modifier = Modifier.size(24.dp),
                     tint = iconTint,
                 )
