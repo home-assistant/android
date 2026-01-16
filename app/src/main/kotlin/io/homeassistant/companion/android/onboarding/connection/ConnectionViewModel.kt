@@ -19,9 +19,10 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
+import io.homeassistant.companion.android.frontend.error.FrontendError
+import io.homeassistant.companion.android.frontend.error.FrontendErrorStateProvider
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.util.TLSWebViewClient
-import io.homeassistant.companion.android.webview.error.ConnectionError
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,7 +69,8 @@ private const val AUTH_CALLBACK = "$AUTH_CALLBACK_SCHEME://$AUTH_CALLBACK_HOST"
 internal class ConnectionViewModel @VisibleForTesting constructor(
     private val rawUrl: String,
     private val keyChainRepository: KeyChainRepository,
-) : ViewModel() {
+) : ViewModel(),
+    FrontendErrorStateProvider {
 
     @Inject
     constructor(
@@ -83,13 +85,13 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     val navigationEventsFlow = _navigationEventsFlow.asSharedFlow()
 
     private val _urlFlow = MutableStateFlow<String?>(null)
-    val urlFlow = _urlFlow.asStateFlow()
+    override val urlFlow = _urlFlow.asStateFlow()
 
     private val _isLoadingFlow = MutableStateFlow(true)
     val isLoadingFlow = _isLoadingFlow.asStateFlow()
 
-    private val _errorFlow = MutableStateFlow<ConnectionError?>(null)
-    val errorFlow = _errorFlow.asStateFlow()
+    private val _errorFlow = MutableStateFlow<FrontendError?>(null)
+    override val errorFlow = _errorFlow.asStateFlow()
 
     val webViewClient: TLSWebViewClient = object : TLSWebViewClient(keyChainRepository) {
         override fun onPageFinished(view: WebView?, url: String?) {
@@ -120,8 +122,8 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
             val errorDetails = errorDetails(view?.context, error?.errorCode, error?.description?.toString())
             Timber.e("onReceivedError: $errorDetails")
 
-            fun authenticationError(message: Int): ConnectionError {
-                return ConnectionError.AuthenticationError(
+            fun authenticationError(message: Int): FrontendError {
+                return FrontendError.AuthenticationError(
                     message = message,
                     errorDetails = errorDetails,
                     rawErrorType = WebResourceError::class.toString(),
@@ -146,13 +148,13 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                         commonR.string.webview_error_AUTH_SCHEME,
                     )
 
-                    ERROR_HOST_LOOKUP -> ConnectionError.UnreachableError(
+                    ERROR_HOST_LOOKUP -> FrontendError.UnreachableError(
                         message = commonR.string.webview_error_HOST_LOOKUP,
                         errorDetails = errorDetails,
                         rawErrorType = WebResourceError::class.toString(),
                     )
 
-                    else -> ConnectionError.UnknownError(
+                    else -> FrontendError.UnknownError(
                         message = commonR.string.connection_error_unknown_error,
                         errorDetails = errorDetails,
                         rawErrorType = WebResourceError::class.toString(),
@@ -174,8 +176,8 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                     errorDetails(view?.context, errorResponse?.statusCode, errorResponse?.reasonPhrase)
                 Timber.e("onReceivedHttpError: $errorDetails")
 
-                fun authenticationError(message: Int): ConnectionError {
-                    return ConnectionError.AuthenticationError(
+                fun authenticationError(message: Int): FrontendError {
+                    return FrontendError.AuthenticationError(
                         message = message,
                         errorDetails = errorDetails,
                         rawErrorType = WebResourceResponse::class.toString(),
@@ -191,7 +193,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                         commonR.string.tls_cert_not_found_message,
                     )
 
-                    else -> ConnectionError.UnknownError(
+                    else -> FrontendError.UnknownError(
                         message = commonR.string.connection_error_unknown_error,
                         errorDetails = errorDetails,
                         rawErrorType = WebResourceResponse::class.toString(),
@@ -214,7 +216,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                 else -> commonR.string.error_ssl
             }
             onError(
-                ConnectionError.AuthenticationError(
+                FrontendError.AuthenticationError(
                     message = messageRes,
                     // SslError overrides the toString method with the error details
                     error.toString(),
@@ -250,7 +252,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         } catch (e: Exception) {
             Timber.e(e, "Unable to build authentication URL")
             onError(
-                ConnectionError.UnreachableError(
+                FrontendError.UnreachableError(
                     message = commonR.string.connection_screen_malformed_url,
                     errorDetails = e.localizedMessage ?: e.message,
                     rawErrorType = e::class.toString(),
@@ -289,7 +291,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         }
     }
 
-    private fun onError(error: ConnectionError) {
+    private fun onError(error: FrontendError) {
         _errorFlow.update { error }
     }
 }

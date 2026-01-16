@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.webview.error
+package io.homeassistant.companion.android.frontend.error
 
 import androidx.annotation.StringRes
 import io.homeassistant.companion.android.common.R as commonR
@@ -9,7 +9,7 @@ import io.homeassistant.companion.android.common.R as commonR
  * This sealed interface provides a type-safe way to handle different connection
  * error scenarios with appropriate user-facing messages.
  */
-sealed interface ConnectionError {
+sealed interface FrontendError {
     /** String resource ID for the error title */
     @get:StringRes
     val title: Int
@@ -32,7 +32,7 @@ sealed interface ConnectionError {
         @StringRes override val message: Int,
         override val errorDetails: String,
         override val rawErrorType: String,
-    ) : ConnectionError {
+    ) : FrontendError {
         override val title: Int = commonR.string.error_connection_failed
     }
 
@@ -44,7 +44,7 @@ sealed interface ConnectionError {
         @StringRes override val message: Int,
         override val errorDetails: String?,
         override val rawErrorType: String,
-    ) : ConnectionError {
+    ) : FrontendError {
         override val title: Int = commonR.string.error_connection_failed
     }
 
@@ -55,7 +55,7 @@ sealed interface ConnectionError {
         @StringRes override val message: Int,
         override val errorDetails: String,
         override val rawErrorType: String,
-    ) : ConnectionError {
+    ) : FrontendError {
         override val title: Int = commonR.string.error_connection_failed
     }
 }
