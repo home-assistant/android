@@ -81,7 +81,12 @@ internal fun createDataSourceFactory(
             .apply {
                 // Cache QUIC data for faster initial connections
                 val storageDirectory = cacheDirectory.resolve("httpEngineStorage")
-                storageDirectory.mkdirs()
+                if (!storageDirectory.exists()) {
+                    val created = storageDirectory.mkdirs()
+                    if (!created && !storageDirectory.exists()) {
+                        Timber.w("Failed to create HttpEngine storage directory at path=${storageDirectory.path}")
+                    }
+                }
                 if (storageDirectory.exists()) {
                     setStoragePath(storageDirectory.path)
                 }
