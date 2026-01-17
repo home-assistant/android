@@ -1,18 +1,27 @@
 package io.homeassistant.companion.android.common.util
 
 import android.content.Context
+import android.net.http.HttpEngine
+import android.os.Build
+import android.os.ext.SdkExtensions
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.HttpEngineDataSource
 import androidx.media3.datasource.cronet.CronetDataSource
 import androidx.media3.datasource.cronet.CronetUtil
+import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import dagger.Lazy
+import java.io.File
 import java.util.concurrent.Executors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
 import org.chromium.net.CronetEngine
 import timber.log.Timber
 
@@ -40,8 +49,7 @@ import timber.log.Timber
  * @see Executors.newSingleThreadExecutor
  */
 @OptIn(UnstableApi::class)
-suspend fun initializePlayer(context: Context): ExoPlayer = withContext(Dispatchers.Default) {
-    val dataSourceFactory = createDataSourceFactory(context)
+suspend fun initializePlayer(context: Context, dataSourceFactory: DataSource.Factory): ExoPlayer = withContext(Dispatchers.Default) {
     return@withContext ExoPlayer.Builder(context).setMediaSourceFactory(
         DefaultMediaSourceFactory(dataSourceFactory).setLiveMaxSpeed(8.0f),
     ).setLoadControl(
@@ -59,13 +67,37 @@ suspend fun initializePlayer(context: Context): ExoPlayer = withContext(Dispatch
  * Falls back to [DefaultHttpDataSource] if Cronet providers are unavailable on the device.
  */
 @OptIn(UnstableApi::class)
-private fun createDataSourceFactory(context: Context): DataSource.Factory {
-    val cronetEngine = CronetUtil.buildCronetEngine(context, null, true)
-
-    return if (cronetEngine == null) {
-        Timber.w("Failed to build cronet engine fallback to DefaultHttpDataSource")
-        DefaultHttpDataSource.Factory()
+internal fun createDataSourceFactory(
+    context: Context,
+    okHttpClientProvider: Lazy<OkHttpClient?>,
+    cacheDirectory: File,
+): DataSource.Factory {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && SdkExtensions.getExtensionVersion(Build.VERSION_CODES.S) >= 7) {
+        // Use Platform embedded Cronet via android.net.http.HttpEngine
+        val httpEngine = HttpEngine.Builder(context)
+            .apply {
+                // Cache QUIC data for faster initial connections
+                setStoragePath(cacheDirectory.resolve("httpEngineStorage").path)
+            }
+            .build()
+        Timber.i("Using HttpEngineDataSource for media")
+        HttpEngineDataSource.Factory(httpEngine, Executors.newSingleThreadExecutor())
     } else {
-        CronetDataSource.Factory(cronetEngine, Executors.newSingleThreadExecutor())
+        val cronetEngine = CronetUtil.buildCronetEngine(context, null, true)
+
+        if (cronetEngine != null) {
+            Timber.i("Using CronetDataSource for media")
+            CronetDataSource.Factory(cronetEngine, Executors.newSingleThreadExecutor())
+        } else {
+            val okHttpClient = okHttpClientProvider.get()
+            if (okHttpClient != null) {
+                // Reuse OkHttpClient instance for Http/2 support
+                Timber.w("Failed to build cronet engine fallback to OkHttpDataSource")
+                OkHttpDataSource.Factory(okHttpClient)
+            } else {
+                Timber.w("Failed to build cronet engine fallback to DefaultDataSource")
+                DefaultDataSource.Factory(context)
+            }
+        }
     }
 }

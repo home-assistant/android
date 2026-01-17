@@ -4,7 +4,9 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
+import androidx.media3.datasource.DataSource
 import dagger.Binds
+import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,6 +29,7 @@ import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepositoryImpl
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.ServerManagerImpl
+import io.homeassistant.companion.android.common.util.createDataSourceFactory
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.getSharedPreferencesSuspend
 import io.homeassistant.companion.android.common.util.tts.AndroidTextToSpeechEngine
@@ -62,6 +65,13 @@ internal abstract class DataModule {
         @Provides
         @Singleton
         fun providesOkHttpClient(homeAssistantApis: HomeAssistantApis): OkHttpClient = homeAssistantApis.okHttpClient
+
+        @Provides
+        @Singleton
+        fun providesDataSourceFactory(
+            @ApplicationContext appContext: Context,
+            okHttpClient: Lazy<OkHttpClient?>,
+        ): DataSource.Factory = createDataSourceFactory(appContext, okHttpClient, appContext.cacheDir)
 
         @Provides
         @NamedSessionStorage

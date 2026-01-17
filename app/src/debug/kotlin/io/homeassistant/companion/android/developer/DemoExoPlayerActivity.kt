@@ -29,10 +29,15 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.datasource.DataSource
+import androidx.work.Data
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.util.initializePlayer
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
+import javax.inject.Inject
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 
 /**
  * Very basic demo of the ExoPlayer usage and the PlayerView.
@@ -40,7 +45,10 @@ import kotlinx.coroutines.launch
  *
  * It supports PIP mode.
  */
+@AndroidEntryPoint
 class DemoExoPlayerActivity : AppCompatActivity() {
+    @Inject
+    lateinit var dataSourceFactory: DataSource.Factory
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +58,7 @@ class DemoExoPlayerActivity : AppCompatActivity() {
                 Box(modifier = Modifier.fillMaxSize()) {
                     HAMediaPlayer(
                         "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
+                        dataSourceFactory = dataSourceFactory,
                         modifier = Modifier.size(width = 428.dp, height = 192.dp).align(Alignment.Center),
                     )
                 }
@@ -77,6 +86,7 @@ class DemoExoPlayerActivity : AppCompatActivity() {
 @Composable
 private fun HAMediaPlayer(
     url: String,
+    dataSourceFactory: DataSource.Factory,
     modifier: Modifier = Modifier,
     fullscreenModifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Inside,
@@ -96,7 +106,7 @@ private fun HAMediaPlayer(
         // playback should continue.
         LifecycleStartEffect(Unit) {
             lifecycleOwner.lifecycleScope.launch {
-                player = initializePlayer(context)
+                player = initializePlayer(context, dataSourceFactory)
             }
             onStopOrDispose {
                 releasePlayer()
@@ -106,7 +116,7 @@ private fun HAMediaPlayer(
         // Call to onStop() is not guaranteed, hence we release the Player in onPause() instead
         LifecycleResumeEffect(Unit) {
             lifecycleOwner.lifecycleScope.launch {
-                player = initializePlayer(context)
+                player = initializePlayer(context, dataSourceFactory)
             }
             onPauseOrDispose {
                 releasePlayer()
