@@ -77,7 +77,11 @@ internal fun createDataSourceFactory(
         val httpEngine = HttpEngine.Builder(context)
             .apply {
                 // Cache QUIC data for faster initial connections
-                setStoragePath(cacheDirectory.resolve("httpEngineStorage").path)
+                val storageDirectory = cacheDirectory.resolve("httpEngineStorage")
+                storageDirectory.mkdirs()
+                if (storageDirectory.exists()) {
+                    setStoragePath(storageDirectory.path)
+                }
             }
             .build()
         Timber.i("Using HttpEngineDataSource for media")

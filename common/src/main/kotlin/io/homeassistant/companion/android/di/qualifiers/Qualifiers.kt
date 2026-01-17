@@ -78,3 +78,10 @@ annotation class LocationTrackingSupport
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class IsAutomotive
+
+/**
+ * Qualifier for dependencies with StrictMode issues.
+ */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class StrictModeExpensive
