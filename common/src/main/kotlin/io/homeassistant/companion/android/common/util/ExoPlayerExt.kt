@@ -49,18 +49,19 @@ import timber.log.Timber
  * @see Executors.newSingleThreadExecutor
  */
 @OptIn(UnstableApi::class)
-suspend fun initializePlayer(context: Context, dataSourceFactory: DataSource.Factory): ExoPlayer = withContext(Dispatchers.Default) {
-    return@withContext ExoPlayer.Builder(context).setMediaSourceFactory(
-        DefaultMediaSourceFactory(dataSourceFactory).setLiveMaxSpeed(8.0f),
-    ).setLoadControl(
-        DefaultLoadControl.Builder().setBufferDurationsMs(
-            0,
-            30000,
-            0,
-            0,
-        ).build(),
-    ).build()
-}
+suspend fun initializePlayer(context: Context, dataSourceFactory: DataSource.Factory): ExoPlayer =
+    withContext(Dispatchers.Default) {
+        return@withContext ExoPlayer.Builder(context).setMediaSourceFactory(
+            DefaultMediaSourceFactory(dataSourceFactory).setLiveMaxSpeed(8.0f),
+        ).setLoadControl(
+            DefaultLoadControl.Builder().setBufferDurationsMs(
+                0,
+                30000,
+                0,
+                0,
+            ).build(),
+        ).build()
+    }
 
 /**
  * Creates a [DataSource.Factory] for ExoPlayer, preferring Cronet with QUIC support.
@@ -72,7 +73,9 @@ internal fun createDataSourceFactory(
     okHttpClientProvider: Lazy<OkHttpClient?>,
     cacheDirectory: File,
 ): DataSource.Factory {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && SdkExtensions.getExtensionVersion(Build.VERSION_CODES.S) >= 7) {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+        SdkExtensions.getExtensionVersion(Build.VERSION_CODES.S) >= 7
+    ) {
         // Use Platform embedded Cronet via android.net.http.HttpEngine
         val httpEngine = HttpEngine.Builder(context)
             .apply {

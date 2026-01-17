@@ -30,14 +30,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.datasource.DataSource
-import androidx.work.Data
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.util.initializePlayer
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
 import javax.inject.Inject
 import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
 
 /**
  * Very basic demo of the ExoPlayer usage and the PlayerView.

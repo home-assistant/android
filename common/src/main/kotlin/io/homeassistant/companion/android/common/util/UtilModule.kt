@@ -22,6 +22,8 @@ object UtilModule {
 
     @Provides
     @Singleton
-    fun provideAudioUrlPlayer(@ApplicationContext appContext: Context, dataSourceFactory: DataSource.Factory): AudioUrlPlayer =
-        AudioUrlPlayer(appContext, appContext.getSystemService<AudioManager>(), dataSourceFactory)
+    fun provideAudioUrlPlayer(
+        @ApplicationContext appContext: Context,
+        dataSourceFactory: DataSource.Factory,
+    ): AudioUrlPlayer = AudioUrlPlayer(appContext, appContext.getSystemService<AudioManager>(), dataSourceFactory)
 }
