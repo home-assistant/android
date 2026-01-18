@@ -39,6 +39,8 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "implementation"(libs.androidx.concurrent.ktx)
                     "fullImplementation"(libs.kotlinx.coroutines.play.services)
 
+                    "implementation"(libs.apache.commons.text)
+
                     "implementation"(libs.appcompat)
                     "implementation"(libs.androidx.lifecycle.runtime.ktx)
                     "implementation"(libs.androidx.lifecycle.service)

@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.common.compose.composable
 
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -84,6 +84,6 @@ fun HATextField(
         colors = LocalHAColorScheme.current.textField(),
         modifier = modifier
             .widthIn(max = MaxButtonWidth)
-            .fillMaxSize(),
+            .fillMaxWidth(),
     )
 }

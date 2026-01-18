@@ -151,7 +151,7 @@
         errorLine2="                             ~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/controls/HaControlsProviderService.kt"
-            line="47"
+            line="46"
             column="30"/>
     </issue>
 
@@ -690,7 +690,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/camera/CameraWidgetConfigureActivity.kt"
-            line="74"
+            line="73"
             column="21"/>
     </issue>
 
@@ -756,7 +756,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/vehicle/DomainListScreen.kt"
-            line="25"
+            line="24"
             column="1"/>
     </issue>
 
@@ -767,7 +767,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/vehicle/EntityGridVehicleScreen.kt"
-            line="51"
+            line="50"
             column="1"/>
     </issue>
 
@@ -778,7 +778,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/entity/EntityWidgetConfigureActivity.kt"
-            line="88"
+            line="87"
             column="21"/>
     </issue>
 
@@ -1053,7 +1053,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/vehicle/MainVehicleScreen.kt"
-            line="43"
+            line="42"
             column="1"/>
     </issue>
 
@@ -1108,7 +1108,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="48"
+            line="49"
             column="1"/>
     </issue>
 
@@ -1119,7 +1119,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="79"
+            line="80"
             column="1"/>
     </issue>
 
@@ -1130,7 +1130,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="329"
+            line="335"
             column="1"/>
     </issue>
 
@@ -1141,7 +1141,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="341"
+            line="347"
             column="1"/>
     </issue>
 
@@ -1152,7 +1152,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="51"
+            line="54"
             column="1"/>
     </issue>
 
@@ -1163,7 +1163,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="61"
+            line="64"
             column="9"/>
     </issue>
 
@@ -1174,7 +1174,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="127"
+            line="160"
             column="17"/>
     </issue>
 
@@ -1185,7 +1185,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="186"
+            line="219"
             column="21"/>
     </issue>
 
@@ -1218,7 +1218,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/vehicle/MapVehicleScreen.kt"
-            line="37"
+            line="36"
             column="1"/>
     </issue>
 
@@ -1240,7 +1240,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/mediaplayer/MediaPlayerControlsWidgetConfigureActivity.kt"
-            line="77"
+            line="76"
             column="21"/>
     </issue>
 
@@ -1581,7 +1581,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/vehicle/TemplateComponents.kt"
-            line="89"
+            line="88"
             column="1"/>
     </issue>
 
@@ -1592,7 +1592,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/vehicle/TemplateComponents.kt"
-            line="132"
+            line="131"
             column="1"/>
     </issue>
 
@@ -1603,7 +1603,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/vehicle/TemplateComponents.kt"
-            line="218"
+            line="217"
             column="1"/>
     </issue>
 
@@ -2817,7 +2817,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="171"
+            line="204"
             column="13"/>
     </issue>
 
@@ -3180,7 +3180,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="70"
+            line="69"
             column="5"/>
     </issue>
 
@@ -3191,7 +3191,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="305"
+            line="304"
             column="5"/>
     </issue>
 
@@ -3202,7 +3202,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="50"
+            line="51"
             column="5"/>
     </issue>
 
@@ -3741,7 +3741,7 @@
         errorLine2="^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="79"
+            line="80"
             column="1"/>
     </issue>
 
@@ -4000,6 +4000,94 @@
 
     <issue
         id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Entity> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;Entity>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;Entity>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entities: List&lt;Entity>,"
+        errorLine2="              ~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
+            line="181"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityRegistryResponse>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entityRegistry: ImmutableList&lt;EntityRegistryResponse>?` or create an `@Immutable` wrapper for this class: `@Immutable data class EntityRegistryList(val items: List&lt;EntityRegistryResponse>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entityRegistry: List&lt;EntityRegistryResponse>? = null,"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
+            line="186"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;DeviceRegistryResponse>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `deviceRegistry: ImmutableList&lt;DeviceRegistryResponse>?` or create an `@Immutable` wrapper for this class: `@Immutable data class DeviceRegistryList(val items: List&lt;DeviceRegistryResponse>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    deviceRegistry: List&lt;DeviceRegistryResponse>? = null,"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
+            line="187"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;AreaRegistryResponse>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `areaRegistry: ImmutableList&lt;AreaRegistryResponse>?` or create an `@Immutable` wrapper for this class: `@Immutable data class AreaRegistryList(val items: List&lt;AreaRegistryResponse>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    areaRegistry: List&lt;AreaRegistryResponse>? = null,"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
+            line="188"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityPickerItem> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;EntityPickerItem>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;EntityPickerItem>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entities: List&lt;EntityPickerItem>,"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
+            line="225"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityPickerItem> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;EntityPickerItem>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;EntityPickerItem>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entities: List&lt;EntityPickerItem>,"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
+            line="395"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityPickerItem> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;EntityPickerItem>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;EntityPickerItem>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entities: List&lt;EntityPickerItem>,"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
+            line="423"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityPickerItem> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;EntityPickerItem>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;EntityPickerItem>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entities: List&lt;EntityPickerItem>,"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/entity/EntityPickerFilter.kt"
+            line="74"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
         message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `keys: ImmutableList&lt;String>` or create an `@Immutable` wrapper for this class: `@Immutable data class KeysList(val items: List&lt;String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
         errorLine1="    keys: List&lt;String>,"
         errorLine2="          ~~~~~~~~~~~~">
@@ -4082,7 +4170,7 @@
         errorLine2="                      ~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="73"
+            line="72"
             column="23"/>
     </issue>
 
@@ -4093,7 +4181,7 @@
         errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="75"
+            line="74"
             column="19"/>
     </issue>
 
@@ -4104,7 +4192,7 @@
         errorLine2="                 ~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="77"
+            line="76"
             column="18"/>
     </issue>
 
@@ -4269,7 +4357,7 @@
         errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/entity/EntityWidgetConfigureActivity.kt"
-            line="134"
+            line="133"
             column="42"/>
     </issue>
 
