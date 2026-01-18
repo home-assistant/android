@@ -4,7 +4,11 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
+import androidx.annotation.OptIn
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSource
 import dagger.Binds
+import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,6 +31,7 @@ import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepositoryImpl
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.ServerManagerImpl
+import io.homeassistant.companion.android.common.util.createDataSourceFactory
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.getSharedPreferencesSuspend
 import io.homeassistant.companion.android.common.util.tts.AndroidTextToSpeechEngine
@@ -40,6 +45,7 @@ import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
 import io.homeassistant.companion.android.di.qualifiers.NamedSessionStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedWearStorage
+import io.homeassistant.companion.android.di.qualifiers.StrictModeExpensive
 import java.util.UUID
 import javax.inject.Singleton
 import okhttp3.OkHttpClient
@@ -62,6 +68,25 @@ internal abstract class DataModule {
         @Provides
         @Singleton
         fun providesOkHttpClient(homeAssistantApis: HomeAssistantApis): OkHttpClient = homeAssistantApis.okHttpClient
+
+        @Provides
+        @Singleton
+        @StrictModeExpensive
+        fun providesRealDataSourceFactory(
+            @ApplicationContext appContext: Context,
+            okHttpClient: Lazy<OkHttpClient?>,
+        ): DataSource.Factory = createDataSourceFactory(appContext, okHttpClient, appContext.cacheDir)
+
+        @OptIn(UnstableApi::class)
+        @Provides
+        @Singleton
+        fun providesDataSourceFactory(
+            @StrictModeExpensive realDataSourceFactory: Lazy<DataSource.Factory>,
+        ): DataSource.Factory = DataSource.Factory {
+            // Defer creation to here as creating a DataSource is expensive
+            // and may use I/O
+            realDataSourceFactory.get().createDataSource()
+        }
 
         @Provides
         @NamedSessionStorage
