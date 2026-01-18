@@ -93,10 +93,14 @@ class GridConfigurationViewModel @Inject constructor(
     }
 
     fun setServer(serverId: Int) = _gridConfig.update { currentConfig ->
-        currentConfig.copy(
-            serverId = serverId,
-            items = if (currentConfig.serverId == serverId) currentConfig.items else emptyList(),
-        )
+        if (currentConfig.serverId != serverId) {
+            currentConfig.copy(
+                serverId = serverId,
+                items = emptyList(),
+            )
+        } else {
+            currentConfig
+        }
     }
 
     fun setLabel(label: String) = _gridConfig.update { it.copy(label = label) }
