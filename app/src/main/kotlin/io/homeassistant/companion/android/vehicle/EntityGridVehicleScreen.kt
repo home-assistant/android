@@ -42,6 +42,7 @@ import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getDomainsGridItem
 import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 import io.homeassistant.companion.android.util.vehicle.getNavigationGridItem
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -195,7 +196,13 @@ class EntityGridVehicleScreen(
 
                                 in SUPPORTED_DOMAINS -> {
                                     lifecycleScope.launch {
-                                        entity.onPressed(integrationRepositoryProvider())
+                                        try {
+                                            entity.onPressed(integrationRepositoryProvider())
+                                        } catch (e: CancellationException) {
+                                            throw e
+                                        } catch (e: Exception) {
+                                            Timber.e(e, "Failed to handle entity onPressed")
+                                        }
                                     }
                                 }
 
