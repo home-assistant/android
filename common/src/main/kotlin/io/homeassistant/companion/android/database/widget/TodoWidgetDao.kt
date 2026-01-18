@@ -38,4 +38,7 @@ interface TodoWidgetDao : WidgetDao<TodoWidgetEntity> {
 
     @Query("SELECT COUNT(*) FROM todo_widget")
     override fun getWidgetCountFlow(): Flow<Int>
+
+    @Query("DELETE FROM todo_widget WHERE server_id = :serverId")
+    override suspend fun deleteByServerId(serverId: Int)
 }

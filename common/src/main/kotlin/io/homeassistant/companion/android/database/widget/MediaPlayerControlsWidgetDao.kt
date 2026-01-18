@@ -28,4 +28,7 @@ interface MediaPlayerControlsWidgetDao : WidgetDao<MediaPlayerControlsWidgetEnti
 
     @Query("SELECT COUNT(*) FROM media_player_controls_widgets")
     override fun getWidgetCountFlow(): Flow<Int>
+
+    @Query("DELETE FROM media_player_controls_widgets WHERE server_id = :serverId")
+    override suspend fun deleteByServerId(serverId: Int)
 }

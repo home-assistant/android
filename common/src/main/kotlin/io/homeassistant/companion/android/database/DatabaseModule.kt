@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWid
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
+import io.homeassistant.companion.android.database.widget.WidgetDao
 import javax.inject.Singleton
 
 private const val DATABASE_NAME = "HomeAssistantDB"
@@ -97,4 +98,21 @@ internal object DatabaseModule {
     @Provides
     fun provideEntityStateComplicationsDao(database: AppDatabase): EntityStateComplicationsDao =
         database.entityStateComplicationsDao()
+
+    @Provides
+    fun provideWidgetDaos(
+        buttonWidgetDao: ButtonWidgetDao,
+        cameraWidgetDao: CameraWidgetDao,
+        mediaPlayerControlsWidgetDao: MediaPlayerControlsWidgetDao,
+        staticWidgetDao: StaticWidgetDao,
+        templateWidgetDao: TemplateWidgetDao,
+        todoWidgetDao: TodoWidgetDao,
+    ): Set<WidgetDao<*>> = setOf(
+        buttonWidgetDao,
+        cameraWidgetDao,
+        mediaPlayerControlsWidgetDao,
+        staticWidgetDao,
+        templateWidgetDao,
+        todoWidgetDao,
+    )
 }
