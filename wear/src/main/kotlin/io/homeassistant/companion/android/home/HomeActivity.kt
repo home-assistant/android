@@ -153,7 +153,7 @@ class HomeActivity :
                     }
                 }
                 launch { mainViewModel.entityRegistryUpdates() }
-                if (!mainViewModel.isFavoritesOnly) {
+                if (!mainViewModel.isFavoritesOnly.value) {
                     launch { mainViewModel.areaUpdates() }
                     launch { mainViewModel.deviceUpdates() }
                 }
