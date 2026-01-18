@@ -22,6 +22,9 @@ import io.homeassistant.companion.android.widgets.grid.asDbEntity
 import io.homeassistant.companion.android.widgets.grid.asGridConfiguration
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -48,12 +51,14 @@ class GridConfigurationViewModel @Inject constructor(
 ) : ViewModel() {
     private var widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID
     val servers = serverManager.defaultServersFlow
+        .map { it.toImmutableList() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), persistentListOf())
 
     private val _gridConfig = MutableStateFlow(GridConfiguration())
     val gridConfig = _gridConfig.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val entities: StateFlow<List<Entity>> = gridConfig
+    val entities: StateFlow<ImmutableList<Entity>> = gridConfig
         .map { it.serverId }
         .distinctUntilChanged()
         .filterNotNull()
@@ -62,11 +67,12 @@ class GridConfigurationViewModel @Inject constructor(
                 serverManager.integrationRepository(serverId)
                     .getEntities()
                     .orEmpty()
+                    .toImmutableList()
             } else {
                 Timber.w("No server registered")
-                emptyList()
+                persistentListOf()
             }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), emptyList())
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), persistentListOf())
 
     fun onSetup(widgetId: Int) {
         if (this.widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {

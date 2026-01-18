@@ -14,6 +14,7 @@ import androidx.glance.unit.ColorProvider
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTheme
 import io.homeassistant.companion.android.util.compose.glanceHaLightColors
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -65,7 +66,7 @@ internal sealed interface GridWidgetState {
 
 internal object LoadingGridState : GridWidgetState
 
-internal data class GridStateWithData(val label: String?, val items: List<GridButtonData>) : GridWidgetState
+internal data class GridStateWithData(val label: String?, val items: ImmutableList<GridButtonData>) : GridWidgetState
 
 internal data class GridButtonData(
     val id: String,

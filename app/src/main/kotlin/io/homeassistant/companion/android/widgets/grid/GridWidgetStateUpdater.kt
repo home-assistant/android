@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.GridWidgetDao
 import io.homeassistant.companion.android.database.widget.GridWidgetEntity
 import javax.inject.Inject
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
@@ -46,7 +47,7 @@ internal class GridWidgetStateUpdater @Inject constructor(
                     state = updatedEntity.friendlyState(context, appendUnitOfMeasurement = true),
                     isActive = updatedEntity.isActive(),
                 )
-                currentUiState = currentUiState.copy(items = items)
+                currentUiState = currentUiState.copy(items = items.toImmutableList())
                 emit(currentUiState)
             }
         }
@@ -70,7 +71,7 @@ internal class GridWidgetStateUpdater @Inject constructor(
 
 private fun GridWidgetEntity.toUiState() = GridStateWithData(
     label = label,
-    items = items.map(GridWidgetEntity.Item::toUiState),
+    items = items.map(GridWidgetEntity.Item::toUiState).toImmutableList(),
 )
 
 private fun GridWidgetEntity.Item.toUiState() = GridButtonData(

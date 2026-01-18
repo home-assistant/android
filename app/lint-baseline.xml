@@ -2425,94 +2425,6 @@
 
     <issue
         id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `servers: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    servers: List&lt;Server>,"
-        errorLine2="             ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/grid/config/GridConfigurationScreen.kt"
-            line="77"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Entity> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;Entity>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;Entity>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    entities: List&lt;Entity>,"
-        errorLine2="              ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/grid/config/GridConfigurationScreen.kt"
-            line="79"
-            column="15"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `servers: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    servers: List&lt;Server>,"
-        errorLine2="             ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/grid/config/GridConfigurationScreen.kt"
-            line="120"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Entity> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;Entity>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;Entity>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    entities: List&lt;Entity>,"
-        errorLine2="              ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/grid/config/GridConfigurationScreen.kt"
-            line="123"
-            column="15"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Entity> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;Entity>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;Entity>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    entities: List&lt;Entity>,"
-        errorLine2="              ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/grid/config/GridConfigurationScreen.kt"
-            line="182"
-            column="15"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Entity> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;Entity>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;Entity>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    entities: List&lt;Entity>,"
-        errorLine2="              ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/grid/config/GridConfigurationScreen.kt"
-            line="249"
-            column="15"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;GridButtonData> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `items: ImmutableList&lt;GridButtonData>` or create an `@Immutable` wrapper for this class: `@Immutable data class ItemsList(val items: List&lt;GridButtonData>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    items: List&lt;GridButtonData>,"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/grid/GridGlanceAppWidget.kt"
-            line="244"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;GridButtonData> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `items: ImmutableList&lt;GridButtonData>` or create an `@Immutable` wrapper for this class: `@Immutable data class ItemsList(val items: List&lt;GridButtonData>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    items: List&lt;GridButtonData>,"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/grid/GridGlanceAppWidget.kt"
-            line="267"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
         message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;IIcon> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `icons: ImmutableList&lt;IIcon>` or create an `@Immutable` wrapper for this class: `@Immutable data class IconsList(val items: List&lt;IIcon>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
         errorLine1="fun IconDialogGrid(icons: List&lt;IIcon>, tint: Color = MaterialTheme.colors.onSurface, onClick: (IIcon) -> Unit) {"
         errorLine2="                          ~~~~~~~~~~~">
@@ -2694,7 +2606,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/grid/GridWidgetState.kt"
-            line="34"
+            line="35"
             column="13"/>
     </issue>
 
@@ -2705,7 +2617,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/grid/GridWidgetState.kt"
-            line="52"
+            line="53"
             column="13"/>
     </issue>
 

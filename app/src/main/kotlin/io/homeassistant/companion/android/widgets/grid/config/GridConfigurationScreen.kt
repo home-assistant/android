@@ -48,6 +48,8 @@ import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import io.homeassistant.companion.android.util.safeTopWindowInsets
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -73,9 +75,9 @@ fun GridWidgetConfigurationScreen(viewModel: GridConfigurationViewModel, onSubmi
 
 @Composable
 private fun GridWidgetConfigurationContent(
-    servers: List<Server>,
+    servers: ImmutableList<Server>,
     onServerSelected: (Int) -> Unit,
-    entities: List<Entity>,
+    entities: ImmutableList<Entity>,
     config: GridConfiguration,
     onNameChange: (String) -> Unit,
     onItemAdd: (Entity) -> Unit,
@@ -116,10 +118,10 @@ private fun GridWidgetConfigurationContent(
 private fun GridWidgetConfigurationContent(
     config: GridConfiguration,
     onNameChange: (String) -> Unit,
-    servers: List<Server>,
+    servers: ImmutableList<Server>,
     onServerSelected: (Int) -> Unit,
     onItemMove: (GridItem, GridItem) -> Unit,
-    entities: List<Entity>,
+    entities: ImmutableList<Entity>,
     onItemEdit: (Int, Entity) -> Unit,
     onItemDelete: (Int) -> Unit,
     onItemAdd: (Entity) -> Unit,
@@ -178,7 +180,7 @@ private fun GridWidgetConfigurationContent(
 private fun EntityList(
     onItemMove: (GridItem, GridItem) -> Unit,
     config: GridConfiguration,
-    entities: List<Entity>,
+    entities: ImmutableList<Entity>,
     onItemEdit: (Int, Entity) -> Unit,
     onItemDelete: (Int) -> Unit,
     onItemAdd: (Entity) -> Unit,
@@ -257,7 +259,7 @@ private fun EntityList(
 
 @Composable
 private fun EntityEditorRow(
-    entities: List<Entity>,
+    entities: ImmutableList<Entity>,
     onSelect: (String) -> Boolean,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
@@ -318,18 +320,18 @@ private fun GridConfigurationPreview() {
             config = GridConfiguration(
                 serverId = 0,
                 label = "Home lights",
-                items = listOf(
+                items = persistentListOf(
                     GridItem("Bedroom", "mdi:lightbulb"),
                     GridItem("Bedroom", "mdi:lightbulb"),
                     GridItem("Living room", "mdi:lightbulb"),
                 ),
             ),
-            servers = listOf(
+            servers = persistentListOf(
                 previewServer1,
                 previewServer2,
             ),
             onServerSelected = {},
-            entities = listOf(
+            entities = persistentListOf(
                 previewEntity1,
                 previewEntity2,
             ),

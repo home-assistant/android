@@ -69,6 +69,8 @@ import io.homeassistant.companion.android.widgets.grid.GridWidgetState.Companion
 import io.homeassistant.companion.android.widgets.grid.GridWidgetState.Companion.getColors
 import io.homeassistant.companion.android.widgets.grid.config.GridWidgetConfigureActivity
 import kotlin.math.ceil
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 /**
  * Glance widget for displaying a grid of actions.
@@ -250,7 +252,7 @@ private enum class GridWidgetLayoutSize(val maxWidth: Dp) {
 
 @Composable
 private fun LazyButtonColumn(
-    items: List<GridButtonData>,
+    items: ImmutableList<GridButtonData>,
     itemContentProvider: @Composable (item: GridButtonData) -> Unit,
     modifier: GlanceModifier = GlanceModifier,
 ) {
@@ -273,7 +275,7 @@ private fun LazyButtonColumn(
 @Composable
 private fun LazyButtonGrid(
     gridCells: Int,
-    items: List<GridButtonData>,
+    items: ImmutableList<GridButtonData>,
     itemContentProvider: @Composable (item: GridButtonData) -> Unit,
     modifier: GlanceModifier = GlanceModifier,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
@@ -422,7 +424,7 @@ private fun DynamicGridWidgetPreview() {
             modifier = GlanceModifier.cornerRadius(32.dp),
             state = GridStateWithData(
                 label = "Home",
-                items = listOf(
+                items = persistentListOf(
                     GridButtonData("0", "Living room", "mdi:lightbulb", "Off"),
                     GridButtonData("1", "Bedside table lamp", "mdi:lamp", "On", true),
                     GridButtonData("2", "Bedroom temperature", "mdi:thermometer", "15 ºC"),
