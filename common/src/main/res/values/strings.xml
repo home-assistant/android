@@ -222,6 +222,7 @@
     <string name="downloads_unnamed_file">Unnamed file</string>
     <string name="downloads_complete">Download complete.</string>
     <string name="downloads_failed">Download failed.</string>
+    <string name="drag_to_reorder">Drag to reorder</string>
     <string name="empty_template">Template value must not be blank</string>
     <string name="enable_sensor">Enable sensor</string>
     <string name="enable_sensor_missing_permission_activity_recognition">Requires \'Physical activity\' permission</string>

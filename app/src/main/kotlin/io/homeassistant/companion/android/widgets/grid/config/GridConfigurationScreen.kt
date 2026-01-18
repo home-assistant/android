@@ -6,13 +6,14 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Button
 import androidx.compose.material.Divider
-import androidx.compose.material.Icon
+import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
@@ -25,15 +26,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.mikepenz.iconics.compose.IconicsPainter
+import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -42,7 +42,6 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.SingleEntityPicker
-import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewEntity2
 import io.homeassistant.companion.android.util.previewServer1
@@ -194,20 +193,17 @@ private fun EntityList(
         state = lazyListState,
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
     ) {
-        itemsIndexed(config.items) { index, item ->
+        itemsIndexed(
+            items = config.items,
+            key = { _, item -> item },
+        ) { index, item ->
             ReorderableItem(
                 state = reorderState,
                 key = item,
             ) {
-                val iconPainter = remember(item.icon) {
-                    CommunityMaterial.getIconByMdiName(item.icon)?.let {
-                        IconicsPainter(it)
-                    }
-                }
                 EntityEditorRow(
                     entityId = item.entityId,
                     entities = entities,
-                    icon = iconPainter?.let { { Icon(it, null) } },
                     onSelect = { selected ->
                         FailFast.failOnCatch(
                             { "Selected entity not found: $selected" },
@@ -219,15 +215,22 @@ private fun EntityList(
                         true
                     },
                     onDelete = { onItemDelete(index) },
+                    leadingContent = {
+                        Image(
+                            modifier = Modifier
+                                .draggableHandle()
+                                .size(width = 40.dp, height = 24.dp),
+                            asset = CommunityMaterial.Icon.cmd_drag_horizontal_variant,
+                            contentDescription = stringResource(commonR.string.hold_to_reorder),
+                            colorFilter = ColorFilter.tint(LocalContentColor.current),
+                        )
+                    },
                 )
             }
         }
         item {
             EntityEditorRow(
                 entities = entities,
-                icon = {
-                    Icon(painterResource(R.drawable.ic_plus), null)
-                },
                 onSelect = { selected ->
                     FailFast.failOnCatch(
                         { "Selected entity not found: $selected" },
@@ -239,6 +242,14 @@ private fun EntityList(
                     false
                 },
                 onDelete = {},
+                leadingContent = {
+                    Image(
+                        modifier = Modifier.size(width = 40.dp, height = 24.dp),
+                        asset = CommunityMaterial.Icon3.cmd_plus_thick,
+                        contentDescription = stringResource(commonR.string.hold_to_reorder),
+                        colorFilter = ColorFilter.tint(LocalContentColor.current),
+                    )
+                },
             )
         }
     }
@@ -251,14 +262,14 @@ private fun EntityEditorRow(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
     entityId: String? = null,
-    icon: (@Composable () -> Unit)? = null,
+    leadingContent: @Composable (() -> Unit)? = null,
 ) {
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        icon?.invoke()
+        leadingContent?.invoke()
         SingleEntityPicker(
             modifier = Modifier.weight(1f),
             label = { Text(stringResource(commonR.string.entity)) },
