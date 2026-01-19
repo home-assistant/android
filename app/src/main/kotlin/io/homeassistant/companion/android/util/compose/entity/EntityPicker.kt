@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -308,6 +307,7 @@ internal fun EntityPicker(
                         searchQuery = ""
                     },
                     dispatcher = dispatcher,
+                    modifier = Modifier.padding(top = HADimens.SPACE2).takeIf { selectedEntityId != null } ?: Modifier,
                 )
             }
         }
@@ -373,6 +373,7 @@ private fun RowScope.EntityContent(entity: EntityPickerItem) {
                 color = colorScheme.colorTextSecondary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = HADimens.SPACE1),
             )
         }
     }
@@ -404,7 +405,6 @@ private fun EntityPickerDropdown(
     Column(
         modifier = modifier
             .enclosureBorder(colorScheme)
-            // No horizontal padding to be able to have list header to take the whole space
             .padding(top = HADimens.SPACE3),
     ) {
         EntityPickerContent(
@@ -444,8 +444,6 @@ private fun EntityPickerContent(
                     .fillMaxWidth()
                     .testTag(ENTITY_LIST_TEST_TAG),
             ) {
-                entityHeader()
-
                 items(
                     items = filteredEntities,
                     key = { it.entityId },
@@ -512,28 +510,6 @@ private fun SearchField(searchQuery: String, onSearchQueryChange: (String) -> Un
     )
 }
 
-private fun LazyListScope.entityHeader() {
-    stickyHeader {
-        val colorScheme = LocalHAColorScheme.current
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(colorScheme.colorSurfaceLow),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(commonR.string.entities),
-                style = HATextStyle.Body,
-                color = colorScheme.colorTextSecondary,
-                modifier = Modifier.padding(
-                    horizontal = HADimens.SPACE3,
-                    vertical = HADimens.SPACE1,
-                ),
-            )
-        }
-    }
-}
-
 @Composable
 private fun EmptyResultPlaceholder(searchQuery: String) {
     Row(
@@ -565,7 +541,7 @@ private fun EntityListItem(entity: EntityPickerItem, onClick: () -> Unit, modifi
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(HADimens.SPACE14)
+            .height(HADimens.SPACE16)
             .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),

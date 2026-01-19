@@ -239,7 +239,6 @@
         <item quantity="one">1 entity</item>
         <item quantity="other">%d entities</item>
     </plurals>
-    <string name="entities">Entities</string>
     <string name="entity_attribute_checkbox">Append attribute value</string>
     <string name="entity_id_name">Entity ID: %1$s</string>
     <string name="entity_picker_add_entity">Add entity</string>
