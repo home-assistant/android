@@ -248,6 +248,10 @@ class AssistViewModel @Inject constructor(
             }
             AssistInputMode.VOICE_ACTIVE -> {
                 stopRecording(sendRecorded = false)
+                // Remove placeholder message if present from proactive recording
+                if (_conversation.lastOrNull()?.let { it.isPlaceholder && it.isInput } == true) {
+                    _conversation.removeLast()
+                }
                 inputMode = AssistInputMode.TEXT
             }
         }
@@ -282,7 +286,7 @@ class AssistViewModel @Inject constructor(
         if (recording) {
             if (!recorderProactive) setupRecorder()
             inputMode = AssistInputMode.VOICE_ACTIVE
-            if (proactive == true) _conversation.add(AssistMessage("…", isInput = true))
+            if (proactive == true) _conversation.add(AssistMessage.placeholder(isInput = true))
             if (proactive != true) runAssistPipeline(null)
         } else {
             _conversation.add(
@@ -296,9 +300,9 @@ class AssistViewModel @Inject constructor(
         val isVoice = text == null
         stopPlayback()
 
-        val userMessage = AssistMessage(text ?: "…", isInput = true)
+        val userMessage = text?.let { AssistMessage(it, isInput = true) } ?: AssistMessage.placeholder(isInput = true)
         _conversation.add(userMessage)
-        val haMessage = AssistMessage("…", isInput = false)
+        val haMessage = AssistMessage.placeholder(isInput = false)
         if (!isVoice) _conversation.add(haMessage)
         var message = if (isVoice) userMessage else haMessage
 
