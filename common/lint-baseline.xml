@@ -85,7 +85,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/database/migration/Utils.kt"
-            line="59"
+            line="53"
             column="9"/>
     </issue>
 
@@ -96,7 +96,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/database/migration/Utils.kt"
-            line="59"
+            line="53"
             column="9"/>
     </issue>
 
@@ -124,7 +124,7 @@
 
     <issue
         id="PrivateResource"
-        message="Overriding `@string/state_off` which is marked as private in androidx.compose.ui:ui-android:1.10.0. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
+        message="Overriding `@string/state_off` which is marked as private in androidx.compose.ui:ui-android:1.10.1. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
         errorLine1="    &lt;string name=&quot;state_off&quot;>Off&lt;/string>"
         errorLine2="                  ~~~~~~~~~">
         <location
@@ -135,7 +135,7 @@
 
     <issue
         id="PrivateResource"
-        message="Overriding `@string/state_on` which is marked as private in androidx.compose.ui:ui-android:1.10.0. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
+        message="Overriding `@string/state_on` which is marked as private in androidx.compose.ui:ui-android:1.10.1. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
         errorLine1="    &lt;string name=&quot;state_on&quot;>On&lt;/string>"
         errorLine2="                  ~~~~~~~~">
         <location
@@ -228,7 +228,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/authentication/impl/AuthenticationRepositoryImpl.kt"
-            line="81"
+            line="55"
             column="13"/>
     </issue>
 
@@ -239,30 +239,30 @@
         errorLine2="                                                            ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorManager.kt"
-            line="303"
+            line="298"
             column="61"/>
     </issue>
 
     <issue
         id="AvoidAnySerializer"
         message="Prefer polymorphic serializer over AnySerializer."
-        errorLine1="                                kotlinJsonMapper.encodeToString(MapAnySerializer, supportedFeaturesMessage),"
-        errorLine2="                                                                ~~~~~~~~~~~~~~~~">
+        errorLine1="                    kotlinJsonMapper.encodeToString(MapAnySerializer, outbound),"
+        errorLine2="                                                    ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/websocket/impl/WebSocketCoreImpl.kt"
-            line="242"
-            column="65"/>
+            line="273"
+            column="53"/>
     </issue>
 
     <issue
         id="AvoidAnySerializer"
         message="Prefer polymorphic serializer over AnySerializer."
-        errorLine1="                                    kotlinJsonMapper.encodeToString(MapAnySerializer, outbound),"
-        errorLine2="                                                                    ~~~~~~~~~~~~~~~~">
+        errorLine1="                MapAnySerializer,"
+        errorLine2="                ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/websocket/impl/WebSocketCoreImpl.kt"
-            line="322"
-            column="69"/>
+            line="534"
+            column="17"/>
     </issue>
 
 </issues>
