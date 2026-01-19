@@ -140,7 +140,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="181"
+            line="182"
             column="13"/>
     </issue>
 
@@ -151,7 +151,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="189"
+            line="190"
             column="13"/>
     </issue>
 
@@ -549,7 +549,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/integration/MobileAppIntegrationActivity.kt"
-            line="63"
+            line="69"
             column="31"/>
     </issue>
 
@@ -560,7 +560,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/integration/MobileAppIntegrationActivity.kt"
-            line="63"
+            line="69"
             column="31"/>
     </issue>
 
@@ -571,7 +571,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/phone/PhoneSettingsListener.kt"
-            line="224"
+            line="220"
             column="35"/>
     </issue>
 
@@ -582,7 +582,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/phone/PhoneSettingsListener.kt"
-            line="224"
+            line="220"
             column="35"/>
     </issue>
 
