@@ -23,7 +23,6 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
@@ -66,11 +65,16 @@ class EntityGridVehicleScreen(
     private var loading = true
     var entities: List<Entity> = listOf()
     private val isFavorites = title == carContext.getString(R.string.favorites)
-    private val shouldSwitchServers = serverManager.defaultServers.size > 1
+    private var shouldSwitchServers = false
 
     init {
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                if (serverManager.servers().size > 1 && !shouldSwitchServers) {
+                    shouldSwitchServers = true
+                    invalidate()
+                }
+
                 entitiesFlow.collect {
                     loading = false
                     val hasChanged = entities.size != it.size || entities.toSet() != it.toSet()
@@ -124,6 +128,7 @@ class EntityGridVehicleScreen(
                 listBuilder.addItem(
                     getChangeServerGridItem(
                         carContext,
+                        lifecycleScope,
                         screenManager,
                         serverManager,
                         serverId,

@@ -40,7 +40,7 @@ class SetHomeNetworkViewModelTest {
     @BeforeEach
     fun setup() {
         every { wifiHelper.getWifiSsid() } returns MOCK_INITIAL_WIFI_SSID_QUOTED
-        every { serverManager.updateServer(any()) } just Runs
+        coEvery { serverManager.updateServer(any()) } just Runs
     }
 
     private fun initializeViewModel() {

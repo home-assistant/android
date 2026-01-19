@@ -26,8 +26,9 @@ import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.common.util.HAStrictMode
 import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
+import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.NightModeManager
@@ -72,6 +73,12 @@ open class HomeAssistantApplication :
 
     @Inject
     lateinit var nightModeManager: NightModeManager
+
+    @Inject
+    lateinit var sensorDao: SensorDao
+
+    @Inject
+    lateinit var settingsDao: SettingsDao
 
     @OptIn(ExperimentalComposeRuntimeApi::class)
     override fun onCreate() {
@@ -269,7 +276,6 @@ open class HomeAssistantApplication :
         )
 
         // Register for all saved user intents
-        val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
         ioScope.launch {
             val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
             for (setting in allSettings) {
@@ -305,10 +311,9 @@ open class HomeAssistantApplication :
         }
 
         // Register for faster sensor updates if enabled
-        val settingDao = AppDatabase.getInstance(applicationContext).settingsDao()
         ioScope.launch {
             // 0 is used for storing app level settings
-            val settings = settingDao.get(0)
+            val settings = settingsDao.get(0)
             if (settings != null &&
                 (
                     settings.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING ||

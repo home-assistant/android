@@ -11,7 +11,6 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.applyCompressedStateDiff
-import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
@@ -101,7 +100,7 @@ class HaControlsProviderService : ControlsProviderService() {
 
                 val splitServersIntoMultipleStructures = splitMultiServersIntoStructures()
 
-                serverManager.defaultServers.map { server ->
+                serverManager.servers().map { server ->
                     async {
                         try {
                             val getAreaRegistry =
@@ -142,8 +141,9 @@ class HaControlsProviderService : ControlsProviderService() {
                         serverEntities.value?.forEach { allEntities += Pair(serverEntities.key, it) }
                     }
                     val serverNames = mutableMapOf<Int, String>()
-                    if (serverManager.defaultServers.size > 1) {
-                        serverManager.defaultServers.forEach { serverNames[it.id] = it.friendlyName }
+                    val servers = serverManager.servers()
+                    if (servers.size > 1) {
+                        servers.forEach { serverNames[it.id] = it.friendlyName }
                     }
                     allEntities
                         .filter {
@@ -194,7 +194,7 @@ class HaControlsProviderService : ControlsProviderService() {
                             .groupBy {
                                 // Controls added before multiserver don't have a server ID, assume the first
                                 it.split(".")[0].toIntOrNull()
-                                    ?: serverManager.defaultServers.firstOrNull()?.id
+                                    ?: serverManager.servers().firstOrNull()?.id
                             }.forEach { (serverId, serverControlIds) ->
                                 if (serverId == null) return@forEach
                                 subscribeToEntitiesForServer(
@@ -226,7 +226,7 @@ class HaControlsProviderService : ControlsProviderService() {
                 server = it
                 domain = controlId.split(".")[1]
             } ?: run {
-                server = serverManager.defaultServers.firstOrNull()!!.id
+                server = serverManager.servers().firstOrNull()!!.id
                 domain = controlId.split(".")[0]
             }
             val haControl = domainToHaControl[domain]
@@ -255,7 +255,7 @@ class HaControlsProviderService : ControlsProviderService() {
         webSocketScope: CoroutineScope,
         subscriber: Flow.Subscriber<in Control>,
     ) {
-        val serverCount = serverManager.defaultServers.size
+        val serverCount = serverManager.servers().size
         val server = serverManager.getServer(serverId)
 
         // Server name should only be specified if there's more than one server, as controls being split by structure (or the area names appended with the server name)

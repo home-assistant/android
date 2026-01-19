@@ -9,15 +9,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.authentication.ServerRegistrationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
-import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
-import io.homeassistant.companion.android.database.server.ServerType
-import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.NameYourDeviceRoute
 import io.homeassistant.companion.android.util.isPubliclyAccessible
 import java.net.URL
@@ -60,6 +56,7 @@ internal sealed interface NameYourDeviceNavigationEvent {
 internal class NameYourDeviceViewModel @VisibleForTesting constructor(
     private val route: NameYourDeviceRoute,
     private val serverManager: ServerManager,
+    private val serverRegistrationRepository: ServerRegistrationRepository,
     private val appVersionProvider: AppVersionProvider,
     private val messagingTokenProvider: MessagingTokenProvider,
     defaultName: String = Build.MODEL,
@@ -69,11 +66,13 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
     constructor(
         savedStateHandle: SavedStateHandle,
         serverManager: ServerManager,
+        serverRegistrationRepository: ServerRegistrationRepository,
         appVersionProvider: AppVersionProvider,
         messagingTokenProvider: MessagingTokenProvider,
     ) : this(
         savedStateHandle.toRoute<NameYourDeviceRoute>(),
         serverManager,
+        serverRegistrationRepository,
         appVersionProvider,
         messagingTokenProvider,
     )
@@ -136,30 +135,24 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
     }
 
     private suspend fun addServer(hasPlainTextAccess: Boolean): Int {
-        val server = Server(
-            _name = "",
-            type = ServerType.TEMPORARY,
-            connection = ServerConnectionInfo(
-                externalUrl = route.url,
-                allowInsecureConnection = if (!hasPlainTextAccess) false else null,
-            ),
-            session = ServerSessionInfo(),
-            user = ServerUserInfo(),
-        )
-        var tempServerId: Int? = null
+        var serverId: Int? = null
         try {
-            tempServerId = serverManager.addServer(server)
-            serverManager.authenticationRepository(tempServerId).registerAuthorizationCode(route.authCode)
-            serverManager.integrationRepository(tempServerId).registerDevice(
+            val temporaryServer = checkNotNull(
+                serverRegistrationRepository.registerAuthorizationCode(
+                    url = route.url,
+                    allowInsecureConnection = if (!hasPlainTextAccess) false else null,
+                    authorizationCode = route.authCode,
+                ),
+            ) { "Registration failed" }
+
+            serverId = serverManager.addServer(temporaryServer)
+            serverManager.integrationRepository(serverId).registerDevice(
                 DeviceRegistration(
                     appVersionProvider(),
                     deviceNameFlow.value,
                     messagingTokenProvider(),
                 ),
             )
-            val serverId = serverManager.convertTemporaryServer(tempServerId)
-                ?: throw IllegalStateException("Server still temporary")
-
             // Active the newly added server
             serverManager.activateServer(serverId)
 
@@ -171,11 +164,11 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
             // - missing mobile_app integration
             // - system version related in OkHttp (cryptography)
             // - general connection issues (offline/unknown)
-            if (tempServerId != null) {
+            if (serverId != null) {
                 Timber.e("Error while adding server and registering device. Reverting")
-                runCatching { serverManager.authenticationRepository(tempServerId).revokeSession() }
+                runCatching { serverManager.authenticationRepository(serverId).revokeSession() }
                     .onFailure { Timber.e(it, "Failed to revoke session") }
-                runCatching { serverManager.removeServer(tempServerId) }
+                runCatching { serverManager.removeServer(serverId) }
                     .onFailure { Timber.e(it, "Failed to remove temporary server") }
             }
             throw e

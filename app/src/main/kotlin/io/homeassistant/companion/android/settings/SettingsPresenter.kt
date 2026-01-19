@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.database.server.Server
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 interface SettingsPresenter {
@@ -18,8 +19,7 @@ interface SettingsPresenter {
     fun updateSuggestions(context: Context)
     fun cancelSuggestion(context: Context, id: String)
     fun getSuggestionFlow(): StateFlow<SettingsHomeSuggestion?>
-    fun getServersFlow(): StateFlow<List<Server>>
-    fun getServerCount(): Int
+    suspend fun getServersFlow(): Flow<List<Server>>
     suspend fun getNotificationRateLimits(): RateLimitResponse?
     suspend fun showChangeLog(context: Context)
     suspend fun isChangeLogPopupEnabled(): Boolean

@@ -16,7 +16,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
-import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -72,22 +71,20 @@ class MediaPlayerControlsWidgetConfigureActivity :
         binding.root.applySafeDrawingInsets()
 
         binding.addButton.setOnClickListener {
-            if (requestLauncherSetup) {
-                if (
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                    isValidServerId() &&
-                    binding.widgetTextConfigEntityId.text.split(",").any {
-                        entities[selectedServerId!!].orEmpty().any { e -> e.entityId == it.trim() }
-                    }
-                ) {
-                    lifecycleScope.launch {
+            lifecycleScope.launch {
+                if (requestLauncherSetup) {
+                    if (
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                        isValidServerId() &&
+                        binding.widgetTextConfigEntityId.text.split(",").any {
+                            entities[selectedServerId!!].orEmpty().any { e -> e.entityId == it.trim() }
+                        }
+                    ) {
                         requestWidgetCreation()
+                    } else {
+                        showAddWidgetError()
                     }
                 } else {
-                    showAddWidgetError()
-                }
-            } else {
-                lifecycleScope.launch {
                     updateWidget()
                 }
             }
@@ -144,7 +141,11 @@ class MediaPlayerControlsWidgetConfigureActivity :
                         }
                     } catch (e: Exception) {
                         Timber.e(e, "Unable to get entity information")
-                        Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
+                        Toast.makeText(
+                            applicationContext,
+                            commonR.string.widget_entity_fetch_error,
+                            Toast.LENGTH_LONG,
+                        )
                             .show()
                         null
                     }
@@ -163,17 +164,19 @@ class MediaPlayerControlsWidgetConfigureActivity :
         binding.widgetTextConfigEntityId.setTokenizer(MultiAutoCompleteTextView.CommaTokenizer())
         binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
 
-        serverManager.defaultServers.forEach { server ->
-            lifecycleScope.launch {
-                try {
-                    val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
-                        .filter { it.domain == MEDIA_PLAYER_DOMAIN }
-                    entities[server.id] = fetchedEntities
-                    if (server.id == selectedServerId) setAdapterEntities(server.id)
-                } catch (e: Exception) {
-                    // If entities fail to load, it's okay to pass
-                    // an empty map to the dynamicFieldAdapter
-                    Timber.e(e, "Failed to query entities")
+        lifecycleScope.launch {
+            serverManager.servers().forEach { server ->
+                launch {
+                    try {
+                        val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
+                            .filter { it.domain == MEDIA_PLAYER_DOMAIN }
+                        entities[server.id] = fetchedEntities
+                        if (server.id == selectedServerId) setAdapterEntities(server.id)
+                    } catch (e: Exception) {
+                        // If entities fail to load, it's okay to pass
+                        // an empty map to the dynamicFieldAdapter
+                        Timber.e(e, "Failed to query entities")
+                    }
                 }
             }
         }

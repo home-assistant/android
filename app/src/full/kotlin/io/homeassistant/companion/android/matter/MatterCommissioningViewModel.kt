@@ -11,6 +11,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.thread.ThreadManager
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -41,6 +42,9 @@ class MatterCommissioningViewModel @Inject constructor(
     var serverId by mutableIntStateOf(0)
         private set
 
+    var servers by mutableStateOf<List<Server>>(emptyList())
+        private set
+
     fun checkSetup(isNewDevice: Boolean) {
         viewModelScope.launch {
             if (!isNewDevice && step != CommissioningFlowStep.NotStarted) {
@@ -53,8 +57,8 @@ class MatterCommissioningViewModel @Inject constructor(
                 step = CommissioningFlowStep.NotRegistered
                 return@launch
             }
-
-            if (serverManager.defaultServers.size > 1) {
+            servers = serverManager.servers()
+            if (servers.size > 1) {
                 step = CommissioningFlowStep.SelectServer
             } else {
                 serverManager.getServer()?.id?.let {

@@ -19,7 +19,6 @@ import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -50,6 +49,7 @@ fun getHeaderBuilder(title: String, action: Action = Action.BACK): Header.Builde
 
 fun getChangeServerGridItem(
     carContext: CarContext,
+    lifecycleScope: LifecycleCoroutineScope,
     screenManager: ScreenManager,
     serverManager: ServerManager,
     serverId: StateFlow<Int>,
@@ -70,16 +70,18 @@ fun getChangeServerGridItem(
                 .build(),
         )
         setOnClickListener {
-            Timber.i("Change server clicked")
-            screenManager.pushForResult(
-                ChangeServerScreen(
-                    carContext,
-                    serverManager,
-                    serverId,
-                ),
-            ) {
-                it?.toString()?.toIntOrNull()?.let { serverId ->
-                    onChangeServer(serverId)
+            lifecycleScope.launch {
+                Timber.i("Change server clicked")
+                screenManager.pushForResult(
+                    ChangeServerScreen(
+                        carContext,
+                        serverManager.servers(),
+                        serverId,
+                    ),
+                ) {
+                    it?.toString()?.toIntOrNull()?.let { serverId ->
+                        onChangeServer(serverId)
+                    }
                 }
             }
         }

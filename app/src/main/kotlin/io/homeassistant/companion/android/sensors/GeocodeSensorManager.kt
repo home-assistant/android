@@ -12,7 +12,6 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.instant
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
@@ -100,7 +99,7 @@ class GeocodeSensorManager : SensorManager {
         }
 
         var address: Address? = null
-        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val sensorDao = sensorDao(context)
         val sensorSettings = sensorDao.getSettings(geocodedLocation.id)
         val minAccuracy = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()

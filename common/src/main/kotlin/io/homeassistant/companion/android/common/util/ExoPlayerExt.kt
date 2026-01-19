@@ -3,7 +3,10 @@ package io.homeassistant.companion.android.common.util
 import android.content.Context
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.cronet.CronetDataSource
+import androidx.media3.datasource.cronet.CronetUtil
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
@@ -11,6 +14,7 @@ import java.util.concurrent.Executors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.chromium.net.CronetEngine
+import timber.log.Timber
 
 /**
  * Initializes and returns an ExoPlayer instance optimized for live streaming,
@@ -23,6 +27,7 @@ import org.chromium.net.CronetEngine
  *
  * Key features of this initialization:
  * - **Network Stack:** Uses Cronet as the underlying HTTP stack, enabling QUIC protocol support.
+ *   Falls back to [DefaultHttpDataSource] if Cronet is unavailable on the device.
  * - **Threading:** Network operations are handled on a dedicated background thread,
  *   created internally via [Executors.newSingleThreadExecutor], to prevent UI blocking.
  * - **Buffering:** Configured with a [DefaultLoadControl] specifically tuned to minimize
@@ -36,13 +41,9 @@ import org.chromium.net.CronetEngine
  */
 @OptIn(UnstableApi::class)
 suspend fun initializePlayer(context: Context): ExoPlayer = withContext(Dispatchers.Default) {
+    val dataSourceFactory = createDataSourceFactory(context)
     return@withContext ExoPlayer.Builder(context).setMediaSourceFactory(
-        DefaultMediaSourceFactory(
-            CronetDataSource.Factory(
-                CronetEngine.Builder(context).enableQuic(true).build(),
-                Executors.newSingleThreadExecutor(),
-            ),
-        ).setLiveMaxSpeed(8.0f),
+        DefaultMediaSourceFactory(dataSourceFactory).setLiveMaxSpeed(8.0f),
     ).setLoadControl(
         DefaultLoadControl.Builder().setBufferDurationsMs(
             0,
@@ -51,4 +52,20 @@ suspend fun initializePlayer(context: Context): ExoPlayer = withContext(Dispatch
             0,
         ).build(),
     ).build()
+}
+
+/**
+ * Creates a [DataSource.Factory] for ExoPlayer, preferring Cronet with QUIC support.
+ * Falls back to [DefaultHttpDataSource] if Cronet providers are unavailable on the device.
+ */
+@OptIn(UnstableApi::class)
+private fun createDataSourceFactory(context: Context): DataSource.Factory {
+    val cronetEngine = CronetUtil.buildCronetEngine(context, null, true)
+
+    return if (cronetEngine == null) {
+        Timber.w("Failed to build cronet engine fallback to DefaultHttpDataSource")
+        DefaultHttpDataSource.Factory()
+    } else {
+        CronetDataSource.Factory(cronetEngine, Executors.newSingleThreadExecutor())
+    }
 }

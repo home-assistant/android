@@ -19,7 +19,6 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
-import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
@@ -51,7 +50,7 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
 ) : ViewModel() {
     private var supportedTextColors: List<String> = emptyList()
     private var widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID
-    val servers = serverManager.defaultServersFlow
+    val servers = serverManager.serversFlow
     var selectedServerId by mutableIntStateOf(ServerManager.SERVER_ID_ACTIVE)
         private set
 

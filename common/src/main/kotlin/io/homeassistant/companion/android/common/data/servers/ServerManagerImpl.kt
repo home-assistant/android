@@ -14,21 +14,59 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerDao
-import io.homeassistant.companion.android.database.server.ServerType
+import io.homeassistant.companion.android.database.server.TemporaryServer
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.di.qualifiers.NamedSessionStorage
 import javax.inject.Inject
-import kotlin.math.min
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import timber.log.Timber
 
-class ServerManagerImpl @Inject constructor(
+private const val PREF_ACTIVE_SERVER = "active_server"
+
+/**
+ * A thread-safe map that associates server IDs with lazily-created values.
+ *
+ * This class provides concurrent access protection using a [Mutex] and supports
+ * lazy initialization of values via the [creator] function when using [getOrCreate].
+ *
+ * @param T The type of values stored in the map.
+ * @param creator A suspend function that creates a new value for a given server ID
+ *                when the ID is not yet present in the map.
+ */
+private class ServerMap<T>(private val creator: suspend (Int) -> T) {
+    private val internalMap = mutableMapOf<Int, T>()
+    private val mutex = Mutex()
+
+    suspend operator fun set(serverId: Int, value: T) {
+        mutex.withLock {
+            internalMap[serverId] = value
+        }
+    }
+
+    suspend operator fun get(serverId: Int): T? {
+        return mutex.withLock {
+            internalMap[serverId]
+        }
+    }
+
+    suspend fun getOrCreate(serverId: Int): T {
+        return mutex.withLock {
+            internalMap.getOrPut(serverId) {
+                creator(serverId)
+            }
+        }
+    }
+
+    suspend fun remove(serverId: Int) {
+        mutex.withLock {
+            internalMap.remove(serverId)
+        }
+    }
+}
+
+internal class ServerManagerImpl @Inject constructor(
     private val authenticationRepositoryFactory: AuthenticationRepositoryFactory,
     private val integrationRepositoryFactory: IntegrationRepositoryFactory,
     private val webSocketRepositoryFactory: WebSocketRepositoryFactory,
@@ -40,188 +78,106 @@ class ServerManagerImpl @Inject constructor(
     @NamedSessionStorage private val localStorage: LocalStorage,
 ) : ServerManager {
 
-    private val ioScope = CoroutineScope(Dispatchers.IO + Job())
+    private val authenticationRepos = ServerMap<AuthenticationRepository>(authenticationRepositoryFactory::create)
+    private val integrationRepos = ServerMap<IntegrationRepository>(integrationRepositoryFactory::create)
+    private val webSocketRepos = ServerMap(webSocketRepositoryFactory::create)
+    private val connectionStateProviders =
+        ServerMap<ServerConnectionStateProvider>(serverConnectionStateProviderFactory::create)
 
-    private val mutableServers = mutableMapOf<Int, Server>()
-    private val mutableDefaultServersFlow = MutableStateFlow<List<Server>>(emptyList())
-
-    private val authenticationRepos = mutableMapOf<Int, AuthenticationRepository>()
-    private val integrationRepos = mutableMapOf<Int, IntegrationRepository>()
-    private val webSocketRepos = mutableMapOf<Int, WebSocketRepository>()
-    private val connectionStateProviders = mutableMapOf<Int, ServerConnectionStateProvider>()
-
-    companion object {
-        private const val PREF_ACTIVE_SERVER = "active_server"
+    override suspend fun servers(): List<Server> {
+        return serverDao.getAll()
     }
 
-    override val defaultServers: List<Server>
-        get() = mutableServers.values.filter { it.type == ServerType.DEFAULT }.toList()
+    override val serversFlow: Flow<List<Server>>
+        get() = serverDao.getAllFlow()
 
-    override val defaultServersFlow: StateFlow<List<Server>>
-        get() = mutableDefaultServersFlow.asStateFlow()
-
-    init {
-        // Initial (blocking) load
-        runBlocking {
-            serverDao.getAll().forEach {
-                mutableServers[it.id] = it
-            }
-        }
-
-        // Listen for updates and update flow
-        ioScope.launch {
-            mutableDefaultServersFlow.emit(defaultServers)
-            serverDao.getAllFlow().collect { servers ->
-                mutableServers
-                    .filter {
-                        it.value.type == ServerType.DEFAULT &&
-                            it.key !in servers.map { server -> server.id }
-                    }
-                    .forEach {
-                        removeServerFromManager(it.key)
-                    }
-                servers.forEach {
-                    mutableServers[it.id] = it
-                }
-                mutableDefaultServersFlow.emit(defaultServers)
-            }
-        }
-    }
-
-    override suspend fun isRegistered(): Boolean = mutableServers.values.any {
-        it.type == ServerType.DEFAULT &&
+    override suspend fun isRegistered(): Boolean {
+        return serverDao.getAll().any {
             it.connection.isRegistered &&
-            FailFast.failOnCatchSuspend(
-                message = {
-                    """Failed to get authenticationRepository for ${it.id}. Current repository ids: ${authenticationRepos.keys}."""
-                },
-                fallback = false,
-            ) { authenticationRepository(it.id).getSessionState() == SessionState.CONNECTED }
-    }
-
-    override suspend fun addServer(server: Server): Int {
-        val newServer = server.copy(
-            id = when (server.type) {
-                ServerType.TEMPORARY -> min(-2, (mutableServers.keys.minOrNull() ?: 0) - 1)
-                else -> 0 // Use autogenerated ID
-            },
-        )
-        return if (server.type == ServerType.DEFAULT) {
-            serverDao.add(newServer).toInt()
-        } else {
-            mutableServers[newServer.id] = newServer
-            newServer.id
+                FailFast.failOnCatchSuspend(
+                    message = {
+                        """Failed to get authenticationRepository for ${it.id}."""
+                    },
+                    fallback = false,
+                ) { authenticationRepository(it.id).getSessionState() == SessionState.CONNECTED }
         }
     }
 
-    private suspend fun activeServerId(): Int? {
-        val pref = localStorage.getInt(PREF_ACTIVE_SERVER)
-
-        return if (pref != null && mutableServers[pref] != null) {
-            pref
-        } else {
-            mutableServers.keys.maxOfOrNull { it }
-        }
+    override suspend fun addServer(server: TemporaryServer): Int {
+        return serverDao.add(Server.fromTemporaryServer(server)).toInt()
     }
 
     override suspend fun getServer(id: Int): Server? {
-        val serverId = if (id == SERVER_ID_ACTIVE) activeServerId() else id
+        val serverId = getServerIdSanitize(id)
         return serverId?.let {
-            mutableServers[serverId] ?: serverDao.get(serverId)
+            serverDao.get(it)
         }
     }
 
-    override suspend fun getServer(webhookId: String): Server? =
-        mutableServers.values.firstOrNull { it.connection.webhookId == webhookId }
-            ?: serverDao.get(webhookId)
+    override suspend fun getServer(webhookId: String): Server? {
+        return serverDao.get(webhookId)
+    }
 
-    override fun activateServer(id: Int) {
-        if (id != SERVER_ID_ACTIVE && mutableServers[id] != null && mutableServers[id]?.type == ServerType.DEFAULT) {
-            ioScope.launch { localStorage.putInt(PREF_ACTIVE_SERVER, id) }
+    override suspend fun activateServer(id: Int) {
+        if (id != SERVER_ID_ACTIVE) {
+            localStorage.putInt(PREF_ACTIVE_SERVER, id)
+        } else {
+            Timber.w("Activate with SERVER_ID_ACTIVE is not doing anything")
         }
     }
 
-    override fun updateServer(server: Server) {
-        mutableServers[server.id] = server
-        if (server.type == ServerType.DEFAULT) {
-            ioScope.launch { serverDao.update(server) }
-        }
-    }
-
-    override suspend fun convertTemporaryServer(id: Int): Int? {
-        return mutableServers[id]?.let { server ->
-            if (server.type != ServerType.TEMPORARY) return null
-
-            val newServer = server.copy(id = 0) // Use autogenerated ID
-            removeServer(id)
-            serverDao.add(newServer).toInt()
-        }
+    override suspend fun updateServer(server: Server) {
+        serverDao.update(server)
     }
 
     override suspend fun removeServer(id: Int) {
         authenticationRepository(id).deletePreferences()
         integrationRepository(id).deletePreferences()
         prefsRepository.removeServer(id)
-        removeServerFromManager(id)
+        authenticationRepos.remove(id)
+        integrationRepos.remove(id)
+        webSocketRepos[id]?.shutdown()
+        webSocketRepos.remove(id)
+        connectionStateProviders.remove(id)
+
         if (localStorage.getInt(PREF_ACTIVE_SERVER) == id) localStorage.remove(PREF_ACTIVE_SERVER)
         settingsDao.delete(id)
         sensorDao.removeServer(id)
         serverDao.delete(id)
     }
 
-    private suspend fun removeServerFromManager(id: Int) {
-        if (mutableServers[id]?.type == ServerType.TEMPORARY) {
-            authenticationRepository(id).deletePreferences()
-            integrationRepository(id).deletePreferences()
-            prefsRepository.removeServer(id)
-        } // else handled in removeServer
-        authenticationRepos.remove(id)
-        integrationRepos.remove(id)
-        webSocketRepos[id]?.shutdown()
-        webSocketRepos.remove(id)
-        connectionStateProviders.remove(id)
-        mutableServers.remove(id)
-    }
-
     override suspend fun authenticationRepository(serverId: Int): AuthenticationRepository {
-        val id = if (serverId == SERVER_ID_ACTIVE) activeServerId() else serverId
-        return authenticationRepos[id] ?: run {
-            if (id == null || mutableServers[id] == null) throw IllegalArgumentException("No server for ID")
-            val repository = authenticationRepositoryFactory.create(id)
-            authenticationRepos[id] = repository
-            checkNotNull(authenticationRepos[id]) { "Should not be null since we've just called create ($repository)" }
-        }
+        val id = validateServerId(serverId)
+        return authenticationRepos.getOrCreate(id)
     }
 
     override suspend fun integrationRepository(serverId: Int): IntegrationRepository {
-        val id = if (serverId == SERVER_ID_ACTIVE) activeServerId() else serverId
-        return integrationRepos[id] ?: run {
-            if (id == null || mutableServers[id] == null) throw IllegalArgumentException("No server for ID")
-            val repository = integrationRepositoryFactory.create(id)
-            integrationRepos[id] = repository
-            checkNotNull(integrationRepos[id]) { "Should not be null since we've just called create ($repository)" }
-        }
+        val id = validateServerId(serverId)
+        return integrationRepos.getOrCreate(id)
     }
 
     override suspend fun webSocketRepository(serverId: Int): WebSocketRepository {
-        val id = if (serverId == SERVER_ID_ACTIVE) activeServerId() else serverId
-        return webSocketRepos[id] ?: run {
-            if (id == null || mutableServers[id] == null) throw IllegalArgumentException("No server for ID")
-            val repository = webSocketRepositoryFactory.create(id)
-            webSocketRepos[id] = repository
-            checkNotNull(webSocketRepos[id]) { "Should not be null since we've just caled create ($repository)" }
-        }
+        val id = validateServerId(serverId)
+        return webSocketRepos.getOrCreate(id)
     }
 
     override suspend fun connectionStateProvider(serverId: Int): ServerConnectionStateProvider {
-        val id = if (serverId == SERVER_ID_ACTIVE) activeServerId() else serverId
-        return connectionStateProviders[id] ?: run {
-            if (id == null || mutableServers[id] == null) throw IllegalArgumentException("No server for ID")
-            val provider = serverConnectionStateProviderFactory.create(id)
-            connectionStateProviders[id] = provider
-            checkNotNull(connectionStateProviders[id]) {
-                "Should not be null since we've just called create ($provider)"
-            }
+        val id = validateServerId(serverId)
+        return connectionStateProviders.getOrCreate(id)
+    }
+
+    private suspend fun getServerIdSanitize(serverId: Int): Int? {
+        return if (serverId == SERVER_ID_ACTIVE) {
+            localStorage.getInt(PREF_ACTIVE_SERVER)
+                ?: serverDao.getLastServerId()
+        } else {
+            serverId
         }
+    }
+
+    private suspend fun validateServerId(serverId: Int): Int {
+        val id = checkNotNull(getServerIdSanitize(serverId)) { "Impossible to determine the serverID from $serverId" }
+        checkNotNull(serverDao.get(id)) { "No server for ID ($id)" }
+        return id
     }
 }

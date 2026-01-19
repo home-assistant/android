@@ -19,6 +19,7 @@ import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
+import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.onboarding.BaseOnboardingNavigationTest
 import io.homeassistant.companion.android.onboarding.URL_GETTING_STARTED_DOCUMENTATION
 import io.homeassistant.companion.android.onboarding.connection.CONNECTION_SCREEN_TAG
@@ -79,6 +80,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
         every { isLoadingFlow } returns MutableStateFlow(false)
         every { navigationEventsFlow } returns connectionNavigationEventFlow
         every { errorFlow } returns MutableStateFlow(null)
+        every { connectivityCheckState } returns MutableStateFlow(ConnectivityCheckState())
     }
 
     @Test

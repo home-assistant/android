@@ -14,12 +14,7 @@ import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
-import io.homeassistant.companion.android.database.server.ServerType
-import io.homeassistant.companion.android.database.server.ServerUserInfo
+import io.homeassistant.companion.android.common.data.authentication.ServerRegistrationRepository
 import io.homeassistant.companion.android.util.UrlUtil
 import java.net.URL
 import java.util.concurrent.Executors
@@ -34,7 +29,7 @@ import timber.log.Timber
 @SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
 class OnboardingPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
-    private val serverManager: ServerManager,
+    private val serverRegistrationRepository: ServerRegistrationRepository,
 ) : OnboardingPresenter {
 
     private val view = context as OnboardingView
@@ -130,36 +125,22 @@ class OnboardingPresenterImpl @Inject constructor(
     fun register(url: String, code: String) {
         mainScope.launch {
             view.showLoading()
-            var serverId: Int? = null
 
-            try {
-                val formattedUrl = UrlUtil.formattedUrlString(url)
-                val server = Server(
-                    _name = "",
-                    type = ServerType.TEMPORARY,
-                    connection = ServerConnectionInfo(
-                        externalUrl = formattedUrl,
+            val temporaryServer = try {
+                checkNotNull(
+                    serverRegistrationRepository.registerAuthorizationCode(
+                        url,
+                        code,
+                        null,
                     ),
-                    session = ServerSessionInfo(),
-                    user = ServerUserInfo(),
-                )
-                serverId = serverManager.addServer(server)
-                serverManager.authenticationRepository(serverId).registerAuthorizationCode(code)
+                ) { "Registration failed" }
             } catch (e: Exception) {
                 Timber.e(e, "Exception during registration")
-                try {
-                    if (serverId != null) {
-                        serverManager.authenticationRepository(serverId).revokeSession()
-                        serverManager.removeServer(serverId)
-                    }
-                } catch (e: Exception) {
-                    Timber.e(e, "Can't revoke session")
-                }
                 view.showError(commonR.string.failed_registration)
                 return@launch
             }
 
-            view.startIntegration(serverId)
+            view.startIntegration(temporaryServer)
         }
     }
 

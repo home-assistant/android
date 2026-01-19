@@ -17,7 +17,6 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
-import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
@@ -246,11 +245,11 @@ class MainViewModel @Inject constructor(
 
                 // Finished initial load, update state
                 val webSocketState = homePresenter.getWebSocketState()
-                if (webSocketState == WebSocketState.CLOSED_AUTH) {
+                if (webSocketState == WebSocketState.ClosedAuth) {
                     homePresenter.onInvalidAuthorization()
                     return@launch
                 }
-                loadingState.value = if (webSocketState == WebSocketState.ACTIVE) {
+                loadingState.value = if (webSocketState == WebSocketState.Active) {
                     LoadingState.READY
                 } else {
                     LoadingState.ERROR

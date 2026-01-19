@@ -20,6 +20,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
+import android.util.DisplayMetrics
 import android.util.Rational
 import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
@@ -47,6 +48,10 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -57,7 +62,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.getSystemService
@@ -125,6 +136,7 @@ import io.homeassistant.companion.android.util.DataUriDownloadManager
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
+import io.homeassistant.companion.android.util.applyInsets
 import io.homeassistant.companion.android.util.hasNonRootPath
 import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.isStarted
@@ -301,8 +313,22 @@ class WebViewActivity :
     private var downloadFileContentDisposition = ""
     private var downloadFileMimetype = ""
     private val javascriptInterface = "externalApp"
+    private var serverHandleInsets = mutableStateOf(false)
 
     private val snackbarHostState = SnackbarHostState()
+
+    private data class InsetsContext(
+        val windowInsets: WindowInsets,
+        val density: Density,
+        val displayMetrics: DisplayMetrics,
+        val layoutDirection: LayoutDirection,
+    ) {
+        fun applyInsets(webView: WebView) {
+            webView.applyInsets(windowInsets, density, displayMetrics, layoutDirection)
+        }
+    }
+
+    private var insetsContext: InsetsContext? = null
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -351,10 +377,27 @@ class WebViewActivity :
             val customViewFromWebView by remember { customViewFromWebView }
             val statusBarColor by remember { statusBarColor }
             val backgroundColor by remember { backgroundColor }
+            val serverHandleInsets by remember { serverHandleInsets }
             var nightModeTheme by remember { mutableStateOf<NightModeTheme?>(null) }
             val snackbarHostState = remember { snackbarHostState }
             var webViewInitialized by remember { webViewInitialized }
             var shouldAskNotificationPermission by remember { mutableStateOf(false) }
+
+            val configuration = LocalConfiguration.current
+            val currentInsetsContext = InsetsContext(
+                windowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout),
+                density = LocalDensity.current,
+                displayMetrics = LocalResources.current.displayMetrics,
+                layoutDirection = LocalLayoutDirection.current,
+            )
+            insetsContext = currentInsetsContext
+
+            // Apply insets when configuration changes (e.g., screen rotation)
+            LaunchedEffect(configuration, serverHandleInsets) {
+                if (serverHandleInsets) {
+                    currentInsetsContext.applyInsets(webView)
+                }
+            }
 
             LaunchedEffect(Unit) {
                 nightModeTheme = nightModeManager.getCurrentNightMode()
@@ -372,6 +415,7 @@ class WebViewActivity :
                 customViewFromWebView,
                 shouldAskNotificationPermission = shouldAskNotificationPermission,
                 webViewInitialized = webViewInitialized,
+                serverHandleInsets = serverHandleInsets,
                 nightModeTheme = nightModeTheme,
                 statusBarColor = statusBarColor,
                 backgroundColor = backgroundColor,
@@ -452,6 +496,11 @@ class WebViewActivity :
                         webView.clearHistory()
                         clearHistory = false
                     }
+
+                    if (serverHandleInsets.value) {
+                        insetsContext?.applyInsets(webView)
+                    }
+
                     setWebViewZoom()
                     if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
                         ioScope.launch {
@@ -1436,8 +1485,11 @@ class WebViewActivity :
         finish()
     }
 
-    override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean) {
-        Timber.d("Loading $url (keepHistory $keepHistory, openInApp $openInApp)")
+    override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean, serverHandleInsets: Boolean) {
+        Timber.d(
+            "Loading $url (keepHistory $keepHistory, openInApp $openInApp, serverHandleInsets $serverHandleInsets)",
+        )
+        this.serverHandleInsets.value = serverHandleInsets
         if (openInApp) {
             runFragmentTransactionIfStateSafe {
                 // Remove any displayed fragments (e.g., BlockInsecureFragment, ConnectionSecurityLevelFragment)
@@ -1585,7 +1637,7 @@ class WebViewActivity :
         isShowingError = true
 
         lifecycleScope.launch {
-            val serverName = if (serverManager.defaultServers.size > 1) presenter.getActiveServerName() else null
+            val serverName = if (serverManager.servers().size > 1) presenter.getActiveServerName() else null
             val alert = AlertDialog.Builder(this@WebViewActivity)
                 .setTitle(
                     getString(

@@ -6,7 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepositoryImpl
+import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.home.HomeActivity
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 class OpenTileSettingsActivity : AppCompatActivity() {
 
     @Inject
-    lateinit var wearPrefsRepository: WearPrefsRepositoryImpl
+    lateinit var wearPrefsRepository: WearPrefsRepository
 
     companion object {
 

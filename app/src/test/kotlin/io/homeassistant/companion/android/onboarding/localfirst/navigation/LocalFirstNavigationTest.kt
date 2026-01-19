@@ -10,7 +10,6 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.BaseOnboardingNavigationTest
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.LocationForSecureConnectionRoute
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.LocationSharingRoute
-import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.SetHomeNetworkRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.stringResource
 import junit.framework.TestCase.assertTrue
@@ -46,9 +45,8 @@ internal class LocalFirstNavigationTest : BaseOnboardingNavigationTest() {
     }
 
     @Test
-    fun `Given no location tracking from LocalFirst with HTTP and no permission when next clicked then show LocationForSecureConnection`() {
+    fun `Given no location tracking from LocalFirst with HTTP when next clicked then show LocationForSecureConnection`() {
         testNavigation(hasLocationTracking = false) {
-            mockCheckPermission(false)
             navController.navigateToLocalFirst(serverId = 42, hasPlainTextAccess = true)
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
 
@@ -59,21 +57,6 @@ internal class LocalFirstNavigationTest : BaseOnboardingNavigationTest() {
             assertTrue(
                 navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true,
             )
-        }
-    }
-
-    @Test
-    fun `Given no location tracking from LocalFirst with HTTP and has permission when next clicked then show SetHomeNetwork`() {
-        testNavigation(hasLocationTracking = false) {
-            mockCheckPermission(true)
-            navController.navigateToLocalFirst(serverId = 42, hasPlainTextAccess = true)
-            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
-
-            onNodeWithText(stringResource(commonR.string.local_first_next))
-                .performScrollTo()
-                .performClick()
-
-            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
         }
     }
 
