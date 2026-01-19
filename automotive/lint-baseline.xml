@@ -833,7 +833,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="229"
+            line="230"
             column="13"/>
     </issue>
 
@@ -844,7 +844,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="239"
+            line="240"
             column="13"/>
     </issue>
 
@@ -855,7 +855,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="295"
+            line="296"
             column="13"/>
     </issue>
 
@@ -2259,6 +2259,13 @@
     </issue>
 
     <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v28`) is unnecessary; `minSdkVersion` is 29. Merge all the resources in this folder into `xml`.">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/xml-v28"/>
+    </issue>
+
+    <issue
         id="StaticFieldLeak"
         message="Do not place Android context classes in static fields (static reference to `Builder` which has field `mContext` pointing to `Context`); this is a memory leak"
         errorLine1="        private lateinit var notificationBuilder: NotificationCompat.Builder"
@@ -2586,17 +2593,6 @@
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/values/dimens.xml"
             line="3"
             column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.drawable.ic_baseline_info_24` appears to be unused"
-        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
-        errorLine2="^">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/drawable/ic_baseline_info_24.xml"
-            line="1"
-            column="1"/>
     </issue>
 
     <issue
@@ -4216,6 +4212,28 @@
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/todo/TodoWidgetConfigureActivity.kt"
             line="189"
             column="15"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableReceiver"
+        message="Instance composable functions on non-stable classes will always be recomposed. If possible, make the receiver type stable or refactor this function if that isn&apos;t possible. See https://slackhq.github.io/compose-lints/rules/#unstable-receivers for more information."
+        errorLine1="        fun GridWidgetState.getColors(): ColorProviders {"
+        errorLine2="            ~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/grid/GridWidgetState.kt"
+            line="35"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableReceiver"
+        message="Instance composable functions on non-stable classes will always be recomposed. If possible, make the receiver type stable or refactor this function if that isn&apos;t possible. See https://slackhq.github.io/compose-lints/rules/#unstable-receivers for more information."
+        errorLine1="        fun GridWidgetState.getButtonColors(): GridButtonColors {"
+        errorLine2="            ~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/grid/GridWidgetState.kt"
+            line="53"
+            column="13"/>
     </issue>
 
     <issue

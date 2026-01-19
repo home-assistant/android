@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:minWidth="40dp"
+    android:minHeight="40dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="86400000"
+    android:description="@string/widget_grid_desc"
+    android:previewImage="@drawable/widget_example_grid"
+    android:initialLayout="@layout/glance_default_loading_layout"
+    android:configure="io.homeassistant.companion.android.widgets.grid.config.GridWidgetConfigureActivity"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable"
+    tools:ignore="UnusedAttribute,UnusedResources" />

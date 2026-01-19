@@ -254,6 +254,17 @@
                 android:resource="@xml/template_widget_info" />
         </receiver>
 
+        <receiver android:name=".widgets.grid.GridWidget" android:label="@string/widget_grid_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/grid_widget_info" />
+        </receiver>
+
         <activity android:name=".widgets.button.ButtonWidgetConfigureActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true">
@@ -295,6 +306,12 @@
             </intent-filter>
         </activity>
         <activity android:name=".widgets.template.TemplateWidgetConfigureActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".widgets.grid.config.GridWidgetConfigureActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
