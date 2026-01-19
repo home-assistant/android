@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.13.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.1)" variant="all" version="8.13.1">
+<issues format="6" by="lint 8.13.2" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.2)" variant="all" version="8.13.2">
 
     <issue
         id="MissingPermission"
@@ -129,7 +129,7 @@
         errorLine2="                             ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/controls/HaControlsProviderService.kt"
-            line="47"
+            line="46"
             column="30"/>
     </issue>
 
@@ -547,7 +547,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="118"
+            line="119"
             column="17"/>
     </issue>
 
@@ -558,7 +558,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="119"
+            line="120"
             column="17"/>
     </issue>
 
@@ -569,7 +569,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/SensorDetailViewModel.kt"
-            line="355"
+            line="368"
             column="38"/>
     </issue>
 
@@ -1198,7 +1198,7 @@
         errorLine2="                                                          ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
-            line="416"
+            line="418"
             column="59"/>
     </issue>
 
@@ -1209,7 +1209,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="171"
+            line="175"
             column="13"/>
     </issue>
 
@@ -1517,7 +1517,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/launch/link/LinkActivity.kt"
-            line="117"
+            line="108"
             column="5"/>
     </issue>
 
@@ -1572,7 +1572,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="70"
+            line="69"
             column="5"/>
     </issue>
 
@@ -1583,7 +1583,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="305"
+            line="304"
             column="5"/>
     </issue>
 
@@ -1792,7 +1792,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="92"
+            line="93"
             column="5"/>
     </issue>
 
@@ -1803,7 +1803,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="344"
+            line="352"
             column="5"/>
     </issue>
 
@@ -1814,7 +1814,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="453"
+            line="461"
             column="5"/>
     </issue>
 
@@ -1825,7 +1825,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="505"
+            line="513"
             column="5"/>
     </issue>
 
@@ -1836,7 +1836,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="565"
+            line="573"
             column="5"/>
     </issue>
 
@@ -1847,7 +1847,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="654"
+            line="662"
             column="5"/>
     </issue>
 
@@ -1858,7 +1858,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="716"
+            line="724"
             column="5"/>
     </issue>
 
@@ -2474,7 +2474,7 @@
         errorLine2="                      ~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="73"
+            line="72"
             column="23"/>
     </issue>
 
@@ -2485,7 +2485,7 @@
         errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="75"
+            line="74"
             column="19"/>
     </issue>
 
@@ -2496,7 +2496,7 @@
         errorLine2="                 ~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="77"
+            line="76"
             column="18"/>
     </issue>
 
@@ -2518,7 +2518,7 @@
         errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="346"
+            line="354"
             column="15"/>
     </issue>
 
@@ -2529,7 +2529,7 @@
         errorLine2="                 ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="348"
+            line="356"
             column="18"/>
     </issue>
 
@@ -2661,7 +2661,7 @@
         errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/entity/EntityWidgetConfigureActivity.kt"
-            line="134"
+            line="131"
             column="42"/>
     </issue>
 
