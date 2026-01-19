@@ -50,7 +50,7 @@ class GridConfigurationViewModel @Inject constructor(
     @param:ApplicationContext private val applicationContext: Context,
 ) : ViewModel() {
     private var widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID
-    val servers = serverManager.defaultServersFlow
+    val servers = serverManager.serversFlow
         .map { it.toImmutableList() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), persistentListOf())
 
